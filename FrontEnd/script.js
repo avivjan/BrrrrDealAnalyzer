@@ -1,48 +1,33 @@
 // ----- DOM SELECTION -----
-
-/**
- * Cache DOM elements used throughout the script.
- */
-const form = document.getElementById("deal-form");
-const submitBtn = document.getElementById("submit-btn");
+const arvForm = document.getElementById("deal-form");
+const arvSubmitBtn = document.getElementById("submit-btn");
 const formStatusEl = document.getElementById("form-status");
 const errorMessageEl = document.getElementById("error-message");
-
 const resultsCard = document.getElementById("results-card");
-const totalPurchaseCostsEl = document.getElementById(
-  "result-total-purchase-costs"
-);
+const totalPurchaseCostsEl = document.getElementById("result-total-purchase-costs");
 const allInPercentEl = document.getElementById("result-all-in-percent");
 const rule70El = document.getElementById("result-70-rule");
-const maxAllowedPurchasePriceEl = document.getElementById(
-  "result-max-allowed-purchase-price"
-);
-const diffPurchasePriceEl = document.getElementById(
-  "result-difference-purchase-price"
-);
+const maxAllowedPurchasePriceEl = document.getElementById("result-max-allowed-purchase-price");
+const diffPurchasePriceEl = document.getElementById("result-difference-purchase-price");
+
+const cashflowForm = document.getElementById("cashflow-form");
+const cashflowSubmitBtn = document.getElementById("cashflow-submit");
+const cashflowStatus = document.getElementById("cashflow-status");
+const cashflowResultsCard = document.getElementById("cashflow-results");
+const grossIncomeEl = document.getElementById("result-gross-income");
+const vacancyEl = document.getElementById("result-vacancy");
+const operatingExpensesEl = document.getElementById("result-operating-expenses");
+const noiEl = document.getElementById("result-noi");
+const cashflowEl = document.getElementById("result-cashflow");
+const cashflowAnnualEl = document.getElementById("result-cashflow-annual");
 
 // ----- UTILITY FUNCTIONS -----
-
-/**
- * Safely parse a numeric input value.
- * Treats empty / invalid values as 0 to keep the request payload numeric.
- * @param {string} name - The field name / input name.
- * @returns {number}
- */
-function getNumericValue(name) {
+function getNumericValue(form, name) {
   const value = form.elements[name]?.value ?? "";
   const parsed = parseFloat(value);
-  if (Number.isNaN(parsed)) {
-    return 0;
-  }
-  return parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-/**
- * Format a number as currency with thousands separators and 2 decimals.
- * @param {number} value
- * @returns {string}
- */
 function formatCurrency(value) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "-";
@@ -53,12 +38,6 @@ function formatCurrency(value) {
   });
 }
 
-/**
- * Format a decimal as percentage with 2 decimals.
- * Example: 0.72 -> "72.00%"
- * @param {number} value
- * @returns {string}
- */
 function formatPercent(value) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "-";
@@ -70,43 +49,33 @@ function formatPercent(value) {
   })}%`;
 }
 
-/**
- * Show loading state on the submit button and status text.
- */
-function setLoading(isLoading) {
+function setLoading(button, statusEl, isLoading, message = "Calculating…") {
+  if (!button || !statusEl) return;
   if (isLoading) {
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Calculating…";
-    formStatusEl.textContent = "Contacting backend on localhost:8000…";
+    button.disabled = true;
+    button.textContent = message;
+    statusEl.textContent = "Working on it…";
   } else {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Calculate";
-    formStatusEl.textContent = "";
+    button.disabled = false;
+    button.textContent = button.dataset.defaultText || button.textContent;
+    statusEl.textContent = "";
   }
 }
 
-/**
- * Show an error message in the UI.
- * @param {string} message
- */
 function showError(message) {
+  if (!errorMessageEl) return;
   errorMessageEl.textContent = message;
   errorMessageEl.classList.add("visible");
 }
 
-/**
- * Clear any visible error message.
- */
 function clearError() {
+  if (!errorMessageEl) return;
   errorMessageEl.textContent = "";
   errorMessageEl.classList.remove("visible");
 }
 
-/**
- * Populate results section with the response from the backend.
- * @param {object} data - Response JSON from backend.
- */
-function displayResults(data) {
+// ----- ACQUISITION CALCULATOR -----
+function displayAcquisitionResults(data) {
   const {
     total_purchase_costs,
     alllInPrecentFromARV,
@@ -116,7 +85,7 @@ function displayResults(data) {
   } = data;
 
   totalPurchaseCostsEl.textContent = formatCurrency(total_purchase_costs);
-  allInPercentEl.textContent = alllInPrecentFromARV;
+  allInPercentEl.textContent = formatPercent(alllInPrecentFromARV / 100);
   maxAllowedPurchasePriceEl.textContent = formatCurrency(
     max_allowed_purchase_price_to_meet_70_rule
   );
@@ -129,11 +98,9 @@ function displayResults(data) {
       difference_in_purchase_price_to_meet_70_rule
     );
   } else {
-    // If backend returns -1 or a negative number, show a friendly message.
     diffPurchasePriceEl.textContent = "Already meets 70% rule";
   }
 
-  // 70% rule pill
   rule70El.classList.remove("pass", "fail");
   if (passes_70_rule) {
     rule70El.textContent = "PASS";
@@ -143,44 +110,38 @@ function displayResults(data) {
     rule70El.classList.add("fail");
   }
 
-  // Reveal results card
   resultsCard.hidden = false;
   resultsCard.classList.add("visible");
 }
 
-// ----- API LOGIC -----
-
-/**
- * Build request payload from form data.
- * @returns {object}
- */
-function buildPayload() {
+function buildAcquisitionPayload() {
   return {
-    arv: getNumericValue("arv"),
-    purchase_price: getNumericValue("purchase_price"),
-    origination_points_percent: getNumericValue("origination_points_percent"),
-    title_fees: getNumericValue("title_fees"),
-    attorney_fees: getNumericValue("attorney_fees"),
-    recording_fees: getNumericValue("recording_fees"),
-    transfer_taxes: getNumericValue("transfer_taxes"),
-    lender_underwriting_fees: getNumericValue("lender_underwriting_fees"),
-    title_insurance: getNumericValue("title_insurance"),
-    survey_cost: getNumericValue("survey_cost"),
-    inspection_costs: getNumericValue("inspection_costs"),
-    hml_underwriting_fee: getNumericValue("hml_underwriting_fee"),
-    hml_processing_fee: getNumericValue("hml_processing_fee"),
-    hml_appraisal_fee: getNumericValue("hml_appraisal_fee"),
-    draw_setup_fee: getNumericValue("draw_setup_fee"),
-    rehab_cost: getNumericValue("rehab_cost"),
-    rehab_utilities_cost: getNumericValue("rehab_utilities_cost"),
+    arv: getNumericValue(arvForm, "arv"),
+    purchase_price: getNumericValue(arvForm, "purchase_price"),
+    origination_points_percent: getNumericValue(
+      arvForm,
+      "origination_points_percent"
+    ),
+    title_fees: getNumericValue(arvForm, "title_fees"),
+    attorney_fees: getNumericValue(arvForm, "attorney_fees"),
+    recording_fees: getNumericValue(arvForm, "recording_fees"),
+    transfer_taxes: getNumericValue(arvForm, "transfer_taxes"),
+    lender_underwriting_fees: getNumericValue(
+      arvForm,
+      "lender_underwriting_fees"
+    ),
+    title_insurance: getNumericValue(arvForm, "title_insurance"),
+    survey_cost: getNumericValue(arvForm, "survey_cost"),
+    inspection_costs: getNumericValue(arvForm, "inspection_costs"),
+    hml_underwriting_fee: getNumericValue(arvForm, "hml_underwriting_fee"),
+    hml_processing_fee: getNumericValue(arvForm, "hml_processing_fee"),
+    hml_appraisal_fee: getNumericValue(arvForm, "hml_appraisal_fee"),
+    draw_setup_fee: getNumericValue(arvForm, "draw_setup_fee"),
+    rehab_cost: getNumericValue(arvForm, "rehab_cost"),
+    rehab_utilities_cost: getNumericValue(arvForm, "rehab_utilities_cost"),
   };
 }
 
-/**
- * Call the FastAPI backend to calculate all-in % of ARV.
- * @param {object} payload
- * @returns {Promise<object>}
- */
 async function calculateAllInPercentage(payload) {
   const response = await fetch("http://localhost:8000/CalcPrecentageOfARVRes", {
     method: "POST",
@@ -191,7 +152,6 @@ async function calculateAllInPercentage(payload) {
   });
 
   if (!response.ok) {
-    // Try to surface error details if available
     let detail = "";
     try {
       const errorBody = await response.json();
@@ -199,7 +159,7 @@ async function calculateAllInPercentage(payload) {
         detail = errorBody.detail || errorBody.message;
       }
     } catch {
-      // ignore JSON parse errors
+      // ignore
     }
     const message = detail || `Backend error (status ${response.status}).`;
     throw new Error(message);
@@ -208,26 +168,16 @@ async function calculateAllInPercentage(payload) {
   return await response.json();
 }
 
-// ----- EVENT BINDING -----
-
-/**
- * Handle form submission:
- *  - prevent default behavior
- *  - build payload
- *  - call backend
- *  - update UI with results or error
- */
-async function handleFormSubmit(event) {
+async function handleArvSubmit(event) {
   event.preventDefault();
-
   clearError();
-  setLoading(true);
+  setLoading(arvSubmitBtn, formStatusEl, true);
 
-  const payload = buildPayload();
+  const payload = buildAcquisitionPayload();
 
   try {
     const data = await calculateAllInPercentage(payload);
-    displayResults(data);
+    displayAcquisitionResults(data);
   } catch (err) {
     console.error(err);
     showError(
@@ -235,13 +185,85 @@ async function handleFormSubmit(event) {
         "Something went wrong while contacting the backend. Please ensure the FastAPI server is running on localhost:8000."
     );
   } finally {
-    setLoading(false);
+    setLoading(arvSubmitBtn, formStatusEl, false);
   }
 }
 
-// Attach submit handler once DOM is ready.
-if (form) {
-  form.addEventListener("submit", handleFormSubmit);
+// ----- CASH FLOW CALCULATOR -----
+function calculateCashFlow(inputs) {
+  const grossIncome = inputs.rent + inputs.otherIncome;
+  const vacancyLoss = grossIncome * (inputs.vacancyPercent / 100);
+
+  const managementFee = grossIncome * (inputs.managementPercent / 100);
+  const otherVariable = grossIncome * (inputs.otherPercent / 100);
+
+  const fixedExpenses =
+    inputs.taxes + inputs.insurance + inputs.maintenance + inputs.capex + inputs.utilities + inputs.hoa;
+
+  const operatingExpenses =
+    vacancyLoss + managementFee + otherVariable + fixedExpenses;
+
+  const netOperatingIncome = grossIncome - operatingExpenses;
+  const cashFlow = netOperatingIncome - inputs.mortgage;
+
+  return {
+    grossIncome,
+    vacancyLoss,
+    operatingExpenses,
+    netOperatingIncome,
+    cashFlow,
+    cashFlowAnnual: cashFlow * 12,
+  };
 }
 
+function buildCashFlowInputs() {
+  return {
+    rent: getNumericValue(cashflowForm, "rent"),
+    otherIncome: getNumericValue(cashflowForm, "other_income"),
+    vacancyPercent: getNumericValue(cashflowForm, "vacancy_percent"),
+    taxes: getNumericValue(cashflowForm, "taxes"),
+    insurance: getNumericValue(cashflowForm, "insurance"),
+    mortgage: getNumericValue(cashflowForm, "mortgage"),
+    maintenance: getNumericValue(cashflowForm, "maintenance"),
+    capex: getNumericValue(cashflowForm, "capex"),
+    utilities: getNumericValue(cashflowForm, "utilities"),
+    hoa: getNumericValue(cashflowForm, "hoa"),
+    managementPercent: getNumericValue(cashflowForm, "management_percent"),
+    otherPercent: getNumericValue(cashflowForm, "other_percent"),
+  };
+}
 
+function displayCashflowResults(results) {
+  grossIncomeEl.textContent = formatCurrency(results.grossIncome);
+  vacancyEl.textContent = formatCurrency(results.vacancyLoss);
+  operatingExpensesEl.textContent = formatCurrency(results.operatingExpenses);
+  noiEl.textContent = formatCurrency(results.netOperatingIncome);
+  cashflowEl.textContent = formatCurrency(results.cashFlow);
+  cashflowAnnualEl.textContent = formatCurrency(results.cashFlowAnnual);
+
+  cashflowResultsCard.hidden = false;
+  cashflowResultsCard.classList.add("visible");
+}
+
+function handleCashflowSubmit(event) {
+  event.preventDefault();
+  if (!cashflowForm) return;
+  setLoading(cashflowSubmitBtn, cashflowStatus, true, "Crunching…");
+
+  const inputs = buildCashFlowInputs();
+  const results = calculateCashFlow(inputs);
+  displayCashflowResults(results);
+
+  setLoading(cashflowSubmitBtn, cashflowStatus, false);
+}
+
+// ----- EVENT BINDING -----
+if (arvForm) {
+  arvSubmitBtn.dataset.defaultText = arvSubmitBtn.textContent;
+  arvForm.addEventListener("submit", handleArvSubmit);
+}
+
+if (cashflowForm) {
+  cashflowSubmitBtn.dataset.defaultText = cashflowSubmitBtn.textContent;
+  cashflowForm.addEventListener("submit", handleCashflowSubmit);
+}
