@@ -14,12 +14,10 @@ const cashflowForm = document.getElementById("cashflow-form");
 const cashflowSubmitBtn = document.getElementById("cashflow-submit");
 const cashflowStatus = document.getElementById("cashflow-status");
 const cashflowResultsCard = document.getElementById("cashflow-results");
-const grossIncomeEl = document.getElementById("result-gross-income");
-const vacancyEl = document.getElementById("result-vacancy");
-const operatingExpensesEl = document.getElementById("result-operating-expenses");
-const noiEl = document.getElementById("result-noi");
 const cashflowEl = document.getElementById("result-cashflow");
-const cashflowAnnualEl = document.getElementById("result-cashflow-annual");
+const dscrEl = document.getElementById("result-dscr");
+const cashOutEl = document.getElementById("result-cash-out");
+const cashflowErrorEl = document.getElementById("cashflow-error");
 
 // ----- UTILITY FUNCTIONS -----
 function getNumericValue(form, name) {
@@ -49,6 +47,16 @@ function formatPercent(value) {
   })}%`;
 }
 
+function formatRatio(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "-";
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function setLoading(button, statusEl, isLoading, message = "Calculating…") {
   if (!button || !statusEl) return;
   if (isLoading) {
@@ -72,6 +80,18 @@ function clearError() {
   if (!errorMessageEl) return;
   errorMessageEl.textContent = "";
   errorMessageEl.classList.remove("visible");
+}
+
+function showCashflowError(message) {
+  if (!cashflowErrorEl) return;
+  cashflowErrorEl.textContent = message;
+  cashflowErrorEl.classList.add("visible");
+}
+
+function clearCashflowError() {
+  if (!cashflowErrorEl) return;
+  cashflowErrorEl.textContent = "";
+  cashflowErrorEl.classList.remove("visible");
 }
 
 // ----- ACQUISITION CALCULATOR -----
@@ -190,71 +210,90 @@ async function handleArvSubmit(event) {
 }
 
 // ----- CASH FLOW CALCULATOR -----
-function calculateCashFlow(inputs) {
-  const grossIncome = inputs.rent + inputs.otherIncome;
-  const vacancyLoss = grossIncome * (inputs.vacancyPercent / 100);
-
-  const managementFee = grossIncome * (inputs.managementPercent / 100);
-  const otherVariable = grossIncome * (inputs.otherPercent / 100);
-
-  const fixedExpenses =
-    inputs.taxes + inputs.insurance + inputs.maintenance + inputs.capex + inputs.utilities + inputs.hoa;
-
-  const operatingExpenses =
-    vacancyLoss + managementFee + otherVariable + fixedExpenses;
-
-  const netOperatingIncome = grossIncome - operatingExpenses;
-  const cashFlow = netOperatingIncome - inputs.mortgage;
-
+function buildCashFlowPayload() {
   return {
-    grossIncome,
-    vacancyLoss,
-    operatingExpenses,
-    netOperatingIncome,
-    cashFlow,
-    cashFlowAnnual: cashFlow * 12,
-  };
-}
-
-function buildCashFlowInputs() {
-  return {
+    arv: getNumericValue(cashflowForm, "arv"),
+    purchasePrice: getNumericValue(cashflowForm, "purchasePrice"),
+    rehabCost: getNumericValue(cashflowForm, "rehabCost"),
+    down_payment: getNumericValue(cashflowForm, "down_payment"),
+    closingCostsBuy: getNumericValue(cashflowForm, "closingCostsBuy"),
+    hmlPoints: getNumericValue(cashflowForm, "hmlPoints"),
+    hmlInterestInCash: getNumericValue(cashflowForm, "hmlInterestInCash"),
+    closingCostsRefi: getNumericValue(cashflowForm, "closingCostsRefi"),
+    loanTermYears: getNumericValue(cashflowForm, "loanTermYears"),
+    ltv: getNumericValue(cashflowForm, "ltv"),
     rent: getNumericValue(cashflowForm, "rent"),
-    otherIncome: getNumericValue(cashflowForm, "other_income"),
-    vacancyPercent: getNumericValue(cashflowForm, "vacancy_percent"),
+    interestRate: getNumericValue(cashflowForm, "interestRate"),
+    vacancyPercent: getNumericValue(cashflowForm, "vacancyPercent"),
+    property_managment_fee_precentages_from_rent: getNumericValue(
+      cashflowForm,
+      "property_managment_fee_precentages_from_rent"
+    ),
+    maintenancePercent: getNumericValue(cashflowForm, "maintenancePercent"),
+    capexPercent: getNumericValue(cashflowForm, "capexPercent"),
     taxes: getNumericValue(cashflowForm, "taxes"),
     insurance: getNumericValue(cashflowForm, "insurance"),
-    mortgage: getNumericValue(cashflowForm, "mortgage"),
-    maintenance: getNumericValue(cashflowForm, "maintenance"),
-    capex: getNumericValue(cashflowForm, "capex"),
-    utilities: getNumericValue(cashflowForm, "utilities"),
     hoa: getNumericValue(cashflowForm, "hoa"),
-    managementPercent: getNumericValue(cashflowForm, "management_percent"),
-    otherPercent: getNumericValue(cashflowForm, "other_percent"),
   };
 }
 
-function displayCashflowResults(results) {
-  grossIncomeEl.textContent = formatCurrency(results.grossIncome);
-  vacancyEl.textContent = formatCurrency(results.vacancyLoss);
-  operatingExpensesEl.textContent = formatCurrency(results.operatingExpenses);
-  noiEl.textContent = formatCurrency(results.netOperatingIncome);
-  cashflowEl.textContent = formatCurrency(results.cashFlow);
-  cashflowAnnualEl.textContent = formatCurrency(results.cashFlowAnnual);
+function displayCashflowResults(data) {
+  const { cash_flow, dscr, cash_out } = data;
+  cashflowEl.textContent = formatCurrency(cash_flow);
+  dscrEl.textContent = formatRatio(dscr);
+  cashOutEl.textContent = formatCurrency(cash_out);
 
   cashflowResultsCard.hidden = false;
   cashflowResultsCard.classList.add("visible");
 }
 
+async function calculateCashFlow(payload) {
+  const response = await fetch("http://localhost:8000/calcCashFlow", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const errorBody = await response.json();
+      if (errorBody && (errorBody.detail || errorBody.message)) {
+        detail = errorBody.detail || errorBody.message;
+      }
+    } catch {
+      // ignore
+    }
+    const message = detail || `Backend error (status ${response.status}).`;
+    throw new Error(message);
+  }
+
+  return await response.json();
+}
+
 function handleCashflowSubmit(event) {
   event.preventDefault();
   if (!cashflowForm) return;
+  clearCashflowError();
   setLoading(cashflowSubmitBtn, cashflowStatus, true, "Crunching…");
 
-  const inputs = buildCashFlowInputs();
-  const results = calculateCashFlow(inputs);
-  displayCashflowResults(results);
+  const payload = buildCashFlowPayload();
 
-  setLoading(cashflowSubmitBtn, cashflowStatus, false);
+  calculateCashFlow(payload)
+    .then(displayCashflowResults)
+    .catch((err) => {
+      console.error(err);
+      showCashflowError(
+        err.message ||
+          "Something went wrong while contacting the backend. Please ensure the FastAPI server is running on localhost:8000."
+      );
+    })
+    .finally(() => {
+      setLoading(cashflowSubmitBtn, cashflowStatus, false);
+    });
+
 }
 
 // ----- EVENT BINDING -----

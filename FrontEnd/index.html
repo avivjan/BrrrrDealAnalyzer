@@ -322,30 +322,82 @@
               <div>
                 <p class="eyebrow">Cash Flow Snapshot</p>
                 <h2>Hold Phase Income &amp; Expenses</h2>
-                <p class="lede-sm">See how rent, vacancy, and expenses stack up before debt service.</p>
+                <p class="lede-sm">Send every BRRRR input to the backend and get cash flow, DSCR, and cash out.</p>
               </div>
               <a class="inline-link" href="#top">Back to top ↑</a>
             </div>
 
             <div class="form-grid two-col">
               <fieldset class="field-group">
-                <legend>Income</legend>
+                <legend>Acquisition &amp; Financing</legend>
+                <label class="field">
+                  <span class="field-label">ARV (After Repair Value)</span>
+                  <input type="number" step="0.01" id="cashflow-arv" name="arv" placeholder="e.g. 250000" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Purchase Price</span>
+                  <input type="number" step="0.01" id="cashflow-purchase-price" name="purchasePrice" placeholder="e.g. 180000" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Rehab Cost</span>
+                  <input type="number" step="0.01" id="rehab-cost" name="rehabCost" placeholder="e.g. 40000" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Down Payment (%)</span>
+                  <input type="number" step="0.01" id="down-payment" name="down_payment" placeholder="e.g. 20" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Closing Costs (buy)</span>
+                  <input type="number" step="0.01" id="closing-costs-buy" name="closingCostsBuy" placeholder="e.g. 7000" />
+                </label>
+                <label class="field">
+                  <span class="field-label">HML Points (%)</span>
+                  <input type="number" step="0.01" id="hml-points" name="hmlPoints" placeholder="e.g. 2" />
+                </label>
+                <label class="field">
+                  <span class="field-label">HML Interest Paid in Cash</span>
+                  <input type="number" step="0.01" id="hml-interest-in-cash" name="hmlInterestInCash" placeholder="e.g. 3500" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Closing Costs (refi)</span>
+                  <input type="number" step="0.01" id="closing-costs-refi" name="closingCostsRefi" placeholder="e.g. 5000" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Loan Term (years)</span>
+                  <input type="number" step="1" id="loan-term-years" name="loanTermYears" placeholder="e.g. 30" />
+                </label>
+                <label class="field">
+                  <span class="field-label">LTV (%)</span>
+                  <input type="number" step="0.01" id="ltv" name="ltv" placeholder="e.g. 75" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Interest Rate (annual %)</span>
+                  <input type="number" step="0.01" id="interest_rate" name="interestRate" placeholder="e.g. 7.25" />
+                </label>
+              </fieldset>
+
+              <fieldset class="field-group">
+                <legend>Income &amp; Operating</legend>
                 <label class="field">
                   <span class="field-label">Monthly Rent</span>
                   <input type="number" step="0.01" id="rent" name="rent" placeholder="e.g. 1800" />
                 </label>
                 <label class="field">
-                  <span class="field-label">Other Monthly Income</span>
-                  <input type="number" step="0.01" id="other_income" name="other_income" placeholder="e.g. 75" />
+                  <span class="field-label">Vacancy (% of rent)</span>
+                  <input type="number" step="0.01" id="vacancy_percent" name="vacancyPercent" placeholder="e.g. 5" />
                 </label>
                 <label class="field">
-                  <span class="field-label">Vacancy Allowance (%)</span>
-                  <input type="number" step="0.01" id="vacancy_percent" name="vacancy_percent" placeholder="e.g. 5" />
+                  <span class="field-label">Property Management (% of rent)</span>
+                  <input type="number" step="0.01" id="property-managment" name="property_managment_fee_precentages_from_rent" placeholder="e.g. 8" />
                 </label>
-              </fieldset>
-
-              <fieldset class="field-group">
-                <legend>Fixed Costs</legend>
+                <label class="field">
+                  <span class="field-label">Maintenance (% of rent)</span>
+                  <input type="number" step="0.01" id="maintenance_percent" name="maintenancePercent" placeholder="e.g. 10" />
+                </label>
+                <label class="field">
+                  <span class="field-label">CapEx (% of rent)</span>
+                  <input type="number" step="0.01" id="capex_percent" name="capexPercent" placeholder="e.g. 7" />
+                </label>
                 <label class="field">
                   <span class="field-label">Property Taxes (monthly)</span>
                   <input type="number" step="0.01" id="taxes" name="taxes" placeholder="e.g. 300" />
@@ -355,40 +407,8 @@
                   <input type="number" step="0.01" id="insurance" name="insurance" placeholder="e.g. 125" />
                 </label>
                 <label class="field">
-                  <span class="field-label">Mortgage Payment</span>
-                  <input type="number" step="0.01" id="mortgage" name="mortgage" placeholder="e.g. 1100" />
-                </label>
-              </fieldset>
-
-              <fieldset class="field-group">
-                <legend>Operating Expenses</legend>
-                <label class="field">
-                  <span class="field-label">Maintenance / Repairs</span>
-                  <input type="number" step="0.01" id="maintenance" name="maintenance" placeholder="e.g. 150" />
-                </label>
-                <label class="field">
-                  <span class="field-label">CapEx Reserve</span>
-                  <input type="number" step="0.01" id="capex" name="capex" placeholder="e.g. 150" />
-                </label>
-                <label class="field">
-                  <span class="field-label">Utilities (owner paid)</span>
-                  <input type="number" step="0.01" id="utilities" name="utilities" placeholder="e.g. 120" />
-                </label>
-                <label class="field">
-                  <span class="field-label">HOA / Misc</span>
+                  <span class="field-label">HOA (monthly, if any)</span>
                   <input type="number" step="0.01" id="hoa" name="hoa" placeholder="e.g. 50" />
-                </label>
-              </fieldset>
-
-              <fieldset class="field-group">
-                <legend>Percent-Based Expenses</legend>
-                <label class="field">
-                  <span class="field-label">Property Management (%)</span>
-                  <input type="number" step="0.01" id="management_percent" name="management_percent" placeholder="e.g. 8" />
-                </label>
-                <label class="field">
-                  <span class="field-label">Other Variable (%)</span>
-                  <input type="number" step="0.01" id="other_percent" name="other_percent" placeholder="e.g. 1" />
                 </label>
               </fieldset>
             </div>
@@ -397,35 +417,24 @@
               <button type="submit" id="cashflow-submit">Calculate Cash Flow</button>
               <span id="cashflow-status" class="form-status" aria-live="polite"></span>
             </div>
+            <div id="cashflow-error" class="error-message" role="alert"></div>
           </form>
         </section>
 
         <section class="card results-card" id="cashflow-results" hidden>
           <h2>Cash Flow Results</h2>
-          <div class="results-grid two-col">
-            <div class="result-item">
-              <span class="result-label">Gross Monthly Income</span>
-              <span id="result-gross-income" class="result-value"></span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">Vacancy Allowance</span>
-              <span id="result-vacancy" class="result-value"></span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">Operating Expenses (monthly)</span>
-              <span id="result-operating-expenses" class="result-value"></span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">Net Operating Income (monthly)</span>
-              <span id="result-noi" class="result-value"></span>
-            </div>
+          <div class="results-grid">
             <div class="result-item">
               <span class="result-label">Cash Flow After Financing (monthly)</span>
               <span id="result-cashflow" class="result-value"></span>
             </div>
             <div class="result-item">
-              <span class="result-label">Cash Flow After Financing (annual)</span>
-              <span id="result-cashflow-annual" class="result-value"></span>
+              <span class="result-label">Debt Service Coverage Ratio (DSCR)</span>
+              <span id="result-dscr" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Cash Out at Refi</span>
+              <span id="result-cash-out" class="result-value"></span>
             </div>
           </div>
         </section>
