@@ -192,19 +192,21 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     cash_flow = net_operating_income - mortgage_payment
     dscr = net_operating_income / mortgage_payment
     
-    if cash_out_from_deal <= 0:
-        cash_on_cash = -1
+    if cash_out_from_deal >= 0:
+        cash_on_cash = -1 # show as infinity
     elif cash_flow <= 0:
-        cash_on_cash = -1
+        cash_on_cash = -2 # show as negative infinity
     else:
         cash_on_cash = cash_flow * 12 / cash_out_from_deal
         
-    equity_build_up = arv * (1-ltv) + cash_out_from_deal
+    equity_build_up = arv * (1-ltv)
+    net_profit = arv * (1-ltv) + cash_out_from_deal
     
-    if cash_out_from_deal <= 0:
-        roi = -1
+    
+    if cash_out_from_deal >= 0:
+        roi = -1 # show as negative infinity
     elif cash_flow <= 0:
-        roi = -1
+        roi = -1 # show as negative infinity
     else:
         roi = (cash_flow * 12 + equity_build_up )/ cash_out_from_deal
 
@@ -215,6 +217,7 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
         cash_out=cash_out_from_deal,
         cash_on_cash=cash_on_cash,
         roi=roi,
-        equity_build_up=equity_build_up,
+        equity=equity,
+        net_profit=net_profit,
         messages=None,
     )
