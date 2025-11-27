@@ -31,16 +31,29 @@ function getNumericValue(form, name) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function normalizeNumber(value) {
+  if (typeof value === "string") {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed === "inf" || trimmed === "infinity") return Number.POSITIVE_INFINITY;
+    if (trimmed === "-inf" || trimmed === "-infinity") return Number.NEGATIVE_INFINITY;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed;
+  }
+  return value;
+}
+
 function formatSpecialValue(value, formatter, infiniteText = "∞") {
-  if (typeof value !== "number" || Number.isNaN(value)) {
+  const normalized = normalizeNumber(value);
+
+  if (typeof normalized !== "number" || Number.isNaN(normalized)) return "-";
+
+  if (!Number.isFinite(normalized)) {
+    if (normalized === Number.POSITIVE_INFINITY) return infiniteText;
+    if (normalized === Number.NEGATIVE_INFINITY) return `-${infiniteText}`;
     return "-";
   }
-  if (!Number.isFinite(value)) {
-    if (value === Number.POSITIVE_INFINITY) return infiniteText;
-    if (value === Number.NEGATIVE_INFINITY) return `-${infiniteText}`;
-    return "-";
-  }
-  return formatter(value);
+
+  return formatter(normalized);
 }
 
 function formatCurrency(value, { infiniteText = "∞" } = {}) {
