@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVReq import CalcPrecentageOfARVReq
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVRes import CalcPrecentageOfARVRes
 from ReqRes.CalcCashFlow.CalcCashFlowReq import CalcCashFlowReq
@@ -68,6 +68,23 @@ def getAlllInPrecentFromARV(payload: CalcPrecentageOfARVReq) -> CalcPrecentageOf
 
 @app.post("/calcCashFlow", response_model=CalcCashFlowRes)
 def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
+    validation_errors = []
+    if payload.arv <= 0:
+        validation_errors.append("ARV must be greater than 0.")
+    if payload.purchase_price < 0:
+        validation_errors.append("Purchase price cannot be negative.")
+    if payload.ltv < 0:
+        validation_errors.append("LTV cannot be negative.")
+    if payload.loan_term_years <= 0:
+        validation_errors.append("Loan term must be at least 1 year.")
+    if payload.interest_rate < 0:
+        validation_errors.append("Interest rate cannot be negative.")
+
+    if validation_errors:
+        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
+
+    messages = []
+
     arv = payload.arv
     rent = payload.rent
     ltv = payload.ltv/100
@@ -111,12 +128,29 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     
     monthly_interest_rate = (payload.interest_rate / 100.0) / 12.0
     total_payments = loan_term_years * 12
-    factor = (1 + monthly_interest_rate) ** total_payments
-    mortgage_payment = loan_amount * monthly_interest_rate * factor / (factor - 1)
+    if total_payments <= 0:
+        raise HTTPException(status_code=400, detail="Loan term must be at least one month.")
+
+    if monthly_interest_rate == 0:
+        if loan_amount == 0:
+            mortgage_payment = 0
+        else:
+            mortgage_payment = loan_amount / total_payments
+            messages.append("Interest rate is 0%; using straight-line principal payments.")
+    else:
+        factor = (1 + monthly_interest_rate) ** total_payments
+        denominator = factor - 1
+        if denominator == 0:
+            raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment with the provided rate and term.")
+        mortgage_payment = loan_amount * monthly_interest_rate * factor / denominator
 
     net_operating_income = rent - operating_expenses
     cash_flow = net_operating_income - mortgage_payment
-    dscr = net_operating_income / mortgage_payment 
-    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal)
+    if mortgage_payment == 0:
+        dscr = None
+        messages.append("Mortgage payment is $0. DSCR is not applicable for cash deals or 0% loans.")
+    else:
+        dscr = net_operating_income / mortgage_payment
+    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, messages=messages or None)
 
 

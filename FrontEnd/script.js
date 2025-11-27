@@ -20,6 +20,7 @@ const cashflowEl = document.getElementById("result-cashflow");
 const dscrEl = document.getElementById("result-dscr");
 const cashOutEl = document.getElementById("result-cash-out");
 const cashflowErrorEl = document.getElementById("cashflow-error");
+const cashflowMessagesEl = document.getElementById("cashflow-messages");
 
 // ----- UTILITY FUNCTIONS -----
 function getNumericValue(form, name) {
@@ -94,6 +95,27 @@ function clearCashflowError() {
   if (!cashflowErrorEl) return;
   cashflowErrorEl.textContent = "";
   cashflowErrorEl.classList.remove("visible");
+}
+
+function showCashflowMessages(messages = []) {
+  if (!cashflowMessagesEl) return;
+  const content = messages
+    .filter((msg) => typeof msg === "string" && msg.trim().length > 0)
+    .map((msg) => `<li>${msg}</li>`)
+    .join("");
+
+  if (content) {
+    cashflowMessagesEl.innerHTML = `<ul>${content}</ul>`;
+    cashflowMessagesEl.classList.add("visible");
+  } else {
+    clearCashflowMessages();
+  }
+}
+
+function clearCashflowMessages() {
+  if (!cashflowMessagesEl) return;
+  cashflowMessagesEl.textContent = "";
+  cashflowMessagesEl.classList.remove("visible");
 }
 
 // ----- ACQUISITION CALCULATOR -----
@@ -257,16 +279,24 @@ async function calculateCashFlow(payload) {
 
   if (!response.ok) {
     let detail = "";
+    let messages = [];
     try {
       const errorBody = await response.json();
       if (errorBody && (errorBody.detail || errorBody.message)) {
         detail = errorBody.detail || errorBody.message;
       }
+      if (errorBody && Array.isArray(errorBody.messages)) {
+        messages = errorBody.messages.filter(
+          (msg) => typeof msg === "string" && msg.trim().length > 0
+        );
+      }
     } catch {
       // ignore
     }
     const message = detail || `Backend error (status ${response.status}).`;
-    throw new Error(message);
+    const error = new Error(message);
+    error.messages = messages;
+    throw error;
   }
 
   return await response.json();
@@ -276,6 +306,7 @@ function handleCashflowSubmit(event) {
   event.preventDefault();
   if (!cashflowForm) return;
   clearCashflowError();
+  clearCashflowMessages();
   setLoading(cashflowSubmitBtn, cashflowStatus, true, "Crunching…");
 
   const payload = buildCashFlowPayload();
@@ -285,6 +316,9 @@ function handleCashflowSubmit(event) {
     .catch((err) => {
       console.error(err);
       showCashflowError(err.message || "Unable to reach the backend service.");
+      if (err.messages && err.messages.length > 0) {
+        showCashflowMessages(err.messages);
+      }
     })
     .finally(() => {
       setLoading(cashflowSubmitBtn, cashflowStatus, false);
