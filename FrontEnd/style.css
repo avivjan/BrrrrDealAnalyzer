@@ -323,9 +323,9 @@ button[type="submit"]:disabled {
 .notice-message {
   margin-top: 0.75rem;
   font-size: 0.95rem;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 0.5rem;
   padding: 0.55rem 0.75rem;
   display: none;

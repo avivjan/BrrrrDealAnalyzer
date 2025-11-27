@@ -20,7 +20,6 @@ const cashflowEl = document.getElementById("result-cashflow");
 const dscrEl = document.getElementById("result-dscr");
 const cashOutEl = document.getElementById("result-cash-out");
 const cashflowErrorEl = document.getElementById("cashflow-error");
-const cashflowMessagesEl = document.getElementById("cashflow-messages");
 
 // ----- UTILITY FUNCTIONS -----
 function getNumericValue(form, name) {
@@ -87,37 +86,20 @@ function clearError() {
 
 function showCashflowError(message) {
   if (!cashflowErrorEl) return;
-  cashflowErrorEl.textContent = message;
-  cashflowErrorEl.classList.add("visible");
-}
-
-function clearCashflowError() {
-  if (!cashflowErrorEl) return;
-  cashflowErrorEl.textContent = "";
-  cashflowErrorEl.classList.remove("visible");
-}
-
-function showCashflowMessages(messages) {
-  if (!cashflowMessagesEl) return;
-
-  const safeMessages = Array.isArray(messages) ? messages : [];
-  const content = safeMessages
+  const messages = Array.isArray(message) ? message : [message];
+  const content = messages
     .filter((msg) => typeof msg === "string" && msg.trim().length > 0)
     .map((msg) => `<li>${msg}</li>`)
     .join("");
 
-  if (content) {
-    cashflowMessagesEl.innerHTML = `<ul>${content}</ul>`;
-    cashflowMessagesEl.classList.add("visible");
-  } else {
-    clearCashflowMessages();
-  }
+  cashflowErrorEl.innerHTML = content ? `<ul>${content}</ul>` : "";
+  cashflowErrorEl.classList.toggle("visible", Boolean(content));
 }
 
-function clearCashflowMessages() {
-  if (!cashflowMessagesEl) return;
-  cashflowMessagesEl.textContent = "";
-  cashflowMessagesEl.classList.remove("visible");
+function clearCashflowError() {
+  if (!cashflowErrorEl) return;
+  cashflowErrorEl.innerHTML = "";
+  cashflowErrorEl.classList.remove("visible");
 }
 
 // ----- ACQUISITION CALCULATOR -----
@@ -233,6 +215,120 @@ async function handleArvSubmit(event) {
 }
 
 // ----- CASH FLOW CALCULATOR -----
+function validatePercentage(value, label, allowZero = true) {
+  const min = allowZero ? 0 : Number.MIN_VALUE;
+  const minLabel = allowZero ? "0" : "greater than 0";
+  return value >= min && value <= 100
+    ? null
+    : `${label} must be between ${minLabel} and 100%.`;
+}
+
+function getFieldValue(form, name) {
+  return form?.elements[name]?.value?.trim() ?? "";
+}
+
+function validateCashflowInputs() {
+  const errors = [];
+
+  const arvRaw = getFieldValue(cashflowForm, "arv");
+  const arvValue = parseFloat(arvRaw);
+  if (!arvRaw) {
+    errors.push("ARV is required.");
+  } else if (!Number.isFinite(arvValue) || arvValue <= 0) {
+    errors.push("ARV must be greater than 0.");
+  }
+
+  const purchaseRaw = getFieldValue(cashflowForm, "purchasePrice");
+  const purchasePrice = parseFloat(purchaseRaw);
+  if (!purchaseRaw) {
+    errors.push("Purchase price is required.");
+  } else if (!Number.isFinite(purchasePrice) || purchasePrice <= 0) {
+    errors.push("Purchase price must be greater than 0.");
+  }
+
+  const loanTermRaw = getFieldValue(cashflowForm, "loanTermYears");
+  const loanTerm = parseFloat(loanTermRaw);
+  if (!loanTermRaw) {
+    errors.push("Loan term is required.");
+  } else if (!Number.isFinite(loanTerm) || loanTerm <= 0) {
+    errors.push("Loan term must be greater than 0.");
+  }
+
+  const ltvRaw = getFieldValue(cashflowForm, "ltv");
+  const ltv = parseFloat(ltvRaw);
+  if (!ltvRaw) {
+    errors.push("LTV is required.");
+  } else {
+    const ltvError = validatePercentage(ltv, "LTV", false);
+    if (ltvError) errors.push(ltvError);
+  }
+
+  const downPayment = parseFloat(getFieldValue(cashflowForm, "down_payment"));
+  const downPaymentError = validatePercentage(downPayment, "Down payment");
+  if (downPaymentError) errors.push(downPaymentError);
+
+  const interestRateRaw = getFieldValue(cashflowForm, "interestRate");
+  const interestRate = parseFloat(interestRateRaw);
+  if (!interestRateRaw) {
+    errors.push("Interest rate is required.");
+  } else {
+    const interestError = validatePercentage(interestRate, "Interest rate", false);
+    if (interestError) errors.push(interestError);
+  }
+
+  const rentRaw = getFieldValue(cashflowForm, "rent");
+  const rent = parseFloat(rentRaw);
+  if (!rentRaw) {
+    errors.push("Monthly rent is required.");
+  } else if (!Number.isFinite(rent) || rent <= 0) {
+    errors.push("Monthly rent must be greater than 0.");
+  }
+
+  [
+    {
+      value: parseFloat(getFieldValue(cashflowForm, "vacancyPercent")),
+      label: "Vacancy",
+    },
+    {
+      value: parseFloat(
+        getFieldValue(cashflowForm, "property_managment_fee_precentages_from_rent")
+      ),
+      label: "Property management",
+    },
+    {
+      value: parseFloat(getFieldValue(cashflowForm, "maintenancePercent")),
+      label: "Maintenance",
+    },
+    {
+      value: parseFloat(getFieldValue(cashflowForm, "capexPercent")),
+      label: "CapEx",
+    },
+  ].forEach(({ value, label }) => {
+    const percentError = validatePercentage(value, `${label} percentage`);
+    if (percentError) errors.push(percentError);
+  });
+
+  const nonNegativeFields = [
+    { value: parseFloat(getFieldValue(cashflowForm, "rehabCost")), label: "Rehab cost" },
+    { value: parseFloat(getFieldValue(cashflowForm, "closingCostsBuy")), label: "Closing costs (buy)" },
+    { value: parseFloat(getFieldValue(cashflowForm, "closingCostsRefi")), label: "Closing costs (refi)" },
+    { value: parseFloat(getFieldValue(cashflowForm, "hmlPoints")), label: "HML points" },
+    { value: parseFloat(getFieldValue(cashflowForm, "hmlInterestInCash")), label: "HML interest paid in cash" },
+    { value: parseFloat(getFieldValue(cashflowForm, "taxes")), label: "Taxes" },
+    { value: parseFloat(getFieldValue(cashflowForm, "insurance")), label: "Insurance" },
+    { value: parseFloat(getFieldValue(cashflowForm, "hoa")), label: "HOA" },
+  ];
+
+  nonNegativeFields.forEach(({ value, label }) => {
+    if (!Number.isFinite(value)) return;
+    if (value < 0) {
+      errors.push(`${label} cannot be negative.`);
+    }
+  });
+
+  return errors;
+}
+
 function buildCashFlowPayload() {
   return {
     arv: getNumericValue(cashflowForm, "arv"),
@@ -261,11 +357,10 @@ function buildCashFlowPayload() {
 }
 
 function displayCashflowResults(data) {
-  const { cash_flow, dscr, cash_out, messages } = data;
+  const { cash_flow, dscr, cash_out } = data;
   cashflowEl.textContent = formatCurrency(cash_flow);
   dscrEl.textContent = formatRatio(dscr);
   cashOutEl.textContent = formatCurrency(cash_out);
-  showCashflowMessages(messages);
 
   cashflowResultsCard.hidden = false;
   cashflowResultsCard.classList.add("visible");
@@ -301,8 +396,16 @@ function handleCashflowSubmit(event) {
   event.preventDefault();
   if (!cashflowForm) return;
   clearCashflowError();
-  clearCashflowMessages();
   setLoading(cashflowSubmitBtn, cashflowStatus, true, "Crunching…");
+
+  const validationErrors = validateCashflowInputs();
+  if (validationErrors.length > 0) {
+    showCashflowError(validationErrors);
+    setLoading(cashflowSubmitBtn, cashflowStatus, false);
+    cashflowResultsCard.hidden = true;
+    cashflowResultsCard.classList.remove("visible");
+    return;
+  }
 
   const payload = buildCashFlowPayload();
 
@@ -311,6 +414,8 @@ function handleCashflowSubmit(event) {
     .catch((err) => {
       console.error(err);
       showCashflowError(err.message || "Unable to reach the backend service.");
+      cashflowResultsCard.hidden = true;
+      cashflowResultsCard.classList.remove("visible");
     })
     .finally(() => {
       setLoading(cashflowSubmitBtn, cashflowStatus, false);
