@@ -19,6 +19,9 @@ const cashflowResultsCard = document.getElementById("cashflow-results");
 const cashflowEl = document.getElementById("result-cashflow");
 const dscrEl = document.getElementById("result-dscr");
 const cashOutEl = document.getElementById("result-cash-out");
+const cashOnCashEl = document.getElementById("result-cash-on-cash");
+const roiEl = document.getElementById("result-roi");
+const equityBuildUpEl = document.getElementById("result-equity-build-up");
 const cashflowErrorEl = document.getElementById("cashflow-error");
 
 // ----- UTILITY FUNCTIONS -----
@@ -28,35 +31,54 @@ function getNumericValue(form, name) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function formatCurrency(value) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
+function formatSpecialValue(value, formatter, infiniteText = "∞") {
+  if (typeof value !== "number" || Number.isNaN(value)) {
     return "-";
   }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  if (!Number.isFinite(value)) {
+    if (value === Number.POSITIVE_INFINITY) return infiniteText;
+    if (value === Number.NEGATIVE_INFINITY) return `-${infiniteText}`;
+    return "-";
+  }
+  return formatter(value);
 }
 
-function formatPercent(value) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return "-";
-  }
-  const percentage = value * 100;
-  return `${percentage.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
+function formatCurrency(value, { infiniteText = "∞" } = {}) {
+  return formatSpecialValue(
+    value,
+    (val) =>
+      val.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    infiniteText
+  );
 }
 
-function formatRatio(value) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return "-";
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+function formatPercent(value, { infiniteText = "∞" } = {}) {
+  return formatSpecialValue(
+    value,
+    (val) => {
+      const percentage = val * 100;
+      return `${percentage.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}%`;
+    },
+    infiniteText
+  );
+}
+
+function formatRatio(value, { infiniteText = "∞" } = {}) {
+  return formatSpecialValue(
+    value,
+    (val) =>
+      val.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    infiniteText
+  );
 }
 
 function setLoading(button, statusEl, isLoading, message = "Calculating…") {
@@ -357,10 +379,15 @@ function buildCashFlowPayload() {
 }
 
 function displayCashflowResults(data) {
-  const { cash_flow, dscr, cash_out } = data;
+  const { cash_flow, dscr, cash_out, cash_on_cash, roi, equity_build_up } = data;
   cashflowEl.textContent = formatCurrency(cash_flow);
   dscrEl.textContent = formatRatio(dscr);
   cashOutEl.textContent = formatCurrency(cash_out);
+  cashOnCashEl.textContent = formatPercent(cash_on_cash, {
+    infiniteText: "∞ (no cash in)",
+  });
+  roiEl.textContent = formatPercent(roi, { infiniteText: "∞ (no cash in)" });
+  equityBuildUpEl.textContent = formatCurrency(equity_build_up);
 
   cashflowResultsCard.hidden = false;
   cashflowResultsCard.classList.add("visible");

@@ -31,7 +31,7 @@ class CalcCashFlowReq(BaseModel):
         0.0, alias="closingCostsRefi", description="Closing costs during the refinance stage"
     )
 
-    ltv: float = Field(..., description="LTV ratio for the DSCR refinance loan (e.g., 0.75)")
+    ltv: float = Field(..., description="LTV as a percent for the DSCR refinance loan (e.g., 75 for 75%)")
 
     loan_term_years: int = Field(30, alias="loanTermYears")
     
@@ -59,4 +59,3 @@ class CalcCashFlowReq(BaseModel):
         alias="capexPercent",
         description="Capital expenditures reserve as a percentage of rent",
     )
-

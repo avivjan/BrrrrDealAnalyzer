@@ -8,6 +8,9 @@ class CalcCashFlowRes(BaseModel):
     cash_flow: float
     dscr: Optional[float] = None
     cash_out: Optional[float] = None
+    cash_on_cash: Optional[float] = None
+    roi: Optional[float] = None
+    equity_build_up: Optional[float] = None
     messages: Optional[list[str]] = None
     
     
