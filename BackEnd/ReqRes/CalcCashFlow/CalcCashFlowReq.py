@@ -45,8 +45,8 @@ class CalcCashFlowReq(BaseModel):
         description="Percentage of rent reserved for vacancy",
     )
 
-    taxes: float = Field(0.0, description="Monthly property taxes")
-    insurance: float = Field(0.0, description="Monthly insurance expense")
+    taxes: float = Field(0.0, description="Annual property taxes")
+    insurance: float = Field(0.0, description="Annual insurance expense")
     hoa: float = Field(0.0, description="Monthly HOA dues")
     property_managment_fee_precentages_from_rent: float = Field(0.0, description="precentages from the rent from property managment")
     maintenance_percent: float = Field(

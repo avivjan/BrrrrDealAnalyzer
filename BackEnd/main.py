@@ -91,9 +91,12 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     capex = rent * (payload.capex_percent / 100.0)
     vacancy = rent * (payload.vacancy_percent / 100.0)
 
+    monthly_taxes = payload.taxes / 12.0
+    monthly_insurance = payload.insurance / 12.0
+
     operating_expenses = (
-        payload.taxes
-        + payload.insurance
+        monthly_taxes
+        + monthly_insurance
         + property_management_fee
         + payload.hoa
         + maintenance
