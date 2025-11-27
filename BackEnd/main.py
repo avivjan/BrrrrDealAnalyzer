@@ -1,3 +1,5 @@
+import math
+
 from fastapi import FastAPI, HTTPException
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVReq import CalcPrecentageOfARVReq
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVRes import CalcPrecentageOfARVRes
@@ -201,11 +203,24 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     
     if cash_out_from_deal <= 0:
         roi = float('inf')
-    elif cashflow <= 0:
+    elif cash_flow <= 0:
         roi = float('-inf')
     else:
         roi = (cash_flow * 12 + equity_build_up )/ cash_out_from_deal
 
-    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_on_cash=cash_on_cash, roi=roi, equity_build_up=equity_build_up, messages=None)
+    def serialize_number(value: float | None):
+        if value is None:
+            return None
+        if math.isinf(value):
+            return "Infinity" if value > 0 else "-Infinity"
+        return value
 
-
+    return {
+        "cash_flow": serialize_number(cash_flow),
+        "dscr": serialize_number(dscr),
+        "cash_out": serialize_number(cash_out_from_deal),
+        "cash_on_cash": serialize_number(cash_on_cash),
+        "roi": serialize_number(roi),
+        "equity_build_up": serialize_number(equity_build_up),
+        "messages": None,
+    }
