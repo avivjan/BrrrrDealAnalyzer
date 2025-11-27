@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVReq import CalcPrecentageOfARVReq
 from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVRes import CalcPrecentageOfARVRes
+from ReqRes.CalcCashFlow.CalcCashFlowReq import CalcCashFlowReq
+from ReqRes.CalcCashFlow.CalcCashFlowRes import CalcCashFlowRes
+
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -61,3 +64,56 @@ def getAlllInPrecentFromARV(payload: CalcPrecentageOfARVReq) -> CalcPrecentageOf
         max_allowed_purchase_price_to_meet_70_rule=max_allowed_purchase_price_to_meet_70_rule,
         difference_in_purchase_price_to_meet_70_rule=difference_in_purchase_price_to_meet_70_rule,
     )
+
+
+@app.post("/calcCashFlow", response_model=CalcCashFlowRes)
+def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
+    arv = payload.arv
+    rent = payload.rent
+    ltv = payload.ltv/100
+    loan_amount = arv * ltv
+    loan_term_years = payload.loan_term_years
+    
+    purchase_price = payload.purchase_price
+    rehab_cost = payload.rehab_cost
+    down_payment_precent = payload.down_payment
+    closing_costs_buy = payload.closing_costs_buy
+    hml_principal = (1 - down_payment_precent/100.0) * purchase_price
+    HML_points = payload.HML_points/100.0 * hml_principal
+    HML_interest_in_cash = payload.HML_interest_in_cash
+    closing_cost_refi = payload.closing_cost_refi
+
+
+    property_management_fee = rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
+  
+
+    maintenance = rent * (payload.maintenance_percent / 100.0)
+    capex = rent * (payload.capex_percent / 100.0)
+    vacancy = rent * (payload.vacancy_percent / 100.0)
+
+    operating_expenses = (
+        payload.taxes
+        + payload.insurance
+        + property_management_fee
+        + payload.hoa
+        + maintenance
+        + capex
+        + vacancy
+    )
+
+    HML_payoff = (1-(down_payment_precent/100)) * purchase_price
+    down_payment_in_cash = (down_payment_precent/100) * purchase_price
+    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points + rehab_cost + HML_interest_in_cash
+    cash_out_from_deal = loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
+    
+    monthly_interest_rate = (payload.interest_rate / 100.0) / 12.0
+    total_payments = loan_term_years * 12
+    factor = (1 + monthly_interest_rate) ** total_payments
+    mortgage_payment = loan_amount * monthly_interest_rate * factor / (factor - 1)
+
+    net_operating_income = rent - operating_expenses
+    cash_flow = net_operating_income - mortgage_payment
+    dscr = net_operating_income / mortgage_payment 
+    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal)
+
+
