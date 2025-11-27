@@ -97,9 +97,11 @@ function clearCashflowError() {
   cashflowErrorEl.classList.remove("visible");
 }
 
-function showCashflowMessages(messages = []) {
+function showCashflowMessages(messages) {
   if (!cashflowMessagesEl) return;
-  const content = messages
+
+  const safeMessages = Array.isArray(messages) ? messages : [];
+  const content = safeMessages
     .filter((msg) => typeof msg === "string" && msg.trim().length > 0)
     .map((msg) => `<li>${msg}</li>`)
     .join("");
