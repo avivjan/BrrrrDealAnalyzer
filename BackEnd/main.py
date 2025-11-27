@@ -193,34 +193,28 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     dscr = net_operating_income / mortgage_payment
     
     if cash_out_from_deal <= 0:
-        cash_on_cash = float('inf')
+        cash_on_cash = -1
     elif cash_flow <= 0:
-        cash_on_cash = float('-inf')
+        cash_on_cash = -1
     else:
         cash_on_cash = cash_flow * 12 / cash_out_from_deal
         
     equity_build_up = arv * (1-ltv) + cash_out_from_deal
     
     if cash_out_from_deal <= 0:
-        roi = float('inf')
+        roi = -1
     elif cash_flow <= 0:
-        roi = float('-inf')
+        roi = -1
     else:
         roi = (cash_flow * 12 + equity_build_up )/ cash_out_from_deal
 
-    def serialize_number(value: float | None):
-        if value is None:
-            return None
-        if math.isinf(value):
-            return "Infinity" if value > 0 else "-Infinity"
-        return value
 
-    return {
-        "cash_flow": serialize_number(cash_flow),
-        "dscr": serialize_number(dscr),
-        "cash_out": serialize_number(cash_out_from_deal),
-        "cash_on_cash": serialize_number(cash_on_cash),
-        "roi": serialize_number(roi),
-        "equity_build_up": serialize_number(equity_build_up),
+    return CalcCashFlowRes(
+        "cash_flow": cash_flow,
+        "dscr": dscr,
+        "cash_out": cash_out_from_deal,
+        "cash_on_cash": cash_on_cash,
+        "roi": roi,
+        "equity_build_up": equity_build_up,
         "messages": None,
     }

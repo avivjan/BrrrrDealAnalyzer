@@ -31,32 +31,13 @@ function getNumericValue(form, name) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function normalizeNumber(value) {
-  if (typeof value === "string") {
-    const trimmed = value.trim().toLowerCase();
-    if (trimmed === "inf" || trimmed === "infinity") return Number.POSITIVE_INFINITY;
-    if (trimmed === "-inf" || trimmed === "-infinity") return Number.NEGATIVE_INFINITY;
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? value : parsed;
-  }
-  return value;
+function formatSpecialValue(value, formatter, { sentinel = null, sentinelText = "X" } = {}) {
+  if (sentinel !== null && value === sentinel) return sentinelText;
+  if (typeof value !== "number" || Number.isNaN(value)) return "-";
+  return formatter(value);
 }
 
-function formatSpecialValue(value, formatter, infiniteText = "∞") {
-  const normalized = normalizeNumber(value);
-
-  if (typeof normalized !== "number" || Number.isNaN(normalized)) return "-";
-
-  if (!Number.isFinite(normalized)) {
-    if (normalized === Number.POSITIVE_INFINITY) return infiniteText;
-    if (normalized === Number.NEGATIVE_INFINITY) return `-${infiniteText}`;
-    return "-";
-  }
-
-  return formatter(normalized);
-}
-
-function formatCurrency(value, { infiniteText = "∞" } = {}) {
+function formatCurrency(value, options = {}) {
   return formatSpecialValue(
     value,
     (val) =>
@@ -64,11 +45,11 @@ function formatCurrency(value, { infiniteText = "∞" } = {}) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-    infiniteText
+    options
   );
 }
 
-function formatPercent(value, { infiniteText = "∞" } = {}) {
+function formatPercent(value, options = {}) {
   return formatSpecialValue(
     value,
     (val) => {
@@ -78,11 +59,11 @@ function formatPercent(value, { infiniteText = "∞" } = {}) {
         maximumFractionDigits: 2,
       })}%`;
     },
-    infiniteText
+    options
   );
 }
 
-function formatRatio(value, { infiniteText = "∞" } = {}) {
+function formatRatio(value, options = {}) {
   return formatSpecialValue(
     value,
     (val) =>
@@ -90,7 +71,7 @@ function formatRatio(value, { infiniteText = "∞" } = {}) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-    infiniteText
+    options
   );
 }
 
@@ -397,9 +378,13 @@ function displayCashflowResults(data) {
   dscrEl.textContent = formatRatio(dscr);
   cashOutEl.textContent = formatCurrency(cash_out);
   cashOnCashEl.textContent = formatPercent(cash_on_cash, {
-    infiniteText: "∞ (no cash in)",
+    sentinel: -1,
+    sentinelText: "X",
   });
-  roiEl.textContent = formatPercent(roi, { infiniteText: "∞ (no cash in)" });
+  roiEl.textContent = formatPercent(roi, {
+    sentinel: -1,
+    sentinelText: "X",
+  });
   equityBuildUpEl.textContent = formatCurrency(equity_build_up);
 
   cashflowResultsCard.hidden = false;
