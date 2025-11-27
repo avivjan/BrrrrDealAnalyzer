@@ -320,6 +320,21 @@ button[type="submit"]:disabled {
   display: block;
 }
 
+.notice-message {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  display: none;
+}
+
+.notice-message.visible {
+  display: block;
+}
+
 /* Results */
 .results-card {
   opacity: 0;
