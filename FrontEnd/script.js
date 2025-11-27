@@ -20,6 +20,7 @@ const cashflowEl = document.getElementById("result-cashflow");
 const dscrEl = document.getElementById("result-dscr");
 const cashOutEl = document.getElementById("result-cash-out");
 const cashflowErrorEl = document.getElementById("cashflow-error");
+const cashflowMessagesEl = document.getElementById("cashflow-messages");
 
 // ----- UTILITY FUNCTIONS -----
 function getNumericValue(form, name) {
@@ -94,6 +95,27 @@ function clearCashflowError() {
   if (!cashflowErrorEl) return;
   cashflowErrorEl.textContent = "";
   cashflowErrorEl.classList.remove("visible");
+}
+
+function showCashflowMessages(messages = []) {
+  if (!cashflowMessagesEl) return;
+  const content = messages
+    .filter((msg) => typeof msg === "string" && msg.trim().length > 0)
+    .map((msg) => `<li>${msg}</li>`)
+    .join("");
+
+  if (content) {
+    cashflowMessagesEl.innerHTML = `<ul>${content}</ul>`;
+    cashflowMessagesEl.classList.add("visible");
+  } else {
+    clearCashflowMessages();
+  }
+}
+
+function clearCashflowMessages() {
+  if (!cashflowMessagesEl) return;
+  cashflowMessagesEl.textContent = "";
+  cashflowMessagesEl.classList.remove("visible");
 }
 
 // ----- ACQUISITION CALCULATOR -----
@@ -237,10 +259,11 @@ function buildCashFlowPayload() {
 }
 
 function displayCashflowResults(data) {
-  const { cash_flow, dscr, cash_out } = data;
+  const { cash_flow, dscr, cash_out, messages } = data;
   cashflowEl.textContent = formatCurrency(cash_flow);
   dscrEl.textContent = formatRatio(dscr);
   cashOutEl.textContent = formatCurrency(cash_out);
+  showCashflowMessages(messages);
 
   cashflowResultsCard.hidden = false;
   cashflowResultsCard.classList.add("visible");
@@ -276,6 +299,7 @@ function handleCashflowSubmit(event) {
   event.preventDefault();
   if (!cashflowForm) return;
   clearCashflowError();
+  clearCashflowMessages();
   setLoading(cashflowSubmitBtn, cashflowStatus, true, "Crunching…");
 
   const payload = buildCashFlowPayload();
