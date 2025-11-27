@@ -210,11 +210,11 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
 
 
     return CalcCashFlowRes(
-        "cash_flow": cash_flow,
-        "dscr": dscr,
-        "cash_out": cash_out_from_deal,
-        "cash_on_cash": cash_on_cash,
-        "roi": roi,
-        "equity_build_up": equity_build_up,
-        "messages": None,
+        cash_flow=cash_flow,
+        dscr=dscr,
+        cash_out=cash_out_from_deal,
+        cash_on_cash=cash_on_cash,
+        roi=roi,
+        equity_build_up=equity_build_up,
+        messages=None,
     )
