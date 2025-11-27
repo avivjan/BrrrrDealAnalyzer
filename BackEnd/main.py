@@ -121,24 +121,36 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
-    arv = payload.arv
+    def thousands_to_dollars(value: float) -> float:
+        return value * 1000.0
+
+    scaled_currency_inputs = {
+        "arv": thousands_to_dollars(payload.arv),
+        "purchase_price": thousands_to_dollars(payload.purchase_price),
+        "rehab_cost": thousands_to_dollars(payload.rehab_cost),
+        "closing_costs_buy": thousands_to_dollars(payload.closing_costs_buy),
+        "HML_interest_in_cash": thousands_to_dollars(payload.HML_interest_in_cash),
+        "closing_cost_refi": thousands_to_dollars(payload.closing_cost_refi),
+    }
+
+    arv = scaled_currency_inputs["arv"]
+    purchase_price = scaled_currency_inputs["purchase_price"]
+    rehab_cost = scaled_currency_inputs["rehab_cost"]
+    closing_costs_buy = scaled_currency_inputs["closing_costs_buy"]
+    HML_interest_in_cash = scaled_currency_inputs["HML_interest_in_cash"]
+    closing_cost_refi = scaled_currency_inputs["closing_cost_refi"]
+    hoa = payload.hoa
+
     rent = payload.rent
     ltv = payload.ltv/100
     loan_amount = arv * ltv
     loan_term_years = payload.loan_term_years
-    
-    purchase_price = payload.purchase_price
-    rehab_cost = payload.rehab_cost
+
     down_payment_precent = payload.down_payment
-    closing_costs_buy = payload.closing_costs_buy
     hml_principal = (1 - down_payment_precent/100.0) * purchase_price
     HML_points = payload.HML_points/100.0 * hml_principal
-    HML_interest_in_cash = payload.HML_interest_in_cash
-    closing_cost_refi = payload.closing_cost_refi
-
 
     property_management_fee = rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
-  
 
     maintenance = rent * (payload.maintenance_percent / 100.0)
     capex = rent * (payload.capex_percent / 100.0)
@@ -151,7 +163,7 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
         monthly_taxes
         + monthly_insurance
         + property_management_fee
-        + payload.hoa
+        + hoa
         + maintenance
         + capex
         + vacancy
@@ -161,7 +173,7 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     down_payment_in_cash = (down_payment_precent/100) * purchase_price
     total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points + rehab_cost + HML_interest_in_cash
     cash_out_from_deal = loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
-    
+
     monthly_interest_rate = (payload.interest_rate / 100.0) / 12.0
     total_payments = loan_term_years * 12
     if total_payments <= 0:
