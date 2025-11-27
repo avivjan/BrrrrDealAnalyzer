@@ -192,7 +192,8 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     
     if cash_out_from_deal <= 0:
         cash_on_cash = float('inf')
-    
+    elif cash_flow <= 0:
+        cash_on_cash = float('-inf')
     else:
         cash_on_cash = cash_flow * 12 / cash_out_from_deal
         
@@ -200,6 +201,8 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     
     if cash_out_from_deal <= 0:
         roi = float('inf')
+    elif cashflow <= 0:
+        roi = float('-inf')
     else:
         roi = (cash_flow * 12 + equity_build_up )/ cash_out_from_deal
 
