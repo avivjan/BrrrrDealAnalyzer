@@ -10,6 +10,8 @@ const rule70El = document.getElementById("result-70-rule");
 const maxAllowedPurchasePriceEl = document.getElementById("result-max-allowed-purchase-price");
 const diffPurchasePriceEl = document.getElementById("result-difference-purchase-price");
 
+const API_BASE_URL = "https://brrrrdealanalyzer.onrender.com";
+
 const cashflowForm = document.getElementById("cashflow-form");
 const cashflowSubmitBtn = document.getElementById("cashflow-submit");
 const cashflowStatus = document.getElementById("cashflow-status");
@@ -163,7 +165,7 @@ function buildAcquisitionPayload() {
 }
 
 async function calculateAllInPercentage(payload) {
-  const response = await fetch("http://localhost:8000/CalcPrecentageOfARVRes", {
+  const response = await fetch(`${API_BASE_URL}/CalcPrecentageOfARVRes`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -200,10 +202,7 @@ async function handleArvSubmit(event) {
     displayAcquisitionResults(data);
   } catch (err) {
     console.error(err);
-    showError(
-      err.message ||
-        "Something went wrong while contacting the backend. Please ensure the FastAPI server is running on localhost:8000."
-    );
+    showError(err.message || "Unable to reach the backend service.");
   } finally {
     setLoading(arvSubmitBtn, formStatusEl, false);
   }
@@ -248,7 +247,7 @@ function displayCashflowResults(data) {
 }
 
 async function calculateCashFlow(payload) {
-  const response = await fetch("http://localhost:8000/calcCashFlow", {
+  const response = await fetch(`${API_BASE_URL}/calcCashFlow`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -285,10 +284,7 @@ function handleCashflowSubmit(event) {
     .then(displayCashflowResults)
     .catch((err) => {
       console.error(err);
-      showCashflowError(
-        err.message ||
-          "Something went wrong while contacting the backend. Please ensure the FastAPI server is running on localhost:8000."
-      );
+      showCashflowError(err.message || "Unable to reach the backend service.");
     })
     .finally(() => {
       setLoading(cashflowSubmitBtn, cashflowStatus, false);
