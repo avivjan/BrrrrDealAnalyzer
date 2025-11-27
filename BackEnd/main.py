@@ -217,4 +217,4 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
         "roi": roi,
         "equity_build_up": equity_build_up,
         "messages": None,
-    }
+    )
