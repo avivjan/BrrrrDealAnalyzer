@@ -69,21 +69,57 @@ def getAlllInPrecentFromARV(payload: CalcPrecentageOfARVReq) -> CalcPrecentageOf
 @app.post("/calcCashFlow", response_model=CalcCashFlowRes)
 def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     validation_errors = []
+
     if payload.arv <= 0:
         validation_errors.append("ARV must be greater than 0.")
-    if payload.purchase_price < 0:
-        validation_errors.append("Purchase price cannot be negative.")
-    if payload.ltv < 0:
-        validation_errors.append("LTV cannot be negative.")
+
+    if payload.purchase_price <= 0:
+        validation_errors.append("Purchase price must be greater than 0.")
+
+    if payload.ltv <= 0 or payload.ltv > 100:
+        validation_errors.append("LTV must be between 0 and 100%.")
+
+    if payload.down_payment < 0 or payload.down_payment > 100:
+        validation_errors.append("Down payment must be between 0 and 100%.")
+
     if payload.loan_term_years <= 0:
         validation_errors.append("Loan term must be at least 1 year.")
-    if payload.interest_rate < 0:
-        validation_errors.append("Interest rate cannot be negative.")
+
+    if payload.interest_rate <= 0 or payload.interest_rate > 100:
+        validation_errors.append("Interest rate must be between 0 and 100%.")
+
+    if payload.rent <= 0:
+        validation_errors.append("Monthly rent must be greater than 0.")
+
+    if payload.vacancy_percent < 0 or payload.vacancy_percent > 100:
+        validation_errors.append("Vacancy percentage must be between 0 and 100%.")
+
+    if (
+        payload.property_managment_fee_precentages_from_rent < 0
+        or payload.property_managment_fee_precentages_from_rent > 100
+    ):
+        validation_errors.append("Property management percentage must be between 0 and 100%.")
+
+    if payload.maintenance_percent < 0 or payload.maintenance_percent > 100:
+        validation_errors.append("Maintenance percentage must be between 0 and 100%.")
+
+    if payload.capex_percent < 0 or payload.capex_percent > 100:
+        validation_errors.append("CapEx percentage must be between 0 and 100%.")
+
+    if payload.rehab_cost < 0:
+        validation_errors.append("Rehab cost cannot be negative.")
+
+    if payload.closing_costs_buy < 0 or payload.closing_cost_refi < 0:
+        validation_errors.append("Closing costs cannot be negative.")
+
+    if payload.HML_points < 0 or payload.HML_interest_in_cash < 0:
+        validation_errors.append("HML points and interest cannot be negative.")
+
+    if payload.taxes < 0 or payload.insurance < 0 or payload.hoa < 0:
+        validation_errors.append("Carrying costs (taxes, insurance, HOA) cannot be negative.")
 
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
-
-    messages = []
 
     arv = payload.arv
     rent = payload.rent
@@ -131,26 +167,17 @@ def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
     if total_payments <= 0:
         raise HTTPException(status_code=400, detail="Loan term must be at least one month.")
 
-    if monthly_interest_rate == 0:
-        if loan_amount == 0:
-            mortgage_payment = 0
-        else:
-            mortgage_payment = loan_amount / total_payments
-            messages.append("Interest rate is 0%; using straight-line principal payments.")
-    else:
-        factor = (1 + monthly_interest_rate) ** total_payments
-        denominator = factor - 1
-        if denominator == 0:
-            raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment with the provided rate and term.")
-        mortgage_payment = loan_amount * monthly_interest_rate * factor / denominator
+    factor = (1 + monthly_interest_rate) ** total_payments
+    denominator = factor - 1
+    if denominator == 0:
+        raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment with the provided rate and term.")
+
+    mortgage_payment = loan_amount * monthly_interest_rate * factor / denominator
 
     net_operating_income = rent - operating_expenses
     cash_flow = net_operating_income - mortgage_payment
-    if mortgage_payment == 0:
-        dscr = None
-        messages.append("Mortgage payment is $0. DSCR is not applicable for cash deals or 0% loans.")
-    else:
-        dscr = net_operating_income / mortgage_payment
-    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, messages=messages or None)
+    dscr = net_operating_income / mortgage_payment
+
+    return CalcCashFlowRes(cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, messages=None)
 
 
