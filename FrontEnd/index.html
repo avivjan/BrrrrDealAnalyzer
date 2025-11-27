@@ -3,23 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BRRRR Deal Analyzer - All-In % of ARV</title>
+    <title>Big Whales Deal Analyzer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body id="top">
     <main class="page">
       <div class="container">
-        <header class="header">
-          <h1>Big Whales Deal Analyzer</h1>
-          <p>Calculate your all-in % of ARV and check the 70% rule.</p>
+        <header class="hero">
+          <div class="hero-text">
+            <p class="eyebrow">Big Whales Deal Analyzer</p>
+            <h1>Start every deal with clarity and confidence.</h1>
+            <p class="lede">
+              Explore every calculation from one launchpad: check your All-In % of
+              ARV and the 70% rule, then size up monthly cash flow before you
+              make a move.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#arv-calculator">Run the 70% rule</a>
+              <a class="button ghost" href="#cashflow-calculator">Estimate cash flow</a>
+            </div>
+          </div>
+          <div class="hero-panel">
+            <h2>At a glance</h2>
+            <ul class="hero-list">
+              <li><span>All-In % of ARV</span><small>Real-time backend calc</small></li>
+              <li><span>70% Rule guidance</span><small>Know your max offer</small></li>
+              <li><span>Cash flow snapshot</span><small>Monthly + annual view</small></li>
+            </ul>
+          </div>
         </header>
 
-        <section class="card">
+        <section class="feature-grid" aria-label="Feature highlights">
+          <article class="feature">
+            <h3>All-In % of ARV</h3>
+            <p>Send your deal inputs to the FastAPI backend and instantly see how your total costs compare to ARV.</p>
+            <a href="#arv-calculator" class="inline-link">Open calculator →</a>
+          </article>
+          <article class="feature">
+            <h3>70% Rule</h3>
+            <p>Get a clear PASS/FAIL badge and the exact price drop needed to fit the classic investor rule of thumb.</p>
+            <a href="#arv-calculator" class="inline-link">Check the rule →</a>
+          </article>
+          <article class="feature">
+            <h3>Cash Flow</h3>
+            <p>Layer rent, expenses, vacancy, and financing into a quick monthly and annual cash flow summary.</p>
+            <a href="#cashflow-calculator" class="inline-link">Estimate cash flow →</a>
+          </article>
+        </section>
+
+        <section class="card" id="arv-calculator">
           <form id="deal-form">
-            <h2>Deal Inputs</h2>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">70% Rule &amp; All-In % of ARV</p>
+                <h2>Acquisition Cost Breakdown</h2>
+                <p class="lede-sm">Map every upfront dollar and verify your offer before you send it.</p>
+              </div>
+              <a class="inline-link" href="#top">Back to top ↑</a>
+            </div>
 
             <div class="form-grid">
-              <!-- Basic Deal Info -->
               <fieldset class="field-group">
                 <legend>Basic Deal Info</legend>
 
@@ -59,7 +102,6 @@
                 </label>
               </fieldset>
 
-              <!-- Closing Costs -->
               <fieldset class="field-group">
                 <legend>Closing Costs</legend>
 
@@ -152,7 +194,6 @@
                 </label>
               </fieldset>
 
-              <!-- Hard Money Fees -->
               <fieldset class="field-group">
                 <legend>Hard Money Fees</legend>
 
@@ -201,7 +242,6 @@
                 </label>
               </fieldset>
 
-              <!-- Rehab Costs -->
               <fieldset class="field-group">
                 <legend>Rehab Costs</legend>
 
@@ -239,7 +279,7 @@
         </section>
 
         <section class="card results-card" id="results-card" hidden>
-          <h2>Results</h2>
+          <h2>Acquisition Results</h2>
           <div class="results-grid">
             <div class="result-item">
               <span class="result-label">Total Purchase Costs</span>
@@ -275,11 +315,123 @@
             </div>
           </div>
         </section>
+
+        <section class="card" id="cashflow-calculator">
+          <form id="cashflow-form">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Cash Flow Snapshot</p>
+                <h2>Hold Phase Income &amp; Expenses</h2>
+                <p class="lede-sm">See how rent, vacancy, and expenses stack up before debt service.</p>
+              </div>
+              <a class="inline-link" href="#top">Back to top ↑</a>
+            </div>
+
+            <div class="form-grid two-col">
+              <fieldset class="field-group">
+                <legend>Income</legend>
+                <label class="field">
+                  <span class="field-label">Monthly Rent</span>
+                  <input type="number" step="0.01" id="rent" name="rent" placeholder="e.g. 1800" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Other Monthly Income</span>
+                  <input type="number" step="0.01" id="other_income" name="other_income" placeholder="e.g. 75" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Vacancy Allowance (%)</span>
+                  <input type="number" step="0.01" id="vacancy_percent" name="vacancy_percent" placeholder="e.g. 5" />
+                </label>
+              </fieldset>
+
+              <fieldset class="field-group">
+                <legend>Fixed Costs</legend>
+                <label class="field">
+                  <span class="field-label">Property Taxes (monthly)</span>
+                  <input type="number" step="0.01" id="taxes" name="taxes" placeholder="e.g. 300" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Insurance (monthly)</span>
+                  <input type="number" step="0.01" id="insurance" name="insurance" placeholder="e.g. 125" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Mortgage Payment</span>
+                  <input type="number" step="0.01" id="mortgage" name="mortgage" placeholder="e.g. 1100" />
+                </label>
+              </fieldset>
+
+              <fieldset class="field-group">
+                <legend>Operating Expenses</legend>
+                <label class="field">
+                  <span class="field-label">Maintenance / Repairs</span>
+                  <input type="number" step="0.01" id="maintenance" name="maintenance" placeholder="e.g. 150" />
+                </label>
+                <label class="field">
+                  <span class="field-label">CapEx Reserve</span>
+                  <input type="number" step="0.01" id="capex" name="capex" placeholder="e.g. 150" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Utilities (owner paid)</span>
+                  <input type="number" step="0.01" id="utilities" name="utilities" placeholder="e.g. 120" />
+                </label>
+                <label class="field">
+                  <span class="field-label">HOA / Misc</span>
+                  <input type="number" step="0.01" id="hoa" name="hoa" placeholder="e.g. 50" />
+                </label>
+              </fieldset>
+
+              <fieldset class="field-group">
+                <legend>Percent-Based Expenses</legend>
+                <label class="field">
+                  <span class="field-label">Property Management (%)</span>
+                  <input type="number" step="0.01" id="management_percent" name="management_percent" placeholder="e.g. 8" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Other Variable (%)</span>
+                  <input type="number" step="0.01" id="other_percent" name="other_percent" placeholder="e.g. 1" />
+                </label>
+              </fieldset>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="cashflow-submit">Calculate Cash Flow</button>
+              <span id="cashflow-status" class="form-status" aria-live="polite"></span>
+            </div>
+          </form>
+        </section>
+
+        <section class="card results-card" id="cashflow-results" hidden>
+          <h2>Cash Flow Results</h2>
+          <div class="results-grid two-col">
+            <div class="result-item">
+              <span class="result-label">Gross Monthly Income</span>
+              <span id="result-gross-income" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Vacancy Allowance</span>
+              <span id="result-vacancy" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Operating Expenses (monthly)</span>
+              <span id="result-operating-expenses" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Net Operating Income (monthly)</span>
+              <span id="result-noi" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Cash Flow After Financing (monthly)</span>
+              <span id="result-cashflow" class="result-value"></span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Cash Flow After Financing (annual)</span>
+              <span id="result-cashflow-annual" class="result-value"></span>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
 
     <script src="script.js"></script>
   </body>
  </html>
-
-
