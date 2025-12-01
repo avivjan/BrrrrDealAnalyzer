@@ -166,7 +166,7 @@
 
     const defaults = {
       rehab_cost_in_thousands: 0,
-      closing_costs_buy: 0,
+      closing_costs_buy_in_thousands: 0,
       use_HM_for_rehab: false,
       HML_points: 0,
       closing_cost_refi_in_thousands: 0,
@@ -175,9 +175,9 @@
       property_managment_fee_precentages_from_rent: 0,
       maintenance_percent: 0,
       capex_percent_of_rent: 0,
-      annual_property_taxes: 0,
-      annual_insurance: 0,
-      montly_hoa: 0
+      taxes: 0,
+      insurance: 0,
+      hoa: 0
     };
 
     createApp({
@@ -187,7 +187,7 @@
             arv_in_thousands: '',
             purchase_price_in_thousands: '',
             rehab_cost_in_thousands: defaults.rehab_cost_in_thousands,
-            closing_costs_buy: defaults.closing_costs_buy,
+            closing_costs_buy_in_thousands: defaults.closing_costs_buy_in_thousands,
             use_HM_for_rehab: defaults.use_HM_for_rehab,
             down_payment: '',
             HML_points: defaults.HML_points,
@@ -202,9 +202,9 @@
             property_managment_fee_precentages_from_rent: defaults.property_managment_fee_precentages_from_rent,
             maintenance_percent: defaults.maintenance_percent,
             capex_percent_of_rent: defaults.capex_percent_of_rent,
-            annual_property_taxes: defaults.annual_property_taxes,
-            annual_insurance: defaults.annual_insurance,
-            montly_hoa: defaults.montly_hoa
+            taxes: defaults.taxes,
+            insurance: defaults.insurance,
+            hoa: defaults.hoa
           },
           loading: false,
           error: '',
@@ -213,7 +213,7 @@
             buyRehab: [
               { key: 'purchase_price_in_thousands', label: 'Purchase Price ($000s) *', placeholder: 'e.g., 250', helper: 'Acquisition price in thousands', required: true },
               { key: 'rehab_cost_in_thousands', label: 'Rehab Cost ($000s)', placeholder: 'e.g., 40', helper: 'Renovation budget in thousands', required: false },
-              { key: 'closing_costs_buy', label: 'Closing Costs (Buy) ($000s)', placeholder: 'e.g., 5', helper: 'Closing costs when purchasing (thousands)', required: false },
+              { key: 'closing_costs_buy_in_thousands', label: 'Closing Costs (Buy) ($000s)', placeholder: 'e.g., 5', helper: 'Closing costs when purchasing (thousands)', required: false },
               { key: 'down_payment', label: 'Down Payment % *', placeholder: 'e.g., 20', helper: 'Down payment percentage for hard money', required: true, suffix: '%' },
               { key: 'HML_points', label: 'Hard Money Points %', placeholder: 'e.g., 2', helper: 'Points charged by hard money lender', required: false, suffix: '%' },
               { key: 'HML_interest_rate', label: 'Hard Money Interest Rate % *', placeholder: 'e.g., 12', helper: 'Interest rate during HML period', required: true, suffix: '%' },
@@ -228,9 +228,9 @@
             ],
             rentExpenses: [
               { key: 'rent', label: 'Monthly Rent *', placeholder: 'e.g., 2500', helper: 'Expected monthly rent', required: true, prefix: '$' },
-              { key: 'annual_property_taxes', label: 'Taxes (Annual)', placeholder: 'e.g., 4200', helper: 'Annual property taxes', required: false },
-              { key: 'annual_insurance', label: 'Insurance (Annual)', placeholder: 'e.g., 1200', helper: 'Annual insurance premium', required: false },
-              { key: 'montly_hoa', label: 'HOA (Monthly)', placeholder: 'e.g., 150', helper: 'Monthly HOA dues', required: false },
+              { key: 'taxes', label: 'Taxes (Annual)', placeholder: 'e.g., 4200', helper: 'Annual property taxes', required: false },
+              { key: 'insurance', label: 'Insurance (Annual)', placeholder: 'e.g., 1200', helper: 'Annual insurance premium', required: false },
+              { key: 'hoa', label: 'HOA (Monthly)', placeholder: 'e.g., 150', helper: 'Monthly HOA dues', required: false },
               { key: 'vacancy_percent', label: 'Vacancy %', placeholder: 'e.g., 5', helper: 'Percentage of rent reserved for vacancy', required: false, suffix: '%' },
               { key: 'maintenance_percent', label: 'Maintenance %', placeholder: 'e.g., 8', helper: 'Maintenance reserve as % of rent', required: false, suffix: '%' },
               { key: 'capex_percent_of_rent', label: 'CapEx %', placeholder: 'e.g., 5', helper: 'Capital expenditures % of rent', required: false, suffix: '%' },
@@ -279,6 +279,13 @@
               payload[key] = defaults[key];
             }
           });
+
+          // Align with backend expectations: ensure both long-form field names used in the
+          // FastAPI handler and the Pydantic model are present in the payload.
+          payload.closing_costs_buy = payload.closing_costs_buy_in_thousands;
+          payload.annual_property_taxes = payload.taxes;
+          payload.annual_insurance = payload.insurance;
+          payload.montly_hoa = payload.hoa;
 
           for (const key of Object.keys(requiredFields)) {
             if (requiredFields[key] && (payload[key] === '' || payload[key] === null || payload[key] === undefined)) {
