@@ -1,10 +1,6 @@
-import math
-
 from fastapi import FastAPI, HTTPException
-from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVReq import CalcPrecentageOfARVReq
-from ReqRes.CalcPrecentageOfARV.CalcPrecentageOfARVRes import CalcPrecentageOfARVRes
-from ReqRes.CalcCashFlow.CalcCashFlowReq import CalcCashFlowReq
-from ReqRes.CalcCashFlow.CalcCashFlowRes import CalcCashFlowRes
+from ReqRes.analyzeDeal.analyzeDealReq import analyzeDealReq
+from ReqRes.analyzeDeal.analyzeDealRes import analyzeDealRes
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,203 +14,189 @@ app.add_middleware(
     allow_headers=["*"],
 ) 
 
-@app.get("/helloworld")
-def helloworld() -> dict:
-    """
-    Simple endpoint that returns a Hello World message.
-    """
-    return {"message": "Hello, World!"}
-
-@app.post("/CalcPrecentageOfARVRes", response_model=CalcPrecentageOfARVRes)
-def getAlllInPrecentFromARV(payload: CalcPrecentageOfARVReq) -> CalcPrecentageOfARVRes:
-    arv = payload.arv
-    purchase_price = payload.purchase_price
-
-    # Origination points are a percentage of purchase price
-    origination_points_cost = (payload.origination_points_percent / 100.0) * purchase_price # default is 3% of purchase price
-    is_transfer_taxes = payload.is_transfer_taxes # default is False
-    transfer_taxes_cost = purchase_price * 0.007 if is_transfer_taxes else 0 # default is 0.7%, aka Doc Stamps
-
-    total_non_purchase_costs = (
-        + payload.title_fees # default is 1200
-        + payload.title_insurance # default is 1200
-        + payload.recording_fees # default is 150
-        + transfer_taxes_cost
-        + payload.lender_underwriting_fees # default is 600
-        + payload.inspection_costs # default is 400
-        + origination_points_cost 
-        + payload.hml_appraisal_fee # default is 500
-        + payload.draw_setup_fee # default is 350
-        + payload.rehab_cost 
-        + payload.rehab_utilities_cost # default is 1000
-    )
-
-    total_purchase_costs = total_non_purchase_costs + purchase_price
-    alllInPrecentFromARV = (total_purchase_costs / arv) * 100.0 # convert to percentage
-    passes_70_rule = alllInPrecentFromARV <= 70
-    max_allowed_purchase_price_to_meet_70_rule = arv * 0.7 - total_non_purchase_costs
-
-    if not passes_70_rule:
-        difference_in_purchase_price_to_meet_70_rule = purchase_price - max_allowed_purchase_price_to_meet_70_rule
-    else:
-        difference_in_purchase_price_to_meet_70_rule = -1
-
-    return CalcPrecentageOfARVRes(
-        total_purchase_costs=total_purchase_costs,
-        alllInPrecentFromARV=alllInPrecentFromARV,
-        passes_70_rule=passes_70_rule,
-        max_allowed_purchase_price_to_meet_70_rule=max_allowed_purchase_price_to_meet_70_rule,
-        difference_in_purchase_price_to_meet_70_rule=difference_in_purchase_price_to_meet_70_rule,
-    )
 
 
-@app.post("/calcCashFlow", response_model=CalcCashFlowRes)
-def calcCashFlow(payload: CalcCashFlowReq) -> CalcCashFlowRes:
+def validate_inputs(payload: analyzeDealReq):
     validation_errors = []
+    # Dollar values in thousands
+    if payload.arv_in_thousands <= 0:
+        validation_errors.append("ARV (in thousands) must be greater than 0.")
 
-    if payload.arv <= 0:
-        validation_errors.append("ARV must be greater than 0.")
+    if payload.purchase_price_in_thousands <= 0:
+        validation_errors.append("Purchase price (in thousands) must be greater than 0.")
 
-    if payload.purchase_price <= 0:
-        validation_errors.append("Purchase price must be greater than 0.")
+    if payload.rehab_cost_in_thousands < 0:
+        validation_errors.append("Rehab cost (in thousands) cannot be negative.")
 
-    if payload.ltv <= 0 or payload.ltv > 100:
-        validation_errors.append("LTV must be between 0 and 100%.")
+    if payload.closing_costs_buy < 0:
+        validation_errors.append("Closing costs (buy) cannot be negative.")
 
+    if payload.closing_cost_refi_in_thousands < 0:
+        validation_errors.append("Refi closing costs (in thousands) cannot be negative.")
+
+    # Lending Terms
     if payload.down_payment < 0 or payload.down_payment > 100:
-        validation_errors.append("Down payment must be between 0 and 100%.")
+        validation_errors.append("Down payment percentage must be between 0% and 100%.")
+
+    if payload.ltv_as_precent <= 0 or payload.ltv_as_precent > 100:
+        validation_errors.append("LTV must be between 0% and 100%.")
+
+    if payload.HML_points < 0 or payload.HML_points > 100:
+        validation_errors.append("HML points must be between 0% and 100%.")
+
+    if payload.HML_interest_rate <= 0 or payload.HML_interest_rate > 100:
+        validation_errors.append("HML interest rate must be between 0% and 100%.")
+
+    if payload.Months_until_refi <= 0:
+        validation_errors.append("Months until refi must be a positive number.")
 
     if payload.loan_term_years <= 0:
         validation_errors.append("Loan term must be at least 1 year.")
 
+    # DSCR long-term financing
     if payload.interest_rate <= 0 or payload.interest_rate > 100:
-        validation_errors.append("Interest rate must be between 0 and 100%.")
+        validation_errors.append("Interest rate must be between 0% and 100%.")
 
+    # Rent + Operating Expenses
     if payload.rent <= 0:
-        validation_errors.append("Monthly rent must be greater than 0.")
+        validation_errors.append("Rent must be greater than 0.")
 
     if payload.vacancy_percent < 0 or payload.vacancy_percent > 100:
-        validation_errors.append("Vacancy percentage must be between 0 and 100%.")
+        validation_errors.append("Vacancy percentage must be between 0% and 100%.")
 
-    if (
-        payload.property_managment_fee_precentages_from_rent < 0
-        or payload.property_managment_fee_precentages_from_rent > 100
-    ):
-        validation_errors.append("Property management percentage must be between 0 and 100%.")
+    if payload.property_managment_fee_precentages_from_rent < 0 or payload.property_managment_fee_precentages_from_rent > 100:
+        validation_errors.append("Property management percentage must be between 0% and 100%.")
 
     if payload.maintenance_percent < 0 or payload.maintenance_percent > 100:
-        validation_errors.append("Maintenance percentage must be between 0 and 100%.")
+        validation_errors.append("Maintenance percentage must be between 0% and 100%.")
 
-    if payload.capex_percent < 0 or payload.capex_percent > 100:
-        validation_errors.append("CapEx percentage must be between 0 and 100%.")
+    if payload.capex_percent_of_rent < 0 or payload.capex_percent_of_rent > 100:
+        validation_errors.append("CapEx percentage must be between 0% and 100%.")
 
-    if payload.rehab_cost < 0:
-        validation_errors.append("Rehab cost cannot be negative.")
+    if payload.annual_property_taxes < 0:
+        validation_errors.append("Annual property taxes cannot be negative.")
 
-    if payload.closing_costs_buy < 0 or payload.closing_cost_refi < 0:
-        validation_errors.append("Closing costs cannot be negative.")
+    if payload.annual_insurance < 0:
+        validation_errors.append("Annual insurance cannot be negative.")
 
-    if payload.HML_points < 0 or payload.HML_interest_in_cash < 0:
-        validation_errors.append("HML points and interest cannot be negative.")
-
-    if payload.taxes < 0 or payload.insurance < 0 or payload.hoa < 0:
-        validation_errors.append("Carrying costs (taxes, insurance, HOA) cannot be negative.")
+    if payload.montly_hoa < 0:
+        validation_errors.append("HOA dues cannot be negative.")
 
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
-    def thousands_to_dollars(value: float) -> float:
-        return value * 1000.0
+def thousands_to_dollars(value: float) -> float:
+    return value * 1000.0
 
-    scaled_currency_inputs = {
-        "arv": thousands_to_dollars(payload.arv),
-        "purchase_price": thousands_to_dollars(payload.purchase_price),
-        "rehab_cost": thousands_to_dollars(payload.rehab_cost),
-        "closing_costs_buy": thousands_to_dollars(payload.closing_costs_buy),
-        "HML_interest_in_cash": thousands_to_dollars(payload.HML_interest_in_cash),
-        "closing_cost_refi": thousands_to_dollars(payload.closing_cost_refi),
-    }
 
-    arv = scaled_currency_inputs["arv"]
-    purchase_price = scaled_currency_inputs["purchase_price"]
-    rehab_cost = scaled_currency_inputs["rehab_cost"]
-    closing_costs_buy = scaled_currency_inputs["closing_costs_buy"]
-    HML_interest_in_cash = scaled_currency_inputs["HML_interest_in_cash"]
-    closing_cost_refi = scaled_currency_inputs["closing_cost_refi"]
-    hoa = payload.hoa
-
-    rent = payload.rent
-    ltv = payload.ltv/100
-    loan_amount = arv * ltv
-    loan_term_years = payload.loan_term_years
-
-    down_payment_precent = payload.down_payment
-    hml_principal = (1 - down_payment_precent/100.0) * purchase_price
-    HML_points = payload.HML_points/100.0 * hml_principal
-
-    property_management_fee = rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
-
-    maintenance = rent * (payload.maintenance_percent / 100.0)
-    capex = rent * (payload.capex_percent / 100.0)
-    vacancy = rent * (payload.vacancy_percent / 100.0)
-
+def calc_montly_operating_expenses(payload):
+    property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
+    maintenance = payload.rent * (payload.maintenance_percent / 100.0)
+    capex = payload.rent * (payload.capex_percent / 100.0)
+    vacancy = payload.rent * (payload.vacancy_percent / 100.0)
     monthly_taxes = payload.taxes / 12.0
     monthly_insurance = payload.insurance / 12.0
-
-    operating_expenses = (
-        monthly_taxes
-        + monthly_insurance
-        + property_management_fee
-        + hoa
-        + maintenance
-        + capex
-        + vacancy
-    )
-
-    HML_payoff = (1-(down_payment_precent/100)) * purchase_price
+    hoa = payload.hoa
+    return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
+    
+def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash,rehab_cost,HML_interest_in_cash,closing_cost_refi, use_HM_for_rehab):
+    loan_amount = arv * ltv
+    HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     down_payment_in_cash = (down_payment_precent/100) * purchase_price
-    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points + rehab_cost + HML_interest_in_cash
-    cash_out_from_deal = loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
+    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
+    return loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
 
-    monthly_interest_rate = (payload.interest_rate / 100.0) / 12.0
+def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
+    loan_amount = arv * ltv
+    monthly_interest_rate = (interest_rate / 100.0) / 12.0
     total_payments = loan_term_years * 12
-    if total_payments <= 0:
-        raise HTTPException(status_code=400, detail="Loan term must be at least one month.")
-
     factor = (1 + monthly_interest_rate) ** total_payments
     denominator = factor - 1
     if denominator == 0:
         raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment with the provided rate and term.")
+    return loan_amount * monthly_interest_rate * factor / denominator
 
-    mortgage_payment = loan_amount * monthly_interest_rate * factor / denominator
+def calc_cash_on_cash(cash_out_from_deal, cash_flow):
+    if cash_out_from_deal >= 0:
+        return -1 # show as infinity
+    elif cash_flow <= 0:
+        return -2 # show as negative infinity
+    else:
+        return cash_flow * 12 / cash_out_from_deal
+        
+def calc_roi(cash_out_from_deal, cash_flow, equity):
+    if cash_out_from_deal >= 0:
+        return -1 # show as infinity
+    elif cash_flow <= 0:
+        return -2 # show as negative infinity
+    else:
+        return (cash_flow * 12 + equity )/ cash_out_from_deal
+    
+def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
+    return purchase_price * (1-down_payment_precent/100) + rehab_cost * int(use_HM_for_rehab)
+     
+     
+def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab):
+    HML_montly_interest = HML_interest_rate / 12 / 100.0 * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    return HML_montly_interest * Months_until_refi  
+
+
+def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
+    down_payment_in_cash = (down_payment_precent/100) * purchase_price
+    return down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
+
+    #________________________________________________________________________
+    #________________________________________________________________________
+    #________________________________________________________________________
+    #________________________________________________________________________
+    
+    
+@app.get("/helloworld")
+def helloworld() -> dict:
+    return {"message": "Hello, World!"}
+    
+@app.post("/analyzeDeal", response_model=analyzeDealRes)
+def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
+    validate_inputs(payload)
+
+    arv = thousands_to_dollars(payload.arv_in_thousands)
+    purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
+    rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
+    down_payment_precent = payload.down_payment
+    closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
+    use_HM_for_rehab = payload.use_HM_for_rehab
+    Months_until_refi = payload.Months_until_refi
+    HML_interest_rate = payload.HML_interest_rate
+    closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
+    loan_term_years = payload.loan_term_years
+    ltv = payload.ltv_as_precent/100
+    interest_rate = payload.interest_rate
+    rent = payload.rent
+
+    HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab)
+    HML_points_in_cash = payload.HML_points/100.0 * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    
+    operating_expenses = calc_montly_operating_expenses(payload)
+    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab)
+    mortgage_payment = calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years)
 
     net_operating_income = rent - operating_expenses
     cash_flow = net_operating_income - mortgage_payment
     dscr = net_operating_income / mortgage_payment
+    cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
+    equity = arv * (1-ltv)
+    net_profit = equity + cash_out_from_deal
+    roi = calc_roi(cash_out_from_deal, cash_flow, equity)
+    total_cash_needed_for_deal = get_total_cash_needed_for_deal(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab)
     
-    if cash_out_from_deal <= 0:
-        cash_on_cash = -1
-    elif cash_flow <= 0:
-        cash_on_cash = -1
-    else:
-        cash_on_cash = cash_flow * 12 / cash_out_from_deal
-        
-    equity_build_up = arv * (1-ltv) + cash_out_from_deal
-    
-    if cash_out_from_deal <= 0:
-        roi = -1
-    elif cash_flow <= 0:
-        roi = -1
-    else:
-        roi = (cash_flow * 12 + equity_build_up )/ cash_out_from_deal
-
-
-    return CalcCashFlowRes(
+    return analyzeDealRes(
         cash_flow=cash_flow,
         dscr=dscr,
         cash_out=cash_out_from_deal,
         cash_on_cash=cash_on_cash,
         roi=roi,
-        equity_build_up=equity_build_up,
+        equity=equity,
+        net_profit=net_profit,
+        total_cash_needed_for_deal = total_cash_needed_for_deal,
         messages=None,
     )
