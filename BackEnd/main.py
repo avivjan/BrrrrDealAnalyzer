@@ -28,7 +28,7 @@ def validate_inputs(payload: analyzeDealReq):
     if payload.rehab_cost_in_thousands < 0:
         validation_errors.append("Rehab cost (in thousands) cannot be negative.")
 
-    if payload.closing_costs_buy < 0:
+    if payload.closing_costs_buy_in_thousands < 0:
         validation_errors.append("Closing costs (buy) cannot be negative.")
 
     if payload.closing_cost_refi_in_thousands < 0:
@@ -92,11 +92,11 @@ def thousands_to_dollars(value: float) -> float:
 def calc_montly_operating_expenses(payload):
     property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
     maintenance = payload.rent * (payload.maintenance_percent / 100.0)
-    capex = payload.rent * (payload.capex_percent / 100.0)
+    capex = payload.rent * (payload.capex_percent_of_rent / 100.0)
     vacancy = payload.rent * (payload.vacancy_percent / 100.0)
-    monthly_taxes = payload.taxes / 12.0
-    monthly_insurance = payload.insurance / 12.0
-    hoa = payload.hoa
+    monthly_taxes = payload.annual_property_taxes / 12.0
+    monthly_insurance = payload.annual_insurance / 12.0
+    hoa = payload.montly_hoa
     return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
     
 def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash,rehab_cost,HML_interest_in_cash,closing_cost_refi, use_HM_for_rehab):
@@ -122,7 +122,7 @@ def calc_cash_on_cash(cash_out_from_deal, cash_flow):
     elif cash_flow <= 0:
         return -2 # show as negative infinity
     else:
-        return cash_flow * 12 / cash_out_from_deal
+        return cash_flow * 12 / abs(cash_out_from_deal)
         
 def calc_roi(cash_out_from_deal, cash_flow, equity):
     if cash_out_from_deal >= 0:
@@ -130,7 +130,7 @@ def calc_roi(cash_out_from_deal, cash_flow, equity):
     elif cash_flow <= 0:
         return -2 # show as negative infinity
     else:
-        return (cash_flow * 12 + equity )/ cash_out_from_deal
+        return (cash_flow * 12 + equity )/ abs(cash_out_from_deal)
     
 def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
     return purchase_price * (1-down_payment_precent/100) + rehab_cost * int(use_HM_for_rehab)

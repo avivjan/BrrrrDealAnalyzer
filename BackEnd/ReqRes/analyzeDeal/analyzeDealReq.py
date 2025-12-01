@@ -18,7 +18,7 @@ class analyzeDealReq(BaseModel):
         description="Estimated rehab costs included in the deal",
     )
     down_payment: float = Field(..., description="Down payment percentage for hard money purchase (0-100)")
-    closing_costs_buy: float = Field(
+    closing_costs_buy_in_thousands: float = Field(
     0.0, alias="closingCostsBuy", description="Closing costs when purchasing with hard money"
     )
     use_HM_for_rehab: bool = Field( #make it a toggle for using hard money for rehab costs
