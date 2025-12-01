@@ -161,16 +161,16 @@
               {{ msg }}
             </div>
           </div>
-          <div class="space-y-3">
-            <ResultRow label="Monthly Cash Flow" :value="formatResult(results.cash_flow, true)"></ResultRow>
-            <ResultRow label="DSCR" :value="formatResult(results.dscr)"></ResultRow>
-            <ResultRow label="Cash Out" :value="formatResult(results.cash_out, true)"></ResultRow>
-            <ResultRow label="Cash on Cash" :value="formatResult(results.cash_on_cash, false, true)"></ResultRow>
-            <ResultRow label="ROI" :value="formatResult(results.roi, false, true)"></ResultRow>
-            <ResultRow label="Equity" :value="formatResult(results.equity, true)"></ResultRow>
-            <ResultRow label="Net Profit" :value="formatResult(results.net_profit, true)"></ResultRow>
-            <ResultRow label="Total Cash Needed" :value="formatResult(results.total_cash_needed_for_deal, true)"></ResultRow>
-          </div>
+            <div class="space-y-3">
+              <result-row label="Monthly Cash Flow" :value="formatResult(results.cash_flow, true)"></result-row>
+              <result-row label="DSCR" :value="formatResult(results.dscr)"></result-row>
+              <result-row label="Cash Out" :value="formatResult(results.cash_out, true)"></result-row>
+              <result-row label="Cash on Cash" :value="formatResult(results.cash_on_cash, false, true)"></result-row>
+              <result-row label="ROI" :value="formatResult(results.roi, false, true)"></result-row>
+              <result-row label="Equity" :value="formatResult(results.equity, true)"></result-row>
+              <result-row label="Net Profit" :value="formatResult(results.net_profit, true)"></result-row>
+              <result-row label="Total Cash Needed" :value="formatResult(results.total_cash_needed_for_deal, true)"></result-row>
+            </div>
         </div>
       </aside>
     </div>
