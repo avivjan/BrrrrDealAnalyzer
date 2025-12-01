@@ -108,11 +108,11 @@ def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
     return rent / pitia
 
 
-def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash,rehab_cost,HML_interest_in_cash,closing_cost_refi, use_HM_for_rehab):
+def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash,rehab_cost,HML_interest_in_cash,closing_cost_refi, use_HM_for_rehab, holding_costs_until_refi):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     down_payment_in_cash = (down_payment_precent/100) * purchase_price
-    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
+    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
     return loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
 
 def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
@@ -141,6 +141,12 @@ def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     else:
         return (cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)
     
+def calc_holding_costs(taxes, insurance, hoa, months):
+    monthly_taxes = taxes / 12.0
+    monthly_insurance = insurance / 12.0
+    monthly_holding = monthly_taxes + monthly_insurance + hoa
+    return monthly_holding * months
+    
 def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
     return purchase_price * (1-down_payment_precent/100) + rehab_cost * int(use_HM_for_rehab)
      
@@ -150,9 +156,9 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
     return HML_montly_interest * Months_until_refi  
 
 
-def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
+def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/100) * purchase_price
-    return down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
+    return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
 
     #________________________________________________________________________
     #________________________________________________________________________
@@ -184,9 +190,11 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
 
     HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab)
     HML_points_in_cash = payload.HML_points/100.0 * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, Months_until_refi)
+    
     
     operating_expenses = calc_montly_operating_expenses(payload)
-    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab)
+    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab, holding_cost_until_refi)
     mortgage_payment = calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years)
 
     net_operating_income = rent - operating_expenses
@@ -195,8 +203,8 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
     cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
     equity = arv * (1-ltv)
     net_profit = equity + cash_out_from_deal
-    roi = calc_roi(cash_out_from_deal, cash_flow, equity)
-    total_cash_needed_for_deal = get_total_cash_needed_for_deal(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab)
+    roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
+    total_cash_needed_for_deal = get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab)
     
     return analyzeDealRes(
         cash_flow=cash_flow,
