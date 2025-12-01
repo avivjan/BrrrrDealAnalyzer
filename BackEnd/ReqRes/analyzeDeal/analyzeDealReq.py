@@ -29,12 +29,12 @@ class analyzeDealReq(BaseModel):
     )
 
     Months_until_refi: float = Field(
-        ..., alias="hmlInterestInCash", description="num of months from buying to refi"
+        ..., alias="monthsUntilRefi", description="num of months from buying to refi"
     )
     
     HML_interest_rate: float = Field(
-        ..., alias="hmlInterestInCash", description="Interest paid during HML period (cash)"
-    )
+        ..., alias="HMLInterestRate", description="Interest paid during HML period (cash)"
+    )   
 
     closing_cost_refi_in_thousands: float = Field(
         0.0, alias="closingCostsRefi", description="Closing costs during the refinance stage"
