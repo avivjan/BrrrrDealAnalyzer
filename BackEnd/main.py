@@ -98,7 +98,16 @@ def calc_montly_operating_expenses(payload):
     monthly_insurance = payload.annual_insurance / 12.0
     hoa = payload.montly_hoa
     return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
-    
+
+def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
+    monthly_taxes = taxes / 12.0
+    monthly_insurance = insurance / 12.0
+    pitia = mortgage_payment + monthly_taxes + monthly_insurance + hoa
+    if pitia == 0:
+        return 0 # Avoid division by zero
+    return rent / pitia
+
+
 def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash,rehab_cost,HML_interest_in_cash,closing_cost_refi, use_HM_for_rehab):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
@@ -124,13 +133,13 @@ def calc_cash_on_cash(cash_out_from_deal, cash_flow):
     else:
         return cash_flow * 12 / abs(cash_out_from_deal)
         
-def calc_roi(cash_out_from_deal, cash_flow, equity):
+def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     if cash_out_from_deal >= 0:
         return -1 # show as infinity
     elif cash_flow <= 0:
         return -2 # show as negative infinity
     else:
-        return (cash_flow * 12 + equity )/ abs(cash_out_from_deal)
+        return (cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)
     
 def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
     return purchase_price * (1-down_payment_precent/100) + rehab_cost * int(use_HM_for_rehab)
@@ -182,7 +191,7 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
 
     net_operating_income = rent - operating_expenses
     cash_flow = net_operating_income - mortgage_payment
-    dscr = net_operating_income / mortgage_payment
+    dscr =  calcDSCR(rent, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, mortgage_payment)
     cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
     equity = arv * (1-ltv)
     net_profit = equity + cash_out_from_deal
