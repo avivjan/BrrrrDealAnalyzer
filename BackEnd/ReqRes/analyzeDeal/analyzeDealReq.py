@@ -32,7 +32,7 @@ class analyzeDealReq(BaseModel):
         ..., alias="hmlInterestInCash", description="num of months from buying to refi"
     )
     
-    HML_interest_rate = Field(
+    HML_interest_rate: float = Field(
         ..., alias="hmlInterestInCash", description="Interest paid during HML period (cash)"
     )
 
