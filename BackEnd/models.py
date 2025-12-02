@@ -7,8 +7,9 @@ class ActiveDeal(Base):
     __tablename__ = "active_deals"
 
     id = Column(Integer, primary_key=True, index=True)
+    section = Column(Integer, nullable=False)
+    stage = Column(Integer, nullable=False)
     address = Column(String, nullable=False)
-    status = Column(String, nullable=False)
     zillow_link = Column(String, nullable=True)
     overall_design = Column(String, nullable=True)
     crime_rate = Column(String, nullable=True)

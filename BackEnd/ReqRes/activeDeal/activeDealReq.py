@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from ReqRes.analyzeDeal.analyzeDealReq import analyzeDealReq
 
@@ -19,8 +19,9 @@ class RentComp(BaseModel):
 
 
 class ActiveDealBase(analyzeDealReq):
-    address: str
-    status: str
+    section: int = Field(..., description="Section number for categorizing the deal 1 wholesale, 2 market, 3 our off market")
+    stage: int = Field(..., description="Stage number for tracking deal progress 1 new, 2 working, 3 brought, 4 to keep in mind, 5 dead")
+    address: str = Field(..., description="Property address")
     zillow_link: Optional[str] = None
     overall_design: Optional[str] = None
     crime_rate: Optional[str] = None
