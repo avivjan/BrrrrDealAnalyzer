@@ -1,10 +1,19 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from ReqRes.analyzeDeal.analyzeDealReq import analyzeDealReq
 from ReqRes.analyzeDeal.analyzeDealRes import analyzeDealRes
+from ReqRes.activeDeal.activeDealReq import ActiveDealCreate, ActiveDealRes
+from sqlalchemy.orm import Session
+
+from crud_active_deal import add_active_deal as add_active_deal_crud
+from crud_active_deal import get_all_active_deals
+from db import Base, engine, get_db
+from models import ActiveDeal
 
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,
@@ -217,3 +226,15 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
         total_cash_needed_for_deal = total_cash_needed_for_deal,
         messages=None,
     )
+
+
+@app.post("/active-deals", response_model=ActiveDealRes)
+def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
+    created_deal = add_active_deal_crud(db, deal)
+    return ActiveDealRes.from_orm(created_deal)
+
+
+@app.get("/active-deals", response_model=list[ActiveDealRes])
+def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
+    deals = get_all_active_deals(db)
+    return [ActiveDealRes.from_orm(deal) for deal in deals]
