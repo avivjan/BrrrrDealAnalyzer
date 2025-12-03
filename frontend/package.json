@@ -1,0 +1,32 @@
+{
+  "name": "brrrr-deal-analyzer-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@primevue/icons": "^4.1.0",
+    "@primevue/themes": "^4.1.0",
+    "@vueuse/core": "^10.11.0",
+    "axios": "^1.6.8",
+    "pinia": "^2.1.7",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.1.0",
+    "vue": "^3.4.21",
+    "vue-draggable-plus": "^0.5.2",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+}

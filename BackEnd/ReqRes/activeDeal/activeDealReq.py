@@ -86,6 +86,9 @@ class ActiveDealBase(BaseModel):
     section: Optional[int] = Field(..., description="Section number for categorizing the deal 1 wholesale, 2 market, 3 our off market")
     stage: Optional[int] = Field(..., description="Stage number for tracking deal progress 1 new, 2 working, 3 brought, 4 to keep in mind, 5 dead")
     address: Optional[str] = Field(..., description="Property address")
+    sqft: Optional[float] = Field(None, description="Property square footage")
+    bedrooms: Optional[int] = Field(None, description="Number of bedrooms")
+    bathrooms: Optional[float] = Field(None, description="Number of bathrooms")
     zillow_link: Optional[str] = None
     overall_design: Optional[str] = None
     crime_rate: Optional[str] = None
@@ -93,7 +96,6 @@ class ActiveDealBase(BaseModel):
     contact: Optional[str] = None
     task: Optional[str] = None
     niche: Optional[str] = None
-    ltv_min_when_dscr_1_15: Optional[float] = None
     sold_comps: Optional[List[SoldComp]] = None
     rent_comps: Optional[List[RentComp]] = None
     notes: Optional[str] = None
