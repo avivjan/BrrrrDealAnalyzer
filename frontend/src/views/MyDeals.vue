@@ -327,6 +327,13 @@ const saveChanges = async () => {
                   class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
                   placeholder="Google Drive / Dropbox..."
                 />
+                <a
+                  v-if="editingDeal.pics_link"
+                  :href="editingDeal.pics_link"
+                  target="_blank"
+                  class="text-xs text-ocean-400 hover:text-ocean-300 flex items-center gap-1"
+                  ><i class="pi pi-external-link"></i> Open</a
+                >
               </div>
             </div>
             <div class="space-y-4">
@@ -587,15 +594,24 @@ const saveChanges = async () => {
                 >
                   <button
                     @click="editingDeal.sold_comps!.splice(index, 1)"
-                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     ×
                   </button>
-                  <input
-                    v-model="comp.url"
-                    placeholder="URL"
-                    class="w-full bg-transparent border-b border-white/10 text-xs mb-1 focus:border-ocean-500 outline-none text-ocean-100"
-                  />
+                  <div class="flex items-center gap-2 mb-1">
+                    <input
+                      v-model="comp.url"
+                      placeholder="URL"
+                      class="flex-1 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                    <a
+                      v-if="comp.url"
+                      :href="comp.url"
+                      target="_blank"
+                      class="text-xs text-ocean-400 hover:text-ocean-300 flex-none"
+                      ><i class="pi pi-external-link"></i
+                    ></a>
+                  </div>
                   <div class="flex gap-2">
                     <input
                       v-model="comp.arv"
@@ -652,15 +668,24 @@ const saveChanges = async () => {
                 >
                   <button
                     @click="editingDeal.rent_comps!.splice(index, 1)"
-                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     ×
                   </button>
-                  <input
-                    v-model="comp.url"
-                    placeholder="URL"
-                    class="w-full bg-transparent border-b border-white/10 text-xs mb-1 focus:border-ocean-500 outline-none text-ocean-100"
-                  />
+                  <div class="flex items-center gap-2 mb-1">
+                    <input
+                      v-model="comp.url"
+                      placeholder="URL"
+                      class="flex-1 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                    <a
+                      v-if="comp.url"
+                      :href="comp.url"
+                      target="_blank"
+                      class="text-xs text-ocean-400 hover:text-ocean-300 flex-none"
+                      ><i class="pi pi-external-link"></i
+                    ></a>
+                  </div>
                   <div class="flex gap-2">
                     <input
                       v-model="comp.rent"
