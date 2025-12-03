@@ -7,15 +7,15 @@ from ReqRes.analyzeDeal.analyzeDealReq import analyzeDealReq
 
 
 class SoldComp(BaseModel):
-    url: str
-    arv: float
-    how_long_ago: str
+    url: Optional[str] = None
+    arv: Optional[float] = None
+    how_long_ago: Optional[str] = None
 
 
 class RentComp(BaseModel):
-    url: str
-    rent: float
-    time_on_market: str
+    url: Optional[str] = None
+    rent: Optional[float] = None
+    time_on_market: Optional[str] = None
 
 
 class ActiveDealBase(BaseModel):

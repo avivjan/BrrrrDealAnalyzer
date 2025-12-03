@@ -235,10 +235,10 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
 @app.post("/active-deals", response_model=ActiveDealRes)
 def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
     created_deal = add_active_deal_crud(db, deal)
-    return ActiveDealRes.from_orm(created_deal)
+    return ActiveDealRes.model_validate(created_deal)
 
 
 @app.get("/active-deals", response_model=list[ActiveDealRes])
 def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     deals = get_all_active_deals(db)
-    return [ActiveDealRes.from_orm(deal) for deal in deals]
+    return [ActiveDealRes.model_validate(deal) for deal in deals]
