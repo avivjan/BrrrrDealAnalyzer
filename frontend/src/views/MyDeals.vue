@@ -73,6 +73,17 @@ const onDrop = (event: any, stageId: number) => {
   }
 };
 
+const confirmDelete = async (deal: ActiveDealRes) => {
+  if (confirm(`Are you sure you want to delete ${deal.address}?`)) {
+    try {
+      await store.deleteDeal(deal.id);
+      refreshColumns(); // Refresh local columns after store update
+    } catch (e) {
+      alert("Failed to delete deal");
+    }
+  }
+};
+
 // Modals
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
@@ -242,7 +253,7 @@ const saveChanges = async () => {
                 :key="deal.id"
                 @click="openDeal(deal)"
               >
-                <DealCard :deal="deal" />
+                <DealCard :deal="deal" @delete="confirmDelete(deal)" />
               </div>
             </VueDraggable>
           </div>

@@ -32,6 +32,10 @@ export default {
     return response.data;
   },
 
+  async deleteActiveDeal(dealId: number): Promise<void> {
+    await apiClient.delete(`/active-deals/${dealId}`);
+  },
+
   async updateDealStage(dealId: number, stage: number): Promise<void> {
     // Stub for update logic
     console.warn('Update endpoint not implemented in backend yet. Would send:', { dealId, stage });

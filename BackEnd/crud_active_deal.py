@@ -28,3 +28,13 @@ def update_active_deal(db: Session, deal_id: int, deal_data: ActiveDealCreate) -
     db.commit()
     db.refresh(db_deal)
     return db_deal
+
+
+def delete_active_deal(db: Session, deal_id: int) -> bool:
+    db_deal = db.query(ActiveDeal).filter(ActiveDeal.id == deal_id).first()
+    if not db_deal:
+        return False
+    
+    db.delete(db_deal)
+    db.commit()
+    return True

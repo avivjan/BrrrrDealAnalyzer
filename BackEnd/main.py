@@ -5,7 +5,7 @@ from ReqRes.activeDeal.activeDealReq import ActiveDealCreate, ActiveDealRes
 from sqlalchemy.orm import Session
 
 from crud_active_deal import add_active_deal as add_active_deal_crud
-from crud_active_deal import get_all_active_deals, update_active_deal as update_active_deal_crud
+from crud_active_deal import get_all_active_deals, update_active_deal as update_active_deal_crud, delete_active_deal as delete_active_deal_crud
 from db import Base, engine, get_db
 from models import ActiveDeal
 
@@ -236,7 +236,7 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
     return calculate_deal_results(payload)
 
 
-@app.post("/active-deals", response_model=ActiveDealRes)
+@app.post("/active-deals", response_model=ActiveDealRes, response_model_by_alias=True)
 def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
     created_deal = add_active_deal_crud(db, deal)
     calc_results = calculate_deal_results(created_deal)
@@ -246,7 +246,7 @@ def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> Ac
     return res
 
 
-@app.get("/active-deals", response_model=list[ActiveDealRes])
+@app.get("/active-deals", response_model=list[ActiveDealRes], response_model_by_alias=True)
 def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     deals = get_all_active_deals(db)
     results = []
@@ -259,7 +259,7 @@ def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     return results
 
 
-@app.put("/active-deals/{deal_id}", response_model=ActiveDealRes)
+@app.put("/active-deals/{deal_id}", response_model=ActiveDealRes, response_model_by_alias=True)
 def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
     updated_deal = update_active_deal_crud(db, deal_id, deal)
     if not updated_deal:
@@ -269,3 +269,11 @@ def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Sessio
     for field, value in calc_results.model_dump().items():
         setattr(res, field, value)
     return res
+
+
+@app.delete("/active-deals/{deal_id}")
+def delete_active_deal_endpoint(deal_id: int, db: Session = Depends(get_db)):
+    success = delete_active_deal_crud(db, deal_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    return {"message": "Deal deleted successfully"}

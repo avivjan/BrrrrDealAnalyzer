@@ -91,6 +91,20 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
+  async function deleteDeal(dealId: number) {
+    isLoading.value = true;
+    try {
+      await api.deleteActiveDeal(dealId);
+      deals.value = deals.value.filter(d => d.id !== dealId);
+    } catch (err) {
+      error.value = 'Failed to delete deal';
+      console.error(err);
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     deals,
     currentAnalysisResult,
@@ -102,6 +116,7 @@ export const useDealStore = defineStore('deals', () => {
     saveDeal,
     updateDeal,
     updateDealStage,
+    deleteDeal,
   };
 });
 
