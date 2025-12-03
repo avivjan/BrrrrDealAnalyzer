@@ -5,7 +5,7 @@ from ReqRes.activeDeal.activeDealReq import ActiveDealCreate, ActiveDealRes
 from sqlalchemy.orm import Session
 
 from crud_active_deal import add_active_deal as add_active_deal_crud
-from crud_active_deal import get_all_active_deals
+from crud_active_deal import get_all_active_deals, update_active_deal as update_active_deal_crud
 from db import Base, engine, get_db
 from models import ActiveDeal
 
@@ -242,3 +242,11 @@ def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> Ac
 def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     deals = get_all_active_deals(db)
     return [ActiveDealRes.model_validate(deal) for deal in deals]
+
+
+@app.put("/active-deals/{deal_id}", response_model=ActiveDealRes)
+def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
+    updated_deal = update_active_deal_crud(db, deal_id, deal)
+    if not updated_deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    return ActiveDealRes.model_validate(updated_deal)

@@ -27,6 +27,11 @@ export default {
     return response.data;
   },
 
+  async updateActiveDeal(deal: ActiveDealRes): Promise<ActiveDealRes> {
+    const response = await apiClient.put<ActiveDealRes>(`/active-deals/${deal.id}`, deal);
+    return response.data;
+  },
+
   async updateDealStage(dealId: number, stage: number): Promise<void> {
     // Stub for update logic
     console.warn('Update endpoint not implemented in backend yet. Would send:', { dealId, stage });

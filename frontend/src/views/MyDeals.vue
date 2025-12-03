@@ -1,46 +1,64 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { useDealStore } from '../stores/dealStore';
-import { VueDraggable } from 'vue-draggable-plus';
-import DealCard from '../components/DealCard.vue';
-import type { ActiveDealRes } from '../types';
+import { ref, watch, onMounted } from "vue";
+import { useDealStore } from "../stores/dealStore";
+import { VueDraggable } from "vue-draggable-plus";
+import DealCard from "../components/DealCard.vue";
+import MoneyInput from "../components/ui/MoneyInput.vue";
+import NumberInput from "../components/ui/NumberInput.vue";
+import SliderField from "../components/ui/SliderField.vue";
+import ToggleSwitch from "primevue/toggleswitch";
+import type { ActiveDealRes } from "../types";
 
 const store = useDealStore();
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
-  { id: 1, name: 'New', color: 'bg-blue-500/10 border-blue-500/30' },
-  { id: 2, name: 'Working', color: 'bg-yellow-500/10 border-yellow-500/30' },
-  { id: 3, name: 'Brought', color: 'bg-emerald-500/10 border-emerald-500/30' },
-  { id: 4, name: 'Keep in Mind', color: 'bg-purple-500/10 border-purple-500/30' },
-  { id: 5, name: 'Dead', color: 'bg-gray-500/10 border-gray-500/30' },
+  { id: 1, name: "New", color: "bg-blue-500/10 border-blue-500/30" },
+  { id: 2, name: "Working", color: "bg-yellow-500/10 border-yellow-500/30" },
+  { id: 3, name: "Brought", color: "bg-emerald-500/10 border-emerald-500/30" },
+  {
+    id: 4,
+    name: "Keep in Mind",
+    color: "bg-purple-500/10 border-purple-500/30",
+  },
+  { id: 5, name: "Dead", color: "bg-gray-500/10 border-gray-500/30" },
 ];
 
 // Local state for each column to support drag-and-drop
 const columns = ref<Record<number, ActiveDealRes[]>>({
-  1: [], 2: [], 3: [], 4: [], 5: []
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
 });
 
 // Sync local columns with store data based on active tab
 const refreshColumns = () => {
-  const filteredDeals = store.deals.filter(d => d.section === activeTab.value);
-  
+  const filteredDeals = store.deals.filter(
+    (d) => d.section === activeTab.value
+  );
+
   // Reset columns
   columns.value = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-  
-  filteredDeals.forEach(deal => {
+
+  filteredDeals.forEach((deal) => {
     if (columns.value[deal.stage]) {
       columns.value[deal.stage]!.push(deal);
     } else {
-       // Fallback for invalid stage
-       columns.value[1]!.push(deal);
+      // Fallback for invalid stage
+      columns.value[1]!.push(deal);
     }
   });
 };
 
-watch(() => [store.deals, activeTab.value], () => {
-  refreshColumns();
-}, { deep: true });
+watch(
+  () => [store.deals, activeTab.value],
+  () => {
+    refreshColumns();
+  },
+  { deep: true }
+);
 
 onMounted(async () => {
   await store.fetchDeals();
@@ -58,61 +76,97 @@ const onDrop = (event: any, stageId: number) => {
 // Modals
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
+const editingDeal = ref<ActiveDealRes | null>(null);
 
 const openDeal = (deal: ActiveDealRes) => {
   selectedDeal.value = deal;
+  editingDeal.value = JSON.parse(JSON.stringify(deal));
   showDetailModal.value = true;
+};
+
+const saveChanges = async () => {
+  if (editingDeal.value) {
+    try {
+      await store.updateDeal(editingDeal.value);
+      showDetailModal.value = false;
+    } catch (e) {
+      alert("Failed to save changes");
+    }
+  }
 };
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-whale-dark text-ocean-50 overflow-hidden">
+  <div
+    class="h-screen flex flex-col bg-whale-dark text-ocean-50 overflow-hidden"
+  >
     <!-- Header -->
-    <header class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-whale-surface bg-whale-dark/95 backdrop-blur z-20">
+    <header
+      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-whale-surface bg-whale-dark/95 backdrop-blur z-20"
+    >
       <div class="flex items-center gap-4">
-        <button @click="$router.push('/')" class="text-ocean-300 hover:text-white transition-colors">
+        <button
+          @click="$router.push('/')"
+          class="text-ocean-300 hover:text-white transition-colors"
+        >
           <i class="pi pi-home text-xl"></i>
         </button>
-        <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-ocean-300 to-ocean-100 hidden md:block">
+        <h1
+          class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-ocean-300 to-ocean-100 hidden md:block"
+        >
           My Deals
         </h1>
       </div>
 
       <!-- Tabs -->
-      <div class="flex bg-whale-surface rounded-lg p-1 border border-whale-surface/50">
-        <button 
-          v-for="tab in [{id:1, label:'Wholesale'}, {id:2, label:'Market'}, {id:3, label:'Off Market'}]"
+      <div
+        class="flex bg-whale-surface rounded-lg p-1 border border-whale-surface/50"
+      >
+        <button
+          v-for="tab in [
+            { id: 1, label: 'Wholesale' },
+            { id: 2, label: 'Market' },
+            { id: 3, label: 'Off Market' },
+          ]"
           :key="tab.id"
           @click="activeTab = tab.id"
           class="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
-          :class="activeTab === tab.id ? 'bg-ocean-600 text-white shadow-md' : 'text-ocean-300 hover:text-white'"
+          :class="
+            activeTab === tab.id
+              ? 'bg-ocean-600 text-white shadow-md'
+              : 'text-ocean-300 hover:text-white'
+          "
         >
           {{ tab.label }}
         </button>
       </div>
 
-      <button 
-        @click="$router.push('/analyze')" 
+      <button
+        @click="$router.push('/analyze')"
         class="bg-ocean-600 hover:bg-ocean-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2"
       >
-        <i class="pi pi-plus"></i> <span class="hidden md:inline">Add Deal</span>
+        <i class="pi pi-plus"></i>
+        <span class="hidden md:inline">Add Deal</span>
       </button>
     </header>
 
     <!-- Kanban Board -->
     <div class="flex-1 overflow-x-auto overflow-y-hidden">
       <div class="h-full flex px-4 pb-4 pt-2 md:pt-4 gap-4 min-w-max">
-        
-        <div 
-          v-for="stage in stages" 
+        <div
+          v-for="stage in stages"
           :key="stage.id"
           class="flex flex-col w-[85vw] md:w-80 h-full rounded-xl border backdrop-blur-sm transition-colors"
           :class="stage.color"
         >
           <!-- Column Header -->
-          <div class="flex-none p-3 flex justify-between items-center border-b border-white/5">
+          <div
+            class="flex-none p-3 flex justify-between items-center border-b border-white/5"
+          >
             <h3 class="font-bold text-ocean-100">{{ stage.name }}</h3>
-            <span class="bg-black/20 px-2 py-0.5 rounded-full text-xs font-mono text-ocean-300">
+            <span
+              class="bg-black/20 px-2 py-0.5 rounded-full text-xs font-mono text-ocean-300"
+            >
               {{ columns[stage.id]?.length || 0 }}
             </span>
           </div>
@@ -128,8 +182,8 @@ const openDeal = (deal: ActiveDealRes) => {
               class="flex flex-col gap-3 min-h-[100px]"
               ghost-class="opacity-50"
             >
-              <div 
-                v-for="deal in columns[stage.id]" 
+              <div
+                v-for="deal in columns[stage.id]"
                 :key="deal.id"
                 @click="openDeal(deal)"
               >
@@ -138,37 +192,506 @@ const openDeal = (deal: ActiveDealRes) => {
             </VueDraggable>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Detail Modal Placeholder -->
-    <div v-if="showDetailModal && selectedDeal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div class="bg-whale-surface w-full max-w-4xl max-h-[90vh] rounded-2xl border border-ocean-500/30 shadow-2xl flex flex-col">
-        <div class="flex justify-between items-center p-6 border-b border-white/10">
-          <h2 class="text-2xl font-bold text-white">{{ selectedDeal.address }}</h2>
-          <button @click="showDetailModal = false" class="text-ocean-300 hover:text-white">
+    <!-- Detail Modal -->
+    <div
+      v-if="showDetailModal && editingDeal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    >
+      <div
+        class="bg-whale-surface w-full max-w-6xl max-h-[95vh] rounded-2xl border border-ocean-500/30 shadow-2xl flex flex-col"
+      >
+        <!-- Modal Header -->
+        <div
+          class="flex justify-between items-center p-6 border-b border-white/10 shrink-0"
+        >
+          <div class="flex-1 mr-4">
+            <label
+              class="text-xs text-ocean-300 uppercase font-bold tracking-wider"
+              >Address</label
+            >
+            <input
+              v-model="editingDeal.address"
+              class="w-full bg-transparent text-2xl font-bold text-white border-b border-transparent hover:border-white/20 focus:border-ocean-500 outline-none transition-colors"
+            />
+          </div>
+          <button
+            @click="showDetailModal = false"
+            class="text-ocean-300 hover:text-white"
+          >
             <i class="pi pi-times text-xl"></i>
           </button>
         </div>
-        
-        <div class="p-6 overflow-y-auto">
-          <p class="text-ocean-200">Full details editing coming soon...</p>
-          <div class="grid grid-cols-2 gap-4 mt-4 text-sm text-gray-300">
-             <div class="bg-black/20 p-3 rounded">
-                <span class="block text-gray-500">Task</span>
-                {{ selectedDeal.task || '-' }}
-             </div>
-             <div class="bg-black/20 p-3 rounded">
-                <span class="block text-gray-500">Price</span>
-                ${{ selectedDeal.purchasePrice ? selectedDeal.purchasePrice * 1000 : 0 }}
-             </div>
-             <!-- More fields would go here -->
+
+        <div class="p-6 overflow-y-auto custom-scrollbar">
+          <!-- Top Section: Task & Basic Details -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Central Task Box -->
+            <div
+              class="md:col-span-2 bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col justify-center"
+            >
+              <label
+                class="text-xs text-ocean-300 uppercase font-bold tracking-wider mb-2"
+                >Current Task / Status</label
+              >
+              <textarea
+                v-model="editingDeal.task"
+                rows="3"
+                class="w-full bg-transparent text-lg text-white resize-none outline-none placeholder-white/10"
+                placeholder="What needs to be done?"
+              ></textarea>
+            </div>
+
+            <!-- Basic Details -->
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <NumberInput v-model="editingDeal.sqft" label="SqFt" />
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs text-ocean-200 font-medium"
+                    >Stage</label
+                  >
+                  <select
+                    v-model="editingDeal.stage"
+                    class="bg-whale-dark border border-whale-surface rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                  >
+                    <option v-for="s in stages" :key="s.id" :value="s.id">
+                      {{ s.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <NumberInput v-model="editingDeal.bedrooms" label="Beds" />
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs text-ocean-200 font-medium"
+                    >Section</label
+                  >
+                  <select
+                    v-model="editingDeal.section"
+                    class="bg-whale-dark border border-whale-surface rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                  >
+                    <option :value="1">Wholesale</option>
+                    <option :value="2">Market</option>
+                    <option :value="3">Off Market</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <NumberInput v-model="editingDeal.bathrooms" label="Baths" />
+                <!-- Placeholder to align grid -->
+                <div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Links & Additional Info -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="space-y-4">
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium"
+                  >Zillow Link</label
+                >
+                <input
+                  v-model="editingDeal.zillow_link"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  placeholder="https://..."
+                />
+                <a
+                  v-if="editingDeal.zillow_link"
+                  :href="editingDeal.zillow_link"
+                  target="_blank"
+                  class="text-xs text-ocean-400 hover:text-ocean-300 flex items-center gap-1"
+                  ><i class="pi pi-external-link"></i> Open</a
+                >
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium"
+                  >Photos Link</label
+                >
+                <input
+                  v-model="editingDeal.pics_link"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  placeholder="Google Drive / Dropbox..."
+                />
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium"
+                  >Overall Design</label
+                >
+                <input
+                  v-model="editingDeal.overall_design"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  placeholder="e.g. Modern Farmhouse"
+                />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium"
+                  >Crime Rate</label
+                >
+                <input
+                  v-model="editingDeal.crime_rate"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  placeholder="e.g. Low / B-"
+                />
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium"
+                  >Contact Info</label
+                >
+                <textarea
+                  v-model="editingDeal.contact"
+                  rows="2"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  placeholder="Agent / Owner details"
+                ></textarea>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-xs text-ocean-200 font-medium">Niche</label>
+                <input
+                  v-model="editingDeal.niche"
+                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Analyze Deal Fields -->
+          <div class="border-t border-white/10 pt-6">
+            <h3
+              class="text-xl font-bold text-ocean-100 mb-6 flex items-center gap-2"
+            >
+              <i class="pi pi-calculator text-ocean-400"></i> Deal Analysis
+            </h3>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Group 1: Buy & Rehab -->
+              <div
+                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
+              >
+                <h4 class="font-semibold text-ocean-200 mb-4">Buy & Rehab</h4>
+                <div class="space-y-3">
+                  <MoneyInput
+                    v-model="editingDeal.purchasePrice"
+                    label="Purchase Price"
+                    :inThousands="true"
+                  />
+                  <MoneyInput
+                    v-model="editingDeal.rehabCost"
+                    label="Rehab Cost"
+                    :inThousands="true"
+                  />
+                  <MoneyInput
+                    v-model="editingDeal.closingCostsBuy"
+                    label="Closing Costs (Buy)"
+                    :inThousands="true"
+                  />
+
+                  <div class="pt-2 border-t border-white/5">
+                    <p class="text-xs text-ocean-300 mb-2">Hard Money</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <NumberInput
+                        v-model="editingDeal.down_payment"
+                        label="Down Pmt %"
+                        :min="0"
+                        :max="100"
+                      />
+                      <NumberInput
+                        v-model="editingDeal.hmlPoints"
+                        label="Points"
+                        :min="0"
+                        :max="100"
+                      />
+                      <NumberInput
+                        v-model="editingDeal.HMLInterestRate"
+                        label="Rate %"
+                        :min="0"
+                        :max="100"
+                      />
+                      <div class="flex flex-col justify-end">
+                        <div
+                          class="flex items-center justify-between bg-black/20 p-2 rounded border border-white/5"
+                        >
+                          <span class="text-[10px] text-ocean-200"
+                            >HM for Rehab</span
+                          >
+                          <ToggleSwitch
+                            v-model="editingDeal.use_HM_for_rehab"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Group 2: Refinance -->
+              <div
+                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
+              >
+                <h4 class="font-semibold text-ocean-200 mb-4">
+                  Refinance (BRRRR)
+                </h4>
+                <div class="space-y-3">
+                  <MoneyInput
+                    v-model="editingDeal.arv_in_thousands"
+                    label="ARV"
+                    :inThousands="true"
+                  />
+                  <SliderField
+                    v-model="editingDeal.ltv_as_precent"
+                    label="LTV %"
+                    :min="1"
+                    :max="100"
+                  />
+                  <div class="grid grid-cols-2 gap-2">
+                    <NumberInput
+                      v-model="editingDeal.monthsUntilRefi"
+                      label="Months to Refi"
+                    />
+                    <MoneyInput
+                      v-model="editingDeal.closingCostsRefi"
+                      label="Refi Costs"
+                      :inThousands="true"
+                    />
+                  </div>
+                  <SliderField
+                    v-model="editingDeal.interestRate"
+                    label="Interest Rate %"
+                    :min="0"
+                    :max="15"
+                    :step="0.125"
+                  />
+                  <NumberInput
+                    v-model="editingDeal.loanTermYears"
+                    label="Loan Term (Yrs)"
+                  />
+                </div>
+              </div>
+
+              <!-- Group 3: Rent & Expenses -->
+              <div
+                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
+              >
+                <h4 class="font-semibold text-ocean-200 mb-4">
+                  Rent & Expenses
+                </h4>
+                <div class="space-y-3">
+                  <MoneyInput v-model="editingDeal.rent" label="Monthly Rent" />
+                  <div class="grid grid-cols-2 gap-2">
+                    <MoneyInput
+                      v-model="editingDeal.annual_property_taxes"
+                      label="Annual Taxes"
+                    />
+                    <MoneyInput
+                      v-model="editingDeal.annual_insurance"
+                      label="Annual Ins."
+                    />
+                  </div>
+                  <MoneyInput
+                    v-model="editingDeal.montly_hoa"
+                    label="Monthly HOA"
+                  />
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <NumberInput
+                      v-model="editingDeal.vacancyPercent"
+                      label="Vacancy %"
+                    />
+                    <NumberInput
+                      v-model="editingDeal.maintenancePercent"
+                      label="Maint. %"
+                    />
+                    <NumberInput
+                      v-model="editingDeal.capexPercent"
+                      label="CapEx %"
+                    />
+                    <NumberInput
+                      v-model="
+                        editingDeal.property_managment_fee_precentages_from_rent
+                      "
+                      label="Mgmt %"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="mt-6">
+            <label
+              class="text-xs text-ocean-200 font-medium uppercase mb-2 block"
+              >Notes</label
+            >
+            <textarea
+              v-model="editingDeal.notes"
+              rows="4"
+              class="w-full bg-whale-dark/50 border border-whale-surface rounded-lg p-4 text-white text-sm outline-none focus:border-ocean-500"
+              placeholder="Additional notes..."
+            ></textarea>
+          </div>
+
+          <!-- Comps Section -->
+          <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Sold Comps -->
+            <div
+              class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <h4 class="font-semibold text-ocean-200">Sold Comps</h4>
+                <button
+                  @click="
+                    editingDeal.sold_comps
+                      ? editingDeal.sold_comps.push({
+                          url: '',
+                          arv: 0,
+                          how_long_ago: '',
+                        })
+                      : (editingDeal.sold_comps = [
+                          { url: '', arv: 0, how_long_ago: '' },
+                        ])
+                  "
+                  class="text-xs bg-ocean-600 px-2 py-1 rounded text-white hover:bg-ocean-500"
+                >
+                  <i class="pi pi-plus"></i> Add
+                </button>
+              </div>
+              <div
+                v-if="
+                  editingDeal.sold_comps && editingDeal.sold_comps.length > 0
+                "
+                class="space-y-3"
+              >
+                <div
+                  v-for="(comp, index) in editingDeal.sold_comps"
+                  :key="index"
+                  class="bg-black/20 p-2 rounded relative group"
+                >
+                  <button
+                    @click="editingDeal.sold_comps!.splice(index, 1)"
+                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                  <input
+                    v-model="comp.url"
+                    placeholder="URL"
+                    class="w-full bg-transparent border-b border-white/10 text-xs mb-1 focus:border-ocean-500 outline-none text-ocean-100"
+                  />
+                  <div class="flex gap-2">
+                    <input
+                      v-model="comp.arv"
+                      type="number"
+                      placeholder="ARV"
+                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                    <input
+                      v-model="comp.how_long_ago"
+                      placeholder="When?"
+                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-500 italic text-center py-4">
+                No sold comps added
+              </div>
+            </div>
+
+            <!-- Rent Comps -->
+            <div
+              class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <h4 class="font-semibold text-ocean-200">Rent Comps</h4>
+                <button
+                  @click="
+                    editingDeal.rent_comps
+                      ? editingDeal.rent_comps.push({
+                          url: '',
+                          rent: 0,
+                          time_on_market: '',
+                        })
+                      : (editingDeal.rent_comps = [
+                          { url: '', rent: 0, time_on_market: '' },
+                        ])
+                  "
+                  class="text-xs bg-ocean-600 px-2 py-1 rounded text-white hover:bg-ocean-500"
+                >
+                  <i class="pi pi-plus"></i> Add
+                </button>
+              </div>
+              <div
+                v-if="
+                  editingDeal.rent_comps && editingDeal.rent_comps.length > 0
+                "
+                class="space-y-3"
+              >
+                <div
+                  v-for="(comp, index) in editingDeal.rent_comps"
+                  :key="index"
+                  class="bg-black/20 p-2 rounded relative group"
+                >
+                  <button
+                    @click="editingDeal.rent_comps!.splice(index, 1)"
+                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                  <input
+                    v-model="comp.url"
+                    placeholder="URL"
+                    class="w-full bg-transparent border-b border-white/10 text-xs mb-1 focus:border-ocean-500 outline-none text-ocean-100"
+                  />
+                  <div class="flex gap-2">
+                    <input
+                      v-model="comp.rent"
+                      type="number"
+                      placeholder="Rent"
+                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                    <input
+                      v-model="comp.time_on_market"
+                      placeholder="Time on Market"
+                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-500 italic text-center py-4">
+                No rent comps added
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="p-4 border-t border-white/10 flex justify-end">
-            <button @click="showDetailModal = false" class="bg-ocean-600 hover:bg-ocean-500 text-white px-6 py-2 rounded-lg">Close</button>
+        <!-- Footer -->
+        <div
+          class="p-6 border-t border-white/10 flex justify-between items-center bg-whale-surface/50 rounded-b-2xl"
+        >
+          <div class="text-xs text-ocean-400">
+            Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
+          </div>
+          <div class="flex gap-4">
+            <button
+              @click="showDetailModal = false"
+              class="text-ocean-300 hover:text-white px-4 py-2"
+            >
+              Cancel
+            </button>
+            <button
+              @click="saveChanges"
+              class="bg-ocean-600 hover:bg-ocean-500 text-white font-bold px-8 py-2 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center gap-2"
+            >
+              <i class="pi pi-save"></i> Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -178,11 +701,10 @@ const openDeal = (deal: ActiveDealRes) => {
 <style scoped>
 /* Custom Scrollbar for columns */
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
-

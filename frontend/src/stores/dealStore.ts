@@ -56,6 +56,24 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
+  async function updateDeal(deal: ActiveDealRes) {
+    isLoading.value = true;
+    try {
+      const updatedDeal = await api.updateActiveDeal(deal);
+      const index = deals.value.findIndex(d => d.id === deal.id);
+      if (index !== -1) {
+        deals.value[index] = updatedDeal;
+      }
+      return updatedDeal;
+    } catch (err) {
+      error.value = 'Failed to update deal';
+      console.error(err);
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   async function updateDealStage(dealId: number, newStage: number) {
     // Optimistic update
     const deal = deals.value.find(d => d.id === dealId);
@@ -64,7 +82,7 @@ export const useDealStore = defineStore('deals', () => {
       deal.stage = newStage;
       
       try {
-        await api.updateDealStage(dealId, newStage);
+        await api.updateActiveDeal(deal);
       } catch (err) {
         // Revert on failure
         deal.stage = oldStage;
@@ -82,6 +100,7 @@ export const useDealStore = defineStore('deals', () => {
     fetchDeals,
     analyze,
     saveDeal,
+    updateDeal,
     updateDealStage,
   };
 });
