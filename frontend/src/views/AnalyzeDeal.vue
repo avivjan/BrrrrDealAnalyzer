@@ -38,6 +38,7 @@ const form = ref<AnalyzeDealReq>({
 
 // Analyze Logic
 const hasAnalyzed = ref(false);
+const validationError = ref<string | null>(null);
 
 const analyze = async () => {
   if (
@@ -45,11 +46,28 @@ const analyze = async () => {
     form.value.arv_in_thousands > 0 &&
     form.value.rent > 0
   ) {
+    validationError.value = null;
     await store.analyze(form.value);
   }
 };
 
 const onAnalyzeClick = async () => {
+  const missingFields: string[] = [];
+  if (!form.value.purchasePrice || form.value.purchasePrice <= 0)
+    missingFields.push("Purchase Price");
+  if (!form.value.arv_in_thousands || form.value.arv_in_thousands <= 0)
+    missingFields.push("ARV");
+  if (!form.value.rent || form.value.rent <= 0)
+    missingFields.push("Monthly Rent");
+
+  if (missingFields.length > 0) {
+    validationError.value = `Missing mandatory inputs: ${missingFields.join(
+      ", "
+    )}`;
+    return;
+  }
+
+  validationError.value = null;
   hasAnalyzed.value = true;
   await analyze();
 };
@@ -326,7 +344,14 @@ const saveDeal = async () => {
         </section>
 
         <!-- Analyze Button -->
-        <div class="flex justify-end pt-2">
+        <div class="flex flex-col items-end pt-2 gap-2">
+          <div
+            v-if="validationError"
+            class="text-red-400 text-sm font-medium animate-pulse"
+          >
+            <i class="pi pi-exclamation-circle mr-1"></i>
+            {{ validationError }}
+          </div>
           <button
             @click="onAnalyzeClick"
             class="w-full md:w-auto bg-ocean-600 hover:bg-ocean-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-lg"
