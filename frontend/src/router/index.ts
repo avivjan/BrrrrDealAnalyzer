@@ -1,16 +1,29 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import LandingPage from '../views/LandingPage.vue';
-import AnalyzePage from '../views/AnalyzePage.vue';
-import MyDealsPage from '../views/MyDealsPage.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import LandingPage from '../views/LandingPage.vue'
+import AnalyzeDeal from '../views/AnalyzeDeal.vue'
+import MyDeals from '../views/MyDeals.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'Landing', component: LandingPage },
-    { path: '/analyze', name: 'Analyze', component: AnalyzePage },
-    { path: '/my-deals', name: 'MyDeals', component: MyDealsPage },
-    { path: '/:pathMatch(.*)*', redirect: '/' }
+    {
+      path: '/',
+      name: 'home',
+      component: LandingPage
+    },
+    {
+      path: '/analyze',
+      name: 'analyze',
+      component: AnalyzeDeal
+    },
+    {
+      path: '/my-deals',
+      name: 'my-deals',
+      component: MyDeals
+    }
   ]
-});
+})
 
-export default router;
+export default router
+
+
