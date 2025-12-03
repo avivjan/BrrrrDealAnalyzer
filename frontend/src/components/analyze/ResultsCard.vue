@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { AnalyzeDealResponse } from '../../types/deal';
 
 const props = defineProps<{ result?: AnalyzeDealResponse | null }>();
