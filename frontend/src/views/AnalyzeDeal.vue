@@ -38,7 +38,63 @@ const form = ref<AnalyzeDealReq>({
 
 // Analyze Logic
 const hasAnalyzed = ref(false);
-const validationError = ref<string | null>(null);
+const validationErrors = ref<string[]>([]);
+
+const validateForm = () => {
+  const errors: string[] = [];
+  const f = form.value;
+
+  if (!f.arv_in_thousands || f.arv_in_thousands <= 0)
+    errors.push("ARV (in thousands) must be greater than 0.");
+  if (!f.purchasePrice || f.purchasePrice <= 0)
+    errors.push("Purchase price (in thousands) must be greater than 0.");
+  if (f.rehabCost < 0)
+    errors.push("Rehab cost (in thousands) cannot be negative.");
+  if (f.closingCostsBuy < 0)
+    errors.push("Closing costs (buy) cannot be negative.");
+  if (f.closingCostsRefi < 0)
+    errors.push("Refi closing costs (in thousands) cannot be negative.");
+
+  // Lending Terms
+  if (f.down_payment < 0 || f.down_payment > 100)
+    errors.push("Down payment percentage must be between 0% and 100%.");
+  if (f.ltv_as_precent <= 0 || f.ltv_as_precent > 100)
+    errors.push("LTV must be between 0% and 100%.");
+  if (f.hmlPoints < 0 || f.hmlPoints > 100)
+    errors.push("HML points must be between 0% and 100%.");
+  if (f.HMLInterestRate <= 0 || f.HMLInterestRate > 100)
+    errors.push("HML interest rate must be between 0% and 100%.");
+
+  if (f.monthsUntilRefi <= 0)
+    errors.push("Months until refi must be a positive number.");
+  if (f.loanTermYears <= 0) errors.push("Loan term must be at least 1 year.");
+
+  // DSCR long-term financing
+  if (f.interestRate <= 0 || f.interestRate > 100)
+    errors.push("Interest rate must be between 0% and 100%.");
+
+  // Rent + Operating Expenses
+  if (!f.rent || f.rent <= 0) errors.push("Rent must be greater than 0.");
+  if (f.vacancyPercent < 0 || f.vacancyPercent > 100)
+    errors.push("Vacancy percentage must be between 0% and 100%.");
+  if (
+    f.property_managment_fee_precentages_from_rent < 0 ||
+    f.property_managment_fee_precentages_from_rent > 100
+  )
+    errors.push("Property management percentage must be between 0% and 100%.");
+  if (f.maintenancePercent < 0 || f.maintenancePercent > 100)
+    errors.push("Maintenance percentage must be between 0% and 100%.");
+  if (f.capexPercent < 0 || f.capexPercent > 100)
+    errors.push("CapEx percentage must be between 0% and 100%.");
+
+  if (f.annual_property_taxes < 0)
+    errors.push("Annual property taxes cannot be negative.");
+  if (f.annual_insurance < 0)
+    errors.push("Annual insurance cannot be negative.");
+  if (f.montly_hoa < 0) errors.push("HOA dues cannot be negative.");
+
+  return errors;
+};
 
 const analyze = async () => {
   if (
@@ -46,28 +102,20 @@ const analyze = async () => {
     form.value.arv_in_thousands > 0 &&
     form.value.rent > 0
   ) {
-    validationError.value = null;
+    validationErrors.value = [];
     await store.analyze(form.value);
   }
 };
 
 const onAnalyzeClick = async () => {
-  const missingFields: string[] = [];
-  if (!form.value.purchasePrice || form.value.purchasePrice <= 0)
-    missingFields.push("Purchase Price");
-  if (!form.value.arv_in_thousands || form.value.arv_in_thousands <= 0)
-    missingFields.push("ARV");
-  if (!form.value.rent || form.value.rent <= 0)
-    missingFields.push("Monthly Rent");
+  const errors = validateForm();
 
-  if (missingFields.length > 0) {
-    validationError.value = `Missing mandatory inputs: ${missingFields.join(
-      ", "
-    )}`;
+  if (errors.length > 0) {
+    validationErrors.value = errors;
     return;
   }
 
-  validationError.value = null;
+  validationErrors.value = [];
   hasAnalyzed.value = true;
   await analyze();
 };
@@ -346,11 +394,17 @@ const saveDeal = async () => {
         <!-- Analyze Button -->
         <div class="flex flex-col items-end pt-2 gap-2">
           <div
-            v-if="validationError"
-            class="text-red-400 text-sm font-medium animate-pulse"
+            v-if="validationErrors.length > 0"
+            class="flex flex-col items-end gap-1 w-full"
           >
-            <i class="pi pi-exclamation-circle mr-1"></i>
-            {{ validationError }}
+            <div
+              v-for="(error, index) in validationErrors"
+              :key="index"
+              class="text-red-400 text-sm font-medium animate-pulse flex items-center justify-end"
+            >
+              <i class="pi pi-exclamation-circle mr-1"></i>
+              {{ error }}
+            </div>
           </div>
           <button
             @click="onAnalyzeClick"

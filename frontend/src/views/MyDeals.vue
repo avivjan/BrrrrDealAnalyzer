@@ -247,7 +247,11 @@ const saveChanges = async () => {
             <!-- Basic Details -->
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
-                <NumberInput v-model="editingDeal.sqft" label="SqFt" />
+                <NumberInput
+                  :model-value="editingDeal.sqft ?? null"
+                  @update:model-value="(val) => (editingDeal!.sqft = val ?? undefined)"
+                  label="SqFt"
+                />
                 <div class="flex flex-col gap-1">
                   <label class="text-xs text-ocean-200 font-medium"
                     >Stage</label
@@ -263,7 +267,11 @@ const saveChanges = async () => {
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                <NumberInput v-model="editingDeal.bedrooms" label="Beds" />
+                <NumberInput
+                  :model-value="editingDeal.bedrooms ?? null"
+                  @update:model-value="(val) => (editingDeal!.bedrooms = val ?? undefined)"
+                  label="Beds"
+                />
                 <div class="flex flex-col gap-1">
                   <label class="text-xs text-ocean-200 font-medium"
                     >Section</label
@@ -279,7 +287,11 @@ const saveChanges = async () => {
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                <NumberInput v-model="editingDeal.bathrooms" label="Baths" />
+                <NumberInput
+                  :model-value="editingDeal.bathrooms ?? null"
+                  @update:model-value="(val) => (editingDeal!.bathrooms = val ?? undefined)"
+                  label="Baths"
+                />
                 <!-- Placeholder to align grid -->
                 <div></div>
               </div>
