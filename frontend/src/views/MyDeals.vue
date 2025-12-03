@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useDealStore } from "../stores/dealStore";
 import { VueDraggable } from "vue-draggable-plus";
+import { useDebounceFn } from "@vueuse/core";
 import DealCard from "../components/DealCard.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
@@ -138,17 +139,27 @@ const openDeal = (deal: ActiveDealRes) => {
   showDetailModal.value = true;
 };
 
-const analyzeCurrentDeal = async () => {
+const analyzeCurrentDeal = useDebounceFn(async () => {
   if (editingDeal.value) {
     try {
       const result = await store.analyze(editingDeal.value);
       // Merge result into currentAnalysis to display new values
       currentAnalysis.value = { ...editingDeal.value, ...result };
     } catch (e) {
-      alert("Analysis failed");
+      console.error("Analysis failed", e);
     }
   }
-};
+}, 500);
+
+watch(
+  editingDeal,
+  () => {
+    if (showDetailModal.value) {
+      analyzeCurrentDeal();
+    }
+  },
+  { deep: true }
+);
 
 const saveChanges = async () => {
   if (editingDeal.value) {
@@ -454,12 +465,6 @@ const saveChanges = async () => {
               >
                 <i class="pi pi-calculator text-ocean-400"></i> Deal Analysis
               </h3>
-              <button
-                @click="analyzeCurrentDeal"
-                class="bg-ocean-600 hover:bg-ocean-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
-              >
-                <i class="pi pi-bolt"></i> Recalculate
-              </button>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
