@@ -1,14 +1,21 @@
-import { createApp } from 'vue';
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
-import { createPinia } from 'pinia';
-import App from './App.vue';
-import router from './router';
-import Aura from '@primevue/themes/aura';
-import 'primeicons/primeicons.css';
-import './assets/main.css';
+import App from './App.vue'
+import router from './router'
+import './assets/main.css'
+import 'primeicons/primeicons.css'
 
-const app = createApp(App);
-app.use(createPinia());
-app.use(router);
-app.use(PrimeVue, { theme: { preset: Aura }, ripple: true });
-app.mount('#app');
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+app.use(PrimeVue, {
+    unstyled: true,
+    pt: {
+        // Global Passthrough configuration can go here
+        // For now we will style components individually or use a preset if we had one
+    } 
+});
+
+app.mount('#app')
