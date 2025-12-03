@@ -1,5 +1,5 @@
 <template>
-  <div class="card-surface sticky top-24 rounded-2xl p-5">
+  <div class="card-surface rounded-2xl p-5 lg:sticky lg:top-24">
     <div class="flex items-center justify-between mb-4">
       <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Results</p>
       <slot name="actions" />

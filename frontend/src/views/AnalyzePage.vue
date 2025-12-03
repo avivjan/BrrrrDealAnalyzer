@@ -1,5 +1,5 @@
 <template>
-  <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
+  <div class="grid gap-8 xl:grid-cols-[1.5fr_1fr] items-start">
     <section class="space-y-6">
       <h1 class="text-2xl font-semibold text-ocean-900">Analyze Deal</h1>
       <AnalyzeForm :form="form" @analyze="runAnalysis" @save="openSave" />
