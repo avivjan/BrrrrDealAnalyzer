@@ -226,6 +226,13 @@ def calculate_deal_results(payload) -> analyzeDealRes:
     #________________________________________________________________________
     
     
+def create_active_deal_res(deal: ActiveDeal) -> ActiveDealRes:
+    calc_results = calculate_deal_results(deal)
+    deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
+    deal_data.update(calc_results.model_dump())
+    return ActiveDealRes.model_validate(deal_data)
+
+
 @app.get("/helloworld")
 def helloworld() -> dict:
     return {"message": "Hello, World!"}
@@ -239,24 +246,13 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
 @app.post("/active-deals", response_model=ActiveDealRes, response_model_by_alias=True)
 def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
     created_deal = add_active_deal_crud(db, deal)
-    calc_results = calculate_deal_results(created_deal)
-    res = ActiveDealRes.model_validate(created_deal)
-    for field, value in calc_results.model_dump().items():
-        setattr(res, field, value)
-    return res
+    return create_active_deal_res(created_deal)
 
 
 @app.get("/active-deals", response_model=list[ActiveDealRes], response_model_by_alias=True)
 def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     deals = get_all_active_deals(db)
-    results = []
-    for deal in deals:
-        calc_results = calculate_deal_results(deal)
-        res = ActiveDealRes.model_validate(deal)
-        for field, value in calc_results.model_dump().items():
-            setattr(res, field, value)
-        results.append(res)
-    return results
+    return [create_active_deal_res(deal) for deal in deals]
 
 
 @app.put("/active-deals/{deal_id}", response_model=ActiveDealRes, response_model_by_alias=True)
@@ -264,11 +260,7 @@ def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Sessio
     updated_deal = update_active_deal_crud(db, deal_id, deal)
     if not updated_deal:
         raise HTTPException(status_code=404, detail="Deal not found")
-    calc_results = calculate_deal_results(updated_deal)
-    res = ActiveDealRes.model_validate(updated_deal)
-    for field, value in calc_results.model_dump().items():
-        setattr(res, field, value)
-    return res
+    return create_active_deal_res(updated_deal)
 
 
 @app.delete("/active-deals/{deal_id}")
