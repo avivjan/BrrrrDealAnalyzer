@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 10% 20%, rgba(31, 91, 155, 0.22), transparent 25%),
+    radial-gradient(circle at 80% 0%, rgba(130, 180, 218, 0.18), transparent 25%),
+    #0b1224;
+}
+
+.card-surface {
+  @apply bg-ocean-100/50 backdrop-blur border border-ocean-400/30 shadow-glow;
+}
+
+.input-base {
+  @apply w-full rounded-lg bg-ocean-50/40 border border-ocean-400/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ocean-600 transition;
+}
+
+.label-text {
+  @apply text-xs uppercase tracking-widest text-slate-300 font-semibold;
+}
+
+.section-heading {
+  @apply text-sm font-semibold text-ocean-900 uppercase tracking-[0.2em] mb-3;
+}
