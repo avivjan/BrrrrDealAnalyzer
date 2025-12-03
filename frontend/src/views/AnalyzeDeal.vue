@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { useDealStore } from '../stores/dealStore';
 import { storeToRefs } from 'pinia';

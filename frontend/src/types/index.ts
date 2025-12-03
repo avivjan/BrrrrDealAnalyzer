@@ -69,7 +69,7 @@ export interface DealDetails {
 
 export interface ActiveDealCreate extends AnalyzeDealReq, DealDetails {}
 
-export interface ActiveDealRes extends ActiveDealCreate {
+export interface ActiveDealRes extends ActiveDealCreate, AnalyzeDealRes {
   id: number;
   created_at: string;
   updated_at: string;

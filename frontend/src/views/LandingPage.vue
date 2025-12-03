@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
 const cards = [
   {
     title: 'Daily Tasks',
@@ -54,7 +52,7 @@ const openLink = (card: any) => {
       </h1>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <template v-for="(card, index) in cards" :key="index">
+        <template v-for="card in cards" :key="card.title">
           <component 
             :is="card.action === 'internal' ? 'RouterLink' : 'div'"
             :to="card.action === 'internal' ? card.route : undefined"
@@ -80,5 +78,3 @@ const openLink = (card: any) => {
     </div>
   </div>
 </template>
-
-

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useDealStore } from '../stores/dealStore';
 import { VueDraggable } from 'vue-draggable-plus';
 import DealCard from '../components/DealCard.vue';
@@ -30,10 +30,10 @@ const refreshColumns = () => {
   
   filteredDeals.forEach(deal => {
     if (columns.value[deal.stage]) {
-      columns.value[deal.stage].push(deal);
+      columns.value[deal.stage]!.push(deal);
     } else {
        // Fallback for invalid stage
-       columns.value[1].push(deal);
+       columns.value[1]!.push(deal);
     }
   });
 };
@@ -56,7 +56,6 @@ const onDrop = (event: any, stageId: number) => {
 };
 
 // Modals
-const showAddModal = ref(false);
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 
@@ -121,7 +120,8 @@ const openDeal = (deal: ActiveDealRes) => {
           <!-- Draggable Area -->
           <div class="flex-1 overflow-y-auto p-3 scrollbar-hide">
             <VueDraggable
-              v-model="columns[stage.id]"
+              v-if="columns[stage.id]"
+              v-model="columns[stage.id]!"
               group="deals"
               @change="(e) => onDrop(e, stage.id)"
               :animation="150"
