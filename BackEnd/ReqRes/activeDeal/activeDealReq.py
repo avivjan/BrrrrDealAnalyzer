@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ReqRes.analyzeDeal.analyzeDealReq import analyzeDealReq
+from ReqRes.analyzeDeal.analyzeDealRes import analyzeDealRes
 
 
 class SoldComp(BaseModel):
@@ -107,7 +107,7 @@ class ActiveDealCreate(ActiveDealBase):
     pass
 
 
-class ActiveDealRes(ActiveDealBase):
+class ActiveDealRes(ActiveDealBase, analyzeDealRes):
     id: int
     created_at: datetime
     updated_at: datetime

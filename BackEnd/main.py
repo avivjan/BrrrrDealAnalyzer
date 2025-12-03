@@ -173,20 +173,10 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
     down_payment_in_cash = (down_payment_precent/100) * purchase_price
     return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
 
-    #________________________________________________________________________
-    #________________________________________________________________________
-    #________________________________________________________________________
-    #________________________________________________________________________
-    
-    
-@app.get("/helloworld")
-def helloworld() -> dict:
-    return {"message": "Hello, World!"}
-    
-@app.post("/analyzeDeal", response_model=analyzeDealRes)
-def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
-    validate_inputs(payload)
-
+def calculate_deal_results(payload) -> analyzeDealRes:
+    """
+    Calculates deal metrics based on the provided payload (ActiveDeal or analyzeDealReq).
+    """
     arv = thousands_to_dollars(payload.arv_in_thousands)
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
     rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
@@ -204,7 +194,6 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
     HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab)
     HML_points_in_cash = payload.HML_points/100.0 * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, Months_until_refi)
-    
     
     operating_expenses = calc_montly_operating_expenses(payload)
     cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab, holding_cost_until_refi)
@@ -231,17 +220,43 @@ def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
         messages=None,
     )
 
+    #________________________________________________________________________
+    #________________________________________________________________________
+    #________________________________________________________________________
+    #________________________________________________________________________
+    
+    
+@app.get("/helloworld")
+def helloworld() -> dict:
+    return {"message": "Hello, World!"}
+    
+@app.post("/analyzeDeal", response_model=analyzeDealRes)
+def analyzeDeal(payload: analyzeDealReq) -> analyzeDealRes:
+    validate_inputs(payload)
+    return calculate_deal_results(payload)
+
 
 @app.post("/active-deals", response_model=ActiveDealRes)
 def add_active_deal(deal: ActiveDealCreate, db: Session = Depends(get_db)) -> ActiveDealRes:
     created_deal = add_active_deal_crud(db, deal)
-    return ActiveDealRes.model_validate(created_deal)
+    calc_results = calculate_deal_results(created_deal)
+    res = ActiveDealRes.model_validate(created_deal)
+    for field, value in calc_results.model_dump().items():
+        setattr(res, field, value)
+    return res
 
 
 @app.get("/active-deals", response_model=list[ActiveDealRes])
 def get_active_deals(db: Session = Depends(get_db)) -> list[ActiveDealRes]:
     deals = get_all_active_deals(db)
-    return [ActiveDealRes.model_validate(deal) for deal in deals]
+    results = []
+    for deal in deals:
+        calc_results = calculate_deal_results(deal)
+        res = ActiveDealRes.model_validate(deal)
+        for field, value in calc_results.model_dump().items():
+            setattr(res, field, value)
+        results.append(res)
+    return results
 
 
 @app.put("/active-deals/{deal_id}", response_model=ActiveDealRes)
@@ -249,4 +264,8 @@ def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Sessio
     updated_deal = update_active_deal_crud(db, deal_id, deal)
     if not updated_deal:
         raise HTTPException(status_code=404, detail="Deal not found")
-    return ActiveDealRes.model_validate(updated_deal)
+    calc_results = calculate_deal_results(updated_deal)
+    res = ActiveDealRes.model_validate(updated_deal)
+    for field, value in calc_results.model_dump().items():
+        setattr(res, field, value)
+    return res

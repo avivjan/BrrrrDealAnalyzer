@@ -77,11 +77,66 @@ const onDrop = (event: any, stageId: number) => {
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 const editingDeal = ref<ActiveDealRes | null>(null);
+const currentAnalysis = ref<ActiveDealRes | null>(null);
+
+const formatCurrency = (value: number | undefined) => {
+  if (value === undefined || value === null) return "-";
+  if (value === -1) return "∞";
+  if (value === -2) return "-∞";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+const formatPercent = (value: number | undefined) => {
+  if (value === undefined || value === null) return "-";
+  if (value === -1) return "∞";
+  if (value === -2) return "-∞";
+  return `${value.toFixed(2)}%`;
+};
+
+const getCashFlowColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value >= 100) return "text-emerald-400";
+  if (value >= 1) return "text-gray-400";
+  return "text-red-400";
+};
+
+const getPerformanceColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value === -1) return "text-emerald-400"; // Infinity
+  if (value === -2) return "text-red-400"; // -Infinity
+  if (value > 0) return "text-emerald-400";
+  if (value < 0) return "text-red-400";
+  return "text-gray-400";
+};
+
+const getDSCRColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value >= 1.2) return "text-emerald-400";
+  if (value >= 1.0) return "text-gray-400";
+  return "text-red-400";
+};
 
 const openDeal = (deal: ActiveDealRes) => {
   selectedDeal.value = deal;
   editingDeal.value = JSON.parse(JSON.stringify(deal));
+  currentAnalysis.value = JSON.parse(JSON.stringify(deal)); // Initialize with stored results
   showDetailModal.value = true;
+};
+
+const analyzeCurrentDeal = async () => {
+  if (editingDeal.value) {
+    try {
+      const result = await store.analyze(editingDeal.value);
+      // Merge result into currentAnalysis to display new values
+      currentAnalysis.value = { ...editingDeal.value, ...result };
+    } catch (e) {
+      alert("Analysis failed");
+    }
+  }
 };
 
 const saveChanges = async () => {
@@ -382,13 +437,21 @@ const saveChanges = async () => {
 
           <!-- Analyze Deal Fields -->
           <div class="border-t border-white/10 pt-6">
-            <h3
-              class="text-xl font-bold text-ocean-100 mb-6 flex items-center gap-2"
-            >
-              <i class="pi pi-calculator text-ocean-400"></i> Deal Analysis
-            </h3>
+            <div class="flex justify-between items-center mb-6">
+              <h3
+                class="text-xl font-bold text-ocean-100 flex items-center gap-2"
+              >
+                <i class="pi pi-calculator text-ocean-400"></i> Deal Analysis
+              </h3>
+              <button
+                @click="analyzeCurrentDeal"
+                class="bg-ocean-600 hover:bg-ocean-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
+              >
+                <i class="pi pi-bolt"></i> Recalculate
+              </button>
+            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <!-- Group 1: Buy & Rehab -->
               <div
                 class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
@@ -536,6 +599,99 @@ const saveChanges = async () => {
                       "
                       label="Mgmt %"
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div
+              v-if="currentAnalysis"
+              class="bg-gradient-to-br from-whale-surface to-whale-dark p-6 rounded-2xl border border-ocean-500/30 shadow-2xl relative overflow-hidden"
+            >
+              <div
+                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-ocean-500 to-purple-500"
+              ></div>
+              <h4
+                class="font-semibold text-ocean-200 mb-6 flex items-center gap-2"
+              >
+                <i class="pi pi-chart-bar text-ocean-400"></i> Analysis Results
+              </h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Primary Metrics -->
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">Cash Flow</div>
+                  <div
+                    class="text-2xl font-bold"
+                    :class="getCashFlowColor(currentAnalysis.cash_flow)"
+                  >
+                    {{ formatCurrency(currentAnalysis.cash_flow) }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">Cash Out</div>
+                  <div
+                    class="text-2xl font-bold"
+                    :class="getPerformanceColor(currentAnalysis.cash_out)"
+                  >
+                    {{ formatCurrency(currentAnalysis.cash_out) }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">
+                    Cash Needed
+                  </div>
+                  <div class="text-2xl font-bold text-blue-400">
+                    {{
+                      formatCurrency(currentAnalysis.total_cash_needed_for_deal)
+                    }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">DSCR</div>
+                  <div
+                    class="text-2xl font-bold"
+                    :class="getDSCRColor(currentAnalysis.dscr)"
+                  >
+                    {{ currentAnalysis.dscr?.toFixed(2) ?? "-" }}
+                  </div>
+                </div>
+
+                <!-- Secondary Metrics -->
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">CoC Return</div>
+                  <div
+                    class="text-lg font-medium"
+                    :class="getPerformanceColor(currentAnalysis.cash_on_cash)"
+                  >
+                    {{ formatPercent(currentAnalysis.cash_on_cash) }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">ROI</div>
+                  <div
+                    class="text-lg font-medium"
+                    :class="getPerformanceColor(currentAnalysis.roi)"
+                  >
+                    {{ formatPercent(currentAnalysis.roi) }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">Equity</div>
+                  <div
+                    class="text-lg font-medium"
+                    :class="getPerformanceColor(currentAnalysis.equity)"
+                  >
+                    {{ formatCurrency(currentAnalysis.equity) }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-ocean-300 uppercase">Net Profit</div>
+                  <div
+                    class="text-lg font-medium"
+                    :class="getPerformanceColor(currentAnalysis.net_profit)"
+                  >
+                    {{ formatCurrency(currentAnalysis.net_profit) }}
                   </div>
                 </div>
               </div>
