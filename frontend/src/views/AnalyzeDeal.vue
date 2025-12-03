@@ -521,6 +521,14 @@ const saveDeal = async () => {
               <i class="pi pi-save"></i> Save Deal
             </button>
           </div>
+
+          <!-- My Deals Button -->
+          <button
+            @click="$router.push('/my-deals')"
+            class="w-full bg-whale-surface/50 hover:bg-whale-surface border border-ocean-500/30 text-ocean-100 font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+          >
+            <i class="pi pi-list"></i> My Deals
+          </button>
         </div>
       </div>
     </div>
