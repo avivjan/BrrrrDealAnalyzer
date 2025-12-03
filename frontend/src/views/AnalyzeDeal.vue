@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { useDebounceFn } from "@vueuse/core";
 import { useDealStore } from "../stores/dealStore";
 import { storeToRefs } from "pinia";
 import MoneyInput from "../components/ui/MoneyInput.vue";
@@ -37,8 +36,10 @@ const form = ref<AnalyzeDealReq>({
   montly_hoa: 0,
 });
 
-// Debounced analyze function
-const analyze = useDebounceFn(async () => {
+// Analyze Logic
+const hasAnalyzed = ref(false);
+
+const analyze = async () => {
   if (
     form.value.purchasePrice > 0 &&
     form.value.arv_in_thousands > 0 &&
@@ -46,12 +47,19 @@ const analyze = useDebounceFn(async () => {
   ) {
     await store.analyze(form.value);
   }
-}, 800);
+};
+
+const onAnalyzeClick = async () => {
+  hasAnalyzed.value = true;
+  await analyze();
+};
 
 watch(
   form,
   () => {
-    analyze();
+    if (hasAnalyzed.value) {
+      analyze();
+    }
   },
   { deep: true }
 );
@@ -293,6 +301,16 @@ const saveDeal = async () => {
             </div>
           </div>
         </section>
+
+        <!-- Analyze Button -->
+        <div class="flex justify-end pt-2">
+          <button
+            @click="onAnalyzeClick"
+            class="w-full md:w-auto bg-ocean-600 hover:bg-ocean-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-lg"
+          >
+            <i class="pi pi-bolt"></i> Analyze Deal
+          </button>
+        </div>
       </div>
 
       <!-- Right Column: Results (Sticky) -->
@@ -320,27 +338,27 @@ const saveDeal = async () => {
               <div
                 class="flex justify-between items-end pb-2 border-b border-white/10"
               >
-                <span class="text-ocean-200">Cash Flow / mo</span>
+                <span class="text-ocean-200">Cash Out</span>
                 <span class="text-2xl font-bold text-emerald-400">{{
-                  formatCurrency(currentAnalysisResult?.cash_flow)
-                }}</span>
-              </div>
-              <div
-                class="flex justify-between items-end pb-2 border-b border-white/10"
-              >
-                <span class="text-ocean-200">CoC Return</span>
-                <span class="text-xl font-bold text-blue-400">{{
-                  formatPercent(currentAnalysisResult?.cash_on_cash)
+                  formatCurrency(currentAnalysisResult?.cash_out)
                 }}</span>
               </div>
               <div
                 class="flex justify-between items-end pb-2 border-b border-white/10"
               >
                 <span class="text-ocean-200">Total Cash Needed</span>
-                <span class="text-lg font-semibold text-white">{{
+                <span class="text-xl font-bold text-blue-400">{{
                   formatCurrency(
                     currentAnalysisResult?.total_cash_needed_for_deal
                   )
+                }}</span>
+              </div>
+              <div
+                class="flex justify-between items-end pb-2 border-b border-white/10"
+              >
+                <span class="text-ocean-200">Cash Flow / mo</span>
+                <span class="text-lg font-semibold text-white">{{
+                  formatCurrency(currentAnalysisResult?.cash_flow)
                 }}</span>
               </div>
 
@@ -365,9 +383,9 @@ const saveDeal = async () => {
                   </div>
                 </div>
                 <div>
-                  <div class="text-gray-400">Cash Out</div>
+                  <div class="text-gray-400">CoC Return</div>
                   <div class="font-medium text-white">
-                    {{ formatCurrency(currentAnalysisResult?.cash_out) }}
+                    {{ formatPercent(currentAnalysisResult?.cash_on_cash) }}
                   </div>
                 </div>
               </div>
