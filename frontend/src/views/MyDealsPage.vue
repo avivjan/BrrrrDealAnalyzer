@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue';
-import VueDraggable from 'vue-draggable-plus';
+import { VueDraggable } from 'vue-draggable-plus';
 import AnalyzeForm from '../components/analyze/AnalyzeForm.vue';
 import ResultsCard from '../components/analyze/ResultsCard.vue';
 import DealCard from '../components/deals/DealCard.vue';
