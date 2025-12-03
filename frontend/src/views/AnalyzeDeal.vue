@@ -91,6 +91,29 @@ const saveForm = ref({
   stage: 1,
 });
 
+const getCashFlowColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value >= 100) return "text-emerald-400";
+  if (value >= 1) return "text-gray-400";
+  return "text-red-400";
+};
+
+const getPerformanceColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value === -1) return "text-emerald-400"; // Infinity
+  if (value === -2) return "text-red-400"; // -Infinity
+  if (value > 0) return "text-emerald-400";
+  if (value < 0) return "text-red-400";
+  return "text-gray-400";
+};
+
+const getDSCRColor = (value: number | undefined) => {
+  if (value === undefined || value === null) return "text-white";
+  if (value >= 1.2) return "text-emerald-400";
+  if (value >= 1.0) return "text-gray-400";
+  return "text-red-400";
+};
+
 const saveDeal = async () => {
   try {
     const dealData = {
@@ -339,9 +362,12 @@ const saveDeal = async () => {
                 class="flex justify-between items-end pb-2 border-b border-white/10"
               >
                 <span class="text-ocean-200">Cash Out</span>
-                <span class="text-2xl font-bold text-emerald-400">{{
-                  formatCurrency(currentAnalysisResult?.cash_out)
-                }}</span>
+                <span
+                  class="text-2xl font-bold"
+                  :class="getPerformanceColor(currentAnalysisResult?.cash_out)"
+                >
+                  {{ formatCurrency(currentAnalysisResult?.cash_out) }}
+                </span>
               </div>
               <div
                 class="flex justify-between items-end pb-2 border-b border-white/10"
@@ -357,34 +383,51 @@ const saveDeal = async () => {
                 class="flex justify-between items-end pb-2 border-b border-white/10"
               >
                 <span class="text-ocean-200">Cash Flow / mo</span>
-                <span class="text-lg font-semibold text-white">{{
-                  formatCurrency(currentAnalysisResult?.cash_flow)
-                }}</span>
+                <span
+                  class="text-lg font-semibold"
+                  :class="getCashFlowColor(currentAnalysisResult?.cash_flow)"
+                >
+                  {{ formatCurrency(currentAnalysisResult?.cash_flow) }}
+                </span>
               </div>
 
               <!-- Secondary Metrics -->
               <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
                 <div>
                   <div class="text-gray-400">DSCR</div>
-                  <div class="font-medium text-white">
+                  <div
+                    class="font-medium"
+                    :class="getDSCRColor(currentAnalysisResult?.dscr)"
+                  >
                     {{ currentAnalysisResult?.dscr?.toFixed(2) ?? "-" }}
                   </div>
                 </div>
                 <div>
                   <div class="text-gray-400">ROI</div>
-                  <div class="font-medium text-white">
+                  <div
+                    class="font-medium"
+                    :class="getPerformanceColor(currentAnalysisResult?.roi)"
+                  >
                     {{ formatPercent(currentAnalysisResult?.roi) }}
                   </div>
                 </div>
                 <div>
                   <div class="text-gray-400">Equity</div>
-                  <div class="font-medium text-white">
+                  <div
+                    class="font-medium"
+                    :class="getPerformanceColor(currentAnalysisResult?.equity)"
+                  >
                     {{ formatCurrency(currentAnalysisResult?.equity) }}
                   </div>
                 </div>
                 <div>
                   <div class="text-gray-400">CoC Return</div>
-                  <div class="font-medium text-white">
+                  <div
+                    class="font-medium"
+                    :class="
+                      getPerformanceColor(currentAnalysisResult?.cash_on_cash)
+                    "
+                  >
                     {{ formatPercent(currentAnalysisResult?.cash_on_cash) }}
                   </div>
                 </div>
