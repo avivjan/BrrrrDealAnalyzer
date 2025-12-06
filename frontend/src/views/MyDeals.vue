@@ -6,6 +6,9 @@ import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
+import MoneyInput from "../components/ui/MoneyInput.vue";
+import SliderField from "../components/ui/SliderField.vue";
+import ToggleSwitch from "primevue/toggleswitch";
 import type { ActiveDealRes, AnalyzeDealReq } from "../types";
 
 console.group("View: MyDeals");
@@ -234,6 +237,12 @@ const getDSCRColor = (value: number | undefined) => {
   if (value >= 1.2) return "text-emerald-600";
   if (value >= 1.0) return "text-gray-600";
   return "text-red-600";
+};
+
+const quickCalcSellingCosts = () => {
+    if (editingDeal.value) {
+        (editingDeal.value as any).sellingClosingCosts = 8;
+    }
 };
 
 const openDeal = (deal: ActiveDealRes) => {
@@ -639,92 +648,96 @@ console.groupEnd();
             </div>
           </div>
 
-          <!-- Analyze Deal Fields -->
-          <div class="border-t border-gray-200 pt-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <i class="pi pi-calculator text-blue-500"></i> Financials
-            </h3>
+          <!-- Analyze Deal Fields (Structured like Analyze Page) -->
+          <div class="border-t border-gray-200 pt-6 space-y-6">
             
-            <!-- Purchase & Rehab Section -->
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
-              <h4 class="text-sm font-bold text-gray-700 uppercase mb-3 tracking-wide">Acquisition & Rehab</h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <MoneyInput :model-value="editingDeal.purchasePrice ?? null" @update:model-value="(v: number | null) => editingDeal!.purchasePrice = v ?? undefined" label="Purchase Price" :inThousands="true" />
-                 <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
-                 <MoneyInput :model-value="editingDeal.closingCostsBuy ?? null" @update:model-value="(v: number | null) => editingDeal!.closingCostsBuy = v ?? undefined" label="Closing Costs (Buy)" :inThousands="true" />
-              </div>
-            </div>
+             <!-- Group 1: Buy & Rehab (Shared) -->
+             <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                   <i class="pi pi-home text-blue-500"></i> Buy & Rehab
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <MoneyInput :model-value="editingDeal.purchasePrice ?? null" @update:model-value="(v: number | null) => editingDeal!.purchasePrice = v ?? undefined" label="Purchase Price" :inThousands="true" :required="true" />
+                   <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
+                   <MoneyInput :model-value="editingDeal.closingCostsBuy ?? null" @update:model-value="(v: number | null) => editingDeal!.closingCostsBuy = v ?? undefined" label="Closing Costs (Buy)" :inThousands="true" />
 
-            <!-- Financing Section -->
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
-              <div class="flex justify-between items-center mb-3">
-                 <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Hard Money Financing</h4>
-                 <div class="flex items-center gap-2">
-                    <input type="checkbox" v-model="editingDeal.use_HM_for_rehab" id="useHM" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <label for="useHM" class="text-xs font-medium text-gray-700">Use HM for Rehab?</label>
-                 </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <NumberInput :model-value="editingDeal.down_payment ?? null" @update:model-value="(v: number | null) => editingDeal!.down_payment = v ?? undefined" label="Down Payment" suffix="%" :max="100" />
-                 <NumberInput :model-value="editingDeal.HMLInterestRate ?? null" @update:model-value="(v: number | null) => editingDeal!.HMLInterestRate = v ?? undefined" label="HML Interest Rate" suffix="%" />
-                 <NumberInput :model-value="editingDeal.hmlPoints ?? null" @update:model-value="(v: number | null) => editingDeal!.hmlPoints = v ?? undefined" label="HML Points" suffix=" pts" />
-              </div>
-            </div>
+                   <div class="md:col-span-2 border-t border-gray-200 my-2 pt-4">
+                      <h3 class="text-sm font-semibold text-gray-600 mb-3">Hard Money Details</h3>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <NumberInput :model-value="editingDeal.down_payment ?? null" @update:model-value="(v: number | null) => editingDeal!.down_payment = v ?? undefined" label="Down Payment" suffix="%" :min="0" :max="100" />
+                         <NumberInput :model-value="editingDeal.hmlPoints ?? null" @update:model-value="(v: number | null) => editingDeal!.hmlPoints = v ?? undefined" label="Points" suffix=" pts" :min="0" :max="100" />
+                         <NumberInput :model-value="editingDeal.HMLInterestRate ?? null" @update:model-value="(v: number | null) => editingDeal!.HMLInterestRate = v ?? undefined" label="Interest Rate" suffix="%" :min="0" :max="100" />
+                         
+                         <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                            <span class="text-sm font-medium text-gray-700">Use HM for Rehab</span>
+                            <ToggleSwitch v-model="editingDeal.use_HM_for_rehab" :pt="{ slider: ({ props }: any) => ({ class: props.modelValue ? 'bg-blue-500' : 'bg-gray-400' }) }" />
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </section>
 
-            <!-- Operating Expenses Section -->
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
-              <h4 class="text-sm font-bold text-gray-700 uppercase mb-3 tracking-wide">Operating Expenses (Annual/Monthly)</h4>
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                 <MoneyInput :model-value="editingDeal.annual_property_taxes ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_property_taxes = v ?? undefined" label="Annual Taxes" />
-                 <MoneyInput :model-value="editingDeal.annual_insurance ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_insurance = v ?? undefined" label="Annual Insurance" />
-                 <MoneyInput :model-value="editingDeal.montly_hoa ?? null" @update:model-value="(v: number | null) => editingDeal!.montly_hoa = v ?? undefined" label="Monthly HOA" />
-                 <MoneyInput v-if="editingDeal.deal_type === 'FLIP'" :model-value="(editingDeal as any).monthly_utilities ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthly_utilities = v ?? undefined" label="Monthly Utilities" />
-              </div>
-            </div>
-               
             <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
-               <!-- BRRRR: Rental Assumptions -->
-               <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4">
-                  <h4 class="text-sm font-bold text-blue-800 uppercase mb-3 tracking-wide">Rental Assumptions</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <MoneyInput :model-value="(editingDeal as any).rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).rent = v ?? undefined" label="Expected Rent" />
-                      <NumberInput :model-value="(editingDeal as any).vacancyPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).vacancyPercent = v ?? undefined" label="Vacancy" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).property_managment_fee_precentages_from_rent = v ?? undefined" label="PM Fee" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).maintenancePercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).maintenancePercent = v ?? undefined" label="Maintenance" suffix="%" :max="100" />
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <NumberInput :model-value="(editingDeal as any).capexPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capexPercent = v ?? undefined" label="CapEx" suffix="%" :max="100" />
-                  </div>
-               </div>
+               <!-- BRRRR Section -->
+               <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+                  <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <i class="pi pi-refresh text-blue-500"></i> Refinance (BRRRR)
+                  </h2>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <MoneyInput :model-value="(editingDeal as any).arv_in_thousands ?? null" @update:model-value="(v: number | null) => (editingDeal as any).arv_in_thousands = v ?? undefined" label="ARV" :inThousands="true" :required="true" />
+                      <SliderField :model-value="(editingDeal as any).ltv_as_precent ?? 75" @update:model-value="(v: number) => (editingDeal as any).ltv_as_precent = v" label="LTV" :min="1" :max="100" suffix="%" :required="true" />
+                      
+                      <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" suffix=" mos" />
+                      <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Closing Costs" :inThousands="true" />
 
-               <!-- BRRRR: Refinance Strategy -->
-               <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4">
-                  <h4 class="text-sm font-bold text-blue-800 uppercase mb-3 tracking-wide">Refinance Strategy</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <MoneyInput :model-value="(editingDeal as any).arv_in_thousands ?? null" @update:model-value="(v: number | null) => (editingDeal as any).arv_in_thousands = v ?? undefined" label="ARV" :inThousands="true" />
-                      <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" />
-                      <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Costs" :inThousands="true" />
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <NumberInput :model-value="(editingDeal as any).ltv_as_precent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).ltv_as_precent = v ?? undefined" label="Refi LTV" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).interestRate ?? null" @update:model-value="(v: number | null) => (editingDeal as any).interestRate = v ?? undefined" label="Refi Interest Rate" suffix="%" />
+                      <SliderField :model-value="(editingDeal as any).interestRate ?? 6.5" @update:model-value="(v: number) => (editingDeal as any).interestRate = v" label="Long Term Interest Rate" :min="0" :max="20" :step="0.125" suffix="%" :required="true" />
                       <NumberInput :model-value="(editingDeal as any).loanTermYears ?? null" @update:model-value="(v: number | null) => (editingDeal as any).loanTermYears = v ?? undefined" label="Loan Term" suffix=" Years" />
                   </div>
-               </div>
+               </section>
             </template>
             
             <template v-else>
-               <!-- Flip: Exit Strategy -->
-               <div class="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-4">
-                  <h4 class="text-sm font-bold text-orange-800 uppercase mb-3 tracking-wide">Exit Strategy</h4>
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <MoneyInput :model-value="(editingDeal as any).salePrice ?? null" @update:model-value="(v: number | null) => (editingDeal as any).salePrice = v ?? undefined" label="Sale Price (ARV)" :inThousands="true" />
-                       <NumberInput :model-value="(editingDeal as any).holdingTime ?? null" @update:model-value="(v: number | null) => (editingDeal as any).holdingTime = v ?? undefined" label="Holding Time (mos)" />
-                       <NumberInput :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Selling Costs" suffix="%" />
-                       <NumberInput :model-value="(editingDeal as any).capitalGainsTax ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capitalGainsTax = v ?? undefined" label="Capital Gains Tax" suffix="%" />
+               <!-- FLIP Section -->
+               <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+                  <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <i class="pi pi-dollar text-orange-500"></i> Flip Strategy
+                  </h2>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <MoneyInput :model-value="(editingDeal as any).salePrice ?? null" @update:model-value="(v: number | null) => (editingDeal as any).salePrice = v ?? undefined" label="Projected Sale Price" :inThousands="true" :required="true" />
+                       <NumberInput :model-value="(editingDeal as any).holdingTime ?? null" @update:model-value="(v: number | null) => (editingDeal as any).holdingTime = v ?? undefined" label="Holding Time" suffix=" mos" :required="true" />
+                       
+                       <div class="flex items-end gap-2">
+                          <NumberInput class="flex-1" :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Selling Costs (Agent + Closing)" suffix="%" />
+                          <button @click="quickCalcSellingCosts" class="mb-[6px] p-2 text-xs bg-gray-200 rounded hover:bg-gray-300 text-gray-700 font-medium" title="Set to 8% (6% agent + 2% closing)">
+                             Quick Calc
+                          </button>
+                       </div>
+                       <NumberInput :model-value="(editingDeal as any).capitalGainsTax ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capitalGainsTax = v ?? undefined" label="Capital Gains Tax Rate" suffix="%" />
                    </div>
-               </div>
+               </section>
             </template>
+
+            <!-- Expenses (Shared but customized) -->
+            <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                   <i class="pi pi-wallet" :class="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR') ? 'text-blue-500' : 'text-orange-500'"></i> Expenses
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <MoneyInput v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')" :model-value="(editingDeal as any).rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).rent = v ?? undefined" label="Monthly Rent" :required="true" />
+                   
+                   <MoneyInput :model-value="editingDeal.annual_property_taxes ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_property_taxes = v ?? undefined" label="Annual Taxes" />
+                   <MoneyInput :model-value="editingDeal.annual_insurance ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_insurance = v ?? undefined" label="Annual Insurance" />
+                   <MoneyInput :model-value="editingDeal.montly_hoa ?? null" @update:model-value="(v: number | null) => editingDeal!.montly_hoa = v ?? undefined" label="Monthly HOA" />
+                   <MoneyInput v-if="editingDeal.deal_type === 'FLIP'" :model-value="(editingDeal as any).monthly_utilities ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthly_utilities = v ?? undefined" label="Monthly Utilities" />
+
+                   <div v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')" class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                      <NumberInput :model-value="(editingDeal as any).vacancyPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).vacancyPercent = v ?? undefined" label="Vacancy" suffix="%" />
+                      <NumberInput :model-value="(editingDeal as any).maintenancePercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).maintenancePercent = v ?? undefined" label="Maint." suffix="%" />
+                      <NumberInput :model-value="(editingDeal as any).capexPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capexPercent = v ?? undefined" label="CapEx" suffix="%" />
+                      <NumberInput :model-value="(editingDeal as any).property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).property_managment_fee_precentages_from_rent = v ?? undefined" label="Prop. Mgmt" suffix="%" />
+                   </div>
+                </div>
+            </section>
 
             <!-- Results Preview -->
             <div v-if="currentAnalysis" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
