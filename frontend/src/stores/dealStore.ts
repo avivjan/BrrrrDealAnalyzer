@@ -93,7 +93,10 @@ export const useDealStore = defineStore('deals', () => {
       try {
         // Send plain object to avoid proxy issues
         const dealPayload = toRaw(deal);
-        await api.updateActiveDeal(dealPayload);
+        const updatedDeal = await api.updateActiveDeal(dealPayload);
+        
+        // Sync with server response
+        Object.assign(deal, updatedDeal);
       } catch (err) {
         // Revert on failure
         deal.stage = oldStage;

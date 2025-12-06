@@ -21,7 +21,9 @@ def update_active_deal(db: Session, deal_id: int, deal_data: ActiveDealCreate) -
     if not db_deal:
         return None
     
-    update_data = deal_data.model_dump(exclude_unset=True)
+    # Use default model_dump to ensure all fields are considered,
+    # trusting that the frontend sends the complete object.
+    update_data = deal_data.model_dump()
     for key, value in update_data.items():
         setattr(db_deal, key, value)
     
