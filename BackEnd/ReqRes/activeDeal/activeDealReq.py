@@ -24,6 +24,7 @@ class BaseDealReq(BaseModel):
     # Shared Fields
     purchase_price_in_thousands: Annotated[Optional[Decimal], Field(alias="purchasePrice", description="Acquisition price for the property")] = None
     rehab_cost_in_thousands: Annotated[Optional[Decimal], Field(alias="rehabCost", description="Estimated rehab costs included in the deal")] = Decimal("0.0")
+    rehab_contingency_percent: Annotated[Optional[Decimal], Field(alias="rehabContingency", description="Contingency percentage for rehab costs")] = Decimal("0.0")
     down_payment:  Optional[Decimal] = Field(None, description="Down payment percentage (0-100)")
     closing_costs_buy_in_thousands: Annotated[Optional[Decimal], Field(alias="closingCostsBuy", description="Closing costs when purchasing")] = Decimal("0.0")
     use_HM_for_rehab: Annotated[Optional[bool], Field(alias="use_HM_for_rehab", description="")] = False 

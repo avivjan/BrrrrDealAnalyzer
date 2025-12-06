@@ -38,6 +38,7 @@ class BaseDeal:
 
     purchase_price_in_thousands = Column(Numeric(12, 2), nullable=False)
     rehab_cost_in_thousands = Column(Numeric(12, 2), nullable=False, default=0.0)
+    rehab_contingency_percent = Column(Numeric(5, 2), nullable=False, default=0.0)
     down_payment = Column(Numeric(5, 2), nullable=False)
     closing_costs_buy_in_thousands = Column(Numeric(12, 2), nullable=False, default=0.0)
     use_HM_for_rehab = Column(Boolean, nullable=False, default=False)
