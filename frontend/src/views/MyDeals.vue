@@ -364,29 +364,33 @@ console.groupEnd();
       </button>
     </header>
 
-    <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-50">
-      <div class="h-full flex px-4 pb-4 pt-2 md:pt-4 gap-4 min-w-max">
+    <!-- Kanban Board (Refactored to Rows) -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
+      <div
+        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-8 w-full max-w-[1920px] mx-auto"
+      >
         <div
           v-for="stage in stages"
           :key="stage.id"
-          class="flex flex-col w-[85vw] md:w-80 h-full rounded-xl border shadow-sm transition-colors"
+          class="flex flex-col w-full rounded-xl border shadow-sm transition-colors bg-white"
           :class="stage.color"
         >
-          <!-- Column Header -->
+          <!-- Row Header -->
           <div
-            class="flex-none p-3 flex justify-between items-center border-b border-gray-100"
+            class="flex-none p-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50 rounded-t-xl"
           >
-            <h3 class="font-bold text-gray-800">{{ stage.name }}</h3>
-            <span
-              class="bg-gray-100 px-2 py-0.5 rounded-full text-xs font-mono text-gray-500"
-            >
-              {{ columns[stage.id]?.length || 0 }}
-            </span>
+            <div class="flex items-center gap-3">
+              <h3 class="font-bold text-lg text-gray-800">{{ stage.name }}</h3>
+              <span
+                class="bg-white px-2.5 py-0.5 rounded-full text-sm font-mono text-gray-500 border border-gray-200 shadow-sm"
+              >
+                {{ columns[stage.id]?.length || 0 }}
+              </span>
+            </div>
           </div>
 
           <!-- Draggable Area -->
-          <div class="flex-1 overflow-y-auto p-3 scrollbar-hide bg-gray-50/50">
+          <div class="p-4 bg-white/50">
             <VueDraggable
               v-if="columns[stage.id]"
               v-model="columns[stage.id]!"
@@ -394,18 +398,20 @@ console.groupEnd();
               @change="(e) => onDrop(e, stage.id)"
               @add="(e) => onAdd(e, stage.id)"
               :animation="150"
-              class="flex flex-col gap-3 min-h-[100px]"
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
               ghost-class="opacity-50"
             >
               <div
                 v-for="deal in columns[stage.id]"
                 :key="deal.id"
                 @click="openDeal(deal)"
+                class="h-full"
               >
                 <DealCard
                   :deal="deal"
                   @delete="confirmDelete(deal)"
                   @duplicate="duplicateDeal(deal.id)"
+                  class="h-full"
                 />
               </div>
             </VueDraggable>
