@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import api from '../api';
 import type { ActiveDealRes, ActiveDealCreate, AnalyzeDealReq, AnalyzeDealRes } from '../types';
 
@@ -91,7 +91,9 @@ export const useDealStore = defineStore('deals', () => {
       deal.stage = newStage;
       
       try {
-        await api.updateActiveDeal(deal);
+        // Send plain object to avoid proxy issues
+        const dealPayload = toRaw(deal);
+        await api.updateActiveDeal(dealPayload);
       } catch (err) {
         // Revert on failure
         deal.stage = oldStage;

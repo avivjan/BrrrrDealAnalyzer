@@ -67,10 +67,13 @@ onMounted(async () => {
 });
 
 // Handle Drag End
-const onDrop = (event: any, stageId: number) => {
+const onDrop = async (event: any, stageId: number) => {
   if (event.added) {
     const deal = event.added.element;
-    store.updateDealStage(deal.id, stageId);
+    // Update local stage immediately for UI consistency
+    deal.stage = stageId;
+
+    await store.updateDealStage(deal.id, stageId);
   }
 };
 
