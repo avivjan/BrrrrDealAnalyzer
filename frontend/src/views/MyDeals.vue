@@ -10,8 +10,8 @@ import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import type { ActiveDealRes } from "../types";
 
-console.group('View: MyDeals');
-console.log('Component setup started');
+console.group("View: MyDeals");
+console.log("Component setup started");
 
 const store = useDealStore();
 
@@ -39,11 +39,14 @@ const columns = ref<Record<number, ActiveDealRes[]>>({
 
 // Sync local columns with store data based on active tab
 const refreshColumns = () => {
-  console.log('View: MyDeals - Refreshing columns for activeTab:', activeTab.value);
+  console.log(
+    "View: MyDeals - Refreshing columns for activeTab:",
+    activeTab.value
+  );
   const filteredDeals = store.deals.filter(
     (d) => d.section === activeTab.value
   );
-  console.log('View: MyDeals - Filtered deals count:', filteredDeals.length);
+  console.log("View: MyDeals - Filtered deals count:", filteredDeals.length);
 
   // Reset columns
   columns.value = { 1: [], 2: [], 3: [], 4: [], 5: [] };
@@ -53,24 +56,34 @@ const refreshColumns = () => {
       columns.value[deal.stage]!.push(deal);
     } else {
       // Fallback for invalid stage
-      console.warn('View: MyDeals - Invalid stage for deal, defaulting to 1:', deal);
+      console.warn(
+        "View: MyDeals - Invalid stage for deal, defaulting to 1:",
+        deal
+      );
       columns.value[1]!.push(deal);
     }
   });
-  console.log('View: MyDeals - Columns refreshed:', Object.keys(columns.value).map(k => `${k}: ${columns.value[parseInt(k)].length}`));
+  console.log(
+    "View: MyDeals - Columns refreshed:",
+    Object.keys(columns.value).map(
+      (k) => `${k}: ${columns.value[parseInt(k)]?.length}`
+    )
+  );
 };
 
 watch(
   () => [store.deals, activeTab.value],
   () => {
-    console.log('View: MyDeals - deals or activeTab changed, refreshing columns');
+    console.log(
+      "View: MyDeals - deals or activeTab changed, refreshing columns"
+    );
     refreshColumns();
   },
   { deep: true }
 );
 
 onMounted(async () => {
-  console.log('View: MyDeals mounted');
+  console.log("View: MyDeals mounted");
   await store.fetchDeals();
   refreshColumns();
 });
@@ -81,24 +94,36 @@ const onDrop = async (event: any, stageId: number) => {
 
   if (event.added) {
     const deal = event.added.element;
-    console.log("View: MyDeals - Deal dropped into stage (via onDrop):", stageId, deal);
+    console.log(
+      "View: MyDeals - Deal dropped into stage (via onDrop):",
+      stageId,
+      deal
+    );
 
     if (deal.stage !== stageId) {
       // Update local stage immediately for UI consistency
       const oldStage = deal.stage;
       deal.stage = stageId;
-      console.log(`View: MyDeals - Updating stage locally from ${oldStage} to ${stageId}`);
+      console.log(
+        `View: MyDeals - Updating stage locally from ${oldStage} to ${stageId}`
+      );
 
       try {
         await store.updateDealStage(deal.id, stageId);
         console.log("View: MyDeals - Deal stage update sent to store");
       } catch (e) {
         deal.stage = oldStage; // Revert
-        console.error("View: MyDeals - Failed to update deal stage in store", e);
+        console.error(
+          "View: MyDeals - Failed to update deal stage in store",
+          e
+        );
       }
     }
   } else {
-    console.log("View: MyDeals - onDrop event ignored (not added):", Object.keys(event));
+    console.log(
+      "View: MyDeals - onDrop event ignored (not added):",
+      Object.keys(event)
+    );
   }
 };
 
@@ -108,57 +133,64 @@ const onAdd = async (event: any, stageId: number) => {
   if (list && typeof event.newIndex === "number") {
     const deal = list[event.newIndex];
     if (deal && deal.stage !== stageId) {
-      console.log("View: MyDeals - Deal dropped into stage (via onAdd):", stageId, deal);
+      console.log(
+        "View: MyDeals - Deal dropped into stage (via onAdd):",
+        stageId,
+        deal
+      );
       const oldStage = deal.stage;
       deal.stage = stageId;
       try {
         await store.updateDealStage(deal.id, stageId);
       } catch (e) {
         deal.stage = oldStage;
-        console.error("View: MyDeals - Failed to update deal stage in store (onAdd)", e);
+        console.error(
+          "View: MyDeals - Failed to update deal stage in store (onAdd)",
+          e
+        );
       }
     }
   }
 };
 
 const confirmDelete = async (deal: ActiveDealRes) => {
-  console.log('View: MyDeals - confirmDelete requested for deal:', deal.id);
+  console.log("View: MyDeals - confirmDelete requested for deal:", deal.id);
   if (confirm(`Are you sure you want to delete ${deal.address}?`)) {
     try {
       await store.deleteDeal(deal.id);
       refreshColumns(); // Refresh local columns after store update
-      console.log('View: MyDeals - Deal deleted successfully');
+      console.log("View: MyDeals - Deal deleted successfully");
     } catch (e) {
-      console.error('View: MyDeals - Failed to delete deal', e);
+      console.error("View: MyDeals - Failed to delete deal", e);
       alert("Failed to delete deal");
     }
   }
 };
 
 const duplicateDeal = async (dealId: number) => {
-  console.log('View: MyDeals - duplicateDeal requested for deal:', dealId);
+  console.log("View: MyDeals - duplicateDeal requested for deal:", dealId);
   if (confirm(`Are you sure you want to duplicate this deal?`)) {
     try {
       await store.duplicateDeal(dealId);
       refreshColumns(); // Refresh local columns after store update
-      console.log('View: MyDeals - Deal duplicated successfully');
+      console.log("View: MyDeals - Deal duplicated successfully");
     } catch (e) {
-      console.error('View: MyDeals - Failed to duplicate deal', e);
+      console.error("View: MyDeals - Failed to duplicate deal", e);
       alert("Failed to duplicate deal");
     }
   }
 };
 
 const duplicateEditingDeal = async () => {
-  console.log('View: MyDeals - duplicateEditingDeal requested');
+  console.log("View: MyDeals - duplicateEditingDeal requested");
   if (editingDeal.value) {
     if (confirm(`Duplicate this deal?`)) {
       try {
         await store.duplicateDeal(editingDeal.value.id);
         showDetailModal.value = false; // Close modal after duplicate
-        console.log('View: MyDeals - Editing deal duplicated successfully');
+        console.log("View: MyDeals - Editing deal duplicated successfully");
       } catch (e) {
-        console.error('View: MyDeals - Failed to duplicate editing deal', e);
+        console.error("View: MyDeals - Failed to duplicate editing deal", e);
         alert("Failed to duplicate deal");
       }
     }
@@ -213,7 +245,7 @@ const getDSCRColor = (value: number | undefined) => {
 };
 
 const openDeal = (deal: ActiveDealRes) => {
-  console.log('View: MyDeals - Opening deal detail modal:', deal.id);
+  console.log("View: MyDeals - Opening deal detail modal:", deal.id);
   selectedDeal.value = deal;
   editingDeal.value = JSON.parse(JSON.stringify(deal));
   currentAnalysis.value = JSON.parse(JSON.stringify(deal)); // Initialize with stored results
@@ -222,12 +254,15 @@ const openDeal = (deal: ActiveDealRes) => {
 
 const analyzeCurrentDeal = useDebounceFn(async () => {
   if (editingDeal.value) {
-    console.log('View: MyDeals - Auto-analyzing editing deal:', editingDeal.value.id);
+    console.log(
+      "View: MyDeals - Auto-analyzing editing deal:",
+      editingDeal.value.id
+    );
     try {
       const result = await store.analyze(editingDeal.value);
       // Merge result into currentAnalysis to display new values
       currentAnalysis.value = { ...editingDeal.value, ...result };
-      console.log('View: MyDeals - Analysis result merged into current view');
+      console.log("View: MyDeals - Analysis result merged into current view");
     } catch (e) {
       console.error("View: MyDeals - Analysis failed", e);
     }
@@ -238,7 +273,9 @@ watch(
   editingDeal,
   () => {
     if (showDetailModal.value) {
-      console.log('View: MyDeals - editingDeal changed, triggering debounce analysis');
+      console.log(
+        "View: MyDeals - editingDeal changed, triggering debounce analysis"
+      );
       analyzeCurrentDeal();
     }
   },
@@ -246,22 +283,21 @@ watch(
 );
 
 const saveChanges = async () => {
-  console.log('View: MyDeals - saveChanges clicked');
+  console.log("View: MyDeals - saveChanges clicked");
   if (editingDeal.value) {
     try {
-      console.log('View: MyDeals - Updating deal:', editingDeal.value);
+      console.log("View: MyDeals - Updating deal:", editingDeal.value);
       await store.updateDeal(editingDeal.value);
       showDetailModal.value = false;
-      console.log('View: MyDeals - Deal updated successfully');
+      console.log("View: MyDeals - Deal updated successfully");
     } catch (e) {
-      console.error('View: MyDeals - Failed to save changes', e);
+      console.error("View: MyDeals - Failed to save changes", e);
       alert("Failed to save changes");
     }
   }
 };
 
 console.groupEnd();
-</script>
 </script>
 
 <template>
