@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,65 +21,40 @@ class RentComp(BaseModel):
 class ActiveDealBase(BaseModel):
     arv_in_thousands: Optional[float] = Field(0, description="After repair value (ARV) of the property in thousands")
     
-    purchase_price_in_thousands: Optional[float] = Field(
-        None, alias="purchasePrice", description="Acquisition price for the property"
-    )
+    purchase_price_in_thousands: Annotated[Optional[float], Field(alias="purchasePrice", description="Acquisition price for the property")] = None
     
-    rehab_cost_in_thousands: Optional[float] = Field(
-        0.0,
-        alias="rehabCost",
-        description="Estimated rehab costs included in the deal",
-    )
+    rehab_cost_in_thousands: Annotated[Optional[float], Field(alias="rehabCost", description="Estimated rehab costs included in the deal")] = 0.0
+
     down_payment:  Optional[float] = Field(None, description="Down payment percentage for hard money purchase (0-100)")
-    closing_costs_buy_in_thousands: Optional[float] = Field(
-    0.0, alias="closingCostsBuy", description="Closing costs when purchasing with hard money"
-    )
-    use_HM_for_rehab: Optional[bool] = Field( #make it a toggle for using hard money for rehab costs
-        False, alias="use_HM_for_rehab", description=""
-    )   
-    HML_points: Optional[float] = Field(
-        0.0, alias="hmlPoints", description="Hard money lender points (percentage)"
-    )
-
-    Months_until_refi: Optional[float] = Field(
-        None, alias="monthsUntilRefi", description="num of months from buying to refi"
-    )
     
-    HML_interest_rate: Optional[float] = Field(
-        None, alias="HMLInterestRate", description="Interest paid during HML period (cash)"
-    )   
+    closing_costs_buy_in_thousands: Annotated[Optional[float], Field(alias="closingCostsBuy", description="Closing costs when purchasing with hard money")] = 0.0
 
-    closing_cost_refi_in_thousands: Optional[float] = Field(
-        0.0, alias="closingCostsRefi", description="Closing costs during the refinance stage"
-    )
+    use_HM_for_rehab: Annotated[Optional[bool], Field(alias="use_HM_for_rehab", description="")] = False # make it a toggle for using hard money for rehab costs
+ 
+    HML_points: Annotated[Optional[float], Field(alias="hmlPoints", description="Hard money lender points (percentage)")] = 0.0
+
+    Months_until_refi: Annotated[Optional[float], Field(alias="monthsUntilRefi", description="num of months from buying to refi")] = None
     
-    loan_term_years: Optional[int] = Field(30, alias="loanTermYears")
+    HML_interest_rate: Annotated[Optional[float], Field(alias="HMLInterestRate", description="Interest paid during HML period (cash)")] = None
+
+    closing_cost_refi_in_thousands: Annotated[Optional[float], Field(alias="closingCostsRefi", description="Closing costs during the refinance stage")] = 0.0
+    
+    loan_term_years: Annotated[Optional[int], Field(alias="loanTermYears")] = 30
 
     ltv_as_precent: Optional[float] = Field(..., description="LTV as a percent for the DSCR refinance loan (e.g., 75 for 75%)")
 
-    interest_rate: Optional[float] = Field(
-        None, alias="interestRate", description="Annual mortgage interest rate (percent)"
-    )
+    interest_rate: Annotated[Optional[float], Field(alias="interestRate", description="Annual mortgage interest rate (percent)")] = None
     
     rent: Optional[float] = Field(None, description="Expected monthly rent")
     
-    vacancy_percent: Optional[float] = Field(
-        0.0,
-        alias="vacancyPercent",
-        description="Percentage of rent reserved for vacancy",
-    )
+    vacancy_percent: Annotated[Optional[float], Field(alias="vacancyPercent", description="Percentage of rent reserved for vacancy")] = 0.0
     
     property_managment_fee_precentages_from_rent: Optional[float] = Field(0.0, description="precentages from the rent from property managment")
-    maintenance_percent: Optional[float] = Field(
-        0.0,
-        alias="maintenancePercent",
-        description="Maintenance reserve as a percentage of rent",
-    )
-    capex_percent_of_rent: Optional[float] = Field(
-        0.0,
-        alias="capexPercent",
-        description="Capital expenditures reserve as a percentage of rent",
-    )
+    
+    maintenance_percent: Annotated[Optional[float], Field(alias="maintenancePercent", description="Maintenance reserve as a percentage of rent")] = 0.0
+
+    capex_percent_of_rent: Annotated[Optional[float], Field(alias="capexPercent", description="Capital expenditures reserve as a percentage of rent")] = 0.0
+
     annual_property_taxes: Optional[float] = Field(0.0, description="Annual property taxes")
     annual_insurance: Optional[float] = Field(0.0, description="Annual insurance expense")
     montly_hoa: Optional[float] = Field(0.0, description="Monthly HOA dues")
