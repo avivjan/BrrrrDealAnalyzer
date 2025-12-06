@@ -117,7 +117,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Footer Stats -->
     <div
-      class="mt-3 pt-2 border-t border-gray-100 flex justify-between text-[10px] text-gray-400"
+      class="mt-3 pt-2 border-t border-gray-200 flex justify-between text-xs font-medium text-gray-500"
     >
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
