@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 import type { ActiveDealRes } from "../types";
+import { formatDealForClipboard } from "../utils/dealUtils";
 
 const props = defineProps<{
   deal: ActiveDealRes;
@@ -10,6 +11,16 @@ const emit = defineEmits<{
   (e: "delete", id: number): void;
   (e: "duplicate", id: number): void;
 }>();
+
+const copyToClipboard = async (deal: ActiveDealRes) => {
+  try {
+    const text = formatDealForClipboard(deal);
+    await navigator.clipboard.writeText(text);
+    console.log("Deal details copied to clipboard");
+  } catch (err) {
+    console.error("Failed to copy to clipboard", err);
+  }
+};
 
 onMounted(() => {
   // console.log('Component: DealCard mounted', props.deal.id); // Too verbose for every card
@@ -64,6 +75,15 @@ const formatMoney = (val?: number) =>
       title="Duplicate Deal"
     >
       <i class="pi pi-copy text-[10px] font-bold"></i>
+    </button>
+
+    <!-- Copy to AI Button -->
+    <button
+      @click.stop="copyToClipboard(deal)"
+      class="absolute top-2 right-16 p-1.5 rounded-full bg-purple-100 text-purple-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-purple-200 hover:scale-110 z-10"
+      title="Copy Summary for AI"
+    >
+      <i class="pi pi-file text-[10px] font-bold"></i>
     </button>
 
     <!-- Header: Address -->

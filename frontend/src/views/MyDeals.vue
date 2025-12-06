@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from "vue";
 import { useDealStore } from "../stores/dealStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
+import { formatDealForClipboard } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
@@ -297,6 +298,16 @@ const saveChanges = async () => {
   }
 };
 
+const copyToClipboard = async (deal: ActiveDealRes) => {
+  try {
+    const text = formatDealForClipboard(deal);
+    await navigator.clipboard.writeText(text);
+    console.log("Deal details copied to clipboard");
+  } catch (err) {
+    console.error("Failed to copy to clipboard", err);
+  }
+};
+
 console.groupEnd();
 </script>
 
@@ -442,12 +453,21 @@ console.groupEnd();
               class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
             />
           </div>
-          <button
-            @click="showDetailModal = false"
-            class="text-gray-400 hover:text-gray-600"
-          >
-            <i class="pi pi-times text-xl"></i>
-          </button>
+          <div class="flex items-center gap-4">
+            <button
+              @click="copyToClipboard(editingDeal)"
+              class="text-gray-400 hover:text-purple-600 transition-colors"
+              title="Copy Summary for AI"
+            >
+              <i class="pi pi-file text-xl"></i>
+            </button>
+            <button
+              @click="showDetailModal = false"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <i class="pi pi-times text-xl"></i>
+            </button>
+          </div>
         </div>
 
         <div class="p-6 overflow-y-auto custom-scrollbar">
