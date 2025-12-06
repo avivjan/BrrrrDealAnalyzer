@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { ActiveDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 
@@ -12,11 +12,17 @@ const emit = defineEmits<{
   (e: "duplicate", id: number): void;
 }>();
 
+const isCopied = ref(false);
+
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
     const text = formatDealForClipboard(deal);
     await navigator.clipboard.writeText(text);
     console.log("Deal details copied to clipboard");
+    isCopied.value = true;
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2000);
   } catch (err) {
     console.error("Failed to copy to clipboard", err);
   }
@@ -80,10 +86,18 @@ const formatMoney = (val?: number) =>
     <!-- Copy to AI Button -->
     <button
       @click.stop="copyToClipboard(deal)"
-      class="absolute top-2 right-16 p-1.5 rounded-full bg-purple-100 text-purple-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-purple-200 hover:scale-110 z-10"
-      title="Copy Summary for AI"
+      class="absolute top-2 right-16 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
+      :class="
+        isCopied
+          ? 'bg-green-100 text-green-600'
+          : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+      "
+      :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
     >
-      <i class="pi pi-file text-[10px] font-bold"></i>
+      <i
+        class="pi text-[10px] font-bold"
+        :class="isCopied ? 'pi-check' : 'pi-file'"
+      ></i>
     </button>
 
     <!-- Header: Address -->

@@ -298,11 +298,17 @@ const saveChanges = async () => {
   }
 };
 
+const isHeaderCopied = ref(false);
+
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
     const text = formatDealForClipboard(deal);
     await navigator.clipboard.writeText(text);
     console.log("Deal details copied to clipboard");
+    isHeaderCopied.value = true;
+    setTimeout(() => {
+      isHeaderCopied.value = false;
+    }, 2000);
   } catch (err) {
     console.error("Failed to copy to clipboard", err);
   }
@@ -456,10 +462,18 @@ console.groupEnd();
           <div class="flex items-center gap-4">
             <button
               @click="copyToClipboard(editingDeal)"
-              class="text-gray-400 hover:text-purple-600 transition-colors"
-              title="Copy Summary for AI"
+              class="transition-colors"
+              :class="
+                isHeaderCopied
+                  ? 'text-green-600'
+                  : 'text-gray-400 hover:text-purple-600'
+              "
+              :title="isHeaderCopied ? 'Copied!' : 'Copy Summary for AI'"
             >
-              <i class="pi pi-file text-xl"></i>
+              <i
+                class="pi text-xl"
+                :class="isHeaderCopied ? 'pi-check' : 'pi-file'"
+              ></i>
             </button>
             <button
               @click="showDetailModal = false"
