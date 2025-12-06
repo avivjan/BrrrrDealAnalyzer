@@ -1,4 +1,5 @@
 from typing import Union, List
+from decimal import Decimal
 
 from fastapi import Depends, FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,11 +41,11 @@ app.add_middleware(
 )
 
 
-def thousands_to_dollars(value: float) -> float:
-    return value * 1000.0
+def thousands_to_dollars(value: Decimal) -> Decimal:
+    return value * Decimal("1000.0")
 
 def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
-    return purchase_price * (1 - down_payment_precent / 100.0) + rehab_cost * int(use_HM_for_rehab)
+    return purchase_price * (1 - down_payment_precent / Decimal("100.0")) + rehab_cost * int(use_HM_for_rehab)
 
 # --- BRRRR Logic ---
 
@@ -107,32 +108,32 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
 def calc_montly_operating_expenses(payload):
-    property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / 100.0)
-    maintenance = payload.rent * (payload.maintenance_percent / 100.0)
-    capex = payload.rent * (payload.capex_percent_of_rent / 100.0)
-    vacancy = payload.rent * (payload.vacancy_percent / 100.0)
-    monthly_taxes = payload.annual_property_taxes / 12.0
-    monthly_insurance = payload.annual_insurance / 12.0
+    property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
+    maintenance = payload.rent * (payload.maintenance_percent / Decimal("100.0"))
+    capex = payload.rent * (payload.capex_percent_of_rent / Decimal("100.0"))
+    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
+    monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
+    monthly_insurance = payload.annual_insurance / Decimal("12.0")
     hoa = payload.montly_hoa
     return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
 
 def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
-    monthly_taxes = taxes / 12.0
-    monthly_insurance = insurance / 12.0
+    monthly_taxes = taxes / Decimal("12.0")
+    monthly_insurance = insurance / Decimal("12.0")
     pitia = mortgage_payment + monthly_taxes + monthly_insurance + hoa
-    if pitia == 0: return 0
+    if pitia == 0: return Decimal("0")
     return rent / pitia
 
 def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab, holding_costs_until_refi):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    down_payment_in_cash = (down_payment_precent/100) * purchase_price
+    down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
     total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
     return loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
 
 def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
     loan_amount = arv * ltv
-    monthly_interest_rate = (interest_rate / 100.0) / 12.0
+    monthly_interest_rate = (interest_rate / Decimal("100.0")) / Decimal("12.0")
     total_payments = loan_term_years * 12
     factor = (1 + monthly_interest_rate) ** total_payments
     denominator = factor - 1
@@ -141,27 +142,27 @@ def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
     return loan_amount * monthly_interest_rate * factor / denominator
 
 def calc_cash_on_cash(cash_out_from_deal, cash_flow):
-    if cash_out_from_deal >= 0: return -1 
-    elif cash_flow <= 0: return -2
-    else: return (cash_flow * 12 / abs(cash_out_from_deal)) * 100.0
+    if cash_out_from_deal >= 0: return Decimal("-1") 
+    elif cash_flow <= 0: return Decimal("-2")
+    else: return (cash_flow * 12 / abs(cash_out_from_deal)) * Decimal("100.0")
         
 def calc_roi(cash_out_from_deal, cash_flow, net_profit):
-    if cash_out_from_deal >= 0: return -1
-    elif cash_flow <= 0: return -2
-    else: return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * 100.0
+    if cash_out_from_deal >= 0: return Decimal("-1")
+    elif cash_flow <= 0: return Decimal("-2")
+    else: return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * Decimal("100.0")
     
 def calc_holding_costs(taxes, insurance, hoa, months):
-    monthly_taxes = taxes / 12.0
-    monthly_insurance = insurance / 12.0
+    monthly_taxes = taxes / Decimal("12.0")
+    monthly_insurance = insurance / Decimal("12.0")
     monthly_holding = monthly_taxes + monthly_insurance + hoa
     return monthly_holding * months
 
 def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab):
-    HML_montly_interest = HML_interest_rate / 12 / 100.0 * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    HML_montly_interest = HML_interest_rate / Decimal("12") / Decimal("100.0") * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     return HML_montly_interest * Months_until_refi  
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
-    down_payment_in_cash = (down_payment_precent/100) * purchase_price
+    down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
     return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
@@ -170,13 +171,13 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
     
     HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, payload.down_payment, rehab_cost, payload.Months_until_refi, payload.HML_interest_rate, payload.use_HM_for_rehab)
-    HML_points_in_cash = payload.HML_points/100.0 * get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
+    HML_points_in_cash = payload.HML_points/Decimal("100.0") * get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
     holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.Months_until_refi)
     
     operating_expenses = calc_montly_operating_expenses(payload)
     closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
     closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
-    ltv = payload.ltv_as_precent/100
+    ltv = payload.ltv_as_precent/Decimal("100")
     
     cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, payload.use_HM_for_rehab, holding_cost_until_refi)
     mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
@@ -237,20 +238,20 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     hml_amount = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
     hml_points_cash = (payload.HML_points / 100.0) * hml_amount
     
-    monthly_interest = (payload.HML_interest_rate / 100.0 / 12.0) * hml_amount
+    monthly_interest = (payload.HML_interest_rate / Decimal("100.0") / Decimal("12.0")) * hml_amount
     total_hml_interest = monthly_interest * payload.holding_time_months
     
-    monthly_taxes = payload.annual_property_taxes / 12.0
-    monthly_insurance = payload.annual_insurance / 12.0
+    monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
+    monthly_insurance = payload.annual_insurance / Decimal("12.0")
     monthly_operating = monthly_taxes + monthly_insurance + payload.montly_hoa + payload.monthly_utilities
     total_operating = monthly_operating * payload.holding_time_months
     
     total_holding_costs = total_hml_interest + total_operating
     
     agent_fees_percent = payload.buyer_agent_selling_fee + payload.seller_agent_selling_fee
-    selling_costs = sale_price * (agent_fees_percent / 100.0) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
+    selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
     
-    down_payment_cash = (payload.down_payment / 100.0) * purchase_price
+    down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
     rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 0
     
     total_cash_needed = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
@@ -260,15 +261,15 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     
     gross_profit = sale_price - total_cost_basis
     
-    cap_gains = 0
+    cap_gains = Decimal("0")
     if gross_profit > 0:
-        cap_gains = gross_profit * (payload.capital_gains_tax_rate / 100.0)
+        cap_gains = gross_profit * (payload.capital_gains_tax_rate / Decimal("100.0"))
         
     net_profit = gross_profit - cap_gains
     
-    roi = (net_profit / total_cash_needed) * 100.0 if total_cash_needed > 0 else 0
-    years = payload.holding_time_months / 12.0
-    annualized_roi = (roi / years) if years > 0 else 0
+    roi = (net_profit / total_cash_needed) * Decimal("100.0") if total_cash_needed > 0 else Decimal("0")
+    years = payload.holding_time_months / Decimal("12.0")
+    annualized_roi = (roi / years) if years > 0 else Decimal("0")
     
     return analyzeFlipRes(
         net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
