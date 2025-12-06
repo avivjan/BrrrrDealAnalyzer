@@ -84,6 +84,7 @@ export const useDealStore = defineStore('deals', () => {
   }
 
   async function updateDealStage(dealId: number, newStage: number) {
+    console.log('store.updateDealStage called', { dealId, newStage });
     // Optimistic update
     const deal = deals.value.find(d => d.id === dealId);
     if (deal) {
@@ -93,7 +94,9 @@ export const useDealStore = defineStore('deals', () => {
       try {
         // Send plain object to avoid proxy issues
         const dealPayload = toRaw(deal);
+        console.log('Sending payload to API:', dealPayload);
         const updatedDeal = await api.updateActiveDeal(dealPayload);
+        console.log('API response:', updatedDeal);
         
         // Sync with server response
         Object.assign(deal, updatedDeal);
@@ -102,6 +105,8 @@ export const useDealStore = defineStore('deals', () => {
         deal.stage = oldStage;
         console.error('Failed to update stage', err);
       }
+    } else {
+        console.error('Deal not found in store:', dealId);
     }
   }
 

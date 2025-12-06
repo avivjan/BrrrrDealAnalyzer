@@ -68,12 +68,42 @@ onMounted(async () => {
 
 // Handle Drag End
 const onDrop = async (event: any, stageId: number) => {
+  console.log("onDrop event triggered:", { event, stageId });
+
   if (event.added) {
     const deal = event.added.element;
-    // Update local stage immediately for UI consistency
-    deal.stage = stageId;
+    console.log("Deal dropped into stage (via onDrop):", stageId, deal);
 
-    await store.updateDealStage(deal.id, stageId);
+    if (deal.stage !== stageId) {
+      // Update local stage immediately for UI consistency
+      deal.stage = stageId;
+
+      try {
+        await store.updateDealStage(deal.id, stageId);
+        console.log("Deal stage update sent to store");
+      } catch (e) {
+        console.error("Failed to update deal stage in store", e);
+      }
+    }
+  } else {
+    console.log("onDrop event ignored (not added):", Object.keys(event));
+  }
+};
+
+const onAdd = async (event: any, stageId: number) => {
+  console.log("onAdd event triggered:", { event, stageId });
+  const list = columns.value[stageId];
+  if (list && typeof event.newIndex === "number") {
+    const deal = list[event.newIndex];
+    if (deal && deal.stage !== stageId) {
+      console.log("Deal dropped into stage (via onAdd):", stageId, deal);
+      deal.stage = stageId;
+      try {
+        await store.updateDealStage(deal.id, stageId);
+      } catch (e) {
+        console.error("Failed to update deal stage in store (onAdd)", e);
+      }
+    }
   }
 };
 
@@ -292,6 +322,7 @@ const saveChanges = async () => {
               v-model="columns[stage.id]!"
               group="deals"
               @change="(e) => onDrop(e, stage.id)"
+              @add="(e) => onAdd(e, stage.id)"
               :animation="150"
               class="flex flex-col gap-3 min-h-[100px]"
               ghost-class="opacity-50"
