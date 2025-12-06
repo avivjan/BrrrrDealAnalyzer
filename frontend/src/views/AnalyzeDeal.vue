@@ -158,14 +158,14 @@ const saveForm = ref({
 });
 
 const getCashFlowColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value >= 100) return "text-emerald-400";
   if (value >= 1) return "text-gray-400";
   return "text-red-400";
 };
 
 const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value === -1) return "text-emerald-400"; // Infinity
   if (value === -2) return "text-red-400"; // -Infinity
   if (value > 0) return "text-emerald-400";
@@ -174,7 +174,7 @@ const getPerformanceColor = (value: number | undefined) => {
 };
 
 const getDSCRColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value >= 1.2) return "text-emerald-400";
   if (value >= 1.0) return "text-gray-400";
   return "text-red-400";
@@ -202,13 +202,13 @@ const saveDeal = async () => {
       <div class="lg:col-span-2 space-y-8">
         <header class="flex justify-between items-center mb-6">
           <h1
-            class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-ocean-300 to-ocean-100"
+            class="text-3xl font-bold text-ocean-500"
           >
             Analyze Deal
           </h1>
           <button
             @click="$router.push('/')"
-            class="text-ocean-300 hover:text-white transition-colors"
+            class="text-ocean-300 hover:text-ocean-600 transition-colors"
           >
             <i class="pi pi-home text-xl"></i>
           </button>
@@ -216,7 +216,7 @@ const saveDeal = async () => {
 
         <!-- Group 1: Buy & Rehab -->
         <section
-          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-surface shadow-lg backdrop-blur-sm"
+          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-border shadow-lg backdrop-blur-sm"
         >
           <h2
             class="text-xl font-semibold text-ocean-100 mb-4 flex items-center gap-2"
@@ -241,7 +241,7 @@ const saveDeal = async () => {
               :inThousands="true"
             />
 
-            <div class="md:col-span-2 border-t border-whale-surface my-2 pt-4">
+            <div class="md:col-span-2 border-t border-whale-border my-2 pt-4">
               <h3 class="text-sm font-semibold text-ocean-300 mb-3">
                 Hard Money Details
               </h3>
@@ -269,7 +269,7 @@ const saveDeal = async () => {
                 />
 
                 <div
-                  class="flex items-center justify-between bg-whale-surface p-3 rounded-lg border border-whale-surface/50"
+                  class="flex items-center justify-between bg-whale-surface p-3 rounded-lg border border-whale-border/50"
                 >
                   <span class="text-sm font-medium text-ocean-200"
                     >Use HM for Rehab</span
@@ -292,7 +292,7 @@ const saveDeal = async () => {
 
         <!-- Group 2: Refinance -->
         <section
-          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-surface shadow-lg backdrop-blur-sm"
+          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-border shadow-lg backdrop-blur-sm"
         >
           <h2
             class="text-xl font-semibold text-ocean-100 mb-4 flex items-center gap-2"
@@ -345,7 +345,7 @@ const saveDeal = async () => {
 
         <!-- Group 3: Rent & Expenses -->
         <section
-          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-surface shadow-lg backdrop-blur-sm"
+          class="bg-whale-surface/50 p-6 rounded-2xl border border-whale-border shadow-lg backdrop-blur-sm"
         >
           <h2
             class="text-xl font-semibold text-ocean-100 mb-4 flex items-center gap-2"
@@ -427,7 +427,7 @@ const saveDeal = async () => {
             ></div>
 
             <h2
-              class="text-2xl font-bold text-white mb-6 flex items-center gap-2"
+              class="text-2xl font-bold text-ocean-50 mb-6 flex items-center gap-2"
             >
               <i class="pi pi-chart-bar text-ocean-400"></i> Results
             </h2>
@@ -541,7 +541,7 @@ const saveDeal = async () => {
       <div
         class="bg-whale-surface w-full max-w-lg rounded-2xl p-6 border border-ocean-500/30 shadow-2xl animate-fade-in-up"
       >
-        <h3 class="text-2xl font-bold text-white mb-4">Save Deal</h3>
+        <h3 class="text-2xl font-bold text-ocean-50 mb-4">Save Deal</h3>
         <p class="text-ocean-200 text-sm mb-6">
           Enter additional details to add this deal to your board.
         </p>
@@ -553,7 +553,7 @@ const saveDeal = async () => {
             >
             <input
               v-model="saveForm.address"
-              class="w-full bg-whale-dark border border-whale-surface rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-ocean-500 outline-none"
+              class="w-full bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 focus:ring-2 focus:ring-ocean-500 outline-none"
               placeholder="123 Main St"
             />
           </div>
@@ -563,7 +563,7 @@ const saveDeal = async () => {
               <label class="text-sm font-medium text-ocean-200">Section</label>
               <select
                 v-model="saveForm.section"
-                class="w-full bg-whale-dark border border-whale-surface rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-ocean-500 outline-none appearance-none"
+                class="w-full bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 focus:ring-2 focus:ring-ocean-500 outline-none appearance-none"
               >
                 <option :value="1">Wholesale</option>
                 <option :value="2">Market</option>
@@ -574,7 +574,7 @@ const saveDeal = async () => {
               <label class="text-sm font-medium text-ocean-200">Stage</label>
               <select
                 v-model="saveForm.stage"
-                class="w-full bg-whale-dark border border-whale-surface rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-ocean-500 outline-none appearance-none"
+                class="w-full bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 focus:ring-2 focus:ring-ocean-500 outline-none appearance-none"
               >
                 <option :value="1">New</option>
                 <option :value="2">Working</option>
@@ -589,7 +589,7 @@ const saveDeal = async () => {
         <div class="flex justify-end gap-3 mt-8">
           <button
             @click="showSaveModal = false"
-            class="px-4 py-2 rounded-lg text-ocean-200 hover:text-white hover:bg-white/5 transition-colors"
+            class="px-4 py-2 rounded-lg text-ocean-200 hover:text-ocean-600 hover:bg-slate-100 transition-colors"
           >
             Cancel
           </button>

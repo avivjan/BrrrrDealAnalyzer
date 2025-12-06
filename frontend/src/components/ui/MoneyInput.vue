@@ -42,10 +42,11 @@ const displayLabel = computed(() => {
       :allowEmpty="true"
       :minFractionDigits="0"
       :maxFractionDigits="0"
-      inputClass="w-full bg-whale-surface border border-whale-surface/50 rounded-lg px-3 py-2 text-ocean-50 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-ocean-500 transition-all hover:bg-whale-surface/80"
+      inputClass="w-full bg-whale-surface border border-whale-border/50 rounded-lg px-3 py-2 text-ocean-50 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-ocean-500 transition-all hover:bg-whale-surface/80"
       class="w-full"
     />
   </div>
 </template>
+
 
 

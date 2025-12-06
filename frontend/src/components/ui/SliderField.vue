@@ -38,7 +38,7 @@ const value = computed({
           :suffix="suffix"
           :step="step"
           :minFractionDigits="step && step < 1 ? 2 : 0"
-          inputClass="w-full text-right bg-whale-surface border border-whale-surface/50 rounded-lg px-2 py-1 text-sm text-ocean-50 focus:outline-none focus:ring-1 focus:ring-ocean-500"
+          inputClass="w-full text-right bg-whale-surface border border-whale-border/50 rounded-lg px-2 py-1 text-sm text-ocean-50 focus:outline-none focus:ring-1 focus:ring-ocean-500"
         />
       </div>
     </div>
@@ -57,5 +57,6 @@ const value = computed({
     </div>
   </div>
 </template>
+
 
 

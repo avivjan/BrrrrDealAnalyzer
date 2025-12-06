@@ -14,15 +14,15 @@ const store = useDealStore();
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
-  { id: 1, name: "New", color: "bg-blue-500/10 border-blue-500/30" },
-  { id: 2, name: "Working", color: "bg-yellow-500/10 border-yellow-500/30" },
-  { id: 3, name: "Brought", color: "bg-emerald-500/10 border-emerald-500/30" },
+  { id: 1, name: "New", color: "bg-whale-surface border-whale-border shadow-sm" },
+  { id: 2, name: "Working", color: "bg-whale-surface border-whale-border shadow-sm" },
+  { id: 3, name: "Brought", color: "bg-whale-surface border-whale-border shadow-sm" },
   {
     id: 4,
     name: "Keep in Mind",
-    color: "bg-purple-500/10 border-purple-500/30",
+    color: "bg-whale-surface border-whale-border shadow-sm",
   },
-  { id: 5, name: "Dead", color: "bg-gray-500/10 border-gray-500/30" },
+  { id: 5, name: "Dead", color: "bg-whale-surface border-whale-border shadow-sm" },
 ];
 
 // Local state for each column to support drag-and-drop
@@ -110,14 +110,14 @@ const formatPercent = (value: number | undefined) => {
 };
 
 const getCashFlowColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value >= 100) return "text-emerald-400";
   if (value >= 1) return "text-gray-400";
   return "text-red-400";
 };
 
 const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value === -1) return "text-emerald-400"; // Infinity
   if (value === -2) return "text-red-400"; // -Infinity
   if (value > 0) return "text-emerald-400";
@@ -126,7 +126,7 @@ const getPerformanceColor = (value: number | undefined) => {
 };
 
 const getDSCRColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-white";
+  if (value === undefined || value === null) return "text-ocean-50";
   if (value >= 1.2) return "text-emerald-400";
   if (value >= 1.0) return "text-gray-400";
   return "text-red-400";
@@ -179,17 +179,17 @@ const saveChanges = async () => {
   >
     <!-- Header -->
     <header
-      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-whale-surface bg-whale-dark/95 backdrop-blur z-20"
+      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-whale-border bg-whale-dark/95 backdrop-blur z-20"
     >
       <div class="flex items-center gap-4">
         <button
           @click="$router.push('/')"
-          class="text-ocean-300 hover:text-white transition-colors"
+          class="text-ocean-300 hover:text-ocean-600 transition-colors"
         >
           <i class="pi pi-home text-xl"></i>
         </button>
         <h1
-          class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-ocean-300 to-ocean-100 hidden md:block"
+          class="text-2xl font-bold text-ocean-500 hidden md:block"
         >
           My Deals
         </h1>
@@ -197,7 +197,7 @@ const saveChanges = async () => {
 
       <!-- Tabs -->
       <div
-        class="flex bg-whale-surface rounded-lg p-1 border border-whale-surface/50"
+        class="flex bg-whale-surface rounded-lg p-1 border border-whale-border/50"
       >
         <button
           v-for="tab in [
@@ -211,7 +211,7 @@ const saveChanges = async () => {
           :class="
             activeTab === tab.id
               ? 'bg-ocean-600 text-white shadow-md'
-              : 'text-ocean-300 hover:text-white'
+              : 'text-ocean-300 hover:text-ocean-600'
           "
         >
           {{ tab.label }}
@@ -291,12 +291,12 @@ const saveChanges = async () => {
             >
             <input
               v-model="editingDeal.address"
-              class="w-full bg-transparent text-2xl font-bold text-white border-b border-transparent hover:border-white/20 focus:border-ocean-500 outline-none transition-colors"
+              class="w-full bg-transparent text-2xl font-bold text-ocean-50 border-b border-transparent hover:border-gray-200 focus:border-ocean-500 outline-none transition-colors"
             />
           </div>
           <button
             @click="showDetailModal = false"
-            class="text-ocean-300 hover:text-white"
+            class="text-ocean-300 hover:text-ocean-600"
           >
             <i class="pi pi-times text-xl"></i>
           </button>
@@ -307,7 +307,7 @@ const saveChanges = async () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Central Task Box -->
             <div
-              class="md:col-span-2 bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col justify-center"
+              class="md:col-span-2 bg-slate-100 p-4 rounded-xl border border-whale-border flex flex-col justify-center"
             >
               <label
                 class="text-xs text-ocean-300 uppercase font-bold tracking-wider mb-2"
@@ -316,7 +316,7 @@ const saveChanges = async () => {
               <textarea
                 v-model="editingDeal.task"
                 rows="3"
-                class="w-full bg-transparent text-lg text-white resize-none outline-none placeholder-white/10"
+                class="w-full bg-transparent text-lg text-ocean-50 resize-none outline-none placeholder-gray-400"
                 placeholder="What needs to be done?"
               ></textarea>
             </div>
@@ -335,7 +335,7 @@ const saveChanges = async () => {
                   >
                   <select
                     v-model="editingDeal.stage"
-                    class="bg-whale-dark border border-whale-surface rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                    class="bg-whale-dark border border-whale-border rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
                   >
                     <option v-for="s in stages" :key="s.id" :value="s.id">
                       {{ s.name }}
@@ -355,7 +355,7 @@ const saveChanges = async () => {
                   >
                   <select
                     v-model="editingDeal.section"
-                    class="bg-whale-dark border border-whale-surface rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                    class="bg-whale-dark border border-whale-border rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
                   >
                     <option :value="1">Wholesale</option>
                     <option :value="2">Market</option>
@@ -384,7 +384,7 @@ const saveChanges = async () => {
                 >
                 <input
                   v-model="editingDeal.zillow_link"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                   placeholder="https://..."
                 />
                 <a
@@ -401,7 +401,7 @@ const saveChanges = async () => {
                 >
                 <input
                   v-model="editingDeal.pics_link"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                   placeholder="Google Drive / Dropbox..."
                 />
                 <a
@@ -420,7 +420,7 @@ const saveChanges = async () => {
                 >
                 <input
                   v-model="editingDeal.overall_design"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                   placeholder="e.g. Modern Farmhouse"
                 />
               </div>
@@ -430,7 +430,7 @@ const saveChanges = async () => {
                 >
                 <input
                   v-model="editingDeal.crime_rate"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                   placeholder="e.g. Low / B-"
                 />
               </div>
@@ -443,7 +443,7 @@ const saveChanges = async () => {
                 <textarea
                   v-model="editingDeal.contact"
                   rows="2"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                   placeholder="Agent / Owner details"
                 ></textarea>
               </div>
@@ -451,7 +451,7 @@ const saveChanges = async () => {
                 <label class="text-xs text-ocean-200 font-medium">Niche</label>
                 <input
                   v-model="editingDeal.niche"
-                  class="bg-whale-dark/50 border border-whale-surface rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-ocean-500"
+                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
                 />
               </div>
             </div>
@@ -723,7 +723,7 @@ const saveChanges = async () => {
             <textarea
               v-model="editingDeal.notes"
               rows="4"
-              class="w-full bg-whale-dark/50 border border-whale-surface rounded-lg p-4 text-white text-sm outline-none focus:border-ocean-500"
+              class="w-full bg-whale-dark/50 border border-whale-border rounded-lg p-4 text-white text-sm outline-none focus:border-ocean-500"
               placeholder="Additional notes..."
             ></textarea>
           </div>
@@ -762,7 +762,7 @@ const saveChanges = async () => {
                 <div
                   v-for="(comp, index) in editingDeal.sold_comps"
                   :key="index"
-                  class="bg-black/20 p-2 rounded relative group"
+                  class="bg-slate-100 p-2 rounded relative group"
                 >
                   <button
                     @click="editingDeal.sold_comps!.splice(index, 1)"
@@ -774,7 +774,7 @@ const saveChanges = async () => {
                     <input
                       v-model="comp.url"
                       placeholder="URL"
-                      class="flex-1 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="flex-1 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                     <a
                       v-if="comp.url"
@@ -789,12 +789,12 @@ const saveChanges = async () => {
                       v-model="comp.arv"
                       type="number"
                       placeholder="ARV"
-                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                     <input
                       v-model="comp.how_long_ago"
                       placeholder="When?"
-                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                   </div>
                 </div>
@@ -836,7 +836,7 @@ const saveChanges = async () => {
                 <div
                   v-for="(comp, index) in editingDeal.rent_comps"
                   :key="index"
-                  class="bg-black/20 p-2 rounded relative group"
+                  class="bg-slate-100 p-2 rounded relative group"
                 >
                   <button
                     @click="editingDeal.rent_comps!.splice(index, 1)"
@@ -848,7 +848,7 @@ const saveChanges = async () => {
                     <input
                       v-model="comp.url"
                       placeholder="URL"
-                      class="flex-1 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="flex-1 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                     <a
                       v-if="comp.url"
@@ -863,12 +863,12 @@ const saveChanges = async () => {
                       v-model="comp.rent"
                       type="number"
                       placeholder="Rent"
-                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                     <input
                       v-model="comp.time_on_market"
                       placeholder="Time on Market"
-                      class="w-1/2 bg-transparent border-b border-white/10 text-xs focus:border-ocean-500 outline-none text-ocean-100"
+                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
                     />
                   </div>
                 </div>
@@ -890,7 +890,7 @@ const saveChanges = async () => {
           <div class="flex gap-4">
             <button
               @click="showDetailModal = false"
-              class="text-ocean-300 hover:text-white px-4 py-2"
+              class="text-ocean-300 hover:text-ocean-600 px-4 py-2"
             >
               Cancel
             </button>
