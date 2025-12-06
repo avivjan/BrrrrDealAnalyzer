@@ -64,6 +64,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Key Metrics Grid -->
     <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-xs text-gray-600">
+      <!-- Row 1: Purchase & Rehab -->
       <div class="flex flex-col">
         <span class="text-[10px] text-gray-400 uppercase">Purchase</span>
         <span class="font-mono text-gray-900">{{
@@ -71,31 +72,20 @@ const formatMoney = (val?: number) =>
         }}</span>
       </div>
       <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
-        <span
-          class="font-mono"
-          :class="deal.cash_flow > 0 ? 'text-emerald-600' : 'text-red-600'"
-        >
-          {{ formatMoney(deal.cash_flow) }}
-        </span>
-      </div>
-
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">CoC</span>
-        <span class="font-mono text-blue-600">{{
-          deal.cash_on_cash ? deal.cash_on_cash.toFixed(1) + "%" : "-"
+        <span class="text-[10px] text-gray-400 uppercase">Rehab</span>
+        <span class="font-mono text-gray-900">{{
+          formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0)
         }}</span>
       </div>
-      <div class="flex flex-col text-right">
+
+      <!-- Row 2: Cash Needed & Cash Out -->
+      <div class="flex flex-col">
         <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
         <span class="font-mono text-orange-600">{{
           formatMoney(deal.total_cash_needed_for_deal)
         }}</span>
       </div>
-
-      <div
-        class="col-span-2 flex justify-between items-center border-t border-gray-100 pt-1 mt-1"
-      >
+      <div class="flex flex-col text-right">
         <span class="text-[10px] text-gray-400 uppercase">Cash Out</span>
         <span
           class="font-mono font-semibold"
@@ -105,6 +95,23 @@ const formatMoney = (val?: number) =>
         >
           {{ formatMoney(deal.cash_out) }}
         </span>
+      </div>
+
+      <!-- Row 3: Cash Flow & CoC -->
+      <div class="flex flex-col">
+        <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
+        <span
+          class="font-mono"
+          :class="deal.cash_flow > 0 ? 'text-emerald-600' : 'text-red-600'"
+        >
+          {{ formatMoney(deal.cash_flow) }}
+        </span>
+      </div>
+      <div class="flex flex-col text-right">
+        <span class="text-[10px] text-gray-400 uppercase">CoC</span>
+        <span class="font-mono text-blue-600">{{
+          deal.cash_on_cash ? deal.cash_on_cash.toFixed(1) + "%" : "-"
+        }}</span>
       </div>
     </div>
 
