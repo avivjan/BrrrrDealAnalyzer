@@ -343,7 +343,7 @@ def add_active_deal(
     raise HTTPException(status_code=400, detail="Invalid deal type")
 
 @app.put("/active-deals/{deal_id}", response_model=Union[BrrrActiveDealRes, FlipActiveDealRes])
-def update_deal(deal_id: int, deal: Union[BrrrActiveDealCreate, FlipActiveDealCreate], db: Session = Depends(get_db)):
+def update_deal(deal_id: str, deal: Union[BrrrActiveDealCreate, FlipActiveDealCreate], db: Session = Depends(get_db)):
     # Note: IDs might clash if tables use separate auto-increment and we look up just by ID.
     # Ideally we need deal_type in query or unique IDs across tables (UUIDs).
     # Since we have separate tables with independent integer PKs, ID=1 can exist in both.
@@ -364,7 +364,7 @@ def update_deal(deal_id: int, deal: Union[BrrrActiveDealCreate, FlipActiveDealCr
     raise HTTPException(status_code=404, detail="Deal not found")
 
 @app.delete("/active-deals/{deal_id}")
-def delete_deal(deal_id: int, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
+def delete_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
     # We need deal_type here to know which table to delete from.
     # Or we try both.
     # Let's try deleting from BRRRR first, if not found try Flip.
@@ -382,7 +382,7 @@ def delete_deal(deal_id: int, deal_type: str = "BRRRR", db: Session = Depends(ge
     raise HTTPException(status_code=404, detail="Deal not found")
 
 @app.post("/active-deals/{deal_id}/duplicate", response_model=Union[BrrrActiveDealRes, FlipActiveDealRes])
-def duplicate_deal(deal_id: int, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
+def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
     if deal_type == "BRRRR":
         new_deal = duplicate_brrr_deal(db, deal_id)
         if new_deal: return create_deal_response(new_deal)

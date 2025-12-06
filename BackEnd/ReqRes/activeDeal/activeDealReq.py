@@ -82,12 +82,14 @@ class FlipActiveDealCreate(BaseDealReq):
     sale_comps: Optional[List[SoldComp]] = None
 
 
+from uuid import UUID
+
 class BrrrActiveDealRes(BrrrActiveDealCreate, analyzeBRRRRes):
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
 class FlipActiveDealRes(FlipActiveDealCreate, analyzeFlipRes):
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime

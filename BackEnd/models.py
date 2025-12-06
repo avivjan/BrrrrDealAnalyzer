@@ -1,12 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, func, Numeric
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, func, Numeric, Uuid
 from sqlalchemy.orm import declarative_mixin, declared_attr
+import uuid
 
 from db import Base
 
 
 @declarative_mixin
 class BaseDeal:
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     section = Column(Integer, nullable=False)
     stage = Column(Integer, nullable=False)
     address = Column(String, nullable=False)
