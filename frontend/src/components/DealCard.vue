@@ -8,8 +8,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "delete", id: number): void;
-  (e: "duplicate", id: number): void;
+  (e: "delete", id: string): void;
+  (e: "duplicate", id: string): void;
 }>();
 
 const isCopied = ref(false);
@@ -39,12 +39,12 @@ onMounted(() => {
   // console.log('Component: DealCard mounted', props.deal.id); // Too verbose for every card
 });
 
-const onDelete = (id: number) => {
+const onDelete = (id: string) => {
   console.log("Component: DealCard - delete clicked for deal:", id);
   emit("delete", id);
 };
 
-const onDuplicate = (id: number) => {
+const onDuplicate = (id: string) => {
   console.log("Component: DealCard - duplicate clicked for deal:", id);
   emit("duplicate", id);
 };
