@@ -71,7 +71,11 @@ class FlipActiveDealCreate(BaseDealReq):
     deal_type: Literal["FLIP"] = "FLIP"
     sale_price_in_thousands: Annotated[float, Field(alias="salePrice")]
     holding_time_months: Annotated[int, Field(alias="holdingTime")]
-    selling_closing_costs_percent: Annotated[float, Field(alias="sellingClosingCosts")] = 0.0
+    
+    buyer_agent_selling_fee: Annotated[float, Field(alias="buyerAgentSellingFee")] = 0.0
+    seller_agent_selling_fee: Annotated[float, Field(alias="sellerAgentSellingFee")] = 0.0
+    selling_closing_costs_in_thousands: Annotated[float, Field(alias="sellingClosingCosts")] = 0.0
+
     monthly_utilities: float = Field(0.0)
     capital_gains_tax_rate: Annotated[float, Field(alias="capitalGainsTax")] = 0.0
     sale_comps: Optional[List[SoldComp]] = None

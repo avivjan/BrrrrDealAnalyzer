@@ -241,7 +241,9 @@ const getDSCRColor = (value: number | undefined) => {
 
 const quickCalcSellingCosts = () => {
     if (editingDeal.value) {
-        (editingDeal.value as any).sellingClosingCosts = 8;
+        (editingDeal.value as any).buyerAgentSellingFee = 3;
+        (editingDeal.value as any).sellerAgentSellingFee = 3;
+        (editingDeal.value as any).sellingClosingCosts = 5;
     }
 };
 
@@ -706,11 +708,18 @@ console.groupEnd();
                        <MoneyInput :model-value="(editingDeal as any).salePrice ?? null" @update:model-value="(v: number | null) => (editingDeal as any).salePrice = v ?? undefined" label="Projected Sale Price" :inThousands="true" :required="true" />
                        <NumberInput :model-value="(editingDeal as any).holdingTime ?? null" @update:model-value="(v: number | null) => (editingDeal as any).holdingTime = v ?? undefined" label="Holding Time" suffix=" mos" :required="true" />
                        
-                       <div class="flex items-end gap-2">
-                          <NumberInput class="flex-1" :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Selling Costs (Agent + Closing)" suffix="%" />
-                          <button @click="quickCalcSellingCosts" class="mb-[6px] p-2 text-xs bg-gray-200 rounded hover:bg-gray-300 text-gray-700 font-medium" title="Set to 8% (6% agent + 2% closing)">
-                             Quick Calc
-                          </button>
+                       <div class="md:col-span-2 bg-white rounded-lg p-3 border border-gray-200 mt-1">
+                            <div class="flex justify-between items-center mb-3">
+                               <h3 class="text-sm font-semibold text-gray-700">Selling Costs Breakdown</h3>
+                               <button @click="quickCalcSellingCosts" class="px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 text-gray-600 transition-colors shadow-sm">
+                                    Quick Defaults (3%/3%/$5k)
+                               </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <NumberInput :model-value="(editingDeal as any).buyerAgentSellingFee ?? null" @update:model-value="(v: number | null) => (editingDeal as any).buyerAgentSellingFee = v ?? undefined" label="Buyer Agent Fee" suffix="%" />
+                                <NumberInput :model-value="(editingDeal as any).sellerAgentSellingFee ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellerAgentSellingFee = v ?? undefined" label="Seller Agent Fee" suffix="%" />
+                                <MoneyInput :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Closing Costs" :inThousands="true" />
+                            </div>
                        </div>
                        <NumberInput :model-value="(editingDeal as any).capitalGainsTax ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capitalGainsTax = v ?? undefined" label="Capital Gains Tax Rate" suffix="%" />
                    </div>

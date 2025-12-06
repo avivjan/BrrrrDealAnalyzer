@@ -48,6 +48,8 @@ const form = ref({
   // Flip Specific
   salePrice: 0, // Maps to sale_price_in_thousands
   holdingTime: 6,
+  buyerAgentSellingFee: 0,
+  sellerAgentSellingFee: 0,
   sellingClosingCosts: 0,
   capitalGainsTax: 0,
   monthly_utilities: 0
@@ -96,6 +98,13 @@ const validateForm = () => {
       errors.push("Sale Price (ARV) must be greater than 0.");
     if (f.holdingTime <= 0)
       errors.push("Holding time must be greater than 0.");
+      
+    if (f.buyerAgentSellingFee < 0 || f.buyerAgentSellingFee > 100)
+         errors.push("Buyer agent fee must be between 0% and 100%.");
+    if (f.sellerAgentSellingFee < 0 || f.sellerAgentSellingFee > 100)
+         errors.push("Seller agent fee must be between 0% and 100%.");
+    if (f.sellingClosingCosts < 0)
+         errors.push("Closing costs cannot be negative.");
   }
 
   console.log("View: AnalyzeDeal - validation errors:", errors);
@@ -219,8 +228,14 @@ const getPerformanceColor = (value: number | undefined) => {
 }
 
 const quickCalcSellingCosts = () => {
-    // 6% agent + 2% closing
-    form.value.sellingClosingCosts = 8;
+    // 3% buyer + 3% seller + ~2% closing (approx $5k for now as default or just 0?)
+    // Let's set closing costs to a reasonable flat fee assumption for "Quick Calc"
+    // The user didn't specify what 2% equivalent is, but typical closing costs might be $2-5k.
+    // If we want to keep logic consistent with previous "2%", we'd need ARV.
+    // Let's just set it to 5 (meaning $5k) as a placeholder for "Quick".
+    form.value.buyerAgentSellingFee = 3;
+    form.value.sellerAgentSellingFee = 3;
+    form.value.sellingClosingCosts = 5; 
 }
 </script>
 
@@ -412,18 +427,32 @@ const quickCalcSellingCosts = () => {
               required
             />
             
-            <div class="flex items-end gap-2">
-                <NumberInput
-                class="flex-1"
-                v-model="form.sellingClosingCosts"
-                label="Selling Costs (Agent + Closing)"
-                suffix="%"
-                />
-                <button @click="quickCalcSellingCosts" class="mb-[6px] p-2 text-xs bg-gray-100 rounded hover:bg-gray-200 text-gray-600" title="Set to 8% (6% agent + 2% closing)">
-                    Quick Calc
-                </button>
+            <div class="md:col-span-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <div class="flex justify-between items-center mb-3">
+                   <h3 class="text-sm font-semibold text-gray-700">Selling Costs</h3>
+                   <button @click="quickCalcSellingCosts" class="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
+                        Quick Defaults (3%/3%/$5k)
+                   </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <NumberInput
+                        v-model="form.buyerAgentSellingFee"
+                        label="Buyer Agent Fee"
+                        suffix="%"
+                    />
+                    <NumberInput
+                        v-model="form.sellerAgentSellingFee"
+                        label="Seller Agent Fee"
+                        suffix="%"
+                    />
+                    <MoneyInput
+                        v-model="form.sellingClosingCosts"
+                        label="Closing Costs"
+                        :inThousands="true"
+                    />
+                </div>
             </div>
-            
+
             <NumberInput
               v-model="form.capitalGainsTax"
               label="Capital Gains Tax Rate"

@@ -74,7 +74,11 @@ class FlipActiveDeal(Base, BaseDeal):
     
     sale_price_in_thousands = Column(Float, nullable=False) # ARV
     holding_time_months = Column(Integer, nullable=False)
-    selling_closing_costs_percent = Column(Float, nullable=False, default=0.0)
+    
+    buyer_agent_selling_fee = Column(Float, nullable=False, default=0.0)
+    seller_agent_selling_fee = Column(Float, nullable=False, default=0.0)
+    selling_closing_costs_in_thousands = Column(Float, nullable=False, default=0.0)
+    
     monthly_utilities = Column(Float, nullable=False, default=0.0)
     capital_gains_tax_rate = Column(Float, nullable=False, default=0.0)
     

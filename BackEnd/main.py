@@ -218,8 +218,12 @@ def validate_flip_inputs(payload: analyzeFlipReq):
     if payload.HML_points < 0 or payload.HML_points > 100:
         validation_errors.append("HML points must be between 0% and 100%.")
         
-    if payload.selling_closing_costs_percent < 0 or payload.selling_closing_costs_percent > 100:
-        validation_errors.append("Selling closing costs must be between 0% and 100%.")
+    if payload.buyer_agent_selling_fee < 0 or payload.buyer_agent_selling_fee > 100:
+        validation_errors.append("Buyer agent fee must be between 0% and 100%.")
+    if payload.seller_agent_selling_fee < 0 or payload.seller_agent_selling_fee > 100:
+        validation_errors.append("Seller agent fee must be between 0% and 100%.")
+    if payload.selling_closing_costs_in_thousands < 0:
+        validation_errors.append("Selling closing cost cannot be negative.")
 
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
@@ -243,7 +247,8 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     
     total_holding_costs = total_hml_interest + total_operating
     
-    selling_costs = sale_price * (payload.selling_closing_costs_percent / 100.0)
+    agent_fees_percent = payload.buyer_agent_selling_fee + payload.seller_agent_selling_fee
+    selling_costs = sale_price * (agent_fees_percent / 100.0) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
     
     down_payment_cash = (payload.down_payment / 100.0) * purchase_price
     rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 0

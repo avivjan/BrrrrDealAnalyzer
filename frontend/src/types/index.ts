@@ -85,7 +85,9 @@ export interface BrrrDealRes extends BrrrDealCreate, BrrrAnalyzeRes {
 export interface FlipAnalyzeReq {
   salePrice: number; // ARV
   holdingTime: number;
-  sellingClosingCosts: number;
+  buyerAgentSellingFee: number;
+  sellerAgentSellingFee: number;
+  sellingClosingCosts: number; // in thousands
   capitalGainsTax: number;
   monthly_utilities?: number;
 }

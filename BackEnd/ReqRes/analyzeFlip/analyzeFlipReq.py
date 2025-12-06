@@ -23,7 +23,9 @@ class analyzeFlipReq(BaseModel):
     holding_time_months: Annotated[int, Field(alias="holdingTime", description="Months until sale")]
     
     # Selling Costs
-    selling_closing_costs_percent: Annotated[float, Field(alias="sellingClosingCosts", description="Agent fees + taxes + other closing costs as percent of sale price")] = 0.0
+    buyer_agent_selling_fee: Annotated[float, Field(alias="buyerAgentSellingFee", description="Buyer agent commission percentage")] = 0.0
+    seller_agent_selling_fee: Annotated[float, Field(alias="sellerAgentSellingFee", description="Seller agent commission percentage")] = 0.0
+    selling_closing_costs_in_thousands: Annotated[float, Field(alias="sellingClosingCosts", description="Other closing costs in thousands")] = 0.0
     
     # Operating Costs during holding
     annual_property_taxes: float = Field(0.0, description="Annual property taxes")
