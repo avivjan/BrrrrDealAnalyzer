@@ -67,7 +67,7 @@ const openLink = (card: any) => {
       <h1
         class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-center mb-12 tracking-tight drop-shadow-sm"
       >
-        BRRRR Deal Analyzer
+        Big Whales Deal Analyzer
       </h1>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
