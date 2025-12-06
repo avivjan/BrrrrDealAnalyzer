@@ -105,6 +105,21 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
+  async function duplicateDeal(dealId: number) {
+    isLoading.value = true;
+    try {
+      const newDeal = await api.duplicateActiveDeal(dealId);
+      deals.value.push(newDeal); // Add to local state
+      return newDeal;
+    } catch (err) {
+      error.value = 'Failed to duplicate deal';
+      console.error(err);
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     deals,
     currentAnalysisResult,
@@ -117,7 +132,6 @@ export const useDealStore = defineStore('deals', () => {
     updateDeal,
     updateDealStage,
     deleteDeal,
+    duplicateDeal,
   };
 });
-
-

@@ -85,6 +85,30 @@ const confirmDelete = async (deal: ActiveDealRes) => {
   }
 };
 
+const duplicateDeal = async (dealId: number) => {
+  if (confirm(`Are you sure you want to duplicate this deal?`)) {
+    try {
+      await store.duplicateDeal(dealId);
+      refreshColumns(); // Refresh local columns after store update
+    } catch (e) {
+      alert("Failed to duplicate deal");
+    }
+  }
+};
+
+const duplicateEditingDeal = async () => {
+  if (editingDeal.value) {
+    if (confirm(`Duplicate this deal?`)) {
+      try {
+        await store.duplicateDeal(editingDeal.value.id);
+        showDetailModal.value = false; // Close modal after duplicate
+      } catch (e) {
+        alert("Failed to duplicate deal");
+      }
+    }
+  }
+};
+
 // Modals
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
@@ -195,13 +219,25 @@ const saveChanges = async () => {
       <div class="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
         <button
           v-for="tab in [
-            { id: 1, label: 'Wholesale' },
-            { id: 2, label: 'Market' },
-            { id: 3, label: 'Off Market' },
+            {
+              id: 1,
+              label: 'Wholesale',
+              count: store.dealsBySection.wholesale.length,
+            },
+            {
+              id: 2,
+              label: 'Market',
+              count: store.dealsBySection.market.length,
+            },
+            {
+              id: 3,
+              label: 'Off Market',
+              count: store.dealsBySection.offMarket.length,
+            },
           ]"
           :key="tab.id"
           @click="activeTab = tab.id"
-          class="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
+          class="px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2"
           :class="
             activeTab === tab.id
               ? 'bg-white text-blue-600 shadow-sm'
@@ -209,6 +245,10 @@ const saveChanges = async () => {
           "
         >
           {{ tab.label }}
+          <span
+            class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full text-[10px]"
+            >{{ tab.count }}</span
+          >
         </button>
       </div>
 
@@ -258,7 +298,11 @@ const saveChanges = async () => {
                 :key="deal.id"
                 @click="openDeal(deal)"
               >
-                <DealCard :deal="deal" @delete="confirmDelete(deal)" />
+                <DealCard
+                  :deal="deal"
+                  @delete="confirmDelete(deal)"
+                  @duplicate="duplicateDeal(deal.id)"
+                />
               </div>
             </VueDraggable>
           </div>
@@ -301,7 +345,7 @@ const saveChanges = async () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Central Task Box -->
             <div
-              class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-center"
+              class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-start min-h-[200px]"
             >
               <label
                 class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2"
@@ -309,8 +353,7 @@ const saveChanges = async () => {
               >
               <textarea
                 v-model="editingDeal.task"
-                rows="3"
-                class="w-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
+                class="w-full h-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
                 placeholder="What needs to be done?"
               ></textarea>
             </div>
@@ -868,6 +911,12 @@ const saveChanges = async () => {
             Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
           </div>
           <div class="flex gap-4">
+            <button
+              @click="duplicateEditingDeal"
+              class="text-blue-600 hover:text-blue-800 px-4 py-2 flex items-center gap-2"
+            >
+              <i class="pi pi-copy"></i> Duplicate
+            </button>
             <button
               @click="showDetailModal = false"
               class="text-gray-500 hover:text-gray-700 px-4 py-2"

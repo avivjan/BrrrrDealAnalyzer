@@ -23,6 +23,17 @@ const value = computed({
 const displayLabel = computed(() => {
   return props.inThousands ? `${props.label} ($000s)` : props.label;
 });
+
+const handleKeydown = (e: KeyboardEvent) => {
+  // Allow Cmd+A / Ctrl+A to select all
+  if ((e.metaKey || e.ctrlKey) && e.key === "a") {
+    e.preventDefault();
+    const input = e.target as HTMLInputElement;
+    if (input && typeof input.select === "function") {
+      input.select();
+    }
+  }
+};
 </script>
 
 <template>
@@ -49,6 +60,7 @@ const displayLabel = computed(() => {
       :maxFractionDigits="0"
       inputClass="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-gray-50"
       class="w-full"
+      @keydown="handleKeydown"
     />
   </div>
 </template>

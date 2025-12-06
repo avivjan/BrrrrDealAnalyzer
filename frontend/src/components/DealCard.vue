@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "delete", id: number): void;
+  (e: "duplicate", id: number): void;
 }>();
 
 const stageColors = {
@@ -40,6 +41,15 @@ const formatMoney = (val?: number) =>
       title="Delete Deal"
     >
       <i class="pi pi-times text-[10px] font-bold"></i>
+    </button>
+
+    <!-- Duplicate Button -->
+    <button
+      @click.stop="emit('duplicate', deal.id)"
+      class="absolute top-2 right-9 p-1.5 rounded-full bg-blue-100 text-blue-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-200 hover:scale-110 z-10"
+      title="Duplicate Deal"
+    >
+      <i class="pi pi-copy text-[10px] font-bold"></i>
     </button>
 
     <!-- Header: Address -->

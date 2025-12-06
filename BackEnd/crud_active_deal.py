@@ -38,3 +38,21 @@ def delete_active_deal(db: Session, deal_id: int) -> bool:
     db.delete(db_deal)
     db.commit()
     return True
+
+def duplicate_active_deal(db: Session, deal_id: int) -> ActiveDeal | None:
+    original_deal = db.query(ActiveDeal).filter(ActiveDeal.id == deal_id).first()
+    if not original_deal:
+        return None
+    
+    # Create new instance with same data
+    data = {c.name: getattr(original_deal, c.name) for c in original_deal.__table__.columns if c.name not in ['id', 'created_at', 'updated_at']}
+    
+    # Append (Copy) to address
+    if 'address' in data and data['address']:
+        data['address'] = f"{data['address']} (Copy)"
+        
+    new_deal = ActiveDeal(**data)
+    db.add(new_deal)
+    db.commit()
+    db.refresh(new_deal)
+    return new_deal

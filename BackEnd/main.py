@@ -5,7 +5,7 @@ from ReqRes.activeDeal.activeDealReq import ActiveDealCreate, ActiveDealRes
 from sqlalchemy.orm import Session
 
 from crud_active_deal import add_active_deal as add_active_deal_crud
-from crud_active_deal import get_all_active_deals, update_active_deal as update_active_deal_crud, delete_active_deal as delete_active_deal_crud
+from crud_active_deal import get_all_active_deals, update_active_deal as update_active_deal_crud, delete_active_deal as delete_active_deal_crud, duplicate_active_deal as duplicate_active_deal_crud
 from db import Base, engine, get_db
 from models import ActiveDeal
 
@@ -262,6 +262,12 @@ def update_active_deal_endpoint(deal_id: int, deal: ActiveDealCreate, db: Sessio
         raise HTTPException(status_code=404, detail="Deal not found")
     return create_active_deal_res(updated_deal)
 
+@app.post("/active-deals/{deal_id}/duplicate", response_model=ActiveDealRes, response_model_by_alias=True)
+def duplicate_active_deal_endpoint(deal_id: int, db: Session = Depends(get_db)) -> ActiveDealRes:
+    new_deal = duplicate_active_deal_crud(db, deal_id)
+    if not new_deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    return create_active_deal_res(new_deal)
 
 @app.delete("/active-deals/{deal_id}")
 def delete_active_deal_endpoint(deal_id: int, db: Session = Depends(get_db)):

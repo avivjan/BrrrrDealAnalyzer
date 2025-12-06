@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes } from '../types';
 
 const apiClient = axios.create({
-  baseURL: 'https://brrrrdealanalyzer.onrender.com', 
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,6 +34,11 @@ export default {
 
   async deleteActiveDeal(dealId: number): Promise<void> {
     await apiClient.delete(`/active-deals/${dealId}`);
+  },
+
+  async duplicateActiveDeal(dealId: number): Promise<ActiveDealRes> {
+    const response = await apiClient.post<ActiveDealRes>(`/active-deals/${dealId}/duplicate`);
+    return response.data;
   },
 
   async updateDealStage(dealId: number, stage: number): Promise<void> {
