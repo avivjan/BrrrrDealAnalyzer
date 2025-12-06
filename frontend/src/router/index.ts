@@ -24,6 +24,16 @@ const router = createRouter({
   ]
 })
 
+router.beforeEach((to, from, next) => {
+  console.group('Router: Navigation');
+  console.log('From:', from.fullPath);
+  console.log('To:', to.fullPath);
+  console.log('Params:', to.params);
+  console.log('Query:', to.query);
+  console.groupEnd();
+  next();
+});
+
 export default router
 
 

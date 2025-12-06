@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
+
+console.log("View: LandingPage setup");
+
+onMounted(() => {
+  console.log("View: LandingPage mounted");
+});
+
 const cards = [
   {
     title: "Daily Tasks",
@@ -31,6 +39,7 @@ const cards = [
 ];
 
 const openLink = (card: any) => {
+  console.log("View: LandingPage - Opening link:", card.title, card.url);
   if (card.action === "external") {
     window.open(card.url, "_blank");
   }

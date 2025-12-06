@@ -6,6 +6,8 @@ import router from './router'
 import './assets/main.css'
 import 'primeicons/primeicons.css'
 
+console.log('Main: App initializing...');
+
 const app = createApp(App)
 
 app.use(createPinia())
@@ -19,3 +21,4 @@ app.use(PrimeVue, {
 });
 
 app.mount('#app')
+console.log('Main: App mounted');

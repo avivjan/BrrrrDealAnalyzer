@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import type { ActiveDealRes } from "../types";
 
 const props = defineProps<{
@@ -10,6 +10,20 @@ const emit = defineEmits<{
   (e: "delete", id: number): void;
   (e: "duplicate", id: number): void;
 }>();
+
+onMounted(() => {
+  // console.log('Component: DealCard mounted', props.deal.id); // Too verbose for every card
+});
+
+const onDelete = (id: number) => {
+  console.log("Component: DealCard - delete clicked for deal:", id);
+  emit("delete", id);
+};
+
+const onDuplicate = (id: number) => {
+  console.log("Component: DealCard - duplicate clicked for deal:", id);
+  emit("duplicate", id);
+};
 
 const stageColors = {
   1: "border-l-4 border-l-blue-500 bg-white border border-gray-100", // New
@@ -36,7 +50,7 @@ const formatMoney = (val?: number) =>
   >
     <!-- Delete Button -->
     <button
-      @click.stop="emit('delete', deal.id)"
+      @click.stop="onDelete(deal.id)"
       class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
       title="Delete Deal"
     >
@@ -45,7 +59,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Duplicate Button -->
     <button
-      @click.stop="emit('duplicate', deal.id)"
+      @click.stop="onDuplicate(deal.id)"
       class="absolute top-2 right-9 p-1.5 rounded-full bg-blue-100 text-blue-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-200 hover:scale-110 z-10"
       title="Duplicate Deal"
     >

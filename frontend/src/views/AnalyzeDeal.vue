@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useDealStore } from "../stores/dealStore";
 import { storeToRefs } from "pinia";
 import MoneyInput from "../components/ui/MoneyInput.vue";
@@ -7,6 +7,9 @@ import NumberInput from "../components/ui/NumberInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import type { AnalyzeDealReq } from "../types";
+
+console.group('View: AnalyzeDeal');
+console.log('Component setup started');
 
 const store = useDealStore();
 const { currentAnalysisResult, isLoading } = storeToRefs(store);
@@ -36,11 +39,16 @@ const form = ref<AnalyzeDealReq>({
   montly_hoa: 0,
 });
 
+onMounted(() => {
+  console.log('View: AnalyzeDeal mounted');
+});
+
 // Analyze Logic
 const hasAnalyzed = ref(false);
 const validationErrors = ref<string[]>([]);
 
 const validateForm = () => {
+  console.log('View: AnalyzeDeal - validating form:', form.value);
   const errors: string[] = [];
   const f = form.value;
 
@@ -93,21 +101,27 @@ const validateForm = () => {
     errors.push("Annual insurance cannot be negative.");
   if (f.montly_hoa < 0) errors.push("HOA dues cannot be negative.");
 
+  console.log('View: AnalyzeDeal - validation errors:', errors);
   return errors;
 };
 
 const analyze = async () => {
+  console.log('View: AnalyzeDeal - analyze triggered');
   if (
     form.value.purchasePrice > 0 &&
     form.value.arv_in_thousands > 0 &&
     form.value.rent > 0
   ) {
     validationErrors.value = [];
+    console.log('View: AnalyzeDeal - calling store.analyze');
     await store.analyze(form.value);
+  } else {
+    console.warn('View: AnalyzeDeal - skipping analysis due to missing basic fields');
   }
 };
 
 const onAnalyzeClick = async () => {
+  console.log('View: AnalyzeDeal - Analyze button clicked');
   const errors = validateForm();
 
   if (errors.length > 0) {
@@ -124,6 +138,7 @@ watch(
   form,
   () => {
     if (hasAnalyzed.value) {
+      console.log('View: AnalyzeDeal - form changed, re-analyzing');
       analyze();
     }
   },
@@ -157,6 +172,10 @@ const saveForm = ref({
   stage: 1,
 });
 
+watch(showSaveModal, (val) => {
+    console.log('View: AnalyzeDeal - showSaveModal changed:', val);
+});
+
 const getCashFlowColor = (value: number | undefined) => {
   if (value === undefined || value === null) return "text-gray-900";
   if (value >= 100) return "text-emerald-600";
@@ -181,18 +200,23 @@ const getDSCRColor = (value: number | undefined) => {
 };
 
 const saveDeal = async () => {
+  console.log('View: AnalyzeDeal - saveDeal clicked');
   try {
     const dealData = {
       ...form.value,
       ...saveForm.value,
     };
+    console.log('View: AnalyzeDeal - saving deal data:', dealData);
     await store.saveDeal(dealData as any);
     showSaveModal.value = false;
     alert("Deal Saved Successfully!");
   } catch (e) {
+    console.error('View: AnalyzeDeal - save failed:', e);
     alert("Failed to save deal.");
   }
 };
+console.groupEnd();
+</script>
 </script>
 
 <template>
