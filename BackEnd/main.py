@@ -50,12 +50,59 @@ def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_
 
 def validate_brrr_inputs(payload: analyzeBRRRReq):
     validation_errors = []
+    
+    # 1. Base Value Checks (Must be positive)
     if payload.arv_in_thousands <= 0:
         validation_errors.append("ARV (in thousands) must be greater than 0.")
     if payload.purchase_price_in_thousands <= 0:
         validation_errors.append("Purchase price (in thousands) must be greater than 0.")
     if payload.rent <= 0:
         validation_errors.append("Rent must be greater than 0.")
+
+    # 2. Non-Negative Checks
+    if payload.rehab_cost_in_thousands < 0:
+        validation_errors.append("Rehab cost cannot be negative.")
+    if payload.closing_costs_buy_in_thousands < 0:
+        validation_errors.append("Closing costs (buy) cannot be negative.")
+    if payload.closing_cost_refi_in_thousands < 0:
+        validation_errors.append("Refi closing costs cannot be negative.")
+    if payload.annual_property_taxes < 0:
+        validation_errors.append("Annual property taxes cannot be negative.")
+    if payload.annual_insurance < 0:
+        validation_errors.append("Annual insurance cannot be negative.")
+    if payload.montly_hoa < 0:
+        validation_errors.append("HOA dues cannot be negative.")
+
+    # 3. Lending Terms (Percentage Ranges 0-100)
+    if payload.down_payment < 0 or payload.down_payment > 100:
+        validation_errors.append("Down payment percentage must be between 0% and 100%.")
+    if payload.ltv_as_precent <= 0 or payload.ltv_as_precent > 100:
+        validation_errors.append("LTV must be between 0% and 100%.")
+    if payload.HML_points < 0 or payload.HML_points > 100:
+        validation_errors.append("HML points must be between 0% and 100%.")
+    if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
+        validation_errors.append("HML interest rate must be between 0% and 100%.")
+    
+    # 4. Timeframes
+    if payload.Months_until_refi <= 0:
+        validation_errors.append("Months until refi must be a positive number.")
+    if payload.loan_term_years <= 0:
+        validation_errors.append("Loan term must be at least 1 year.")
+
+    # 5. Long-term Financing
+    if payload.interest_rate < 0 or payload.interest_rate > 100:
+        validation_errors.append("Interest rate must be between 0% and 100%.")
+
+    # 6. Operating Expenses (Percentage Ranges)
+    if payload.vacancy_percent < 0 or payload.vacancy_percent > 100:
+        validation_errors.append("Vacancy percentage must be between 0% and 100%.")
+    if payload.property_managment_fee_precentages_from_rent < 0 or payload.property_managment_fee_precentages_from_rent > 100:
+        validation_errors.append("Property management percentage must be between 0% and 100%.")
+    if payload.maintenance_percent < 0 or payload.maintenance_percent > 100:
+        validation_errors.append("Maintenance percentage must be between 0% and 100%.")
+    if payload.capex_percent_of_rent < 0 or payload.capex_percent_of_rent > 100:
+        validation_errors.append("CapEx percentage must be between 0% and 100%.")
+
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
@@ -151,6 +198,32 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
 
 # --- Flip Logic ---
 
+def validate_flip_inputs(payload: analyzeFlipReq):
+    validation_errors = []
+    
+    if payload.sale_price_in_thousands <= 0:
+        validation_errors.append("Sale price (ARV) must be greater than 0.")
+    if payload.purchase_price_in_thousands <= 0:
+        validation_errors.append("Purchase price must be greater than 0.")
+    
+    if payload.holding_time_months <= 0:
+        validation_errors.append("Holding time must be greater than 0 months.")
+
+    if payload.rehab_cost_in_thousands < 0:
+        validation_errors.append("Rehab cost cannot be negative.")
+    
+    if payload.down_payment < 0 or payload.down_payment > 100:
+        validation_errors.append("Down payment percentage must be between 0% and 100%.")
+        
+    if payload.HML_points < 0 or payload.HML_points > 100:
+        validation_errors.append("HML points must be between 0% and 100%.")
+        
+    if payload.selling_closing_costs_percent < 0 or payload.selling_closing_costs_percent > 100:
+        validation_errors.append("Selling closing costs must be between 0% and 100%.")
+
+    if validation_errors:
+        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
+
 def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
     rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
@@ -207,7 +280,7 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 
 @app.post("/analyze/flip", response_model=analyzeFlipRes)
 def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
-    # validate_flip_inputs(payload)
+    validate_flip_inputs(payload)
     return calculate_flip_results(payload)
 
 
