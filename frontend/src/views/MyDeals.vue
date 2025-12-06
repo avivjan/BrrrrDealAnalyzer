@@ -14,15 +14,15 @@ const store = useDealStore();
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
-  { id: 1, name: "New", color: "bg-whale-surface border-whale-border shadow-sm" },
-  { id: 2, name: "Working", color: "bg-whale-surface border-whale-border shadow-sm" },
-  { id: 3, name: "Brought", color: "bg-whale-surface border-whale-border shadow-sm" },
+  { id: 1, name: "New", color: "bg-white border-gray-200" },
+  { id: 2, name: "Working", color: "bg-white border-gray-200" },
+  { id: 3, name: "Brought", color: "bg-white border-gray-200" },
   {
     id: 4,
     name: "Keep in Mind",
-    color: "bg-whale-surface border-whale-border shadow-sm",
+    color: "bg-white border-gray-200",
   },
-  { id: 5, name: "Dead", color: "bg-whale-surface border-whale-border shadow-sm" },
+  { id: 5, name: "Dead", color: "bg-white border-gray-200" },
 ];
 
 // Local state for each column to support drag-and-drop
@@ -110,26 +110,26 @@ const formatPercent = (value: number | undefined) => {
 };
 
 const getCashFlowColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-ocean-50";
-  if (value >= 100) return "text-emerald-400";
-  if (value >= 1) return "text-gray-400";
-  return "text-red-400";
+  if (value === undefined || value === null) return "text-gray-900";
+  if (value >= 100) return "text-emerald-600";
+  if (value >= 1) return "text-gray-600";
+  return "text-red-600";
 };
 
 const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-ocean-50";
-  if (value === -1) return "text-emerald-400"; // Infinity
-  if (value === -2) return "text-red-400"; // -Infinity
-  if (value > 0) return "text-emerald-400";
-  if (value < 0) return "text-red-400";
-  return "text-gray-400";
+  if (value === undefined || value === null) return "text-gray-900";
+  if (value === -1) return "text-emerald-600"; // Infinity
+  if (value === -2) return "text-red-600"; // -Infinity
+  if (value > 0) return "text-emerald-600";
+  if (value < 0) return "text-red-600";
+  return "text-gray-600";
 };
 
 const getDSCRColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-ocean-50";
-  if (value >= 1.2) return "text-emerald-400";
-  if (value >= 1.0) return "text-gray-400";
-  return "text-red-400";
+  if (value === undefined || value === null) return "text-gray-900";
+  if (value >= 1.2) return "text-emerald-600";
+  if (value >= 1.0) return "text-gray-600";
+  return "text-red-600";
 };
 
 const openDeal = (deal: ActiveDealRes) => {
@@ -174,31 +174,25 @@ const saveChanges = async () => {
 </script>
 
 <template>
-  <div
-    class="h-screen flex flex-col bg-whale-dark text-ocean-50 overflow-hidden"
-  >
+  <div class="h-screen flex flex-col bg-gray-50 text-gray-900 overflow-hidden">
     <!-- Header -->
     <header
-      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-whale-border bg-whale-dark/95 backdrop-blur z-20"
+      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-gray-200 bg-white/95 backdrop-blur z-20 shadow-sm"
     >
       <div class="flex items-center gap-4">
         <button
           @click="$router.push('/')"
-          class="text-ocean-300 hover:text-ocean-600 transition-colors"
+          class="text-gray-500 hover:text-blue-600 transition-colors"
         >
           <i class="pi pi-home text-xl"></i>
         </button>
-        <h1
-          class="text-2xl font-bold text-ocean-500 hidden md:block"
-        >
+        <h1 class="text-2xl font-bold text-gray-900 hidden md:block">
           My Deals
         </h1>
       </div>
 
       <!-- Tabs -->
-      <div
-        class="flex bg-whale-surface rounded-lg p-1 border border-whale-border/50"
-      >
+      <div class="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
         <button
           v-for="tab in [
             { id: 1, label: 'Wholesale' },
@@ -210,8 +204,8 @@ const saveChanges = async () => {
           class="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
           :class="
             activeTab === tab.id
-              ? 'bg-ocean-600 text-white shadow-md'
-              : 'text-ocean-300 hover:text-ocean-600'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           "
         >
           {{ tab.label }}
@@ -220,7 +214,7 @@ const saveChanges = async () => {
 
       <button
         @click="$router.push('/analyze')"
-        class="bg-ocean-600 hover:bg-ocean-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2"
+        class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all"
       >
         <i class="pi pi-plus"></i>
         <span class="hidden md:inline">Add Deal</span>
@@ -228,28 +222,28 @@ const saveChanges = async () => {
     </header>
 
     <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden">
+    <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-50">
       <div class="h-full flex px-4 pb-4 pt-2 md:pt-4 gap-4 min-w-max">
         <div
           v-for="stage in stages"
           :key="stage.id"
-          class="flex flex-col w-[85vw] md:w-80 h-full rounded-xl border backdrop-blur-sm transition-colors"
+          class="flex flex-col w-[85vw] md:w-80 h-full rounded-xl border shadow-sm transition-colors"
           :class="stage.color"
         >
           <!-- Column Header -->
           <div
-            class="flex-none p-3 flex justify-between items-center border-b border-white/5"
+            class="flex-none p-3 flex justify-between items-center border-b border-gray-100"
           >
-            <h3 class="font-bold text-ocean-100">{{ stage.name }}</h3>
+            <h3 class="font-bold text-gray-800">{{ stage.name }}</h3>
             <span
-              class="bg-black/20 px-2 py-0.5 rounded-full text-xs font-mono text-ocean-300"
+              class="bg-gray-100 px-2 py-0.5 rounded-full text-xs font-mono text-gray-500"
             >
               {{ columns[stage.id]?.length || 0 }}
             </span>
           </div>
 
           <!-- Draggable Area -->
-          <div class="flex-1 overflow-y-auto p-3 scrollbar-hide">
+          <div class="flex-1 overflow-y-auto p-3 scrollbar-hide bg-gray-50/50">
             <VueDraggable
               v-if="columns[stage.id]"
               v-model="columns[stage.id]!"
@@ -275,28 +269,28 @@ const saveChanges = async () => {
     <!-- Detail Modal -->
     <div
       v-if="showDetailModal && editingDeal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
       <div
-        class="bg-whale-surface w-full max-w-6xl max-h-[95vh] rounded-2xl border border-ocean-500/30 shadow-2xl flex flex-col"
+        class="bg-white w-full max-w-6xl max-h-[95vh] rounded-2xl border border-gray-200 shadow-2xl flex flex-col"
       >
         <!-- Modal Header -->
         <div
-          class="flex justify-between items-center p-6 border-b border-white/10 shrink-0"
+          class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0"
         >
           <div class="flex-1 mr-4">
             <label
-              class="text-xs text-ocean-300 uppercase font-bold tracking-wider"
+              class="text-xs text-gray-500 uppercase font-bold tracking-wider"
               >Address</label
             >
             <input
               v-model="editingDeal.address"
-              class="w-full bg-transparent text-2xl font-bold text-ocean-50 border-b border-transparent hover:border-gray-200 focus:border-ocean-500 outline-none transition-colors"
+              class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
             />
           </div>
           <button
             @click="showDetailModal = false"
-            class="text-ocean-300 hover:text-ocean-600"
+            class="text-gray-400 hover:text-gray-600"
           >
             <i class="pi pi-times text-xl"></i>
           </button>
@@ -307,16 +301,16 @@ const saveChanges = async () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Central Task Box -->
             <div
-              class="md:col-span-2 bg-slate-100 p-4 rounded-xl border border-whale-border flex flex-col justify-center"
+              class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-center"
             >
               <label
-                class="text-xs text-ocean-300 uppercase font-bold tracking-wider mb-2"
+                class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2"
                 >Current Task / Status</label
               >
               <textarea
                 v-model="editingDeal.task"
                 rows="3"
-                class="w-full bg-transparent text-lg text-ocean-50 resize-none outline-none placeholder-gray-400"
+                class="w-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
                 placeholder="What needs to be done?"
               ></textarea>
             </div>
@@ -330,12 +324,10 @@ const saveChanges = async () => {
                   label="SqFt"
                 />
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs text-ocean-200 font-medium"
-                    >Stage</label
-                  >
+                  <label class="text-xs text-gray-600 font-medium">Stage</label>
                   <select
                     v-model="editingDeal.stage"
-                    class="bg-whale-dark border border-whale-border rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                    class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option v-for="s in stages" :key="s.id" :value="s.id">
                       {{ s.name }}
@@ -350,12 +342,12 @@ const saveChanges = async () => {
                   label="Beds"
                 />
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs text-ocean-200 font-medium"
+                  <label class="text-xs text-gray-600 font-medium"
                     >Section</label
                   >
                   <select
                     v-model="editingDeal.section"
-                    class="bg-whale-dark border border-whale-border rounded-lg px-2 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-ocean-500"
+                    class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option :value="1">Wholesale</option>
                     <option :value="2">Market</option>
@@ -379,100 +371,98 @@ const saveChanges = async () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium"
+                <label class="text-xs text-gray-600 font-medium"
                   >Zillow Link</label
                 >
                 <input
                   v-model="editingDeal.zillow_link"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="https://..."
                 />
                 <a
                   v-if="editingDeal.zillow_link"
                   :href="editingDeal.zillow_link"
                   target="_blank"
-                  class="text-xs text-ocean-400 hover:text-ocean-300 flex items-center gap-1"
+                  class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                   ><i class="pi pi-external-link"></i> Open</a
                 >
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium"
+                <label class="text-xs text-gray-600 font-medium"
                   >Photos Link</label
                 >
                 <input
                   v-model="editingDeal.pics_link"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="Google Drive / Dropbox..."
                 />
                 <a
                   v-if="editingDeal.pics_link"
                   :href="editingDeal.pics_link"
                   target="_blank"
-                  class="text-xs text-ocean-400 hover:text-ocean-300 flex items-center gap-1"
+                  class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                   ><i class="pi pi-external-link"></i> Open</a
                 >
               </div>
             </div>
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium"
+                <label class="text-xs text-gray-600 font-medium"
                   >Overall Design</label
                 >
                 <input
                   v-model="editingDeal.overall_design"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Modern Farmhouse"
                 />
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium"
+                <label class="text-xs text-gray-600 font-medium"
                   >Crime Rate</label
                 >
                 <input
                   v-model="editingDeal.crime_rate"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Low / B-"
                 />
               </div>
             </div>
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium"
+                <label class="text-xs text-gray-600 font-medium"
                   >Contact Info</label
                 >
                 <textarea
                   v-model="editingDeal.contact"
                   rows="2"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="Agent / Owner details"
                 ></textarea>
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-ocean-200 font-medium">Niche</label>
+                <label class="text-xs text-gray-600 font-medium">Niche</label>
                 <input
                   v-model="editingDeal.niche"
-                  class="bg-white border border-whale-border rounded-lg px-3 py-2 text-ocean-50 text-sm outline-none focus:border-ocean-500"
+                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                 />
               </div>
             </div>
           </div>
 
           <!-- Analyze Deal Fields -->
-          <div class="border-t border-white/10 pt-6">
+          <div class="border-t border-gray-200 pt-6">
             <div class="flex justify-between items-center mb-6">
               <h3
-                class="text-xl font-bold text-ocean-100 flex items-center gap-2"
+                class="text-xl font-bold text-gray-800 flex items-center gap-2"
               >
-                <i class="pi pi-calculator text-ocean-400"></i> Deal Analysis
+                <i class="pi pi-calculator text-blue-500"></i> Deal Analysis
               </h3>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <!-- Group 1: Buy & Rehab -->
-              <div
-                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
-              >
-                <h4 class="font-semibold text-ocean-200 mb-4">Buy & Rehab</h4>
+              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <h4 class="font-semibold text-gray-700 mb-4">Buy & Rehab</h4>
                 <div class="space-y-3">
                   <MoneyInput
                     v-model="editingDeal.purchasePrice"
@@ -490,8 +480,8 @@ const saveChanges = async () => {
                     :inThousands="true"
                   />
 
-                  <div class="pt-2 border-t border-white/5">
-                    <p class="text-xs text-ocean-300 mb-2">Hard Money</p>
+                  <div class="pt-2 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 mb-2">Hard Money</p>
                     <div class="grid grid-cols-2 gap-2">
                       <NumberInput
                         v-model="editingDeal.down_payment"
@@ -513,9 +503,9 @@ const saveChanges = async () => {
                       />
                       <div class="flex flex-col justify-end">
                         <div
-                          class="flex items-center justify-between bg-black/20 p-2 rounded border border-white/5"
+                          class="flex items-center justify-between bg-white p-2 rounded border border-gray-200"
                         >
-                          <span class="text-[10px] text-ocean-200"
+                          <span class="text-[10px] text-gray-600"
                             >HM for Rehab</span
                           >
                           <ToggleSwitch
@@ -529,10 +519,8 @@ const saveChanges = async () => {
               </div>
 
               <!-- Group 2: Refinance -->
-              <div
-                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
-              >
-                <h4 class="font-semibold text-ocean-200 mb-4">
+              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <h4 class="font-semibold text-gray-700 mb-4">
                   Refinance (BRRRR)
                 </h4>
                 <div class="space-y-3">
@@ -573,10 +561,8 @@ const saveChanges = async () => {
               </div>
 
               <!-- Group 3: Rent & Expenses -->
-              <div
-                class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
-              >
-                <h4 class="font-semibold text-ocean-200 mb-4">
+              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <h4 class="font-semibold text-gray-700 mb-4">
                   Rent & Expenses
                 </h4>
                 <div class="space-y-3">
@@ -623,20 +609,20 @@ const saveChanges = async () => {
             <!-- Analysis Results -->
             <div
               v-if="currentAnalysis"
-              class="bg-gradient-to-br from-whale-surface to-whale-dark p-6 rounded-2xl border border-ocean-500/30 shadow-2xl relative overflow-hidden"
+              class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl relative overflow-hidden"
             >
               <div
-                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-ocean-500 to-purple-500"
+                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"
               ></div>
               <h4
-                class="font-semibold text-ocean-200 mb-6 flex items-center gap-2"
+                class="font-semibold text-gray-800 mb-6 flex items-center gap-2"
               >
-                <i class="pi pi-chart-bar text-ocean-400"></i> Analysis Results
+                <i class="pi pi-chart-bar text-blue-500"></i> Analysis Results
               </h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <!-- Primary Metrics -->
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">Cash Flow</div>
+                  <div class="text-xs text-gray-500 uppercase">Cash Flow</div>
                   <div
                     class="text-2xl font-bold"
                     :class="getCashFlowColor(currentAnalysis.cash_flow)"
@@ -645,7 +631,7 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">Cash Out</div>
+                  <div class="text-xs text-gray-500 uppercase">Cash Out</div>
                   <div
                     class="text-2xl font-bold"
                     :class="getPerformanceColor(currentAnalysis.cash_out)"
@@ -654,17 +640,15 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">
-                    Cash Needed
-                  </div>
-                  <div class="text-2xl font-bold text-blue-400">
+                  <div class="text-xs text-gray-500 uppercase">Cash Needed</div>
+                  <div class="text-2xl font-bold text-blue-600">
                     {{
                       formatCurrency(currentAnalysis.total_cash_needed_for_deal)
                     }}
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">DSCR</div>
+                  <div class="text-xs text-gray-500 uppercase">DSCR</div>
                   <div
                     class="text-2xl font-bold"
                     :class="getDSCRColor(currentAnalysis.dscr)"
@@ -675,7 +659,7 @@ const saveChanges = async () => {
 
                 <!-- Secondary Metrics -->
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">CoC Return</div>
+                  <div class="text-xs text-gray-500 uppercase">CoC Return</div>
                   <div
                     class="text-lg font-medium"
                     :class="getPerformanceColor(currentAnalysis.cash_on_cash)"
@@ -684,7 +668,7 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">ROI</div>
+                  <div class="text-xs text-gray-500 uppercase">ROI</div>
                   <div
                     class="text-lg font-medium"
                     :class="getPerformanceColor(currentAnalysis.roi)"
@@ -693,7 +677,7 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">Equity</div>
+                  <div class="text-xs text-gray-500 uppercase">Equity</div>
                   <div
                     class="text-lg font-medium"
                     :class="getPerformanceColor(currentAnalysis.equity)"
@@ -702,7 +686,7 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div class="text-xs text-ocean-300 uppercase">Net Profit</div>
+                  <div class="text-xs text-gray-500 uppercase">Net Profit</div>
                   <div
                     class="text-lg font-medium"
                     :class="getPerformanceColor(currentAnalysis.net_profit)"
@@ -717,13 +701,13 @@ const saveChanges = async () => {
           <!-- Notes -->
           <div class="mt-6">
             <label
-              class="text-xs text-ocean-200 font-medium uppercase mb-2 block"
+              class="text-xs text-gray-600 font-medium uppercase mb-2 block"
               >Notes</label
             >
             <textarea
               v-model="editingDeal.notes"
               rows="4"
-              class="w-full bg-whale-dark/50 border border-whale-border rounded-lg p-4 text-white text-sm outline-none focus:border-ocean-500"
+              class="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-900 text-sm outline-none focus:border-blue-500"
               placeholder="Additional notes..."
             ></textarea>
           </div>
@@ -731,11 +715,9 @@ const saveChanges = async () => {
           <!-- Comps Section -->
           <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Sold Comps -->
-            <div
-              class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
-            >
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div class="flex justify-between items-center mb-4">
-                <h4 class="font-semibold text-ocean-200">Sold Comps</h4>
+                <h4 class="font-semibold text-gray-700">Sold Comps</h4>
                 <button
                   @click="
                     editingDeal.sold_comps
@@ -748,7 +730,7 @@ const saveChanges = async () => {
                           { url: '', arv: 0, how_long_ago: '' },
                         ])
                   "
-                  class="text-xs bg-ocean-600 px-2 py-1 rounded text-white hover:bg-ocean-500"
+                  class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
                 >
                   <i class="pi pi-plus"></i> Add
                 </button>
@@ -762,11 +744,11 @@ const saveChanges = async () => {
                 <div
                   v-for="(comp, index) in editingDeal.sold_comps"
                   :key="index"
-                  class="bg-slate-100 p-2 rounded relative group"
+                  class="bg-white p-2 rounded relative group border border-gray-100"
                 >
                   <button
                     @click="editingDeal.sold_comps!.splice(index, 1)"
-                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     ×
                   </button>
@@ -774,13 +756,13 @@ const saveChanges = async () => {
                     <input
                       v-model="comp.url"
                       placeholder="URL"
-                      class="flex-1 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <a
                       v-if="comp.url"
                       :href="comp.url"
                       target="_blank"
-                      class="text-xs text-ocean-400 hover:text-ocean-300 flex-none"
+                      class="text-xs text-blue-500 hover:text-blue-700 flex-none"
                       ><i class="pi pi-external-link"></i
                     ></a>
                   </div>
@@ -789,27 +771,25 @@ const saveChanges = async () => {
                       v-model="comp.arv"
                       type="number"
                       placeholder="ARV"
-                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <input
                       v-model="comp.how_long_ago"
                       placeholder="When?"
-                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                   </div>
                 </div>
               </div>
-              <div v-else class="text-xs text-gray-500 italic text-center py-4">
+              <div v-else class="text-xs text-gray-400 italic text-center py-4">
                 No sold comps added
               </div>
             </div>
 
             <!-- Rent Comps -->
-            <div
-              class="bg-whale-surface/30 p-4 rounded-xl border border-white/5"
-            >
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div class="flex justify-between items-center mb-4">
-                <h4 class="font-semibold text-ocean-200">Rent Comps</h4>
+                <h4 class="font-semibold text-gray-700">Rent Comps</h4>
                 <button
                   @click="
                     editingDeal.rent_comps
@@ -822,7 +802,7 @@ const saveChanges = async () => {
                           { url: '', rent: 0, time_on_market: '' },
                         ])
                   "
-                  class="text-xs bg-ocean-600 px-2 py-1 rounded text-white hover:bg-ocean-500"
+                  class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
                 >
                   <i class="pi pi-plus"></i> Add
                 </button>
@@ -836,11 +816,11 @@ const saveChanges = async () => {
                 <div
                   v-for="(comp, index) in editingDeal.rent_comps"
                   :key="index"
-                  class="bg-slate-100 p-2 rounded relative group"
+                  class="bg-white p-2 rounded relative group border border-gray-100"
                 >
                   <button
                     @click="editingDeal.rent_comps!.splice(index, 1)"
-                    class="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     ×
                   </button>
@@ -848,13 +828,13 @@ const saveChanges = async () => {
                     <input
                       v-model="comp.url"
                       placeholder="URL"
-                      class="flex-1 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <a
                       v-if="comp.url"
                       :href="comp.url"
                       target="_blank"
-                      class="text-xs text-ocean-400 hover:text-ocean-300 flex-none"
+                      class="text-xs text-blue-500 hover:text-blue-700 flex-none"
                       ><i class="pi pi-external-link"></i
                     ></a>
                   </div>
@@ -863,17 +843,17 @@ const saveChanges = async () => {
                       v-model="comp.rent"
                       type="number"
                       placeholder="Rent"
-                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <input
                       v-model="comp.time_on_market"
                       placeholder="Time on Market"
-                      class="w-1/2 bg-transparent border-b border-gray-300 text-xs focus:border-ocean-500 outline-none text-ocean-50"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                   </div>
                 </div>
               </div>
-              <div v-else class="text-xs text-gray-500 italic text-center py-4">
+              <div v-else class="text-xs text-gray-400 italic text-center py-4">
                 No rent comps added
               </div>
             </div>
@@ -882,21 +862,21 @@ const saveChanges = async () => {
 
         <!-- Footer -->
         <div
-          class="p-6 border-t border-white/10 flex justify-between items-center bg-whale-surface/50 rounded-b-2xl"
+          class="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-2xl"
         >
-          <div class="text-xs text-ocean-400">
+          <div class="text-xs text-gray-500">
             Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
           </div>
           <div class="flex gap-4">
             <button
               @click="showDetailModal = false"
-              class="text-ocean-300 hover:text-ocean-600 px-4 py-2"
+              class="text-gray-500 hover:text-gray-700 px-4 py-2"
             >
               Cancel
             </button>
             <button
               @click="saveChanges"
-              class="bg-ocean-600 hover:bg-ocean-500 text-white font-bold px-8 py-2 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center gap-2"
+              class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-2 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center gap-2"
             >
               <i class="pi pi-save"></i> Save Changes
             </button>

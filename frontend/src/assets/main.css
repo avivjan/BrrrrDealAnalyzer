@@ -7,17 +7,17 @@
 }
 
 body {
-  @apply bg-whale-dark text-ocean-50 min-h-screen antialiased;
+  @apply bg-gray-50 text-gray-900 min-h-screen antialiased;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar for "Bright" feel */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-whale-dark;
+  @apply bg-gray-100;
 }
 
 ::-webkit-scrollbar-thumb {

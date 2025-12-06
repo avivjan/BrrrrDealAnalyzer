@@ -11,11 +11,11 @@ const emit = defineEmits<{
 }>();
 
 const stageColors = {
-  1: "border-l-4 border-l-blue-400 bg-gradient-to-br from-slate-800 to-slate-900", // New
-  2: "border-l-4 border-l-yellow-400 bg-gradient-to-br from-slate-800 to-amber-900/20", // Working
-  3: "border-l-4 border-l-emerald-500 bg-gradient-to-br from-slate-800 to-emerald-900/20", // Brought
-  4: "border-l-4 border-l-purple-400 bg-gradient-to-br from-slate-800 to-slate-900 opacity-80", // Keep
-  5: "border-l-4 border-l-gray-500 bg-slate-900 grayscale opacity-60", // Dead
+  1: "border-l-4 border-l-blue-500 bg-white border border-gray-100", // New
+  2: "border-l-4 border-l-yellow-500 bg-white border border-gray-100", // Working
+  3: "border-l-4 border-l-emerald-500 bg-white border border-gray-100", // Brought
+  4: "border-l-4 border-l-purple-500 bg-white border border-gray-100", // Keep
+  5: "border-l-4 border-l-gray-400 bg-gray-50 border border-gray-100", // Dead
 };
 
 const cardClass = computed(() => {
@@ -30,13 +30,13 @@ const formatMoney = (val?: number) =>
 
 <template>
   <div
-    class="p-4 rounded-xl shadow-lg cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden"
+    class="p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden"
     :class="cardClass"
   >
     <!-- Delete Button -->
     <button
       @click.stop="emit('delete', deal.id)"
-      class="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:scale-110 z-10"
+      class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
       title="Delete Deal"
     >
       <i class="pi pi-times text-[10px] font-bold"></i>
@@ -44,7 +44,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Header: Address -->
     <div class="text-center mb-3">
-      <h3 class="font-bold text-white text-sm md:text-base leading-tight">
+      <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
@@ -52,44 +52,43 @@ const formatMoney = (val?: number) =>
     <!-- Task Box -->
     <div
       v-if="deal.task"
-      class="bg-black/30 rounded-lg p-2 mb-3 text-center border border-white/5"
+      class="bg-gray-50 rounded-lg p-2 mb-3 text-center border border-gray-200"
     >
-      <span
-        class="text-xs text-ocean-200 uppercase tracking-wider font-semibold"
+      <span class="text-xs text-blue-600 uppercase tracking-wider font-semibold"
         >Current Task</span
       >
-      <p class="text-sm text-white font-medium mt-1 line-clamp-2">
+      <p class="text-sm text-gray-800 font-medium mt-1 line-clamp-2">
         {{ deal.task }}
       </p>
     </div>
 
     <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-xs text-gray-300">
+    <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-xs text-gray-600">
       <div class="flex flex-col">
-        <span class="text-[10px] text-gray-500 uppercase">Purchase</span>
-        <span class="font-mono text-white">{{
+        <span class="text-[10px] text-gray-400 uppercase">Purchase</span>
+        <span class="font-mono text-gray-900">{{
           formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0)
         }}</span>
       </div>
       <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-500 uppercase">Cash Flow</span>
+        <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
         <span
           class="font-mono"
-          :class="deal.cash_flow > 0 ? 'text-emerald-400' : 'text-red-400'"
+          :class="deal.cash_flow > 0 ? 'text-emerald-600' : 'text-red-600'"
         >
           {{ formatMoney(deal.cash_flow) }}
         </span>
       </div>
 
       <div class="flex flex-col">
-        <span class="text-[10px] text-gray-500 uppercase">CoC</span>
-        <span class="font-mono text-blue-300">{{
+        <span class="text-[10px] text-gray-400 uppercase">CoC</span>
+        <span class="font-mono text-blue-600">{{
           deal.cash_on_cash ? deal.cash_on_cash.toFixed(1) + "%" : "-"
         }}</span>
       </div>
       <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-500 uppercase">Cash Needed</span>
-        <span class="font-mono text-orange-300">{{
+        <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
+        <span class="font-mono text-orange-600">{{
           formatMoney(deal.total_cash_needed_for_deal)
         }}</span>
       </div>
@@ -97,7 +96,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Footer Stats -->
     <div
-      class="mt-3 pt-2 border-t border-white/5 flex justify-between text-[10px] text-gray-500"
+      class="mt-3 pt-2 border-t border-gray-100 flex justify-between text-[10px] text-gray-400"
     >
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
