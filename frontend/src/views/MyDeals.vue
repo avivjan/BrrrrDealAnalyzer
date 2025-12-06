@@ -6,7 +6,7 @@ import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
-import type { ActiveDealRes, FlipDealRes, BrrrDealRes } from "../types";
+import type { ActiveDealRes, AnalyzeDealReq } from "../types";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -251,7 +251,13 @@ const analyzeCurrentDeal = useDebounceFn(async () => {
       editingDeal.value.id
     );
     try {
-      const result = await store.analyze(editingDeal.value, editingDeal.value.deal_type || 'BRRRR');
+      const type = editingDeal.value.deal_type || 'BRRRR';
+      // We need to ensure payload matches AnalyzeDealReq.
+      // editingDeal (ActiveDealRes) is a superset, but we might need to be explicit or cast.
+      // TypeScript error suggests mismatches.
+      const payload = JSON.parse(JSON.stringify(editingDeal.value)); // Clone to avoid mutation or proxy issues
+      
+      const result = await store.analyze(payload as AnalyzeDealReq, type);
       // Merge result into currentAnalysis to display new values
       currentAnalysis.value = { ...editingDeal.value, ...result };
       console.log("View: MyDeals - Analysis result merged into current view");
@@ -442,8 +448,8 @@ console.groupEnd();
         >
           <div class="flex-1 mr-4">
             <div class="flex items-center gap-2 mb-1">
-                <label
-                class="text-xs text-gray-500 uppercase font-bold tracking-wider"
+            <label
+              class="text-xs text-gray-500 uppercase font-bold tracking-wider"
                 >Address</label>
                  <!-- Type Badge -->
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
@@ -633,8 +639,68 @@ console.groupEnd();
             </div>
           </div>
 
-          <!-- Analyze Deal Fields (Hidden details in Modal for simplicity? Or Show limited?) -->
-          <!-- The prompt didn't specify updating the edit form in the modal, but it makes sense to update "Rent Comps" -->
+          <!-- Analyze Deal Fields -->
+          <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <i class="pi pi-calculator text-blue-500"></i> Financials
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+               <MoneyInput v-model="editingDeal.purchasePrice" label="Purchase Price" :inThousands="true" />
+               <MoneyInput v-model="editingDeal.rehabCost" label="Rehab Cost" :inThousands="true" />
+               <MoneyInput v-model="editingDeal.closingCostsBuy" label="Closing Costs (Buy)" :inThousands="true" />
+               
+               <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
+                   <MoneyInput v-model="editingDeal.arv_in_thousands" label="ARV" :inThousands="true" />
+                   <MoneyInput v-model="editingDeal.rent" label="Rent" />
+                   <MoneyInput v-model="editingDeal.closingCostsRefi" label="Refi Costs" :inThousands="true" />
+               </template>
+               <template v-else>
+                   <MoneyInput v-model="(editingDeal as any).salePrice" label="Sale Price" :inThousands="true" />
+                   <NumberInput v-model="(editingDeal as any).holdingTime" label="Holding Time (mos)" />
+                   <NumberInput v-model="(editingDeal as any).sellingClosingCosts" label="Selling Costs %" suffix="%" />
+               </template>
+            </div>
+
+            <!-- Results Preview -->
+            <div v-if="currentAnalysis" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+                <h4 class="font-semibold text-gray-700 mb-3">Analysis Results</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
+                        <div>
+                            <div class="text-gray-500">Cash Flow</div>
+                            <div class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Cash Out</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">CoC</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                        </div>
+                         <div>
+                            <div class="text-gray-500">DSCR</div>
+                            <div class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div>
+                            <div class="text-gray-500">Net Profit</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">ROI</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Cash Needed</div>
+                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+          </div>
 
           <!-- Notes -->
           <div class="mt-6">
@@ -739,7 +805,7 @@ console.groupEnd();
                         : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])
                       )
                     : (
-                        editingDeal.rent_comps
+                    editingDeal.rent_comps
                         ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' })
                         : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }])
                       )
@@ -782,54 +848,54 @@ console.groupEnd();
 
               <!-- BRRRR Rent Comps -->
               <div v-else>
-                  <div
-                    v-if="
-                      editingDeal.rent_comps && editingDeal.rent_comps.length > 0
-                    "
-                    class="space-y-3"
+              <div
+                v-if="
+                  editingDeal.rent_comps && editingDeal.rent_comps.length > 0
+                "
+                class="space-y-3"
+              >
+                <div
+                  v-for="(comp, index) in editingDeal.rent_comps"
+                  :key="index"
+                  class="bg-white p-2 rounded relative group border border-gray-100"
+                >
+                  <button
+                    @click="editingDeal.rent_comps!.splice(index, 1)"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
-                    <div
-                      v-for="(comp, index) in editingDeal.rent_comps"
-                      :key="index"
-                      class="bg-white p-2 rounded relative group border border-gray-100"
-                    >
-                      <button
-                        @click="editingDeal.rent_comps!.splice(index, 1)"
-                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      >
-                        ×
-                      </button>
-                      <div class="flex items-center gap-2 mb-1">
-                        <input
-                          v-model="comp.url"
-                          placeholder="URL"
-                          class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                        />
-                        <a
-                          v-if="comp.url"
-                          :href="comp.url"
-                          target="_blank"
-                          class="text-xs text-blue-500 hover:text-blue-700 flex-none"
-                          ><i class="pi pi-external-link"></i
-                        ></a>
-                      </div>
-                      <div class="flex gap-2">
-                        <input
-                          v-model="comp.rent"
-                          type="number"
-                          placeholder="Rent"
-                          class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                        />
-                        <input
-                          v-model="comp.time_on_market"
-                          placeholder="Time on Market"
-                          class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                        />
-                      </div>
-                    </div>
+                    ×
+                  </button>
+                  <div class="flex items-center gap-2 mb-1">
+                    <input
+                      v-model="comp.url"
+                      placeholder="URL"
+                      class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                    />
+                    <a
+                      v-if="comp.url"
+                      :href="comp.url"
+                      target="_blank"
+                      class="text-xs text-blue-500 hover:text-blue-700 flex-none"
+                      ><i class="pi pi-external-link"></i
+                    ></a>
                   </div>
-                  <div v-else class="text-xs text-gray-400 italic text-center py-4">
-                    No rent comps added
+                  <div class="flex gap-2">
+                    <input
+                      v-model="comp.rent"
+                      type="number"
+                      placeholder="Rent"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                    />
+                    <input
+                      v-model="comp.time_on_market"
+                      placeholder="Time on Market"
+                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-400 italic text-center py-4">
+                No rent comps added
                   </div>
               </div>
             </div>

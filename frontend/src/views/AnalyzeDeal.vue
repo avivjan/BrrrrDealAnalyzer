@@ -6,7 +6,7 @@ import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { AnalyzeDealReq, BrrrAnalyzeRes, FlipAnalyzeRes } from "../types";
+import type { BrrrAnalyzeRes, FlipAnalyzeRes } from "../types";
 
 console.group("View: AnalyzeDeal");
 console.log("Component setup started");
