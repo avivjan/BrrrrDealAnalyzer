@@ -5,14 +5,14 @@ from pydantic import BaseModel
 
 class analyzeBRRRRes(BaseModel):
     """Represents the result of the cash flow calculation."""
-    cash_flow: Decimal
-    dscr: Optional[Decimal] = None
-    cash_out: Optional[Decimal] = None
-    cash_on_cash: Optional[Decimal] = None
-    roi: Optional[Decimal] = None
-    equity: Optional[Decimal] = None
-    net_profit: Optional[Decimal] = None
-    total_cash_needed_for_deal:Optional[Decimal] = None
+    cash_flow: float
+    dscr: Optional[float] = None
+    cash_out: Optional[float] = None
+    cash_on_cash: Optional[float] = None
+    roi: Optional[float] = None
+    equity: Optional[float] = None
+    net_profit: Optional[float] = None
+    total_cash_needed_for_deal:Optional[float] = None
     messages: Optional[list[str]] = None
     
     
