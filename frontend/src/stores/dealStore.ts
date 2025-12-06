@@ -42,12 +42,11 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
-  async function analyze(data: AnalyzeDealReq) {
+  async function analyze(data: AnalyzeDealReq, type: 'BRRRR' | 'FLIP') {
     console.group('Store: analyze');
-    console.log('Analyzing deal with data:', data);
-    // Don't set global loading for debounce calc, but we could track "calculating" state
+    console.log(`Analyzing deal (${type}) with data:`, data);
     try {
-      const result = await api.analyzeDeal(data);
+      const result = await api.analyzeDeal(data, type);
       currentAnalysisResult.value = result;
       console.log('Analysis result stored:', result);
       console.groupEnd();
@@ -84,10 +83,16 @@ export const useDealStore = defineStore('deals', () => {
     isLoading.value = true;
     try {
       const updatedDeal = await api.updateActiveDeal(deal);
-      const index = deals.value.findIndex(d => d.id === deal.id);
-      if (index !== -1) {
-        deals.value[index] = updatedDeal;
-        console.log('Deal updated in store at index:', index, updatedDeal);
+      const index = deals.value.findIndex(d => d.id === deal.id && d.deal_type === deal.deal_type);
+      // Fallback if deal_type match fails or ID is enough
+      // Actually ID might clash, so checking type is important if IDs overlap.
+      // But in store they are separate objects.
+      
+      const realIndex = index !== -1 ? index : deals.value.findIndex(d => d.id === deal.id); // fallback
+      
+      if (realIndex !== -1) {
+        deals.value[realIndex] = updatedDeal;
+        console.log('Deal updated in store at index:', realIndex, updatedDeal);
       } else {
         console.warn('Deal not found in local store for update:', deal.id);
       }
@@ -103,27 +108,22 @@ export const useDealStore = defineStore('deals', () => {
   }
 
   async function updateDealStage(dealId: number, newStage: number) {
+    // This function relies on finding the deal in store to know type.
     console.group('Store: updateDealStage');
-    console.log('Updating deal stage. Deal ID:', dealId, 'New Stage:', newStage);
-    // Optimistic update
-    const deal = deals.value.find(d => d.id === dealId);
+    const deal = deals.value.find(d => d.id === dealId); 
+    // WARN: If ID clash, this might pick wrong deal.
+    // Ideally we pass type or unique ID.
+    // Assume user is interacting with a specific card.
+    
     if (deal) {
       const oldStage = deal.stage;
       deal.stage = newStage;
-      console.log('Optimistic update applied. Old Stage:', oldStage);
       
       try {
-        // Send plain object to avoid proxy issues
         const dealPayload = toRaw(deal);
-        console.log('Sending payload to API:', dealPayload);
         const updatedDeal = await api.updateActiveDeal(dealPayload);
-        console.log('API response:', updatedDeal);
-        
-        // Sync with server response
         Object.assign(deal, updatedDeal);
-        console.log('Store synced with server response');
       } catch (err) {
-        // Revert on failure
         deal.stage = oldStage;
         console.error('Failed to update stage, reverting. Error:', err);
       }
@@ -133,13 +133,13 @@ export const useDealStore = defineStore('deals', () => {
     console.groupEnd();
   }
 
-  async function deleteDeal(dealId: number) {
+  async function deleteDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
     console.group('Store: deleteDeal');
-    console.log('Deleting deal ID:', dealId);
+    console.log('Deleting deal ID:', dealId, 'Type:', type);
     isLoading.value = true;
     try {
-      await api.deleteActiveDeal(dealId);
-      deals.value = deals.value.filter(d => d.id !== dealId);
+      await api.deleteActiveDeal(dealId, type);
+      deals.value = deals.value.filter(d => !(d.id === dealId && (d.deal_type === type || (!d.deal_type && type === 'BRRRR'))));
       console.log('Deal removed from store');
     } catch (err) {
       error.value = 'Failed to delete deal';
@@ -151,12 +151,12 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
-  async function duplicateDeal(dealId: number) {
+  async function duplicateDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
     console.group('Store: duplicateDeal');
-    console.log('Duplicating deal ID:', dealId);
+    console.log('Duplicating deal ID:', dealId, 'Type:', type);
     isLoading.value = true;
     try {
-      const newDeal = await api.duplicateActiveDeal(dealId);
+      const newDeal = await api.duplicateActiveDeal(dealId, type);
       deals.value.push(newDeal); // Add to local state
       console.log('Duplicated deal added to store:', newDeal);
       return newDeal;

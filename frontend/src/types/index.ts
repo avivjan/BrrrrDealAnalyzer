@@ -1,54 +1,30 @@
 export interface SoldComp {
-  url: string;
-  arv: number;
-  how_long_ago: string;
+  url?: string;
+  arv?: number;
+  how_long_ago?: string;
 }
 
 export interface RentComp {
-  url: string;
-  rent: number;
-  time_on_market: string;
+  url?: string;
+  rent?: number;
+  time_on_market?: string;
 }
 
-// Fields for calculation (Analyze Deal) & Active Deal
-// Using JSON keys (aliases) where applicable to match backend response/request
-export interface AnalyzeDealReq {
-  arv_in_thousands: number;
-  purchasePrice: number; // alias for purchase_price_in_thousands
-  rehabCost: number; // alias for rehab_cost_in_thousands
-  down_payment: number; 
-  closingCostsBuy: number; // alias for closing_costs_buy_in_thousands
-  use_HM_for_rehab: boolean;
-  hmlPoints: number; 
-  monthsUntilRefi: number;
-  HMLInterestRate: number; 
-  closingCostsRefi: number; 
-  loanTermYears: number; 
-  ltv_as_precent: number; 
-  interestRate: number; 
-  rent: number;
-  vacancyPercent: number; 
-  property_managment_fee_precentages_from_rent: number;
-  maintenancePercent: number; 
-  capexPercent: number; 
-  annual_property_taxes: number;
-  annual_insurance: number;
-  montly_hoa: number;
-}
+// Base Interface for Shared Fields
+export interface BaseDealReq {
+  // Shared
+  purchasePrice?: number;
+  rehabCost?: number;
+  down_payment?: number; 
+  closingCostsBuy?: number;
+  use_HM_for_rehab?: boolean;
+  hmlPoints?: number; 
+  HMLInterestRate?: number; 
+  
+  annual_property_taxes?: number;
+  annual_insurance?: number;
+  montly_hoa?: number;
 
-export interface AnalyzeDealRes {
-  cash_flow: number;
-  dscr?: number;
-  cash_out?: number;
-  cash_on_cash?: number;
-  roi?: number;
-  equity?: number;
-  net_profit?: number;
-  total_cash_needed_for_deal?: number;
-  messages?: string[];
-}
-
-export interface DealDetails {
   section: number; 
   stage: number; 
   address: string;
@@ -67,10 +43,77 @@ export interface DealDetails {
   notes?: string;
 }
 
-export interface ActiveDealCreate extends AnalyzeDealReq, DealDetails {}
+// BRRRR Specific
+export interface BrrrAnalyzeReq {
+  arv_in_thousands: number;
+  monthsUntilRefi: number;
+  closingCostsRefi: number; 
+  loanTermYears: number; 
+  ltv_as_precent: number; 
+  interestRate: number; 
+  rent: number;
+  vacancyPercent: number; 
+  property_managment_fee_precentages_from_rent: number;
+  maintenancePercent: number; 
+  capexPercent: number;
+}
 
-export interface ActiveDealRes extends ActiveDealCreate, AnalyzeDealRes {
+export interface BrrrAnalyzeRes {
+  cash_flow: number;
+  dscr?: number;
+  cash_out?: number;
+  cash_on_cash?: number;
+  roi?: number;
+  equity?: number;
+  net_profit?: number;
+  total_cash_needed_for_deal?: number;
+  messages?: string[];
+}
+
+export interface BrrrDealCreate extends BaseDealReq, Partial<BrrrAnalyzeReq> {
+  deal_type: 'BRRRR';
+}
+
+export interface BrrrDealRes extends BrrrDealCreate, BrrrAnalyzeRes {
   id: number;
   created_at: string;
   updated_at: string;
 }
+
+
+// Flip Specific
+export interface FlipAnalyzeReq {
+  salePrice: number; // ARV
+  holdingTime: number;
+  sellingClosingCosts: number;
+  capitalGainsTax: number;
+  monthly_utilities?: number;
+}
+
+export interface FlipAnalyzeRes {
+  net_profit: number;
+  roi: number;
+  annualized_roi: number;
+  total_cash_needed: number;
+  total_holding_costs: number;
+  total_hml_interest: number;
+  messages?: string[];
+}
+
+export interface FlipDealCreate extends BaseDealReq, Partial<FlipAnalyzeReq> {
+  deal_type: 'FLIP';
+  sale_comps?: SoldComp[];
+}
+
+export interface FlipDealRes extends FlipDealCreate, FlipAnalyzeRes {
+  id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+
+// Unions
+export type ActiveDealCreate = BrrrDealCreate | FlipDealCreate;
+export type ActiveDealRes = BrrrDealRes | FlipDealRes;
+export type AnalyzeDealReq = (BrrrAnalyzeReq & Partial<BaseDealReq>) | (FlipAnalyzeReq & Partial<BaseDealReq>); // Simplified for analyze API
+export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;

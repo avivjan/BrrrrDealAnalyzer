@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 
-class analyzeDealReq(BaseModel):
+class analyzeBRRRReq(BaseModel):
     """Captures inputs required to calculate rental cash flow and DSCR."""
 
     arv_in_thousands: float = Field(..., description="After repair value (ARV) of the property in thousands")

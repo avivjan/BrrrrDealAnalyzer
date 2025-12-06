@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import type { ActiveDealRes } from "../types";
+import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 
 const props = defineProps<{
@@ -13,6 +13,13 @@ const emit = defineEmits<{
 }>();
 
 const isCopied = ref(false);
+
+const isBrrr = computed(() => !props.deal.deal_type || props.deal.deal_type === 'BRRRR');
+const isFlip = computed(() => props.deal.deal_type === 'FLIP');
+
+// Casted helpers
+const brrrDeal = computed(() => isBrrr.value ? props.deal as BrrrDealRes : null);
+const flipDeal = computed(() => isFlip.value ? props.deal as FlipDealRes : null);
 
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
@@ -51,9 +58,16 @@ const stageColors = {
 };
 
 const cardClass = computed(() => {
-  return (
-    stageColors[props.deal.stage as keyof typeof stageColors] || stageColors[1]
-  );
+  // Base stage color
+  let base = stageColors[props.deal.stage as keyof typeof stageColors] || stageColors[1];
+  
+  // Type styling
+  if (isFlip.value) {
+     // Add orange tint or border style? 
+     // Tailwind classes can be appended
+     base += " bg-orange-50/30"; // Subtle orange tint
+  }
+  return base;
 });
 
 const formatMoney = (val?: number) =>
@@ -65,6 +79,12 @@ const formatMoney = (val?: number) =>
     class="p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden"
     :class="cardClass"
   >
+    <!-- Badge -->
+    <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+         :class="isBrrr ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-orange-100 text-orange-700 border-orange-200'">
+        {{ isBrrr ? '🏠 BRRRR' : '💰 FLIP' }}
+    </div>
+
     <!-- Delete Button -->
     <button
       @click.stop="onDelete(deal.id)"
@@ -101,7 +121,7 @@ const formatMoney = (val?: number) =>
     </button>
 
     <!-- Header: Address -->
-    <div class="text-center mb-3">
+    <div class="text-center mb-3 mt-4">
       <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight">
         {{ deal.address || "No Address" }}
       </h3>
@@ -136,41 +156,64 @@ const formatMoney = (val?: number) =>
         }}</span>
       </div>
 
-      <!-- Row 2: Cash Needed & Cash Out -->
-      <div class="flex flex-col">
+      <!-- Row 2: Cash Needed -->
+       <div class="flex flex-col">
         <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
         <span class="font-mono text-orange-600">{{
-          formatMoney(deal.total_cash_needed_for_deal)
+            formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
         }}</span>
-      </div>
-      <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-400 uppercase">Cash Out</span>
-        <span
-          class="font-mono font-semibold"
-          :class="
-            (deal.cash_out || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'
-          "
-        >
-          {{ formatMoney(deal.cash_out) }}
-        </span>
       </div>
 
-      <!-- Row 3: Cash Flow & CoC -->
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
-        <span
-          class="font-mono"
-          :class="deal.cash_flow > 0 ? 'text-emerald-600' : 'text-red-600'"
-        >
-          {{ formatMoney(deal.cash_flow) }}
-        </span>
-      </div>
-      <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-400 uppercase">CoC</span>
-        <span class="font-mono text-blue-600">{{
-          deal.cash_on_cash ? deal.cash_on_cash.toFixed(1) + "%" : "-"
-        }}</span>
-      </div>
+      <!-- Type Specific Rows -->
+      <template v-if="isBrrr">
+        <div class="flex flex-col text-right">
+            <span class="text-[10px] text-gray-400 uppercase">Cash Out</span>
+            <span
+            class="font-mono font-semibold"
+            :class="(brrrDeal?.cash_out || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'"
+            >
+            {{ formatMoney(brrrDeal?.cash_out) }}
+            </span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
+            <span
+            class="font-mono"
+            :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-emerald-600' : 'text-red-600'"
+            >
+            {{ formatMoney(brrrDeal?.cash_flow) }}
+            </span>
+        </div>
+        <div class="flex flex-col text-right">
+            <span class="text-[10px] text-gray-400 uppercase">CoC</span>
+            <span class="font-mono text-blue-600">{{
+            brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-"
+            }}</span>
+        </div>
+      </template>
+
+      <template v-else>
+         <!-- Flip Metrics -->
+         <div class="flex flex-col text-right">
+            <span class="text-[10px] text-gray-400 uppercase">Net Profit</span>
+            <span class="font-mono font-bold"
+                 :class="(flipDeal?.net_profit || 0) > 0 ? 'text-emerald-600' : 'text-red-600'">
+                {{ formatMoney(flipDeal?.net_profit) }}
+            </span>
+         </div>
+         <div class="flex flex-col">
+            <span class="text-[10px] text-gray-400 uppercase">ROI</span>
+            <span class="font-mono font-semibold text-blue-600">
+                {{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}
+            </span>
+         </div>
+          <div class="flex flex-col text-right">
+            <span class="text-[10px] text-gray-400 uppercase">Ann. ROI</span>
+            <span class="font-mono text-purple-600">
+                {{ flipDeal?.annualized_roi ? flipDeal.annualized_roi.toFixed(1) + "%" : "-" }}
+            </span>
+         </div>
+      </template>
     </div>
 
     <!-- Footer Stats -->

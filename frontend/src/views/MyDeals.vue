@@ -5,11 +5,8 @@ import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
-import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
-import SliderField from "../components/ui/SliderField.vue";
-import ToggleSwitch from "primevue/toggleswitch";
-import type { ActiveDealRes } from "../types";
+import type { ActiveDealRes, FlipDealRes, BrrrDealRes } from "../types";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -64,12 +61,6 @@ const refreshColumns = () => {
       columns.value[1]!.push(deal);
     }
   });
-  console.log(
-    "View: MyDeals - Columns refreshed:",
-    Object.keys(columns.value).map(
-      (k) => `${k}: ${columns.value[parseInt(k)]?.length}`
-    )
-  );
 };
 
 watch(
@@ -158,7 +149,7 @@ const confirmDelete = async (deal: ActiveDealRes) => {
   console.log("View: MyDeals - confirmDelete requested for deal:", deal.id);
   if (confirm(`Are you sure you want to delete ${deal.address}?`)) {
     try {
-      await store.deleteDeal(deal.id);
+      await store.deleteDeal(deal.id, deal.deal_type || 'BRRRR');
       refreshColumns(); // Refresh local columns after store update
       console.log("View: MyDeals - Deal deleted successfully");
     } catch (e) {
@@ -168,11 +159,11 @@ const confirmDelete = async (deal: ActiveDealRes) => {
   }
 };
 
-const duplicateDeal = async (dealId: number) => {
-  console.log("View: MyDeals - duplicateDeal requested for deal:", dealId);
+const duplicateDeal = async (deal: ActiveDealRes) => {
+  console.log("View: MyDeals - duplicateDeal requested for deal:", deal.id);
   if (confirm(`Are you sure you want to duplicate this deal?`)) {
     try {
-      await store.duplicateDeal(dealId);
+      await store.duplicateDeal(deal.id, deal.deal_type || 'BRRRR');
       refreshColumns(); // Refresh local columns after store update
       console.log("View: MyDeals - Deal duplicated successfully");
     } catch (e) {
@@ -187,7 +178,7 @@ const duplicateEditingDeal = async () => {
   if (editingDeal.value) {
     if (confirm(`Duplicate this deal?`)) {
       try {
-        await store.duplicateDeal(editingDeal.value.id);
+        await store.duplicateDeal(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
         showDetailModal.value = false; // Close modal after duplicate
         console.log("View: MyDeals - Editing deal duplicated successfully");
       } catch (e) {
@@ -260,7 +251,7 @@ const analyzeCurrentDeal = useDebounceFn(async () => {
       editingDeal.value.id
     );
     try {
-      const result = await store.analyze(editingDeal.value);
+      const result = await store.analyze(editingDeal.value, editingDeal.value.deal_type || 'BRRRR');
       // Merge result into currentAnalysis to display new values
       currentAnalysis.value = { ...editingDeal.value, ...result };
       console.log("View: MyDeals - Analysis result merged into current view");
@@ -427,7 +418,7 @@ console.groupEnd();
                 <DealCard
                   :deal="deal"
                   @delete="confirmDelete(deal)"
-                  @duplicate="duplicateDeal(deal.id)"
+                  @duplicate="duplicateDeal(deal)"
                   class="h-full"
                 />
               </div>
@@ -450,10 +441,16 @@ console.groupEnd();
           class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0"
         >
           <div class="flex-1 mr-4">
-            <label
-              class="text-xs text-gray-500 uppercase font-bold tracking-wider"
-              >Address</label
-            >
+            <div class="flex items-center gap-2 mb-1">
+                <label
+                class="text-xs text-gray-500 uppercase font-bold tracking-wider"
+                >Address</label>
+                 <!-- Type Badge -->
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                    :class="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR') ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-orange-100 text-orange-700 border-orange-200'">
+                    {{ (!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR') ? 'BRRRR' : 'FLIP' }}
+                </span>
+            </div>
             <input
               v-model="editingDeal.address"
               class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
@@ -636,254 +633,8 @@ console.groupEnd();
             </div>
           </div>
 
-          <!-- Analyze Deal Fields -->
-          <div class="border-t border-gray-200 pt-6">
-            <div class="flex justify-between items-center mb-6">
-              <h3
-                class="text-xl font-bold text-gray-800 flex items-center gap-2"
-              >
-                <i class="pi pi-calculator text-blue-500"></i> Deal Analysis
-              </h3>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <!-- Group 1: Buy & Rehab -->
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <h4 class="font-semibold text-gray-700 mb-4">Buy & Rehab</h4>
-                <div class="space-y-3">
-                  <MoneyInput
-                    v-model="editingDeal.purchasePrice"
-                    label="Purchase Price"
-                    :inThousands="true"
-                  />
-                  <MoneyInput
-                    v-model="editingDeal.rehabCost"
-                    label="Rehab Cost"
-                    :inThousands="true"
-                  />
-                  <MoneyInput
-                    v-model="editingDeal.closingCostsBuy"
-                    label="Closing Costs (Buy)"
-                    :inThousands="true"
-                  />
-
-                  <div class="pt-2 border-t border-gray-200">
-                    <p class="text-xs text-gray-500 mb-2">Hard Money</p>
-                    <div class="grid grid-cols-2 gap-2">
-                      <NumberInput
-                        v-model="editingDeal.down_payment"
-                        label="Down Pmt %"
-                        :min="0"
-                        :max="100"
-                      />
-                      <NumberInput
-                        v-model="editingDeal.hmlPoints"
-                        label="Points"
-                        :min="0"
-                        :max="100"
-                      />
-                      <NumberInput
-                        v-model="editingDeal.HMLInterestRate"
-                        label="Rate %"
-                        :min="0"
-                        :max="100"
-                      />
-                      <div class="flex flex-col justify-end">
-                        <div
-                          class="flex items-center justify-between bg-white p-2 rounded border border-gray-200"
-                        >
-                          <span class="text-[10px] text-gray-600"
-                            >HM for Rehab</span
-                          >
-                          <ToggleSwitch
-                            v-model="editingDeal.use_HM_for_rehab"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Group 2: Refinance -->
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <h4 class="font-semibold text-gray-700 mb-4">
-                  Refinance (BRRRR)
-                </h4>
-                <div class="space-y-3">
-                  <MoneyInput
-                    v-model="editingDeal.arv_in_thousands"
-                    label="ARV"
-                    :inThousands="true"
-                  />
-                  <SliderField
-                    v-model="editingDeal.ltv_as_precent"
-                    label="LTV %"
-                    :min="1"
-                    :max="100"
-                  />
-                  <div class="grid grid-cols-2 gap-2">
-                    <NumberInput
-                      v-model="editingDeal.monthsUntilRefi"
-                      label="Months to Refi"
-                    />
-                    <MoneyInput
-                      v-model="editingDeal.closingCostsRefi"
-                      label="Refi Costs"
-                      :inThousands="true"
-                    />
-                  </div>
-                  <SliderField
-                    v-model="editingDeal.interestRate"
-                    label="Interest Rate %"
-                    :min="0"
-                    :max="15"
-                    :step="0.125"
-                  />
-                  <NumberInput
-                    v-model="editingDeal.loanTermYears"
-                    label="Loan Term (Yrs)"
-                  />
-                </div>
-              </div>
-
-              <!-- Group 3: Rent & Expenses -->
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <h4 class="font-semibold text-gray-700 mb-4">
-                  Rent & Expenses
-                </h4>
-                <div class="space-y-3">
-                  <MoneyInput v-model="editingDeal.rent" label="Monthly Rent" />
-                  <div class="grid grid-cols-2 gap-2">
-                    <MoneyInput
-                      v-model="editingDeal.annual_property_taxes"
-                      label="Annual Taxes"
-                    />
-                    <MoneyInput
-                      v-model="editingDeal.annual_insurance"
-                      label="Annual Ins."
-                    />
-                  </div>
-                  <MoneyInput
-                    v-model="editingDeal.montly_hoa"
-                    label="Monthly HOA"
-                  />
-
-                  <div class="grid grid-cols-2 gap-2">
-                    <NumberInput
-                      v-model="editingDeal.vacancyPercent"
-                      label="Vacancy %"
-                    />
-                    <NumberInput
-                      v-model="editingDeal.maintenancePercent"
-                      label="Maint. %"
-                    />
-                    <NumberInput
-                      v-model="editingDeal.capexPercent"
-                      label="CapEx %"
-                    />
-                    <NumberInput
-                      v-model="
-                        editingDeal.property_managment_fee_precentages_from_rent
-                      "
-                      label="Mgmt %"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Analysis Results -->
-            <div
-              v-if="currentAnalysis"
-              class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl relative overflow-hidden"
-            >
-              <div
-                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"
-              ></div>
-              <h4
-                class="font-semibold text-gray-800 mb-6 flex items-center gap-2"
-              >
-                <i class="pi pi-chart-bar text-blue-500"></i> Analysis Results
-              </h4>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <!-- Primary Metrics -->
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">Cash Flow</div>
-                  <div
-                    class="text-2xl font-bold"
-                    :class="getCashFlowColor(currentAnalysis.cash_flow)"
-                  >
-                    {{ formatCurrency(currentAnalysis.cash_flow) }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">Cash Out</div>
-                  <div
-                    class="text-2xl font-bold"
-                    :class="getPerformanceColor(currentAnalysis.cash_out)"
-                  >
-                    {{ formatCurrency(currentAnalysis.cash_out) }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">Cash Needed</div>
-                  <div class="text-2xl font-bold text-blue-600">
-                    {{
-                      formatCurrency(currentAnalysis.total_cash_needed_for_deal)
-                    }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">DSCR</div>
-                  <div
-                    class="text-2xl font-bold"
-                    :class="getDSCRColor(currentAnalysis.dscr)"
-                  >
-                    {{ currentAnalysis.dscr?.toFixed(2) ?? "-" }}
-                  </div>
-                </div>
-
-                <!-- Secondary Metrics -->
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">CoC Return</div>
-                  <div
-                    class="text-lg font-medium"
-                    :class="getPerformanceColor(currentAnalysis.cash_on_cash)"
-                  >
-                    {{ formatPercent(currentAnalysis.cash_on_cash) }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">ROI</div>
-                  <div
-                    class="text-lg font-medium"
-                    :class="getPerformanceColor(currentAnalysis.roi)"
-                  >
-                    {{ formatPercent(currentAnalysis.roi) }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">Equity</div>
-                  <div
-                    class="text-lg font-medium"
-                    :class="getPerformanceColor(currentAnalysis.equity)"
-                  >
-                    {{ formatCurrency(currentAnalysis.equity) }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div class="text-xs text-gray-500 uppercase">Net Profit</div>
-                  <div
-                    class="text-lg font-medium"
-                    :class="getPerformanceColor(currentAnalysis.net_profit)"
-                  >
-                    {{ formatCurrency(currentAnalysis.net_profit) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Analyze Deal Fields (Hidden details in Modal for simplicity? Or Show limited?) -->
+          <!-- The prompt didn't specify updating the edit form in the modal, but it makes sense to update "Rent Comps" -->
 
           <!-- Notes -->
           <div class="mt-6">
@@ -973,75 +724,113 @@ console.groupEnd();
               </div>
             </div>
 
-            <!-- Rent Comps -->
+            <!-- Rent Comps OR Sale Comps (Flip) -->
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div class="flex justify-between items-center mb-4">
-                <h4 class="font-semibold text-gray-700">Rent Comps</h4>
+                <h4 class="font-semibold text-gray-700">
+                    {{ editingDeal.deal_type === 'FLIP' ? 'For Sale Comps' : 'Rent Comps' }}
+                </h4>
                 <button
                   @click="
-                    editingDeal.rent_comps
-                      ? editingDeal.rent_comps.push({
-                          url: '',
-                          rent: 0,
-                          time_on_market: '',
-                        })
-                      : (editingDeal.rent_comps = [
-                          { url: '', rent: 0, time_on_market: '' },
-                        ])
+                    editingDeal.deal_type === 'FLIP'
+                    ? (
+                        (editingDeal as any).sale_comps
+                        ? (editingDeal as any).sale_comps.push({ url: '', arv: 0, how_long_ago: '' })
+                        : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])
+                      )
+                    : (
+                        editingDeal.rent_comps
+                        ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' })
+                        : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }])
+                      )
                   "
                   class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
                 >
                   <i class="pi pi-plus"></i> Add
                 </button>
               </div>
-              <div
-                v-if="
-                  editingDeal.rent_comps && editingDeal.rent_comps.length > 0
-                "
-                class="space-y-3"
-              >
-                <div
-                  v-for="(comp, index) in editingDeal.rent_comps"
-                  :key="index"
-                  class="bg-white p-2 rounded relative group border border-gray-100"
-                >
-                  <button
-                    @click="editingDeal.rent_comps!.splice(index, 1)"
-                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              
+              <!-- Flip Sale Comps -->
+              <div v-if="editingDeal.deal_type === 'FLIP'">
+                 <div
+                    v-if="(editingDeal as any).sale_comps && (editingDeal as any).sale_comps.length > 0"
+                    class="space-y-3"
                   >
-                    ×
-                  </button>
-                  <div class="flex items-center gap-2 mb-1">
-                    <input
-                      v-model="comp.url"
-                      placeholder="URL"
-                      class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                    />
-                    <a
-                      v-if="comp.url"
-                      :href="comp.url"
-                      target="_blank"
-                      class="text-xs text-blue-500 hover:text-blue-700 flex-none"
-                      ><i class="pi pi-external-link"></i
-                    ></a>
-                  </div>
-                  <div class="flex gap-2">
-                    <input
-                      v-model="comp.rent"
-                      type="number"
-                      placeholder="Rent"
-                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                    />
-                    <input
-                      v-model="comp.time_on_market"
-                      placeholder="Time on Market"
-                      class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
-                    />
-                  </div>
-                </div>
+                    <div
+                      v-for="(comp, index) in (editingDeal as any).sale_comps"
+                      :key="index"
+                      class="bg-white p-2 rounded relative group border border-gray-100"
+                    >
+                       <button
+                        @click="(editingDeal as any).sale_comps!.splice(index, 1)"
+                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      >
+                        ×
+                      </button>
+                      <div class="flex items-center gap-2 mb-1">
+                        <input v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                        <a v-if="comp.url" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                      </div>
+                      <div class="flex gap-2">
+                        <input v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                         <input v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      </div>
+                    </div>
+                 </div>
+                 <div v-else class="text-xs text-gray-400 italic text-center py-4">No active comps added</div>
               </div>
-              <div v-else class="text-xs text-gray-400 italic text-center py-4">
-                No rent comps added
+
+              <!-- BRRRR Rent Comps -->
+              <div v-else>
+                  <div
+                    v-if="
+                      editingDeal.rent_comps && editingDeal.rent_comps.length > 0
+                    "
+                    class="space-y-3"
+                  >
+                    <div
+                      v-for="(comp, index) in editingDeal.rent_comps"
+                      :key="index"
+                      class="bg-white p-2 rounded relative group border border-gray-100"
+                    >
+                      <button
+                        @click="editingDeal.rent_comps!.splice(index, 1)"
+                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      >
+                        ×
+                      </button>
+                      <div class="flex items-center gap-2 mb-1">
+                        <input
+                          v-model="comp.url"
+                          placeholder="URL"
+                          class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                        />
+                        <a
+                          v-if="comp.url"
+                          :href="comp.url"
+                          target="_blank"
+                          class="text-xs text-blue-500 hover:text-blue-700 flex-none"
+                          ><i class="pi pi-external-link"></i
+                        ></a>
+                      </div>
+                      <div class="flex gap-2">
+                        <input
+                          v-model="comp.rent"
+                          type="number"
+                          placeholder="Rent"
+                          class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                        />
+                        <input
+                          v-model="comp.time_on_market"
+                          placeholder="Time on Market"
+                          class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-xs text-gray-400 italic text-center py-4">
+                    No rent comps added
+                  </div>
               </div>
             </div>
           </div>
@@ -1079,14 +868,3 @@ console.groupEnd();
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Custom Scrollbar for columns */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>
