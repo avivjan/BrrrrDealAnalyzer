@@ -63,6 +63,8 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
     # 2. Non-Negative Checks
     if payload.rehab_cost_in_thousands < 0:
         validation_errors.append("Rehab cost cannot be negative.")
+    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
+        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
     if payload.closing_costs_buy_in_thousands < 0:
         validation_errors.append("Closing costs (buy) cannot be negative.")
     if payload.closing_cost_refi_in_thousands < 0:
@@ -168,7 +170,9 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     arv = thousands_to_dollars(payload.arv_in_thousands)
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
-    rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
+    rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
+    contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
+    rehab_cost = rehab_cost_base + contingency
     
     HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, payload.down_payment, rehab_cost, payload.Months_until_refi, payload.HML_interest_rate, payload.use_HM_for_rehab)
     HML_points_in_cash = payload.HML_points/Decimal("100.0") * get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
@@ -213,6 +217,9 @@ def validate_flip_inputs(payload: analyzeFlipReq):
     if payload.rehab_cost_in_thousands < 0:
         validation_errors.append("Rehab cost cannot be negative.")
     
+    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
+        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
+
     if payload.down_payment < 0 or payload.down_payment > 100:
         validation_errors.append("Down payment percentage must be between 0% and 100%.")
         
@@ -231,12 +238,14 @@ def validate_flip_inputs(payload: analyzeFlipReq):
 
 def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
-    rehab_cost = thousands_to_dollars(payload.rehab_cost_in_thousands)
+    rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
+    contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
+    rehab_cost = rehab_cost_base + contingency
     sale_price = thousands_to_dollars(payload.sale_price_in_thousands)
     closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
     
     hml_amount = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
-    hml_points_cash = (payload.HML_points / 100.0) * hml_amount
+    hml_points_cash = (payload.HML_points / Decimal("100.0")) * hml_amount
     
     monthly_interest = (payload.HML_interest_rate / Decimal("100.0") / Decimal("12.0")) * hml_amount
     total_hml_interest = monthly_interest * payload.holding_time_months
@@ -252,7 +261,7 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
     
     down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
-    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 0
+    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 10000
     
     total_cash_needed = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
     

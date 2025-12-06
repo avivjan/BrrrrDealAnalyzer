@@ -13,6 +13,8 @@ class analyzeBRRRReq(BaseModel):
     purchase_price_in_thousands: Annotated[Decimal, Field(alias="purchasePrice", description="Acquisition price for the property")]
     
     rehab_cost_in_thousands: Annotated[Decimal, Field(alias="rehabCost", description="Estimated rehab costs included in the deal")] = Decimal("0.0")
+    
+    rehab_contingency_percent: Annotated[Decimal, Field(alias="rehabContingency", description="Contingency budget as a percentage of rehab cost")] = Decimal("0.0")
 
     down_payment: Decimal = Field(..., description="Down payment percentage for hard money purchase (0-100)")
     

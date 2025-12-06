@@ -22,6 +22,7 @@ const form = ref({
   // Shared
   purchasePrice: 0,
   rehabCost: 0,
+  rehabContingency: 0,
   closingCostsBuy: 0,
   down_payment: 0,
   hmlPoints: 0,
@@ -82,6 +83,8 @@ const validateForm = () => {
     errors.push("Purchase price (in thousands) must be greater than 0.");
   if (f.rehabCost < 0)
     errors.push("Rehab cost (in thousands) cannot be negative.");
+  if (f.rehabContingency < 0 || f.rehabContingency > 100)
+    errors.push("Contingency must be between 0% and 100%.");
   
   if (f.down_payment < 0 || f.down_payment > 100)
     errors.push("Down payment percentage must be between 0% and 100%.");
@@ -297,6 +300,13 @@ const quickCalcSellingCosts = () => {
               v-model="form.rehabCost"
               label="Rehab Cost"
               :inThousands="true"
+            />
+            <NumberInput
+              v-model="form.rehabContingency"
+              label="Contingency"
+              suffix="%"
+              :min="0"
+              :max="100"
             />
             <MoneyInput
               v-model="form.closingCostsBuy"
