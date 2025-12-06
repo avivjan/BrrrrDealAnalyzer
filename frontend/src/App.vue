@@ -1,16 +1,40 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
 import { useConnectionStore } from "./stores/connectionStore";
-import { onMounted, onUnmounted } from "vue";
+import { onMounted } from "vue";
+import { apiClient } from "./api";
 
 const connectionStore = useConnectionStore();
 
 onMounted(() => {
-  connectionStore.startKeepAlive();
-});
+  // Setup global interceptors to track connection status
+  apiClient.interceptors.request.use((config) => {
+    connectionStore.isChecking = true;
+    return config;
+  });
 
-onUnmounted(() => {
-  connectionStore.stopKeepAlive();
+  apiClient.interceptors.response.use(
+    (response) => {
+      connectionStore.isChecking = false;
+      connectionStore.isConnected = true;
+      return response;
+    },
+    (error) => {
+      connectionStore.isChecking = false;
+      if (error.response) {
+        // Server responded with an error status code (e.g. 400, 500)
+        // This means the server IS connected/awake
+        connectionStore.isConnected = true;
+      } else if (error.request) {
+        // Request made but no response received (Network Error / Server Down)
+        connectionStore.isConnected = false;
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  // Wake up the backend immediately
+  connectionStore.checkConnection();
 });
 </script>
 

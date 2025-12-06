@@ -7,10 +7,6 @@ export const useConnectionStore = defineStore('connection', () => {
   const isChecking = ref(false);
   const lastCheck = ref<Date | null>(null);
 
-  // 14 minutes in milliseconds
-  const KEEP_ALIVE_INTERVAL = 60 * 1000;
-  let intervalId: ReturnType<typeof setInterval> | null = null;
-
   async function checkConnection() {
     isChecking.value = true;
     try {
@@ -26,35 +22,9 @@ export const useConnectionStore = defineStore('connection', () => {
     }
   }
 
-  function startKeepAlive() {
-    // Initial check
-    checkConnection();
-
-    // Clear existing interval if any
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-
-    // Set up periodic keep-alive
-    intervalId = setInterval(() => {
-      console.log('Keep-alive ping triggered');
-      checkConnection();
-    }, KEEP_ALIVE_INTERVAL);
-  }
-
-  function stopKeepAlive() {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-  }
-
   return {
     isConnected,
     isChecking,
-    checkConnection,
-    startKeepAlive,
-    stopKeepAlive
+    checkConnection
   };
 });
-
