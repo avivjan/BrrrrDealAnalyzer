@@ -25,7 +25,7 @@ const form = ref<AnalyzeDealReq>({
   closingCostsRefi: 0,
   loanTermYears: 30,
   ltv_as_precent: 75,
-  interestRate: 7,
+  interestRate: 6.5,
   rent: 0,
   vacancyPercent: 5,
   property_managment_fee_precentages_from_rent: 0,
@@ -574,7 +574,7 @@ const saveDeal = async () => {
                 v-model="saveForm.stage"
                 class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
               >
-                <option :value="1">New</option>
+                <option :value="1">New - need to analyze</option>
                 <option :value="2">Working</option>
                 <option :value="3">Brought</option>
                 <option :value="4">Keep in Mind</option>

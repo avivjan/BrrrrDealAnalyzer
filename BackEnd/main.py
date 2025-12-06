@@ -144,7 +144,7 @@ def calc_cash_on_cash(cash_out_from_deal, cash_flow):
     elif cash_flow <= 0:
         return -2 # show as negative infinity
     else:
-        return cash_flow * 12 / abs(cash_out_from_deal)
+        return (cash_flow * 12 / abs(cash_out_from_deal)) * 100.0
         
 def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     if cash_out_from_deal >= 0:
@@ -152,7 +152,7 @@ def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     elif cash_flow <= 0:
         return -2 # show as negative infinity
     else:
-        return (cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)
+        return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * 100.0
     
 def calc_holding_costs(taxes, insurance, hoa, months):
     monthly_taxes = taxes / 12.0

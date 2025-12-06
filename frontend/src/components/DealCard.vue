@@ -92,6 +92,20 @@ const formatMoney = (val?: number) =>
           formatMoney(deal.total_cash_needed_for_deal)
         }}</span>
       </div>
+
+      <div
+        class="col-span-2 flex justify-between items-center border-t border-gray-100 pt-1 mt-1"
+      >
+        <span class="text-[10px] text-gray-400 uppercase">Cash Out</span>
+        <span
+          class="font-mono font-semibold"
+          :class="
+            (deal.cash_out || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'
+          "
+        >
+          {{ formatMoney(deal.cash_out) }}
+        </span>
+      </div>
     </div>
 
     <!-- Footer Stats -->

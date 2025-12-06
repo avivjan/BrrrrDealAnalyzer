@@ -14,7 +14,7 @@ const store = useDealStore();
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
-  { id: 1, name: "New", color: "bg-white border-gray-200" },
+  { id: 1, name: "New - need to analyze", color: "bg-white border-gray-200" },
   { id: 2, name: "Working", color: "bg-white border-gray-200" },
   { id: 3, name: "Brought", color: "bg-white border-gray-200" },
   {
