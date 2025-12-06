@@ -222,17 +222,17 @@ const saveChanges = async () => {
             {
               id: 1,
               label: 'Wholesale',
-              count: store.dealsBySection.wholesale.length,
+              count: store.activeDealsCount.wholesale,
             },
             {
               id: 2,
               label: 'Market',
-              count: store.dealsBySection.market.length,
+              count: store.activeDealsCount.market,
             },
             {
               id: 3,
               label: 'Off Market',
-              count: store.dealsBySection.offMarket.length,
+              count: store.activeDealsCount.offMarket,
             },
           ]"
           :key="tab.id"

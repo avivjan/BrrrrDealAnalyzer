@@ -17,6 +17,15 @@ export const useDealStore = defineStore('deals', () => {
     };
   });
 
+  const activeDealsCount = computed(() => {
+    const activeStages = [1, 2]; // New (1) & Working (2)
+    return {
+      wholesale: deals.value.filter(d => d.section === 1 && activeStages.includes(d.stage)).length,
+      market: deals.value.filter(d => d.section === 2 && activeStages.includes(d.stage)).length,
+      offMarket: deals.value.filter(d => d.section === 3 && activeStages.includes(d.stage)).length,
+    };
+  });
+
   async function fetchDeals() {
     isLoading.value = true;
     try {
@@ -126,6 +135,7 @@ export const useDealStore = defineStore('deals', () => {
     isLoading,
     error,
     dealsBySection,
+    activeDealsCount,
     fetchDeals,
     analyze,
     saveDeal,
