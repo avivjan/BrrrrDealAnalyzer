@@ -109,5 +109,15 @@ export default {
       console.groupEnd();
       throw error;
     }
+  },
+
+  async helloWorld(): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.get<{ message: string }>('/helloworld');
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
   }
 };

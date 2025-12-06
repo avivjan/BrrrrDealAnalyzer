@@ -14,9 +14,8 @@ export const useConnectionStore = defineStore('connection', () => {
   async function checkConnection() {
     isChecking.value = true;
     try {
-      // We use getActiveDeals as a ping because it's a GET request
-      // and the user specifically requested using this endpoint.
-      await api.getActiveDeals();
+      // Use helloworld as a ping because it's lightweight
+      await api.helloWorld();
       isConnected.value = true;
       lastCheck.value = new Date();
     } catch (error) {
