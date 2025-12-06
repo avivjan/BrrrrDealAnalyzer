@@ -81,7 +81,7 @@ export default {
     }
   },
 
-  async deleteActiveDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR'): Promise<void> {
+  async deleteActiveDeal(dealId: string, type: 'BRRRR' | 'FLIP' = 'BRRRR'): Promise<void> {
     console.group('API: deleteActiveDeal');
     console.log('Deal ID:', dealId, 'Type:', type);
     try {
@@ -95,7 +95,7 @@ export default {
     }
   },
 
-  async duplicateActiveDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR'): Promise<ActiveDealRes> {
+  async duplicateActiveDeal(dealId: string, type: 'BRRRR' | 'FLIP' = 'BRRRR'): Promise<ActiveDealRes> {
     console.group('API: duplicateActiveDeal');
     console.log('Deal ID:', dealId, 'Type:', type);
     try {

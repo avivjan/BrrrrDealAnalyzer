@@ -75,7 +75,7 @@ export interface BrrrDealCreate extends BaseDealReq, Partial<BrrrAnalyzeReq> {
 }
 
 export interface BrrrDealRes extends BrrrDealCreate, BrrrAnalyzeRes {
-  id: number;
+  id: string; // UUID
   created_at: string;
   updated_at: string;
 }
@@ -108,7 +108,7 @@ export interface FlipDealCreate extends BaseDealReq, Partial<FlipAnalyzeReq> {
 }
 
 export interface FlipDealRes extends FlipDealCreate, FlipAnalyzeRes {
-  id: number;
+  id: string; // UUID
   created_at: string;
   updated_at: string;
 }

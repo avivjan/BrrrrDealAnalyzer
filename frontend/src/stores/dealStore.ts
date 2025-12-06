@@ -107,7 +107,7 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
-  async function updateDealStage(dealId: number, newStage: number) {
+  async function updateDealStage(dealId: string, newStage: number) {
     // This function relies on finding the deal in store to know type.
     console.group('Store: updateDealStage');
     const deal = deals.value.find(d => d.id === dealId); 
@@ -133,7 +133,7 @@ export const useDealStore = defineStore('deals', () => {
     console.groupEnd();
   }
 
-  async function deleteDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
+  async function deleteDeal(dealId: string, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
     console.group('Store: deleteDeal');
     console.log('Deleting deal ID:', dealId, 'Type:', type);
     isLoading.value = true;
@@ -151,7 +151,7 @@ export const useDealStore = defineStore('deals', () => {
     }
   }
 
-  async function duplicateDeal(dealId: number, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
+  async function duplicateDeal(dealId: string, type: 'BRRRR' | 'FLIP' = 'BRRRR') {
     console.group('Store: duplicateDeal');
     console.log('Duplicating deal ID:', dealId, 'Type:', type);
     isLoading.value = true;
