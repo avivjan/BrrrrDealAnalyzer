@@ -649,9 +649,9 @@ console.groupEnd();
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
               <h4 class="text-sm font-bold text-gray-700 uppercase mb-3 tracking-wide">Acquisition & Rehab</h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <MoneyInput :model-value="editingDeal.purchasePrice ?? null" @update:model-value="(v) => editingDeal.purchasePrice = v ?? undefined" label="Purchase Price" :inThousands="true" />
-                 <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v) => editingDeal.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
-                 <MoneyInput :model-value="editingDeal.closingCostsBuy ?? null" @update:model-value="(v) => editingDeal.closingCostsBuy = v ?? undefined" label="Closing Costs (Buy)" :inThousands="true" />
+                 <MoneyInput :model-value="editingDeal.purchasePrice ?? null" @update:model-value="(v: number | null) => editingDeal!.purchasePrice = v ?? undefined" label="Purchase Price" :inThousands="true" />
+                 <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
+                 <MoneyInput :model-value="editingDeal.closingCostsBuy ?? null" @update:model-value="(v: number | null) => editingDeal!.closingCostsBuy = v ?? undefined" label="Closing Costs (Buy)" :inThousands="true" />
               </div>
             </div>
 
@@ -665,9 +665,9 @@ console.groupEnd();
                  </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <NumberInput :model-value="editingDeal.down_payment ?? null" @update:model-value="(v) => editingDeal.down_payment = v ?? undefined" label="Down Payment" suffix="%" :max="100" />
-                 <NumberInput :model-value="editingDeal.HMLInterestRate ?? null" @update:model-value="(v) => editingDeal.HMLInterestRate = v ?? undefined" label="HML Interest Rate" suffix="%" />
-                 <NumberInput :model-value="editingDeal.hmlPoints ?? null" @update:model-value="(v) => editingDeal.hmlPoints = v ?? undefined" label="HML Points" suffix=" pts" />
+                 <NumberInput :model-value="editingDeal.down_payment ?? null" @update:model-value="(v: number | null) => editingDeal!.down_payment = v ?? undefined" label="Down Payment" suffix="%" :max="100" />
+                 <NumberInput :model-value="editingDeal.HMLInterestRate ?? null" @update:model-value="(v: number | null) => editingDeal!.HMLInterestRate = v ?? undefined" label="HML Interest Rate" suffix="%" />
+                 <NumberInput :model-value="editingDeal.hmlPoints ?? null" @update:model-value="(v: number | null) => editingDeal!.hmlPoints = v ?? undefined" label="HML Points" suffix=" pts" />
               </div>
             </div>
 
@@ -675,10 +675,10 @@ console.groupEnd();
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
               <h4 class="text-sm font-bold text-gray-700 uppercase mb-3 tracking-wide">Operating Expenses (Annual/Monthly)</h4>
               <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                 <MoneyInput :model-value="editingDeal.annual_property_taxes ?? null" @update:model-value="(v) => editingDeal.annual_property_taxes = v ?? undefined" label="Annual Taxes" />
-                 <MoneyInput :model-value="editingDeal.annual_insurance ?? null" @update:model-value="(v) => editingDeal.annual_insurance = v ?? undefined" label="Annual Insurance" />
-                 <MoneyInput :model-value="editingDeal.montly_hoa ?? null" @update:model-value="(v) => editingDeal.montly_hoa = v ?? undefined" label="Monthly HOA" />
-                 <MoneyInput v-if="editingDeal.deal_type === 'FLIP'" :model-value="(editingDeal as any).monthly_utilities ?? null" @update:model-value="(v) => (editingDeal as any).monthly_utilities = v ?? undefined" label="Monthly Utilities" />
+                 <MoneyInput :model-value="editingDeal.annual_property_taxes ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_property_taxes = v ?? undefined" label="Annual Taxes" />
+                 <MoneyInput :model-value="editingDeal.annual_insurance ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_insurance = v ?? undefined" label="Annual Insurance" />
+                 <MoneyInput :model-value="editingDeal.montly_hoa ?? null" @update:model-value="(v: number | null) => editingDeal!.montly_hoa = v ?? undefined" label="Monthly HOA" />
+                 <MoneyInput v-if="editingDeal.deal_type === 'FLIP'" :model-value="(editingDeal as any).monthly_utilities ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthly_utilities = v ?? undefined" label="Monthly Utilities" />
               </div>
             </div>
                
@@ -687,13 +687,13 @@ console.groupEnd();
                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4">
                   <h4 class="text-sm font-bold text-blue-800 uppercase mb-3 tracking-wide">Rental Assumptions</h4>
                   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <MoneyInput :model-value="editingDeal.rent ?? null" @update:model-value="(v) => editingDeal.rent = v ?? undefined" label="Expected Rent" />
-                      <NumberInput :model-value="(editingDeal as any).vacancyPercent ?? null" @update:model-value="(v) => (editingDeal as any).vacancyPercent = v ?? undefined" label="Vacancy" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v) => (editingDeal as any).property_managment_fee_precentages_from_rent = v ?? undefined" label="PM Fee" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).maintenancePercent ?? null" @update:model-value="(v) => (editingDeal as any).maintenancePercent = v ?? undefined" label="Maintenance" suffix="%" :max="100" />
+                      <MoneyInput :model-value="(editingDeal as any).rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).rent = v ?? undefined" label="Expected Rent" />
+                      <NumberInput :model-value="(editingDeal as any).vacancyPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).vacancyPercent = v ?? undefined" label="Vacancy" suffix="%" :max="100" />
+                      <NumberInput :model-value="(editingDeal as any).property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).property_managment_fee_precentages_from_rent = v ?? undefined" label="PM Fee" suffix="%" :max="100" />
+                      <NumberInput :model-value="(editingDeal as any).maintenancePercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).maintenancePercent = v ?? undefined" label="Maintenance" suffix="%" :max="100" />
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <NumberInput :model-value="(editingDeal as any).capexPercent ?? null" @update:model-value="(v) => (editingDeal as any).capexPercent = v ?? undefined" label="CapEx" suffix="%" :max="100" />
+                      <NumberInput :model-value="(editingDeal as any).capexPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capexPercent = v ?? undefined" label="CapEx" suffix="%" :max="100" />
                   </div>
                </div>
 
@@ -701,14 +701,14 @@ console.groupEnd();
                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4">
                   <h4 class="text-sm font-bold text-blue-800 uppercase mb-3 tracking-wide">Refinance Strategy</h4>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <MoneyInput :model-value="(editingDeal as any).arv_in_thousands ?? null" @update:model-value="(v) => (editingDeal as any).arv_in_thousands = v ?? undefined" label="ARV" :inThousands="true" />
-                      <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" />
-                      <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Costs" :inThousands="true" />
+                      <MoneyInput :model-value="(editingDeal as any).arv_in_thousands ?? null" @update:model-value="(v: number | null) => (editingDeal as any).arv_in_thousands = v ?? undefined" label="ARV" :inThousands="true" />
+                      <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" />
+                      <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Costs" :inThousands="true" />
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <NumberInput :model-value="(editingDeal as any).ltv_as_precent ?? null" @update:model-value="(v) => (editingDeal as any).ltv_as_precent = v ?? undefined" label="Refi LTV" suffix="%" :max="100" />
-                      <NumberInput :model-value="(editingDeal as any).interestRate ?? null" @update:model-value="(v) => (editingDeal as any).interestRate = v ?? undefined" label="Refi Interest Rate" suffix="%" />
-                      <NumberInput :model-value="(editingDeal as any).loanTermYears ?? null" @update:model-value="(v) => (editingDeal as any).loanTermYears = v ?? undefined" label="Loan Term" suffix=" Years" />
+                      <NumberInput :model-value="(editingDeal as any).ltv_as_precent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).ltv_as_precent = v ?? undefined" label="Refi LTV" suffix="%" :max="100" />
+                      <NumberInput :model-value="(editingDeal as any).interestRate ?? null" @update:model-value="(v: number | null) => (editingDeal as any).interestRate = v ?? undefined" label="Refi Interest Rate" suffix="%" />
+                      <NumberInput :model-value="(editingDeal as any).loanTermYears ?? null" @update:model-value="(v: number | null) => (editingDeal as any).loanTermYears = v ?? undefined" label="Loan Term" suffix=" Years" />
                   </div>
                </div>
             </template>
@@ -718,10 +718,10 @@ console.groupEnd();
                <div class="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-4">
                   <h4 class="text-sm font-bold text-orange-800 uppercase mb-3 tracking-wide">Exit Strategy</h4>
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <MoneyInput :model-value="(editingDeal as any).salePrice ?? null" @update:model-value="(v) => (editingDeal as any).salePrice = v ?? undefined" label="Sale Price (ARV)" :inThousands="true" />
-                       <NumberInput :model-value="(editingDeal as any).holdingTime ?? null" @update:model-value="(v) => (editingDeal as any).holdingTime = v ?? undefined" label="Holding Time (mos)" />
-                       <NumberInput :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Selling Costs" suffix="%" />
-                       <NumberInput :model-value="(editingDeal as any).capitalGainsTax ?? null" @update:model-value="(v) => (editingDeal as any).capitalGainsTax = v ?? undefined" label="Capital Gains Tax" suffix="%" />
+                       <MoneyInput :model-value="(editingDeal as any).salePrice ?? null" @update:model-value="(v: number | null) => (editingDeal as any).salePrice = v ?? undefined" label="Sale Price (ARV)" :inThousands="true" />
+                       <NumberInput :model-value="(editingDeal as any).holdingTime ?? null" @update:model-value="(v: number | null) => (editingDeal as any).holdingTime = v ?? undefined" label="Holding Time (mos)" />
+                       <NumberInput :model-value="(editingDeal as any).sellingClosingCosts ?? null" @update:model-value="(v: number | null) => (editingDeal as any).sellingClosingCosts = v ?? undefined" label="Selling Costs" suffix="%" />
+                       <NumberInput :model-value="(editingDeal as any).capitalGainsTax ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capitalGainsTax = v ?? undefined" label="Capital Gains Tax" suffix="%" />
                    </div>
                </div>
             </template>
