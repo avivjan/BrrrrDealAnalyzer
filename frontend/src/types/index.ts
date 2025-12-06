@@ -15,6 +15,7 @@ export interface BaseDealReq {
   // Shared
   purchasePrice?: number;
   rehabCost?: number;
+  rehabContingency?: number;
   down_payment?: number; 
   closingCostsBuy?: number;
   use_HM_for_rehab?: boolean;

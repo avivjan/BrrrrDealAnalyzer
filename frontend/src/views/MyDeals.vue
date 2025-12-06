@@ -660,7 +660,10 @@ console.groupEnd();
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <MoneyInput :model-value="editingDeal.purchasePrice ?? null" @update:model-value="(v: number | null) => editingDeal!.purchasePrice = v ?? undefined" label="Purchase Price" :inThousands="true" :required="true" />
-                   <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
+                   <div class="grid grid-cols-2 gap-2">
+                      <MoneyInput :model-value="editingDeal.rehabCost ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabCost = v ?? undefined" label="Rehab Cost" :inThousands="true" />
+                      <NumberInput :model-value="editingDeal.rehabContingency ?? null" @update:model-value="(v: number | null) => editingDeal!.rehabContingency = v ?? undefined" label="Contingency" suffix="%" :min="0" :max="100" />
+                   </div>
                    <MoneyInput :model-value="editingDeal.closingCostsBuy ?? null" @update:model-value="(v: number | null) => editingDeal!.closingCostsBuy = v ?? undefined" label="Closing Costs (Buy)" :inThousands="true" />
 
                    <div class="md:col-span-2 border-t border-gray-200 my-2 pt-4">
