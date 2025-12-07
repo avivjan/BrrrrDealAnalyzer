@@ -21,8 +21,13 @@ from crud_active_deal import (
     delete_brrr_deal, delete_flip_deal,
     duplicate_brrr_deal, duplicate_flip_deal
 )
+from crud_liquidity import get_liquidity_settings, update_liquidity_settings
+from ReqRes.liquidity.liquidityReq import LiquidityUpdate
+from ReqRes.liquidity.liquidityRes import LiquidityRes
 from db import Base, engine, get_db
 from models import BrrrActiveDeal, FlipActiveDeal
+# Ensure models_liquidity is imported so the table is created
+import models_liquidity
 
 app = FastAPI()
 
@@ -395,3 +400,11 @@ def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
 @app.get("/helloworld")
 def helloworld() -> dict:
     return {"message": "Hello, World!"}
+
+@app.get("/liquidity", response_model=LiquidityRes)
+def get_liquidity(db: Session = Depends(get_db)):
+    return get_liquidity_settings(db)
+
+@app.put("/liquidity", response_model=LiquidityRes)
+def update_liquidity(payload: LiquidityUpdate, db: Session = Depends(get_db)):
+    return update_liquidity_settings(db, payload)
