@@ -6,7 +6,7 @@ from ReqRes.activeDeal.activeDealReq import BrrrActiveDealCreate, FlipActiveDeal
 
 
 def add_brrr_deal(db: Session, deal_data: BrrrActiveDealCreate) -> BrrrActiveDeal:
-    data = deal_data.model_dump(exclude_unset=True, exclude={'deal_type'})
+    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
     db_deal = BrrrActiveDeal(**data)
     db.add(db_deal)
     db.commit()
@@ -15,7 +15,7 @@ def add_brrr_deal(db: Session, deal_data: BrrrActiveDealCreate) -> BrrrActiveDea
 
 
 def add_flip_deal(db: Session, deal_data: FlipActiveDealCreate) -> FlipActiveDeal:
-    data = deal_data.model_dump(exclude_unset=True, exclude={'deal_type'})
+    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
     db_deal = FlipActiveDeal(**data)
     db.add(db_deal)
     db.commit()
@@ -36,7 +36,7 @@ def update_brrr_deal(db: Session, deal_id: str, deal_data: BrrrActiveDealCreate)
     if not db_deal:
         return None
     
-    update_data = deal_data.model_dump(exclude={'deal_type'})
+    update_data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     for key, value in update_data.items():
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
@@ -51,7 +51,7 @@ def update_flip_deal(db: Session, deal_id: str, deal_data: FlipActiveDealCreate)
     if not db_deal:
         return None
     
-    update_data = deal_data.model_dump(exclude={'deal_type'})
+    update_data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     for key, value in update_data.items():
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
