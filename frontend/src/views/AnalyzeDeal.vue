@@ -14,7 +14,7 @@ console.log("Component setup started");
 const store = useDealStore();
 const { currentAnalysisResult, isLoading } = storeToRefs(store);
 
-const selectedType = ref<'BRRRR' | 'FLIP'>('BRRRR');
+const selectedType = ref<"BRRRR" | "FLIP">("BRRRR");
 
 // Initial form state with defaults
 // We use a merged state for the form to handle both types
@@ -26,9 +26,9 @@ const form = ref({
   closingCostsBuy: 0,
   down_payment: 0,
   hmlPoints: 0,
-  HMLInterestRate: 10,
+  HMLInterestRate: 11,
   use_HM_for_rehab: false,
-  
+
   annual_property_taxes: 0,
   annual_insurance: 0,
   montly_hoa: 0,
@@ -53,17 +53,22 @@ const form = ref({
   sellerAgentSellingFee: 0,
   sellingClosingCosts: 0,
   capitalGainsTax: 0,
-  monthly_utilities: 0
+  monthly_utilities: 0,
 });
 
 // Sync ARV and Sale Price for convenience if user switches
-watch(() => form.value.arv_in_thousands, (val) => {
-  if (selectedType.value === 'BRRRR') form.value.salePrice = val;
-});
-watch(() => form.value.salePrice, (val) => {
-  if (selectedType.value === 'FLIP') form.value.arv_in_thousands = val;
-});
-
+watch(
+  () => form.value.arv_in_thousands,
+  (val) => {
+    if (selectedType.value === "BRRRR") form.value.salePrice = val;
+  }
+);
+watch(
+  () => form.value.salePrice,
+  (val) => {
+    if (selectedType.value === "FLIP") form.value.arv_in_thousands = val;
+  }
+);
 
 onMounted(() => {
   console.log("View: AnalyzeDeal mounted");
@@ -85,11 +90,11 @@ const validateForm = () => {
     errors.push("Rehab cost (in thousands) cannot be negative.");
   if (f.rehabContingency < 0 || f.rehabContingency > 100)
     errors.push("Contingency must be between 0% and 100%.");
-  
+
   if (f.down_payment < 0 || f.down_payment > 100)
     errors.push("Down payment percentage must be between 0% and 100%.");
 
-  if (selectedType.value === 'BRRRR') {
+  if (selectedType.value === "BRRRR") {
     if (!f.arv_in_thousands || f.arv_in_thousands <= 0)
       errors.push("ARV (in thousands) must be greater than 0.");
     if (!f.rent || f.rent <= 0) errors.push("Rent must be greater than 0.");
@@ -99,15 +104,14 @@ const validateForm = () => {
     // Flip Validations
     if (!f.salePrice || f.salePrice <= 0)
       errors.push("Sale Price (ARV) must be greater than 0.");
-    if (f.holdingTime <= 0)
-      errors.push("Holding time must be greater than 0.");
-      
+    if (f.holdingTime <= 0) errors.push("Holding time must be greater than 0.");
+
     if (f.buyerAgentSellingFee < 0 || f.buyerAgentSellingFee > 100)
-         errors.push("Buyer agent fee must be between 0% and 100%.");
+      errors.push("Buyer agent fee must be between 0% and 100%.");
     if (f.sellerAgentSellingFee < 0 || f.sellerAgentSellingFee > 100)
-         errors.push("Seller agent fee must be between 0% and 100%.");
+      errors.push("Seller agent fee must be between 0% and 100%.");
     if (f.sellingClosingCosts < 0)
-         errors.push("Closing costs cannot be negative.");
+      errors.push("Closing costs cannot be negative.");
   }
 
   console.log("View: AnalyzeDeal - validation errors:", errors);
@@ -119,26 +123,26 @@ const analyze = async () => {
   const f = form.value;
   let payload: any = {};
 
-  if (selectedType.value === 'BRRRR') {
-     payload = {
-       ...f,
-       arv_in_thousands: f.arv_in_thousands
-     };
+  if (selectedType.value === "BRRRR") {
+    payload = {
+      ...f,
+      arv_in_thousands: f.arv_in_thousands,
+    };
   } else {
-     payload = {
-       ...f,
-       salePrice: f.salePrice, // confirm casing matches backend alias? 
-       // Backend Req uses alias="salePrice". 
-       // My form state has salePrice.
-       // In `validate_flip_inputs` I might need to map it if I send raw form.
-       // My API `analyzeDeal` takes `AnalyzeDealReq`.
-       // Let's pass `f` and let Axios/Backend handle aliases if possible, 
-       // OR ensure keys match exactly what backend expects (alias names).
-       // Pydantic alias generator populate_by_name=True allows using field names OR aliases.
-       // I used aliases in Pydantic.
-       // So sending `salePrice` is good if alias is `salePrice`.
-       // Backend Req: `sale_price_in_thousands: Annotated[float, Field(alias="salePrice")]`
-     };
+    payload = {
+      ...f,
+      salePrice: f.salePrice, // confirm casing matches backend alias?
+      // Backend Req uses alias="salePrice".
+      // My form state has salePrice.
+      // In `validate_flip_inputs` I might need to map it if I send raw form.
+      // My API `analyzeDeal` takes `AnalyzeDealReq`.
+      // Let's pass `f` and let Axios/Backend handle aliases if possible,
+      // OR ensure keys match exactly what backend expects (alias names).
+      // Pydantic alias generator populate_by_name=True allows using field names OR aliases.
+      // I used aliases in Pydantic.
+      // So sending `salePrice` is good if alias is `salePrice`.
+      // Backend Req: `sale_price_in_thousands: Annotated[float, Field(alias="salePrice")]`
+    };
   }
 
   if (validationErrors.value.length === 0) {
@@ -174,8 +178,16 @@ watch(
 );
 
 // Results Casting
-const brrrResult = computed(() => selectedType.value === 'BRRRR' ? currentAnalysisResult.value as BrrrAnalyzeRes : null);
-const flipResult = computed(() => selectedType.value === 'FLIP' ? currentAnalysisResult.value as FlipAnalyzeRes : null);
+const brrrResult = computed(() =>
+  selectedType.value === "BRRRR"
+    ? (currentAnalysisResult.value as BrrrAnalyzeRes)
+    : null
+);
+const flipResult = computed(() =>
+  selectedType.value === "FLIP"
+    ? (currentAnalysisResult.value as FlipAnalyzeRes)
+    : null
+);
 
 // Formatting Helpers
 const formatCurrency = (value: number | undefined) => {
@@ -210,7 +222,7 @@ const saveDeal = async () => {
     const dealData = {
       ...form.value,
       ...saveForm.value,
-      deal_type: selectedType.value
+      deal_type: selectedType.value,
     };
     console.log("View: AnalyzeDeal - saving deal data:", dealData);
     await store.saveDeal(dealData as any);
@@ -224,22 +236,22 @@ const saveDeal = async () => {
 
 // Colors
 const getPerformanceColor = (value: number | undefined) => {
-    if (value === undefined || value === null) return "text-gray-900";
-    if (value > 0) return "text-emerald-600";
-    if (value < 0) return "text-red-600";
-    return "text-gray-600";
-}
+  if (value === undefined || value === null) return "text-gray-900";
+  if (value > 0) return "text-emerald-600";
+  if (value < 0) return "text-red-600";
+  return "text-gray-600";
+};
 
 const quickCalcSellingCosts = () => {
-    // 3% buyer + 3% seller + ~2% closing (approx $5k for now as default or just 0?)
-    // Let's set closing costs to a reasonable flat fee assumption for "Quick Calc"
-    // The user didn't specify what 2% equivalent is, but typical closing costs might be $2-5k.
-    // If we want to keep logic consistent with previous "2%", we'd need ARV.
-    // Let's just set it to 5 (meaning $5k) as a placeholder for "Quick".
-    form.value.buyerAgentSellingFee = 3;
-    form.value.sellerAgentSellingFee = 3;
-    form.value.sellingClosingCosts = 5; 
-}
+  // 3% buyer + 3% seller + ~2% closing (approx $5k for now as default or just 0?)
+  // Let's set closing costs to a reasonable flat fee assumption for "Quick Calc"
+  // The user didn't specify what 2% equivalent is, but typical closing costs might be $2-5k.
+  // If we want to keep logic consistent with previous "2%", we'd need ARV.
+  // Let's just set it to 5 (meaning $5k) as a placeholder for "Quick".
+  form.value.buyerAgentSellingFee = 3;
+  form.value.sellerAgentSellingFee = 3;
+  form.value.sellingClosingCosts = 5;
+};
 </script>
 
 <template>
@@ -247,29 +259,49 @@ const quickCalcSellingCosts = () => {
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left Column: Form -->
       <div class="lg:col-span-2 space-y-8">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <header
+          class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4"
+        >
           <h1
             class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600"
           >
             Analyze Deal
           </h1>
-          
+
           <!-- Type Switcher -->
-          <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
-             <button 
-                @click="selectedType = 'BRRRR'; hasAnalyzed = false; currentAnalysisResult = null;"
-                :class="selectedType === 'BRRRR' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:text-gray-700'"
-                class="px-6 py-2 rounded-lg transition-all"
-             >
-                BRRRR
-             </button>
-             <button 
-                @click="selectedType = 'FLIP'; hasAnalyzed = false; currentAnalysisResult = null;"
-                :class="selectedType === 'FLIP' ? 'bg-orange-100 text-orange-700 font-bold' : 'text-gray-500 hover:text-gray-700'"
-                class="px-6 py-2 rounded-lg transition-all"
-             >
-                FLIP
-             </button>
+          <div
+            class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex"
+          >
+            <button
+              @click="
+                selectedType = 'BRRRR';
+                hasAnalyzed = false;
+                currentAnalysisResult = null;
+              "
+              :class="
+                selectedType === 'BRRRR'
+                  ? 'bg-blue-100 text-blue-700 font-bold'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+              class="px-6 py-2 rounded-lg transition-all"
+            >
+              BRRRR
+            </button>
+            <button
+              @click="
+                selectedType = 'FLIP';
+                hasAnalyzed = false;
+                currentAnalysisResult = null;
+              "
+              :class="
+                selectedType === 'FLIP'
+                  ? 'bg-orange-100 text-orange-700 font-bold'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+              class="px-6 py-2 rounded-lg transition-all"
+            >
+              FLIP
+            </button>
           </div>
 
           <button
@@ -362,7 +394,8 @@ const quickCalcSellingCosts = () => {
         </section>
 
         <!-- BRRRR Section -->
-        <section v-if="selectedType === 'BRRRR'"
+        <section
+          v-if="selectedType === 'BRRRR'"
           class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"
         >
           <h2
@@ -413,9 +446,10 @@ const quickCalcSellingCosts = () => {
             />
           </div>
         </section>
-        
+
         <!-- FLIP Section -->
-        <section v-if="selectedType === 'FLIP'"
+        <section
+          v-if="selectedType === 'FLIP'"
           class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"
         >
           <h2
@@ -430,37 +464,44 @@ const quickCalcSellingCosts = () => {
               :inThousands="true"
               required
             />
-             <NumberInput
+            <NumberInput
               v-model="form.holdingTime"
               label="Holding Time"
               suffix=" mos"
               required
             />
-            
-            <div class="md:col-span-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <div class="flex justify-between items-center mb-3">
-                   <h3 class="text-sm font-semibold text-gray-700">Selling Costs</h3>
-                   <button @click="quickCalcSellingCosts" class="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
-                        Quick Defaults (3%/3%/$5k)
-                   </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <NumberInput
-                        v-model="form.buyerAgentSellingFee"
-                        label="Buyer Agent Fee"
-                        suffix="%"
-                    />
-                    <NumberInput
-                        v-model="form.sellerAgentSellingFee"
-                        label="Seller Agent Fee"
-                        suffix="%"
-                    />
-                    <MoneyInput
-                        v-model="form.sellingClosingCosts"
-                        label="Closing Costs"
-                        :inThousands="true"
-                    />
-                </div>
+
+            <div
+              class="md:col-span-2 bg-gray-50 rounded-lg p-3 border border-gray-100"
+            >
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-semibold text-gray-700">
+                  Selling Costs
+                </h3>
+                <button
+                  @click="quickCalcSellingCosts"
+                  class="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition-colors shadow-sm"
+                >
+                  Quick Defaults (3%/3%/$5k)
+                </button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <NumberInput
+                  v-model="form.buyerAgentSellingFee"
+                  label="Buyer Agent Fee"
+                  suffix="%"
+                />
+                <NumberInput
+                  v-model="form.sellerAgentSellingFee"
+                  label="Seller Agent Fee"
+                  suffix="%"
+                />
+                <MoneyInput
+                  v-model="form.sellingClosingCosts"
+                  label="Closing Costs"
+                  :inThousands="true"
+                />
+              </div>
             </div>
 
             <NumberInput
@@ -478,11 +519,22 @@ const quickCalcSellingCosts = () => {
           <h2
             class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
           >
-            <i class="pi pi-wallet" :class="selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'"></i> Expenses
+            <i
+              class="pi pi-wallet"
+              :class="
+                selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'
+              "
+            ></i>
+            Expenses
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MoneyInput v-if="selectedType === 'BRRRR'" v-model="form.rent" label="Monthly Rent" required />
-            
+            <MoneyInput
+              v-if="selectedType === 'BRRRR'"
+              v-model="form.rent"
+              label="Monthly Rent"
+              required
+            />
+
             <MoneyInput
               v-model="form.annual_property_taxes"
               label="Annual Taxes"
@@ -492,9 +544,14 @@ const quickCalcSellingCosts = () => {
               label="Annual Insurance"
             />
             <MoneyInput v-model="form.montly_hoa" label="Monthly HOA" />
-            <MoneyInput v-if="selectedType === 'FLIP'" v-model="form.monthly_utilities" label="Monthly Utilities" />
+            <MoneyInput
+              v-if="selectedType === 'FLIP'"
+              v-model="form.monthly_utilities"
+              label="Monthly Utilities"
+            />
 
-            <div v-if="selectedType === 'BRRRR'"
+            <div
+              v-if="selectedType === 'BRRRR'"
               class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2"
             >
               <NumberInput
@@ -539,7 +596,11 @@ const quickCalcSellingCosts = () => {
           <button
             @click="onAnalyzeClick"
             class="w-full md:w-auto text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-lg"
-            :class="selectedType === 'BRRRR' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'"
+            :class="
+              selectedType === 'BRRRR'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-orange-500 hover:bg-orange-600'
+            "
           >
             <i class="pi pi-bolt"></i> Analyze Deal
           </button>
@@ -555,112 +616,171 @@ const quickCalcSellingCosts = () => {
           >
             <div
               class="absolute top-0 left-0 w-full h-1"
-              :class="selectedType === 'BRRRR' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-orange-400 to-red-500'"
+              :class="
+                selectedType === 'BRRRR'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-orange-400 to-red-500'
+              "
             ></div>
 
             <h2
               class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"
             >
-              <i class="pi pi-chart-bar" :class="selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'"></i> Results
+              <i
+                class="pi pi-chart-bar"
+                :class="
+                  selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'
+                "
+              ></i>
+              Results
             </h2>
 
             <div v-if="isLoading" class="flex justify-center py-10">
-              <i class="pi pi-spin pi-spinner text-4xl" :class="selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'"></i>
+              <i
+                class="pi pi-spin pi-spinner text-4xl"
+                :class="
+                  selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'
+                "
+              ></i>
             </div>
 
             <div v-else-if="currentAnalysisResult" class="space-y-4">
-              
               <!-- BRRRR RESULTS -->
               <template v-if="selectedType === 'BRRRR' && brrrResult">
-                  <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">Cash Out</span>
-                    <span class="text-2xl font-bold" :class="getPerformanceColor(brrrResult.cash_out)">
-                      {{ formatCurrency(brrrResult.cash_out) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">Total Cash Needed</span>
-                    <span class="text-xl font-bold text-blue-600">{{ formatCurrency(brrrResult.total_cash_needed_for_deal) }}</span>
-                  </div>
-                  <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">Cash Flow / mo</span>
-                    <span class="text-lg font-semibold" :class="getPerformanceColor(brrrResult.cash_flow)">
-                      {{ formatCurrency(brrrResult.cash_flow) }}
-                    </span>
-                  </div>
-                  <!-- Secondary Metrics -->
-                  <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-                    <div>
-                      <div class="text-gray-400">DSCR</div>
-                      <div class="font-medium">{{ brrrResult.dscr?.toFixed(2) ?? "-" }}</div>
-                    </div>
-                    <div>
-                      <div class="text-gray-400">ROI</div>
-                      <div class="font-medium" :class="getPerformanceColor(brrrResult.roi)">
-                        {{ formatPercent(brrrResult.roi) }}
-                      </div>
-                    </div>
-                     <div>
-                      <div class="text-gray-400">Equity</div>
-                      <div class="font-medium" :class="getPerformanceColor(brrrResult.equity)">
-                        {{ formatCurrency(brrrResult.equity) }}
-                      </div>
-                    </div>
-                    <div>
-                      <div class="text-gray-400">CoC Return</div>
-                      <div class="font-medium" :class="getPerformanceColor(brrrResult.cash_on_cash)">
-                        {{ formatPercent(brrrResult.cash_on_cash) }}
-                      </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">Cash Out</span>
+                  <span
+                    class="text-2xl font-bold"
+                    :class="getPerformanceColor(brrrResult.cash_out)"
+                  >
+                    {{ formatCurrency(brrrResult.cash_out) }}
+                  </span>
+                </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">Total Cash Needed</span>
+                  <span class="text-xl font-bold text-blue-600">{{
+                    formatCurrency(brrrResult.total_cash_needed_for_deal)
+                  }}</span>
+                </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">Cash Flow / mo</span>
+                  <span
+                    class="text-lg font-semibold"
+                    :class="getPerformanceColor(brrrResult.cash_flow)"
+                  >
+                    {{ formatCurrency(brrrResult.cash_flow) }}
+                  </span>
+                </div>
+                <!-- Secondary Metrics -->
+                <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+                  <div>
+                    <div class="text-gray-400">DSCR</div>
+                    <div class="font-medium">
+                      {{ brrrResult.dscr?.toFixed(2) ?? "-" }}
                     </div>
                   </div>
+                  <div>
+                    <div class="text-gray-400">ROI</div>
+                    <div
+                      class="font-medium"
+                      :class="getPerformanceColor(brrrResult.roi)"
+                    >
+                      {{ formatPercent(brrrResult.roi) }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-gray-400">Equity</div>
+                    <div
+                      class="font-medium"
+                      :class="getPerformanceColor(brrrResult.equity)"
+                    >
+                      {{ formatCurrency(brrrResult.equity) }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-gray-400">CoC Return</div>
+                    <div
+                      class="font-medium"
+                      :class="getPerformanceColor(brrrResult.cash_on_cash)"
+                    >
+                      {{ formatPercent(brrrResult.cash_on_cash) }}
+                    </div>
+                  </div>
+                </div>
               </template>
-              
-              <!-- FLIP RESULTS -->
-               <template v-if="selectedType === 'FLIP' && flipResult">
-                  <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">Net Profit</span>
-                    <span class="text-3xl font-bold" :class="getPerformanceColor(flipResult.net_profit)">
-                      {{ formatCurrency(flipResult.net_profit) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">Total Cash Needed</span>
-                    <span class="text-xl font-bold text-orange-600">{{ formatCurrency(flipResult.total_cash_needed) }}</span>
-                  </div>
-                   <div class="flex justify-between items-end pb-2 border-b border-gray-100">
-                    <span class="text-gray-600">ROI</span>
-                    <span class="text-2xl font-bold" :class="getPerformanceColor(flipResult.roi)">
-                      {{ formatPercent(flipResult.roi) }}
-                    </span>
-                  </div>
-                  
-                  <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-                     <div>
-                      <div class="text-gray-400">Annualized ROI</div>
-                      <div class="font-medium" :class="getPerformanceColor(flipResult.annualized_roi)">
-                        {{ formatPercent(flipResult.annualized_roi) }}
-                      </div>
-                    </div>
-                     <div>
-                      <div class="text-gray-400">Holding Costs</div>
-                      <div class="font-medium text-red-500">
-                        {{ formatCurrency(flipResult.total_holding_costs) }}
-                      </div>
-                    </div>
-                  </div>
-               </template>
 
+              <!-- FLIP RESULTS -->
+              <template v-if="selectedType === 'FLIP' && flipResult">
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">Net Profit</span>
+                  <span
+                    class="text-3xl font-bold"
+                    :class="getPerformanceColor(flipResult.net_profit)"
+                  >
+                    {{ formatCurrency(flipResult.net_profit) }}
+                  </span>
+                </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">Total Cash Needed</span>
+                  <span class="text-xl font-bold text-orange-600">{{
+                    formatCurrency(flipResult.total_cash_needed)
+                  }}</span>
+                </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
+                  <span class="text-gray-600">ROI</span>
+                  <span
+                    class="text-2xl font-bold"
+                    :class="getPerformanceColor(flipResult.roi)"
+                  >
+                    {{ formatPercent(flipResult.roi) }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+                  <div>
+                    <div class="text-gray-400">Annualized ROI</div>
+                    <div
+                      class="font-medium"
+                      :class="getPerformanceColor(flipResult.annualized_roi)"
+                    >
+                      {{ formatPercent(flipResult.annualized_roi) }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-gray-400">Holding Costs</div>
+                    <div class="font-medium text-red-500">
+                      {{ formatCurrency(flipResult.total_holding_costs) }}
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
-            
+
             <div v-else class="py-10 text-center text-gray-400">
-                Run analysis to see results
+              Run analysis to see results
             </div>
 
             <!-- Save Button -->
             <button
               @click="showSaveModal = true"
               class="w-full mt-8 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-              :class="selectedType === 'BRRRR' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'"
+              :class="
+                selectedType === 'BRRRR'
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-orange-500 hover:bg-orange-600'
+              "
             >
               <i class="pi pi-save"></i> Save Deal
             </button>
@@ -740,7 +860,11 @@ const quickCalcSellingCosts = () => {
           <button
             @click="saveDeal"
             class="px-6 py-2 text-white rounded-lg font-medium shadow-lg transition-colors"
-            :class="selectedType === 'BRRRR' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'"
+            :class="
+              selectedType === 'BRRRR'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-orange-500 hover:bg-orange-600'
+            "
           >
             Save
           </button>
