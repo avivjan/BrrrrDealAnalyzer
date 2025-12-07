@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLiquidityStore } from "@/stores/liquidityStore";
+import { useLiquidityStore } from "../stores/liquidityStore";
 import { onMounted, watch, ref } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 

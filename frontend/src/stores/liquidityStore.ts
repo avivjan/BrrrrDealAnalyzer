@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import api from '@/api';
-import type { LiquiditySettings } from '@/types';
+import api from '../api';
+import type { LiquiditySettings } from '../types';
 
 export const useLiquidityStore = defineStore('liquidity', {
   state: () => ({
