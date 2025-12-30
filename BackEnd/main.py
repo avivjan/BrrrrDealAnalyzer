@@ -170,7 +170,7 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
-    rehab_cash = rehab_cost if not use_HM_for_rehab else min(10000, rehab_cost)
+    rehab_cash = rehab_cost if not use_HM_for_rehab else 0
     return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
@@ -267,7 +267,7 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
     
     down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
-    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else min(10000, rehab_cost)
+    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 0
     
     total_cash_needed = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
     
