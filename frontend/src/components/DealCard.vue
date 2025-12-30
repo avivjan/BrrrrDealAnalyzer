@@ -190,6 +190,12 @@ const formatMoney = (val?: number) =>
             brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-"
             }}</span>
         </div>
+        <div class="flex flex-col">
+            <span class="text-[10px] text-gray-400 uppercase">Equity</span>
+            <span class="font-mono text-emerald-600">{{
+            formatMoney(brrrDeal?.equity)
+            }}</span>
+        </div>
       </template>
 
       <template v-else>

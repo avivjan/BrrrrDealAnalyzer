@@ -772,6 +772,10 @@ console.groupEnd();
                             <div class="text-gray-500">DSCR</div>
                             <div class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
                         </div>
+                        <div>
+                            <div class="text-gray-500">Equity</div>
+                            <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
+                        </div>
                     </template>
                     <template v-else>
                         <div>

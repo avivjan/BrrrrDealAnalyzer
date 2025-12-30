@@ -109,3 +109,4 @@ const openLink = (card: any) => {
   </div>
 </template>
 
+
