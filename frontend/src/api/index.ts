@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, LiquiditySettings } from '../types';
+import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, LiquiditySettings, SendOfferReq, SendOfferRes } from '../types';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -137,6 +137,22 @@ export default {
       return response.data;
     } catch (error) {
       console.error('API Error:', error);
+      throw error;
+    }
+  },
+
+  async sendOffer(data: SendOfferReq): Promise<SendOfferRes> {
+    console.group('API: sendOffer');
+    console.log('Request Payload:', data);
+    try {
+      const response = await apiClient.post<SendOfferRes>('/send-offer', data);
+      console.log('Response Status:', response.status);
+      console.log('Response Data:', response.data);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
       throw error;
     }
   }

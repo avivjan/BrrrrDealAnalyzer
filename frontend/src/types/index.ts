@@ -125,3 +125,16 @@ export interface LiquiditySettings {
   big_whale_amount: number;
   mini_whale_amount: number;
 }
+
+export interface SendOfferReq {
+  agent_name: string;
+  agent_email: string;
+  property_address: string;
+  purchase_price: number;
+  inspection_period_days: number;
+}
+
+export interface SendOfferRes {
+  message: string;
+  success: boolean;
+}

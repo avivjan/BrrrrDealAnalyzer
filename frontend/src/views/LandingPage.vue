@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
+import SendOfferModal from "../components/SendOfferModal.vue";
 
 console.log("View: LandingPage setup");
+
+const isOfferModalOpen = ref(false);
 
 onMounted(() => {
   console.log("View: LandingPage mounted");
@@ -65,10 +68,20 @@ const openLink = (card: any) => {
 
     <div class="relative z-10 max-w-6xl w-full">
       <h1
-        class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-center mb-12 tracking-tight drop-shadow-sm"
+        class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-center mb-6 tracking-tight drop-shadow-sm"
       >
         Big Whales Deal Analyzer
       </h1>
+
+      <div class="flex justify-center mb-10">
+        <button
+          @click="isOfferModalOpen = true"
+          class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-medium flex items-center gap-2 text-sm md:text-base"
+        >
+          <i class="pi pi-send"></i>
+          Send Market Offer
+        </button>
+      </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <template v-for="card in cards" :key="card.title">
@@ -106,6 +119,8 @@ const openLink = (card: any) => {
         </template>
       </div>
     </div>
+    
+    <SendOfferModal :isOpen="isOfferModalOpen" @close="isOfferModalOpen = false" />
   </div>
 </template>
 
