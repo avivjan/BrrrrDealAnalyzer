@@ -580,7 +580,7 @@ def send_offer_email(details: SendOfferReq):
       <p class="cta">We are ready to sign and get this moving today.</p>
       
       <div class="footer">
-        <p class="footer-name">Yarden Kelly - BigWhalesLLC</p>
+        <p class="footer-name">Yarden Kelly - Big Whales AY LLC</p>
         <p class="footer-contact">(786)-600-7210</p>
         <p class="footer-contact"><a href="mailto:BigWhalesLLC@gmail.com">BigWhalesLLC@gmail.com</a></p>
       </div>
