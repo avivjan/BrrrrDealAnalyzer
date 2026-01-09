@@ -563,7 +563,7 @@ def send_offer_email(details: SendOfferReq):
   <body>
     <div class="container">
       <p class="greeting">Hi {details.agent_name},</p>
-      <p class="intro">I'm addressing you in regards to the property at <strong>{details.property_address}</strong></p>
+      <p class="intro">I’m writing to you regarding the property at <strong>{details.property_address}</strong></p>
       <p class="intro">We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/drive/folders/1tFIQried0ycW4kuo3HJ8TJE3ndml73Pq">LLC Formation</a>)</p>
       
       <p class="intro">I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
