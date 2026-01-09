@@ -447,60 +447,126 @@ def send_offer_email(details: SendOfferReq):
   <head>
     <style>
       body {{
-        font-family: Arial, sans-serif;
-        color: #333333;
-        line-height: 1.6;
-        background-color: #f9f9f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #2c3e50;
+        line-height: 1.7;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         margin: 0;
-        padding: 20px;
+        padding: 40px 20px;
       }}
       .container {{
-        max_width: 600px;
+        max-width: 650px;
         margin: 0 auto;
         background-color: #ffffff;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        border-top: 5px solid #2c3e50;
+        padding: 45px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border-top: 6px solid #3498db;
       }}
-      h2 {{
+      .greeting {{
+        font-size: 18px;
         color: #2c3e50;
-        margin-top: 0;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }}
+      .intro {{
+        font-size: 16px;
+        color: #34495e;
+        margin-bottom: 25px;
       }}
       .highlight {{
-        background-color: #e8f4fc;
-        padding: 10px;
-        border-radius: 4px;
-        border-left: 4px solid #3498db;
-        margin: 15px 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px 30px;
+        border-radius: 10px;
+        margin: 30px 0;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
       }}
       .highlight p {{
-        margin: 5px 0;
-        font-weight: bold;
+        margin: 12px 0;
+        font-weight: 600;
+        font-size: 16px;
+        color: #ffffff;
+        line-height: 1.8;
+      }}
+      .highlight p:first-child {{
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 18px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255,255,255,0.3);
+      }}
+      .highlight a {{
+        color: #ffffff;
+        text-decoration: underline;
+        font-weight: 600;
+      }}
+      .cta {{
+        font-size: 17px;
+        color: #2c3e50;
+        font-weight: 600;
+        margin: 30px 0;
+        text-align: center;
+        padding: 15px;
+        background-color: #ecf0f1;
+        border-radius: 8px;
       }}
       .footer {{
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #eeeeee;
-        font-size: 0.9em;
-        color: #777777;
+        margin-top: 45px;
+        padding: 35px;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }}
+      .footer p {{
+        margin: 8px 0;
+        font-size: 20px;
+        color: #ffffff;
+        font-weight: 600;
+      }}
+      .footer-name {{
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        margin-bottom: 15px !important;
+        letter-spacing: 0.5px;
+      }}
+      .footer-contact {{
+        font-size: 18px !important;
+        font-weight: 500 !important;
+        margin: 10px 0 !important;
+      }}
+      .footer a {{
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 18px;
+      }}
+      .footer a:hover {{
+        color: #5dade2;
+        text-decoration: underline;
       }}
       a {{
         color: #3498db;
         text-decoration: none;
+        font-weight: 600;
       }}
       a:hover {{
+        color: #2980b9;
         text-decoration: underline;
+      }}
+      strong {{
+        color: #2c3e50;
+        font-weight: 700;
       }}
     </style>
   </head>
   <body>
     <div class="container">
-      <p>Hi {details.agent_name},</p>
-      <p>Im addressing you in regards to the property at <strong>{details.property_address}</strong></p>
-      <p>We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/drive/folders/1tFIQried0ycW4kuo3HJ8TJE3ndml73Pq">LLC Formation</a>)</p>
+      <p class="greeting">Hi {details.agent_name},</p>
+      <p class="intro">I'm addressing you in regards to the property at <strong>{details.property_address}</strong></p>
+      <p class="intro">We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/drive/folders/1tFIQried0ycW4kuo3HJ8TJE3ndml73Pq">LLC Formation</a>)</p>
       
-      <p>I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
+      <p class="intro">I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
       
       <div class="highlight">
         <p>Purchase Price: ${details.purchase_price:,.2f}</p>
@@ -511,12 +577,12 @@ def send_offer_email(details: SendOfferReq):
         <p>Other Contingencies: None</p>
       </div>
 
-      <p>We are ready to sign and get this moving today.</p>
+      <p class="cta">We are ready to sign and get this moving today.</p>
       
       <div class="footer">
-        <p><strong>Yarden Kelly - BigWhalesLLC</strong><br>
-        (786)-600-7210<br>
-        <a href="mailto:BigWhalesLLC@gmail.com">BigWhalesLLC@gmail.com</a></p>
+        <p class="footer-name">Yarden Kelly - BigWhalesLLC</p>
+        <p class="footer-contact">(786)-600-7210</p>
+        <p class="footer-contact"><a href="mailto:BigWhalesLLC@gmail.com">BigWhalesLLC@gmail.com</a></p>
       </div>
     </div>
   </body>
