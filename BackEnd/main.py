@@ -24,10 +24,20 @@ from crud_active_deal import (
 from crud_liquidity import get_liquidity_settings, update_liquidity_settings
 from ReqRes.liquidity.liquidityReq import LiquidityUpdate
 from ReqRes.liquidity.liquidityRes import LiquidityRes
+from ReqRes.email.sendOfferReq import SendOfferReq
+from ReqRes.email.sendOfferRes import SendOfferRes
 from db import Base, engine, get_db
 from models import BrrrActiveDeal, FlipActiveDeal
 # Ensure models_liquidity is imported so the table is created
 import models_liquidity
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -396,6 +406,125 @@ def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
         if new_deal: return create_deal_response(new_deal)
         
     raise HTTPException(status_code=404, detail="Deal not found")
+
+
+
+# --- Email Logic ---
+
+def send_offer_email(details: SendOfferReq):
+    sender_email = "BigWhalesLLC@gmail.com"
+    sender_password = os.getenv("EMAIL_PASSWORD")
+    
+    if not sender_password:
+        return False, "Email password not configured"
+    
+    subject = f"CashOffer for {details.property_address}"
+    
+    body = f"""
+<html>
+  <head>
+    <style>
+      body {{
+        font-family: Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+      }}
+      .container {{
+        max_width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-top: 5px solid #2c3e50;
+      }}
+      h2 {{
+        color: #2c3e50;
+        margin-top: 0;
+      }}
+      .highlight {{
+        background-color: #e8f4fc;
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 4px solid #3498db;
+        margin: 15px 0;
+      }}
+      .highlight p {{
+        margin: 5px 0;
+        font-weight: bold;
+      }}
+      .footer {{
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eeeeee;
+        font-size: 0.9em;
+        color: #777777;
+      }}
+      a {{
+        color: #3498db;
+        text-decoration: none;
+      }}
+      a:hover {{
+        text-decoration: underline;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <p>Hi {details.agent_name},</p>
+      <p>Im addressing you in regards to the property at <strong>{details.property_address}</strong></p>
+      <p>We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/file/d/1uP2FbFpFc5SVHWBdVcBCoAfhBijTzyBP/view">LLC Formation</a>)</p>
+      
+      <p>I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
+      
+      <div class="highlight">
+        <p>Purchase Price: ${details.purchase_price:,.2f}</p>
+        <p>Terms: 100% - Hard Money (No Financing Contingency) (<a href="https://drive.google.com/file/d/1uP2FbFpFc5SVHWBdVcBCoAfhBijTzyBP/view">PreApproval</a>)</p>
+        <p>Inspection: {details.inspection_period_days}-Day inspection period - We are purchasing "As-Is" and will not ask for repairs or credits.</p>
+        <p>Closing: 14 Days (or sooner if title is ready)</p>
+        <p>Earnest Money: $5,000 can be wired as soon as today</p>
+        <p>Other Contingencies: None</p>
+      </div>
+
+      <p>We are ready to sign and get this moving today.</p>
+      
+      <div class="footer">
+        <p><strong>Yarden Kelly - BigWhalesLLC</strong><br>
+        (786)-600-7210<br>
+        <a href="mailto:BigWhalesLLC@gmail.com">BigWhalesLLC@gmail.com</a></p>
+      </div>
+    </div>
+  </body>
+</html>
+    """
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = details.agent_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'html'))
+
+    try:
+        # Using Gmail's SSL port 465
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        return True, "Email sent successfully"
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False, str(e)
+
+@app.post("/send-offer", response_model=SendOfferRes)
+def send_offer_route(payload: SendOfferReq):
+    success, message = send_offer_email(payload)
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {message}")
+    return SendOfferRes(message=message, success=success)
+
 
 @app.get("/helloworld")
 def helloworld() -> dict:
