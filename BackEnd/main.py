@@ -430,7 +430,14 @@ def send_offer_email(details: SendOfferReq):
         logger.error("EMAIL_PASSWORD environment variable is not set")
         return False, "Email password not configured"
     
+    # Strip any whitespace (common issue when copying/pasting)
+    sender_password = sender_password.strip()
+    
+    if len(sender_password) != 16:
+        logger.warning(f"Email password length is {len(sender_password)} (expected 16 for Gmail App Password)")
+    
     logger.info(f"Email password found (length: {len(sender_password)})")
+    logger.info(f"Email password starts with: {sender_password[:2]}... (masked for security)")
     
     subject = f"CashOffer for {details.property_address}"
     logger.info(f"Email subject: {subject}")
