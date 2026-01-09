@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import api from '../api';
 import MoneyInput from './ui/MoneyInput.vue';
 
-const props = defineProps<{
+defineProps<{
   isOpen: boolean;
 }>();
 
