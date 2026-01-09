@@ -34,10 +34,18 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+import logging
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -412,13 +420,20 @@ def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
 # --- Email Logic ---
 
 def send_offer_email(details: SendOfferReq):
+    logger.info(f"Starting email send process for property: {details.property_address}")
+    logger.info(f"Recipient: {details.agent_email} (Agent: {details.agent_name})")
+    
     sender_email = "BigWhalesLLC@gmail.com"
     sender_password = os.getenv("EMAIL_PASSWORD")
     
     if not sender_password:
+        logger.error("EMAIL_PASSWORD environment variable is not set")
         return False, "Email password not configured"
     
+    logger.info(f"Email password found (length: {len(sender_password)})")
+    
     subject = f"CashOffer for {details.property_address}"
+    logger.info(f"Email subject: {subject}")
     
     body = f"""
 <html>
@@ -501,29 +516,61 @@ def send_offer_email(details: SendOfferReq):
 </html>
     """
 
+    logger.info("Creating email message")
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = details.agent_email
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'html'))
+    logger.info("Email message created successfully")
 
     try:
+        logger.info("Connecting to SMTP server (smtp.gmail.com:465)")
         # Using Gmail's SSL port 465
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        logger.info("SMTP connection established")
+        
+        logger.info("Attempting to login to SMTP server")
         server.login(sender_email, sender_password)
+        logger.info("SMTP login successful")
+        
+        logger.info(f"Sending email to {details.agent_email}")
         server.send_message(msg)
+        logger.info("Email sent successfully")
+        
         server.quit()
+        logger.info("SMTP connection closed")
         return True, "Email sent successfully"
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication Error: {e}")
+        logger.error(f"Error code: {e.smtp_code}, Error message: {e.smtp_error}")
+        return False, f"Authentication failed: {str(e)}"
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP Error: {e}")
+        return False, f"SMTP error: {str(e)}"
     except Exception as e:
-        print(f"Error sending email: {e}")
-        return False, str(e)
+        logger.error(f"Unexpected error sending email: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return False, f"Error sending email: {str(e)}"
 
 @app.post("/send-offer", response_model=SendOfferRes)
 def send_offer_route(payload: SendOfferReq):
-    success, message = send_offer_email(payload)
-    if not success:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {message}")
-    return SendOfferRes(message=message, success=success)
+    logger.info(f"Received send-offer request: property={payload.property_address}, agent={payload.agent_name}, email={payload.agent_email}")
+    try:
+        success, message = send_offer_email(payload)
+        if not success:
+            logger.error(f"Email send failed: {message}")
+            raise HTTPException(status_code=500, detail=f"Failed to send email: {message}")
+        logger.info("Email send completed successfully")
+        return SendOfferRes(message=message, success=success)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in send_offer_route: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.get("/helloworld")
