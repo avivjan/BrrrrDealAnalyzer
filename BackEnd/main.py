@@ -571,7 +571,7 @@ def send_offer_email(details: SendOfferReq):
       <div class="highlight">
         <p>Purchase Price: ${details.purchase_price:,.2f}</p>
         <p>Terms: 100% - Hard Money (No Financing Contingency) (<a href="https://drive.google.com/file/d/1uP2FbFpFc5SVHWBdVcBCoAfhBijTzyBP/view">PreApproval</a>)</p>
-        <p>Inspection: {details.inspection_period_days}-Day inspection period - We are purchasing "As-Is" and will not ask for repairs or credits.</p>
+        <p>Inspection: {details.inspection_period_days}-Day inspection period - We are purchasing "As-Is" and will not ask for repairs.</p>
         <p>Closing: 14 Days (or sooner if title is ready)</p>
         <p>Earnest Money: $5,000 can be wired as soon as today</p>
         <p>Other Contingencies: None</p>
