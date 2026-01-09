@@ -439,7 +439,7 @@ def send_offer_email(details: SendOfferReq):
     logger.info(f"Email password found (length: {len(sender_password)})")
     logger.info(f"Email password starts with: {sender_password[:2]}... (masked for security)")
     
-    subject = f"CashOffer for {details.property_address}"
+    subject = f"Cash Offer for {details.property_address}"
     logger.info(f"Email subject: {subject}")
     
     body = f"""
@@ -498,7 +498,7 @@ def send_offer_email(details: SendOfferReq):
     <div class="container">
       <p>Hi {details.agent_name},</p>
       <p>Im addressing you in regards to the property at <strong>{details.property_address}</strong></p>
-      <p>We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/file/d/1uP2FbFpFc5SVHWBdVcBCoAfhBijTzyBP/view">LLC Formation</a>)</p>
+      <p>We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/drive/folders/1tFIQried0ycW4kuo3HJ8TJE3ndml73Pq">LLC Formation</a>)</p>
       
       <p>I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
       
