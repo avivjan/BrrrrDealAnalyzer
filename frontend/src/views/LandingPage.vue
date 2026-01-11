@@ -123,7 +123,7 @@ const openLink = (card: any) => {
       <div class="mt-16 mb-8">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
-            href="#"
+            href="https://docs.google.com/document/d/1U5ryt5Rrmo70FcAzvxo-i_Ra6nZazI0xsIQ7zSA0yCw/edit?tab=t.0"
             class="group relative block"
           >
             <div
@@ -145,7 +145,7 @@ const openLink = (card: any) => {
           </a>
 
           <a
-            href="#"
+            href="https://docs.google.com/document/d/1z81cSxV0_R-hPX811XjxPWuiV-tgUrXWq7X6bZ3ZHas/edit?tab=t.0"
             class="group relative block"
           >
             <div
@@ -167,7 +167,7 @@ const openLink = (card: any) => {
           </a>
 
           <a
-            href="#"
+            href="https://docs.google.com/document/d/1qbzRvgt7zIYnZaHUIgxhMXHi7Fi1wZ1uIky-VkIfJXk/edit?tab=t.0"
             class="group relative block"
           >
             <div
@@ -189,7 +189,7 @@ const openLink = (card: any) => {
           </a>
 
           <a
-            href="#"
+            href="https://docs.google.com/document/d/1-foWzLM6xjeGVVEyLqNk8AdCg-s3j9TC6cZ15GIvFZI/edit?tab=t.0"
             class="group relative block"
           >
             <div
