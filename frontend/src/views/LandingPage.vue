@@ -118,6 +118,99 @@ const openLink = (card: any) => {
           </component>
         </template>
       </div>
+
+      <!-- Bottom Links Section -->
+      <div class="mt-16 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <a
+            href="#"
+            class="group relative block"
+          >
+            <div
+              class="h-32 rounded-xl p-1 shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 border border-gray-200 overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600"
+            >
+              <div
+                class="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 border border-white/50 group-hover:bg-white transition-colors"
+              >
+                <i
+                  class="pi pi-users text-3xl mb-2 text-gray-700 drop-shadow-sm group-hover:scale-110 transition-transform duration-300 group-hover:text-orange-600"
+                ></i>
+                <span
+                  class="text-base font-bold text-gray-800 tracking-wide group-hover:text-orange-600 transition-colors"
+                >
+                  Contractors
+                </span>
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="#"
+            class="group relative block"
+          >
+            <div
+              class="h-32 rounded-xl p-1 shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 border border-gray-200 overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600"
+            >
+              <div
+                class="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 border border-white/50 group-hover:bg-white transition-colors"
+              >
+                <i
+                  class="pi pi-wallet text-3xl mb-2 text-gray-700 drop-shadow-sm group-hover:scale-110 transition-transform duration-300 group-hover:text-emerald-600"
+                ></i>
+                <span
+                  class="text-base font-bold text-gray-800 tracking-wide group-hover:text-emerald-600 transition-colors"
+                >
+                  Lenders
+                </span>
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="#"
+            class="group relative block"
+          >
+            <div
+              class="h-32 rounded-xl p-1 shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 border border-gray-200 overflow-hidden bg-gradient-to-br from-cyan-500 to-blue-600"
+            >
+              <div
+                class="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 border border-white/50 group-hover:bg-white transition-colors"
+              >
+                <i
+                  class="pi pi-building text-3xl mb-2 text-gray-700 drop-shadow-sm group-hover:scale-110 transition-transform duration-300 group-hover:text-blue-600"
+                ></i>
+                <span
+                  class="text-base font-bold text-gray-800 tracking-wide group-hover:text-blue-600 transition-colors"
+                >
+                  PM
+                </span>
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="#"
+            class="group relative block"
+          >
+            <div
+              class="h-32 rounded-xl p-1 shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 border border-gray-200 overflow-hidden bg-gradient-to-br from-rose-500 to-pink-600"
+            >
+              <div
+                class="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 border border-white/50 group-hover:bg-white transition-colors"
+              >
+                <i
+                  class="pi pi-shopping-bag text-3xl mb-2 text-gray-700 drop-shadow-sm group-hover:scale-110 transition-transform duration-300 group-hover:text-pink-600"
+                ></i>
+                <span
+                  class="text-base font-bold text-gray-800 tracking-wide group-hover:text-pink-600 transition-colors"
+                >
+                  Wholesalers
+                </span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     
     <SendOfferModal :isOpen="isOfferModalOpen" @close="isOfferModalOpen = false" />
