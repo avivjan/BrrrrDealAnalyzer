@@ -3,7 +3,6 @@ import { RouterView } from "vue-router";
 import { useConnectionStore } from "./stores/connectionStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
-import LiquidityHeader from "./components/LiquidityHeader.vue";
 
 const connectionStore = useConnectionStore();
 
@@ -60,7 +59,6 @@ onMounted(() => {
       "
     ></div>
 
-    <LiquidityHeader />
     <RouterView />
   </div>
 </template>

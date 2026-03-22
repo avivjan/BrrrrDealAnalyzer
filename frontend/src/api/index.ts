@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, LiquiditySettings, SendOfferReq, SendOfferRes } from '../types';
+import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes } from '../types';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -114,26 +114,6 @@ export default {
   async helloWorld(): Promise<{ message: string }> {
     try {
       const response = await apiClient.get<{ message: string }>('/helloworld');
-      return response.data;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  },
-
-  async getLiquidity(): Promise<LiquiditySettings> {
-    try {
-      const response = await apiClient.get<LiquiditySettings>('/liquidity');
-      return response.data;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  },
-
-  async updateLiquidity(settings: LiquiditySettings): Promise<LiquiditySettings> {
-    try {
-      const response = await apiClient.put<LiquiditySettings>('/liquidity', settings);
       return response.data;
     } catch (error) {
       console.error('API Error:', error);
