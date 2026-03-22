@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes } from '../types';
+import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes, LiquidityTransaction, LiquidityResponse } from '../types';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -135,5 +135,67 @@ export default {
       console.groupEnd();
       throw error;
     }
-  }
+  },
+
+  // Liquidity / Buying Power
+  async getLiquidity(): Promise<LiquidityResponse> {
+    console.group('API: getLiquidity');
+    try {
+      const response = await apiClient.get<LiquidityResponse>('/liquidity');
+      console.log('Response Status:', response.status);
+      console.log('Transactions:', response.data.transactions?.length);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async addLiquidityTransaction(data: Omit<LiquidityTransaction, 'id'>): Promise<LiquidityTransaction> {
+    console.group('API: addLiquidityTransaction');
+    console.log('Request Payload:', data);
+    try {
+      const response = await apiClient.post<LiquidityTransaction>('/liquidity', data);
+      console.log('Response Status:', response.status);
+      console.log('Created:', response.data);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async updateLiquidityTransaction(txn: LiquidityTransaction): Promise<LiquidityTransaction> {
+    console.group('API: updateLiquidityTransaction');
+    console.log('Request Payload:', txn);
+    try {
+      const response = await apiClient.put<LiquidityTransaction>(`/liquidity/${txn.id}`, txn);
+      console.log('Response Status:', response.status);
+      console.log('Updated:', response.data);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async deleteLiquidityTransaction(id: string): Promise<void> {
+    console.group('API: deleteLiquidityTransaction');
+    console.log('Transaction ID:', id);
+    try {
+      await apiClient.delete(`/liquidity/${id}`);
+      console.log('Delete Successful');
+      console.groupEnd();
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
 };

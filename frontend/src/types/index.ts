@@ -121,6 +121,20 @@ export type ActiveDealRes = BrrrDealRes | FlipDealRes;
 export type AnalyzeDealReq = (BrrrAnalyzeReq & Partial<BaseDealReq>) | (FlipAnalyzeReq & Partial<BaseDealReq>); // Simplified for analyze API
 export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;
 
+// Buying Power / Liquidity
+export interface LiquidityTransaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+}
+
+export interface LiquidityResponse {
+  transactions: LiquidityTransaction[];
+  total_liquidity: number;
+}
+
 export interface SendOfferReq {
   agent_name: string;
   agent_email: string;
