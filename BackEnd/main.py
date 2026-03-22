@@ -21,15 +21,14 @@ from crud_active_deal import (
     delete_brrr_deal, delete_flip_deal,
     duplicate_brrr_deal, duplicate_flip_deal
 )
-from crud_liquidity import get_liquidity_settings, update_liquidity_settings
-from ReqRes.liquidity.liquidityReq import LiquidityUpdate
-from ReqRes.liquidity.liquidityRes import LiquidityRes
+from crud_liquidity import get_all_liquidity, add_liquidity_transaction, update_liquidity_transaction, delete_liquidity_transaction
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
+from ReqRes.BuyingPower.getLiquidityRes import GetLiquidityRes, LiquidityTransactionRes
+from ReqRes.BuyingPower.addLiquidityTransactionReq import AddLiquidityTransactionReq
+from ReqRes.BuyingPower.updateLiquidityTransactionReq import UpdateLiquidityTransactionReq
 from db import Base, engine, get_db
 from models import BrrrActiveDeal, FlipActiveDeal
-# Ensure models_liquidity is imported so the table is created
-import models_liquidity
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -50,6 +49,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -416,6 +416,37 @@ def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
     raise HTTPException(status_code=404, detail="Deal not found")
 
 
+# --- Liquidity / Buying Power ---
+
+@app.get("/liquidity", response_model=GetLiquidityRes)
+def get_liquidity(db: Session = Depends(get_db)):
+    transactions, total = get_all_liquidity(db)
+    return GetLiquidityRes(
+        transactions=[LiquidityTransactionRes.model_validate(t) for t in transactions],
+        total_liquidity=total,
+    )
+
+
+@app.post("/liquidity", response_model=LiquidityTransactionRes)
+def add_liquidity(payload: AddLiquidityTransactionReq, db: Session = Depends(get_db)):
+    created = add_liquidity_transaction(db, payload)
+    return LiquidityTransactionRes.model_validate(created)
+
+
+@app.put("/liquidity/{txn_id}", response_model=LiquidityTransactionRes)
+def update_liquidity(txn_id: str, payload: UpdateLiquidityTransactionReq, db: Session = Depends(get_db)):
+    updated = update_liquidity_transaction(db, txn_id, payload)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return LiquidityTransactionRes.model_validate(updated)
+
+
+@app.delete("/liquidity/{txn_id}")
+def delete_liquidity(txn_id: str, db: Session = Depends(get_db)):
+    if not delete_liquidity_transaction(db, txn_id):
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return {"message": "Transaction deleted"}
+
 
 # --- Email Logic ---
 
@@ -650,10 +681,3 @@ def send_offer_route(payload: SendOfferReq):
 def helloworld() -> dict:
     return {"message": "Hello, World!"}
 
-@app.get("/liquidity", response_model=LiquidityRes)
-def get_liquidity(db: Session = Depends(get_db)):
-    return get_liquidity_settings(db)
-
-@app.put("/liquidity", response_model=LiquidityRes)
-def update_liquidity(payload: LiquidityUpdate, db: Session = Depends(get_db)):
-    return update_liquidity_settings(db, payload)

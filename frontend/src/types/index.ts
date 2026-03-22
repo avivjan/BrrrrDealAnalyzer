@@ -121,9 +121,18 @@ export type ActiveDealRes = BrrrDealRes | FlipDealRes;
 export type AnalyzeDealReq = (BrrrAnalyzeReq & Partial<BaseDealReq>) | (FlipAnalyzeReq & Partial<BaseDealReq>); // Simplified for analyze API
 export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;
 
-export interface LiquiditySettings {
-  big_whale_amount: number;
-  mini_whale_amount: number;
+// Buying Power / Liquidity
+export interface LiquidityTransaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+}
+
+export interface LiquidityResponse {
+  transactions: LiquidityTransaction[];
+  total_liquidity: number;
 }
 
 export interface SendOfferReq {

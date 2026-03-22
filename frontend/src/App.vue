@@ -3,7 +3,7 @@ import { RouterView } from "vue-router";
 import { useConnectionStore } from "./stores/connectionStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
-import LiquidityHeader from "./components/LiquidityHeader.vue";
+import BuyingPowerWidget from "./components/BuyingPowerWidget.vue";
 
 const connectionStore = useConnectionStore();
 
@@ -31,7 +31,7 @@ onMounted(() => {
         connectionStore.isConnected = false;
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   // Wake up the backend immediately
@@ -55,12 +55,12 @@ onMounted(() => {
         connectionStore.isChecking
           ? 'Connecting to server...'
           : connectionStore.isConnected
-          ? 'Server Connected'
-          : 'Disconnected'
+            ? 'Server Connected'
+            : 'Disconnected'
       "
     ></div>
 
-    <LiquidityHeader />
     <RouterView />
+    <BuyingPowerWidget />
   </div>
 </template>
