@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import type { LiquidityTransaction } from "../types";
 import api from "../api";
 
@@ -24,8 +24,12 @@ const newCategorySearch = ref("");
 const showNewCategoryDropdown = ref(false);
 const newCategoryInputRef = ref<HTMLInputElement | null>(null);
 
-const pendingDeletes = ref<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-const undoToasts = ref<{ id: string; description: string; timer: number }[]>([]);
+const pendingDeletes = ref<Map<string, ReturnType<typeof setTimeout>>>(
+  new Map(),
+);
+const undoToasts = ref<{ id: string; description: string; timer: number }[]>(
+  [],
+);
 
 // ── Derived ────────────────────────────────────────────
 const DEFAULT_CATEGORIES = [
@@ -234,7 +238,7 @@ function handleEditBlur(e: FocusEvent) {
 // ── New transaction logic ──────────────────────────────
 function startAddNew() {
   isAddingNew.value = true;
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0] ?? "";
   newDraft.value = { date: today, description: "", amount: 0, category: "" };
   newCategorySearch.value = "";
   newValidationErrors.value = {};
@@ -358,7 +362,11 @@ function formatAmount(val: number): string {
 function formatDate(d: string): string {
   if (!d) return "";
   const dt = new Date(d + "T00:00:00");
-  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+  return dt.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "2-digit",
+  });
 }
 
 function categoryLabel(cat: string): string {
@@ -391,7 +399,9 @@ onUnmounted(() => {
       "
     >
       <div class="flex flex-col items-start">
-        <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <span
+          class="text-[10px] font-semibold uppercase tracking-wider text-gray-400"
+        >
           Buying Power
         </span>
         <span
@@ -499,7 +509,11 @@ onUnmounted(() => {
               v-model="newDraft.date"
               type="date"
               class="text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              :class="newValidationErrors.date ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+              :class="
+                newValidationErrors.date
+                  ? 'border-red-400 ring-1 ring-red-300'
+                  : 'border-gray-200'
+              "
               @blur="handleNewBlur"
             />
             <input
@@ -507,7 +521,11 @@ onUnmounted(() => {
               type="text"
               placeholder="Description"
               class="text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              :class="newValidationErrors.description ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+              :class="
+                newValidationErrors.description
+                  ? 'border-red-400 ring-1 ring-red-300'
+                  : 'border-gray-200'
+              "
               @blur="handleNewBlur"
             />
             <input
@@ -516,7 +534,11 @@ onUnmounted(() => {
               step="0.1"
               placeholder="$000s"
               class="text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              :class="newValidationErrors.amount ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+              :class="
+                newValidationErrors.amount
+                  ? 'border-red-400 ring-1 ring-red-300'
+                  : 'border-gray-200'
+              "
               @blur="handleNewBlur"
             />
           </div>
@@ -529,9 +551,18 @@ onUnmounted(() => {
                 type="text"
                 placeholder="Category"
                 class="w-full text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                :class="newValidationErrors.category ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+                :class="
+                  newValidationErrors.category
+                    ? 'border-red-400 ring-1 ring-red-300'
+                    : 'border-gray-200'
+                "
                 @focus="showNewCategoryDropdown = true"
-                @blur="(e: FocusEvent) => { handleNewCategoryDropdownBlur(); handleNewBlur(e); }"
+                @blur="
+                  (e: FocusEvent) => {
+                    handleNewCategoryDropdownBlur();
+                    handleNewBlur(e);
+                  }
+                "
               />
               <div
                 v-if="showNewCategoryDropdown"
@@ -539,7 +570,9 @@ onUnmounted(() => {
               >
                 <button
                   v-if="showAddNewCategory"
-                  @mousedown.prevent="selectNewCategory(newCategorySearch.trim())"
+                  @mousedown.prevent="
+                    selectNewCategory(newCategorySearch.trim())
+                  "
                   class="w-full text-left px-3 py-1.5 text-xs text-blue-600 font-medium hover:bg-blue-50 flex items-center gap-1.5"
                 >
                   <i class="pi pi-plus-circle text-[10px]"></i>
@@ -600,7 +633,11 @@ onUnmounted(() => {
           :key="txn.id"
           :data-edit-row="editingId === txn.id ? true : undefined"
           class="group rounded-xl px-3 py-2.5 transition-all duration-200 hover:bg-gray-50/80"
-          :class="editingId === txn.id ? 'bg-amber-50/50 border border-amber-200/50' : ''"
+          :class="
+            editingId === txn.id
+              ? 'bg-amber-50/50 border border-amber-200/50'
+              : ''
+          "
         >
           <!-- Display Mode -->
           <div v-if="editingId !== txn.id" class="flex items-center gap-3">
@@ -633,7 +670,9 @@ onUnmounted(() => {
             </span>
 
             <!-- Actions -->
-            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div
+              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
               <button
                 @click="startEdit(txn)"
                 class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-all"
@@ -658,14 +697,22 @@ onUnmounted(() => {
                 v-model="editDraft.date"
                 type="date"
                 class="text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
-                :class="validationErrors.date ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+                :class="
+                  validationErrors.date
+                    ? 'border-red-400 ring-1 ring-red-300'
+                    : 'border-gray-200'
+                "
                 @blur="handleEditBlur"
               />
               <input
                 v-model="editDraft.description"
                 type="text"
                 class="text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
-                :class="validationErrors.description ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+                :class="
+                  validationErrors.description
+                    ? 'border-red-400 ring-1 ring-red-300'
+                    : 'border-gray-200'
+                "
                 @blur="handleEditBlur"
               />
               <input
@@ -673,7 +720,11 @@ onUnmounted(() => {
                 type="number"
                 step="0.1"
                 class="text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
-                :class="validationErrors.amount ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+                :class="
+                  validationErrors.amount
+                    ? 'border-red-400 ring-1 ring-red-300'
+                    : 'border-gray-200'
+                "
                 @blur="handleEditBlur"
               />
             </div>
@@ -685,9 +736,18 @@ onUnmounted(() => {
                 type="text"
                 placeholder="Category"
                 class="w-full text-xs bg-white border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all capitalize"
-                :class="validationErrors.category ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'"
+                :class="
+                  validationErrors.category
+                    ? 'border-red-400 ring-1 ring-red-300'
+                    : 'border-gray-200'
+                "
                 @focus="showCategoryDropdown = true"
-                @blur="(e: FocusEvent) => { handleCategoryDropdownBlur(); handleEditBlur(e); }"
+                @blur="
+                  (e: FocusEvent) => {
+                    handleCategoryDropdownBlur();
+                    handleEditBlur(e);
+                  }
+                "
               />
               <div
                 v-if="showCategoryDropdown"
@@ -718,7 +778,11 @@ onUnmounted(() => {
   </Transition>
 
   <!-- Undo Toasts -->
-  <TransitionGroup name="toast" tag="div" class="fixed bottom-5 left-5 z-50 space-y-2">
+  <TransitionGroup
+    name="toast"
+    tag="div"
+    class="fixed bottom-5 left-5 z-50 space-y-2"
+  >
     <div
       v-for="toast in undoToasts"
       :key="toast.id"
