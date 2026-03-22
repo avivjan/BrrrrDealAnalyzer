@@ -87,10 +87,13 @@ class FlipActiveDeal(Base, BaseDeal):
     sale_comps = Column(JSON, nullable=True)
     
     
-class LiquidityTransaction(Base, BaseDeal):
+class LiquidityTransaction(Base):
     __tablename__ = "liquidity_transactions"
-    
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     date = Column(DateTime, nullable=False)
     description = Column(String, nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     category = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
