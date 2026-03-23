@@ -21,10 +21,12 @@ const isLoading = ref(false);
 
 const editingId = ref<string | null>(null);
 const editDraft = ref<Partial<LiquidityTransaction>>({});
+const editIsInflow = ref(true);
 const validationErrors = ref<Record<string, boolean>>({});
 
 const isAddingNew = ref(false);
 const newDraft = ref({ date: "", description: "", amount: 0, category: "" });
+const newIsInflow = ref(true);
 const newValidationErrors = ref<Record<string, boolean>>({});
 
 const categorySearch = ref("");
@@ -199,7 +201,8 @@ async function refreshTotal() {
 // ── Edit logic ─────────────────────────────────────────
 function startEdit(txn: LiquidityTransaction) {
   editingId.value = txn.id;
-  editDraft.value = { ...txn };
+  editIsInflow.value = txn.amount >= 0;
+  editDraft.value = { ...txn, amount: Math.abs(txn.amount) };
   categorySearch.value = txn.category;
   validationErrors.value = {};
 }
@@ -223,6 +226,9 @@ function commitEdit() {
   if (!editingId.value) return;
   editDraft.value.category = categorySearch.value.trim();
   if (!validateDraft()) return;
+
+  editDraft.value.amount =
+    Math.abs(editDraft.value.amount ?? 0) * (editIsInflow.value ? 1 : -1);
 
   const txn = transactions.value.find((t) => t.id === editingId.value);
   if (txn) {
@@ -248,6 +254,7 @@ function handleEditBlur(e: FocusEvent) {
 // ── New transaction logic ──────────────────────────────
 function startAddNew() {
   isAddingNew.value = true;
+  newIsInflow.value = true;
   const today = new Date().toISOString().split("T")[0] ?? "";
   newDraft.value = { date: today, description: "", amount: 0, category: "" };
   newCategorySearch.value = "";
@@ -267,7 +274,8 @@ function validateNewDraft(): boolean {
 function commitNew() {
   newDraft.value.category = newCategorySearch.value.trim();
   if (!validateNewDraft()) return;
-  createTransaction({ ...newDraft.value });
+  const amount = Math.abs(newDraft.value.amount) * (newIsInflow.value ? 1 : -1);
+  createTransaction({ ...newDraft.value, amount });
   isAddingNew.value = false;
   newDraft.value = { date: "", description: "", amount: 0, category: "" };
   newCategorySearch.value = "";
@@ -515,7 +523,7 @@ onUnmounted(() => {
           data-new-row
           class="bg-blue-50/60 border border-blue-200/60 rounded-xl p-3 space-y-2 animate-in"
         >
-          <div class="grid grid-cols-[100px_1fr_90px] gap-2">
+          <div class="grid grid-cols-[100px_1fr] gap-2">
             <input
               v-model="newDraft.date"
               type="date"
@@ -539,12 +547,27 @@ onUnmounted(() => {
               "
               @blur="handleNewBlur"
             />
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @mousedown.prevent="newIsInflow = !newIsInflow"
+              class="flex-shrink-0 w-16 h-7 rounded-lg text-[11px] font-bold transition-all border"
+              :class="
+                newIsInflow
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-red-50 text-red-500 border-red-200 hover:bg-red-100'
+              "
+            >
+              {{ newIsInflow ? "+ In" : "− Out" }}
+            </button>
             <input
               v-model.number="newDraft.amount"
               type="number"
               step="0.1"
+              min="0"
               placeholder="$000s"
-              class="text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+              class="flex-1 text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
               :class="
                 newValidationErrors.amount
                   ? 'border-red-400 ring-1 ring-red-300'
@@ -703,7 +726,7 @@ onUnmounted(() => {
 
           <!-- Edit Mode -->
           <div v-else class="space-y-2">
-            <div class="grid grid-cols-[100px_1fr_90px] gap-2">
+            <div class="grid grid-cols-[100px_1fr] gap-2">
               <input
                 v-model="editDraft.date"
                 type="date"
@@ -726,11 +749,26 @@ onUnmounted(() => {
                 "
                 @blur="handleEditBlur"
               />
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @mousedown.prevent="editIsInflow = !editIsInflow"
+                class="flex-shrink-0 w-16 h-7 rounded-lg text-[11px] font-bold transition-all border"
+                :class="
+                  editIsInflow
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-red-50 text-red-500 border-red-200 hover:bg-red-100'
+                "
+              >
+                {{ editIsInflow ? "+ In" : "− Out" }}
+              </button>
               <input
                 v-model.number="editDraft.amount"
                 type="number"
                 step="0.1"
-                class="text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
+                min="0"
+                class="flex-1 text-xs bg-white border rounded-lg px-2 py-1.5 text-right font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 :class="
                   validationErrors.amount
                     ? 'border-red-400 ring-1 ring-red-300'
