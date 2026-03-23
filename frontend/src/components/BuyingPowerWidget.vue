@@ -9,6 +9,10 @@ function parseDate(d: string): Date {
   return new Date(d + "T00:00:00");
 }
 
+function normalizeTxn(t: LiquidityTransaction): LiquidityTransaction {
+  return { ...t, amount: Number(t.amount) };
+}
+
 // ── State ──────────────────────────────────────────────
 const isOpen = ref(false);
 const transactions = ref<LiquidityTransaction[]>([]);
@@ -139,8 +143,8 @@ async function fetchLiquidity() {
   isLoading.value = true;
   try {
     const res = await api.getLiquidity();
-    transactions.value = res.transactions;
-    totalLiquidity.value = res.total_liquidity;
+    transactions.value = res.transactions.map(normalizeTxn);
+    totalLiquidity.value = Number(res.total_liquidity);
   } catch {
     console.warn("Liquidity API not available yet");
   } finally {
@@ -150,7 +154,7 @@ async function fetchLiquidity() {
 
 async function saveTransaction(txn: LiquidityTransaction) {
   try {
-    const updated = await api.updateLiquidityTransaction(txn);
+    const updated = normalizeTxn(await api.updateLiquidityTransaction(txn));
     const idx = transactions.value.findIndex((t) => t.id === txn.id);
     if (idx !== -1) transactions.value[idx] = updated;
     await refreshTotal();
@@ -161,7 +165,7 @@ async function saveTransaction(txn: LiquidityTransaction) {
 
 async function createTransaction(data: Omit<LiquidityTransaction, "id">) {
   try {
-    const created = await api.addLiquidityTransaction(data);
+    const created = normalizeTxn(await api.addLiquidityTransaction(data));
     transactions.value.push(created);
     await refreshTotal();
   } catch {
@@ -182,7 +186,7 @@ async function deleteTransaction(id: string) {
 async function refreshTotal() {
   try {
     const res = await api.getLiquidity();
-    totalLiquidity.value = res.total_liquidity;
+    totalLiquidity.value = Number(res.total_liquidity);
   } catch {
     // fallback: compute locally
     totalLiquidity.value = transactions.value.reduce(
