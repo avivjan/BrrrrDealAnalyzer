@@ -3,6 +3,12 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import type { LiquidityTransaction } from "../types";
 import api from "../api";
 
+// ── Helpers ────────────────────────────────────────────
+function parseDate(d: string): Date {
+  if (d.includes("T")) return new Date(d);
+  return new Date(d + "T00:00:00");
+}
+
 // ── State ──────────────────────────────────────────────
 const isOpen = ref(false);
 const transactions = ref<LiquidityTransaction[]>([]);
@@ -79,18 +85,18 @@ const showAddNewCategory = computed(() => {
 const visibleTransactions = computed(() =>
   transactions.value
     .filter((t) => !pendingDeletes.value.has(t.id))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()),
 );
 
 const sparklinePoints = computed(() => {
   if (transactions.value.length === 0) return "";
   const sorted = [...transactions.value].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    (a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime(),
   );
 
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  const recent = sorted.filter((t) => new Date(t.date) >= sixMonthsAgo);
+  const recent = sorted.filter((t) => parseDate(t.date) >= sixMonthsAgo);
   const data = recent.length > 0 ? recent : sorted.slice(-12);
 
   if (data.length === 0) return "";
@@ -361,7 +367,8 @@ function formatAmount(val: number): string {
 
 function formatDate(d: string): string {
   if (!d) return "";
-  const dt = new Date(d + "T00:00:00");
+  const dt = parseDate(d);
+  if (isNaN(dt.getTime())) return "";
   return dt.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
