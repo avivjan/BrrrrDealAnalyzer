@@ -204,17 +204,22 @@ let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const performSave = async () => {
   if (!editingDeal.value || !isDirty) return;
+  isDirty = false;
   saveStatus.value = 'saving';
   try {
     const updatedDeal = await store.updateDeal(editingDeal.value);
     if (updatedDeal) {
       currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
     }
-    isDirty = false;
-    saveStatus.value = 'saved';
-    if (savedTimeoutId) clearTimeout(savedTimeoutId);
-    savedTimeoutId = setTimeout(() => { saveStatus.value = 'idle'; }, 2000);
+    if (isDirty) {
+      debouncedAutoSave();
+    } else {
+      saveStatus.value = 'saved';
+      if (savedTimeoutId) clearTimeout(savedTimeoutId);
+      savedTimeoutId = setTimeout(() => { saveStatus.value = 'idle'; }, 2000);
+    }
   } catch (e) {
+    isDirty = true;
     saveStatus.value = 'error';
     console.error("View: MyDeals - Auto-save failed", e);
   }
