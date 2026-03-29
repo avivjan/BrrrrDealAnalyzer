@@ -197,7 +197,9 @@ const formatMoney = (val?: number) =>
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">Cash Out Refi</span>
+          <span class="text-[10px] text-gray-400 uppercase"
+            >Cash Out Routi</span
+          >
           <span
             class="font-mono"
             :class="
