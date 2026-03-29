@@ -197,9 +197,7 @@ const formatMoney = (val?: number) =>
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase"
-            >Cash Out Routi</span
-          >
+          <span class="text-[10px] text-gray-400 uppercase">Cash Out Refi</span>
           <span
             class="font-mono"
             :class="
@@ -211,7 +209,7 @@ const formatMoney = (val?: number) =>
             {{ formatMoney(brrrDeal?.cash_out_routi) }}
           </span>
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col text-right">
           <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
           <span
             class="font-mono"
@@ -224,7 +222,7 @@ const formatMoney = (val?: number) =>
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
-        <div class="flex flex-col text-right">
+        <div class="flex flex-col">
           <span class="text-[10px] text-gray-400 uppercase">CoC</span>
           <span class="font-mono text-blue-600">{{
             brrrDeal?.cash_on_cash
@@ -232,7 +230,7 @@ const formatMoney = (val?: number) =>
               : "-"
           }}</span>
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col text-right">
           <span class="text-[10px] text-gray-400 uppercase">Equity</span>
           <span class="font-mono text-emerald-600">{{
             formatMoney(brrrDeal?.equity)
