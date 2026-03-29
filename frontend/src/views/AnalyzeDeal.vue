@@ -185,11 +185,7 @@ const quickCalcSellingCosts = () => {
             class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex"
           >
             <button
-              @click="
-                selectedType = 'BRRRR';
-                hasAnalyzed = false;
-                currentAnalysisResult = null;
-              "
+              @click="selectedType = 'BRRRR'"
               :class="
                 selectedType === 'BRRRR'
                   ? 'bg-blue-100 text-blue-700 font-bold'
@@ -200,11 +196,7 @@ const quickCalcSellingCosts = () => {
               BRRRR
             </button>
             <button
-              @click="
-                selectedType = 'FLIP';
-                hasAnalyzed = false;
-                currentAnalysisResult = null;
-              "
+              @click="selectedType = 'FLIP'"
               :class="
                 selectedType === 'FLIP'
                   ? 'bg-orange-100 text-orange-700 font-bold'
