@@ -98,6 +98,7 @@ onMounted(async () => {
 
     const dealToOpen = store.deals.find((d) => d.id === openDealId);
     if (dealToOpen) {
+      shouldScrollToResults.value = true;
       openDeal(dealToOpen);
     }
 
@@ -213,11 +214,29 @@ const duplicateEditingDeal = async () => {
   }
 };
 
+const deleteEditingDeal = async () => {
+  if (editingDeal.value) {
+    if (confirm(`Are you sure you want to delete ${editingDeal.value.address}?`)) {
+      try {
+        await store.deleteDeal(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
+        showDetailModal.value = false;
+        refreshColumns();
+      } catch (e) {
+        console.error("View: MyDeals - Failed to delete editing deal", e);
+        alert("Failed to delete deal");
+      }
+    }
+  }
+};
+
 // Modals
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 const editingDeal = ref<ActiveDealRes | null>(null);
 const currentAnalysis = ref<ActiveDealRes | null>(null);
+const modalScrollContainer = ref<HTMLElement | null>(null);
+const analysisResultsEl = ref<HTMLElement | null>(null);
+const shouldScrollToResults = ref(false);
 
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 let isDirty = false;
@@ -333,6 +352,12 @@ const analyzeCurrentDeal = useDebounceFn(async () => {
       // Merge result into currentAnalysis to display new values
       currentAnalysis.value = { ...editingDeal.value, ...result };
       console.log("View: MyDeals - Analysis result merged into current view");
+
+      if (shouldScrollToResults.value) {
+        shouldScrollToResults.value = false;
+        await nextTick();
+        analysisResultsEl.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     } catch (e) {
       console.error("View: MyDeals - Analysis failed", e);
     }
@@ -548,7 +573,7 @@ console.groupEnd();
           </div>
         </div>
 
-        <div class="p-6 overflow-y-auto custom-scrollbar">
+        <div ref="modalScrollContainer" class="p-6 overflow-y-auto custom-scrollbar">
           <!-- Top Section: Task & Basic Details -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Central Task Box -->
@@ -802,7 +827,7 @@ console.groupEnd();
             </section>
 
             <!-- Results Preview -->
-            <div v-if="currentAnalysis" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+            <div ref="analysisResultsEl" v-if="currentAnalysis" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
                 <h4 class="font-semibold text-gray-700 mb-3">Analysis Results</h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
@@ -1079,6 +1104,12 @@ console.groupEnd();
                 <span class="text-red-500">Save failed</span>
               </template>
             </div>
+            <button
+              @click="deleteEditingDeal"
+              class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"
+            >
+              <i class="pi pi-trash"></i> Delete
+            </button>
             <button
               @click="duplicateEditingDeal"
               class="text-blue-600 hover:text-blue-800 px-4 py-2 flex items-center gap-2"
