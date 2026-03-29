@@ -780,6 +780,14 @@ console.groupEnd();
                             <div class="text-gray-500">Equity</div>
                             <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                         </div>
+                        <div>
+                            <div class="text-gray-500">ROI</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Total Cash Needed</div>
+                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
+                        </div>
                     </template>
                     <template v-else>
                         <div>
