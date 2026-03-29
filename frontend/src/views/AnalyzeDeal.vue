@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
-import { storeToRefs } from "pinia";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { BrrrAnalyzeRes, FlipAnalyzeRes } from "../types";
 
 console.group("View: AnalyzeDeal");
 console.log("Component setup started");
 
 const store = useDealStore();
-const { currentAnalysisResult, isLoading } = storeToRefs(store);
+const router = useRouter();
 
 const selectedType = ref<"BRRRR" | "FLIP">("BRRRR");
 
-// Initial form state with defaults
-// We use a merged state for the form to handle both types
 const form = ref({
   // Shared
   purchasePrice: 0,
@@ -47,7 +44,7 @@ const form = ref({
   capexPercent: 5,
 
   // Flip Specific
-  salePrice: 0, // Maps to sale_price_in_thousands
+  salePrice: 0,
   holdingTime: 6,
   buyerAgentSellingFee: 0,
   sellerAgentSellingFee: 0,
@@ -56,7 +53,6 @@ const form = ref({
   monthly_utilities: 0,
 });
 
-// Sync ARV and Sale Price for convenience if user switches
 watch(
   () => form.value.arv_in_thousands,
   (val) => {
@@ -74,23 +70,18 @@ onMounted(() => {
   console.log("View: AnalyzeDeal mounted");
 });
 
-// Analyze Logic
-const hasAnalyzed = ref(false);
 const validationErrors = ref<string[]>([]);
 
 const validateForm = () => {
-  console.log("View: AnalyzeDeal - validating form:", form.value);
   const errors: string[] = [];
   const f = form.value;
 
-  // Shared Validations
   if (!f.purchasePrice || f.purchasePrice <= 0)
     errors.push("Purchase price (in thousands) must be greater than 0.");
   if (f.rehabCost < 0)
     errors.push("Rehab cost (in thousands) cannot be negative.");
   if (f.rehabContingency < 0 || f.rehabContingency > 100)
     errors.push("Contingency must be between 0% and 100%.");
-
   if (f.down_payment < 0 || f.down_payment > 100)
     errors.push("Down payment percentage must be between 0% and 100%.");
 
@@ -101,11 +92,9 @@ const validateForm = () => {
     if (f.ltv_as_precent <= 0 || f.ltv_as_precent > 100)
       errors.push("LTV must be between 0% and 100%.");
   } else {
-    // Flip Validations
     if (!f.salePrice || f.salePrice <= 0)
       errors.push("Sale Price (ARV) must be greater than 0.");
     if (f.holdingTime <= 0) errors.push("Holding time must be greater than 0.");
-
     if (f.buyerAgentSellingFee < 0 || f.buyerAgentSellingFee > 100)
       errors.push("Buyer agent fee must be between 0% and 100%.");
     if (f.sellerAgentSellingFee < 0 || f.sellerAgentSellingFee > 100)
@@ -114,140 +103,63 @@ const validateForm = () => {
       errors.push("Closing costs cannot be negative.");
   }
 
-  console.log("View: AnalyzeDeal - validation errors:", errors);
   return errors;
 };
 
-const analyze = async () => {
-  console.log("View: AnalyzeDeal - analyze triggered");
-  const f = form.value;
-  let payload: any = {};
-
-  if (selectedType.value === "BRRRR") {
-    payload = {
-      ...f,
-      arv_in_thousands: f.arv_in_thousands,
-    };
-  } else {
-    payload = {
-      ...f,
-      salePrice: f.salePrice, // confirm casing matches backend alias?
-      // Backend Req uses alias="salePrice".
-      // My form state has salePrice.
-      // In `validate_flip_inputs` I might need to map it if I send raw form.
-      // My API `analyzeDeal` takes `AnalyzeDealReq`.
-      // Let's pass `f` and let Axios/Backend handle aliases if possible,
-      // OR ensure keys match exactly what backend expects (alias names).
-      // Pydantic alias generator populate_by_name=True allows using field names OR aliases.
-      // I used aliases in Pydantic.
-      // So sending `salePrice` is good if alias is `salePrice`.
-      // Backend Req: `sale_price_in_thousands: Annotated[float, Field(alias="salePrice")]`
-    };
-  }
-
-  if (validationErrors.value.length === 0) {
-    console.log("View: AnalyzeDeal - calling store.analyze");
-    await store.analyze(payload, selectedType.value);
-  }
-};
-
-const onAnalyzeClick = async () => {
-  console.log("View: AnalyzeDeal - Analyze button clicked");
+const onAnalyzeAndSaveClick = () => {
   const errors = validateForm();
-
   if (errors.length > 0) {
     validationErrors.value = errors;
     return;
   }
-
   validationErrors.value = [];
-  hasAnalyzed.value = true;
-  await analyze();
-};
-
-watch(
-  form,
-  () => {
-    if (hasAnalyzed.value) {
-      console.log("View: AnalyzeDeal - form changed, re-analyzing");
-      // Debounce?
-      analyze();
-    }
-  },
-  { deep: true }
-);
-
-// Results Casting
-const brrrResult = computed(() =>
-  selectedType.value === "BRRRR"
-    ? (currentAnalysisResult.value as BrrrAnalyzeRes)
-    : null
-);
-const flipResult = computed(() =>
-  selectedType.value === "FLIP"
-    ? (currentAnalysisResult.value as FlipAnalyzeRes)
-    : null
-);
-
-// Formatting Helpers
-const formatCurrency = (value: number | undefined) => {
-  if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-const formatPercent = (value: number | undefined) => {
-  if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
-  return `${value.toFixed(2)}%`;
+  showSaveModal.value = true;
 };
 
 // Save Modal Logic
 const showSaveModal = ref(false);
+const isSaving = ref(false);
+const saveError = ref("");
 const saveForm = ref({
   address: "",
   section: 1,
-  stage: 1,
+  stage: 2,
 });
 
 const saveDeal = async () => {
-  console.log("View: AnalyzeDeal - saveDeal clicked");
+  if (!saveForm.value.address.trim()) {
+    saveError.value = "Property address is required.";
+    return;
+  }
+  saveError.value = "";
+  isSaving.value = true;
+
   try {
     const dealData = {
       ...form.value,
       ...saveForm.value,
       deal_type: selectedType.value,
     };
-    console.log("View: AnalyzeDeal - saving deal data:", dealData);
-    await store.saveDeal(dealData as any);
+    const savedDeal = await store.saveDeal(dealData as any);
     showSaveModal.value = false;
-    alert("Deal Saved Successfully!");
+
+    await router.push({
+      path: "/my-deals",
+      query: {
+        openDeal: savedDeal.id,
+        dealType: savedDeal.deal_type || selectedType.value,
+        section: String(saveForm.value.section),
+      },
+    });
   } catch (e) {
     console.error("View: AnalyzeDeal - save failed:", e);
-    alert("Failed to save deal.");
+    saveError.value = "Failed to save deal. Please try again.";
+  } finally {
+    isSaving.value = false;
   }
 };
 
-// Colors
-const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value > 0) return "text-emerald-600";
-  if (value < 0) return "text-red-600";
-  return "text-gray-600";
-};
-
 const quickCalcSellingCosts = () => {
-  // 3% buyer + 3% seller + ~2% closing (approx $5k for now as default or just 0?)
-  // Let's set closing costs to a reasonable flat fee assumption for "Quick Calc"
-  // The user didn't specify what 2% equivalent is, but typical closing costs might be $2-5k.
-  // If we want to keep logic consistent with previous "2%", we'd need ARV.
-  // Let's just set it to 5 (meaning $5k) as a placeholder for "Quick".
   form.value.buyerAgentSellingFee = 3;
   form.value.sellerAgentSellingFee = 3;
   form.value.sellingClosingCosts = 5;
@@ -578,7 +490,7 @@ const quickCalcSellingCosts = () => {
           </div>
         </section>
 
-        <!-- Analyze Button -->
+        <!-- Analyze & Save Button -->
         <div class="flex flex-col items-end pt-2 gap-2">
           <div
             v-if="validationErrors.length > 0"
@@ -594,7 +506,7 @@ const quickCalcSellingCosts = () => {
             </div>
           </div>
           <button
-            @click="onAnalyzeClick"
+            @click="onAnalyzeAndSaveClick"
             class="w-full md:w-auto text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-lg"
             :class="
               selectedType === 'BRRRR'
@@ -602,17 +514,17 @@ const quickCalcSellingCosts = () => {
                 : 'bg-orange-500 hover:bg-orange-600'
             "
           >
-            <i class="pi pi-bolt"></i> Analyze Deal
+            <i class="pi pi-bolt"></i> Analyze & Save
           </button>
         </div>
       </div>
 
-      <!-- Right Column: Results (Sticky) -->
+      <!-- Right Column: Info & Navigation (Sticky) -->
       <div class="lg:col-span-1">
         <div class="sticky top-6 space-y-6">
-          <!-- Results Card -->
+          <!-- How It Works Card -->
           <div
-            class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl relative overflow-hidden group"
+            class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl relative overflow-hidden"
           >
             <div
               class="absolute top-0 left-0 w-full h-1"
@@ -624,177 +536,47 @@ const quickCalcSellingCosts = () => {
             ></div>
 
             <h2
-              class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+              class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"
             >
               <i
-                class="pi pi-chart-bar"
+                class="pi pi-info-circle"
                 :class="
                   selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'
                 "
               ></i>
-              Results
+              How It Works
             </h2>
 
-            <div v-if="isLoading" class="flex justify-center py-10">
-              <i
-                class="pi pi-spin pi-spinner text-4xl"
-                :class="
-                  selectedType === 'BRRRR' ? 'text-blue-500' : 'text-orange-500'
-                "
-              ></i>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="flex-none w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">1</div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">Fill in deal numbers</p>
+                  <p class="text-xs text-gray-500 mt-0.5">Enter purchase price, rehab, financing details, and expenses.</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex-none w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">2</div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">Analyze & Save</p>
+                  <p class="text-xs text-gray-500 mt-0.5">Click the button, enter the property address, and save it to your board.</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex-none w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">3</div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">See results & refine</p>
+                  <p class="text-xs text-gray-500 mt-0.5">View full analysis on your deal board. Changes auto-save as you tweak numbers.</p>
+                </div>
+              </div>
             </div>
 
-            <div v-else-if="currentAnalysisResult" class="space-y-4">
-              <!-- BRRRR RESULTS -->
-              <template v-if="selectedType === 'BRRRR' && brrrResult">
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Cash Out</span>
-                  <span
-                    class="text-2xl font-bold"
-                    :class="getPerformanceColor(brrrResult.cash_out)"
-                  >
-                    {{ formatCurrency(brrrResult.cash_out) }}
-                  </span>
-                </div>
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Cash Out Routi</span>
-                  <span
-                    class="text-lg font-semibold"
-                    :class="getPerformanceColor(brrrResult.cash_out_routi)"
-                  >
-                    {{ formatCurrency(brrrResult.cash_out_routi) }}
-                  </span>
-                </div>
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Total Cash Needed</span>
-                  <span class="text-xl font-bold text-blue-600">{{
-                    formatCurrency(brrrResult.total_cash_needed_for_deal)
-                  }}</span>
-                </div>
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Cash Flow / mo</span>
-                  <span
-                    class="text-lg font-semibold"
-                    :class="getPerformanceColor(brrrResult.cash_flow)"
-                  >
-                    {{ formatCurrency(brrrResult.cash_flow) }}
-                  </span>
-                </div>
-                <!-- Secondary Metrics -->
-                <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-                  <div>
-                    <div class="text-gray-400">DSCR</div>
-                    <div class="font-medium">
-                      {{ brrrResult.dscr?.toFixed(2) ?? "-" }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-400">ROI</div>
-                    <div
-                      class="font-medium"
-                      :class="getPerformanceColor(brrrResult.roi)"
-                    >
-                      {{ formatPercent(brrrResult.roi) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-400">Equity</div>
-                    <div
-                      class="font-medium"
-                      :class="getPerformanceColor(brrrResult.equity)"
-                    >
-                      {{ formatCurrency(brrrResult.equity) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-400">CoC Return</div>
-                    <div
-                      class="font-medium"
-                      :class="getPerformanceColor(brrrResult.cash_on_cash)"
-                    >
-                      {{ formatPercent(brrrResult.cash_on_cash) }}
-                    </div>
-                  </div>
-                </div>
-              </template>
-
-              <!-- FLIP RESULTS -->
-              <template v-if="selectedType === 'FLIP' && flipResult">
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Net Profit</span>
-                  <span
-                    class="text-3xl font-bold"
-                    :class="getPerformanceColor(flipResult.net_profit)"
-                  >
-                    {{ formatCurrency(flipResult.net_profit) }}
-                  </span>
-                </div>
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">Total Cash Needed</span>
-                  <span class="text-xl font-bold text-orange-600">{{
-                    formatCurrency(flipResult.total_cash_needed)
-                  }}</span>
-                </div>
-                <div
-                  class="flex justify-between items-end pb-2 border-b border-gray-100"
-                >
-                  <span class="text-gray-600">ROI</span>
-                  <span
-                    class="text-2xl font-bold"
-                    :class="getPerformanceColor(flipResult.roi)"
-                  >
-                    {{ formatPercent(flipResult.roi) }}
-                  </span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-                  <div>
-                    <div class="text-gray-400">Annualized ROI</div>
-                    <div
-                      class="font-medium"
-                      :class="getPerformanceColor(flipResult.annualized_roi)"
-                    >
-                      {{ formatPercent(flipResult.annualized_roi) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-400">Holding Costs</div>
-                    <div class="font-medium text-red-500">
-                      {{ formatCurrency(flipResult.total_holding_costs) }}
-                    </div>
-                  </div>
-                </div>
-              </template>
+            <div class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p class="text-xs text-amber-700 flex items-start gap-2">
+                <i class="pi pi-shield text-amber-500 mt-0.5 flex-none"></i>
+                Every deal is automatically saved &mdash; no more lost data during busy days.
+              </p>
             </div>
-
-            <div v-else class="py-10 text-center text-gray-400">
-              Run analysis to see results
-            </div>
-
-            <!-- Save Button -->
-            <button
-              @click="showSaveModal = true"
-              class="w-full mt-8 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-              :class="
-                selectedType === 'BRRRR'
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-orange-500 hover:bg-orange-600'
-              "
-            >
-              <i class="pi pi-save"></i> Save Deal
-            </button>
           </div>
 
           <!-- My Deals Button -->
@@ -812,13 +594,14 @@ const quickCalcSellingCosts = () => {
     <div
       v-if="showSaveModal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      @click.self="!isSaving && (showSaveModal = false)"
     >
       <div
         class="bg-white w-full max-w-lg rounded-2xl p-6 border border-gray-200 shadow-2xl animate-fade-in-up"
       >
-        <h3 class="text-2xl font-bold text-gray-900 mb-4">Save Deal</h3>
+        <h3 class="text-2xl font-bold text-gray-900 mb-1">Analyze & Save Deal</h3>
         <p class="text-gray-500 text-sm mb-6">
-          Enter additional details to add this deal to your board.
+          Enter additional details to add this deal to your board. You'll see the full analysis results after saving.
         </p>
 
         <div class="space-y-4">
@@ -828,8 +611,10 @@ const quickCalcSellingCosts = () => {
             >
             <input
               v-model="saveForm.address"
-              class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
+              class="w-full bg-white border rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              :class="saveError && !saveForm.address.trim() ? 'border-red-400' : 'border-gray-300'"
               placeholder="123 Main St"
+              @keyup.enter="saveDeal"
             />
           </div>
 
@@ -861,23 +646,34 @@ const quickCalcSellingCosts = () => {
           </div>
         </div>
 
+        <div v-if="saveError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-sm text-red-600 flex items-center gap-2">
+            <i class="pi pi-exclamation-circle"></i>
+            {{ saveError }}
+          </p>
+        </div>
+
         <div class="flex justify-end gap-3 mt-8">
           <button
             @click="showSaveModal = false"
-            class="px-4 py-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            :disabled="isSaving"
+            class="px-4 py-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             @click="saveDeal"
-            class="px-6 py-2 text-white rounded-lg font-medium shadow-lg transition-colors"
+            :disabled="isSaving"
+            class="px-6 py-2 text-white rounded-lg font-medium shadow-lg transition-all flex items-center gap-2 disabled:opacity-70"
             :class="
               selectedType === 'BRRRR'
                 ? 'bg-blue-600 hover:bg-blue-700'
                 : 'bg-orange-500 hover:bg-orange-600'
             "
           >
-            Save
+            <i v-if="isSaving" class="pi pi-spin pi-spinner"></i>
+            <i v-else class="pi pi-bolt"></i>
+            {{ isSaving ? 'Saving...' : 'Analyze & Save' }}
           </button>
         </div>
       </div>

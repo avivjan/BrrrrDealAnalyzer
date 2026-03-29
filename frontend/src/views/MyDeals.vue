@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
@@ -15,6 +16,8 @@ console.group("View: MyDeals");
 console.log("Component setup started");
 
 const store = useDealStore();
+const route = useRoute();
+const router = useRouter();
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
@@ -81,6 +84,25 @@ onMounted(async () => {
   console.log("View: MyDeals mounted");
   await store.fetchDeals();
   refreshColumns();
+
+  const openDealId = route.query.openDeal as string | undefined;
+  const openDealSection = route.query.section as string | undefined;
+
+  if (openDealId) {
+    if (openDealSection) {
+      activeTab.value = Number(openDealSection);
+    }
+
+    await nextTick();
+    refreshColumns();
+
+    const dealToOpen = store.deals.find((d) => d.id === openDealId);
+    if (dealToOpen) {
+      openDeal(dealToOpen);
+    }
+
+    router.replace({ path: "/my-deals", query: {} });
+  }
 });
 
 // Handle Drag End
