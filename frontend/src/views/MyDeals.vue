@@ -177,13 +177,12 @@ const duplicateDeal = async (deal: ActiveDealRes) => {
 };
 
 const duplicateEditingDeal = async () => {
-  console.log("View: MyDeals - duplicateEditingDeal requested");
   if (editingDeal.value) {
     if (confirm(`Duplicate this deal?`)) {
       try {
+        if (isDirty) await performSave();
         await store.duplicateDeal(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
-        showDetailModal.value = false; // Close modal after duplicate
-        console.log("View: MyDeals - Editing deal duplicated successfully");
+        showDetailModal.value = false;
       } catch (e) {
         console.error("View: MyDeals - Failed to duplicate editing deal", e);
         alert("Failed to duplicate deal");
@@ -197,6 +196,38 @@ const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 const editingDeal = ref<ActiveDealRes | null>(null);
 const currentAnalysis = ref<ActiveDealRes | null>(null);
+
+const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+let isDirty = false;
+let isInitialLoad = true;
+let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+const performSave = async () => {
+  if (!editingDeal.value || !isDirty) return;
+  saveStatus.value = 'saving';
+  try {
+    const updatedDeal = await store.updateDeal(editingDeal.value);
+    if (updatedDeal) {
+      currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
+    }
+    isDirty = false;
+    saveStatus.value = 'saved';
+    if (savedTimeoutId) clearTimeout(savedTimeoutId);
+    savedTimeoutId = setTimeout(() => { saveStatus.value = 'idle'; }, 2000);
+  } catch (e) {
+    saveStatus.value = 'error';
+    console.error("View: MyDeals - Auto-save failed", e);
+  }
+};
+
+const debouncedAutoSave = useDebounceFn(performSave, 1500);
+
+const closeModal = async () => {
+  if (isDirty && editingDeal.value) {
+    await performSave();
+  }
+  showDetailModal.value = false;
+};
 
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
@@ -249,9 +280,12 @@ const quickCalcSellingCosts = () => {
 
 const openDeal = (deal: ActiveDealRes) => {
   console.log("View: MyDeals - Opening deal detail modal:", deal.id);
+  isInitialLoad = true;
+  isDirty = false;
+  saveStatus.value = 'idle';
   selectedDeal.value = deal;
   editingDeal.value = JSON.parse(JSON.stringify(deal));
-  currentAnalysis.value = JSON.parse(JSON.stringify(deal)); // Initialize with stored results
+  currentAnalysis.value = JSON.parse(JSON.stringify(deal));
   showDetailModal.value = true;
 };
 
@@ -282,29 +316,17 @@ watch(
   editingDeal,
   () => {
     if (showDetailModal.value) {
-      console.log(
-        "View: MyDeals - editingDeal changed, triggering debounce analysis"
-      );
       analyzeCurrentDeal();
+      if (isInitialLoad) {
+        isInitialLoad = false;
+        return;
+      }
+      isDirty = true;
+      debouncedAutoSave();
     }
   },
   { deep: true }
 );
-
-const saveChanges = async () => {
-  console.log("View: MyDeals - saveChanges clicked");
-  if (editingDeal.value) {
-    try {
-      console.log("View: MyDeals - Updating deal:", editingDeal.value);
-      await store.updateDeal(editingDeal.value);
-      showDetailModal.value = false;
-      console.log("View: MyDeals - Deal updated successfully");
-    } catch (e) {
-      console.error("View: MyDeals - Failed to save changes", e);
-      alert("Failed to save changes");
-    }
-  }
-};
 
 const isHeaderCopied = ref(false);
 
@@ -449,6 +471,7 @@ console.groupEnd();
     <div
       v-if="showDetailModal && editingDeal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      @click.self="closeModal"
     >
       <div
         class="bg-white w-full max-w-6xl max-h-[95vh] rounded-2xl border border-gray-200 shadow-2xl flex flex-col"
@@ -490,7 +513,7 @@ console.groupEnd();
               ></i>
             </button>
             <button
-              @click="showDetailModal = false"
+              @click="closeModal"
               class="text-gray-400 hover:text-gray-600"
             >
               <i class="pi pi-times text-xl"></i>
@@ -1014,7 +1037,21 @@ console.groupEnd();
           <div class="text-xs text-gray-500">
             Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
           </div>
-          <div class="flex gap-4">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1.5 text-xs transition-opacity duration-300">
+              <template v-if="saveStatus === 'saving'">
+                <i class="pi pi-spin pi-spinner text-blue-500"></i>
+                <span class="text-blue-500">Saving...</span>
+              </template>
+              <template v-else-if="saveStatus === 'saved'">
+                <i class="pi pi-check-circle text-emerald-500"></i>
+                <span class="text-emerald-500">Saved</span>
+              </template>
+              <template v-else-if="saveStatus === 'error'">
+                <i class="pi pi-exclamation-circle text-red-500"></i>
+                <span class="text-red-500">Save failed</span>
+              </template>
+            </div>
             <button
               @click="duplicateEditingDeal"
               class="text-blue-600 hover:text-blue-800 px-4 py-2 flex items-center gap-2"
@@ -1022,16 +1059,10 @@ console.groupEnd();
               <i class="pi pi-copy"></i> Duplicate
             </button>
             <button
-              @click="showDetailModal = false"
-              class="text-gray-500 hover:text-gray-700 px-4 py-2"
+              @click="closeModal"
+              class="text-gray-500 hover:text-gray-700 px-4 py-2 flex items-center gap-2"
             >
-              Cancel
-            </button>
-            <button
-              @click="saveChanges"
-              class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-2 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center gap-2"
-            >
-              <i class="pi pi-save"></i> Save Changes
+              <i class="pi pi-times"></i> Close
             </button>
           </div>
         </div>
