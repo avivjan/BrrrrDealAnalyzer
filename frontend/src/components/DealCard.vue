@@ -176,6 +176,15 @@ const formatMoney = (val?: number) =>
             </span>
         </div>
         <div class="flex flex-col">
+            <span class="text-[10px] text-gray-400 uppercase">Cash Out Refi</span>
+            <span
+            class="font-mono"
+            :class="(brrrDeal?.cash_out_routi || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'"
+            >
+            {{ formatMoney(brrrDeal?.cash_out_routi) }}
+            </span>
+        </div>
+        <div class="flex flex-col">
             <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
             <span
             class="font-mono"

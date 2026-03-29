@@ -8,6 +8,7 @@ class analyzeBRRRRes(BaseModel):
     cash_flow: float
     dscr: Optional[float] = None
     cash_out: Optional[float] = None
+    cash_out_routi: Optional[float] = None
     cash_on_cash: Optional[float] = None
     roi: Optional[float] = None
     equity: Optional[float] = None

@@ -63,6 +63,7 @@ export interface BrrrAnalyzeRes {
   cash_flow: number;
   dscr?: number;
   cash_out?: number;
+  cash_out_routi?: number;
   cash_on_cash?: number;
   roi?: number;
   equity?: number;

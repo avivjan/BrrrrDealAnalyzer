@@ -661,6 +661,17 @@ const quickCalcSellingCosts = () => {
                 <div
                   class="flex justify-between items-end pb-2 border-b border-gray-100"
                 >
+                  <span class="text-gray-600">Cash Out Refi</span>
+                  <span
+                    class="text-lg font-semibold"
+                    :class="getPerformanceColor(brrrResult.cash_out_routi)"
+                  >
+                    {{ formatCurrency(brrrResult.cash_out_routi) }}
+                  </span>
+                </div>
+                <div
+                  class="flex justify-between items-end pb-2 border-b border-gray-100"
+                >
                   <span class="text-gray-600">Total Cash Needed</span>
                   <span class="text-xl font-bold text-blue-600">{{
                     formatCurrency(brrrResult.total_cash_needed_for_deal)

@@ -516,7 +516,9 @@ onUnmounted(() => {
       </div>
 
       <!-- Transaction List -->
-      <div class="flex-1 overflow-y-auto px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] space-y-1">
+      <div
+        class="flex-1 overflow-y-auto px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] space-y-1"
+      >
         <!-- New Transaction Row -->
         <div
           v-if="isAddingNew"

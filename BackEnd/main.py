@@ -156,6 +156,14 @@ def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, clos
     total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
     return loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
 
+
+def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, use_HM_for_rehab):
+    loan_amount = arv * ltv
+    HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    return loan_amount - HML_payoff - closing_cost_refi
+
+
+
 def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
     loan_amount = arv * ltv
     monthly_interest_rate = (interest_rate / Decimal("100.0")) / Decimal("12.0")
@@ -208,6 +216,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     ltv = payload.ltv_as_precent/Decimal("100")
     
     cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, payload.use_HM_for_rehab, holding_cost_until_refi)
+    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, payload.use_HM_for_rehab)
     mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
 
     net_operating_income = payload.rent - operating_expenses
@@ -220,7 +229,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     total_cash_needed_for_deal = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
     
     return analyzeBRRRRes(
-        cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_on_cash=cash_on_cash,
+        cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_out_routi=cash_out_routi, cash_on_cash=cash_on_cash,
         roi=roi, equity=equity, net_profit=net_profit, total_cash_needed_for_deal=total_cash_needed_for_deal, messages=None
     )
 

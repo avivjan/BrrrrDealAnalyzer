@@ -39,6 +39,7 @@ Analysis Results (BRRRR)
 ------------------------
 Cash Flow: ${formatMoney(brrr.cash_flow)}
 Cash Out: ${formatMoney(brrr.cash_out)}
+Cash Out Refi: ${formatMoney(brrr.cash_out_routi)}
 Cash Needed: ${formatMoney(brrr.total_cash_needed_for_deal)}
 DSCR: ${brrr.dscr?.toFixed(2) || "-"}
 CoC Return: ${formatPercent(brrr.cash_on_cash)}
