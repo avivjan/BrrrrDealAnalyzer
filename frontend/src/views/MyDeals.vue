@@ -765,7 +765,7 @@ console.groupEnd();
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">Cash Out Refi</div>
+                            <div class="text-gray-500">Cash Out Routi</div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                         </div>
                         <div>

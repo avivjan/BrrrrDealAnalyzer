@@ -661,7 +661,7 @@ const quickCalcSellingCosts = () => {
                 <div
                   class="flex justify-between items-end pb-2 border-b border-gray-100"
                 >
-                  <span class="text-gray-600">Cash Out Refi</span>
+                  <span class="text-gray-600">Cash Out Routi</span>
                   <span
                     class="text-lg font-semibold"
                     :class="getPerformanceColor(brrrResult.cash_out_routi)"
