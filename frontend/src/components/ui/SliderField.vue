@@ -44,6 +44,7 @@ const value = computed({
           :step="step"
           :minFractionDigits="step && step < 1 ? 2 : 0"
           inputClass="w-full text-right bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          @input="(e: any) => emit('update:modelValue', e.value)"
         />
       </div>
     </div>

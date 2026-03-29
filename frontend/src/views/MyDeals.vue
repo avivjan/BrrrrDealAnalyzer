@@ -220,7 +220,7 @@ const performSave = async () => {
   }
 };
 
-const debouncedAutoSave = useDebounceFn(performSave, 1500);
+const debouncedAutoSave = useDebounceFn(performSave, 2000);
 
 const closeModal = async () => {
   if (isDirty && editingDeal.value) {

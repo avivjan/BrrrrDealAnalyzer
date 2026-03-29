@@ -55,6 +55,7 @@ const handleKeydown = (e: KeyboardEvent) => {
       inputClass="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-gray-50"
       class="w-full"
       @keydown="handleKeydown"
+      @input="(e: any) => emit('update:modelValue', e.value)"
     />
   </div>
 </template>
