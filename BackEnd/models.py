@@ -61,6 +61,7 @@ class BrrrActiveDeal(Base, BaseDeal):
     arv_in_thousands = Column(Numeric(12, 2), nullable=False) # Used for Refi LTV
     Months_until_refi = Column(Numeric(5, 1), nullable=False) # Can be half month?
     closing_cost_refi_in_thousands = Column(Numeric(12, 2), nullable=False, default=0.0)
+    refi_points = Column(Numeric(5, 2), nullable=False, server_default='1.5', default=1.5)
     loan_term_years = Column(Integer, nullable=False, default=30)
     ltv_as_precent = Column(Numeric(5, 2), nullable=False)
     interest_rate = Column(Numeric(5, 2), nullable=False) # Long term loan rate
