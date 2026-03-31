@@ -48,8 +48,7 @@ export interface BaseDealReq {
 export interface BrrrAnalyzeReq {
   arv_in_thousands: number;
   monthsUntilRefi: number;
-  closingCostsRefi: number;
-  refiPoints: number;
+  closingCostsRefi: number; 
   loanTermYears: number; 
   ltv_as_precent: number; 
   interestRate: number; 

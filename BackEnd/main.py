@@ -106,8 +106,6 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
         validation_errors.append("LTV must be between 0% and 100%.")
     if payload.HML_points < 0 or payload.HML_points > 100:
         validation_errors.append("HML points must be between 0% and 100%.")
-    if payload.refi_points < 0 or payload.refi_points > 100:
-        validation_errors.append("Refi points must be between 0% and 100%.")
     if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
         validation_errors.append("HML interest rate must be between 0% and 100%.")
     
@@ -151,18 +149,18 @@ def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
     if pitia == 0: return Decimal("0")
     return rent / pitia
 
-def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, holding_costs_until_refi):
+def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, use_HM_for_rehab, holding_costs_until_refi):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
     total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - total_cash_invested
+    return loan_amount - HML_payoff - closing_cost_refi - total_cash_invested
 
 
-def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab):
+def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, use_HM_for_rehab):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash
+    return loan_amount - HML_payoff - closing_cost_refi
 
 
 
@@ -215,12 +213,10 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     operating_expenses = calc_montly_operating_expenses(payload)
     closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
     closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
-    refi_points_in_cash = (payload.refi_points / Decimal("100.0")) * (arv * ltv)
     ltv = payload.ltv_as_precent/Decimal("100")
     
-    
-    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, holding_cost_until_refi)
-    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab)
+    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, payload.use_HM_for_rehab, holding_cost_until_refi)
+    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, payload.use_HM_for_rehab)
     mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
 
     net_operating_income = payload.rent - operating_expenses
