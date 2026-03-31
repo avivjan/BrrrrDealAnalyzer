@@ -769,6 +769,7 @@ console.groupEnd();
                       
                       <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" suffix=" mos" />
                       <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Closing Costs" :inThousands="true" />
+                      <NumberInput :model-value="(editingDeal as any).refiPoints ?? 1.5" @update:model-value="(v: number | null) => (editingDeal as any).refiPoints = v ?? undefined" label="Refi Points" suffix=" pts" :min="0" :max="100" />
 
                       <SliderField :model-value="(editingDeal as any).interestRate ?? 6.5" @update:model-value="(v: number) => (editingDeal as any).interestRate = v" label="Long Term Interest Rate" :min="0" :max="20" :step="0.125" suffix="%" :required="true" />
                       <NumberInput :model-value="(editingDeal as any).loanTermYears ?? null" @update:model-value="(v: number | null) => (editingDeal as any).loanTermYears = v ?? undefined" label="Loan Term" suffix=" Years" />

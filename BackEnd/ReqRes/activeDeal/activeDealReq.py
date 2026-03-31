@@ -59,6 +59,7 @@ class BrrrActiveDealCreate(BaseDealReq):
     arv_in_thousands: Optional[Decimal] = Field(Decimal("0"), description="ARV in thousands")
     Months_until_refi: Annotated[Optional[Decimal], Field(alias="monthsUntilRefi")] = None
     closing_cost_refi_in_thousands: Annotated[Optional[Decimal], Field(alias="closingCostsRefi")] = Decimal("0.0")
+    refi_points: Annotated[Optional[Decimal], Field(alias="refiPoints")] = Decimal("1.5")
     loan_term_years: Annotated[Optional[int], Field(alias="loanTermYears")] = 30
     ltv_as_precent: Optional[Decimal] = Field(..., description="LTV for Refi")
     interest_rate: Annotated[Optional[Decimal], Field(alias="interestRate")] = None

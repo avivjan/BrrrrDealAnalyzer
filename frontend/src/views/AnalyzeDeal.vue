@@ -34,6 +34,7 @@ const form = ref({
   arv_in_thousands: 0,
   monthsUntilRefi: 6,
   closingCostsRefi: 0,
+  refiPoints: 1.5,
   loanTermYears: 30,
   ltv_as_precent: 75,
   interestRate: 6.5,
@@ -332,6 +333,13 @@ const quickCalcSellingCosts = () => {
               v-model="form.closingCostsRefi"
               label="Refi Closing Costs"
               :inThousands="true"
+            />
+            <NumberInput
+              v-model="form.refiPoints"
+              label="Refi Points"
+              suffix=" pts"
+              :min="0"
+              :max="100"
             />
 
             <SliderField

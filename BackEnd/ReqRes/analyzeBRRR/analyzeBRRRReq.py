@@ -29,7 +29,9 @@ class analyzeBRRRReq(BaseModel):
     HML_interest_rate: Annotated[Decimal, Field(alias="HMLInterestRate", description="Interest paid during HML period (cash)")]   
 
     closing_cost_refi_in_thousands: Annotated[Decimal, Field(alias="closingCostsRefi", description="Closing costs during the refinance stage")] = Decimal("0.0")
-    
+
+    refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Points paid to refi lender as a percentage of the refi loan amount")] = Decimal("1.5")
+
     loan_term_years: Annotated[int, Field(alias="loanTermYears")] = 30
 
     ltv_as_precent: Decimal = Field(..., description="LTV as a percent for the DSCR refinance loan (e.g., 75 for 75%)")
