@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
 import { useConnectionStore } from "./stores/connectionStore";
+import { useDealStore } from "./stores/dealStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
 import BuyingPowerWidget from "./components/BuyingPowerWidget.vue";
+import PortfolioStatsBar from "./components/PortfolioStatsBar.vue";
 
 const connectionStore = useConnectionStore();
+const dealStore = useDealStore();
 
 onMounted(() => {
   // Setup global interceptors to track connection status
@@ -36,6 +39,9 @@ onMounted(() => {
 
   // Wake up the backend immediately
   connectionStore.checkConnection();
+
+  // Fetch deals globally so portfolio stats are available on all pages
+  dealStore.fetchDeals();
 });
 </script>
 
@@ -60,6 +66,7 @@ onMounted(() => {
       "
     ></div>
 
+    <PortfolioStatsBar />
     <RouterView />
     <BuyingPowerWidget />
   </div>

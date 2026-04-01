@@ -26,6 +26,27 @@ export const useDealStore = defineStore('deals', () => {
     };
   });
 
+  const portfolioStats = computed(() => {
+    const broughtBrrr = deals.value.filter(
+      d => d.stage === 3 && (!d.deal_type || d.deal_type === 'BRRRR')
+    );
+    const numDoors = broughtBrrr.length;
+    let totalValue = 0;
+    let totalDebt = 0;
+    for (const deal of broughtBrrr) {
+      const arv = Number((deal as any).arv_in_thousands) || 0;
+      const ltv = Number((deal as any).ltv_as_precent) || 0;
+      totalValue += arv * 1000;
+      totalDebt += arv * 1000 * (ltv / 100);
+    }
+    return {
+      numDoors,
+      totalValue,
+      totalDebt,
+      equity: totalValue - totalDebt,
+    };
+  });
+
   async function fetchDeals() {
     console.group('Store: fetchDeals');
     console.log('Fetching deals...');
@@ -177,6 +198,7 @@ export const useDealStore = defineStore('deals', () => {
     error,
     dealsBySection,
     activeDealsCount,
+    portfolioStats,
     fetchDeals,
     analyze,
     saveDeal,
