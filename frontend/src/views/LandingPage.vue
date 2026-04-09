@@ -19,10 +19,10 @@ const cards = [
     color: "bg-gradient-to-br from-emerald-500 to-teal-600",
   },
   {
-    title: "Airtable",
+    title: "Stessa",
     icon: "pi pi-database",
     action: "external",
-    url: "https://airtable.com/appmO7pNFJE06E9E0/pagE3Tz2sIMugDfUP",
+    url: "https://app.stessa.com/web3/dashboard",
     color: "bg-gradient-to-br from-yellow-500 to-orange-600",
   },
   {
