@@ -13,6 +13,10 @@ from ReqRes.activeDeal.activeDealReq import (
     BrrrActiveDealCreate, BrrrActiveDealRes,
     FlipActiveDealCreate, FlipActiveDealRes
 )
+from ReqRes.boughtDeal.boughtDealReq import (
+    BoughtBrrrDealCreate, BoughtBrrrDealRes,
+    BoughtFlipDealCreate, BoughtFlipDealRes
+)
 
 from crud_active_deal import (
     add_brrr_deal, add_flip_deal,
@@ -21,6 +25,13 @@ from crud_active_deal import (
     delete_brrr_deal, delete_flip_deal,
     duplicate_brrr_deal, duplicate_flip_deal
 )
+from crud_bought_deal import (
+    add_bought_brrr_deal, add_bought_flip_deal,
+    get_all_bought_brrr_deals, get_all_bought_flip_deals,
+    update_bought_brrr_deal, update_bought_flip_deal,
+    delete_bought_brrr_deal, delete_bought_flip_deal,
+    create_bought_from_active_brrr, create_bought_from_active_flip
+)
 from crud_liquidity import get_all_liquidity, add_liquidity_transaction, update_liquidity_transaction, delete_liquidity_transaction
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
@@ -28,7 +39,7 @@ from ReqRes.BuyingPower.getLiquidityRes import GetLiquidityRes, LiquidityTransac
 from ReqRes.BuyingPower.addLiquidityTransactionReq import AddLiquidityTransactionReq
 from ReqRes.BuyingPower.updateLiquidityTransactionReq import UpdateLiquidityTransactionReq
 from db import Base, engine, get_db
-from models import BrrrActiveDeal, FlipActiveDeal
+from models import BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal
 from sqlalchemy import text, inspect as sa_inspect
 import smtplib
 from email.mime.text import MIMEText
@@ -442,6 +453,86 @@ def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
         if new_deal: return create_deal_response(new_deal)
         
     raise HTTPException(status_code=404, detail="Deal not found")
+
+
+# --- Bought Deals ---
+
+def create_bought_deal_response(deal: Union[BoughtBrrrDeal, BoughtFlipDeal]):
+    if isinstance(deal, BoughtBrrrDeal):
+        calc = calculate_brrr_results(deal)
+        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
+        deal_data.update(calc.model_dump())
+        deal_data['deal_type'] = "BRRRR"
+        return BoughtBrrrDealRes.model_validate(deal_data)
+    elif isinstance(deal, BoughtFlipDeal):
+        calc = calculate_flip_results(deal)
+        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
+        deal_data.update(calc.model_dump())
+        deal_data['deal_type'] = "FLIP"
+        return BoughtFlipDealRes.model_validate(deal_data)
+    return None
+
+@app.get("/bought-deals", response_model=List[Union[BoughtBrrrDealRes, BoughtFlipDealRes]])
+def get_bought_deals(db: Session = Depends(get_db)):
+    brrr_deals = get_all_bought_brrr_deals(db)
+    flip_deals = get_all_bought_flip_deals(db)
+
+    all_deals = []
+    all_deals.extend([create_bought_deal_response(d) for d in brrr_deals])
+    all_deals.extend([create_bought_deal_response(d) for d in flip_deals])
+
+    all_deals.sort(key=lambda x: x.created_at, reverse=True)
+    return all_deals
+
+@app.post("/bought-deals", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
+def add_bought_deal(
+    deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate] = Body(..., discriminator='deal_type'),
+    db: Session = Depends(get_db)
+):
+    if deal.deal_type == "BRRRR":
+        created = add_bought_brrr_deal(db, deal)
+        return create_bought_deal_response(created)
+    elif deal.deal_type == "FLIP":
+        created = add_bought_flip_deal(db, deal)
+        return create_bought_deal_response(created)
+    raise HTTPException(status_code=400, detail="Invalid deal type")
+
+@app.put("/bought-deals/{deal_id}", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
+def update_bought_deal(deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate], db: Session = Depends(get_db)):
+    if deal.deal_type == "BRRRR":
+        updated = update_bought_brrr_deal(db, deal_id, deal)
+        if updated: return create_bought_deal_response(updated)
+    elif deal.deal_type == "FLIP":
+        updated = update_bought_flip_deal(db, deal_id, deal)
+        if updated: return create_bought_deal_response(updated)
+
+    raise HTTPException(status_code=404, detail="Bought deal not found")
+
+@app.delete("/bought-deals/{deal_id}")
+def delete_bought_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
+    if deal_type == "BRRRR":
+        if delete_bought_brrr_deal(db, deal_id): return {"message": "Bought deal deleted"}
+    elif deal_type == "FLIP":
+        if delete_bought_flip_deal(db, deal_id): return {"message": "Bought deal deleted"}
+
+    raise HTTPException(status_code=404, detail="Bought deal not found")
+
+@app.post("/bought-deals/from-active/{deal_id}", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
+def move_to_bought(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
+    if deal_type == "BRRRR":
+        source = db.query(BrrrActiveDeal).filter(BrrrActiveDeal.id == deal_id).first()
+        if not source:
+            raise HTTPException(status_code=404, detail="Source BRRRR deal not found")
+        new_deal = create_bought_from_active_brrr(db, source)
+        return create_bought_deal_response(new_deal)
+    elif deal_type == "FLIP":
+        source = db.query(FlipActiveDeal).filter(FlipActiveDeal.id == deal_id).first()
+        if not source:
+            raise HTTPException(status_code=404, detail="Source FLIP deal not found")
+        new_deal = create_bought_from_active_flip(db, source)
+        return create_bought_deal_response(new_deal)
+
+    raise HTTPException(status_code=400, detail="Invalid deal type")
 
 
 # --- Liquidity / Buying Power ---

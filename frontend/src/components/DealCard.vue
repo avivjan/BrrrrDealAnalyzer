@@ -10,6 +10,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "delete", id: string): void;
   (e: "duplicate", id: string): void;
+  (e: "moveToBought", id: string): void;
 }>();
 
 const isCopied = ref(false);
@@ -53,6 +54,11 @@ const onDelete = (id: string) => {
 const onDuplicate = (id: string) => {
   console.log("Component: DealCard - duplicate clicked for deal:", id);
   emit("duplicate", id);
+};
+
+const onMoveToBought = (id: string) => {
+  console.log("Component: DealCard - move to bought clicked for deal:", id);
+  emit("moveToBought", id);
 };
 
 const stageColors = {
@@ -116,15 +122,26 @@ const formatMoney = (val?: number) =>
       <i class="pi pi-copy text-[10px] font-bold"></i>
     </button>
 
+    <!-- Move to Bought Button (only for Brought stage) -->
+    <button
+      v-if="deal.stage === 3"
+      @click.stop="onMoveToBought(deal.id)"
+      class="absolute top-2 right-[5.75rem] p-1.5 rounded-full bg-emerald-100 text-emerald-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-200 hover:scale-110 z-10"
+      title="Move to Bought Deals"
+    >
+      <i class="pi pi-arrow-right text-[10px] font-bold"></i>
+    </button>
+
     <!-- Copy to AI Button -->
     <button
       @click.stop="copyToClipboard(deal)"
-      class="absolute top-2 right-16 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
-      :class="
+      class="absolute top-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
+      :class="[
+        deal.stage === 3 ? 'right-[8.25rem]' : 'right-16',
         isCopied
           ? 'bg-green-100 text-green-600'
           : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-      "
+      ]"
       :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
     >
       <i

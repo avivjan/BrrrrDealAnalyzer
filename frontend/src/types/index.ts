@@ -123,6 +123,21 @@ export type ActiveDealRes = BrrrDealRes | FlipDealRes;
 export type AnalyzeDealReq = (BrrrAnalyzeReq & Partial<BaseDealReq>) | (FlipAnalyzeReq & Partial<BaseDealReq>); // Simplified for analyze API
 export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;
 
+// Bought Deals
+export interface BoughtBrrrDealRes extends BrrrDealRes {
+  boughtStage: number;
+  completedSubstages: Record<string, boolean>;
+  sourceDealId?: string;
+}
+
+export interface BoughtFlipDealRes extends FlipDealRes {
+  boughtStage: number;
+  completedSubstages: Record<string, boolean>;
+  sourceDealId?: string;
+}
+
+export type BoughtDealRes = BoughtBrrrDealRes | BoughtFlipDealRes;
+
 // Buying Power / Liquidity
 export interface LiquidityTransaction {
   id: string;

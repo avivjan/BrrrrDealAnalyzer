@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes, LiquidityTransaction, LiquidityResponse } from '../types';
+import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes, LiquidityTransaction, LiquidityResponse, BoughtDealRes } from '../types';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -176,6 +176,70 @@ export default {
       const response = await apiClient.put<LiquidityTransaction>(`/liquidity/${txn.id}`, txn);
       console.log('Response Status:', response.status);
       console.log('Updated:', response.data);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  // Bought Deals
+  async getBoughtDeals(): Promise<BoughtDealRes[]> {
+    console.group('API: getBoughtDeals');
+    try {
+      const response = await apiClient.get<BoughtDealRes[]>('/bought-deals');
+      console.log('Response Status:', response.status);
+      console.log('Bought Deals Fetched:', response.data.length);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async updateBoughtDeal(deal: BoughtDealRes): Promise<BoughtDealRes> {
+    const type = deal.deal_type || 'BRRRR';
+    const logPrefix = `[BoughtDeal:${type}]`;
+    console.group(`API: updateBoughtDeal (${type})`);
+    console.log(`${logPrefix} Request Payload:`, deal);
+    try {
+      const response = await apiClient.put<BoughtDealRes>(`/bought-deals/${deal.id}`, deal);
+      console.log(`${logPrefix} Response Status:`, response.status);
+      console.log(`${logPrefix} Updated Deal:`, response.data);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error(`${logPrefix} API Error:`, error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async deleteBoughtDeal(dealId: string, type: 'BRRRR' | 'FLIP' = 'BRRRR'): Promise<void> {
+    console.group('API: deleteBoughtDeal');
+    console.log('Deal ID:', dealId, 'Type:', type);
+    try {
+      await apiClient.delete(`/bought-deals/${dealId}`, { params: { deal_type: type } });
+      console.log('Delete Successful');
+      console.groupEnd();
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async moveToBought(dealId: string, dealType: 'BRRRR' | 'FLIP'): Promise<BoughtDealRes> {
+    console.group('API: moveToBought');
+    console.log('Deal ID:', dealId, 'Type:', dealType);
+    try {
+      const response = await apiClient.post<BoughtDealRes>(`/bought-deals/from-active/${dealId}`, null, { params: { deal_type: dealType } });
+      console.log('Response Status:', response.status);
+      console.log('Created Bought Deal:', response.data);
       console.groupEnd();
       return response.data;
     } catch (error) {

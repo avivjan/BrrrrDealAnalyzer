@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
+import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
@@ -16,6 +17,7 @@ console.group("View: MyDeals");
 console.log("Component setup started");
 
 const store = useDealStore();
+const boughtStore = useBoughtDealStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -195,6 +197,33 @@ const duplicateDeal = async (deal: ActiveDealRes) => {
     } catch (e) {
       console.error("View: MyDeals - Failed to duplicate deal", e);
       alert("Failed to duplicate deal");
+    }
+  }
+};
+
+const moveToBought = async (deal: ActiveDealRes) => {
+  if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
+    try {
+      await boughtStore.moveToBought(deal.id, deal.deal_type || 'BRRRR');
+      alert("Deal moved to Bought Deals successfully!");
+    } catch (e) {
+      console.error("View: MyDeals - Failed to move deal to bought", e);
+      alert("Failed to move deal to Bought Deals");
+    }
+  }
+};
+
+const moveToBoughtFromModal = async () => {
+  if (editingDeal.value) {
+    if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
+      try {
+        if (isDirty) await performSave();
+        await boughtStore.moveToBought(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
+        alert("Deal moved to Bought Deals successfully!");
+      } catch (e) {
+        console.error("View: MyDeals - Failed to move editing deal to bought", e);
+        alert("Failed to move deal to Bought Deals");
+      }
     }
   }
 };
@@ -510,6 +539,7 @@ console.groupEnd();
                   :deal="deal"
                   @delete="confirmDelete(deal)"
                   @duplicate="duplicateDeal(deal)"
+                  @moveToBought="moveToBought(deal)"
                   class="h-full"
                 />
               </div>
@@ -1105,6 +1135,13 @@ console.groupEnd();
                 <span class="text-red-500">Save failed</span>
               </template>
             </div>
+            <button
+              v-if="editingDeal.stage === 3"
+              @click="moveToBoughtFromModal"
+              class="text-emerald-600 hover:text-emerald-800 px-4 py-2 flex items-center gap-2"
+            >
+              <i class="pi pi-arrow-right"></i> Move to Bought
+            </button>
             <button
               @click="deleteEditingDeal"
               class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"

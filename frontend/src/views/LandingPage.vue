@@ -34,10 +34,17 @@ const cards = [
   },
   {
     title: "My Deals",
-    icon: "pi pi-trello", // Using Trello/Kanban icon
+    icon: "pi pi-trello",
     action: "internal",
     route: "/my-deals",
     color: "bg-gradient-to-br from-purple-500 to-fuchsia-600",
+  },
+  {
+    title: "Bought Deals",
+    icon: "pi pi-check-circle",
+    action: "internal",
+    route: "/bought-deals",
+    color: "bg-gradient-to-br from-emerald-500 to-green-600",
   },
 ];
 

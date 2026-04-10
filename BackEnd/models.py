@@ -88,6 +88,48 @@ class FlipActiveDeal(Base, BaseDeal):
     sale_comps = Column(JSON, nullable=True)
     
     
+class BoughtBrrrDeal(Base, BaseDeal):
+    __tablename__ = "bought_brrrr_deals"
+
+    # BRRRR Specific (same as BrrrActiveDeal)
+    arv_in_thousands = Column(Numeric(12, 2), nullable=False)
+    Months_until_refi = Column(Numeric(5, 1), nullable=False)
+    closing_cost_refi_in_thousands = Column(Numeric(12, 2), nullable=False, default=0.0)
+    refi_points = Column(Numeric(5, 2), nullable=False, server_default='1.5', default=1.5)
+    loan_term_years = Column(Integer, nullable=False, default=30)
+    ltv_as_precent = Column(Numeric(5, 2), nullable=False)
+    interest_rate = Column(Numeric(5, 2), nullable=False)
+    rent = Column(Numeric(12, 2), nullable=False)
+    vacancy_percent = Column(Numeric(5, 2), nullable=False, default=0.0)
+    property_managment_fee_precentages_from_rent = Column(Numeric(5, 2), nullable=False, default=0.0)
+    maintenance_percent = Column(Numeric(5, 2), nullable=False, default=0.0)
+    capex_percent_of_rent = Column(Numeric(5, 2), nullable=False, default=0.0)
+
+    # Bought deal columns
+    bought_stage = Column(Integer, nullable=False, default=1)
+    completed_substages = Column(JSON, nullable=False, default=dict)
+    source_deal_id = Column(Uuid(as_uuid=True), nullable=True)
+
+
+class BoughtFlipDeal(Base, BaseDeal):
+    __tablename__ = "bought_flip_deals"
+
+    # Flip Specific (same as FlipActiveDeal)
+    sale_price_in_thousands = Column(Numeric(12, 2), nullable=False)
+    holding_time_months = Column(Integer, nullable=False)
+    buyer_agent_selling_fee = Column(Numeric(5, 2), nullable=False, default=0.0)
+    seller_agent_selling_fee = Column(Numeric(5, 2), nullable=False, default=0.0)
+    selling_closing_costs_in_thousands = Column(Numeric(12, 2), nullable=False, default=0.0)
+    monthly_utilities = Column(Numeric(12, 2), nullable=False, default=0.0)
+    capital_gains_tax_rate = Column(Numeric(5, 2), nullable=False, default=0.0)
+    sale_comps = Column(JSON, nullable=True)
+
+    # Bought deal columns
+    bought_stage = Column(Integer, nullable=False, default=1)
+    completed_substages = Column(JSON, nullable=False, default=dict)
+    source_deal_id = Column(Uuid(as_uuid=True), nullable=True)
+
+
 class LiquidityTransaction(Base):
     __tablename__ = "liquidity_transactions"
 
