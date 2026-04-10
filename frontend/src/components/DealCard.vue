@@ -11,6 +11,7 @@ const emit = defineEmits<{
   (e: "delete", id: string): void;
   (e: "duplicate", id: string): void;
   (e: "moveToBought", id: string): void;
+  (e: "moveToBought", id: string): void;
 }>();
 
 const isCopied = ref(false);
@@ -55,11 +56,11 @@ const onDuplicate = (id: string) => {
   console.log("Component: DealCard - duplicate clicked for deal:", id);
   emit("duplicate", id);
 };
-
 const onMoveToBought = (id: string) => {
   console.log("Component: DealCard - move to bought clicked for deal:", id);
   emit("moveToBought", id);
 };
+
 
 const stageColors = {
   1: "border-l-4 border-l-blue-500 bg-white border border-gray-100", // New
@@ -121,7 +122,6 @@ const formatMoney = (val?: number) =>
     >
       <i class="pi pi-copy text-[10px] font-bold"></i>
     </button>
-
     <!-- Move to Bought Button (only for Brought stage) -->
     <button
       v-if="deal.stage === 3"
@@ -142,6 +142,7 @@ const formatMoney = (val?: number) =>
           ? 'bg-green-100 text-green-600'
           : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
       ]"
+      "
       :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
     >
       <i

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed, toRaw } from 'vue';
 import api from '../api';
 import type { BoughtDealRes, AnalyzeDealReq, AnalyzeDealRes } from '../types';
-import { canAdvance, getStageConfig, getPipelineForType } from '../config/boughtDealStages';
+import { canAdvance, getPipelineForType } from '../config/boughtDealStages';
 
 export const useBoughtDealStore = defineStore('boughtDeals', () => {
   const boughtDeals = ref<BoughtDealRes[]>([]);
@@ -145,7 +145,12 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
 
     const oldStage = deal.boughtStage;
     const oldSubstages = { ...deal.completedSubstages };
-    deal.boughtStage = pipeline.stages[currentIdx + 1].id;
+    const nextStage = pipeline.stages[currentIdx + 1];
+    if (!nextStage) {
+      console.warn('No next stage in pipeline');
+      return false;
+    }
+    deal.boughtStage = nextStage.id;
     deal.completedSubstages = {};
 
     try {

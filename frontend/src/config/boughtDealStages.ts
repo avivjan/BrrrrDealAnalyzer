@@ -100,14 +100,19 @@ export function getPipelineForType(dealType: 'FLIP' | 'BRRRR'): BoughtDealPipeli
 
 export function getStageConfig(dealType: 'FLIP' | 'BRRRR', stageId: number): BoughtDealStage {
   const pipeline = getPipelineForType(dealType);
-  const stage = pipeline.stages.find(s => s.id === stageId);
+  const stages = pipeline.stages;
+  const first = stages[0];
+  const last = stages[stages.length - 1];
+  if (!first || !last) {
+    throw new Error(`[BoughtDealStages] Pipeline for ${dealType} has no stages`);
+  }
+  const stage = stages.find(s => s.id === stageId);
   if (!stage) {
     console.warn(`[BoughtDealStages] Stage ${stageId} not found for ${dealType}, clamping to nearest valid stage`);
-    // Clamp to last stage if beyond range, first if below
-    if (stageId > pipeline.stages[pipeline.stages.length - 1].id) {
-      return pipeline.stages[pipeline.stages.length - 1];
+    if (stageId > last.id) {
+      return last;
     }
-    return pipeline.stages[0];
+    return first;
   }
   return stage;
 }
@@ -124,7 +129,9 @@ export function canAdvance(dealType: 'FLIP' | 'BRRRR', stageId: number, complete
 
 export function isTerminalStage(dealType: 'FLIP' | 'BRRRR', stageId: number): boolean {
   const pipeline = getPipelineForType(dealType);
-  return stageId === pipeline.stages[pipeline.stages.length - 1].id;
+  const stages = pipeline.stages;
+  const last = stages[stages.length - 1];
+  return last !== undefined && stageId === last.id;
 }
 
 export function getMissingSubstages(dealType: 'FLIP' | 'BRRRR', stageId: number, completedSubstages: Record<string, boolean>): string[] {

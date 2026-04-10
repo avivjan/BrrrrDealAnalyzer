@@ -35,12 +35,12 @@ def update_bought_brrr_deal(db: Session, deal_id: str, deal_data: BoughtBrrrDeal
     db_deal = db.query(BoughtBrrrDeal).filter(BoughtBrrrDeal.id == deal_id).first()
     if not db_deal:
         return None
-
+    
     update_data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     for key, value in update_data.items():
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
-
+    
     db.commit()
     db.refresh(db_deal)
     return db_deal
@@ -50,12 +50,12 @@ def update_bought_flip_deal(db: Session, deal_id: str, deal_data: BoughtFlipDeal
     db_deal = db.query(BoughtFlipDeal).filter(BoughtFlipDeal.id == deal_id).first()
     if not db_deal:
         return None
-
+    
     update_data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     for key, value in update_data.items():
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
-
+    
     db.commit()
     db.refresh(db_deal)
     return db_deal
@@ -84,7 +84,7 @@ def create_bought_from_active_brrr(db: Session, source_deal: BrrrActiveDeal) -> 
     data['bought_stage'] = 1
     data['completed_substages'] = {}
     data['source_deal_id'] = source_deal.id
-
+    
     new_deal = BoughtBrrrDeal(**data)
     db.add(new_deal)
     db.commit()
@@ -97,7 +97,7 @@ def create_bought_from_active_flip(db: Session, source_deal: FlipActiveDeal) -> 
     data['bought_stage'] = 1
     data['completed_substages'] = {}
     data['source_deal_id'] = source_deal.id
-
+    
     new_deal = BoughtFlipDeal(**data)
     db.add(new_deal)
     db.commit()

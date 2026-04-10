@@ -16,8 +16,8 @@ import type { ActiveDealRes, AnalyzeDealReq } from "../types";
 console.group("View: MyDeals");
 console.log("Component setup started");
 
-const store = useDealStore();
 const boughtStore = useBoughtDealStore();
+const store = useDealStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -200,7 +200,6 @@ const duplicateDeal = async (deal: ActiveDealRes) => {
     }
   }
 };
-
 const moveToBought = async (deal: ActiveDealRes) => {
   if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
     try {
@@ -227,6 +226,7 @@ const moveToBoughtFromModal = async () => {
     }
   }
 };
+
 
 const duplicateEditingDeal = async () => {
   if (editingDeal.value) {
@@ -538,8 +538,8 @@ console.groupEnd();
                 <DealCard
                   :deal="deal"
                   @delete="confirmDelete(deal)"
-                  @duplicate="duplicateDeal(deal)"
                   @moveToBought="moveToBought(deal)"
+                  @duplicate="duplicateDeal(deal)"
                   class="h-full"
                 />
               </div>

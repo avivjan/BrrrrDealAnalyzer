@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, watch, onMounted, computed } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
@@ -21,7 +20,6 @@ import {
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
-const router = useRouter();
 
 const activeTab = ref<"FLIP" | "BRRRR">("BRRRR");
 
@@ -37,13 +35,14 @@ const refreshColumns = () => {
   for (const stage of currentStages.value) {
     cols[stage.id] = [];
   }
+  const firstStage = currentStages.value[0];
   for (const deal of deals) {
     const stageConfig = getStageConfig(activeTab.value, deal.boughtStage);
-    if (cols[stageConfig.id]) {
-      cols[stageConfig.id].push(deal);
-    } else {
-      // Fallback to first stage
-      cols[currentStages.value[0].id]?.push(deal);
+    const targetCol = cols[stageConfig.id];
+    if (targetCol) {
+      targetCol.push(deal);
+    } else if (firstStage) {
+      cols[firstStage.id]?.push(deal);
     }
   }
   columns.value = cols;
@@ -325,10 +324,13 @@ const advanceEditingDeal = async () => {
     (s) => s.id === editingDeal.value!.boughtStage
   );
   if (currentIdx < pipeline.stages.length - 1) {
-    editingDeal.value.boughtStage = pipeline.stages[currentIdx + 1].id;
-    editingDeal.value.completedSubstages = {};
-    isDirty = true;
-    debouncedAutoSave();
+    const nextStage = pipeline.stages[currentIdx + 1];
+    if (nextStage) {
+      editingDeal.value.boughtStage = nextStage.id;
+      editingDeal.value.completedSubstages = {};
+      isDirty = true;
+      debouncedAutoSave();
+    }
   }
 };
 
