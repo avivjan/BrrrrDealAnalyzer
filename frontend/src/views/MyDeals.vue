@@ -444,6 +444,15 @@ console.groupEnd();
         <h1 class="text-2xl font-bold text-gray-900 hidden md:block">
           My Deals
         </h1>
+        <button
+          type="button"
+          @click="$router.push('/bought-deals')"
+          class="text-sm font-medium text-emerald-700 hover:text-emerald-800 border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+          title="Open bought deals pipeline"
+        >
+          <i class="pi pi-arrow-circle-right"></i>
+          <span class="hidden sm:inline">Bought Deals</span>
+        </button>
       </div>
 
       <!-- Tabs -->

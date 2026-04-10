@@ -443,7 +443,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </button>
       </div>
 
-      <div class="w-24"></div>
+      <button
+        type="button"
+        @click="$router.push('/my-deals')"
+        class="text-sm font-medium text-blue-700 hover:text-blue-800 border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shrink-0"
+        title="Back to active deal pipeline"
+      >
+        <i class="pi pi-th-large"></i>
+        <span class="hidden sm:inline">My Deals</span>
+      </button>
     </header>
 
     <!-- Board -->
