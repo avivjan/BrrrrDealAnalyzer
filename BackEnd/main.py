@@ -225,8 +225,17 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
-    rehab_cash = rehab_cost if not use_HM_for_rehab else 0
-    return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash + 0.1*rehab_cost
+    rehab_cash = rehab_cost if not use_HM_for_rehab else Decimal("0")
+    rehab_contingency_reserve = rehab_cost * Decimal("0.1")
+    return (
+        down_payment_in_cash
+        + holding_cost_until_refi
+        + closing_costs_buy
+        + HML_points_in_cash
+        + rehab_cash
+        + HML_interest_in_cash
+        + rehab_contingency_reserve
+    )
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     arv = thousands_to_dollars(payload.arv_in_thousands)
