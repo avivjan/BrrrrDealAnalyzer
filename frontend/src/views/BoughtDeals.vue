@@ -9,7 +9,11 @@ import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { BoughtDealRes, AnalyzeDealReq } from "../types";
+import type { BoughtDealRes, AnalyzeDealReq, BoughtBrrrDealRes } from "../types";
+import {
+  ensureBrrrRefiPointsDefault,
+  DEFAULT_REFI_POINTS,
+} from "../utils/dealUtils";
 import {
   getPipelineForType,
   getStageConfig,
@@ -162,6 +166,13 @@ const confirmDelete = async (deal: BoughtDealRes) => {
 // --- Modal ---
 const showDetailModal = ref(false);
 const editingDeal = ref<BoughtDealRes | null>(null);
+
+const brrrrBoughtEditing = computed((): BoughtBrrrDealRes | null => {
+  const d = editingDeal.value;
+  if (!d || d.deal_type === "FLIP") return null;
+  return d as BoughtBrrrDealRes;
+});
+
 const currentAnalysis = ref<BoughtDealRes | null>(null);
 const modalScrollContainer = ref<HTMLElement | null>(null);
 const analysisResultsEl = ref<HTMLElement | null>(null);
@@ -208,8 +219,10 @@ const openDeal = (deal: BoughtDealRes) => {
   isInitialLoad = true;
   isDirty = false;
   saveStatus.value = "idle";
-  editingDeal.value = JSON.parse(JSON.stringify(deal));
-  currentAnalysis.value = JSON.parse(JSON.stringify(deal));
+  const clone = JSON.parse(JSON.stringify(deal)) as BoughtDealRes;
+  ensureBrrrRefiPointsDefault(clone);
+  editingDeal.value = clone;
+  currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   showDetailModal.value = true;
 };
 
@@ -939,9 +952,10 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               </div>
             </section>
 
-            <template v-if="editingDealType === 'BRRRR'">
-              <!-- BRRRR Section -->
+            <template v-if="brrrrBoughtEditing">
               <section
+                v-for="bd in [brrrrBoughtEditing]"
+                :key="'brrrr-bought-refi'"
                 class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm"
               >
                 <h2
@@ -952,26 +966,18 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <MoneyInput
-                    :model-value="
-                      (editingDeal as any).arv_in_thousands ?? null
-                    "
+                    :model-value="bd.arv_in_thousands ?? null"
                     @update:model-value="
                       (v: number | null) =>
-                        ((editingDeal as any).arv_in_thousands =
-                          v ?? undefined)
+                        (bd.arv_in_thousands = v ?? undefined)
                     "
                     label="ARV"
                     :inThousands="true"
                     :required="true"
                   />
                   <SliderField
-                    :model-value="
-                      (editingDeal as any).ltv_as_precent ?? 75
-                    "
-                    @update:model-value="
-                      (v: number) =>
-                        ((editingDeal as any).ltv_as_precent = v)
-                    "
+                    :model-value="bd.ltv_as_precent ?? 75"
+                    @update:model-value="(v: number) => (bd.ltv_as_precent = v)"
                     label="LTV"
                     :min="1"
                     :max="100"
@@ -979,36 +985,28 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     :required="true"
                   />
                   <NumberInput
-                    :model-value="
-                      (editingDeal as any).monthsUntilRefi ?? null
-                    "
+                    :model-value="bd.monthsUntilRefi ?? null"
                     @update:model-value="
                       (v: number | null) =>
-                        ((editingDeal as any).monthsUntilRefi =
-                          v ?? undefined)
+                        (bd.monthsUntilRefi = v ?? undefined)
                     "
                     label="Months until Refi"
                     suffix=" mos"
                   />
                   <MoneyInput
-                    :model-value="
-                      (editingDeal as any).closingCostsRefi ?? null
-                    "
+                    :model-value="bd.closingCostsRefi ?? null"
                     @update:model-value="
                       (v: number | null) =>
-                        ((editingDeal as any).closingCostsRefi =
-                          v ?? undefined)
+                        (bd.closingCostsRefi = v ?? undefined)
                     "
                     label="Refi Closing Costs"
                     :inThousands="true"
                   />
                   <NumberInput
-                    :model-value="
-                      (editingDeal as any).refiPoints ?? 1.5
-                    "
+                    :model-value="bd.refiPoints ?? DEFAULT_REFI_POINTS"
                     @update:model-value="
                       (v: number | null) =>
-                        ((editingDeal as any).refiPoints = v ?? 1.5)
+                        (bd.refiPoints = v ?? DEFAULT_REFI_POINTS)
                     "
                     label="Refi Points"
                     suffix=" pts"
@@ -1016,13 +1014,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     :max="100"
                   />
                   <SliderField
-                    :model-value="
-                      (editingDeal as any).interestRate ?? 6.5
-                    "
-                    @update:model-value="
-                      (v: number) =>
-                        ((editingDeal as any).interestRate = v)
-                    "
+                    :model-value="bd.interestRate ?? 6.5"
+                    @update:model-value="(v: number) => (bd.interestRate = v)"
                     label="Long Term Interest Rate"
                     :min="0"
                     :max="20"
@@ -1031,13 +1024,10 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     :required="true"
                   />
                   <NumberInput
-                    :model-value="
-                      (editingDeal as any).loanTermYears ?? null
-                    "
+                    :model-value="bd.loanTermYears ?? null"
                     @update:model-value="
                       (v: number | null) =>
-                        ((editingDeal as any).loanTermYears =
-                          v ?? undefined)
+                        (bd.loanTermYears = v ?? undefined)
                     "
                     label="Loan Term"
                     suffix=" Years"
@@ -1177,16 +1167,20 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 Expenses
               </h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <MoneyInput
-                  v-if="editingDealType === 'BRRRR'"
-                  :model-value="(editingDeal as any).rent ?? null"
-                  @update:model-value="
-                    (v: number | null) =>
-                      ((editingDeal as any).rent = v ?? undefined)
-                  "
-                  label="Monthly Rent"
-                  :required="true"
-                />
+                <div
+                  v-for="bd in brrrrBoughtEditing ? [brrrrBoughtEditing] : []"
+                  :key="'brrrr-bought-rent'"
+                  class="contents"
+                >
+                  <MoneyInput
+                    :model-value="bd.rent ?? null"
+                    @update:model-value="
+                      (v: number | null) => (bd.rent = v ?? undefined)
+                    "
+                    label="Monthly Rent"
+                    :required="true"
+                  />
+                </div>
                 <MoneyInput
                   :model-value="
                     editingDeal.annual_property_taxes ?? null
@@ -1228,59 +1222,54 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 />
 
                 <div
-                  v-if="editingDealType === 'BRRRR'"
-                  class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2"
+                  v-for="bd in brrrrBoughtEditing ? [brrrrBoughtEditing] : []"
+                  :key="'brrrr-bought-exp'"
+                  class="contents"
                 >
-                  <NumberInput
-                    :model-value="
-                      (editingDeal as any).vacancyPercent ?? null
-                    "
-                    @update:model-value="
-                      (v: number | null) =>
-                        ((editingDeal as any).vacancyPercent =
-                          v ?? undefined)
-                    "
-                    label="Vacancy"
-                    suffix="%"
-                  />
-                  <NumberInput
-                    :model-value="
-                      (editingDeal as any).maintenancePercent ?? null
-                    "
-                    @update:model-value="
-                      (v: number | null) =>
-                        ((editingDeal as any).maintenancePercent =
-                          v ?? undefined)
-                    "
-                    label="Maint."
-                    suffix="%"
-                  />
-                  <NumberInput
-                    :model-value="
-                      (editingDeal as any).capexPercent ?? null
-                    "
-                    @update:model-value="
-                      (v: number | null) =>
-                        ((editingDeal as any).capexPercent =
-                          v ?? undefined)
-                    "
-                    label="CapEx"
-                    suffix="%"
-                  />
-                  <NumberInput
-                    :model-value="
-                      (editingDeal as any)
-                        .property_managment_fee_precentages_from_rent ??
-                      null
-                    "
-                    @update:model-value="
-                      (v: number | null) =>
-                        ((editingDeal as any).property_managment_fee_precentages_from_rent =
-                          v ?? undefined)
-                    "
-                    label="Prop. Mgmt"
-                    suffix="%"
-                  />
+                  <div
+                    class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2"
+                  >
+                    <NumberInput
+                      :model-value="bd.vacancyPercent ?? null"
+                      @update:model-value="
+                        (v: number | null) =>
+                          (bd.vacancyPercent = v ?? undefined)
+                      "
+                      label="Vacancy"
+                      suffix="%"
+                    />
+                    <NumberInput
+                      :model-value="bd.maintenancePercent ?? null"
+                      @update:model-value="
+                        (v: number | null) =>
+                          (bd.maintenancePercent = v ?? undefined)
+                      "
+                      label="Maint."
+                      suffix="%"
+                    />
+                    <NumberInput
+                      :model-value="bd.capexPercent ?? null"
+                      @update:model-value="
+                        (v: number | null) =>
+                          (bd.capexPercent = v ?? undefined)
+                      "
+                      label="CapEx"
+                      suffix="%"
+                    />
+                    <NumberInput
+                      :model-value="
+                        bd.property_managment_fee_precentages_from_rent ??
+                        null
+                      "
+                      @update:model-value="
+                        (v: number | null) =>
+                          (bd.property_managment_fee_precentages_from_rent =
+                            v ?? undefined)
+                      "
+                      label="Prop. Mgmt"
+                      suffix="%"
+                    />
+                  </div>
                 </div>
               </div>
             </section>

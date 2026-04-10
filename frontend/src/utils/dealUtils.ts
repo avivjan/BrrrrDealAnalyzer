@@ -1,5 +1,19 @@
 import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
 
+/** Matches backend default (`analyzeBRRRReq`, DB column). */
+export const DEFAULT_REFI_POINTS = 1.5;
+
+/** Fill missing refi points on legacy BRRRR deals (mutates in place). */
+export function ensureBrrrRefiPointsDefault(deal: {
+  deal_type?: "BRRRR" | "FLIP";
+  refiPoints?: number;
+}): void {
+  if (deal.deal_type === "FLIP") return;
+  if (deal.refiPoints == null || Number.isNaN(Number(deal.refiPoints))) {
+    deal.refiPoints = DEFAULT_REFI_POINTS;
+  }
+}
+
 export const getStageName = (id: number) => {
   const map: Record<number, string> = {
     1: "New - need to analyze",
@@ -32,6 +46,7 @@ Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : u
 Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
 Closing Costs (Buy): ${formatMoney(brrr.closingCostsBuy ? brrr.closingCostsBuy * 1000 : undefined)}
 ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)}
+Refi Points: ${Number(brrr.refiPoints ?? DEFAULT_REFI_POINTS)} pts
 Rent: ${formatMoney(brrr.rent)}
 `;
       analysis = `

@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
+import { DEFAULT_REFI_POINTS } from "../utils/dealUtils";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
@@ -34,6 +35,7 @@ const form = ref({
   arv_in_thousands: 0,
   monthsUntilRefi: 6,
   closingCostsRefi: 0,
+  refiPoints: DEFAULT_REFI_POINTS,
   loanTermYears: 30,
   ltv_as_precent: 75,
   interestRate: 6.5,
@@ -91,6 +93,8 @@ const validateForm = () => {
     if (!f.rent || f.rent <= 0) errors.push("Rent must be greater than 0.");
     if (f.ltv_as_precent <= 0 || f.ltv_as_precent > 100)
       errors.push("LTV must be between 0% and 100%.");
+    if (f.refiPoints < 0 || f.refiPoints > 100)
+      errors.push("Refi points must be between 0% and 100%.");
   } else {
     if (!f.salePrice || f.salePrice <= 0)
       errors.push("Sale Price (ARV) must be greater than 0.");
@@ -332,6 +336,13 @@ const quickCalcSellingCosts = () => {
               v-model="form.closingCostsRefi"
               label="Refi Closing Costs"
               :inThousands="true"
+            />
+            <NumberInput
+              v-model="form.refiPoints"
+              label="Refi Points"
+              suffix=" pts"
+              :min="0"
+              :max="100"
             />
 
             <SliderField

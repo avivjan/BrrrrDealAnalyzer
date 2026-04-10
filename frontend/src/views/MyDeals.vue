@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from "vue";
+import { ref, watch, onMounted, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
-import { formatDealForClipboard } from "../utils/dealUtils";
+import {
+  formatDealForClipboard,
+  ensureBrrrRefiPointsDefault,
+  DEFAULT_REFI_POINTS,
+} from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { ActiveDealRes, AnalyzeDealReq } from "../types";
+import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes } from "../types";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -262,6 +266,12 @@ const deleteEditingDeal = async () => {
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 const editingDeal = ref<ActiveDealRes | null>(null);
+
+const brrrrEditingDeal = computed((): BrrrDealRes | null => {
+  const d = editingDeal.value;
+  if (!d || d.deal_type === "FLIP") return null;
+  return d as BrrrDealRes;
+});
 const currentAnalysis = ref<ActiveDealRes | null>(null);
 const modalScrollContainer = ref<HTMLElement | null>(null);
 const analysisResultsEl = ref<HTMLElement | null>(null);
@@ -359,8 +369,10 @@ const openDeal = (deal: ActiveDealRes) => {
   isDirty = false;
   saveStatus.value = 'idle';
   selectedDeal.value = deal;
-  editingDeal.value = JSON.parse(JSON.stringify(deal));
-  currentAnalysis.value = JSON.parse(JSON.stringify(deal));
+  const clone = JSON.parse(JSON.stringify(deal)) as ActiveDealRes;
+  ensureBrrrRefiPointsDefault(clone);
+  editingDeal.value = clone;
+  currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   showDetailModal.value = true;
 };
 
@@ -796,26 +808,28 @@ console.groupEnd();
                 </div>
              </section>
 
-            <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
-               <!-- BRRRR Section -->
-               <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <template v-if="brrrrEditingDeal">
+               <section
+                  v-for="bd in [brrrrEditingDeal]"
+                  :key="'brrrr-refi'"
+                  class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm"
+               >
                   <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                      <i class="pi pi-refresh text-blue-500"></i> Refinance (BRRRR)
                   </h2>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <MoneyInput :model-value="(editingDeal as any).arv_in_thousands ?? null" @update:model-value="(v: number | null) => (editingDeal as any).arv_in_thousands = v ?? undefined" label="ARV" :inThousands="true" :required="true" />
-                      <SliderField :model-value="(editingDeal as any).ltv_as_precent ?? 75" @update:model-value="(v: number) => (editingDeal as any).ltv_as_precent = v" label="LTV" :min="1" :max="100" suffix="%" :required="true" />
+                      <MoneyInput :model-value="bd.arv_in_thousands ?? null" @update:model-value="(v: number | null) => (bd.arv_in_thousands = v ?? undefined)" label="ARV" :inThousands="true" :required="true" />
+                      <SliderField :model-value="bd.ltv_as_precent ?? 75" @update:model-value="(v: number) => (bd.ltv_as_precent = v)" label="LTV" :min="1" :max="100" suffix="%" :required="true" />
                       
-                      <NumberInput :model-value="(editingDeal as any).monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthsUntilRefi = v ?? undefined" label="Months until Refi" suffix=" mos" />
-                      <MoneyInput :model-value="(editingDeal as any).closingCostsRefi ?? null" @update:model-value="(v: number | null) => (editingDeal as any).closingCostsRefi = v ?? undefined" label="Refi Closing Costs" :inThousands="true" />
-                      <NumberInput :model-value="(editingDeal as any).refiPoints ?? 1.5" @update:model-value="(v: number | null) => (editingDeal as any).refiPoints = v ?? 1.5" label="Refi Points" suffix=" pts" :min="0" :max="100" />
+                      <NumberInput :model-value="bd.monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (bd.monthsUntilRefi = v ?? undefined)" label="Months until Refi" suffix=" mos" />
+                      <MoneyInput :model-value="bd.closingCostsRefi ?? null" @update:model-value="(v: number | null) => (bd.closingCostsRefi = v ?? undefined)" label="Refi Closing Costs" :inThousands="true" />
+                      <NumberInput :model-value="bd.refiPoints ?? DEFAULT_REFI_POINTS" @update:model-value="(v: number | null) => (bd.refiPoints = v ?? DEFAULT_REFI_POINTS)" label="Refi Points" suffix=" pts" :min="0" :max="100" />
 
-                      <SliderField :model-value="(editingDeal as any).interestRate ?? 6.5" @update:model-value="(v: number) => (editingDeal as any).interestRate = v" label="Long Term Interest Rate" :min="0" :max="20" :step="0.125" suffix="%" :required="true" />
-                      <NumberInput :model-value="(editingDeal as any).loanTermYears ?? null" @update:model-value="(v: number | null) => (editingDeal as any).loanTermYears = v ?? undefined" label="Loan Term" suffix=" Years" />
+                      <SliderField :model-value="bd.interestRate ?? 6.5" @update:model-value="(v: number) => (bd.interestRate = v)" label="Long Term Interest Rate" :min="0" :max="20" :step="0.125" suffix="%" :required="true" />
+                      <NumberInput :model-value="bd.loanTermYears ?? null" @update:model-value="(v: number | null) => (bd.loanTermYears = v ?? undefined)" label="Loan Term" suffix=" Years" />
                   </div>
                </section>
             </template>
-            
             <template v-else>
                <!-- FLIP Section -->
                <section class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
@@ -850,18 +864,22 @@ console.groupEnd();
                    <i class="pi pi-wallet" :class="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR') ? 'text-blue-500' : 'text-orange-500'"></i> Expenses
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <MoneyInput v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')" :model-value="(editingDeal as any).rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).rent = v ?? undefined" label="Monthly Rent" :required="true" />
+                   <div v-for="bd in brrrrEditingDeal ? [brrrrEditingDeal] : []" :key="'brrrr-rent'" class="contents">
+                   <MoneyInput :model-value="bd.rent ?? null" @update:model-value="(v: number | null) => (bd.rent = v ?? undefined)" label="Monthly Rent" :required="true" />
+                   </div>
                    
                    <MoneyInput :model-value="editingDeal.annual_property_taxes ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_property_taxes = v ?? undefined" label="Annual Taxes" />
                    <MoneyInput :model-value="editingDeal.annual_insurance ?? null" @update:model-value="(v: number | null) => editingDeal!.annual_insurance = v ?? undefined" label="Annual Insurance" />
                    <MoneyInput :model-value="editingDeal.montly_hoa ?? null" @update:model-value="(v: number | null) => editingDeal!.montly_hoa = v ?? undefined" label="Monthly HOA" />
                    <MoneyInput v-if="editingDeal.deal_type === 'FLIP'" :model-value="(editingDeal as any).monthly_utilities ?? null" @update:model-value="(v: number | null) => (editingDeal as any).monthly_utilities = v ?? undefined" label="Monthly Utilities" />
 
-                   <div v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')" class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                      <NumberInput :model-value="(editingDeal as any).vacancyPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).vacancyPercent = v ?? undefined" label="Vacancy" suffix="%" />
-                      <NumberInput :model-value="(editingDeal as any).maintenancePercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).maintenancePercent = v ?? undefined" label="Maint." suffix="%" />
-                      <NumberInput :model-value="(editingDeal as any).capexPercent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).capexPercent = v ?? undefined" label="CapEx" suffix="%" />
-                      <NumberInput :model-value="(editingDeal as any).property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v: number | null) => (editingDeal as any).property_managment_fee_precentages_from_rent = v ?? undefined" label="Prop. Mgmt" suffix="%" />
+                   <div v-for="bd in brrrrEditingDeal ? [brrrrEditingDeal] : []" :key="'brrrr-exp'" class="contents">
+                   <div class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                      <NumberInput :model-value="bd.vacancyPercent ?? null" @update:model-value="(v: number | null) => (bd.vacancyPercent = v ?? undefined)" label="Vacancy" suffix="%" />
+                      <NumberInput :model-value="bd.maintenancePercent ?? null" @update:model-value="(v: number | null) => (bd.maintenancePercent = v ?? undefined)" label="Maint." suffix="%" />
+                      <NumberInput :model-value="bd.capexPercent ?? null" @update:model-value="(v: number | null) => (bd.capexPercent = v ?? undefined)" label="CapEx" suffix="%" />
+                      <NumberInput :model-value="bd.property_managment_fee_precentages_from_rent ?? null" @update:model-value="(v: number | null) => (bd.property_managment_fee_precentages_from_rent = v ?? undefined)" label="Prop. Mgmt" suffix="%" />
+                   </div>
                    </div>
                 </div>
             </section>

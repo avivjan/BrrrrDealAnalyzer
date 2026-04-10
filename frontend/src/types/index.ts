@@ -49,7 +49,8 @@ export interface BrrrAnalyzeReq {
   arv_in_thousands: number;
   monthsUntilRefi: number;
   closingCostsRefi: number;
-  refiPoints: number;
+  /** % of refi loan amount; omit on request to use server default (1.5). */
+  refiPoints?: number;
   loanTermYears: number; 
   ltv_as_precent: number; 
   interestRate: number; 
