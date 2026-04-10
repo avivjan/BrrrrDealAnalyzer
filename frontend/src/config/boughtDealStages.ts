@@ -68,9 +68,12 @@ export const brrrPipeline: BoughtDealPipeline = {
         { id: 'insurance', label: 'Insurance' },
         { id: 'title_insurance', label: 'Title Insurance' },
         { id: 'title_approval', label: 'Title Approval (Ready to Close)' },
+        { id: 'understand_breakdown', label: 'Understand Breakdown' },
       ],
     },
-    { id: 3, name: 'Closed', subStages: [] },
+    { id: 3, name: 'Closed', subStages: [
+      { id: 'save_package', label: 'Lender Approval' }
+    ] },
     { id: 4, name: 'Rehab', subStages: [] },
     {
       id: 5,
@@ -90,7 +93,9 @@ export const brrrPipeline: BoughtDealPipeline = {
         { id: 'decide_reserve', label: 'Decide on Reserve (Down/% /Max)' },
       ],
     },
-    { id: 7, name: 'Refinanced', subStages: [] },
+    { id: 7, name: 'Refinanced', subStages: [
+      { id: 'save_package', label: 'Save Package' },
+    ] },
   ],
 };
 
