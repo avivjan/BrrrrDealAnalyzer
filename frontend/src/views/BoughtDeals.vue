@@ -180,6 +180,8 @@ const analysisResultsEl = ref<HTMLElement | null>(null);
 const saveStatus = ref<"idle" | "saving" | "saved" | "error">("idle");
 let isDirty = false;
 let isInitialLoad = true;
+let settleUntilMs = 0;
+const MODAL_SETTLE_MS = 250;
 let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const performSave = async () => {
@@ -223,6 +225,7 @@ const openDeal = (deal: BoughtDealRes) => {
   ensureBrrrRefiPointsDefault(clone);
   editingDeal.value = clone;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
+  settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
 };
 
@@ -251,6 +254,9 @@ watch(
       analyzeCurrentDeal();
       if (isInitialLoad) {
         isInitialLoad = false;
+        return;
+      }
+      if (Date.now() < settleUntilMs) {
         return;
       }
       isDirty = true;

@@ -286,6 +286,9 @@ const shouldScrollToResults = ref(false);
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 let isDirty = false;
 let isInitialLoad = true;
+/** Ignore deep-watch churn from inputs mounting (still analyze; no dirty/save). */
+let settleUntilMs = 0;
+const MODAL_SETTLE_MS = 250;
 let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const performSave = async () => {
@@ -379,6 +382,7 @@ const openDeal = (deal: ActiveDealRes) => {
   ensureBrrrRefiPointsDefault(clone);
   editingDeal.value = clone;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
+  settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
 };
 
@@ -418,6 +422,9 @@ watch(
       analyzeCurrentDeal();
       if (isInitialLoad) {
         isInitialLoad = false;
+        return;
+      }
+      if (Date.now() < settleUntilMs) {
         return;
       }
       isDirty = true;
