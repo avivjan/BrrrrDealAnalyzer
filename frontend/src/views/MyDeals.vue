@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { VueDraggable } from "vue-draggable-plus";
-import { useDebounceFn } from "@vueuse/core";
+import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import {
   formatDealForClipboard,
   ensureBrrrRefiPointsDefault,
@@ -24,6 +24,9 @@ const boughtStore = useBoughtDealStore();
 const store = useDealStore();
 const route = useRoute();
 const router = useRouter();
+
+/** Sortable + Vue can leave list data intact but hide/move DOM on touch; use a plain list there. */
+const useSortableBoard = useMediaQuery("(pointer: fine)");
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
@@ -53,8 +56,9 @@ const refreshColumns = () => {
     "View: MyDeals - Refreshing columns for activeTab:",
     activeTab.value
   );
+  const tab = Number(activeTab.value);
   const filteredDeals = store.deals.filter(
-    (d) => d.section === activeTab.value
+    (d) => Number(d.section) === tab
   );
   console.log("View: MyDeals - Filtered deals count:", filteredDeals.length);
 
@@ -62,8 +66,10 @@ const refreshColumns = () => {
   columns.value = { 1: [], 2: [], 3: [], 4: [], 5: [] };
 
   filteredDeals.forEach((deal) => {
-    if (columns.value[deal.stage]) {
-      columns.value[deal.stage]!.push(deal);
+    const st = Number(deal.stage);
+    const stageKey = Number.isFinite(st) ? st : 1;
+    if (columns.value[stageKey]) {
+      columns.value[stageKey]!.push(deal);
     } else {
       // Fallback for invalid stage
       console.warn(
@@ -538,10 +544,10 @@ console.groupEnd();
             </div>
           </div>
 
-          <!-- Draggable Area -->
+          <!-- Draggable Area: Sortable breaks Vue DOM on many touch browsers; plain list for coarse pointer -->
           <div class="p-4 bg-white/50">
             <VueDraggable
-              v-if="columns[stage.id]"
+              v-if="useSortableBoard && columns[stage.id]"
               v-model="columns[stage.id]!"
               group="deals"
               @change="(e) => onDrop(e, stage.id)"
@@ -565,6 +571,25 @@ console.groupEnd();
                 />
               </div>
             </VueDraggable>
+            <div
+              v-else-if="columns[stage.id]"
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
+            >
+              <div
+                v-for="deal in columns[stage.id]"
+                :key="deal.id"
+                @click="openDeal(deal)"
+                class="h-full"
+              >
+                <DealCard
+                  :deal="deal"
+                  @delete="confirmDelete(deal)"
+                  @moveToBought="moveToBought(deal)"
+                  @duplicate="duplicateDeal(deal)"
+                  class="h-full"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

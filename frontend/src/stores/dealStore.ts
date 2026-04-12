@@ -11,24 +11,26 @@ export const useDealStore = defineStore('deals', () => {
 
   const dealsBySection = computed(() => {
     return {
-      wholesale: deals.value.filter(d => d.section === 1),
-      market: deals.value.filter(d => d.section === 2),
-      offMarket: deals.value.filter(d => d.section === 3),
+      wholesale: deals.value.filter(d => Number(d.section) === 1),
+      market: deals.value.filter(d => Number(d.section) === 2),
+      offMarket: deals.value.filter(d => Number(d.section) === 3),
     };
   });
 
   const activeDealsCount = computed(() => {
     const activeStages = [1, 2]; // New (1) & Working (2)
+    const inActiveStage = (d: ActiveDealRes) =>
+      activeStages.includes(Number(d.stage));
     return {
-      wholesale: deals.value.filter(d => d.section === 1 && activeStages.includes(d.stage)).length,
-      market: deals.value.filter(d => d.section === 2 && activeStages.includes(d.stage)).length,
-      offMarket: deals.value.filter(d => d.section === 3 && activeStages.includes(d.stage)).length,
+      wholesale: deals.value.filter(d => Number(d.section) === 1 && inActiveStage(d)).length,
+      market: deals.value.filter(d => Number(d.section) === 2 && inActiveStage(d)).length,
+      offMarket: deals.value.filter(d => Number(d.section) === 3 && inActiveStage(d)).length,
     };
   });
 
   const portfolioStats = computed(() => {
     const broughtBrrr = deals.value.filter(
-      d => d.stage === 3 && (!d.deal_type || d.deal_type === 'BRRRR')
+      d => Number(d.stage) === 3 && (!d.deal_type || d.deal_type === 'BRRRR')
     );
     const numDoors = broughtBrrr.length;
     let totalValue = 0;

@@ -142,7 +142,6 @@ const formatMoney = (val?: number) =>
           ? 'bg-green-100 text-green-600'
           : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
       ]"
-      "
       :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
     >
       <i
