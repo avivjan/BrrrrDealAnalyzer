@@ -85,33 +85,33 @@ def _run_migrations():
     if "liquidity_transactions" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_transactions")]
 
-        if "date" in columns and "effective_date" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE liquidity_transactions RENAME COLUMN date TO effective_date"
-                ))
-        elif "date" in columns and "effective_date" in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "UPDATE liquidity_transactions SET effective_date = date WHERE effective_date IS NULL"
-                ))
-                conn.execute(text(
-                    "ALTER TABLE liquidity_transactions DROP COLUMN date"
-                ))
+        # Rename legacy columns to their current model names
+        renames = {"date": "effective_date", "amount": "amount_k"}
+        for old_name, new_name in renames.items():
+            if old_name in columns and new_name not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text(
+                        f"ALTER TABLE liquidity_transactions RENAME COLUMN {old_name} TO {new_name}"
+                    ))
+                columns = [new_name if c == old_name else c for c in columns]
+            elif old_name in columns and new_name in columns:
+                with engine.begin() as conn:
+                    conn.execute(text(
+                        f"UPDATE liquidity_transactions SET {new_name} = {old_name} WHERE {new_name} IS NULL"
+                    ))
+                    conn.execute(text(
+                        f"ALTER TABLE liquidity_transactions DROP COLUMN {old_name}"
+                    ))
+                columns = [c for c in columns if c != old_name]
 
-        if "amount" in columns and "amount_k" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE liquidity_transactions RENAME COLUMN amount TO amount_k"
-                ))
-        elif "amount" in columns and "amount_k" in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "UPDATE liquidity_transactions SET amount_k = amount WHERE amount_k IS NULL"
-                ))
-                conn.execute(text(
-                    "ALTER TABLE liquidity_transactions DROP COLUMN amount"
-                ))
+        # Drop any leftover columns not in the current model
+        expected = {"id", "effective_date", "description", "amount_k", "created_at", "updated_at"}
+        for col in columns:
+            if col not in expected:
+                with engine.begin() as conn:
+                    conn.execute(text(
+                        f"ALTER TABLE liquidity_transactions DROP COLUMN {col}"
+                    ))
 
     if "liquidity_settings" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]
