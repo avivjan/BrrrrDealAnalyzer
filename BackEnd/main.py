@@ -84,6 +84,7 @@ def _run_migrations():
 
     if "liquidity_transactions" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_transactions")]
+
         if "date" in columns and "effective_date" not in columns:
             with engine.begin() as conn:
                 conn.execute(text(
@@ -96,6 +97,20 @@ def _run_migrations():
                 ))
                 conn.execute(text(
                     "ALTER TABLE liquidity_transactions DROP COLUMN date"
+                ))
+
+        if "amount" in columns and "amount_k" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE liquidity_transactions RENAME COLUMN amount TO amount_k"
+                ))
+        elif "amount" in columns and "amount_k" in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "UPDATE liquidity_transactions SET amount_k = amount WHERE amount_k IS NULL"
+                ))
+                conn.execute(text(
+                    "ALTER TABLE liquidity_transactions DROP COLUMN amount"
                 ))
 
     if "liquidity_settings" in table_names:
