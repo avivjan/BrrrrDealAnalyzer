@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import type { SimulationResult } from '../../types/liquidity'
 
-const props = defineProps<{
+defineProps<{
   open: boolean
   result: SimulationResult | null
   severity: 'hard' | 'soft' | 'none'
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'confirm'): void
   (e: 'cancel'): void
 }>()
 
 function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
+  const parts = iso.split('-')
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return months[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y
+  return (months[parseInt(parts[1] ?? '0') - 1] ?? '') + ' ' + parseInt(parts[2] ?? '0') + ', ' + (parts[0] ?? '')
 }
 </script>
 

@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import type { DayBucket } from '../../types/liquidity'
 
-const props = defineProps<{
+defineProps<{
   bucket: DayBucket | null
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'editTxn', id: string): void
   (e: 'deleteTxn', id: string): void
   (e: 'addOnDate', date: string): void
 }>()
 
 function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
+  const parts = iso.split('-')
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return months[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y
+  return (months[parseInt(parts[1] ?? '0') - 1] ?? '') + ' ' + parseInt(parts[2] ?? '0') + ', ' + (parts[0] ?? '')
 }
 </script>
 

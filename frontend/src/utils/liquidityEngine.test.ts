@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   addDays,
-  toISO,
   aggregateNetByDay,
   buildDailyLiquiditySeries,
   simulateImpact,
@@ -34,9 +33,9 @@ describe('aggregateNetByDay', () => {
       txn('c', '2025-06-16', 5),
     ]
     const map = aggregateNetByDay(txns)
-    expect(map.get('2025-06-15')!.net_k).toBe(7)
-    expect(map.get('2025-06-15')!.txns).toHaveLength(2)
-    expect(map.get('2025-06-16')!.net_k).toBe(5)
+    expect(map.get('2025-06-15')?.net_k).toBe(7)
+    expect(map.get('2025-06-15')?.txns).toHaveLength(2)
+    expect(map.get('2025-06-16')?.net_k).toBe(5)
   })
 
   it('returns empty map for no txns', () => {
@@ -52,29 +51,22 @@ describe('buildDailyLiquiditySeries', () => {
       txn('b', '2025-06-03', -5),
     ]
     const series = buildDailyLiquiditySeries(txns, 49, '2025-06-01', '2025-06-01', '2025-06-05')
-    expect(series.days).toHaveLength(5) // June 1-5
+    expect(series.days).toHaveLength(5)
 
-    // Day 1 (June 1 = opening balance date): 49 + 10 = 59
-    expect(series.days[0].balance_k).toBe(59)
-    // Day 2 (June 2): 59 + 0 = 59
-    expect(series.days[1].balance_k).toBe(59)
-    // Day 3 (June 3): 59 - 5 = 54
-    expect(series.days[2].balance_k).toBe(54)
-    // Day 4-5: carry forward at 54
-    expect(series.days[3].balance_k).toBe(54)
-    expect(series.days[4].balance_k).toBe(54)
+    expect(series.days[0]?.balance_k).toBe(59)
+    expect(series.days[1]?.balance_k).toBe(59)
+    expect(series.days[2]?.balance_k).toBe(54)
+    expect(series.days[3]?.balance_k).toBe(54)
+    expect(series.days[4]?.balance_k).toBe(54)
   })
 
   it('flat before opening balance date', () => {
     const txns = [txn('a', '2025-06-03', 10)]
     const series = buildDailyLiquiditySeries(txns, 20, '2025-06-02', '2025-06-01', '2025-06-04')
 
-    // June 1 is before anchor: flat at opening
-    expect(series.days[0].balance_k).toBe(20)
-    // June 2 = anchor day, no flow on that day: 20 + 0 = 20
-    expect(series.days[1].balance_k).toBe(20)
-    // June 3: 20 + 10 = 30
-    expect(series.days[2].balance_k).toBe(30)
+    expect(series.days[0]?.balance_k).toBe(20)
+    expect(series.days[1]?.balance_k).toBe(20)
+    expect(series.days[2]?.balance_k).toBe(30)
   })
 
   it('tracks globalMin and globalMinDates correctly', () => {
@@ -85,7 +77,6 @@ describe('buildDailyLiquiditySeries', () => {
     ]
     const series = buildDailyLiquiditySeries(txns, 49, '2025-06-01', '2025-06-01', '2025-06-06')
 
-    // Day balances: 49, 19, 19, -11, -1, -1
     expect(series.globalMin).toBe(-11)
     expect(series.globalMinDates).toEqual(['2025-06-04'])
   })
@@ -98,7 +89,6 @@ describe('buildDailyLiquiditySeries', () => {
     ]
     const series = buildDailyLiquiditySeries(txns, 49, '2025-06-01', '2025-06-01', '2025-06-05')
 
-    // 49, 0, 10, 0, 0 => min is 0 on days 2, 4, 5
     expect(series.globalMin).toBe(0)
     expect(series.globalMinDates).toContain('2025-06-02')
     expect(series.globalMinDates).toContain('2025-06-04')
@@ -123,27 +113,22 @@ describe('buildDailyLiquiditySeries', () => {
   it('handles empty transactions', () => {
     const series = buildDailyLiquiditySeries([], 49, '2025-06-01', '2025-06-01', '2025-06-03')
     expect(series.days).toHaveLength(3)
-    expect(series.days[0].balance_k).toBe(49)
-    expect(series.days[1].balance_k).toBe(49)
-    expect(series.days[2].balance_k).toBe(49)
+    expect(series.days[0]?.balance_k).toBe(49)
+    expect(series.days[1]?.balance_k).toBe(49)
+    expect(series.days[2]?.balance_k).toBe(49)
     expect(series.globalMin).toBe(49)
   })
 
   it('handles range start after opening with intermediate flows', () => {
-    // Opening on June 1 at 100, flow on June 3: -20, range starts June 5
     const txns = [
       txn('a', '2025-06-03', -20),
       txn('b', '2025-06-06', 5),
     ]
     const series = buildDailyLiquiditySeries(txns, 100, '2025-06-01', '2025-06-05', '2025-06-07')
 
-    // Balance at start of range: 100 - 20 = 80 (flow on June 3 applied)
-    // June 5: 80
-    // June 6: 80 + 5 = 85
-    // June 7: 85
-    expect(series.days[0].balance_k).toBe(80)
-    expect(series.days[1].balance_k).toBe(85)
-    expect(series.days[2].balance_k).toBe(85)
+    expect(series.days[0]?.balance_k).toBe(80)
+    expect(series.days[1]?.balance_k).toBe(85)
+    expect(series.days[2]?.balance_k).toBe(85)
   })
 })
 
@@ -187,14 +172,12 @@ describe('simulateImpact', () => {
     const baseline = [
       txn('a', '2025-06-05', -40),
     ]
-    // Edit: move outflow from June 5 to June 2
     const candidate = [
       txn('a', '2025-06-02', -40),
     ]
     const resultBase = simulateImpact(baseline, 49, '2025-06-01', '2025-06-01', '2025-06-06', 5)
     const resultCandidate = simulateImpact(candidate, 49, '2025-06-01', '2025-06-01', '2025-06-06', 5)
 
-    // Both have same min (9) but candidate has lower balance on June 2-4
     expect(resultBase.min).toBe(9)
     expect(resultCandidate.min).toBe(9)
   })
@@ -233,8 +216,6 @@ describe('computeDefaultRange', () => {
       horizonMonths: 6,
       paddingDays: 30,
     })
-    // rangeStart should be min(2025-06-01, today - 30)
-    // rangeEnd should include horizon + padding
     expect(rangeStart <= '2025-06-01').toBe(true)
     expect(rangeEnd > '2025-06-15').toBe(true)
   })

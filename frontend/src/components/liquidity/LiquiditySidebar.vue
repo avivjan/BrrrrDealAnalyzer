@@ -12,9 +12,9 @@ const props = defineProps<{
 const today = todayISO()
 
 function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
+  const parts = iso.split('-')
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return months[parseInt(m) - 1] + ' ' + parseInt(d)
+  return (months[parseInt(parts[1] ?? '0') - 1] ?? '') + ' ' + parseInt(parts[2] ?? '0')
 }
 
 const todayBalance = computed(() => {

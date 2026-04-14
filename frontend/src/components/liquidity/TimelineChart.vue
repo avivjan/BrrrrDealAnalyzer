@@ -38,6 +38,12 @@ const today = todayISO()
 
 const totalWidth = computed(() => props.days.length * DAY_WIDTH + CHART_PADDING_LEFT + CHART_PADDING_RIGHT)
 
+const activeDay = computed<DayBucket | null>(() => {
+  const idx = hoveredIndex.value ?? selectedIndex.value
+  if (idx === null || idx < 0 || idx >= props.days.length) return null
+  return props.days[idx] ?? null
+})
+
 const balanceRange = computed(() => {
   if (props.days.length === 0) return { min: 0, max: 100 }
   let min = Infinity, max = -Infinity
@@ -69,6 +75,11 @@ function indexForClientX(clientX: number): number | null {
   return idx
 }
 
+function parseDateParts(iso: string): [string, string, string] {
+  const parts = iso.split('-')
+  return [parts[0] ?? '', parts[1] ?? '', parts[2] ?? '']
+}
+
 function draw() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -86,7 +97,6 @@ function draw() {
   const ctx = canvas.getContext('2d')!
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-  // Background
   ctx.fillStyle = '#0f1117'
   ctx.fillRect(0, 0, w, h)
 
@@ -147,12 +157,11 @@ function draw() {
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
     if (x < CHART_PADDING_LEFT || x > w) continue
-    const d = days[i]
-    const dateParts = d.date.split('-')
-    const monthKey = dateParts[0] + '-' + dateParts[1]
-    const dayNum = parseInt(dateParts[2])
+    const d = days[i]!
+    const [yr, mo, dy] = parseDateParts(d.date)
+    const monthKey = yr + '-' + mo
+    const dayNum = parseInt(dy)
 
-    // Month separator
     if (monthKey !== lastLabelMonth && dayNum <= 7) {
       ctx.strokeStyle = '#2a2f45'
       ctx.lineWidth = 1
@@ -162,21 +171,19 @@ function draw() {
       ctx.stroke()
 
       const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-      const mIdx = parseInt(dateParts[1]) - 1
+      const mIdx = parseInt(mo) - 1
       ctx.fillStyle = '#7c82a0'
       ctx.font = '10px "JetBrains Mono", monospace'
-      ctx.fillText(monthNames[mIdx] + ' ' + dateParts[0].slice(2), x + 20, h - CHART_PADDING_BOTTOM + 24)
+      ctx.fillText((monthNames[mIdx] ?? '') + ' ' + yr.slice(2), x + 20, h - CHART_PADDING_BOTTOM + 24)
       lastLabelMonth = monthKey
     }
 
-    // Day-of-month labels (show 1st, 8th, 15th, 22nd)
     if (dayNum === 1 || dayNum === 8 || dayNum === 15 || dayNum === 22) {
       ctx.fillStyle = '#5c6078'
       ctx.font = '9px "JetBrains Mono", monospace'
       ctx.fillText(String(dayNum), x, h - CHART_PADDING_BOTTOM + 8)
     }
 
-    // Today marker
     if (d.date === today) {
       ctx.strokeStyle = '#6366f1'
       ctx.lineWidth = 1.5
@@ -191,7 +198,6 @@ function draw() {
       ctx.fillText('TODAY', x, h - CHART_PADDING_BOTTOM + 42)
     }
 
-    // Transaction tick marks (small bars for days with flow)
     if (d.net_k !== 0) {
       ctx.fillStyle = d.net_k > 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
       const barH = Math.min(Math.abs(d.net_k) / (max - min) * plotH * 0.5, plotH * 0.15)
@@ -207,12 +213,11 @@ function draw() {
   let started = false
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
-    const y = yForBalance(days[i].balance_k, h)
+    const y = yForBalance(days[i]!.balance_k, h)
     if (!started) { ctx.moveTo(x, y); started = true }
     else ctx.lineTo(x, y)
   }
 
-  // Fill area under line
   if (started && lastVisible > firstVisible) {
     const lastX = xForIndex(lastVisible)
     const firstX = xForIndex(firstVisible)
@@ -233,7 +238,7 @@ function draw() {
   started = false
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
-    const y = yForBalance(days[i].balance_k, h)
+    const y = yForBalance(days[i]!.balance_k, h)
     if (!started) { ctx.moveTo(x, y); started = true }
     else ctx.lineTo(x, y)
   }
@@ -246,8 +251,9 @@ function draw() {
   started = false
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
-    const y = yForBalance(days[i].balance_k, h)
-    if (days[i].balance_k < 0) {
+    const bucket = days[i]!
+    const y = yForBalance(bucket.balance_k, h)
+    if (bucket.balance_k < 0) {
       if (!started) { ctx.moveTo(x, y); started = true }
       else ctx.lineTo(x, y)
     } else {
@@ -269,10 +275,10 @@ function draw() {
   // Hovered day crosshair + dot
   const hIdx = hoveredIndex.value ?? selectedIndex.value
   if (hIdx !== null && hIdx >= firstVisible && hIdx <= lastVisible) {
+    const hBucket = days[hIdx]!
     const hx = xForIndex(hIdx)
-    const hy = yForBalance(days[hIdx].balance_k, h)
+    const hy = yForBalance(hBucket.balance_k, h)
 
-    // Vertical crosshair
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)'
     ctx.lineWidth = 1
     ctx.setLineDash([2, 2])
@@ -282,7 +288,6 @@ function draw() {
     ctx.stroke()
     ctx.setLineDash([])
 
-    // Horizontal crosshair
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)'
     ctx.lineWidth = 1
     ctx.setLineDash([2, 2])
@@ -292,10 +297,9 @@ function draw() {
     ctx.stroke()
     ctx.setLineDash([])
 
-    // Dot
     ctx.beginPath()
     ctx.arc(hx, hy, 5, 0, Math.PI * 2)
-    ctx.fillStyle = days[hIdx].balance_k < 0 ? '#ef4444' : '#818cf8'
+    ctx.fillStyle = hBucket.balance_k < 0 ? '#ef4444' : '#818cf8'
     ctx.fill()
     ctx.strokeStyle = '#0f1117'
     ctx.lineWidth = 2
@@ -308,11 +312,11 @@ function draw() {
     ctx.font = 'bold 10px "JetBrains Mono", monospace'
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
-    ctx.fillText(formatK(days[hIdx].balance_k), CHART_PADDING_LEFT - 8, hy)
+    ctx.fillText(formatK(hBucket.balance_k), CHART_PADDING_LEFT - 8, hy)
 
     // Date label at bottom
     ctx.fillStyle = '#818cf8'
-    const dateLabel = formatDateLabel(days[hIdx].date)
+    const dateLabel = formatDateLabel(hBucket.date)
     const tw = ctx.measureText(dateLabel).width + 12
     ctx.fillRect(hx - tw / 2, h - CHART_PADDING_BOTTOM + 2, tw, 18)
     ctx.fillStyle = '#fff'
@@ -326,14 +330,15 @@ function draw() {
   for (const minDate of props.globalMinDates) {
     const idx = days.findIndex(d => d.date === minDate)
     if (idx < firstVisible || idx > lastVisible) continue
+    const mBucket = days[idx]!
     const mx = xForIndex(idx)
-    const my = yForBalance(days[idx].balance_k, h)
+    const my = yForBalance(mBucket.balance_k, h)
     ctx.beginPath()
     ctx.moveTo(mx, my - 8)
     ctx.lineTo(mx - 5, my - 14)
     ctx.lineTo(mx + 5, my - 14)
     ctx.closePath()
-    ctx.fillStyle = days[idx].balance_k < 0 ? '#ef4444' : '#f59e0b'
+    ctx.fillStyle = mBucket.balance_k < 0 ? '#ef4444' : '#f59e0b'
     ctx.fill()
   }
 }
@@ -344,9 +349,9 @@ function formatK(val: number): string {
 }
 
 function formatDateLabel(iso: string): string {
-  const [y, m, d] = iso.split('-')
+  const [, m, d] = parseDateParts(iso)
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return months[parseInt(m) - 1] + ' ' + parseInt(d)
+  return (months[parseInt(m) - 1] ?? '') + ' ' + parseInt(d)
 }
 
 function niceGridSteps(min: number, max: number, target: number): number[] {
@@ -427,13 +432,12 @@ function onPointerUp(e: PointerEvent) {
     const idx = indexForClientX(e.clientX)
     if (idx !== null) {
       selectedIndex.value = idx
-      emit('selectDay', props.days[idx].date)
+      emit('selectDay', props.days[idx]!.date)
     }
     draw()
     return
   }
 
-  // Momentum scroll
   if (Math.abs(velocityX) > 0.1) {
     const friction = 0.95
     const tick = () => {
@@ -467,17 +471,17 @@ function onKeyDown(e: KeyboardEvent) {
     const next = current !== null ? Math.min(current + 1, props.days.length - 1) : 0
     selectedIndex.value = next
     ensureVisible(next)
-    emit('selectDay', props.days[next].date)
+    emit('selectDay', props.days[next]!.date)
     draw()
   } else if (e.key === 'ArrowLeft') {
     e.preventDefault()
     const prev = current !== null ? Math.max(current - 1, 0) : 0
     selectedIndex.value = prev
     ensureVisible(prev)
-    emit('selectDay', props.days[prev].date)
+    emit('selectDay', props.days[prev]!.date)
     draw()
   } else if (e.key === 'Enter' && current !== null) {
-    emit('selectDay', props.days[current].date)
+    emit('selectDay', props.days[current]!.date)
   }
 }
 
@@ -532,35 +536,33 @@ defineExpose({ centerOnToday })
     <!-- Hover tooltip -->
     <Transition name="fade">
       <div
-        v-if="(hoveredIndex !== null || selectedIndex !== null) && days.length > 0"
+        v-if="activeDay"
         class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-3 py-2 shadow-xl pointer-events-none z-10 min-w-[180px]"
       >
-        <template v-if="days[hoveredIndex ?? selectedIndex ?? 0]">
-          <div class="text-[11px] text-slate-400 font-mono mb-1">
-            {{ days[hoveredIndex ?? selectedIndex ?? 0].date }}
+        <div class="text-[11px] text-slate-400 font-mono mb-1">
+          {{ activeDay.date }}
+        </div>
+        <div class="text-lg font-mono font-bold" :class="activeDay.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
+          {{ formatK(activeDay.balance_k) }}
+        </div>
+        <div v-if="activeDay.net_k !== 0" class="text-xs font-mono mt-1" :class="activeDay.net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+          net: {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
+        </div>
+        <div v-if="activeDay.transactions.length" class="mt-1 border-t border-[#2a2f45] pt-1">
+          <div
+            v-for="txn in activeDay.transactions.slice(0, 4)"
+            :key="txn.id"
+            class="text-[10px] font-mono text-slate-400 flex justify-between gap-3"
+          >
+            <span class="truncate max-w-[120px]">{{ txn.description }}</span>
+            <span :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+              {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
+            </span>
           </div>
-          <div class="text-lg font-mono font-bold" :class="days[hoveredIndex ?? selectedIndex ?? 0].balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
-            {{ formatK(days[hoveredIndex ?? selectedIndex ?? 0].balance_k) }}
+          <div v-if="activeDay.transactions.length > 4" class="text-[10px] text-slate-500">
+            +{{ activeDay.transactions.length - 4 }} more
           </div>
-          <div v-if="days[hoveredIndex ?? selectedIndex ?? 0].net_k !== 0" class="text-xs font-mono mt-1" :class="days[hoveredIndex ?? selectedIndex ?? 0].net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
-            net: {{ days[hoveredIndex ?? selectedIndex ?? 0].net_k > 0 ? '+' : '' }}{{ days[hoveredIndex ?? selectedIndex ?? 0].net_k.toFixed(2) }}k
-          </div>
-          <div v-if="days[hoveredIndex ?? selectedIndex ?? 0].transactions.length" class="mt-1 border-t border-[#2a2f45] pt-1">
-            <div
-              v-for="txn in days[hoveredIndex ?? selectedIndex ?? 0].transactions.slice(0, 4)"
-              :key="txn.id"
-              class="text-[10px] font-mono text-slate-400 flex justify-between gap-3"
-            >
-              <span class="truncate max-w-[120px]">{{ txn.description }}</span>
-              <span :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
-                {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
-              </span>
-            </div>
-            <div v-if="days[hoveredIndex ?? selectedIndex ?? 0].transactions.length > 4" class="text-[10px] text-slate-500">
-              +{{ days[hoveredIndex ?? selectedIndex ?? 0].transactions.length - 4 }} more
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
     </Transition>
   </div>
