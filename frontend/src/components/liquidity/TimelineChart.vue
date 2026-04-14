@@ -17,9 +17,9 @@ const emit = defineEmits<{
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
 
-const DAY_WIDTH = 18
+const DAY_WIDTH = 48
 const CHART_PADDING_TOP = 40
-const CHART_PADDING_BOTTOM = 60
+const CHART_PADDING_BOTTOM = 52
 const CHART_PADDING_LEFT = 72
 const CHART_PADDING_RIGHT = 24
 
@@ -35,6 +35,8 @@ let lastDragTime = 0
 let animFrame = 0
 
 const today = todayISO()
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const WEEKDAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
 const totalWidth = computed(() => props.days.length * DAY_WIDTH + CHART_PADDING_LEFT + CHART_PADDING_RIGHT)
 
@@ -80,6 +82,10 @@ function parseDateParts(iso: string): [string, string, string] {
   return [parts[0] ?? '', parts[1] ?? '', parts[2] ?? '']
 }
 
+function weekday(iso: string): number {
+  return new Date(iso + 'T00:00:00').getDay()
+}
+
 function draw() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -106,7 +112,7 @@ function draw() {
   const { min, max } = balanceRange.value
   const plotH = h - CHART_PADDING_TOP - CHART_PADDING_BOTTOM
 
-  // Horizontal grid lines
+  // Horizontal grid lines + Y labels
   const gridSteps = niceGridSteps(min, max, 6)
   ctx.strokeStyle = '#1e2030'
   ctx.lineWidth = 1
@@ -146,45 +152,71 @@ function draw() {
     ctx.fillRect(CHART_PADDING_LEFT, negTop, w - CHART_PADDING_LEFT, negBottom - negTop)
   }
 
-  // Day columns — vertical lines for months + date labels
+  // Visible range
   const firstVisible = Math.max(0, Math.floor((scrollX.value - CHART_PADDING_LEFT) / DAY_WIDTH))
   const lastVisible = Math.min(days.length - 1, firstVisible + Math.ceil(w / DAY_WIDTH) + 2)
+  const hIdx = hoveredIndex.value ?? selectedIndex.value
 
+  // --- Day columns: vertical grid lines + labels for EVERY day ---
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
 
-  let lastLabelMonth = ''
+  let prevMonth = ''
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
-    if (x < CHART_PADDING_LEFT || x > w) continue
+    if (x < CHART_PADDING_LEFT - DAY_WIDTH || x > w + DAY_WIDTH) continue
     const d = days[i]!
     const [yr, mo, dy] = parseDateParts(d.date)
-    const monthKey = yr + '-' + mo
     const dayNum = parseInt(dy)
+    const monthKey = yr + '-' + mo
+    const wd = weekday(d.date)
+    const isWeekend = wd === 0 || wd === 6
+    const isHovered = i === hIdx
+    const isToday = d.date === today
+    const isFirstOfMonth = dayNum === 1
+    const hasTxns = d.net_k !== 0
 
-    if (monthKey !== lastLabelMonth && dayNum <= 7) {
-      ctx.strokeStyle = '#2a2f45'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(x, CHART_PADDING_TOP)
-      ctx.lineTo(x, h - CHART_PADDING_BOTTOM)
-      ctx.stroke()
+    // Weekend shading
+    if (isWeekend) {
+      ctx.fillStyle = 'rgba(255,255,255,0.015)'
+      ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
+    }
 
-      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    // Hovered column highlight
+    if (isHovered) {
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)'
+      ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
+    }
+
+    // Vertical grid line per day
+    ctx.strokeStyle = isFirstOfMonth ? '#2a2f45' : '#16192a'
+    ctx.lineWidth = isFirstOfMonth ? 1 : 0.5
+    ctx.beginPath()
+    ctx.moveTo(x - DAY_WIDTH / 2, CHART_PADDING_TOP)
+    ctx.lineTo(x - DAY_WIDTH / 2, h - CHART_PADDING_BOTTOM)
+    ctx.stroke()
+
+    // Month label row (drawn once per new month)
+    if (monthKey !== prevMonth) {
       const mIdx = parseInt(mo) - 1
       ctx.fillStyle = '#7c82a0'
-      ctx.font = '10px "JetBrains Mono", monospace'
-      ctx.fillText((monthNames[mIdx] ?? '') + ' ' + yr.slice(2), x + 20, h - CHART_PADDING_BOTTOM + 24)
-      lastLabelMonth = monthKey
+      ctx.font = 'bold 10px "JetBrains Mono", monospace'
+      ctx.fillText((MONTH_NAMES[mIdx] ?? '') + ' \'' + yr.slice(2), x + 30, h - CHART_PADDING_BOTTOM + 28)
+      prevMonth = monthKey
     }
 
-    if (dayNum === 1 || dayNum === 8 || dayNum === 15 || dayNum === 22) {
-      ctx.fillStyle = '#5c6078'
-      ctx.font = '9px "JetBrains Mono", monospace'
-      ctx.fillText(String(dayNum), x, h - CHART_PADDING_BOTTOM + 8)
-    }
+    // Day number label for every day
+    ctx.fillStyle = isToday ? '#818cf8' : isHovered ? '#c7d2fe' : hasTxns ? '#94a3b8' : '#3e4460'
+    ctx.font = (isToday || isHovered ? 'bold ' : '') + '10px "JetBrains Mono", monospace'
+    ctx.fillText(String(dayNum), x, h - CHART_PADDING_BOTTOM + 6)
 
-    if (d.date === today) {
+    // Weekday abbreviation under the number
+    ctx.fillStyle = isToday ? '#6366f1' : '#2e3350'
+    ctx.font = '8px "JetBrains Mono", monospace'
+    ctx.fillText(WEEKDAY_NAMES[wd] ?? '', x, h - CHART_PADDING_BOTTOM + 18)
+
+    // Today marker
+    if (isToday) {
       ctx.strokeStyle = '#6366f1'
       ctx.lineWidth = 1.5
       ctx.setLineDash([3, 3])
@@ -193,22 +225,26 @@ function draw() {
       ctx.lineTo(x, h - CHART_PADDING_BOTTOM)
       ctx.stroke()
       ctx.setLineDash([])
-      ctx.fillStyle = '#6366f1'
-      ctx.font = 'bold 9px "JetBrains Mono", monospace'
-      ctx.fillText('TODAY', x, h - CHART_PADDING_BOTTOM + 42)
     }
 
-    if (d.net_k !== 0) {
+    // Transaction flow bars (small colored ticks at the balance point)
+    if (hasTxns) {
       ctx.fillStyle = d.net_k > 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
-      const barH = Math.min(Math.abs(d.net_k) / (max - min) * plotH * 0.5, plotH * 0.15)
+      const barH = Math.max(Math.min(Math.abs(d.net_k) / (max - min) * plotH * 0.5, plotH * 0.15), 3)
       const barY = d.net_k > 0
         ? yForBalance(d.balance_k, h) - barH
         : yForBalance(d.balance_k, h)
-      ctx.fillRect(x - DAY_WIDTH / 2 + 2, barY, DAY_WIDTH - 4, barH)
+      ctx.fillRect(x - DAY_WIDTH / 2 + 4, barY, DAY_WIDTH - 8, barH)
+
+      // Small dot at day label area to indicate transactions exist
+      ctx.beginPath()
+      ctx.arc(x, h - CHART_PADDING_BOTTOM + 2, 1.5, 0, Math.PI * 2)
+      ctx.fillStyle = d.net_k > 0 ? '#22c55e' : '#ef4444'
+      ctx.fill()
     }
   }
 
-  // Balance line — gradient fill under the line
+  // --- Balance line with gradient fill ---
   ctx.beginPath()
   let started = false
   for (let i = firstVisible; i <= lastVisible; i++) {
@@ -246,7 +282,25 @@ function draw() {
   ctx.lineWidth = 2
   ctx.stroke()
 
-  // Negative segments in red
+  // Dots on each day point
+  for (let i = firstVisible; i <= lastVisible; i++) {
+    const x = xForIndex(i)
+    const bucket = days[i]!
+    const y = yForBalance(bucket.balance_k, h)
+    if (bucket.net_k !== 0 || i === hIdx) {
+      ctx.beginPath()
+      ctx.arc(x, y, i === hIdx ? 5 : 3, 0, Math.PI * 2)
+      ctx.fillStyle = bucket.balance_k < 0 ? '#ef4444' : '#818cf8'
+      ctx.fill()
+      if (i === hIdx) {
+        ctx.strokeStyle = '#0f1117'
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
+    }
+  }
+
+  // Negative segments overlay in red
   ctx.beginPath()
   started = false
   for (let i = firstVisible; i <= lastVisible; i++) {
@@ -272,22 +326,12 @@ function draw() {
     ctx.stroke()
   }
 
-  // Hovered day crosshair + dot
-  const hIdx = hoveredIndex.value ?? selectedIndex.value
+  // Hovered day Y-axis badge
   if (hIdx !== null && hIdx >= firstVisible && hIdx <= lastVisible) {
     const hBucket = days[hIdx]!
-    const hx = xForIndex(hIdx)
     const hy = yForBalance(hBucket.balance_k, h)
 
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([2, 2])
-    ctx.beginPath()
-    ctx.moveTo(hx, CHART_PADDING_TOP)
-    ctx.lineTo(hx, h - CHART_PADDING_BOTTOM)
-    ctx.stroke()
-    ctx.setLineDash([])
-
+    // Horizontal crosshair
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)'
     ctx.lineWidth = 1
     ctx.setLineDash([2, 2])
@@ -297,15 +341,7 @@ function draw() {
     ctx.stroke()
     ctx.setLineDash([])
 
-    ctx.beginPath()
-    ctx.arc(hx, hy, 5, 0, Math.PI * 2)
-    ctx.fillStyle = hBucket.balance_k < 0 ? '#ef4444' : '#818cf8'
-    ctx.fill()
-    ctx.strokeStyle = '#0f1117'
-    ctx.lineWidth = 2
-    ctx.stroke()
-
-    // Y-axis label
+    // Y-axis label badge
     ctx.fillStyle = '#818cf8'
     ctx.fillRect(0, hy - 10, CHART_PADDING_LEFT - 4, 20)
     ctx.fillStyle = '#fff'
@@ -313,20 +349,9 @@ function draw() {
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
     ctx.fillText(formatK(hBucket.balance_k), CHART_PADDING_LEFT - 8, hy)
-
-    // Date label at bottom
-    ctx.fillStyle = '#818cf8'
-    const dateLabel = formatDateLabel(hBucket.date)
-    const tw = ctx.measureText(dateLabel).width + 12
-    ctx.fillRect(hx - tw / 2, h - CHART_PADDING_BOTTOM + 2, tw, 18)
-    ctx.fillStyle = '#fff'
-    ctx.font = 'bold 9px "JetBrains Mono", monospace'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(dateLabel, hx, h - CHART_PADDING_BOTTOM + 11)
   }
 
-  // Global min markers
+  // Global min markers (triangle)
   for (const minDate of props.globalMinDates) {
     const idx = days.findIndex(d => d.date === minDate)
     if (idx < firstVisible || idx > lastVisible) continue
@@ -348,12 +373,6 @@ function formatK(val: number): string {
   return val.toFixed(1) + 'k'
 }
 
-function formatDateLabel(iso: string): string {
-  const [, m, d] = parseDateParts(iso)
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return (months[parseInt(m) - 1] ?? '') + ' ' + parseInt(d)
-}
-
 function niceGridSteps(min: number, max: number, target: number): number[] {
   const range = max - min
   if (range <= 0) return [0]
@@ -370,6 +389,12 @@ function niceGridSteps(min: number, max: number, target: number): number[] {
     v += step
   }
   return steps
+}
+
+function formatDateForTooltip(iso: string): string {
+  const [, mo, dy] = parseDateParts(iso)
+  const wd = weekday(iso)
+  return (WEEKDAY_NAMES[wd] ?? '') + ', ' + (MONTH_NAMES[parseInt(mo) - 1] ?? '') + ' ' + parseInt(dy)
 }
 
 // --- Scroll / pan with momentum ---
@@ -533,35 +558,50 @@ defineExpose({ centerOnToday })
       @wheel.prevent="onWheel"
     />
 
-    <!-- Hover tooltip -->
+    <!-- Hover tooltip: day date + balance + transaction list -->
     <Transition name="fade">
       <div
         v-if="activeDay"
-        class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-3 py-2 shadow-xl pointer-events-none z-10 min-w-[180px]"
+        class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-4 py-3 shadow-xl pointer-events-none z-10 min-w-[200px] max-w-[280px]"
       >
-        <div class="text-[11px] text-slate-400 font-mono mb-1">
-          {{ activeDay.date }}
+        <div class="text-xs text-slate-400 font-mono mb-1.5 tracking-wide">
+          {{ formatDateForTooltip(activeDay.date) }}
         </div>
-        <div class="text-lg font-mono font-bold" :class="activeDay.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
+        <div class="text-xl font-mono font-bold mb-1" :class="activeDay.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
           {{ formatK(activeDay.balance_k) }}
+          <span class="text-[10px] font-normal text-slate-500 ml-1">EOD balance</span>
         </div>
-        <div v-if="activeDay.net_k !== 0" class="text-xs font-mono mt-1" :class="activeDay.net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
-          net: {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
+
+        <div v-if="activeDay.net_k !== 0" class="text-xs font-mono mb-2 flex items-center gap-1.5">
+          <span class="text-slate-500">Day net:</span>
+          <span class="font-bold" :class="activeDay.net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+            {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
+          </span>
         </div>
-        <div v-if="activeDay.transactions.length" class="mt-1 border-t border-[#2a2f45] pt-1">
-          <div
-            v-for="txn in activeDay.transactions.slice(0, 4)"
-            :key="txn.id"
-            class="text-[10px] font-mono text-slate-400 flex justify-between gap-3"
-          >
-            <span class="truncate max-w-[120px]">{{ txn.description }}</span>
-            <span :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
-              {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
-            </span>
+
+        <!-- Transaction list for this day -->
+        <div v-if="activeDay.transactions.length" class="border-t border-[#2a2f45] pt-2 mt-1">
+          <div class="text-[10px] text-slate-500 font-mono mb-1.5 uppercase tracking-wider">
+            Transactions ({{ activeDay.transactions.length }})
           </div>
-          <div v-if="activeDay.transactions.length > 4" class="text-[10px] text-slate-500">
-            +{{ activeDay.transactions.length - 4 }} more
+          <div class="space-y-1">
+            <div
+              v-for="txn in activeDay.transactions.slice(0, 6)"
+              :key="txn.id"
+              class="flex justify-between gap-3 items-baseline"
+            >
+              <span class="text-[11px] font-mono text-slate-300 truncate">{{ txn.description }}</span>
+              <span class="text-[11px] font-mono font-bold shrink-0" :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+                {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
+              </span>
+            </div>
           </div>
+          <div v-if="activeDay.transactions.length > 6" class="text-[10px] text-slate-500 font-mono mt-1">
+            +{{ activeDay.transactions.length - 6 }} more
+          </div>
+        </div>
+        <div v-else class="text-[10px] text-slate-600 font-mono mt-1 italic">
+          No transactions
         </div>
       </div>
     </Transition>
