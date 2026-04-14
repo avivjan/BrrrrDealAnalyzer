@@ -27,8 +27,10 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   })
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const _version = ref(0)
 
   const series = computed<LiquiditySeries>(() => {
+    void _version.value
     const { rangeStart, rangeEnd } = computeDefaultRange(
       transactions.value,
       settings.value.opening_balance_date,
@@ -99,25 +101,27 @@ export const useLiquidityStore = defineStore('liquidity', () => {
 
   async function addTransaction(data: LiquidityTransactionCreate): Promise<LiquidityTransaction> {
     const created = await liquidityApi.createTransaction(data)
-    transactions.value = [...transactions.value, created].sort(
-      (a, b) => a.effective_date.localeCompare(b.effective_date),
-    )
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
     return created
   }
 
   async function updateTransaction(id: string, data: LiquidityTransactionUpdate): Promise<LiquidityTransaction> {
     const updated = await liquidityApi.updateTransaction(id, data)
-    transactions.value = transactions.value.map(t => t.id === id ? updated : t)
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
     return updated
   }
 
   async function deleteTransaction(id: string): Promise<void> {
     await liquidityApi.deleteTransaction(id)
-    transactions.value = transactions.value.filter(t => t.id !== id)
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
   }
 
   async function updateSettings(data: LiquiditySettingsUpdate): Promise<void> {
     settings.value = await liquidityApi.updateSettings(data)
+    _version.value++
   }
 
   return {

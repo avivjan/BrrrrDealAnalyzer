@@ -536,7 +536,10 @@ onUnmounted(() => {
   resizeObs?.disconnect()
 })
 
-watch(() => [props.days, props.globalMin], () => draw(), { deep: true })
+watch(
+  [() => props.days, () => props.globalMin, () => props.globalMinDates, () => props.firstNegativeDate],
+  () => draw(),
+)
 
 defineExpose({ centerOnToday })
 </script>
