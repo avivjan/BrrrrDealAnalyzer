@@ -69,7 +69,9 @@ Base.metadata.create_all(bind=engine)
 
 def _run_migrations():
     inspector = sa_inspect(engine)
-    if "active_deals" in inspector.get_table_names():
+    table_names = inspector.get_table_names()
+
+    if "active_deals" in table_names:
         columns = [col["name"] for col in inspector.get_columns("active_deals")]
         if "refi_points" not in columns:
             with engine.begin() as conn:
@@ -78,6 +80,24 @@ def _run_migrations():
                 ))
                 conn.execute(text(
                     "UPDATE active_deals SET refi_points = 1.5 WHERE refi_points IS NULL"
+                ))
+
+    if "liquidity_settings" in table_names:
+        columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]
+        if "opening_balance_date" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_date DATE DEFAULT CURRENT_DATE NOT NULL"
+                ))
+        if "reserve_k" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE liquidity_settings ADD COLUMN reserve_k NUMERIC(14,4) DEFAULT 5 NOT NULL"
+                ))
+        if "opening_balance_k" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
 
 _run_migrations()
