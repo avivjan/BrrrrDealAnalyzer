@@ -82,6 +82,22 @@ def _run_migrations():
                     "UPDATE active_deals SET refi_points = 1.5 WHERE refi_points IS NULL"
                 ))
 
+    if "liquidity_transactions" in table_names:
+        columns = [col["name"] for col in inspector.get_columns("liquidity_transactions")]
+        if "date" in columns and "effective_date" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE liquidity_transactions RENAME COLUMN date TO effective_date"
+                ))
+        elif "date" in columns and "effective_date" in columns:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "UPDATE liquidity_transactions SET effective_date = date WHERE effective_date IS NULL"
+                ))
+                conn.execute(text(
+                    "ALTER TABLE liquidity_transactions DROP COLUMN date"
+                ))
+
     if "liquidity_settings" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]
         if "opening_balance_date" not in columns:
