@@ -131,24 +131,15 @@ function draw() {
     ctx.fillText(formatK(val), CHART_PADDING_LEFT - 8, y)
   }
 
-  // Zero line
+  // Zero line — solid red, always visible
   const zeroY = yForBalance(0, h)
-  if (zeroY >= CHART_PADDING_TOP && zeroY <= h - CHART_PADDING_BOTTOM) {
-    ctx.strokeStyle = '#3a3f55'
-    ctx.lineWidth = 1.5
-    ctx.setLineDash([4, 4])
-    ctx.beginPath()
-    ctx.moveTo(CHART_PADDING_LEFT, zeroY)
-    ctx.lineTo(w, zeroY)
-    ctx.stroke()
-    ctx.setLineDash([])
-  }
+  const zeroVisible = zeroY >= CHART_PADDING_TOP && zeroY <= h - CHART_PADDING_BOTTOM
 
-  // Negative region fill
-  if (min < 0) {
+  // Negative region fill (drawn before bars so it sits behind)
+  if (min < 0 && zeroVisible) {
     const negBottom = Math.min(yForBalance(min, h), h - CHART_PADDING_BOTTOM)
     const negTop = Math.max(zeroY, CHART_PADDING_TOP)
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.06)'
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.04)'
     ctx.fillRect(CHART_PADDING_LEFT, negTop, w - CHART_PADDING_LEFT, negBottom - negTop)
   }
 
@@ -227,16 +218,8 @@ function draw() {
       ctx.setLineDash([])
     }
 
-    // Transaction flow bars (small colored ticks at the balance point)
+    // Small dot at day label area to indicate transactions exist
     if (hasTxns) {
-      ctx.fillStyle = d.net_k > 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
-      const barH = Math.max(Math.min(Math.abs(d.net_k) / (max - min) * plotH * 0.5, plotH * 0.15), 3)
-      const barY = d.net_k > 0
-        ? yForBalance(d.balance_k, h) - barH
-        : yForBalance(d.balance_k, h)
-      ctx.fillRect(x - DAY_WIDTH / 2 + 4, barY, DAY_WIDTH - 8, barH)
-
-      // Small dot at day label area to indicate transactions exist
       ctx.beginPath()
       ctx.arc(x, h - CHART_PADDING_BOTTOM + 2, 1.5, 0, Math.PI * 2)
       ctx.fillStyle = d.net_k > 0 ? '#22c55e' : '#ef4444'
@@ -244,85 +227,44 @@ function draw() {
     }
   }
 
-  // --- Balance line with gradient fill ---
-  ctx.beginPath()
-  let started = false
-  for (let i = firstVisible; i <= lastVisible; i++) {
-    const x = xForIndex(i)
-    const y = yForBalance(days[i]!.balance_k, h)
-    if (!started) { ctx.moveTo(x, y); started = true }
-    else ctx.lineTo(x, y)
-  }
+  // --- Balance bars ---
+  const barGap = 2
+  const barW = DAY_WIDTH - barGap * 2
+  const baseY = zeroVisible ? zeroY : h - CHART_PADDING_BOTTOM
 
-  if (started && lastVisible > firstVisible) {
-    const lastX = xForIndex(lastVisible)
-    const firstX = xForIndex(firstVisible)
-    ctx.lineTo(lastX, h - CHART_PADDING_BOTTOM)
-    ctx.lineTo(firstX, h - CHART_PADDING_BOTTOM)
-    ctx.closePath()
-
-    const grad = ctx.createLinearGradient(0, CHART_PADDING_TOP, 0, h - CHART_PADDING_BOTTOM)
-    grad.addColorStop(0, 'rgba(99, 102, 241, 0.15)')
-    grad.addColorStop(0.7, 'rgba(99, 102, 241, 0.03)')
-    grad.addColorStop(1, 'rgba(99, 102, 241, 0)')
-    ctx.fillStyle = grad
-    ctx.fill()
-  }
-
-  // Balance line stroke
-  ctx.beginPath()
-  started = false
-  for (let i = firstVisible; i <= lastVisible; i++) {
-    const x = xForIndex(i)
-    const y = yForBalance(days[i]!.balance_k, h)
-    if (!started) { ctx.moveTo(x, y); started = true }
-    else ctx.lineTo(x, y)
-  }
-  ctx.strokeStyle = '#818cf8'
-  ctx.lineWidth = 2
-  ctx.stroke()
-
-  // Dots on each day point
   for (let i = firstVisible; i <= lastVisible; i++) {
     const x = xForIndex(i)
     const bucket = days[i]!
-    const y = yForBalance(bucket.balance_k, h)
-    if (bucket.net_k !== 0 || i === hIdx) {
-      ctx.beginPath()
-      ctx.arc(x, y, i === hIdx ? 5 : 3, 0, Math.PI * 2)
-      ctx.fillStyle = bucket.balance_k < 0 ? '#ef4444' : '#818cf8'
-      ctx.fill()
-      if (i === hIdx) {
-        ctx.strokeStyle = '#0f1117'
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
-    }
-  }
+    const balY = yForBalance(bucket.balance_k, h)
+    const isHov = i === hIdx
 
-  // Negative segments overlay in red
-  ctx.beginPath()
-  started = false
-  for (let i = firstVisible; i <= lastVisible; i++) {
-    const x = xForIndex(i)
-    const bucket = days[i]!
-    const y = yForBalance(bucket.balance_k, h)
-    if (bucket.balance_k < 0) {
-      if (!started) { ctx.moveTo(x, y); started = true }
-      else ctx.lineTo(x, y)
+    if (bucket.balance_k >= 0) {
+      const top = Math.min(balY, baseY)
+      const barH = Math.abs(baseY - balY)
+      ctx.fillStyle = isHov ? 'rgba(129, 140, 248, 0.55)' : 'rgba(99, 102, 241, 0.35)'
+      ctx.fillRect(x - barW / 2, top, barW, barH)
+      ctx.strokeStyle = isHov ? '#a5b4fc' : '#818cf8'
+      ctx.lineWidth = isHov ? 1.5 : 0.5
+      ctx.strokeRect(x - barW / 2, top, barW, barH)
     } else {
-      if (started) {
-        ctx.strokeStyle = '#ef4444'
-        ctx.lineWidth = 2.5
-        ctx.stroke()
-        ctx.beginPath()
-        started = false
-      }
+      const top = baseY
+      const barH = Math.abs(balY - baseY)
+      ctx.fillStyle = isHov ? 'rgba(239, 68, 68, 0.55)' : 'rgba(239, 68, 68, 0.35)'
+      ctx.fillRect(x - barW / 2, top, barW, barH)
+      ctx.strokeStyle = isHov ? '#fca5a5' : '#ef4444'
+      ctx.lineWidth = isHov ? 1.5 : 0.5
+      ctx.strokeRect(x - barW / 2, top, barW, barH)
     }
   }
-  if (started) {
+
+  // --- Zero line — solid red, drawn on top of bars ---
+  if (zeroVisible) {
     ctx.strokeStyle = '#ef4444'
-    ctx.lineWidth = 2.5
+    ctx.lineWidth = 2
+    ctx.setLineDash([])
+    ctx.beginPath()
+    ctx.moveTo(CHART_PADDING_LEFT, zeroY)
+    ctx.lineTo(w, zeroY)
     ctx.stroke()
   }
 
