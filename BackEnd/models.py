@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, func, Numeric, Uuid
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Date, JSON, func, Numeric, Uuid
 from sqlalchemy.orm import declarative_mixin, declared_attr
 import uuid
 
@@ -128,3 +128,32 @@ class BoughtFlipDeal(Base, BaseDeal):
     bought_stage = Column(Integer, nullable=False, default=1)
     completed_substages = Column(JSON, nullable=False, default=dict)
     source_deal_id = Column(Uuid(as_uuid=True), nullable=True)
+
+
+class LiquidityTransaction(Base):
+    """A single cash flow event on the liquidity timeline.
+    amount_k is signed: positive = inflow, negative = outflow.
+    All amounts are in thousands of dollars ($k).
+    """
+    __tablename__ = "liquidity_transactions"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    effective_date = Column(Date, nullable=False, index=True)
+    description = Column(String, nullable=False)
+    amount_k = Column(Numeric(14, 4), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class LiquiditySettings(Base):
+    """Singleton row (id=1) holding the opening balance anchor and user prefs.
+    opening_balance_k: balance at start-of-day on opening_balance_date, in $k.
+    reserve_k: soft-warning threshold, in $k.
+    """
+    __tablename__ = "liquidity_settings"
+
+    id = Column(Integer, primary_key=True, default=1)
+    opening_balance_k = Column(Numeric(14, 4), nullable=False, default=0)
+    opening_balance_date = Column(Date, nullable=False)
+    reserve_k = Column(Numeric(14, 4), nullable=False, default=5)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

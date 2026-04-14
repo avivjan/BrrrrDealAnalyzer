@@ -32,10 +32,19 @@ from crud_bought_deal import (
     delete_bought_brrr_deal, delete_bought_flip_deal,
     create_bought_from_active_brrr, create_bought_from_active_flip
 )
+from crud_liquidity import (
+    get_all_transactions, get_transaction, add_transaction,
+    update_transaction, delete_transaction,
+    get_settings, upsert_settings,
+)
+from ReqRes.liquidity.liquidityReq import (
+    LiquidityTransactionCreate, LiquidityTransactionUpdate, LiquidityTransactionRes,
+    LiquiditySettingsUpdate, LiquiditySettingsRes,
+)
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
 from db import Base, engine, get_db
-from models import BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal
+from models import BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal, LiquidityTransaction
 from sqlalchemy import text, inspect as sa_inspect
 import smtplib
 from email.mime.text import MIMEText
@@ -759,6 +768,69 @@ def send_offer_route(payload: SendOfferReq):
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# --- Liquidity Timeline ---
+
+def _txn_to_res(txn: LiquidityTransaction) -> LiquidityTransactionRes:
+    return LiquidityTransactionRes(
+        id=str(txn.id),
+        effective_date=txn.effective_date,
+        description=txn.description,
+        amount_k=float(txn.amount_k),
+        created_at=txn.created_at.isoformat() if txn.created_at else None,
+        updated_at=txn.updated_at.isoformat() if txn.updated_at else None,
+    )
+
+@app.get("/liquidity/transactions", response_model=List[LiquidityTransactionRes])
+def list_liquidity_transactions(db: Session = Depends(get_db)):
+    return [_txn_to_res(t) for t in get_all_transactions(db)]
+
+@app.post("/liquidity/transactions", response_model=LiquidityTransactionRes, status_code=201)
+def create_liquidity_transaction(data: LiquidityTransactionCreate, db: Session = Depends(get_db)):
+    txn = add_transaction(db, data)
+    return _txn_to_res(txn)
+
+@app.put("/liquidity/transactions/{txn_id}", response_model=LiquidityTransactionRes)
+def update_liquidity_transaction(txn_id: str, data: LiquidityTransactionUpdate, db: Session = Depends(get_db)):
+    txn = update_transaction(db, txn_id, data)
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return _txn_to_res(txn)
+
+@app.delete("/liquidity/transactions/{txn_id}")
+def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
+    if not delete_transaction(db, txn_id):
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return {"message": "Transaction deleted"}
+
+@app.get("/liquidity/settings", response_model=LiquiditySettingsRes)
+def get_liquidity_settings(db: Session = Depends(get_db)):
+    settings = get_settings(db)
+    if not settings:
+        from datetime import date as date_type
+        default_data = LiquiditySettingsUpdate(
+            opening_balance_k=0,
+            opening_balance_date=date_type.today(),
+            reserve_k=5,
+        )
+        settings = upsert_settings(db, default_data)
+    return LiquiditySettingsRes(
+        opening_balance_k=float(settings.opening_balance_k),
+        opening_balance_date=settings.opening_balance_date,
+        reserve_k=float(settings.reserve_k),
+        updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
+    )
+
+@app.put("/liquidity/settings", response_model=LiquiditySettingsRes)
+def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depends(get_db)):
+    settings = upsert_settings(db, data)
+    return LiquiditySettingsRes(
+        opening_balance_k=float(settings.opening_balance_k),
+        opening_balance_date=settings.opening_balance_date,
+        reserve_k=float(settings.reserve_k),
+        updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
+    )
 
 
 @app.get("/helloworld")

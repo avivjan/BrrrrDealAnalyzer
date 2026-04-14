@@ -3,6 +3,7 @@ import LandingPage from '../views/LandingPage.vue'
 import AnalyzeDeal from '../views/AnalyzeDeal.vue'
 import MyDeals from '../views/MyDeals.vue'
 import BoughtDeals from '../views/BoughtDeals.vue'
+import LiquidityTimeline from '../views/LiquidityTimeline.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/bought-deals',
       name: 'bought-deals',
       component: BoughtDeals
+    },
+    {
+      path: '/liquidity',
+      name: 'liquidity',
+      component: LiquidityTimeline
     }
   ]
 })

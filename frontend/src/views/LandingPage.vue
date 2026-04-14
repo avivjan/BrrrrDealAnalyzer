@@ -46,6 +46,13 @@ const cards = [
     route: "/bought-deals",
     color: "bg-gradient-to-br from-emerald-500 to-green-600",
   },
+  {
+    title: "Liquidity",
+    icon: "pi pi-chart-line",
+    action: "internal",
+    route: "/liquidity",
+    color: "bg-gradient-to-br from-slate-700 to-indigo-800",
+  },
 ];
 
 const openLink = (card: any) => {
