@@ -4,7 +4,6 @@ import { useConnectionStore } from "./stores/connectionStore";
 import { useDealStore } from "./stores/dealStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
-import BuyingPowerWidget from "./components/BuyingPowerWidget.vue";
 import PortfolioStatsBar from "./components/PortfolioStatsBar.vue";
 
 const connectionStore = useConnectionStore();
@@ -68,6 +67,5 @@ onMounted(() => {
 
     <PortfolioStatsBar />
     <RouterView />
-    <BuyingPowerWidget />
   </div>
 </template>

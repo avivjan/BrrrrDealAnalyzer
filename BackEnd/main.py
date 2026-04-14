@@ -32,12 +32,8 @@ from crud_bought_deal import (
     delete_bought_brrr_deal, delete_bought_flip_deal,
     create_bought_from_active_brrr, create_bought_from_active_flip
 )
-from crud_liquidity import get_all_liquidity, add_liquidity_transaction, update_liquidity_transaction, delete_liquidity_transaction
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
-from ReqRes.BuyingPower.getLiquidityRes import GetLiquidityRes, LiquidityTransactionRes
-from ReqRes.BuyingPower.addLiquidityTransactionReq import AddLiquidityTransactionReq
-from ReqRes.BuyingPower.updateLiquidityTransactionReq import UpdateLiquidityTransactionReq
 from db import Base, engine, get_db
 from models import BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal
 from sqlalchemy import text, inspect as sa_inspect
@@ -534,38 +530,6 @@ def move_to_bought(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends
         return create_bought_deal_response(new_deal)
 
     raise HTTPException(status_code=400, detail="Invalid deal type")
-
-
-# --- Liquidity / Buying Power ---
-
-@app.get("/liquidity", response_model=GetLiquidityRes)
-def get_liquidity(db: Session = Depends(get_db)):
-    transactions, total = get_all_liquidity(db)
-    return GetLiquidityRes(
-        transactions=[LiquidityTransactionRes.model_validate(t) for t in transactions],
-        total_liquidity=total,
-    )
-
-
-@app.post("/liquidity", response_model=LiquidityTransactionRes)
-def add_liquidity(payload: AddLiquidityTransactionReq, db: Session = Depends(get_db)):
-    created = add_liquidity_transaction(db, payload)
-    return LiquidityTransactionRes.model_validate(created)
-
-
-@app.put("/liquidity/{txn_id}", response_model=LiquidityTransactionRes)
-def update_liquidity(txn_id: str, payload: UpdateLiquidityTransactionReq, db: Session = Depends(get_db)):
-    updated = update_liquidity_transaction(db, txn_id, payload)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    return LiquidityTransactionRes.model_validate(updated)
-
-
-@app.delete("/liquidity/{txn_id}")
-def delete_liquidity(txn_id: str, db: Session = Depends(get_db)):
-    if not delete_liquidity_transaction(db, txn_id):
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    return {"message": "Transaction deleted"}
 
 
 # --- Email Logic ---
