@@ -360,9 +360,29 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
-    rehab_cash = rehab_cost if not use_HM_for_rehab else Decimal("0")
-    return down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash
-       
+    
+    # 1. Direct Rehab Cash (if not funded) + Float Buffer (for draws)
+    # Even if HML pays, we need 10% on hand to start work/pay deposits
+    rehab_float_buffer = Decimal("0.1") * rehab_cost
+    rehab_out_of_pocket = rehab_cost if not use_HM_for_rehab else Decimal("0")
+    total_rehab_cash_needed = rehab_out_of_pocket + rehab_float_buffer
+
+    # 2. Time Contingency (The "Safety Multiplier")
+    # Doubling these accounts for delays in permits, rehab, or tenant placement
+    total_holding_cash = holding_cost_until_refi * 2
+    total_interest_cash = HML_interest_in_cash * 2
+    
+    # 3. Closing Buffer
+    total_closing_buy = closing_costs_buy * Decimal("1.1")
+    
+    return (
+        down_payment_in_cash + 
+        total_holding_cash + 
+        total_closing_buy + 
+        HML_points_in_cash + 
+        total_rehab_cash_needed + 
+        total_interest_cash
+    )
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     arv = thousands_to_dollars(payload.arv_in_thousands)
@@ -460,9 +480,11 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
     
     down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
-    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else 0
     
-    total_cash_needed = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
+    total_cash_needed = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, total_operating, closing_costs_buy, hml_points_cash, rehab_cost, total_hml_interest, payload.use_HM_for_rehab)
+    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else Decimal("0")
+    
+    total_cash_invested = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
     
     # Cost basis for profit calc
     total_cost_basis = purchase_price + rehab_cost + closing_costs_buy + total_holding_costs + selling_costs + hml_points_cash
@@ -475,7 +497,7 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
         
     net_profit = gross_profit - cap_gains
     
-    roi = (net_profit / total_cash_needed) * Decimal("100.0") if total_cash_needed > 0 else Decimal("0")
+    roi = (net_profit / total_cash_invested) * Decimal("100.0") if total_cash_invested > 0 else Decimal("0")
     years = payload.holding_time_months / Decimal("12.0")
     annualized_roi = (roi / years) if years > 0 else Decimal("0")
     
