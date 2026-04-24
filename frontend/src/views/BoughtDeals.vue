@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
+import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import BoughtDealCard from "../components/BoughtDealCard.vue";
+import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
@@ -15,8 +17,7 @@ import {
   DEFAULT_REFI_POINTS,
 } from "../utils/dealUtils";
 import {
-  getPipelineForType,
-  getStageConfig,
+  resolveStage,
   getSubStagesForStage,
   canAdvance,
   getMissingSubstages,
@@ -24,28 +25,37 @@ import {
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
+const pipelineStore = usePipelineTemplateStore();
 
 const activeTab = ref<"FLIP" | "BRRRR">("BRRRR");
 
-const currentPipeline = computed(() => getPipelineForType(activeTab.value));
+const currentPipeline = computed(() => pipelineStore.pipelineFor(activeTab.value));
 const currentStages = computed(() => currentPipeline.value.stages);
 
-// Local state for columns keyed by stage id
-const columns = ref<Record<number, BoughtDealRes[]>>({});
+// Template editor modal
+const showPipelineEditor = ref(false);
+const openPipelineEditor = () => {
+  showPipelineEditor.value = true;
+};
+
+// Local state for columns keyed by stage id (string)
+const columns = ref<Record<string, BoughtDealRes[]>>({});
 
 const refreshColumns = () => {
   const deals = store.dealsByType[activeTab.value];
-  const cols: Record<number, BoughtDealRes[]> = {};
+  const cols: Record<string, BoughtDealRes[]> = {};
   for (const stage of currentStages.value) {
     cols[stage.id] = [];
   }
   const firstStage = currentStages.value[0];
   for (const deal of deals) {
-    const stageConfig = getStageConfig(activeTab.value, deal.boughtStage);
+    const stageConfig = resolveStage(currentPipeline.value, deal.boughtStage);
     const targetCol = cols[stageConfig.id];
     if (targetCol) {
       targetCol.push(deal);
     } else if (firstStage) {
+      // Deleted/renamed-away stage → clamp to first stage so the card never
+      // disappears from the board.
       cols[firstStage.id]?.push(deal);
     }
   }
@@ -53,18 +63,21 @@ const refreshColumns = () => {
 };
 
 watch(
-  () => [store.boughtDeals, activeTab.value],
+  () => [store.boughtDeals, activeTab.value, currentStages.value],
   () => refreshColumns(),
   { deep: true }
 );
 
 onMounted(async () => {
-  await store.fetchBoughtDeals();
+  await Promise.all([
+    store.fetchBoughtDeals(),
+    pipelineStore.fetchTemplates(),
+  ]);
   refreshColumns();
 });
 
 // Stage color based on position in pipeline
-const getStageAccentColor = (stageId: number) => {
+const getStageAccentColor = (stageId: string) => {
   const stages = currentStages.value;
   const idx = stages.findIndex((s) => s.id === stageId);
   const ratio = stages.length > 1 ? idx / (stages.length - 1) : 0;
@@ -75,13 +88,14 @@ const getStageAccentColor = (stageId: number) => {
 };
 
 // Drag-and-drop
-const onDrop = async (event: any, targetStageId: number) => {
+const onDrop = async (event: any, targetStageId: string) => {
   if (!event.added) return;
   const deal = event.added.element as BoughtDealRes;
   if (deal.boughtStage === targetStageId) return;
 
   const dealType = (deal.deal_type || "BRRRR") as "FLIP" | "BRRRR";
-  const stages = getPipelineForType(dealType).stages;
+  const pipeline = pipelineStore.pipelineFor(dealType);
+  const stages = pipeline.stages;
   const currentIdx = stages.findIndex((s) => s.id === deal.boughtStage);
   const targetIdx = stages.findIndex((s) => s.id === targetStageId);
 
@@ -94,9 +108,9 @@ const onDrop = async (event: any, targetStageId: number) => {
 
   // Forward move: check substages
   if (targetIdx > currentIdx) {
-    if (!canAdvance(dealType, deal.boughtStage, deal.completedSubstages)) {
+    if (!canAdvance(pipeline, deal.boughtStage, deal.completedSubstages)) {
       const missing = getMissingSubstages(
-        dealType,
+        pipeline,
         deal.boughtStage,
         deal.completedSubstages
       );
@@ -108,19 +122,18 @@ const onDrop = async (event: any, targetStageId: number) => {
     }
   }
 
-  // Apply stage change
   await store.updateBoughtDealStage(deal.id, targetStageId);
   refreshColumns();
 };
 
-const onAdd = async (event: any, targetStageId: number) => {
+const onAdd = async (event: any, targetStageId: string) => {
   const list = columns.value[targetStageId];
   if (list && typeof event.newIndex === "number") {
     const deal = list[event.newIndex];
     if (deal && deal.boughtStage !== targetStageId) {
-      // Same validation as onDrop
       const dealType = (deal.deal_type || "BRRRR") as "FLIP" | "BRRRR";
-      const stages = getPipelineForType(dealType).stages;
+      const pipeline = pipelineStore.pipelineFor(dealType);
+      const stages = pipeline.stages;
       const currentIdx = stages.findIndex((s) => s.id === deal.boughtStage);
       const targetIdx = stages.findIndex((s) => s.id === targetStageId);
 
@@ -132,10 +145,10 @@ const onAdd = async (event: any, targetStageId: number) => {
 
       if (
         targetIdx > currentIdx &&
-        !canAdvance(dealType, deal.boughtStage, deal.completedSubstages)
+        !canAdvance(pipeline, deal.boughtStage, deal.completedSubstages)
       ) {
         const missing = getMissingSubstages(
-          dealType,
+          pipeline,
           deal.boughtStage,
           deal.completedSubstages
         );
@@ -292,35 +305,39 @@ const editingDealType = computed(
   () =>
     ((editingDeal.value?.deal_type || "BRRRR") as "FLIP" | "BRRRR")
 );
+const editingPipeline = computed(() =>
+  pipelineStore.pipelineFor(editingDealType.value)
+);
 const editingStageConfig = computed(() =>
   editingDeal.value
-    ? getStageConfig(editingDealType.value, editingDeal.value.boughtStage)
+    ? resolveStage(editingPipeline.value, editingDeal.value.boughtStage)
     : null
 );
 const editingSubStages = computed(() =>
   editingDeal.value
-    ? getSubStagesForStage(
-        editingDealType.value,
-        editingDeal.value.boughtStage
-      )
+    ? getSubStagesForStage(editingPipeline.value, editingDeal.value.boughtStage)
     : []
 );
 const editingCanAdvance = computed(() =>
   editingDeal.value
     ? canAdvance(
-        editingDealType.value,
+        editingPipeline.value,
         editingDeal.value.boughtStage,
-        editingDeal.value.completedSubstages
+        editingDeal.value.completedSubstages,
       )
     : false
 );
 const editingIsTerminal = computed(() =>
   editingDeal.value
-    ? isTerminalStage(editingDealType.value, editingDeal.value.boughtStage)
+    ? isTerminalStage(editingPipeline.value, editingDeal.value.boughtStage)
     : false
 );
-const editingPipeline = computed(() =>
-  getPipelineForType(editingDealType.value)
+const editingStageIndex = computed(() =>
+  editingDeal.value
+    ? editingPipeline.value.stages.findIndex(
+        (s) => s.id === editingDeal.value!.boughtStage,
+      )
+    : -1,
 );
 
 const toggleModalSubstage = (substageId: string) => {
@@ -462,15 +479,36 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </button>
       </div>
 
-      <button
-        type="button"
-        @click="$router.push('/my-deals')"
-        class="text-sm font-medium text-blue-700 hover:text-blue-800 border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shrink-0"
-        title="Back to active deal pipeline"
-      >
-        <i class="pi pi-th-large"></i>
-        <span class="hidden sm:inline">My Deals</span>
-      </button>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          @click="openPipelineEditor"
+          class="text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+          :title="`Edit ${activeTab} pipeline stages & substages`"
+        >
+          <i class="pi pi-sliders-v"></i>
+          <span class="hidden sm:inline">Edit Pipeline</span>
+          <span
+            class="hidden md:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+            :class="
+              activeTab === 'BRRRR'
+                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                : 'bg-orange-100 text-orange-700 border-orange-200'
+            "
+          >
+            {{ activeTab }}
+          </span>
+        </button>
+        <button
+          type="button"
+          @click="$router.push('/my-deals')"
+          class="text-sm font-medium text-blue-700 hover:text-blue-800 border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+          title="Back to active deal pipeline"
+        >
+          <i class="pi pi-th-large"></i>
+          <span class="hidden sm:inline">My Deals</span>
+        </button>
+      </div>
     </header>
 
     <!-- Board -->
@@ -611,7 +649,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     v-if="idx > 0"
                     class="h-0.5 flex-1 rounded"
                     :class="
-                      pStage.id <= editingDeal.boughtStage
+                      idx <= editingStageIndex
                         ? 'bg-emerald-400'
                         : 'bg-gray-200'
                     "
@@ -619,7 +657,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div
                     class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
                     :class="
-                      pStage.id < editingDeal.boughtStage
+                      idx < editingStageIndex
                         ? 'bg-emerald-500 text-white'
                         : pStage.id === editingDeal.boughtStage
                           ? 'bg-blue-500 text-white ring-2 ring-blue-200'
@@ -627,7 +665,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                   >
                     <i
-                      v-if="pStage.id < editingDeal.boughtStage"
+                      v-if="idx < editingStageIndex"
                       class="pi pi-check text-[10px]"
                     ></i>
                     <span v-else>{{ idx + 1 }}</span>
@@ -1609,5 +1647,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </div>
       </div>
     </div>
+
+    <!-- Pipeline Template Editor -->
+    <PipelineTemplateEditor
+      :open="showPipelineEditor"
+      :initial-tab="activeTab"
+      @close="showPipelineEditor = false"
+      @saved="refreshColumns"
+    />
   </div>
 </template>

@@ -5,6 +5,30 @@ import uuid
 from db import Base
 
 
+# Stable-ID slugs used when the built-in pipeline defaults are first seeded
+# and when migrating legacy integer `bought_stage` values to string IDs.
+# NOTE: once assigned, these IDs must never change – they are referenced by
+# `bought_stage` on existing deal rows and by keys in `completed_substages`.
+DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT: dict[int, str] = {
+    1: "purchase",
+    2: "prepare_for_closing",
+    3: "closed",
+    4: "rehab",
+    5: "rent",
+    6: "prepare_for_refi",
+    7: "refinanced",
+}
+
+DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT: dict[int, str] = {
+    1: "purchase",
+    2: "prepare_for_closing",
+    3: "closed",
+    4: "rehab",
+    5: "sell",
+    6: "sold",
+}
+
+
 @declarative_mixin
 class BaseDeal:
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
@@ -106,7 +130,9 @@ class BoughtBrrrDeal(Base, BaseDeal):
     capex_percent_of_rent = Column(Numeric(5, 2), nullable=False, default=0.0)
 
     # Bought deal columns
-    bought_stage = Column(Integer, nullable=False, default=1)
+    # `bought_stage` is a stable string ID (slug for defaults, UUID-prefixed for
+    # user-added stages). See PipelineTemplate. Stored as TEXT for portability.
+    bought_stage = Column(String, nullable=False, default="purchase")
     completed_substages = Column(JSON, nullable=False, default=dict)
     source_deal_id = Column(Uuid(as_uuid=True), nullable=True)
 
@@ -124,10 +150,32 @@ class BoughtFlipDeal(Base, BaseDeal):
     capital_gains_tax_rate = Column(Numeric(5, 2), nullable=False, default=0.0)
     sale_comps = Column(JSON, nullable=True)
 
-    # Bought deal columns
-    bought_stage = Column(Integer, nullable=False, default=1)
+    # Bought deal columns (string stage ID, see note above)
+    bought_stage = Column(String, nullable=False, default="purchase")
     completed_substages = Column(JSON, nullable=False, default=dict)
     source_deal_id = Column(Uuid(as_uuid=True), nullable=True)
+
+
+class PipelineTemplate(Base):
+    """Persisted bought-deal pipeline template, one row per deal type.
+
+    `stages` is a JSON array shaped like:
+        [
+          {"id": "purchase", "name": "Purchase",
+           "subStages": [{"id": "purchase_agreement", "label": "Purchase Agreement"}, ...]},
+          ...
+        ]
+
+    IDs are stable string identifiers. Labels/names are display-only and may
+    change freely without impacting existing deals (whose `bought_stage` and
+    `completed_substages` keys reference IDs, not labels).
+    """
+
+    __tablename__ = "pipeline_templates"
+
+    deal_type = Column(String, primary_key=True)  # "BRRRR" | "FLIP"
+    stages = Column(JSON, nullable=False, default=list)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class LiquidityTransaction(Base):

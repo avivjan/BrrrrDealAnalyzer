@@ -79,12 +79,24 @@ def delete_bought_flip_deal(db: Session, deal_id: str) -> bool:
     return True
 
 
+def _first_stage_id(db: Session, deal_type: str) -> str:
+    """Return the ID of the first stage in the current pipeline template."""
+    from models import PipelineTemplate
+    from pipeline_defaults import default_stages_for
+
+    row = db.query(PipelineTemplate).filter(PipelineTemplate.deal_type == deal_type).first()
+    stages = (row.stages if row and row.stages else default_stages_for(deal_type)) or []
+    if stages:
+        return stages[0]["id"]
+    return "purchase"
+
+
 def create_bought_from_active_brrr(db: Session, source_deal: BrrrActiveDeal) -> BoughtBrrrDeal:
     data = {c.name: getattr(source_deal, c.name) for c in source_deal.__table__.columns if c.name not in ['id', 'created_at', 'updated_at']}
-    data['bought_stage'] = 1
+    data['bought_stage'] = _first_stage_id(db, "BRRRR")
     data['completed_substages'] = {}
     data['source_deal_id'] = source_deal.id
-    
+
     new_deal = BoughtBrrrDeal(**data)
     db.add(new_deal)
     db.commit()
@@ -94,10 +106,10 @@ def create_bought_from_active_brrr(db: Session, source_deal: BrrrActiveDeal) -> 
 
 def create_bought_from_active_flip(db: Session, source_deal: FlipActiveDeal) -> BoughtFlipDeal:
     data = {c.name: getattr(source_deal, c.name) for c in source_deal.__table__.columns if c.name not in ['id', 'created_at', 'updated_at']}
-    data['bought_stage'] = 1
+    data['bought_stage'] = _first_stage_id(db, "FLIP")
     data['completed_substages'] = {}
     data['source_deal_id'] = source_deal.id
-    
+
     new_deal = BoughtFlipDeal(**data)
     db.add(new_deal)
     db.commit()

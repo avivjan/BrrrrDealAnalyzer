@@ -126,18 +126,55 @@ export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;
 
 // Bought Deals
 export interface BoughtBrrrDealRes extends BrrrDealRes {
-  boughtStage: number;
+  /** Stable pipeline stage id (slug or `stage_<uuid>`). */
+  boughtStage: string;
   completedSubstages: Record<string, boolean>;
   sourceDealId?: string;
 }
 
 export interface BoughtFlipDealRes extends FlipDealRes {
-  boughtStage: number;
+  /** Stable pipeline stage id (slug or `stage_<uuid>`). */
+  boughtStage: string;
   completedSubstages: Record<string, boolean>;
   sourceDealId?: string;
 }
 
 export type BoughtDealRes = BoughtBrrrDealRes | BoughtFlipDealRes;
+
+// Pipeline templates (editable per deal type)
+export interface PipelineSubStageDto {
+  id: string;
+  label: string;
+}
+
+export interface PipelineStageDto {
+  id: string;
+  name: string;
+  subStages: PipelineSubStageDto[];
+}
+
+export interface PipelineTemplateDto {
+  dealType: 'BRRRR' | 'FLIP';
+  stages: PipelineStageDto[];
+  updated_at?: string | null;
+}
+
+export interface PipelineSubstageStat {
+  substageId: string;
+  dealsWithCompletion: number;
+}
+
+export interface PipelineStageStat {
+  stageId: string;
+  dealCount: number;
+  substages: PipelineSubstageStat[];
+}
+
+export interface PipelineTemplateStats {
+  dealType: 'BRRRR' | 'FLIP';
+  stages: PipelineStageStat[];
+  orphanStageDealCount: number;
+}
 
 export interface SendOfferReq {
   agent_name: string;

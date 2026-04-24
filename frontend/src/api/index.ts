@@ -1,5 +1,16 @@
 import axios from 'axios';
-import type { AnalyzeDealReq, AnalyzeDealRes, ActiveDealCreate, ActiveDealRes, SendOfferReq, SendOfferRes, BoughtDealRes } from '../types';
+import type {
+  AnalyzeDealReq,
+  AnalyzeDealRes,
+  ActiveDealCreate,
+  ActiveDealRes,
+  SendOfferReq,
+  SendOfferRes,
+  BoughtDealRes,
+  PipelineTemplateDto,
+  PipelineTemplateStats,
+  PipelineStageDto,
+} from '../types';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -199,5 +210,31 @@ export default {
       console.groupEnd();
       throw error;
     }
+  },
+
+  // Pipeline Templates (bought-deal stages/substages per deal type)
+  async getPipelineTemplates(): Promise<PipelineTemplateDto[]> {
+    const response = await apiClient.get<PipelineTemplateDto[]>('/pipeline-templates');
+    return response.data;
+  },
+
+  async updatePipelineTemplate(
+    dealType: 'BRRRR' | 'FLIP',
+    stages: PipelineStageDto[],
+  ): Promise<PipelineTemplateDto> {
+    const response = await apiClient.put<PipelineTemplateDto>(
+      `/pipeline-templates/${dealType}`,
+      { stages },
+    );
+    return response.data;
+  },
+
+  async getPipelineTemplateStats(
+    dealType: 'BRRRR' | 'FLIP',
+  ): Promise<PipelineTemplateStats> {
+    const response = await apiClient.get<PipelineTemplateStats>(
+      `/pipeline-templates/${dealType}/stats`,
+    );
+    return response.data;
   },
 };

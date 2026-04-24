@@ -2,7 +2,8 @@ import { defineStore } from 'pinia';
 import { ref, computed, toRaw } from 'vue';
 import api from '../api';
 import type { BoughtDealRes, AnalyzeDealReq, AnalyzeDealRes } from '../types';
-import { canAdvance, getPipelineForType } from '../config/boughtDealStages';
+import { canAdvance } from '../config/boughtDealStages';
+import { usePipelineTemplateStore } from './pipelineTemplateStore';
 
 export const useBoughtDealStore = defineStore('boughtDeals', () => {
   const boughtDeals = ref<BoughtDealRes[]>([]);
@@ -131,12 +132,14 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     if (!deal) return;
 
     const dealType = deal.deal_type || 'BRRRR';
-    if (!canAdvance(dealType, deal.boughtStage, deal.completedSubstages)) {
+    const pipelineStore = usePipelineTemplateStore();
+    const pipeline = pipelineStore.pipelineFor(dealType);
+
+    if (!canAdvance(pipeline, deal.boughtStage, deal.completedSubstages)) {
       console.warn('Cannot advance: not all substages complete');
       return false;
     }
 
-    const pipeline = getPipelineForType(dealType);
     const currentIdx = pipeline.stages.findIndex(s => s.id === deal.boughtStage);
     if (currentIdx === -1 || currentIdx >= pipeline.stages.length - 1) {
       console.warn('Already at terminal stage');
@@ -167,7 +170,7 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     }
   }
 
-  async function updateBoughtDealStage(dealId: string, newStageId: number) {
+  async function updateBoughtDealStage(dealId: string, newStageId: string) {
     const deal = boughtDeals.value.find(d => d.id === dealId);
     if (!deal) return;
 

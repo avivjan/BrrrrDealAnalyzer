@@ -3,7 +3,8 @@ import { computed, ref } from "vue";
 import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
-import { getStageConfig, getSubStagesForStage, canAdvance, getPipelineForType } from "../config/boughtDealStages";
+import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
+import { resolveStage, getSubStagesForStage, canAdvance } from "../config/boughtDealStages";
 
 const props = defineProps<{
   deal: BoughtDealRes;
@@ -14,6 +15,7 @@ const emit = defineEmits<{
 }>();
 
 const store = useBoughtDealStore();
+const pipelineStore = usePipelineTemplateStore();
 const isCopied = ref(false);
 
 const isBrrr = computed(() => !props.deal.deal_type || props.deal.deal_type === "BRRRR");
@@ -23,11 +25,12 @@ const brrrDeal = computed(() => isBrrr.value ? (props.deal as BoughtBrrrDealRes)
 const flipDeal = computed(() => isFlip.value ? (props.deal as BoughtFlipDealRes) : null);
 
 const dealType = computed(() => (props.deal.deal_type || "BRRRR") as 'FLIP' | 'BRRRR');
-const stageConfig = computed(() => getStageConfig(dealType.value, props.deal.boughtStage));
-const subStages = computed(() => getSubStagesForStage(dealType.value, props.deal.boughtStage));
-const allSubstagesComplete = computed(() => canAdvance(dealType.value, props.deal.boughtStage, props.deal.completedSubstages));
-
-const pipeline = computed(() => getPipelineForType(dealType.value));
+const pipeline = computed(() => pipelineStore.pipelineFor(dealType.value));
+const stageConfig = computed(() => resolveStage(pipeline.value, props.deal.boughtStage));
+const subStages = computed(() => getSubStagesForStage(pipeline.value, props.deal.boughtStage));
+const allSubstagesComplete = computed(() =>
+  canAdvance(pipeline.value, props.deal.boughtStage, props.deal.completedSubstages),
+);
 const progressPercent = computed(() => {
   const stages = pipeline.value.stages;
   const currentIdx = stages.findIndex(s => s.id === props.deal.boughtStage);

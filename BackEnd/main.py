@@ -37,14 +37,30 @@ from crud_liquidity import (
     update_transaction, delete_transaction,
     get_settings, upsert_settings,
 )
+from crud_pipeline_template import (
+    ensure_defaults as ensure_pipeline_defaults,
+    list_templates as list_pipeline_templates,
+    upsert_template as upsert_pipeline_template,
+    get_stats as get_pipeline_stats,
+)
 from ReqRes.liquidity.liquidityReq import (
     LiquidityTransactionCreate, LiquidityTransactionUpdate, LiquidityTransactionRes,
     LiquiditySettingsUpdate, LiquiditySettingsRes,
 )
+from ReqRes.pipelineTemplate import (
+    PipelineTemplateUpsert,
+    PipelineTemplateRes,
+    PipelineTemplateStatsRes,
+)
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
-from db import Base, engine, get_db
-from models import BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal, LiquidityTransaction
+from db import Base, engine, SessionLocal, get_db
+from models import (
+    BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
+    LiquidityTransaction, PipelineTemplate,
+    DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
+    DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
+)
 from sqlalchemy import text, inspect as sa_inspect
 import smtplib
 from email.mime.text import MIMEText
@@ -131,7 +147,70 @@ def _run_migrations():
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
 
+    # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
+    # to the stable slug IDs used by the default pipeline template. Idempotent.
+    _migrate_bought_stage_to_string(inspector, "bought_brrrr_deals", DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT)
+    _migrate_bought_stage_to_string(inspector, "bought_flip_deals", DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT)
+
+
+def _migrate_bought_stage_to_string(
+    inspector,
+    table_name: str,
+    slug_by_int: dict[int, str],
+) -> None:
+    if table_name not in inspector.get_table_names():
+        return
+    cols = {c["name"]: c for c in inspector.get_columns(table_name)}
+    col = cols.get("bought_stage")
+    if col is None:
+        return
+
+    col_type = str(col.get("type") or "").upper()
+    # Already text-like? Nothing to do.
+    if any(token in col_type for token in ("CHAR", "TEXT", "STRING", "VARCHAR")):
+        return
+
+    default_slug = slug_by_int.get(1, "purchase")
+    with engine.begin() as conn:
+        # 1) Add a temp text column with a safe default.
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ADD COLUMN bought_stage_new TEXT"
+        ))
+        # 2) Translate each legacy int to its canonical slug; anything unknown
+        #    clamps to the first default stage so the board never breaks.
+        for legacy_int, slug in slug_by_int.items():
+            conn.execute(
+                text(
+                    f"UPDATE {table_name} SET bought_stage_new = :slug "
+                    f"WHERE bought_stage = :legacy_int"
+                ),
+                {"slug": slug, "legacy_int": legacy_int},
+            )
+        conn.execute(
+            text(
+                f"UPDATE {table_name} SET bought_stage_new = :default_slug "
+                f"WHERE bought_stage_new IS NULL"
+            ),
+            {"default_slug": default_slug},
+        )
+        # 3) Drop the old int column and rename the new one into place.
+        conn.execute(text(f"ALTER TABLE {table_name} DROP COLUMN bought_stage"))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} RENAME COLUMN bought_stage_new TO bought_stage"
+        ))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ALTER COLUMN bought_stage SET NOT NULL"
+        ))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ALTER COLUMN bought_stage SET DEFAULT 'purchase'"
+        ))
+
+
 _run_migrations()
+
+# Seed pipeline template rows (BRRRR + FLIP) on first boot. Safe to call often.
+with SessionLocal() as _seed_db:
+    ensure_pipeline_defaults(_seed_db)
 
 
 app.add_middleware(
@@ -882,6 +961,38 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
         reserve_k=float(settings.reserve_k),
         updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
     )
+
+
+# --- Pipeline Templates (bought-deal stages/substages) ---
+
+_VALID_DEAL_TYPES = {"BRRRR", "FLIP"}
+
+
+def _require_valid_deal_type(deal_type: str) -> str:
+    if deal_type not in _VALID_DEAL_TYPES:
+        raise HTTPException(status_code=400, detail="deal_type must be 'BRRRR' or 'FLIP'")
+    return deal_type
+
+
+@app.get("/pipeline-templates", response_model=List[PipelineTemplateRes])
+def list_pipeline_templates_route(db: Session = Depends(get_db)):
+    return list_pipeline_templates(db)
+
+
+@app.put("/pipeline-templates/{deal_type}", response_model=PipelineTemplateRes)
+def update_pipeline_template_route(
+    deal_type: str,
+    payload: PipelineTemplateUpsert,
+    db: Session = Depends(get_db),
+):
+    _require_valid_deal_type(deal_type)
+    return upsert_pipeline_template(db, deal_type, payload)  # type: ignore[arg-type]
+
+
+@app.get("/pipeline-templates/{deal_type}/stats", response_model=PipelineTemplateStatsRes)
+def pipeline_template_stats_route(deal_type: str, db: Session = Depends(get_db)):
+    _require_valid_deal_type(deal_type)
+    return get_pipeline_stats(db, deal_type)  # type: ignore[arg-type]
 
 
 @app.get("/helloworld")

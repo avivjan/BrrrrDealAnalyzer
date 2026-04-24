@@ -1,10 +1,20 @@
+/**
+ * Bought-deal pipeline helpers.
+ *
+ * The pipeline template is persisted on the server (see `pipeline_templates`
+ * table). These defaults are kept in the frontend only as a fallback for
+ * first-render before the API resolves, and to seed new installs. IDs are
+ * stable string identifiers – renaming or reordering never changes an id.
+ */
+
 export interface SubStage {
   id: string;
   label: string;
 }
 
 export interface BoughtDealStage {
-  id: number;
+  /** Stable string ID (slug for defaults, `stage_<uuid>` for user-added). */
+  id: string;
   name: string;
   subStages: SubStage[];
 }
@@ -18,7 +28,7 @@ export const flipPipeline: BoughtDealPipeline = {
   dealType: 'FLIP',
   stages: [
     {
-      id: 1,
+      id: 'purchase',
       name: 'Purchase',
       subStages: [
         { id: 'purchase_agreement', label: 'Purchase Agreement' },
@@ -26,7 +36,7 @@ export const flipPipeline: BoughtDealPipeline = {
       ],
     },
     {
-      id: 2,
+      id: 'prepare_for_closing',
       name: 'Prepare for Closing',
       subStages: [
         { id: 'lender_approval', label: 'Lender Approval' },
@@ -35,17 +45,17 @@ export const flipPipeline: BoughtDealPipeline = {
         { id: 'title_approval', label: 'Title Approval (Ready to Close)' },
       ],
     },
-    { id: 3, name: 'Closed', subStages: [] },
-    { id: 4, name: 'Rehab', subStages: [] },
+    { id: 'closed', name: 'Closed', subStages: [] },
+    { id: 'rehab', name: 'Rehab', subStages: [] },
     {
-      id: 5,
+      id: 'sell',
       name: 'Sell',
       subStages: [
         { id: 'decide_who_sells', label: 'Decide Who Sells It' },
         { id: 'pictures_ads', label: 'Pictures & Ads' },
       ],
     },
-    { id: 6, name: 'Sold', subStages: [] },
+    { id: 'sold', name: 'Sold', subStages: [] },
   ],
 };
 
@@ -53,7 +63,7 @@ export const brrrPipeline: BoughtDealPipeline = {
   dealType: 'BRRRR',
   stages: [
     {
-      id: 1,
+      id: 'purchase',
       name: 'Purchase',
       subStages: [
         { id: 'purchase_agreement', label: 'Purchase Agreement' },
@@ -61,7 +71,7 @@ export const brrrPipeline: BoughtDealPipeline = {
       ],
     },
     {
-      id: 2,
+      id: 'prepare_for_closing',
       name: 'Prepare for Closing',
       subStages: [
         { id: 'lender_approval', label: 'Lender Approval' },
@@ -71,12 +81,14 @@ export const brrrPipeline: BoughtDealPipeline = {
         { id: 'understand_breakdown', label: 'Understand Breakdown' },
       ],
     },
-    { id: 3, name: 'Closed', subStages: [
-      { id: 'save_package', label: 'Lender Approval' }
-    ] },
-    { id: 4, name: 'Rehab', subStages: [] },
     {
-      id: 5,
+      id: 'closed',
+      name: 'Closed',
+      subStages: [{ id: 'save_package', label: 'Save Package' }],
+    },
+    { id: 'rehab', name: 'Rehab', subStages: [] },
+    {
+      id: 'rent',
       name: 'Rent',
       subStages: [
         { id: 'decide_who_rents', label: 'Decide Who Rents It' },
@@ -84,7 +96,7 @@ export const brrrPipeline: BoughtDealPipeline = {
       ],
     },
     {
-      id: 6,
+      id: 'prepare_for_refi',
       name: 'Prepare for Refi',
       subStages: [
         { id: 'choose_best_lender', label: 'Choose Best Lender' },
@@ -93,53 +105,105 @@ export const brrrPipeline: BoughtDealPipeline = {
         { id: 'decide_reserve', label: 'Decide on Reserve (Down/% /Max)' },
       ],
     },
-    { id: 7, name: 'Refinanced', subStages: [
-      { id: 'save_package', label: 'Save Package' },
-    ] },
+    {
+      id: 'refinanced',
+      name: 'Refinanced',
+      subStages: [{ id: 'save_package_refi', label: 'Save Package' }],
+    },
   ],
 };
 
-export function getPipelineForType(dealType: 'FLIP' | 'BRRRR'): BoughtDealPipeline {
+export function getDefaultPipelineForType(
+  dealType: 'FLIP' | 'BRRRR',
+): BoughtDealPipeline {
   return dealType === 'FLIP' ? flipPipeline : brrrPipeline;
 }
 
-export function getStageConfig(dealType: 'FLIP' | 'BRRRR', stageId: number): BoughtDealStage {
-  const pipeline = getPipelineForType(dealType);
+/**
+ * Find a stage by ID within a pipeline. When the referenced stage has been
+ * deleted from the template, clamp to the nearest position (first or last)
+ * so the board never breaks. Never throws, never mutates the pipeline.
+ */
+export function resolveStage(
+  pipeline: BoughtDealPipeline,
+  stageId: string,
+): BoughtDealStage {
   const stages = pipeline.stages;
   const first = stages[0];
   const last = stages[stages.length - 1];
   if (!first || !last) {
-    throw new Error(`[BoughtDealStages] Pipeline for ${dealType} has no stages`);
+    // A pipeline with zero stages is invalid; fall back to the shipped default
+    // so the UI can still render instead of crashing.
+    const fallback = getDefaultPipelineForType(pipeline.dealType);
+    return fallback.stages[0]!;
   }
-  const stage = stages.find(s => s.id === stageId);
-  if (!stage) {
-    console.warn(`[BoughtDealStages] Stage ${stageId} not found for ${dealType}, clamping to nearest valid stage`);
-    if (stageId > last.id) {
-      return last;
-    }
-    return first;
-  }
-  return stage;
+  const stage = stages.find((s) => s.id === stageId);
+  if (stage) return stage;
+  console.warn(
+    `[PipelineTemplate] Stage "${stageId}" not found for ${pipeline.dealType}; clamping to first stage.`,
+  );
+  return first;
 }
 
-export function getSubStagesForStage(dealType: 'FLIP' | 'BRRRR', stageId: number): SubStage[] {
-  return getStageConfig(dealType, stageId).subStages;
+export function getSubStagesForStage(
+  pipeline: BoughtDealPipeline,
+  stageId: string,
+): SubStage[] {
+  return resolveStage(pipeline, stageId).subStages;
 }
 
-export function canAdvance(dealType: 'FLIP' | 'BRRRR', stageId: number, completedSubstages: Record<string, boolean>): boolean {
-  const subStages = getSubStagesForStage(dealType, stageId);
+/**
+ * Can this deal advance? Only substages that still exist in the current
+ * template are considered – orphan entries in `completedSubstages` left over
+ * from deleted substages are ignored (never block advance, never crash).
+ */
+export function canAdvance(
+  pipeline: BoughtDealPipeline,
+  stageId: string,
+  completedSubstages: Record<string, boolean>,
+): boolean {
+  const subStages = getSubStagesForStage(pipeline, stageId);
   if (subStages.length === 0) return true;
-  return subStages.every(sub => completedSubstages[sub.id] === true);
+  return subStages.every((sub) => completedSubstages[sub.id] === true);
 }
 
-export function isTerminalStage(dealType: 'FLIP' | 'BRRRR', stageId: number): boolean {
-  const pipeline = getPipelineForType(dealType);
+export function isTerminalStage(
+  pipeline: BoughtDealPipeline,
+  stageId: string,
+): boolean {
   const stages = pipeline.stages;
   const last = stages[stages.length - 1];
   return last !== undefined && stageId === last.id;
 }
 
-export function getMissingSubstages(dealType: 'FLIP' | 'BRRRR', stageId: number, completedSubstages: Record<string, boolean>): string[] {
-  const subStages = getSubStagesForStage(dealType, stageId);
-  return subStages.filter(sub => !completedSubstages[sub.id]).map(sub => sub.label);
+export function getMissingSubstages(
+  pipeline: BoughtDealPipeline,
+  stageId: string,
+  completedSubstages: Record<string, boolean>,
+): string[] {
+  const subStages = getSubStagesForStage(pipeline, stageId);
+  return subStages
+    .filter((sub) => !completedSubstages[sub.id])
+    .map((sub) => sub.label);
+}
+
+export function getStageIndex(pipeline: BoughtDealPipeline, stageId: string): number {
+  return pipeline.stages.findIndex((s) => s.id === stageId);
+}
+
+/** Generate a collision-resistant id for a new stage or substage. */
+export function newStageId(): string {
+  return `stage_${cryptoRandomId()}`;
+}
+
+export function newSubStageId(): string {
+  return `sub_${cryptoRandomId()}`;
+}
+
+function cryptoRandomId(): string {
+  const g: any = globalThis as any;
+  if (g.crypto && typeof g.crypto.randomUUID === 'function') {
+    return g.crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
