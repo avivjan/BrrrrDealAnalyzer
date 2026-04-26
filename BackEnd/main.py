@@ -369,8 +369,8 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
 
     # 2. Time Contingency (The "Safety Multiplier")
     # Doubling these accounts for delays in permits, rehab, or tenant placement
-    total_holding_cash = holding_cost_until_refi * 2
-    total_interest_cash = HML_interest_in_cash * 2
+    total_holding_cash = holding_cost_until_refi * 1.5
+    total_interest_cash = HML_interest_in_cash * 1.5
     
     # 3. Closing Buffer
     total_closing_buy = closing_costs_buy * Decimal("1.1")
