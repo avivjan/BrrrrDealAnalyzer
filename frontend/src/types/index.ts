@@ -67,6 +67,22 @@ export interface BrrrAnalyzeReq {
   capexPercent: number;
 }
 
+/**
+ * One self-documenting line in a calculation, emitted by the backend next to
+ * the source variable. Frontend uses these to render hover/PDF explanations.
+ */
+export interface CalcStep {
+  label: string;
+  value: number;
+  formula: string;
+}
+
+/**
+ * Map of metric key (e.g. "cash_flow", "roi", "net_profit") to the ordered
+ * list of CalcSteps that derive it. Frontend filters by key per metric.
+ */
+export type CalcBreakdowns = Record<string, CalcStep[]>;
+
 export interface BrrrAnalyzeRes {
   cash_flow: number;
   dscr?: number;
@@ -79,6 +95,7 @@ export interface BrrrAnalyzeRes {
   total_cash_needed_for_deal?: number;
   total_cash_needed_for_deal_with_buffer?: number;
   messages?: string[];
+  breakdowns?: CalcBreakdowns;
 }
 
 export interface BrrrDealCreate extends BaseDealReq, Partial<BrrrAnalyzeReq> {
@@ -112,6 +129,7 @@ export interface FlipAnalyzeRes {
   total_holding_costs: number;
   total_hml_interest: number;
   messages?: string[];
+  breakdowns?: CalcBreakdowns;
 }
 
 export interface FlipDealCreate extends BaseDealReq, Partial<FlipAnalyzeReq> {

@@ -15,8 +15,10 @@ import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
+import CalcInfo from "../components/ui/CalcInfo.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes } from "../types";
+import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes, CalcStep } from "../types";
+import api from "../api";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -436,6 +438,7 @@ watch(
 );
 
 const isHeaderCopied = ref(false);
+const isDownloadingPdf = ref(false);
 
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
@@ -448,6 +451,37 @@ const copyToClipboard = async (deal: ActiveDealRes) => {
     }, 2000);
   } catch (err) {
     console.error("Failed to copy to clipboard", err);
+  }
+};
+
+const analysisBreakdown = (key: string): CalcStep[] => {
+  const src = currentAnalysis.value?.breakdowns;
+  if (!src || !Array.isArray(src[key])) return [];
+  return src[key];
+};
+
+const downloadDealReport = async () => {
+  if (!editingDeal.value) return;
+  const deal = editingDeal.value;
+  const dealType: "BRRRR" | "FLIP" = deal.deal_type === "FLIP" ? "FLIP" : "BRRRR";
+
+  isDownloadingPdf.value = true;
+  try {
+    const address = deal.address || "Property";
+    const payload = JSON.parse(JSON.stringify(deal)) as AnalyzeDealReq;
+    const blob = await api.downloadDealPdf(payload, dealType, address);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `BigWhales_${dealType}_${address.replace(/[^A-Za-z0-9]+/g, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Failed to download deal report", err);
+  } finally {
+    isDownloadingPdf.value = false;
   }
 };
 
@@ -633,6 +667,20 @@ console.groupEnd();
             />
           </div>
           <div class="flex items-center gap-4">
+            <button
+              @click="downloadDealReport"
+              :disabled="isDownloadingPdf"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              :title="isDownloadingPdf ? 'Building PDF…' : 'Download Deal Report (Big Whales branded PDF)'"
+            >
+              <i
+                class="pi text-base"
+                :class="isDownloadingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
+              ></i>
+              <span class="hidden sm:inline">
+                {{ isDownloadingPdf ? "Generating…" : "Download Report" }}
+              </span>
+            </button>
             <button
               @click="copyToClipboard(editingDeal)"
               class="transition-colors"
@@ -924,7 +972,14 @@ console.groupEnd();
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                         <div>
-                            <div class="text-gray-500">Cash Flow</div>
+                            <div class="text-gray-500 inline-flex items-center gap-1">
+                                Cash Flow
+                                <CalcInfo
+                                    :steps="analysisBreakdown('cash_flow')"
+                                    title="Cash Flow"
+                                    accent-class="text-blue-600"
+                                />
+                            </div>
                             <div class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                         </div>
                         <div>
@@ -948,7 +1003,14 @@ console.groupEnd();
                             <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">ROI</div>
+                            <div class="text-gray-500 inline-flex items-center gap-1">
+                                ROI
+                                <CalcInfo
+                                    :steps="analysisBreakdown('roi')"
+                                    title="ROI"
+                                    accent-class="text-blue-600"
+                                />
+                            </div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
@@ -962,11 +1024,25 @@ console.groupEnd();
                     </template>
                     <template v-else>
                         <div>
-                            <div class="text-gray-500">Net Profit</div>
+                            <div class="text-gray-500 inline-flex items-center gap-1">
+                                Net Profit
+                                <CalcInfo
+                                    :steps="analysisBreakdown('net_profit')"
+                                    title="Net Profit"
+                                    accent-class="text-orange-600"
+                                />
+                            </div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">ROI</div>
+                            <div class="text-gray-500 inline-flex items-center gap-1">
+                                ROI
+                                <CalcInfo
+                                    :steps="analysisBreakdown('roi')"
+                                    title="ROI"
+                                    accent-class="text-blue-600"
+                                />
+                            </div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>

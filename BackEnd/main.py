@@ -61,6 +61,8 @@ from models import (
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
+from calc_breakdown import CalcBreakdown, fmt_money, fmt_pct, fmt_num
+from deal_pdf import build_deal_pdf
 from sqlalchemy import text, inspect as sa_inspect
 import smtplib
 from email.mime.text import MIMEText
@@ -415,6 +417,10 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
     return (total_cash_needed_without_buffer, total_cash_needed_with_buffer)
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
+    # Self-documenting calculation: each intermediate variable below registers
+    # its own CalcStep next to the line that produces it. Math is unchanged.
+    breakdown = CalcBreakdown()
+
     arv = thousands_to_dollars(payload.arv_in_thousands)
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
     rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
@@ -426,6 +432,12 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.Months_until_refi)
     
     operating_expenses = calc_montly_operating_expenses(payload)
+    breakdown.add(
+        "cash_flow",
+        "Monthly Operating Expenses",
+        operating_expenses,
+        f"Rent ({fmt_money(payload.rent)}) × (Vacancy {fmt_pct(payload.vacancy_percent)} + Mgmt {fmt_pct(payload.property_managment_fee_precentages_from_rent)} + Maint {fmt_pct(payload.maintenance_percent)} + CapEx {fmt_pct(payload.capex_percent_of_rent)}) + Taxes ({fmt_money(payload.annual_property_taxes)})/12 + Insurance ({fmt_money(payload.annual_insurance)})/12 + HOA ({fmt_money(payload.montly_hoa)}) = {fmt_money(operating_expenses)}",
+    )
     closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
     closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
     ltv = payload.ltv_as_precent/Decimal("100")
@@ -433,20 +445,84 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     cash_reserve_in_cash = thousands_to_dollars(payload.cash_reserve_in_thousands)
 
     cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, holding_cost_until_refi, cash_reserve_in_cash)
+    # Decompose the helper's inputs only for the formula narrative (no math change).
+    _brrr_loan_amount = arv * ltv
+    _brrr_hml_payoff = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
+    _brrr_down_payment_cash = (payload.down_payment / Decimal("100")) * purchase_price
+    _brrr_total_cash_invested = _brrr_down_payment_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1 - int(payload.use_HM_for_rehab)) + HML_interest_in_cash + holding_cost_until_refi
+    breakdown.add(
+        ["net_profit", "roi", "cash_on_cash"],
+        "Cash Out from Deal",
+        cash_out_from_deal,
+        f"Refi Loan ({fmt_money(_brrr_loan_amount)}) − HML Payoff ({fmt_money(_brrr_hml_payoff)}) − Refi Closing ({fmt_money(closing_cost_refi)}) − Refi Points ({fmt_money(refi_points_in_cash)}) − Cash Reserve ({fmt_money(cash_reserve_in_cash)}) − Total Cash Invested ({fmt_money(_brrr_total_cash_invested)}) = {fmt_money(cash_out_from_deal)}",
+    )
     cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, cash_reserve_in_cash)
     mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
+    breakdown.add(
+        ["cash_flow", "dscr"],
+        "Monthly Mortgage Payment",
+        mortgage_payment,
+        f"Amortize Loan ({fmt_money(_brrr_loan_amount)} = ARV {fmt_money(arv)} × LTV {fmt_pct(payload.ltv_as_precent)}) at {fmt_pct(payload.interest_rate)}/yr over {payload.loan_term_years} years = {fmt_money(mortgage_payment)}",
+    )
 
     net_operating_income = payload.rent - operating_expenses
+    breakdown.add(
+        "cash_flow",
+        "Net Operating Income (NOI)",
+        net_operating_income,
+        f"Rent ({fmt_money(payload.rent)}) − Operating Expenses ({fmt_money(operating_expenses)}) = {fmt_money(net_operating_income)}",
+    )
     cash_flow = net_operating_income - mortgage_payment
+    breakdown.add(
+        ["cash_flow", "roi", "cash_on_cash"],
+        "Monthly Cash Flow",
+        cash_flow,
+        f"NOI ({fmt_money(net_operating_income)}) − Mortgage ({fmt_money(mortgage_payment)}) = {fmt_money(cash_flow)}",
+    )
     dscr =  calcDSCR(payload.rent, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, mortgage_payment)
+    # Decompose PITIA only for the formula narrative (matches calcDSCR internals).
+    _brrr_pitia = mortgage_payment + payload.annual_property_taxes / Decimal("12.0") + payload.annual_insurance / Decimal("12.0") + payload.montly_hoa
+    breakdown.add(
+        "dscr",
+        "DSCR",
+        dscr,
+        (f"Rent ({fmt_money(payload.rent)}) / PITIA ({fmt_money(_brrr_pitia)} = Mortgage + Taxes/12 + Ins/12 + HOA) = {fmt_num(dscr)}"
+         if _brrr_pitia else "PITIA is 0 → DSCR undefined"),
+    )
     cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
+    if cash_out_from_deal >= 0:
+        _brrr_coc_formula = f"Cash Out ({fmt_money(cash_out_from_deal)}) ≥ 0 → no equity at risk (∞)"
+    elif cash_flow <= 0:
+        _brrr_coc_formula = f"Cash Flow ({fmt_money(cash_flow)}) ≤ 0 → CoC undefined (-∞)"
+    else:
+        _brrr_coc_formula = f"Annual Cash Flow ({fmt_money(cash_flow * 12)}) / |Cash Out| ({fmt_money(abs(cash_out_from_deal))}) × 100 = {fmt_pct(cash_on_cash)}"
+    breakdown.add("cash_on_cash", "Cash on Cash", cash_on_cash, _brrr_coc_formula)
     # Cash reserve is treated as an immediate principal paydown on the DSCR
     # loan, so the post-refi loan balance is `arv*ltv - cash_reserve`. That
     # paydown converts cash_out into equity 1:1, leaving net_profit unchanged
     # (CoC and ROI still drop because more capital is tied up in the deal).
     equity = arv * (1 - ltv) + cash_reserve_in_cash
+    breakdown.add(
+        ["net_profit", "roi"],
+        "Equity (post-refi)",
+        equity,
+        f"ARV ({fmt_money(arv)}) × (1 − LTV {fmt_pct(payload.ltv_as_precent)}) + Cash Reserve ({fmt_money(cash_reserve_in_cash)}) = {fmt_money(equity)}",
+    )
     net_profit = equity + cash_out_from_deal
+    breakdown.add(
+        ["net_profit", "roi"],
+        "Net Profit",
+        net_profit,
+        f"Equity ({fmt_money(equity)}) + Cash Out ({fmt_money(cash_out_from_deal)}) = {fmt_money(net_profit)}",
+    )
     roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
+    if cash_out_from_deal >= 0:
+        _brrr_roi_formula = f"Cash Out ({fmt_money(cash_out_from_deal)}) ≥ 0 → no equity at risk (∞)"
+    elif cash_flow <= 0:
+        _brrr_roi_formula = f"Cash Flow ({fmt_money(cash_flow)}) ≤ 0 → ROI undefined (-∞)"
+    else:
+        _brrr_roi_formula = f"(Annual Cash Flow ({fmt_money(cash_flow * 12)}) + Net Profit ({fmt_money(net_profit)})) / |Cash Out| ({fmt_money(abs(cash_out_from_deal))}) × 100 = {fmt_pct(roi)}"
+    breakdown.add("roi", "ROI", roi, _brrr_roi_formula)
     total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
     
     return analyzeBRRRRes(
@@ -454,7 +530,8 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         roi=roi, equity=equity, net_profit=net_profit,
         total_cash_needed_for_deal=total_cash_needed_without_buffer,
         total_cash_needed_for_deal_with_buffer=total_cash_needed_with_buffer,
-        messages=None
+        messages=None,
+        breakdowns=breakdown.to_dict(),
     )
 
 
@@ -494,28 +571,68 @@ def validate_flip_inputs(payload: analyzeFlipReq):
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
 def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
+    # Self-documenting calculation: each intermediate variable below registers
+    # its own CalcStep next to the line that produces it. Math is unchanged.
+    breakdown = CalcBreakdown()
+
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
     rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
     contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
     rehab_cost = rehab_cost_base + contingency
+    breakdown.add(
+        "net_profit",
+        "Rehab Cost (with contingency)",
+        rehab_cost,
+        f"Base ({fmt_money(rehab_cost_base)}) + Contingency {fmt_pct(payload.rehab_contingency_percent)} ({fmt_money(contingency)}) = {fmt_money(rehab_cost)}",
+    )
     sale_price = thousands_to_dollars(payload.sale_price_in_thousands)
     closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
     
     hml_amount = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
     hml_points_cash = (payload.HML_points / Decimal("100.0")) * hml_amount
+    breakdown.add(
+        "net_profit",
+        "HML Points (cash)",
+        hml_points_cash,
+        f"{fmt_pct(payload.HML_points)} × HML Amount ({fmt_money(hml_amount)}) = {fmt_money(hml_points_cash)}",
+    )
     
     monthly_interest = (payload.HML_interest_rate / Decimal("100.0") / Decimal("12.0")) * hml_amount
     total_hml_interest = monthly_interest * payload.holding_time_months
+    breakdown.add(
+        "net_profit",
+        "Total HML Interest (over holding period)",
+        total_hml_interest,
+        f"HML Amount ({fmt_money(hml_amount)}) × {fmt_pct(payload.HML_interest_rate)}/yr ÷ 12 × {payload.holding_time_months} mos = {fmt_money(total_hml_interest)}",
+    )
     
     monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
     monthly_insurance = payload.annual_insurance / Decimal("12.0")
     monthly_operating = monthly_taxes + monthly_insurance + payload.montly_hoa + payload.monthly_utilities
     total_operating = monthly_operating * payload.holding_time_months
+    breakdown.add(
+        "net_profit",
+        "Total Operating Costs (during holding)",
+        total_operating,
+        f"(Taxes/12 ({fmt_money(monthly_taxes)}) + Insurance/12 ({fmt_money(monthly_insurance)}) + HOA ({fmt_money(payload.montly_hoa)}) + Utilities ({fmt_money(payload.monthly_utilities)})) × {payload.holding_time_months} mos = {fmt_money(total_operating)}",
+    )
     
     total_holding_costs = total_hml_interest + total_operating
+    breakdown.add(
+        "net_profit",
+        "Total Holding Costs",
+        total_holding_costs,
+        f"HML Interest ({fmt_money(total_hml_interest)}) + Operating ({fmt_money(total_operating)}) = {fmt_money(total_holding_costs)}",
+    )
     
     agent_fees_percent = payload.buyer_agent_selling_fee + payload.seller_agent_selling_fee
     selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
+    breakdown.add(
+        "net_profit",
+        "Selling Costs",
+        selling_costs,
+        f"Sale Price ({fmt_money(sale_price)}) × Agent Fees {fmt_pct(agent_fees_percent)} + Closing ({fmt_money(thousands_to_dollars(payload.selling_closing_costs_in_thousands))}) = {fmt_money(selling_costs)}",
+    )
     
     down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
     
@@ -523,28 +640,74 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     rehab_cash = rehab_cost if not payload.use_HM_for_rehab else Decimal("0")
     
     total_cash_invested = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
+    breakdown.add(
+        "roi",
+        "Total Cash Invested",
+        total_cash_invested,
+        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(hml_points_cash)}) + Holding ({fmt_money(total_holding_costs)}) + Rehab Out-of-Pocket ({fmt_money(rehab_cash)}) = {fmt_money(total_cash_invested)}",
+    )
     
     # Cost basis for profit calc
     total_cost_basis = purchase_price + rehab_cost + closing_costs_buy + total_holding_costs + selling_costs + hml_points_cash
+    breakdown.add(
+        "net_profit",
+        "Total Cost Basis",
+        total_cost_basis,
+        f"Purchase ({fmt_money(purchase_price)}) + Rehab ({fmt_money(rehab_cost)}) + Closing ({fmt_money(closing_costs_buy)}) + Holding ({fmt_money(total_holding_costs)}) + Selling ({fmt_money(selling_costs)}) + HML Points ({fmt_money(hml_points_cash)}) = {fmt_money(total_cost_basis)}",
+    )
     
     gross_profit = sale_price - total_cost_basis
+    breakdown.add(
+        "net_profit",
+        "Gross Profit",
+        gross_profit,
+        f"Sale Price ({fmt_money(sale_price)}) − Total Cost Basis ({fmt_money(total_cost_basis)}) = {fmt_money(gross_profit)}",
+    )
     
     cap_gains = Decimal("0")
     if gross_profit > 0:
         cap_gains = gross_profit * (payload.capital_gains_tax_rate / Decimal("100.0"))
+    breakdown.add(
+        "net_profit",
+        "Capital Gains Tax",
+        cap_gains,
+        (f"Gross Profit ({fmt_money(gross_profit)}) × {fmt_pct(payload.capital_gains_tax_rate)} = {fmt_money(cap_gains)}"
+         if gross_profit > 0 else f"Gross Profit ≤ 0 → no tax owed = {fmt_money(cap_gains)}"),
+    )
         
     net_profit = gross_profit - cap_gains
+    breakdown.add(
+        ["net_profit", "roi"],
+        "Net Profit (after tax)",
+        net_profit,
+        f"Gross Profit ({fmt_money(gross_profit)}) − Capital Gains Tax ({fmt_money(cap_gains)}) = {fmt_money(net_profit)}",
+    )
     
     roi = (net_profit / total_cash_invested) * Decimal("100.0") if total_cash_invested > 0 else Decimal("0")
+    breakdown.add(
+        ["roi", "annualized_roi"],
+        "ROI",
+        roi,
+        (f"Net Profit ({fmt_money(net_profit)}) / Total Cash Invested ({fmt_money(total_cash_invested)}) × 100 = {fmt_pct(roi)}"
+         if total_cash_invested > 0 else "Total Cash Invested is 0 → ROI = 0%"),
+    )
     years = payload.holding_time_months / Decimal("12.0")
     annualized_roi = (roi / years) if years > 0 else Decimal("0")
+    breakdown.add(
+        "annualized_roi",
+        "Annualized ROI",
+        annualized_roi,
+        (f"ROI ({fmt_pct(roi)}) / Holding Years ({fmt_num(years)}) = {fmt_pct(annualized_roi)}"
+         if years > 0 else "Holding time is 0 → Annualized ROI = 0%"),
+    )
     
     return analyzeFlipRes(
         net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
         total_cash_needed=total_cash_needed_without_buffer,
         total_cash_needed_with_buffer=total_cash_needed_with_buffer,
         total_holding_costs=total_holding_costs,
-        total_hml_interest=total_hml_interest, messages=[]
+        total_hml_interest=total_hml_interest, messages=[],
+        breakdowns=breakdown.to_dict(),
     )
 
 # --- Endpoints ---
@@ -558,6 +721,50 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
     validate_flip_inputs(payload)
     return calculate_flip_results(payload)
+
+
+# --- PDF Deal Report ---
+
+from fastapi.responses import Response
+
+
+def _safe_filename(address: str) -> str:
+    cleaned = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in (address or "deal"))
+    return cleaned.strip("_") or "deal"
+
+
+@app.post("/reports/brrr-pdf")
+def report_brrr_pdf(payload: analyzeBRRRReq, address: str = "Property") -> Response:
+    validate_brrr_inputs(payload)
+    result = calculate_brrr_results(payload)
+    pdf_bytes = build_deal_pdf(
+        address=address,
+        deal_type="BRRRR",
+        result=result.model_dump(),
+    )
+    filename = f"BigWhales_BRRRR_{_safe_filename(address)}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/reports/flip-pdf")
+def report_flip_pdf(payload: analyzeFlipReq, address: str = "Property") -> Response:
+    validate_flip_inputs(payload)
+    result = calculate_flip_results(payload)
+    pdf_bytes = build_deal_pdf(
+        address=address,
+        deal_type="FLIP",
+        result=result.model_dump(),
+    )
+    filename = f"BigWhales_FLIP_{_safe_filename(address)}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def create_deal_response(deal: Union[BrrrActiveDeal, FlipActiveDeal]):
