@@ -122,6 +122,29 @@ export default {
     }
   },
 
+  async downloadDealPdf(
+    data: AnalyzeDealReq,
+    type: 'BRRRR' | 'FLIP',
+    address: string,
+  ): Promise<Blob> {
+    const endpoint = type === 'FLIP' ? '/reports/flip-pdf' : '/reports/brrr-pdf';
+    const logPrefix = `[DealReport:${type}]`;
+    console.group(`API: downloadDealPdf (${type})`);
+    try {
+      const response = await apiClient.post(endpoint, data, {
+        params: { address },
+        responseType: 'blob',
+      });
+      console.log(`${logPrefix} Response Status:`, response.status);
+      console.groupEnd();
+      return response.data as Blob;
+    } catch (error) {
+      console.error(`${logPrefix} API Error:`, error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
   async helloWorld(): Promise<{ message: string }> {
     try {
       const response = await apiClient.get<{ message: string }>('/helloworld');
