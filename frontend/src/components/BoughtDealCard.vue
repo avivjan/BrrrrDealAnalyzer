@@ -5,6 +5,7 @@ import { formatDealForClipboard } from "../utils/dealUtils";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import { resolveStage, getSubStagesForStage, canAdvance } from "../config/boughtDealStages";
+import BreakdownTooltip from "./ui/BreakdownTooltip.vue";
 
 const props = defineProps<{
   deal: BoughtDealRes;
@@ -55,6 +56,14 @@ const cardClass = computed(() => {
 });
 
 const formatMoney = (val?: number) => val ? `$${Math.round(val).toLocaleString()}` : "-";
+
+/**
+ * Read a metric breakdown formula off the deal payload. Older deals stored
+ * before the transparency feature shipped won't have this field, so we
+ * gracefully degrade to undefined and the tooltip simply hides itself.
+ */
+const breakdownFor = (key: string): string | undefined =>
+  ((props.deal as any)?.breakdowns as Record<string, string> | undefined)?.[key];
 
 const copyToClipboard = async (deal: BoughtDealRes) => {
   try {
@@ -150,7 +159,13 @@ const onToggleSubstage = (substageId: string) => {
 
       <template v-if="isBrrr">
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
+          <BreakdownTooltip
+            title="Cash Flow"
+            :formula="breakdownFor('cash_flow')"
+            class="text-[10px] text-gray-400 uppercase justify-end"
+          >
+            <span>Cash Flow</span>
+          </BreakdownTooltip>
           <span class="font-mono" :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-emerald-600' : 'text-red-600'">
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
@@ -160,20 +175,38 @@ const onToggleSubstage = (substageId: string) => {
           <span class="font-mono text-blue-600">{{ brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-" }}</span>
         </div>
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Equity</span>
+          <BreakdownTooltip
+            title="Equity"
+            :formula="breakdownFor('equity')"
+            class="text-[10px] text-gray-400 uppercase justify-end"
+          >
+            <span>Equity</span>
+          </BreakdownTooltip>
           <span class="font-mono text-emerald-600">{{ formatMoney(brrrDeal?.equity) }}</span>
         </div>
       </template>
 
       <template v-else>
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Net Profit</span>
+          <BreakdownTooltip
+            title="Net Profit"
+            :formula="breakdownFor('net_profit')"
+            class="text-[10px] text-gray-400 uppercase justify-end"
+          >
+            <span>Net Profit</span>
+          </BreakdownTooltip>
           <span class="font-mono font-bold" :class="(flipDeal?.net_profit || 0) > 0 ? 'text-emerald-600' : 'text-red-600'">
             {{ formatMoney(flipDeal?.net_profit) }}
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">ROI</span>
+          <BreakdownTooltip
+            title="ROI"
+            :formula="breakdownFor('roi')"
+            class="text-[10px] text-gray-400 uppercase"
+          >
+            <span>ROI</span>
+          </BreakdownTooltip>
           <span class="font-mono font-semibold text-blue-600">{{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}</span>
         </div>
         <div class="flex flex-col text-right">

@@ -67,6 +67,20 @@ export interface BrrrAnalyzeReq {
   capexPercent: number;
 }
 
+/**
+ * One row in a deal-analysis breakdown. Mirrors `CalcStep` on the backend.
+ *
+ * `key` is a stable identifier (e.g. `'cash_flow'`, `'roi'`) the UI uses to
+ * filter steps for hover tooltips; `formula` is the human-readable string
+ * we render verbatim in tooltips and the PDF report.
+ */
+export interface CalcStep {
+  key?: string;
+  label: string;
+  value: number;
+  formula: string;
+}
+
 export interface BrrrAnalyzeRes {
   cash_flow: number;
   dscr?: number;
@@ -79,6 +93,10 @@ export interface BrrrAnalyzeRes {
   total_cash_needed_for_deal?: number;
   total_cash_needed_for_deal_with_buffer?: number;
   messages?: string[];
+  /** Flat key→formula map keyed by metric (e.g. `'cash_flow'`, `'roi'`). */
+  breakdowns?: Record<string, string>;
+  /** Ordered list of intermediate values used by the PDF report and details view. */
+  breakdown_steps?: CalcStep[];
 }
 
 export interface BrrrDealCreate extends BaseDealReq, Partial<BrrrAnalyzeReq> {
@@ -112,6 +130,10 @@ export interface FlipAnalyzeRes {
   total_holding_costs: number;
   total_hml_interest: number;
   messages?: string[];
+  /** Flat key→formula map keyed by metric (e.g. `'net_profit'`, `'roi'`). */
+  breakdowns?: Record<string, string>;
+  /** Ordered list of intermediate values used by the PDF report and details view. */
+  breakdown_steps?: CalcStep[];
 }
 
 export interface FlipDealCreate extends BaseDealReq, Partial<FlipAnalyzeReq> {

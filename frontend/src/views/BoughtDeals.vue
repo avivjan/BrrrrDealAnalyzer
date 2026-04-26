@@ -10,6 +10,8 @@ import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
+import BreakdownTooltip from "../components/ui/BreakdownTooltip.vue";
+import api from "../api";
 import ToggleSwitch from "primevue/toggleswitch";
 import type { BoughtDealRes, AnalyzeDealReq, BoughtBrrrDealRes } from "../types";
 import {
@@ -188,6 +190,44 @@ const brrrrBoughtEditing = computed((): BoughtBrrrDealRes | null => {
 });
 
 const currentAnalysis = ref<BoughtDealRes | null>(null);
+
+/**
+ * Pull a per-metric formula string out of the latest analyze payload so the
+ * info-icon tooltip can show how a number was computed. Returns undefined
+ * for stale/legacy results -- the tooltip then auto-hides.
+ */
+const analysisBreakdown = (key: string): string | undefined =>
+  ((currentAnalysis.value as any)?.breakdowns as Record<string, string> | undefined)?.[key];
+
+/**
+ * Trigger a branded PDF deal report download for the currently-open deal.
+ * The server re-runs the analyzer from the modal payload so the PDF stays
+ * in sync with what the user is looking at instead of the saved snapshot.
+ */
+const isDownloadingReport = ref(false);
+const downloadReport = async () => {
+  if (!editingDeal.value || isDownloadingReport.value) return;
+  isDownloadingReport.value = true;
+  try {
+    const type = (editingDeal.value.deal_type || 'BRRRR') as 'BRRRR' | 'FLIP';
+    const payload = JSON.parse(JSON.stringify(editingDeal.value)) as AnalyzeDealReq & { address?: string };
+    payload.address = editingDeal.value.address || undefined;
+    const blob = await api.downloadDealReport(payload, type);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeAddress = (editingDeal.value.address || 'deal').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '');
+    a.download = `${safeAddress || 'deal'}-${type.toLowerCase()}-report.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('View: BoughtDeals - Failed to download report', e);
+  } finally {
+    isDownloadingReport.value = false;
+  }
+};
 const modalScrollContainer = ref<HTMLElement | null>(null);
 const analysisResultsEl = ref<HTMLElement | null>(null);
 
@@ -1342,7 +1382,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               >
                 <template v-if="editingDealType === 'BRRRR'">
                   <div>
-                    <div class="text-gray-500">Cash Flow</div>
+                    <BreakdownTooltip
+                      title="Cash Flow"
+                      :formula="analysisBreakdown('cash_flow')"
+                      class="text-gray-500"
+                    >
+                      <span>Cash Flow</span>
+                    </BreakdownTooltip>
                     <div
                       class="font-bold"
                       :class="
@@ -1426,7 +1472,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     </div>
                   </div>
                   <div>
-                    <div class="text-gray-500">Equity</div>
+                    <BreakdownTooltip
+                      title="Equity"
+                      :formula="analysisBreakdown('equity')"
+                      class="text-gray-500"
+                    >
+                      <span>Equity</span>
+                    </BreakdownTooltip>
                     <div class="font-bold text-emerald-600">
                       {{
                         formatCurrency(
@@ -1436,7 +1488,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     </div>
                   </div>
                   <div>
-                    <div class="text-gray-500">ROI</div>
+                    <BreakdownTooltip
+                      title="ROI"
+                      :formula="analysisBreakdown('roi')"
+                      class="text-gray-500"
+                    >
+                      <span>ROI</span>
+                    </BreakdownTooltip>
                     <div
                       class="font-bold"
                       :class="
@@ -1481,7 +1539,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </template>
                 <template v-else>
                   <div>
-                    <div class="text-gray-500">Net Profit</div>
+                    <BreakdownTooltip
+                      title="Net Profit"
+                      :formula="analysisBreakdown('net_profit')"
+                      class="text-gray-500"
+                    >
+                      <span>Net Profit</span>
+                    </BreakdownTooltip>
                     <div
                       class="font-bold"
                       :class="
@@ -1498,7 +1562,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     </div>
                   </div>
                   <div>
-                    <div class="text-gray-500">ROI</div>
+                    <BreakdownTooltip
+                      title="ROI"
+                      :formula="analysisBreakdown('roi')"
+                      class="text-gray-500"
+                    >
+                      <span>ROI</span>
+                    </BreakdownTooltip>
                     <div
                       class="font-bold"
                       :class="
@@ -1664,6 +1734,21 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <span class="text-red-500">Save failed</span>
               </template>
             </div>
+            <button
+              @click="downloadReport"
+              :disabled="isDownloadingReport"
+              class="text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 flex items-center gap-2"
+              :title="`Download ${editingDealType} deal report`"
+            >
+              <i
+                :class="
+                  isDownloadingReport
+                    ? 'pi pi-spin pi-spinner'
+                    : 'pi pi-download'
+                "
+              ></i>
+              {{ isDownloadingReport ? 'Generating...' : 'Download Report' }}
+            </button>
             <button
               @click="deleteEditingDeal"
               class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"

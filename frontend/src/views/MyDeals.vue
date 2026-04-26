@@ -15,6 +15,8 @@ import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
+import BreakdownTooltip from "../components/ui/BreakdownTooltip.vue";
+import api from "../api";
 import ToggleSwitch from "primevue/toggleswitch";
 import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes } from "../types";
 
@@ -280,6 +282,14 @@ const brrrrEditingDeal = computed((): BrrrDealRes | null => {
   return d as BrrrDealRes;
 });
 const currentAnalysis = ref<ActiveDealRes | null>(null);
+
+/**
+ * Pull a per-metric formula string (e.g. "Rent ($2,000) - OpEx ($800) = $200")
+ * out of the live analyze response. Returns undefined when absent so the
+ * tooltip auto-hides for stale or in-flight results.
+ */
+const analysisBreakdown = (key: string): string | undefined =>
+  ((currentAnalysis.value as any)?.breakdowns as Record<string, string> | undefined)?.[key];
 const modalScrollContainer = ref<HTMLElement | null>(null);
 const analysisResultsEl = ref<HTMLElement | null>(null);
 const shouldScrollToResults = ref(false);
@@ -385,6 +395,39 @@ const openDeal = (deal: ActiveDealRes) => {
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
+};
+
+/**
+ * Download a branded PDF report for the deal currently open in the modal.
+ *
+ * We send the in-modal payload (including the address) so the server re-runs
+ * the analyzer and the PDF reflects exactly what the user is seeing, rather
+ * than relying on whatever we last persisted. The browser download is wired
+ * via a hidden anchor + ObjectURL because axios returns a Blob.
+ */
+const isDownloadingReport = ref(false);
+const downloadReport = async () => {
+  if (!editingDeal.value || isDownloadingReport.value) return;
+  isDownloadingReport.value = true;
+  try {
+    const type = (editingDeal.value.deal_type || 'BRRRR') as 'BRRRR' | 'FLIP';
+    const payload = JSON.parse(JSON.stringify(editingDeal.value)) as AnalyzeDealReq & { address?: string };
+    payload.address = editingDeal.value.address || undefined;
+    const blob = await api.downloadDealReport(payload, type);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeAddress = (editingDeal.value.address || 'deal').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '');
+    a.download = `${safeAddress || 'deal'}-${type.toLowerCase()}-report.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('View: MyDeals - Failed to download report', e);
+  } finally {
+    isDownloadingReport.value = false;
+  }
 };
 
 const analyzeCurrentDeal = useDebounceFn(async () => {
@@ -924,7 +967,13 @@ console.groupEnd();
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                         <div>
-                            <div class="text-gray-500">Cash Flow</div>
+                            <BreakdownTooltip
+                                title="Cash Flow"
+                                :formula="analysisBreakdown('cash_flow')"
+                                class="text-gray-500"
+                            >
+                                <span>Cash Flow</span>
+                            </BreakdownTooltip>
                             <div class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                         </div>
                         <div>
@@ -944,11 +993,23 @@ console.groupEnd();
                             <div class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">Equity</div>
+                            <BreakdownTooltip
+                                title="Equity"
+                                :formula="analysisBreakdown('equity')"
+                                class="text-gray-500"
+                            >
+                                <span>Equity</span>
+                            </BreakdownTooltip>
                             <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">ROI</div>
+                            <BreakdownTooltip
+                                title="ROI"
+                                :formula="analysisBreakdown('roi')"
+                                class="text-gray-500"
+                            >
+                                <span>ROI</span>
+                            </BreakdownTooltip>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
@@ -962,11 +1023,23 @@ console.groupEnd();
                     </template>
                     <template v-else>
                         <div>
-                            <div class="text-gray-500">Net Profit</div>
+                            <BreakdownTooltip
+                                title="Net Profit"
+                                :formula="analysisBreakdown('net_profit')"
+                                class="text-gray-500"
+                            >
+                                <span>Net Profit</span>
+                            </BreakdownTooltip>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500">ROI</div>
+                            <BreakdownTooltip
+                                title="ROI"
+                                :formula="analysisBreakdown('roi')"
+                                class="text-gray-500"
+                            >
+                                <span>ROI</span>
+                            </BreakdownTooltip>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
@@ -1204,6 +1277,15 @@ console.groupEnd();
                 <span class="text-red-500">Save failed</span>
               </template>
             </div>
+            <button
+              @click="downloadReport"
+              :disabled="isDownloadingReport"
+              class="text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 flex items-center gap-2"
+              :title="`Download ${editingDeal.deal_type || 'BRRRR'} deal report`"
+            >
+              <i :class="isDownloadingReport ? 'pi pi-spin pi-spinner' : 'pi pi-download'"></i>
+              {{ isDownloadingReport ? 'Generating...' : 'Download Report' }}
+            </button>
             <button
               v-if="editingDeal.stage === 3"
               @click="moveToBoughtFromModal"

@@ -122,6 +122,25 @@ export default {
     }
   },
 
+  /**
+   * Request a generated PDF deal report from the backend.
+   *
+   * `payload` should contain the same fields as the analyze endpoint plus an
+   * optional `address` for the report header. We rely on the backend to run
+   * the analyzer (rather than passing client-computed numbers) so the PDF is
+   * always derived from the same math as `/analyze/*`.
+   */
+  async downloadDealReport(
+    payload: AnalyzeDealReq & { address?: string },
+    type: 'BRRRR' | 'FLIP',
+  ): Promise<Blob> {
+    const endpoint = type === 'BRRRR' ? '/reports/brrr-pdf' : '/reports/flip-pdf';
+    const response = await apiClient.post<Blob>(endpoint, payload, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
   async helloWorld(): Promise<{ message: string }> {
     try {
       const response = await apiClient.get<{ message: string }>('/helloworld');

@@ -1,14 +1,18 @@
-from typing import Union, List
+from typing import Union, List, Dict, Optional
 from decimal import Decimal
+import io
 
 from fastapi import Depends, FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from ReqRes.analyzeBRRR.analyzeBRRRReq import analyzeBRRRReq
 from ReqRes.analyzeBRRR.analyzeBRRRRes import analyzeBRRRRes
 from ReqRes.analyzeFlip.analyzeFlipReq import analyzeFlipReq
 from ReqRes.analyzeFlip.analyzeFlipRes import analyzeFlipRes
+from ReqRes.calcStep import CalcStep
 from ReqRes.activeDeal.activeDealReq import (
     BrrrActiveDealCreate, BrrrActiveDealRes,
     FlipActiveDealCreate, FlipActiveDealRes
@@ -414,6 +418,32 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
     total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash
     return (total_cash_needed_without_buffer, total_cash_needed_with_buffer)
 
+# --- Formatting helpers for breakdown strings (display-only, no math impact) ---
+
+def _money(v) -> str:
+    """Format a Decimal/float as ``$1,234`` for breakdown formula strings."""
+    try:
+        return f"${float(v):,.0f}"
+    except Exception:
+        return "$0"
+
+
+def _money2(v) -> str:
+    """Same as `_money` but with cents – used for sub-$1 monthly values."""
+    try:
+        return f"${float(v):,.2f}"
+    except Exception:
+        return "$0.00"
+
+
+def _pct(v) -> str:
+    """Format a Decimal/float as ``12.34%``."""
+    try:
+        return f"{float(v):.2f}%"
+    except Exception:
+        return "0.00%"
+
+
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     arv = thousands_to_dollars(payload.arv_in_thousands)
     purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
@@ -448,13 +478,178 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     net_profit = equity + cash_out_from_deal
     roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
     total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
-    
+
+    # --- Calculation transparency ---
+    # All values below are derived purely from the variables computed above
+    # using the SAME formulas; no new mathematical assumptions are introduced.
+    # We re-derive a few sub-components (e.g. PM/maint/CapEx) only to display
+    # them in formula strings – `operating_expenses` itself is unchanged.
+    loan_amount = arv * ltv
+    HML_payoff = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
+    down_payment_cash = (payload.down_payment / Decimal("100")) * purchase_price
+    rehab_oop = rehab_cost * (1 - int(payload.use_HM_for_rehab))
+    cash_invested = down_payment_cash + closing_costs_buy + HML_points_in_cash + rehab_oop + HML_interest_in_cash + holding_cost_until_refi
+
+    pm = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
+    maint = payload.rent * (payload.maintenance_percent / Decimal("100.0"))
+    capex = payload.rent * (payload.capex_percent_of_rent / Decimal("100.0"))
+    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
+    monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
+    monthly_insurance = payload.annual_insurance / Decimal("12.0")
+    pitia = mortgage_payment + monthly_taxes + monthly_insurance + payload.montly_hoa
+
+    breakdowns: Dict[str, str] = {}
+    steps: List[CalcStep] = []
+
+    rehab_formula = (
+        f"Base Rehab ({_money(rehab_cost_base)}) + Contingency "
+        f"({_money(contingency)} @ {_pct(payload.rehab_contingency_percent)}) "
+        f"= {_money(rehab_cost)}"
+    )
+    breakdowns["rehab_cost"] = rehab_formula
+    steps.append(CalcStep(key="rehab_cost", label="Total Rehab Cost", value=float(rehab_cost), formula=rehab_formula))
+
+    holding_formula = (
+        f"(Taxes/12 ({_money(monthly_taxes)}) + Ins/12 ({_money(monthly_insurance)}) "
+        f"+ HOA ({_money(payload.montly_hoa)})) × {payload.Months_until_refi} mos "
+        f"= {_money(holding_cost_until_refi)}"
+    )
+    breakdowns["holding_costs"] = holding_formula
+    steps.append(CalcStep(key="holding_costs", label="Holding Costs Until Refi", value=float(holding_cost_until_refi), formula=holding_formula))
+
+    hml_amount_formula = (
+        f"Purchase ({_money(purchase_price)}) × (1 − Down Payment {_pct(payload.down_payment)}) "
+        f"+ Rehab funded by HML ({_money(rehab_cost if payload.use_HM_for_rehab else Decimal('0'))}) "
+        f"= {_money(HML_payoff)}"
+    )
+    breakdowns["hml_amount"] = hml_amount_formula
+    steps.append(CalcStep(key="hml_amount", label="HML Loan Amount", value=float(HML_payoff), formula=hml_amount_formula))
+
+    hml_pts_formula = f"{_pct(payload.HML_points)} × HML Amount ({_money(HML_payoff)}) = {_money(HML_points_in_cash)}"
+    breakdowns["hml_points_cash"] = hml_pts_formula
+    steps.append(CalcStep(key="hml_points_cash", label="HML Points (Cash)", value=float(HML_points_in_cash), formula=hml_pts_formula))
+
+    hml_int_formula = (
+        f"({_pct(payload.HML_interest_rate)} / 12) × HML Amount ({_money(HML_payoff)}) × "
+        f"{payload.Months_until_refi} mos = {_money(HML_interest_in_cash)}"
+    )
+    breakdowns["hml_interest_cash"] = hml_int_formula
+    steps.append(CalcStep(key="hml_interest_cash", label="HML Interest Paid Until Refi", value=float(HML_interest_in_cash), formula=hml_int_formula))
+
+    opex_formula = (
+        f"Vacancy ({_money(vacancy)}) + Mgmt ({_money(pm)}) + Maint ({_money(maint)}) "
+        f"+ CapEx ({_money(capex)}) + Taxes/12 ({_money(monthly_taxes)}) "
+        f"+ Ins/12 ({_money(monthly_insurance)}) + HOA ({_money(payload.montly_hoa)}) "
+        f"= {_money(operating_expenses)}/mo"
+    )
+    breakdowns["operating_expenses"] = opex_formula
+    steps.append(CalcStep(key="operating_expenses", label="Monthly Operating Expenses", value=float(operating_expenses), formula=opex_formula))
+
+    mortgage_formula = (
+        f"Loan ({_money(loan_amount)} = ARV {_money(arv)} × LTV {_pct(payload.ltv_as_precent)}) "
+        f"amortized at {_pct(payload.interest_rate)} over {payload.loan_term_years} yrs "
+        f"= {_money(mortgage_payment)}/mo"
+    )
+    breakdowns["mortgage_payment"] = mortgage_formula
+    steps.append(CalcStep(key="mortgage_payment", label="Mortgage Payment (P&I)", value=float(mortgage_payment), formula=mortgage_formula))
+
+    cash_flow_formula = (
+        f"Rent ({_money(payload.rent)}) − OpEx ({_money(operating_expenses)}) "
+        f"− Mortgage ({_money(mortgage_payment)}) = {_money(cash_flow)}/mo"
+    )
+    breakdowns["cash_flow"] = cash_flow_formula
+    steps.append(CalcStep(key="cash_flow", label="Monthly Cash Flow", value=float(cash_flow), formula=cash_flow_formula))
+
+    dscr_formula = (
+        f"Rent ({_money(payload.rent)}) / PITIA ({_money(pitia)} = Mortgage {_money(mortgage_payment)} "
+        f"+ Taxes/12 {_money(monthly_taxes)} + Ins/12 {_money(monthly_insurance)} + HOA {_money(payload.montly_hoa)}) "
+        f"= {float(dscr):.2f}"
+    )
+    breakdowns["dscr"] = dscr_formula
+    steps.append(CalcStep(key="dscr", label="DSCR", value=float(dscr), formula=dscr_formula))
+
+    cash_invested_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Closing ({_money(closing_costs_buy)}) "
+        f"+ HML Pts ({_money(HML_points_in_cash)}) + Rehab OOP ({_money(rehab_oop)}) "
+        f"+ HML Interest ({_money(HML_interest_in_cash)}) + Holding ({_money(holding_cost_until_refi)}) "
+        f"= {_money(cash_invested)}"
+    )
+    breakdowns["cash_invested"] = cash_invested_formula
+    steps.append(CalcStep(key="cash_invested", label="Cash Invested Pre-Refi", value=float(cash_invested), formula=cash_invested_formula))
+
+    cash_out_formula = (
+        f"Refi Loan ({_money(loan_amount)}) − HML Payoff ({_money(HML_payoff)}) "
+        f"− Refi Closing ({_money(closing_cost_refi)}) − Refi Points ({_money(refi_points_in_cash)}) "
+        f"− Cash Reserve ({_money(cash_reserve_in_cash)}) − Cash Invested ({_money(cash_invested)}) "
+        f"= {_money(cash_out_from_deal)}"
+    )
+    breakdowns["cash_out"] = cash_out_formula
+    steps.append(CalcStep(key="cash_out", label="Cash Out at Refi", value=float(cash_out_from_deal), formula=cash_out_formula))
+
+    cash_out_routi_formula = (
+        f"Refi Loan ({_money(loan_amount)}) − HML Payoff ({_money(HML_payoff)}) "
+        f"− Refi Closing ({_money(closing_cost_refi)}) − Refi Points ({_money(refi_points_in_cash)}) "
+        f"− Cash Reserve ({_money(cash_reserve_in_cash)}) = {_money(cash_out_routi)}"
+    )
+    breakdowns["cash_out_routi"] = cash_out_routi_formula
+    steps.append(CalcStep(key="cash_out_routi", label="Cash Out (Routi)", value=float(cash_out_routi), formula=cash_out_routi_formula))
+
+    coc_formula = (
+        "Infinite return (no money left in deal)" if cash_on_cash == Decimal("-1")
+        else "Negative cash flow (CoC undefined)" if cash_on_cash == Decimal("-2")
+        else f"(Cash Flow {_money(cash_flow)} × 12) / |Cash Out| ({_money(abs(cash_out_from_deal))}) × 100 = {_pct(cash_on_cash)}"
+    )
+    breakdowns["cash_on_cash"] = coc_formula
+    steps.append(CalcStep(key="cash_on_cash", label="Cash-on-Cash Return", value=float(cash_on_cash), formula=coc_formula))
+
+    equity_formula = (
+        f"ARV ({_money(arv)}) × (1 − LTV {_pct(payload.ltv_as_precent)}) "
+        f"+ Cash Reserve ({_money(cash_reserve_in_cash)}) = {_money(equity)}"
+    )
+    breakdowns["equity"] = equity_formula
+    steps.append(CalcStep(key="equity", label="Equity After Refi", value=float(equity), formula=equity_formula))
+
+    net_profit_formula = (
+        f"Equity ({_money(equity)}) + Cash Out ({_money(cash_out_from_deal)}) = {_money(net_profit)}"
+    )
+    breakdowns["net_profit"] = net_profit_formula
+    steps.append(CalcStep(key="net_profit", label="Net Profit", value=float(net_profit), formula=net_profit_formula))
+
+    roi_formula = (
+        "Infinite return (no money left in deal)" if roi == Decimal("-1")
+        else "Negative cash flow (ROI undefined)" if roi == Decimal("-2")
+        else f"((Cash Flow {_money(cash_flow)} × 12) + Net Profit {_money(net_profit)}) / |Cash Out| ({_money(abs(cash_out_from_deal))}) × 100 = {_pct(roi)}"
+    )
+    breakdowns["roi"] = roi_formula
+    steps.append(CalcStep(key="roi", label="ROI", value=float(roi), formula=roi_formula))
+
+    total_cash_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Holding ({_money(holding_cost_until_refi)}) "
+        f"+ Closing ({_money(closing_costs_buy)}) + HML Pts ({_money(HML_points_in_cash)}) "
+        f"+ Rehab OOP ({_money(rehab_oop)}) + HML Interest ({_money(HML_interest_in_cash)}) "
+        f"= {_money(total_cash_needed_without_buffer)}"
+    )
+    breakdowns["total_cash_needed"] = total_cash_formula
+    steps.append(CalcStep(key="total_cash_needed", label="Total Cash Needed (No Buffer)", value=float(total_cash_needed_without_buffer), formula=total_cash_formula))
+
+    total_cash_buffered_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Holding × 1.5 ({_money(holding_cost_until_refi * Decimal('1.5'))}) "
+        f"+ Closing × 1.1 ({_money(closing_costs_buy * Decimal('1.1'))}) + HML Pts ({_money(HML_points_in_cash)}) "
+        f"+ Rehab Cash + 10% Float ({_money(rehab_oop + Decimal('0.1') * rehab_cost)}) "
+        f"+ HML Interest × 1.5 ({_money(HML_interest_in_cash * Decimal('1.5'))}) "
+        f"= {_money(total_cash_needed_with_buffer)}"
+    )
+    breakdowns["total_cash_needed_with_buffer"] = total_cash_buffered_formula
+    steps.append(CalcStep(key="total_cash_needed_with_buffer", label="Total Cash Needed (With Buffer)", value=float(total_cash_needed_with_buffer), formula=total_cash_buffered_formula))
+
     return analyzeBRRRRes(
         cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_out_routi=cash_out_routi, cash_on_cash=cash_on_cash,
         roi=roi, equity=equity, net_profit=net_profit,
         total_cash_needed_for_deal=total_cash_needed_without_buffer,
         total_cash_needed_for_deal_with_buffer=total_cash_needed_with_buffer,
-        messages=None
+        messages=None,
+        breakdowns=breakdowns,
+        breakdown_steps=steps,
     )
 
 
@@ -538,13 +733,145 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     roi = (net_profit / total_cash_invested) * Decimal("100.0") if total_cash_invested > 0 else Decimal("0")
     years = payload.holding_time_months / Decimal("12.0")
     annualized_roi = (roi / years) if years > 0 else Decimal("0")
-    
+
+    # --- Calculation transparency ---
+    breakdowns: Dict[str, str] = {}
+    steps: List[CalcStep] = []
+
+    rehab_formula = (
+        f"Base Rehab ({_money(rehab_cost_base)}) + Contingency "
+        f"({_money(contingency)} @ {_pct(payload.rehab_contingency_percent)}) "
+        f"= {_money(rehab_cost)}"
+    )
+    breakdowns["rehab_cost"] = rehab_formula
+    steps.append(CalcStep(key="rehab_cost", label="Total Rehab Cost", value=float(rehab_cost), formula=rehab_formula))
+
+    hml_amount_formula = (
+        f"Purchase ({_money(purchase_price)}) × (1 − Down Payment {_pct(payload.down_payment)}) "
+        f"+ Rehab funded by HML ({_money(rehab_cost if payload.use_HM_for_rehab else Decimal('0'))}) "
+        f"= {_money(hml_amount)}"
+    )
+    breakdowns["hml_amount"] = hml_amount_formula
+    steps.append(CalcStep(key="hml_amount", label="HML Loan Amount", value=float(hml_amount), formula=hml_amount_formula))
+
+    hml_pts_formula = f"{_pct(payload.HML_points)} × HML Amount ({_money(hml_amount)}) = {_money(hml_points_cash)}"
+    breakdowns["hml_points_cash"] = hml_pts_formula
+    steps.append(CalcStep(key="hml_points_cash", label="HML Points (Cash)", value=float(hml_points_cash), formula=hml_pts_formula))
+
+    hml_int_formula = (
+        f"({_pct(payload.HML_interest_rate)} / 12) × HML Amount ({_money(hml_amount)}) × "
+        f"{payload.holding_time_months} mos = {_money(total_hml_interest)}"
+    )
+    breakdowns["total_hml_interest"] = hml_int_formula
+    steps.append(CalcStep(key="total_hml_interest", label="Total HML Interest", value=float(total_hml_interest), formula=hml_int_formula))
+
+    operating_formula = (
+        f"(Taxes/12 ({_money(monthly_taxes)}) + Ins/12 ({_money(monthly_insurance)}) "
+        f"+ HOA ({_money(payload.montly_hoa)}) + Utilities ({_money(payload.monthly_utilities)})) × "
+        f"{payload.holding_time_months} mos = {_money(total_operating)}"
+    )
+    breakdowns["total_operating"] = operating_formula
+    steps.append(CalcStep(key="total_operating", label="Total Operating Costs (Holding)", value=float(total_operating), formula=operating_formula))
+
+    holding_formula = (
+        f"Total HML Interest ({_money(total_hml_interest)}) + Total Operating ({_money(total_operating)}) "
+        f"= {_money(total_holding_costs)}"
+    )
+    breakdowns["total_holding_costs"] = holding_formula
+    steps.append(CalcStep(key="total_holding_costs", label="Total Holding Costs", value=float(total_holding_costs), formula=holding_formula))
+
+    selling_formula = (
+        f"Sale Price ({_money(sale_price)}) × Agent Fees ({_pct(agent_fees_percent)}) "
+        f"+ Closing ({_money(thousands_to_dollars(payload.selling_closing_costs_in_thousands))}) "
+        f"= {_money(selling_costs)}"
+    )
+    breakdowns["selling_costs"] = selling_formula
+    steps.append(CalcStep(key="selling_costs", label="Selling Costs", value=float(selling_costs), formula=selling_formula))
+
+    cash_invested_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Closing ({_money(closing_costs_buy)}) "
+        f"+ HML Pts ({_money(hml_points_cash)}) + Holding ({_money(total_holding_costs)}) "
+        f"+ Rehab OOP ({_money(rehab_cash)}) = {_money(total_cash_invested)}"
+    )
+    breakdowns["total_cash_invested"] = cash_invested_formula
+    steps.append(CalcStep(key="total_cash_invested", label="Total Cash Invested", value=float(total_cash_invested), formula=cash_invested_formula))
+
+    cost_basis_formula = (
+        f"Purchase ({_money(purchase_price)}) + Rehab ({_money(rehab_cost)}) "
+        f"+ Closing ({_money(closing_costs_buy)}) + Holding ({_money(total_holding_costs)}) "
+        f"+ Selling ({_money(selling_costs)}) + HML Pts ({_money(hml_points_cash)}) "
+        f"= {_money(total_cost_basis)}"
+    )
+    breakdowns["total_cost_basis"] = cost_basis_formula
+    steps.append(CalcStep(key="total_cost_basis", label="Total Cost Basis", value=float(total_cost_basis), formula=cost_basis_formula))
+
+    gross_profit_formula = (
+        f"Sale Price ({_money(sale_price)}) − Total Cost Basis ({_money(total_cost_basis)}) "
+        f"= {_money(gross_profit)}"
+    )
+    breakdowns["gross_profit"] = gross_profit_formula
+    steps.append(CalcStep(key="gross_profit", label="Gross Profit", value=float(gross_profit), formula=gross_profit_formula))
+
+    cap_gains_formula = (
+        f"Gross Profit ({_money(gross_profit)}) × Cap Gains Rate ({_pct(payload.capital_gains_tax_rate)}) "
+        f"= {_money(cap_gains)}"
+        if gross_profit > 0
+        else f"Gross Profit ≤ $0 → Capital Gains = $0"
+    )
+    breakdowns["capital_gains"] = cap_gains_formula
+    steps.append(CalcStep(key="capital_gains", label="Capital Gains Tax", value=float(cap_gains), formula=cap_gains_formula))
+
+    net_profit_formula = (
+        f"Gross Profit ({_money(gross_profit)}) − Capital Gains Tax ({_money(cap_gains)}) "
+        f"= {_money(net_profit)}"
+    )
+    breakdowns["net_profit"] = net_profit_formula
+    steps.append(CalcStep(key="net_profit", label="Net Profit", value=float(net_profit), formula=net_profit_formula))
+
+    roi_formula = (
+        f"Net Profit ({_money(net_profit)}) / Total Cash Invested ({_money(total_cash_invested)}) × 100 "
+        f"= {_pct(roi)}"
+        if total_cash_invested > 0
+        else "Total Cash Invested = $0 → ROI = 0%"
+    )
+    breakdowns["roi"] = roi_formula
+    steps.append(CalcStep(key="roi", label="ROI", value=float(roi), formula=roi_formula))
+
+    annualized_formula = (
+        f"ROI ({_pct(roi)}) / Years ({float(years):.2f}) = {_pct(annualized_roi)}"
+        if years > 0
+        else "Holding Time = 0 → Annualized ROI = 0%"
+    )
+    breakdowns["annualized_roi"] = annualized_formula
+    steps.append(CalcStep(key="annualized_roi", label="Annualized ROI", value=float(annualized_roi), formula=annualized_formula))
+
+    total_cash_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Holding Operating ({_money(total_operating)}) "
+        f"+ Closing ({_money(closing_costs_buy)}) + HML Pts ({_money(hml_points_cash)}) "
+        f"+ Rehab OOP ({_money(rehab_cash)}) + HML Interest ({_money(total_hml_interest)}) "
+        f"= {_money(total_cash_needed_without_buffer)}"
+    )
+    breakdowns["total_cash_needed"] = total_cash_formula
+    steps.append(CalcStep(key="total_cash_needed", label="Total Cash Needed (No Buffer)", value=float(total_cash_needed_without_buffer), formula=total_cash_formula))
+
+    total_cash_buffered_formula = (
+        f"Down Payment ({_money(down_payment_cash)}) + Operating × 1.5 ({_money(total_operating * Decimal('1.5'))}) "
+        f"+ Closing × 1.1 ({_money(closing_costs_buy * Decimal('1.1'))}) + HML Pts ({_money(hml_points_cash)}) "
+        f"+ Rehab Cash + 10% Float ({_money(rehab_cash + Decimal('0.1') * rehab_cost)}) "
+        f"+ HML Interest × 1.5 ({_money(total_hml_interest * Decimal('1.5'))}) "
+        f"= {_money(total_cash_needed_with_buffer)}"
+    )
+    breakdowns["total_cash_needed_with_buffer"] = total_cash_buffered_formula
+    steps.append(CalcStep(key="total_cash_needed_with_buffer", label="Total Cash Needed (With Buffer)", value=float(total_cash_needed_with_buffer), formula=total_cash_buffered_formula))
+
     return analyzeFlipRes(
         net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
         total_cash_needed=total_cash_needed_without_buffer,
         total_cash_needed_with_buffer=total_cash_needed_with_buffer,
         total_holding_costs=total_holding_costs,
-        total_hml_interest=total_hml_interest, messages=[]
+        total_hml_interest=total_hml_interest, messages=[],
+        breakdowns=breakdowns,
+        breakdown_steps=steps,
     )
 
 # --- Endpoints ---
@@ -558,6 +885,65 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
     validate_flip_inputs(payload)
     return calculate_flip_results(payload)
+
+
+# --- PDF Deal Reports ---
+# The PDF endpoints reuse the analyze request schemas (so the frontend can
+# submit the same form fields) and add an optional `address` for the report
+# header. We re-run the analyzer on submission to guarantee the PDF reflects
+# the same math as the on-screen UI.
+
+from reports import build_deal_report_pdf  # local import to avoid bootstrap cycles
+
+
+class BrrrReportReq(analyzeBRRRReq):
+    address: Optional[str] = None
+
+
+class FlipReportReq(analyzeFlipReq):
+    address: Optional[str] = None
+
+
+def _safe_filename(address: Optional[str], deal_type: str) -> str:
+    raw = (address or "deal").strip()
+    safe = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in raw)[:80] or "deal"
+    return f"{safe}_{deal_type.lower()}_report.pdf"
+
+
+@app.post("/reports/brrr-pdf")
+def report_brrr_pdf(payload: BrrrReportReq):
+    validate_brrr_inputs(payload)
+    result = calculate_brrr_results(payload)
+    pdf_bytes = build_deal_report_pdf(
+        deal_type="BRRRR",
+        address=payload.address,
+        payload=payload,
+        result=result,
+    )
+    filename = _safe_filename(payload.address, "BRRRR")
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/reports/flip-pdf")
+def report_flip_pdf(payload: FlipReportReq):
+    validate_flip_inputs(payload)
+    result = calculate_flip_results(payload)
+    pdf_bytes = build_deal_report_pdf(
+        deal_type="FLIP",
+        address=payload.address,
+        payload=payload,
+        result=result,
+    )
+    filename = _safe_filename(payload.address, "FLIP")
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def create_deal_response(deal: Union[BrrrActiveDeal, FlipActiveDeal]):
