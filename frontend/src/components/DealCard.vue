@@ -186,7 +186,7 @@ const formatMoney = (val?: number) =>
         }}</span>
       </div>
 
-      <!-- Row 2: Cash Needed -->
+      <!-- Row 2: Cash Needed (with and without buffer) -->
       <div class="flex flex-col">
         <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
         <span class="font-mono text-orange-600">{{
@@ -194,6 +194,14 @@ const formatMoney = (val?: number) =>
             isBrrr
               ? brrrDeal?.total_cash_needed_for_deal
               : flipDeal?.total_cash_needed,
+          )
+        }}</span>
+        <span class="text-[9px] text-gray-400 uppercase mt-1">w/ Buffer</span>
+        <span class="font-mono text-orange-700 text-[11px]">{{
+          formatMoney(
+            isBrrr
+              ? brrrDeal?.total_cash_needed_for_deal_with_buffer
+              : flipDeal?.total_cash_needed_with_buffer,
           )
         }}</span>
       </div>

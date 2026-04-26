@@ -14,6 +14,7 @@ class analyzeBRRRRes(BaseModel):
     equity: Optional[float] = None
     net_profit: Optional[float] = None
     total_cash_needed_for_deal:Optional[float] = None
+    total_cash_needed_for_deal_with_buffer: Optional[float] = None
     messages: Optional[list[str]] = None
     
     

@@ -56,6 +56,7 @@ Cash Flow: ${formatMoney(brrr.cash_flow)}
 Cash Out: ${formatMoney(brrr.cash_out)}
 Cash Out Routi: ${formatMoney(brrr.cash_out_routi)}
 Cash Needed: ${formatMoney(brrr.total_cash_needed_for_deal)}
+Cash Needed (Buffered): ${formatMoney(brrr.total_cash_needed_for_deal_with_buffer)}
 DSCR: ${brrr.dscr?.toFixed(2) || "-"}
 CoC Return: ${formatPercent(brrr.cash_on_cash)}
 ROI: ${formatPercent(brrr.roi)}
@@ -79,6 +80,7 @@ Net Profit: ${formatMoney(flip.net_profit)}
 ROI: ${formatPercent(flip.roi)}
 Annualized ROI: ${formatPercent(flip.annualized_roi)}
 Total Cash Needed: ${formatMoney(flip.total_cash_needed)}
+Total Cash Needed (Buffered): ${formatMoney(flip.total_cash_needed_with_buffer)}
 Holding Costs: ${formatMoney(flip.total_holding_costs)}
 `;
   }

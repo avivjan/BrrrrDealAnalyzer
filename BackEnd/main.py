@@ -360,6 +360,8 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
+    rehab_cash = rehab_cost if not use_HM_for_rehab else Decimal("0")
+    total_cash_needed_without_buffer = down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash
     
     # 1. Direct Rehab Cash (if not funded) + Float Buffer (for draws)
     # Even if HML pays, we need 10% on hand to start work/pay deposits
@@ -369,20 +371,13 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
 
     # 2. Time Contingency (The "Safety Multiplier")
     # Doubling these accounts for delays in permits, rehab, or tenant placement
-    total_holding_cash = holding_cost_until_refi * 1.5
-    total_interest_cash = HML_interest_in_cash * 1.5
+    total_holding_cash = holding_cost_until_refi * Decimal("1.5")
+    total_interest_cash = HML_interest_in_cash * Decimal("1.5")
     
     # 3. Closing Buffer
     total_closing_buy = closing_costs_buy * Decimal("1.1")
-    
-    return (
-        down_payment_in_cash + 
-        total_holding_cash + 
-        total_closing_buy + 
-        HML_points_in_cash + 
-        total_rehab_cash_needed + 
-        total_interest_cash
-    )
+    total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash
+    return (total_cash_needed_without_buffer, total_cash_needed_with_buffer)
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     arv = thousands_to_dollars(payload.arv_in_thousands)
@@ -412,11 +407,14 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     equity = arv * (1-ltv)
     net_profit = equity + cash_out_from_deal
     roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
-    total_cash_needed_for_deal = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
+    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
     
     return analyzeBRRRRes(
         cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_out_routi=cash_out_routi, cash_on_cash=cash_on_cash,
-        roi=roi, equity=equity, net_profit=net_profit, total_cash_needed_for_deal=total_cash_needed_for_deal, messages=None
+        roi=roi, equity=equity, net_profit=net_profit,
+        total_cash_needed_for_deal=total_cash_needed_without_buffer,
+        total_cash_needed_for_deal_with_buffer=total_cash_needed_with_buffer,
+        messages=None
     )
 
 
@@ -481,7 +479,7 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     
     down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
     
-    total_cash_needed = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, total_operating, closing_costs_buy, hml_points_cash, rehab_cost, total_hml_interest, payload.use_HM_for_rehab)
+    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, total_operating, closing_costs_buy, hml_points_cash, rehab_cost, total_hml_interest, payload.use_HM_for_rehab)
     rehab_cash = rehab_cost if not payload.use_HM_for_rehab else Decimal("0")
     
     total_cash_invested = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
@@ -503,7 +501,9 @@ def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
     
     return analyzeFlipRes(
         net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
-        total_cash_needed=total_cash_needed, total_holding_costs=total_holding_costs,
+        total_cash_needed=total_cash_needed_without_buffer,
+        total_cash_needed_with_buffer=total_cash_needed_with_buffer,
+        total_holding_costs=total_holding_costs,
         total_hml_interest=total_hml_interest, messages=[]
     )
 

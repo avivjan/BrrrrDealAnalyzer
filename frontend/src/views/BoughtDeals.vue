@@ -1455,6 +1455,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       }}
                     </div>
                   </div>
+                  <div>
+                    <div class="text-gray-500">
+                      Cash Needed (Buffered)
+                    </div>
+                    <div class="font-bold">
+                      {{
+                        formatCurrency(
+                          (currentAnalysis as any)
+                            .total_cash_needed_for_deal_with_buffer
+                        )
+                      }}
+                    </div>
+                  </div>
                 </template>
                 <template v-else>
                   <div>
@@ -1497,6 +1510,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{
                         formatCurrency(
                           (currentAnalysis as any).total_cash_needed
+                        )
+                      }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500">Cash Needed (Buffered)</div>
+                    <div class="font-bold">
+                      {{
+                        formatCurrency(
+                          (currentAnalysis as any).total_cash_needed_with_buffer
                         )
                       }}
                     </div>

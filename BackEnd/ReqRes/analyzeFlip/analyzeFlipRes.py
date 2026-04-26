@@ -8,6 +8,7 @@ class analyzeFlipRes(BaseModel):
     roi: float
     annualized_roi: float
     total_cash_needed: float
+    total_cash_needed_with_buffer: float
     total_holding_costs: float
     total_hml_interest: float
     messages: Optional[list[str]] = None

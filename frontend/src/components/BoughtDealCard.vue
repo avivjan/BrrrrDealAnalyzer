@@ -142,6 +142,10 @@ const onToggleSubstage = (substageId: string) => {
         <span class="font-mono text-orange-600">{{
           formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
         }}</span>
+        <span class="text-[9px] text-gray-400 uppercase mt-1">w/ Buffer</span>
+        <span class="font-mono text-orange-700 text-[11px]">{{
+          formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal_with_buffer : flipDeal?.total_cash_needed_with_buffer)
+        }}</span>
       </div>
 
       <template v-if="isBrrr">

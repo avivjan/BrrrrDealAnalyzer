@@ -71,6 +71,7 @@ export interface BrrrAnalyzeRes {
   equity?: number;
   net_profit?: number;
   total_cash_needed_for_deal?: number;
+  total_cash_needed_for_deal_with_buffer?: number;
   messages?: string[];
 }
 
@@ -101,6 +102,7 @@ export interface FlipAnalyzeRes {
   roi: number;
   annualized_roi: number;
   total_cash_needed: number;
+  total_cash_needed_with_buffer: number;
   total_holding_costs: number;
   total_hml_interest: number;
   messages?: string[];
