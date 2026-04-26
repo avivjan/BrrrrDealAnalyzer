@@ -7,8 +7,9 @@ import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import {
   formatDealForClipboard,
-  ensureBrrrRefiPointsDefault,
+  ensureBrrrLegacyDefaults,
   DEFAULT_REFI_POINTS,
+  DEFAULT_CASH_RESERVE,
 } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
@@ -379,7 +380,7 @@ const openDeal = (deal: ActiveDealRes) => {
   saveStatus.value = 'idle';
   selectedDeal.value = deal;
   const clone = JSON.parse(JSON.stringify(deal)) as ActiveDealRes;
-  ensureBrrrRefiPointsDefault(clone);
+  ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
@@ -856,6 +857,7 @@ console.groupEnd();
                       <NumberInput :model-value="bd.monthsUntilRefi ?? null" @update:model-value="(v: number | null) => (bd.monthsUntilRefi = v ?? undefined)" label="Months until Refi" suffix=" mos" />
                       <MoneyInput :model-value="bd.closingCostsRefi ?? null" @update:model-value="(v: number | null) => (bd.closingCostsRefi = v ?? undefined)" label="Refi Closing Costs" :inThousands="true" />
                       <NumberInput :model-value="bd.refiPoints ?? DEFAULT_REFI_POINTS" @update:model-value="(v: number | null) => (bd.refiPoints = v ?? DEFAULT_REFI_POINTS)" label="Refi Points" suffix=" pts" :min="0" :max="100" />
+                      <MoneyInput :model-value="bd.cashReserve ?? DEFAULT_CASH_RESERVE" @update:model-value="(v: number | null) => (bd.cashReserve = v ?? DEFAULT_CASH_RESERVE)" label="Cash Reserve (paydown at refi)" :inThousands="true" />
 
                       <SliderField :model-value="bd.interestRate ?? 6.5" @update:model-value="(v: number) => (bd.interestRate = v)" label="Long Term Interest Rate" :min="0" :max="20" :step="0.125" suffix="%" :required="true" />
                       <NumberInput :model-value="bd.loanTermYears ?? null" @update:model-value="(v: number | null) => (bd.loanTermYears = v ?? undefined)" label="Loan Term" suffix=" Years" />

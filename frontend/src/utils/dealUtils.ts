@@ -1,18 +1,42 @@
 import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
 
-/** Matches backend default (`analyzeBRRRReq`, DB column). */
-export const DEFAULT_REFI_POINTS = 1.5;
+/**
+ * Backend-side defaults for BRRRR fields that were added after the initial
+ * schema. Mirrors the Pydantic/SQLAlchemy defaults so legacy rows loaded
+ * without these keys still render and recalculate correctly.
+ *
+ * When you add a new BRRRR field with a server default, add it here and
+ * `ensureBrrrLegacyDefaults` will backfill it on every loaded deal.
+ */
+const BRRR_LEGACY_DEFAULTS = {
+  refiPoints: 1.5,
+  cashReserve: 0,
+} as const;
 
-/** Fill missing refi points on legacy BRRRR deals (mutates in place). */
-export function ensureBrrrRefiPointsDefault(deal: {
+export const DEFAULT_REFI_POINTS = BRRR_LEGACY_DEFAULTS.refiPoints;
+export const DEFAULT_CASH_RESERVE = BRRR_LEGACY_DEFAULTS.cashReserve;
+
+type BrrrLegacyKey = keyof typeof BRRR_LEGACY_DEFAULTS;
+type BrrrLegacyShape = {
   deal_type?: "BRRRR" | "FLIP";
-  refiPoints?: number;
-}): void {
+} & Partial<Record<BrrrLegacyKey, number>>;
+
+/** Backfill missing BRRRR fields with their backend defaults (mutates in place). */
+export function ensureBrrrLegacyDefaults(deal: BrrrLegacyShape): void {
   if (deal.deal_type === "FLIP") return;
-  if (deal.refiPoints == null || Number.isNaN(Number(deal.refiPoints))) {
-    deal.refiPoints = DEFAULT_REFI_POINTS;
+  for (const key of Object.keys(BRRR_LEGACY_DEFAULTS) as BrrrLegacyKey[]) {
+    const v = deal[key];
+    if (v == null || Number.isNaN(Number(v))) {
+      deal[key] = BRRR_LEGACY_DEFAULTS[key];
+    }
   }
 }
+
+/**
+ * @deprecated Use `ensureBrrrLegacyDefaults`. Kept as an alias so older
+ * imports keep compiling while we migrate consumers.
+ */
+export const ensureBrrrRefiPointsDefault = ensureBrrrLegacyDefaults;
 
 export const getStageName = (id: number) => {
   const map: Record<number, string> = {
@@ -47,6 +71,7 @@ Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
 Closing Costs (Buy): ${formatMoney(brrr.closingCostsBuy ? brrr.closingCostsBuy * 1000 : undefined)}
 ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)}
 Refi Points: ${Number(brrr.refiPoints ?? DEFAULT_REFI_POINTS)} pts
+Cash Reserve: ${formatMoney(((brrr.cashReserve ?? DEFAULT_CASH_RESERVE)) * 1000)}
 Rent: ${formatMoney(brrr.rent)}
 `;
       analysis = `

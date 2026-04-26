@@ -2,7 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
-import { DEFAULT_REFI_POINTS } from "../utils/dealUtils";
+import { DEFAULT_CASH_RESERVE, DEFAULT_REFI_POINTS } from "../utils/dealUtils";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
@@ -36,6 +36,7 @@ const form = ref({
   monthsUntilRefi: 6,
   closingCostsRefi: 0,
   refiPoints: DEFAULT_REFI_POINTS,
+  cashReserve: DEFAULT_CASH_RESERVE,
   loanTermYears: 30,
   ltv_as_precent: 75,
   interestRate: 6.5,
@@ -95,6 +96,8 @@ const validateForm = () => {
       errors.push("LTV must be between 0% and 100%.");
     if (f.refiPoints < 0 || f.refiPoints > 100)
       errors.push("Refi points must be between 0% and 100%.");
+    if (f.cashReserve < 0)
+      errors.push("Cash reserve cannot be negative.");
   } else {
     if (!f.salePrice || f.salePrice <= 0)
       errors.push("Sale Price (ARV) must be greater than 0.");
@@ -343,6 +346,11 @@ const quickCalcSellingCosts = () => {
               suffix=" pts"
               :min="0"
               :max="100"
+            />
+            <MoneyInput
+              v-model="form.cashReserve"
+              label="Cash Reserve (paydown at refi)"
+              :inThousands="true"
             />
 
             <SliderField

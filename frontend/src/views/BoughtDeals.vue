@@ -13,8 +13,9 @@ import SliderField from "../components/ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import type { BoughtDealRes, AnalyzeDealReq, BoughtBrrrDealRes } from "../types";
 import {
-  ensureBrrrRefiPointsDefault,
+  ensureBrrrLegacyDefaults,
   DEFAULT_REFI_POINTS,
+  DEFAULT_CASH_RESERVE,
 } from "../utils/dealUtils";
 import {
   resolveStage,
@@ -235,7 +236,7 @@ const openDeal = (deal: BoughtDealRes) => {
   isDirty = false;
   saveStatus.value = "idle";
   const clone = JSON.parse(JSON.stringify(deal)) as BoughtDealRes;
-  ensureBrrrRefiPointsDefault(clone);
+  ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
@@ -1056,6 +1057,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     suffix=" pts"
                     :min="0"
                     :max="100"
+                  />
+                  <MoneyInput
+                    :model-value="bd.cashReserve ?? DEFAULT_CASH_RESERVE"
+                    @update:model-value="
+                      (v: number | null) =>
+                        (bd.cashReserve = v ?? DEFAULT_CASH_RESERVE)
+                    "
+                    label="Cash Reserve (paydown at refi)"
+                    :inThousands="true"
                   />
                   <SliderField
                     :model-value="bd.interestRate ?? 6.5"

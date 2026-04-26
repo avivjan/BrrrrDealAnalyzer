@@ -83,20 +83,51 @@ app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
+def _add_brrr_column_if_missing(
+    inspector,
+    table_name: str,
+    column_name: str,
+    column_ddl: str,
+    backfill_value: str,
+) -> None:
+    """Idempotently add a BRRRR column with a backfill on existing rows."""
+    if table_name not in inspector.get_table_names():
+        return
+    columns = [col["name"] for col in inspector.get_columns(table_name)]
+    if column_name in columns:
+        return
+    with engine.begin() as conn:
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_ddl}"
+        ))
+        conn.execute(text(
+            f"UPDATE {table_name} SET {column_name} = {backfill_value} "
+            f"WHERE {column_name} IS NULL"
+        ))
+
+
 def _run_migrations():
     inspector = sa_inspect(engine)
     table_names = inspector.get_table_names()
 
-    if "active_deals" in table_names:
-        columns = [col["name"] for col in inspector.get_columns("active_deals")]
-        if "refi_points" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE active_deals ADD COLUMN refi_points NUMERIC(5,2) DEFAULT 1.5"
-                ))
-                conn.execute(text(
-                    "UPDATE active_deals SET refi_points = 1.5 WHERE refi_points IS NULL"
-                ))
+    # BRRRR-specific columns added after initial schema. New rows pick up the
+    # default from the model; existing rows are backfilled here so all reads
+    # are safe (no NULLs, no surprise KeyErrors in the response models).
+    for brrr_table in ("active_deals", "bought_brrrr_deals"):
+        _add_brrr_column_if_missing(
+            inspector,
+            brrr_table,
+            "refi_points",
+            "NUMERIC(5,2) DEFAULT 1.5",
+            "1.5",
+        )
+        _add_brrr_column_if_missing(
+            inspector,
+            brrr_table,
+            "cash_reserve_in_thousands",
+            "NUMERIC(12,2) DEFAULT 0",
+            "0",
+        )
 
     if "liquidity_transactions" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_transactions")]
@@ -256,6 +287,8 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
         validation_errors.append("Refi closing costs cannot be negative.")
     if payload.refi_points < 0 or payload.refi_points > 100:
         validation_errors.append("Refi points must be between 0% and 100%.")
+    if payload.cash_reserve_in_thousands < 0:
+        validation_errors.append("Cash reserve cannot be negative.")
     if payload.annual_property_taxes < 0:
         validation_errors.append("Annual property taxes cannot be negative.")
     if payload.annual_insurance < 0:
@@ -313,18 +346,20 @@ def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
     if pitia == 0: return Decimal("0")
     return rent / pitia
 
-def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, holding_costs_until_refi):
+def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, holding_costs_until_refi, cash_reserve_in_cash=Decimal("0")):
+    # `cash_reserve_in_cash` is committed at refi (paydown to DSCR principal),
+    # so it reduces what the investor walks away with.
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
     total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - total_cash_invested
+    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - cash_reserve_in_cash - total_cash_invested
 
 
-def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab):
+def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, cash_reserve_in_cash=Decimal("0")):
     loan_amount = arv * ltv
     HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash
+    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - cash_reserve_in_cash
 
 
 
@@ -395,16 +430,21 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
     ltv = payload.ltv_as_precent/Decimal("100")
     refi_points_in_cash = (payload.refi_points / Decimal("100")) * arv * ltv
-    
-    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, holding_cost_until_refi)
-    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab)
+    cash_reserve_in_cash = thousands_to_dollars(payload.cash_reserve_in_thousands)
+
+    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, holding_cost_until_refi, cash_reserve_in_cash)
+    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, cash_reserve_in_cash)
     mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
 
     net_operating_income = payload.rent - operating_expenses
     cash_flow = net_operating_income - mortgage_payment
     dscr =  calcDSCR(payload.rent, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, mortgage_payment)
     cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
-    equity = arv * (1-ltv)
+    # Cash reserve is treated as an immediate principal paydown on the DSCR
+    # loan, so the post-refi loan balance is `arv*ltv - cash_reserve`. That
+    # paydown converts cash_out into equity 1:1, leaving net_profit unchanged
+    # (CoC and ROI still drop because more capital is tied up in the deal).
+    equity = arv * (1 - ltv) + cash_reserve_in_cash
     net_profit = equity + cash_out_from_deal
     roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
     total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)

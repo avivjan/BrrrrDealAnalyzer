@@ -51,6 +51,12 @@ export interface BrrrAnalyzeReq {
   closingCostsRefi: number;
   /** % of refi loan amount; omit on request to use server default (1.5). */
   refiPoints?: number;
+  /**
+   * Cash deposited toward the DSCR loan principal at refi (in thousands).
+   * Omit on request to use server default (0). Reduces cash_out 1:1 and
+   * boosts equity 1:1 (net_profit unchanged, CoC and ROI drop).
+   */
+  cashReserve?: number;
   loanTermYears: number; 
   ltv_as_precent: number; 
   interestRate: number; 
