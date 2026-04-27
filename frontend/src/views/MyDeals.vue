@@ -993,6 +993,10 @@ console.groupEnd();
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
+                            <div class="text-gray-500">Net Profit</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                        </div>
+                        <div>
                             <div class="text-gray-500">Total Cash Needed</div>
                             <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
                         </div>
@@ -1011,12 +1015,24 @@ console.groupEnd();
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
+                            <div class="text-gray-500">Annualized ROI</div>
+                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                        </div>
+                        <div>
                             <div class="text-gray-500">Cash Needed</div>
                             <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Needed (Buffered)</div>
                             <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Holding Costs</div>
+                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">HML Interest</div>
+                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
                         </div>
                     </template>
                 </div>
