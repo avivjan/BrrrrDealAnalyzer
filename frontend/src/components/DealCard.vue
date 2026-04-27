@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import type { ActiveDealRes, BrrrDealRes, FlipDealRes, CalcStep } from "../types";
+import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
-import CalcInfo from "./ui/CalcInfo.vue";
 
 const props = defineProps<{
   deal: ActiveDealRes;
@@ -87,12 +86,6 @@ const cardClass = computed(() => {
 
 const formatMoney = (val?: number) =>
   val ? `$${Math.round(val).toLocaleString()}` : "-";
-
-const breakdownFor = (key: string): CalcStep[] => {
-  const src = props.deal.breakdowns;
-  if (!src || !Array.isArray(src[key])) return [];
-  return src[key];
-};
 </script>
 
 <template>
@@ -244,15 +237,7 @@ const breakdownFor = (key: string): CalcStep[] => {
           </span>
         </div>
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase inline-flex items-center justify-end gap-1">
-            Cash Flow
-            <CalcInfo
-              :steps="breakdownFor('cash_flow')"
-              title="Cash Flow"
-              accent-class="text-blue-600"
-              @click.stop
-            />
-          </span>
+          <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
           <span
             class="font-mono"
             :class="
@@ -283,15 +268,7 @@ const breakdownFor = (key: string): CalcStep[] => {
       <template v-else>
         <!-- Flip Metrics -->
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase inline-flex items-center justify-end gap-1">
-            Net Profit
-            <CalcInfo
-              :steps="breakdownFor('net_profit')"
-              title="Net Profit"
-              accent-class="text-orange-600"
-              @click.stop
-            />
-          </span>
+          <span class="text-[10px] text-gray-400 uppercase">Net Profit</span>
           <span
             class="font-mono font-bold"
             :class="
@@ -304,15 +281,7 @@ const breakdownFor = (key: string): CalcStep[] => {
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase inline-flex items-center gap-1">
-            ROI
-            <CalcInfo
-              :steps="breakdownFor('roi')"
-              title="ROI"
-              accent-class="text-blue-600"
-              @click.stop
-            />
-          </span>
+          <span class="text-[10px] text-gray-400 uppercase">ROI</span>
           <span class="font-mono font-semibold text-blue-600">
             {{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}
           </span>

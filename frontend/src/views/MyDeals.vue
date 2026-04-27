@@ -15,9 +15,8 @@ import DealCard from "../components/DealCard.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import MoneyInput from "../components/ui/MoneyInput.vue";
 import SliderField from "../components/ui/SliderField.vue";
-import CalcInfo from "../components/ui/CalcInfo.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes, CalcStep } from "../types";
+import type { ActiveDealRes, AnalyzeDealReq, BrrrDealRes } from "../types";
 import api from "../api";
 
 console.group("View: MyDeals");
@@ -452,12 +451,6 @@ const copyToClipboard = async (deal: ActiveDealRes) => {
   } catch (err) {
     console.error("Failed to copy to clipboard", err);
   }
-};
-
-const analysisBreakdown = (key: string): CalcStep[] => {
-  const src = currentAnalysis.value?.breakdowns;
-  if (!src || !Array.isArray(src[key])) return [];
-  return src[key];
 };
 
 const downloadDealReport = async () => {
@@ -972,14 +965,7 @@ console.groupEnd();
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                         <div>
-                            <div class="text-gray-500 inline-flex items-center gap-1">
-                                Cash Flow
-                                <CalcInfo
-                                    :steps="analysisBreakdown('cash_flow')"
-                                    title="Cash Flow"
-                                    accent-class="text-blue-600"
-                                />
-                            </div>
+                            <div class="text-gray-500">Cash Flow</div>
                             <div class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                         </div>
                         <div>
@@ -1003,14 +989,7 @@ console.groupEnd();
                             <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500 inline-flex items-center gap-1">
-                                ROI
-                                <CalcInfo
-                                    :steps="analysisBreakdown('roi')"
-                                    title="ROI"
-                                    accent-class="text-blue-600"
-                                />
-                            </div>
+                            <div class="text-gray-500">ROI</div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
@@ -1024,25 +1003,11 @@ console.groupEnd();
                     </template>
                     <template v-else>
                         <div>
-                            <div class="text-gray-500 inline-flex items-center gap-1">
-                                Net Profit
-                                <CalcInfo
-                                    :steps="analysisBreakdown('net_profit')"
-                                    title="Net Profit"
-                                    accent-class="text-orange-600"
-                                />
-                            </div>
+                            <div class="text-gray-500">Net Profit</div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                         </div>
                         <div>
-                            <div class="text-gray-500 inline-flex items-center gap-1">
-                                ROI
-                                <CalcInfo
-                                    :steps="analysisBreakdown('roi')"
-                                    title="ROI"
-                                    accent-class="text-blue-600"
-                                />
-                            </div>
+                            <div class="text-gray-500">ROI</div>
                             <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
