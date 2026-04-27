@@ -916,8 +916,18 @@ def _safe_filename(address: str) -> str:
     return cleaned.strip("_") or "deal"
 
 
+def _disposition(value: str) -> str:
+    """Normalize the optional `disposition` query param.
+    `inline` (default) → preview in the browser; `attachment` → force download."""
+    return "attachment" if (value or "").lower() == "attachment" else "inline"
+
+
 @app.post("/reports/brrr-pdf")
-def report_brrr_pdf(payload: analyzeBRRRReq, address: str = "Property") -> Response:
+def report_brrr_pdf(
+    payload: analyzeBRRRReq,
+    address: str = "Property",
+    disposition: str = "inline",
+) -> Response:
     validate_brrr_inputs(payload)
     result = calculate_brrr_results(payload)
     pdf_bytes = build_deal_pdf(
@@ -929,12 +939,16 @@ def report_brrr_pdf(payload: analyzeBRRRReq, address: str = "Property") -> Respo
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'{_disposition(disposition)}; filename="{filename}"'},
     )
 
 
 @app.post("/reports/flip-pdf")
-def report_flip_pdf(payload: analyzeFlipReq, address: str = "Property") -> Response:
+def report_flip_pdf(
+    payload: analyzeFlipReq,
+    address: str = "Property",
+    disposition: str = "inline",
+) -> Response:
     validate_flip_inputs(payload)
     result = calculate_flip_results(payload)
     pdf_bytes = build_deal_pdf(
@@ -946,7 +960,7 @@ def report_flip_pdf(payload: analyzeFlipReq, address: str = "Property") -> Respo
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'{_disposition(disposition)}; filename="{filename}"'},
     )
 
 

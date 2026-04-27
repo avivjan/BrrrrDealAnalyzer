@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick, computed } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
@@ -437,7 +437,16 @@ watch(
 );
 
 const isHeaderCopied = ref(false);
-const isDownloadingPdf = ref(false);
+const isPreparingPdf = ref(false);
+
+// PDF preview modal state. The blob URL is held alive while the modal is open
+// and revoked on close to avoid leaking memory.
+const pdfPreview = ref<{
+  url: string;
+  filename: string;
+  title: string;
+  dealType: "BRRRR" | "FLIP";
+} | null>(null);
 
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
@@ -453,30 +462,50 @@ const copyToClipboard = async (deal: ActiveDealRes) => {
   }
 };
 
-const downloadDealReport = async () => {
+// Generate the report and open it in an in-app preview modal. The user can
+// review the PDF inline and only opt into a download from inside the modal.
+const viewDealReport = async () => {
   if (!editingDeal.value) return;
   const deal = editingDeal.value;
   const dealType: "BRRRR" | "FLIP" = deal.deal_type === "FLIP" ? "FLIP" : "BRRRR";
 
-  isDownloadingPdf.value = true;
+  isPreparingPdf.value = true;
   try {
     const address = deal.address || "Property";
     const payload = JSON.parse(JSON.stringify(deal)) as AnalyzeDealReq;
     const blob = await api.downloadDealPdf(payload, dealType, address);
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `BigWhales_${dealType}_${address.replace(/[^A-Za-z0-9]+/g, "_")}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const filename = `BigWhales_${dealType}_${address.replace(/[^A-Za-z0-9]+/g, "_")}.pdf`;
+    closePdfPreview();
+    pdfPreview.value = { url, filename, title: address, dealType };
   } catch (err) {
-    console.error("Failed to download deal report", err);
+    console.error("Failed to generate deal report", err);
   } finally {
-    isDownloadingPdf.value = false;
+    isPreparingPdf.value = false;
   }
 };
+
+const downloadFromPreview = () => {
+  if (!pdfPreview.value) return;
+  const { url, filename } = pdfPreview.value;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
+
+const closePdfPreview = () => {
+  if (pdfPreview.value) {
+    URL.revokeObjectURL(pdfPreview.value.url);
+    pdfPreview.value = null;
+  }
+};
+
+onBeforeUnmount(() => {
+  closePdfPreview();
+});
 
 console.groupEnd();
 </script>
@@ -661,17 +690,17 @@ console.groupEnd();
           </div>
           <div class="flex items-center gap-4">
             <button
-              @click="downloadDealReport"
-              :disabled="isDownloadingPdf"
+              @click="viewDealReport"
+              :disabled="isPreparingPdf"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-              :title="isDownloadingPdf ? 'Building PDF…' : 'Download Deal Report (Big Whales branded PDF)'"
+              :title="isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
             >
               <i
                 class="pi text-base"
-                :class="isDownloadingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
+                :class="isPreparingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
               ></i>
               <span class="hidden sm:inline">
-                {{ isDownloadingPdf ? "Generating…" : "Download Report" }}
+                {{ isPreparingPdf ? "Generating…" : "View Report" }}
               </span>
             </button>
             <button
@@ -1288,6 +1317,54 @@ console.groupEnd();
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- PDF Preview Modal -->
+    <div
+      v-if="pdfPreview"
+      class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+      @click.self="closePdfPreview"
+    >
+      <div class="bg-white w-full max-w-5xl h-[92vh] rounded-2xl border border-gray-200 shadow-2xl flex flex-col overflow-hidden">
+        <div class="flex justify-between items-center px-5 py-3 border-b border-gray-100 shrink-0">
+          <div class="flex items-center gap-3 min-w-0">
+            <span
+              class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border shrink-0"
+              :class="pdfPreview.dealType === 'BRRRR'
+                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                : 'bg-orange-100 text-orange-700 border-orange-200'"
+            >
+              {{ pdfPreview.dealType }}
+            </span>
+            <div class="min-w-0">
+              <h3 class="text-sm font-bold text-gray-900 truncate">{{ pdfPreview.title }}</h3>
+              <p class="text-[11px] text-gray-500">Deal Report Preview &middot; Big Whales</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              @click="downloadFromPreview"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors text-sm font-medium"
+              title="Download this PDF"
+            >
+              <i class="pi pi-download text-base"></i>
+              <span class="hidden sm:inline">Download</span>
+            </button>
+            <button
+              @click="closePdfPreview"
+              class="text-gray-400 hover:text-gray-600 p-1.5"
+              title="Close preview"
+            >
+              <i class="pi pi-times text-lg"></i>
+            </button>
+          </div>
+        </div>
+        <iframe
+          :src="pdfPreview.url"
+          class="flex-1 w-full bg-gray-100"
+          title="Deal Report PDF"
+        ></iframe>
       </div>
     </div>
   </div>
