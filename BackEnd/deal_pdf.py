@@ -146,18 +146,28 @@ _FLIP_SUMMARY = [
 ]
 
 # Order in which to render the breakdown sections. Keys not present are skipped.
+# Mirrors the order of the high-level Summary tables above so the reader can
+# scan top-to-bottom and find the explanation for each headline number.
 _BRRR_BREAKDOWN_ORDER = [
     ("cash_flow", "Cash Flow"),
-    ("net_profit", "Net Profit"),
-    ("roi", "ROI"),
-    ("cash_on_cash", "Cash on Cash"),
     ("dscr", "DSCR"),
+    ("cash_on_cash", "Cash on Cash"),
+    ("roi", "ROI"),
+    ("net_profit", "Net Profit"),
+    ("equity", "Equity (post-refi)"),
+    ("cash_out", "Cash Out from Deal"),
+    ("total_cash_needed_for_deal", "Total Cash Needed"),
+    ("total_cash_needed_for_deal_with_buffer", "Cash Needed (Buffered)"),
 ]
 
 _FLIP_BREAKDOWN_ORDER = [
     ("net_profit", "Net Profit"),
     ("roi", "ROI"),
     ("annualized_roi", "Annualized ROI"),
+    ("total_holding_costs", "Total Holding Costs"),
+    ("total_hml_interest", "Total HML Interest"),
+    ("total_cash_needed", "Total Cash Needed"),
+    ("total_cash_needed_with_buffer", "Cash Needed (Buffered)"),
 ]
 
 
