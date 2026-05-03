@@ -10,10 +10,25 @@ Configuration (env vars):
 - REPS_GCS_BUCKET                 GCS bucket name for evidence uploads.
 - REPS_GCS_BASE_PREFIX            (Optional) Top-level prefix in the bucket.
                                   Default "evidence/2026".
-- REPS_PUBLIC_OBJECTS             (Optional) "true" | "false". When true the
-                                  uploaded object is made public-read and the
-                                  permanent public URL is returned. When false
-                                  (default) a 7-day signed URL is returned.
+- REPS_LINK_STYLE                 (Optional) How evidence URLs are written to
+                                  the Sheet. One of:
+                                    "auth"    Permanent
+                                              `https://storage.cloud.google.com/...`
+                                              link. Viewer must be signed in
+                                              with a Google account that has
+                                              read access (you / your CPA).
+                                              **DEFAULT** — best for audit.
+                                    "public"  Permanent
+                                              `https://storage.googleapis.com/...`
+                                              link. Bucket must be configured
+                                              for public read access (grant
+                                              `roles/storage.objectViewer` to
+                                              `allUsers` at the bucket level
+                                              when UBLA is on).
+                                    "signed"  7-day expiring v4 signed URL.
+                                              NOT recommended (links rot).
+- REPS_PUBLIC_OBJECTS             (Deprecated; kept for backward compat)
+                                  "true" implies REPS_LINK_STYLE="public".
 
 Design notes:
 - We use `.append()` exclusively (USER_ENTERED) so historical rows are never
@@ -79,6 +94,9 @@ class RepsValidationError(ValueError):
 
 # --- Config helpers ------------------------------------------------------- #
 
+_VALID_LINK_STYLES = {"auth", "public", "signed"}
+
+
 @dataclass(frozen=True)
 class RepsConfig:
     sheet_id_aviv: str
@@ -86,7 +104,7 @@ class RepsConfig:
     sheet_tab: str
     bucket_name: str
     base_prefix: str
-    make_public: bool
+    link_style: str  # "auth" | "public" | "signed"
     creds_path: Optional[str]
 
 
@@ -109,13 +127,24 @@ def get_config() -> RepsConfig:
             + ". See REPS_README.md for setup instructions."
         )
 
+    # Permanent-by-default link style. Auditors can still revoke access by
+    # removing IAM bindings; the URLs themselves never rot. Signed URLs were
+    # the previous default but they expire after 7 days, breaking the trail.
+    raw_style = (os.getenv("REPS_LINK_STYLE") or "").strip().lower()
+    if raw_style in _VALID_LINK_STYLES:
+        link_style = raw_style
+    elif (os.getenv("REPS_PUBLIC_OBJECTS") or "").strip().lower() == "true":
+        link_style = "public"  # back-compat with the old toggle
+    else:
+        link_style = "auth"
+
     return RepsConfig(
         sheet_id_aviv=sheet_id_aviv,
         sheet_id_yarden=sheet_id_yarden,
         sheet_tab=os.getenv("REPS_SHEET_TAB", "Log"),
         bucket_name=bucket_name,
         base_prefix=os.getenv("REPS_GCS_BASE_PREFIX", "evidence/2026").strip("/"),
-        make_public=os.getenv("REPS_PUBLIC_OBJECTS", "false").lower() == "true",
+        link_style=link_style,
         creds_path=os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or None,
     )
 
@@ -467,26 +496,7 @@ def upload_evidence(
         content_type = mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
 
     blob.upload_from_file(io.BytesIO(file_bytes), content_type=content_type, rewind=True)
-
-    if cfg.make_public:
-        try:
-            blob.make_public()
-            return blob.public_url
-        except Exception as exc:  # pragma: no cover
-            logger.warning("REPS upload: make_public failed (%s); falling back to signed URL", exc)
-
-    # Signed URL good for 7 days — long enough for "permanent link" use cases
-    # without exposing the bucket; the sheet still has the underlying object
-    # path embedded in the URL for re-signing later.
-    try:
-        return blob.generate_signed_url(
-            version="v4",
-            expiration=timedelta(days=7),
-            method="GET",
-        )
-    except Exception as exc:  # pragma: no cover
-        logger.warning("REPS upload: signed URL failed (%s); returning gs:// URI", exc)
-        return f"gs://{cfg.bucket_name}/{object_name}"
+    return _make_url_for_blob(blob, cfg, object_name)
 
 
 # --- Multi-asset evidence (batch upload to a per-log folder) ------------ #
@@ -539,21 +549,48 @@ def _audit_filename(
 
 
 def _make_url_for_blob(blob, cfg: "RepsConfig", object_name: str) -> str:
-    if cfg.make_public:
+    """Return a stable URL for `object_name` according to `cfg.link_style`.
+
+    - "auth"   permanent `https://storage.cloud.google.com/...` URL. The viewer
+               must be signed in with a Google account that has read access to
+               the object (you, a partner, or your CPA via IAM). DEFAULT.
+    - "public" permanent `https://storage.googleapis.com/...` URL. Bucket must
+               grant `roles/storage.objectViewer` to `allUsers` (UBLA-friendly).
+               We attempt a legacy `make_public()` ACL flip as a best-effort for
+               buckets without UBLA; on UBLA buckets it's a no-op and the URL
+               only works if you set the bucket-level IAM yourself.
+    - "signed" 7-day v4 signed URL. NOT permanent — links rot. Kept for ops
+               who want zero IAM exposure.
+    """
+
+    style = cfg.link_style
+
+    if style == "public":
         try:
             blob.make_public()
-            return blob.public_url
         except Exception as exc:  # pragma: no cover
-            logger.warning("REPS upload: make_public failed (%s); falling back to signed URL", exc)
-    try:
-        return blob.generate_signed_url(
-            version="v4",
-            expiration=timedelta(days=7),
-            method="GET",
-        )
-    except Exception as exc:  # pragma: no cover
-        logger.warning("REPS upload: signed URL failed (%s); returning gs:// URI", exc)
-        return f"gs://{cfg.bucket_name}/{object_name}"
+            logger.info(
+                "REPS upload: make_public no-op (bucket likely has UBLA); "
+                "assuming bucket-level IAM grants allUsers:objectViewer. (%s)",
+                exc,
+            )
+        return f"https://storage.googleapis.com/{cfg.bucket_name}/{object_name}"
+
+    if style == "signed":
+        try:
+            return blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(days=7),
+                method="GET",
+            )
+        except Exception as exc:  # pragma: no cover
+            logger.warning("REPS upload: signed URL failed (%s); returning gs:// URI", exc)
+            return f"gs://{cfg.bucket_name}/{object_name}"
+
+    # Default: "auth" — permanent, requires viewer to be a signed-in Google
+    # account with `storage.objects.get` on this object (or any role that
+    # implies it: Storage Object Viewer, Project Viewer, etc.).
+    return f"https://storage.cloud.google.com/{cfg.bucket_name}/{object_name}"
 
 
 @dataclass(frozen=True)

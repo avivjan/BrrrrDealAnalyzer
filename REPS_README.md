@@ -53,10 +53,23 @@ gcloud storage buckets create gs://bigwhales-reps-evidence-2026 \
   --uniform-bucket-level-access
 ```
 
-> If you want **public links** in the sheet (anyone with link can view the
-> file), grant `roles/storage.objectViewer` to `allUsers` on the bucket and
-> set `REPS_PUBLIC_OBJECTS=true` (see env vars). Otherwise, leave it
-> private — the app will return time-limited (7-day) signed URLs.
+> By default the app writes **permanent, Google-authenticated URLs**
+> (`https://storage.cloud.google.com/...`) into the Sheet. The viewer must
+> be signed in with a Google account that has `Storage Object Viewer`
+> on the bucket — perfect for a private REPS audit trail (you, Yarden,
+> your CPA). Grant access with:
+>
+> ```bash
+> # Repeat for each viewer (and CPA)
+> gcloud storage buckets add-iam-policy-binding gs://bigwhales-reps-evidence-2026 \
+>   --member="user:cpa@example.com" \
+>   --role="roles/storage.objectViewer"
+> ```
+>
+> If you instead want **public links** (anyone with the URL can view), set
+> `REPS_LINK_STYLE=public` AND grant `roles/storage.objectViewer` to
+> `allUsers` at the bucket level. Use `REPS_LINK_STYLE=signed` to fall
+> back to 7-day signed URLs (NOT recommended — links rot).
 
 ### 1d. Create the two Google Sheets
 
@@ -114,9 +127,14 @@ REPS_GCS_BUCKET=bigwhales-reps-evidence-2026
 # (Optional) Folder prefix inside the bucket — defaults to "evidence/2026"
 REPS_GCS_BASE_PREFIX=evidence/2026
 
-# (Optional) "true" returns public URLs (requires bucket-level allUsers
-# objectViewer); "false" (default) returns 7-day signed URLs.
-REPS_PUBLIC_OBJECTS=false
+# (Optional) Link style for the Evidence column.
+#   auth   = permanent storage.cloud.google.com URL (Google login required) — DEFAULT
+#   public = permanent storage.googleapis.com URL (bucket must be public)
+#   signed = 7-day expiring v4 URL (NOT recommended — links rot)
+REPS_LINK_STYLE=auth
+
+# (Deprecated, back-compat only) "true" implies REPS_LINK_STYLE=public
+# REPS_PUBLIC_OBJECTS=false
 ```
 
 > If you deploy on Cloud Run / GKE you can omit
@@ -266,10 +284,22 @@ is gated to secure origins (`https://` or `localhost`).
 - **`Permission denied` on bucket** → service account needs
   `roles/storage.objectAdmin` on the bucket (or just `objectCreator` +
   `objectViewer` if you want least privilege).
-- **`make_public` fails** → the bucket has uniform-bucket-level access
-  enabled (which is the default and recommended). Either grant
-  `allUsers` `objectViewer` at the bucket level, or leave
-  `REPS_PUBLIC_OBJECTS=false` to use signed URLs.
+- **Evidence link in the sheet expires / 403s after a week** → that's the
+  legacy `REPS_LINK_STYLE=signed` (or older `REPS_PUBLIC_OBJECTS=false`)
+  default — signed URLs are capped at 7 days. Switch to
+  `REPS_LINK_STYLE=auth` (default in v2+) for permanent links and
+  re-upload the rotting evidence (or just re-sign the URL by reading the
+  object path embedded in the link).
+- **`make_public` fails / "uniform bucket-level access" error** → the
+  bucket has UBLA enabled (default and recommended). Either keep
+  `REPS_LINK_STYLE=auth` (links work as long as the viewer is a
+  signed-in Google account with bucket access), or set
+  `REPS_LINK_STYLE=public` AND grant `allUsers` `objectViewer` at the
+  bucket level via IAM.
+- **403 on the evidence URL when opening it in an incognito window** →
+  expected for `auth` (default) links — it requires a Google login. Sign
+  in to the same Google account that has bucket access, or share access
+  with the auditor's Google account via `gcloud storage buckets add-iam-policy-binding`.
 - **Timer drift** → the stopwatch only relies on the running segment's
   `startedAt` for the wall-clock portion; everything else is
   `accumulatedMs`. If you suspect drift, check that the tab using the
