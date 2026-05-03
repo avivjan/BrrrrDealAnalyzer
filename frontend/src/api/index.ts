@@ -11,6 +11,15 @@ import type {
   PipelineTemplateStats,
   PipelineStageDto,
 } from '../types';
+import type {
+  RepsUser,
+  RepsLogPayload,
+  RepsLogRes,
+  RepsEntriesEnvelope,
+  RepsPropertyOption,
+  RepsPerson,
+  RepsConfigStatus,
+} from '../types/reps';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -259,5 +268,75 @@ export default {
       `/pipeline-templates/${dealType}/stats`,
     );
     return response.data;
+  },
+
+  // --- REPS Tracker --- //
+
+  async getRepsConfigStatus(): Promise<RepsConfigStatus> {
+    const response = await apiClient.get<RepsConfigStatus>('/reps/config-status');
+    return response.data;
+  },
+
+  async logRepsEntry(payload: RepsLogPayload): Promise<RepsLogRes> {
+    console.group('API: logRepsEntry');
+    console.log('Payload:', payload);
+    try {
+      const response = await apiClient.post<RepsLogRes>('/reps/log', payload);
+      console.log('Saved row range:', response.data.appended_range);
+      console.groupEnd();
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      console.groupEnd();
+      throw error;
+    }
+  },
+
+  async getRepsEntries(user: RepsUser): Promise<RepsEntriesEnvelope> {
+    const response = await apiClient.get<RepsEntriesEnvelope>('/reps/entries', {
+      params: { user },
+    });
+    return response.data;
+  },
+
+  async uploadRepsEvidence(user: RepsUser, file: File): Promise<{ url: string; filename: string }> {
+    const form = new FormData();
+    form.append('user', user);
+    form.append('file', file, file.name);
+    const response = await apiClient.post<{ url: string; filename: string }>(
+      '/reps/upload',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  },
+
+  async getRepsProperties(): Promise<RepsPropertyOption[]> {
+    const response = await apiClient.get<RepsPropertyOption[]>('/reps/properties');
+    return response.data;
+  },
+
+  async createRepsProspect(name: string): Promise<RepsPropertyOption> {
+    const response = await apiClient.post<RepsPropertyOption>('/reps/properties', { name });
+    return response.data;
+  },
+
+  async getRepsPeople(): Promise<RepsPerson[]> {
+    const response = await apiClient.get<RepsPerson[]>('/reps/people');
+    return response.data;
+  },
+
+  async createRepsPerson(payload: { name: string; role?: string; notes?: string }): Promise<RepsPerson> {
+    const response = await apiClient.post<RepsPerson>('/reps/people', payload);
+    return response.data;
+  },
+
+  async updateRepsPerson(id: string, payload: { name?: string; role?: string; notes?: string }): Promise<RepsPerson> {
+    const response = await apiClient.put<RepsPerson>(`/reps/people/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteRepsPerson(id: string): Promise<void> {
+    await apiClient.delete(`/reps/people/${id}`);
   },
 };

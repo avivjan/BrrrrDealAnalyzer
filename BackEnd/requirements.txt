@@ -3,6 +3,12 @@ uvicorn[standard]==0.32.1
 SQLAlchemy>=2.0
 psycopg2-binary>=2.9.9
 reportlab>=4.0
+python-multipart>=0.0.9
+
+google-api-python-client>=2.140.0
+google-auth>=2.34.0
+google-auth-httplib2>=0.2.0
+google-cloud-storage>=2.18.0
 
 
 python-dotenv

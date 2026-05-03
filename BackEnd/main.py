@@ -1,7 +1,8 @@
-from typing import Union, List
+from typing import Union, List, Optional
 from decimal import Decimal
+from datetime import datetime, date as date_cls
 
-from fastapi import Depends, FastAPI, HTTPException, Body
+from fastapi import Depends, FastAPI, HTTPException, Body, File, Form, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -58,9 +59,18 @@ from db import Base, engine, SessionLocal, get_db
 from models import (
     BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
     LiquidityTransaction, PipelineTemplate,
+    RepsPerson, RepsProperty,
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
+from ReqRes.reps.repsReq import (
+    RepsLogCreate, RepsLogRes, RepsEntryRow, RepsStats, RepsEntriesEnvelope,
+    RepsPersonCreate, RepsPersonUpdate, RepsPersonRes,
+    RepsPropertyOption, RepsPropertyCreate,
+    MIN_DESCRIPTION_LEN,
+)
+import crud_reps
+import reps_service
 from calc_breakdown import CalcBreakdown, fmt_money, fmt_pct, fmt_num
 from deal_pdf import build_deal_pdf
 from sqlalchemy import text, inspect as sa_inspect
@@ -1464,4 +1474,230 @@ def pipeline_template_stats_route(deal_type: str, db: Session = Depends(get_db))
 @app.get("/helloworld")
 def helloworld() -> dict:
     return {"message": "Hello, World!"}
+
+
+# --- REPS (Real Estate Professional Status) tracker --- #
+
+_VALID_REPS_USERS = {"Aviv2026", "Yarden2026"}
+
+
+def _require_reps_user(user: str) -> str:
+    if user not in _VALID_REPS_USERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"user must be one of {sorted(_VALID_REPS_USERS)}",
+        )
+    return user
+
+
+def _person_to_res(p: RepsPerson) -> RepsPersonRes:
+    return RepsPersonRes(
+        id=str(p.id),
+        name=p.name,
+        role=p.role,
+        notes=p.notes,
+        created_at=p.created_at.isoformat() if p.created_at else None,
+        updated_at=p.updated_at.isoformat() if p.updated_at else None,
+    )
+
+
+def _compute_stats(user: str, entries: list[dict]) -> RepsStats:
+    today = date_cls.today()
+    days_in_year = 366 if (today.year % 4 == 0 and (today.year % 100 != 0 or today.year % 400 == 0)) else 365
+    days_elapsed = max(1, (today - date_cls(today.year, 1, 1)).days + 1)
+
+    user_entries = [e for e in entries if (e.get("user") or "").strip() == user]
+    total = round(sum(float(e.get("total_hours") or 0) for e in user_entries), 2)
+    material = round(sum(
+        float(e.get("total_hours") or 0)
+        for e in user_entries
+        if e.get("material_participation_rentals")
+    ), 2)
+    non_material = round(total - material, 2)
+
+    year_pct = (days_elapsed / days_in_year) * 100.0
+    reps_pct = (total / 750.0) * 100.0
+    mat_pct = (material / 500.0) * 100.0
+
+    return RepsStats(
+        user=user,  # type: ignore[arg-type]
+        total_hours=total,
+        material_hours=material,
+        non_material_hours=non_material,
+        entry_count=len(user_entries),
+        days_elapsed=days_elapsed,
+        days_in_year=days_in_year,
+        year_progress_pct=round(year_pct, 2),
+        reps_750_pct=round(reps_pct, 2),
+        material_500_pct=round(mat_pct, 2),
+        avg_daily_hours_total=round(total / days_elapsed, 2),
+        avg_daily_hours_material=round(material / days_elapsed, 2),
+    )
+
+
+@app.post("/reps/log", response_model=RepsLogRes, status_code=201)
+def reps_log_route(payload: RepsLogCreate):
+    """Append a new REPS entry to the user's Google Sheet (append-only)."""
+    _require_reps_user(payload.user)
+
+    try:
+        # Server-generated contemporaneous fingerprint, regardless of any
+        # user-selected event date.
+        _, created_at_iso = reps_service.now_utc_iso()
+        total_hours = reps_service.calc_total_hours(
+            payload.start_time, payload.end_time
+        )
+        sid, updated_range = reps_service.append_log_row(
+            user=payload.user,
+            created_at_iso=created_at_iso,
+            property_name=payload.property_name,
+            activity_category=payload.activity_category,
+            description=payload.description,
+            start_iso=payload.start_time.isoformat(),
+            end_iso=payload.end_time.isoformat(),
+            total_hours=total_hours,
+            evidence_link=payload.evidence_link,
+            location=payload.location,
+            material_participation_rentals=payload.material_participation_rentals,
+            people_involved=payload.people_involved,
+        )
+    except reps_service.RepsConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except reps_service.RepsValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Failed to append REPS log row")
+        raise HTTPException(status_code=500, detail=f"Sheet append failed: {exc}")
+
+    return RepsLogRes(
+        created_at=created_at_iso,
+        user=payload.user,
+        property_name=payload.property_name,
+        activity_category=payload.activity_category,
+        description=payload.description,
+        start_time=payload.start_time.isoformat(),
+        end_time=payload.end_time.isoformat(),
+        total_hours=total_hours,
+        evidence_link=payload.evidence_link,
+        location=payload.location,
+        material_participation_rentals=payload.material_participation_rentals,
+        people_involved=payload.people_involved,
+        spreadsheet_id=sid,
+        appended_range=updated_range,
+    )
+
+
+@app.get("/reps/entries", response_model=RepsEntriesEnvelope)
+def reps_entries_route(user: str = Query(...)):
+    """Read the user's full sheet history and return entries + computed stats."""
+    _require_reps_user(user)
+    try:
+        rows = reps_service.read_log_rows(user)
+    except reps_service.RepsConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Failed to read REPS sheet")
+        raise HTTPException(status_code=500, detail=f"Sheet read failed: {exc}")
+
+    return RepsEntriesEnvelope(
+        user=user,  # type: ignore[arg-type]
+        entries=[RepsEntryRow(**r) for r in rows],
+        stats=_compute_stats(user, rows),
+    )
+
+
+@app.post("/reps/upload")
+async def reps_upload_route(
+    user: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """Upload an evidence file to GCS, return a URL the client persists in the sheet."""
+    _require_reps_user(user)
+    try:
+        contents = await file.read()
+        url = reps_service.upload_evidence(
+            user=user,
+            file_bytes=contents,
+            original_filename=file.filename or "evidence",
+            content_type=file.content_type,
+        )
+    except reps_service.RepsConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except reps_service.RepsValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.exception("REPS evidence upload failed")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {exc}")
+
+    return {"url": url, "filename": file.filename}
+
+
+@app.get("/reps/properties", response_model=List[RepsPropertyOption])
+def reps_properties_route(db: Session = Depends(get_db)):
+    """Bought-deal addresses (priority) + saved prospects."""
+    return crud_reps.list_property_options(db)
+
+
+@app.post("/reps/properties", response_model=RepsPropertyOption, status_code=201)
+def reps_create_prospect_route(payload: RepsPropertyCreate, db: Session = Depends(get_db)):
+    try:
+        prospect = crud_reps.upsert_prospect(db, payload.name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return RepsPropertyOption(name=prospect.name, source="prospect")
+
+
+@app.delete("/reps/properties/{prospect_id}")
+def reps_delete_prospect_route(prospect_id: str, db: Session = Depends(get_db)):
+    if not crud_reps.delete_prospect(db, prospect_id):
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    return {"message": "Prospect deleted"}
+
+
+@app.get("/reps/people", response_model=List[RepsPersonRes])
+def reps_list_people_route(db: Session = Depends(get_db)):
+    return [_person_to_res(p) for p in crud_reps.list_people(db)]
+
+
+@app.post("/reps/people", response_model=RepsPersonRes, status_code=201)
+def reps_create_person_route(payload: RepsPersonCreate, db: Session = Depends(get_db)):
+    try:
+        person = crud_reps.add_person(db, payload)
+    except Exception as exc:
+        # most likely a UNIQUE-name collision
+        raise HTTPException(status_code=400, detail=f"Could not add person: {exc}")
+    return _person_to_res(person)
+
+
+@app.put("/reps/people/{person_id}", response_model=RepsPersonRes)
+def reps_update_person_route(
+    person_id: str, payload: RepsPersonUpdate, db: Session = Depends(get_db)
+):
+    person = crud_reps.update_person(db, person_id, payload)
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    return _person_to_res(person)
+
+
+@app.delete("/reps/people/{person_id}")
+def reps_delete_person_route(person_id: str, db: Session = Depends(get_db)):
+    if not crud_reps.delete_person(db, person_id):
+        raise HTTPException(status_code=404, detail="Person not found")
+    return {"message": "Person deleted"}
+
+
+@app.get("/reps/config-status")
+def reps_config_status_route():
+    """Lightweight probe so the frontend can show a setup banner if env is missing."""
+    try:
+        cfg = reps_service.get_config()
+        return {
+            "configured": True,
+            "sheet_tab": cfg.sheet_tab,
+            "bucket_name": cfg.bucket_name,
+            "base_prefix": cfg.base_prefix,
+            "min_description_length": MIN_DESCRIPTION_LEN,
+        }
+    except reps_service.RepsConfigError as exc:
+        return {"configured": False, "detail": str(exc), "min_description_length": MIN_DESCRIPTION_LEN}
 
