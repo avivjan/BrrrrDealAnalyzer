@@ -17,13 +17,16 @@ from sqlalchemy.orm import Session
 from models import (
     RepsPerson,
     RepsProperty,
+    RepsActivityCategory,
     BoughtBrrrDeal,
     BoughtFlipDeal,
+    DEFAULT_REPS_ACTIVITY_CATEGORIES,
 )
 from ReqRes.reps.repsReq import (
     RepsPersonCreate,
     RepsPersonUpdate,
     RepsPropertyOption,
+    RepsActivityCategoryCreate,
 )
 
 
@@ -133,5 +136,71 @@ def delete_prospect(db: Session, prospect_id: str) -> bool:
     if not prospect:
         return False
     db.delete(prospect)
+    db.commit()
+    return True
+
+
+# --- Activity categories ------------------------------------------------- #
+
+def ensure_activity_category_defaults(db: Session) -> None:
+    """Idempotently seed the dropdown with the curated default categories."""
+
+    existing = {
+        (c.name or "").strip().lower()
+        for c in db.query(RepsActivityCategory).all()
+    }
+    added = False
+    for idx, name in enumerate(DEFAULT_REPS_ACTIVITY_CATEGORIES):
+        if name.lower() in existing:
+            continue
+        db.add(RepsActivityCategory(name=name, sort_order=idx, is_default=True))
+        added = True
+    if added:
+        db.commit()
+
+
+def list_activity_categories(db: Session) -> List[RepsActivityCategory]:
+    return (
+        db.query(RepsActivityCategory)
+        .order_by(RepsActivityCategory.sort_order.asc(), RepsActivityCategory.name.asc())
+        .all()
+    )
+
+
+def add_activity_category(
+    db: Session, payload: RepsActivityCategoryCreate
+) -> RepsActivityCategory:
+    name = (payload.name or "").strip()
+    if not name:
+        raise ValueError("Activity category name cannot be empty.")
+
+    existing = (
+        db.query(RepsActivityCategory)
+        .filter(RepsActivityCategory.name.ilike(name))
+        .first()
+    )
+    if existing:
+        return existing
+
+    # Place new categories at the end of the list.
+    last = (
+        db.query(RepsActivityCategory)
+        .order_by(RepsActivityCategory.sort_order.desc())
+        .first()
+    )
+    next_order = (last.sort_order if last else 0) + 1
+
+    cat = RepsActivityCategory(name=name, sort_order=next_order, is_default=False)
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+
+def delete_activity_category(db: Session, cat_id: str) -> bool:
+    cat = db.query(RepsActivityCategory).filter(RepsActivityCategory.id == cat_id).first()
+    if not cat:
+        return False
+    db.delete(cat)
     db.commit()
     return True

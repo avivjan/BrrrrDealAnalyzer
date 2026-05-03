@@ -191,7 +191,51 @@ curl 'http://localhost:8000/reps/entries?user=Aviv2026'
 
 ---
 
-## 6. How the audit-trail rules are enforced
+## 6. New in v2 — Multi-asset evidence, real-time camera, GPS breadcrumbs, dynamic categories
+
+The REPS Tracker now captures more audit-defensible context out of the box:
+
+- **Device GPS breadcrumbs.** The browser auto-snaps `navigator.geolocation`
+  on **Start / Stop / Pause / Resume**, on **"Pin GPS now"** during a
+  session, on **"Save"** for any entry, and each time you snap a photo via
+  the in-app camera. The full breadcrumb trail
+  (`START 2026-05-03T18:01:00Z @ 25.7741,-80.1937 (±15m) — maps.google.com/?q=…`)
+  is rendered into the **Location** column so the auditor can see you
+  stayed at the property during the session. If the user denies location
+  permission, the snapshot still goes into the trail with
+  `[permission_denied]` so the audit log is honest, not silent.
+- **Multi-asset evidence + real-time camera.** The modal accepts
+  multiple files, supports `Camera` (uses `<input capture="environment">`
+  to open the device's native camera) and `Attach`. Each log gets its own
+  GCS sub-folder
+  (`/<base_prefix>/<aviv|yarden>/<property-slug>/log_<utc_timestamp>_<rand>/`)
+  and uploaded files are renamed
+  `Property_Activity_YYYY-MM-DD_HHMM[_idx].ext` for grep-ability. The
+  Sheet's **Evidence Link** column gets the folder URL on top followed by
+  every individual file URL.
+- **Real-time camera while clocked-in.** With the timer running you can
+  hit **Take Photo / Video** straight from the timer card. The file is
+  queued for that user's session and a `PHOTO` snapshot is added to the
+  GPS breadcrumbs at the same moment.
+- **Dynamic activity categories.** The dropdown is now backed by the
+  `reps_activity_categories` table (seeded with sensible defaults on
+  first boot). Click **Add new** in the modal to create one inline; the
+  dropdown refreshes immediately and the new value is reused on the next
+  entry. Endpoint: `GET/POST/DELETE /reps/activity-categories`.
+- **File-count badge.** The modal shows a "N files attached" badge so
+  you can verify your evidence is queued before saving. The Save button
+  also shows an `Uploading N files...` state while the GCS batch upload
+  runs.
+
+No new env vars are required for any of this — the same
+`GOOGLE_APPLICATION_CREDENTIALS`, `REPS_GCS_BUCKET`, `REPS_GCS_BASE_PREFIX`,
+`REPS_PUBLIC_OBJECTS`, and the two `REPS_SHEET_ID_*` vars cover the new
+behavior. **Don't forget to deploy over HTTPS** — `navigator.geolocation`
+is gated to secure origins (`https://` or `localhost`).
+
+---
+
+## 7. How the audit-trail rules are enforced
 
 | Spec rule | Where it's enforced |
 |---|---|
@@ -210,10 +254,13 @@ curl 'http://localhost:8000/reps/entries?user=Aviv2026'
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
-- **403 from Sheets API** → service account email is not shared on the
-  spreadsheet as Editor. Re-share and try again.
+- **400 / "Unable to parse range"** → usually `REPS_SHEET_TAB` does not
+  match a tab at the bottom of the spreadsheet. New spreadsheets default
+  to **Sheet1**; either rename that tab to `Log` **or** set
+  `REPS_SHEET_TAB=Sheet1`. The backend now verifies the tab exists and
+  returns `400` listing the tabs it found when the name is wrong.
 - **404 / "Requested entity was not found"** → wrong `REPS_SHEET_ID_*`
   value, or the tab name doesn't exist (set `REPS_SHEET_TAB`).
 - **`Permission denied` on bucket** → service account needs

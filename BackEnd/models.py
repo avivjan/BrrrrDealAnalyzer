@@ -226,6 +226,37 @@ class RepsProperty(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class RepsActivityCategory(Base):
+    """User-managed activity-category dropdown for the REPS log form.
+
+    Seeded with sensible defaults on first boot; users can add their own
+    inline from the entry modal. Names are unique (case-insensitive at the
+    application layer via crud_reps).
+    """
+
+    __tablename__ = "reps_activity_categories"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String, nullable=False, unique=True, index=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_default = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# Seeded once into RepsActivityCategory on first boot.
+DEFAULT_REPS_ACTIVITY_CATEGORIES: list[str] = [
+    "Acquisition / Underwriting",
+    "Construction / Rehab Oversight",
+    "Property Management",
+    "Tenant / Leasing",
+    "Bookkeeping / Admin",
+    "Education / Research",
+    "Travel — Property",
+    "Refinance / Lender Calls",
+    "Other",
+]
+
+
 class LiquiditySettings(Base):
     """Singleton row (id=1) holding the opening balance anchor and user prefs.
     opening_balance_k: balance at start-of-day on opening_balance_date, in $k.

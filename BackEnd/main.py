@@ -59,7 +59,7 @@ from db import Base, engine, SessionLocal, get_db
 from models import (
     BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
     LiquidityTransaction, PipelineTemplate,
-    RepsPerson, RepsProperty,
+    RepsPerson, RepsProperty, RepsActivityCategory,
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
@@ -67,6 +67,8 @@ from ReqRes.reps.repsReq import (
     RepsLogCreate, RepsLogRes, RepsEntryRow, RepsStats, RepsEntriesEnvelope,
     RepsPersonCreate, RepsPersonUpdate, RepsPersonRes,
     RepsPropertyOption, RepsPropertyCreate,
+    RepsActivityCategoryRes, RepsActivityCategoryCreate,
+    RepsUploadBatchRes, RepsUploadedFile,
     MIN_DESCRIPTION_LEN,
 )
 import crud_reps
@@ -254,6 +256,11 @@ _run_migrations()
 # Seed pipeline template rows (BRRRR + FLIP) on first boot. Safe to call often.
 with SessionLocal() as _seed_db:
     ensure_pipeline_defaults(_seed_db)
+    # Seed REPS activity categories so the dropdown is never empty on first run.
+    try:
+        crud_reps.ensure_activity_category_defaults(_seed_db)
+    except Exception as _exc:  # pragma: no cover
+        logger.warning("Failed to seed REPS activity categories: %s", _exc)
 
 
 app.add_middleware(
@@ -1536,8 +1543,18 @@ def _compute_stats(user: str, entries: list[dict]) -> RepsStats:
 
 
 @app.post("/reps/log", response_model=RepsLogRes, status_code=201)
-def reps_log_route(payload: RepsLogCreate):
-    """Append a new REPS entry to the user's Google Sheet (append-only)."""
+def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
+    """Append a new REPS entry to the user's Google Sheet (append-only).
+
+    Multi-asset evidence: `evidence_links` + optional `evidence_folder` get
+    folded into a single newline-joined cell so the auditor can see the
+    folder URL on top and each file underneath.
+
+    Location: `location_snapshots` get rendered as breadcrumbs (START/STOP/
+    PAUSE/RESUME/BOOKMARK/MANUAL/PHOTO) so an auditor can verify the user
+    stayed at the property during the session.
+    """
+
     _require_reps_user(payload.user)
 
     try:
@@ -1547,6 +1564,17 @@ def reps_log_route(payload: RepsLogCreate):
         total_hours = reps_service.calc_total_hours(
             payload.start_time, payload.end_time
         )
+
+        rendered_location = reps_service.format_location_snapshots(
+            [s.model_dump() for s in payload.location_snapshots],
+            fallback_note=payload.location,
+        )
+        rendered_evidence = reps_service.join_evidence_links(
+            folder_url=payload.evidence_folder,
+            file_urls=list(payload.evidence_links or []),
+            legacy_single=payload.evidence_link,
+        )
+
         sid, updated_range = reps_service.append_log_row(
             user=payload.user,
             created_at_iso=created_at_iso,
@@ -1556,11 +1584,22 @@ def reps_log_route(payload: RepsLogCreate):
             start_iso=payload.start_time.isoformat(),
             end_iso=payload.end_time.isoformat(),
             total_hours=total_hours,
-            evidence_link=payload.evidence_link,
-            location=payload.location,
+            evidence_link=rendered_evidence or None,
+            location=rendered_location or None,
             material_participation_rentals=payload.material_participation_rentals,
             people_involved=payload.people_involved,
         )
+
+        # If the user typed a brand-new activity category in the modal, persist
+        # it so it shows up next time. Idempotent.
+        if payload.activity_category and payload.activity_category.strip():
+            try:
+                crud_reps.add_activity_category(
+                    db,
+                    RepsActivityCategoryCreate(name=payload.activity_category.strip()),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to persist new activity category: %s", exc)
     except reps_service.RepsConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except reps_service.RepsValidationError as exc:
@@ -1578,8 +1617,11 @@ def reps_log_route(payload: RepsLogCreate):
         start_time=payload.start_time.isoformat(),
         end_time=payload.end_time.isoformat(),
         total_hours=total_hours,
-        evidence_link=payload.evidence_link,
-        location=payload.location,
+        evidence_link=rendered_evidence or None,
+        evidence_links=list(payload.evidence_links or []),
+        evidence_folder=payload.evidence_folder,
+        location=rendered_location or None,
+        location_snapshots=payload.location_snapshots,
         material_participation_rentals=payload.material_participation_rentals,
         people_involved=payload.people_involved,
         spreadsheet_id=sid,
@@ -1608,12 +1650,80 @@ def reps_entries_route(user: str = Query(...)):
     )
 
 
+@app.post("/reps/upload-batch", response_model=RepsUploadBatchRes)
+async def reps_upload_batch_route(
+    user: str = Form(...),
+    property_name: Optional[str] = Form(None),
+    activity_category: Optional[str] = Form(None),
+    log_timestamp: Optional[str] = Form(None),
+    files: List[UploadFile] = File(...),
+):
+    """Upload one or many evidence files into a per-log GCS sub-folder.
+
+    The folder + per-file URLs are returned to the frontend, which then sends
+    them back inside the `/reps/log` payload so the Sheet stores both the
+    folder URL (auditor's index page) and each file URL.
+    """
+
+    _require_reps_user(user)
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one file is required.")
+
+    log_dt: Optional[datetime] = None
+    if log_timestamp:
+        try:
+            log_dt = datetime.fromisoformat(log_timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail="log_timestamp must be ISO-8601."
+            )
+
+    items: List[tuple[str, Optional[str], bytes]] = []
+    for f in files:
+        contents = await f.read()
+        items.append((f.filename or "evidence", f.content_type, contents))
+
+    try:
+        batch = reps_service.upload_evidence_batch(
+            user=user,
+            property_name=property_name,
+            activity_category=activity_category,
+            log_timestamp=log_dt,
+            items=items,
+        )
+    except reps_service.RepsConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except reps_service.RepsValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.exception("REPS batch upload failed")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {exc}")
+
+    return RepsUploadBatchRes(
+        folder_url=batch.folder_url,
+        folder_path=batch.folder_path,
+        files=[
+            RepsUploadedFile(
+                name=a.name,
+                url=a.url,
+                content_type=a.content_type,
+                size_bytes=a.size_bytes,
+            )
+            for a in batch.files
+        ],
+    )
+
+
 @app.post("/reps/upload")
 async def reps_upload_route(
     user: str = Form(...),
     file: UploadFile = File(...),
 ):
-    """Upload an evidence file to GCS, return a URL the client persists in the sheet."""
+    """Single-file convenience shim — kept for backward compatibility.
+
+    New clients should call `/reps/upload-batch`.
+    """
+
     _require_reps_user(user)
     try:
         contents = await file.read()
@@ -1686,6 +1796,40 @@ def reps_delete_person_route(person_id: str, db: Session = Depends(get_db)):
     if not crud_reps.delete_person(db, person_id):
         raise HTTPException(status_code=404, detail="Person not found")
     return {"message": "Person deleted"}
+
+
+def _category_to_res(c: RepsActivityCategory) -> RepsActivityCategoryRes:
+    return RepsActivityCategoryRes(
+        id=str(c.id),
+        name=c.name,
+        sort_order=c.sort_order or 0,
+        is_default=bool(c.is_default),
+    )
+
+
+@app.get("/reps/activity-categories", response_model=List[RepsActivityCategoryRes])
+def reps_list_activity_categories_route(db: Session = Depends(get_db)):
+    return [_category_to_res(c) for c in crud_reps.list_activity_categories(db)]
+
+
+@app.post("/reps/activity-categories", response_model=RepsActivityCategoryRes, status_code=201)
+def reps_create_activity_category_route(
+    payload: RepsActivityCategoryCreate, db: Session = Depends(get_db)
+):
+    try:
+        cat = crud_reps.add_activity_category(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Could not add category: {exc}")
+    return _category_to_res(cat)
+
+
+@app.delete("/reps/activity-categories/{cat_id}")
+def reps_delete_activity_category_route(cat_id: str, db: Session = Depends(get_db)):
+    if not crud_reps.delete_activity_category(db, cat_id):
+        raise HTTPException(status_code=404, detail="Activity category not found")
+    return {"message": "Activity category deleted"}
 
 
 @app.get("/reps/config-status")

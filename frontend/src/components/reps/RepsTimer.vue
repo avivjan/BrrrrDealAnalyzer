@@ -43,13 +43,24 @@ const display = computed(() => {
 
 const decimalHours = computed(() => Math.round((elapsedMs.value / 3_600_000) * 100) / 100);
 
+// Per-user buffers exposed by the store. Reading them through the store keeps
+// reactivity intact when switching tabs.
+const snapshots = computed(() => store.snapshotsByUser[props.user]);
+const inFlightFiles = computed(() => store.inFlightFilesByUser[props.user]);
+
+const lastSnapshot = computed(() => snapshots.value[snapshots.value.length - 1]);
+const capturing = ref(false);
+const cameraInput = ref<HTMLInputElement | null>(null);
+const galleryInput = ref<HTMLInputElement | null>(null);
+
 function start() {
   store.startTimer(props.user);
 }
 
 function stop() {
   // Stop pauses the segment but keeps sessionStartedAt + accumulated so the
-  // user can resume or finalize.
+  // user can resume or finalize. The user may now click "Pin GPS" to record
+  // a pause-time location if they want one.
   store.stopTimer(props.user);
 }
 
@@ -57,23 +68,51 @@ function resume() {
   store.resumeTimer(props.user);
 }
 
+async function pinGps(kind: 'bookmark' | 'timer_pause' | 'timer_resume' | 'timer_stop' | 'timer_start' = 'bookmark') {
+  // The single, explicit "capture-my-current-location" button. The `kind`
+  // parameter just labels the breadcrumb in the audit trail; we default to
+  // a generic `bookmark` so a single tap does the right thing in any state.
+  capturing.value = true;
+  try {
+    await store.captureAndPushSnapshot(props.user, kind);
+  } finally {
+    capturing.value = false;
+  }
+}
+
 function finish() {
-  // Make sure we capture any in-flight running segment first.
   if (timer.value.running) {
     store.stopTimer(props.user);
   }
   const start = timer.value.sessionStartedAt;
   const end = new Date().toISOString();
   if (!start) return;
-  // Use the *accumulated* hours for total, not wall-clock end-start, so that
-  // stop/resume gaps don't inflate the audit total.
   const totalHours = Math.round((timer.value.accumulatedMs / 3_600_000) * 100) / 100;
   emit('finish', { startIso: start, endIso: end, totalHours });
 }
 
 function discard() {
-  if (!confirm('Discard this stopwatch session? The timer will reset.')) return;
+  if (!confirm('Discard this stopwatch session? Timer, GPS breadcrumbs, and queued evidence will reset.')) return;
   store.resetTimer(props.user);
+}
+
+// --- Real-time camera / file capture during an active session --- //
+
+function openCamera() {
+  cameraInput.value?.click();
+}
+
+function openGallery() {
+  galleryInput.value?.click();
+}
+
+function onCameraFiles(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
+  for (const f of files) {
+    store.addInFlightFile(props.user, f);
+  }
+  input.value = '';
 }
 </script>
 
@@ -93,6 +132,7 @@ function discard() {
       <span v-else-if="hasSession" class="ml-2 text-amber-600">paused</span>
     </div>
 
+    <!-- Primary controls -->
     <div class="flex flex-wrap gap-2 justify-center">
       <button
         v-if="!hasSession"
@@ -130,7 +170,69 @@ function discard() {
       </template>
     </div>
 
-    <div v-if="hasSession" class="text-[11px] font-mono text-slate-400">
+    <!-- Live-session toolbar: explicit GPS capture + real-time camera/gallery.
+         The "Pin GPS now" button is always visible while a session exists so
+         the user can manually capture a snapshot at start, during, on pause,
+         and right before finishing. We never auto-capture. -->
+    <div v-if="hasSession" class="flex flex-wrap items-center gap-2 justify-center pt-1">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
+        :disabled="capturing"
+        :title="isRunning ? 'Capture GPS while clocked in' : 'Capture GPS at pause / before finish'"
+        @click="pinGps(isRunning ? 'bookmark' : 'timer_pause')"
+      >
+        <i class="pi pi-map-marker"></i>
+        {{ capturing ? 'Capturing...' : 'Pin GPS now' }}
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1.5"
+        @click="openCamera"
+      >
+        <i class="pi pi-camera"></i> Take Photo / Video
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center gap-1.5"
+        @click="openGallery"
+      >
+        <i class="pi pi-paperclip"></i> Attach File
+      </button>
+      <span
+        v-if="inFlightFiles.length > 0"
+        class="text-[11px] font-mono text-slate-600 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+      >
+        {{ inFlightFiles.length }} {{ inFlightFiles.length === 1 ? 'file' : 'files' }} queued
+      </span>
+      <span
+        v-if="snapshots.length > 0"
+        class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"
+        :title="lastSnapshot?.kind || ''"
+      >
+        {{ snapshots.length }} GPS pin{{ snapshots.length === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <input
+      ref="cameraInput"
+      type="file"
+      accept="image/*,video/*"
+      capture="environment"
+      class="hidden"
+      multiple
+      @change="onCameraFiles"
+    />
+    <input
+      ref="galleryInput"
+      type="file"
+      accept=".pdf,.jpg,.jpeg,.png,.mov,.mp4"
+      class="hidden"
+      multiple
+      @change="onCameraFiles"
+    />
+
+    <div v-if="hasSession" class="text-[11px] font-mono text-slate-400 text-center">
       Session started:
       {{ timer.sessionStartedAt ? new Date(timer.sessionStartedAt).toLocaleString() : '—' }}
     </div>

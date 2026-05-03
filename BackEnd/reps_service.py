@@ -487,3 +487,246 @@ def upload_evidence(
     except Exception as exc:  # pragma: no cover
         logger.warning("REPS upload: signed URL failed (%s); returning gs:// URI", exc)
         return f"gs://{cfg.bucket_name}/{object_name}"
+
+
+# --- Multi-asset evidence (batch upload to a per-log folder) ------------ #
+
+# Slug used in object names when the user didn't pick a property/category.
+_DEFAULT_SLUG_PROPERTY = "property"
+_DEFAULT_SLUG_ACTIVITY = "log"
+
+
+def _slugify(value: Optional[str], default: str) -> str:
+    """Cheap, GCS-safe slug — lowercase, ASCII, words joined with `-`."""
+
+    raw = (value or "").strip().lower()
+    if not raw:
+        return default
+    cleaned = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+    return (cleaned or default)[:60]
+
+
+def _log_folder_path(
+    cfg: "RepsConfig",
+    user: str,
+    property_name: Optional[str],
+    log_dt: datetime,
+) -> str:
+    """`<base>/<user>/<property>/log_YYYYMMDDTHHMMSS_<rand>/`."""
+
+    user_folder = USER_FOLDER_MAP[user]
+    prop_slug = _slugify(property_name, _DEFAULT_SLUG_PROPERTY)
+    stamp = log_dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    rand = uuid.uuid4().hex[:6]
+    return f"{cfg.base_prefix}/{user_folder}/{prop_slug}/log_{stamp}_{rand}"
+
+
+def _audit_filename(
+    property_name: Optional[str],
+    activity_category: Optional[str],
+    log_dt: datetime,
+    original_filename: str,
+    index: int,
+) -> str:
+    """`<Property>_<Activity>_<YYYY-MM-DD_HHMM>[_<idx>].<ext>` — easy to grep."""
+
+    ext = os.path.splitext(original_filename or "")[1].lower() or ".bin"
+    prop = _slugify(property_name, _DEFAULT_SLUG_PROPERTY).title().replace("-", "")
+    act = _slugify(activity_category, _DEFAULT_SLUG_ACTIVITY).title().replace("-", "")
+    stamp = log_dt.astimezone(timezone.utc).strftime("%Y-%m-%d_%H%M")
+    suffix = f"_{index}" if index > 0 else ""
+    return f"{prop}_{act}_{stamp}{suffix}{ext}"
+
+
+def _make_url_for_blob(blob, cfg: "RepsConfig", object_name: str) -> str:
+    if cfg.make_public:
+        try:
+            blob.make_public()
+            return blob.public_url
+        except Exception as exc:  # pragma: no cover
+            logger.warning("REPS upload: make_public failed (%s); falling back to signed URL", exc)
+    try:
+        return blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(days=7),
+            method="GET",
+        )
+    except Exception as exc:  # pragma: no cover
+        logger.warning("REPS upload: signed URL failed (%s); returning gs:// URI", exc)
+        return f"gs://{cfg.bucket_name}/{object_name}"
+
+
+@dataclass(frozen=True)
+class UploadedAsset:
+    name: str
+    url: str
+    content_type: Optional[str]
+    size_bytes: int
+
+
+@dataclass(frozen=True)
+class UploadBatch:
+    folder_url: Optional[str]
+    folder_path: str
+    files: List[UploadedAsset]
+
+
+def upload_evidence_batch(
+    *,
+    user: str,
+    property_name: Optional[str],
+    activity_category: Optional[str],
+    log_timestamp: Optional[datetime],
+    items: List[Tuple[str, Optional[str], bytes]],
+) -> UploadBatch:
+    """Upload one or many evidence files into a per-log GCS sub-folder.
+
+    `items` is a list of `(original_filename, content_type, file_bytes)`.
+
+    Returns the folder path / browseable folder URL plus per-file URLs that
+    the frontend will hand back to `/reps/log` to be persisted in the Sheet.
+    """
+
+    if user not in USER_FOLDER_MAP:
+        raise RepsValidationError(f"Unknown REPS user: {user!r}")
+    if not items:
+        raise RepsValidationError("upload_evidence_batch requires at least one file")
+
+    log_dt = log_timestamp or datetime.now(timezone.utc)
+
+    cfg = get_config()
+    client = get_storage_client()
+    bucket = client.bucket(cfg.bucket_name)
+
+    folder_path = _log_folder_path(cfg, user, property_name, log_dt)
+    uploaded: List[UploadedAsset] = []
+
+    for idx, (orig_name, content_type, file_bytes) in enumerate(items):
+        validate_evidence_file(orig_name, content_type)
+        if not content_type:
+            content_type = mimetypes.guess_type(orig_name)[0] or "application/octet-stream"
+
+        new_name = _audit_filename(property_name, activity_category, log_dt, orig_name, idx)
+        # Belt-and-suspenders: re-sanitize after the construction.
+        new_name = sanitize_filename(new_name)
+        object_name = f"{folder_path}/{new_name}"
+
+        blob = bucket.blob(object_name)
+        blob.upload_from_file(
+            io.BytesIO(file_bytes),
+            content_type=content_type,
+            rewind=True,
+        )
+        url = _make_url_for_blob(blob, cfg, object_name)
+        uploaded.append(
+            UploadedAsset(
+                name=new_name,
+                url=url,
+                content_type=content_type,
+                size_bytes=len(file_bytes),
+            )
+        )
+
+    folder_url: Optional[str] = None
+    # Console folder browser — visible only to project members; convenient to
+    # paste into the Sheet for auditors who have project access. Files
+    # themselves are accessed via their (signed/public) URLs above.
+    if cfg.bucket_name:
+        folder_url = (
+            f"https://console.cloud.google.com/storage/browser/"
+            f"{cfg.bucket_name}/{folder_path}"
+        )
+
+    return UploadBatch(folder_url=folder_url, folder_path=folder_path, files=uploaded)
+
+
+# --- Location snapshot rendering for the Sheet --- #
+
+_KIND_LABELS: dict = {
+    "manual_save": "MANUAL",
+    "timer_start": "START",
+    "timer_pause": "PAUSE",
+    "timer_resume": "RESUME",
+    "timer_stop": "STOP",
+    "bookmark": "BOOKMARK",
+    "evidence_capture": "PHOTO",
+}
+
+
+def _format_one_snapshot(snap: dict) -> str:
+    """Render a single snapshot dict as a single audit-trail line.
+
+    Produces e.g.  `START 2026-05-03T18:01:00Z @ 25.7741,-80.1937 (±15m) — https://maps.google.com/?q=25.7741,-80.1937`
+    Falls back to "[no GPS]" + an optional note when coordinates are missing
+    (user denied permission OR explicitly chose "Remote").
+    """
+
+    kind_raw = (snap.get("kind") or "").strip() or "bookmark"
+    label = _KIND_LABELS.get(kind_raw, kind_raw.upper())
+
+    captured_at = snap.get("captured_at") or ""
+    if isinstance(captured_at, datetime):
+        captured_at = captured_at.isoformat()
+
+    lat = snap.get("lat")
+    lng = snap.get("lng")
+    accuracy = snap.get("accuracy_m")
+    note = (snap.get("note") or "").strip()
+
+    parts = [label, str(captured_at)]
+    if lat is not None and lng is not None:
+        coord = f"@ {float(lat):.5f},{float(lng):.5f}"
+        if accuracy is not None:
+            coord += f" (±{float(accuracy):.0f}m)"
+        parts.append(coord)
+        parts.append(f"— https://maps.google.com/?q={float(lat):.5f},{float(lng):.5f}")
+    else:
+        parts.append("[no GPS]")
+
+    if note:
+        parts.append(f"({note})")
+
+    return " ".join(parts).strip()
+
+
+def format_location_snapshots(
+    snapshots: List[dict],
+    fallback_note: Optional[str] = None,
+) -> str:
+    """Multi-line breadcrumb string the Sheet's Location column shows."""
+
+    rendered: List[str] = []
+    for snap in snapshots or []:
+        try:
+            rendered.append(_format_one_snapshot(snap))
+        except Exception:  # noqa: BLE001
+            # Never let a single bad reading kill the whole append.
+            continue
+
+    if rendered:
+        return "\n".join(rendered)
+
+    return (fallback_note or "").strip()
+
+
+def join_evidence_links(
+    folder_url: Optional[str],
+    file_urls: List[str],
+    legacy_single: Optional[str] = None,
+) -> str:
+    """One newline-joined string for the 'Evidence Link (GCS URL)' column.
+
+    Folder URL on top (auditor's index page), then each file URL, then any
+    legacy single-link backward-compat value.
+    """
+
+    out: List[str] = []
+    if folder_url:
+        out.append(folder_url.strip())
+    for u in file_urls or []:
+        u = (u or "").strip()
+        if u and u not in out:
+            out.append(u)
+    if legacy_single and legacy_single.strip() and legacy_single.strip() not in out:
+        out.append(legacy_single.strip())
+    return "\n".join(out)

@@ -19,6 +19,35 @@ RepsUser = Literal["Aviv2026", "Yarden2026"]
 # survives an audit much better.
 MIN_DESCRIPTION_LEN = 20
 
+# All allowed event types for a location snapshot. The auditor reads these as
+# breadcrumbs in the Sheet's Location column, so order matters in the UI but
+# the backend treats them as opaque labels here.
+LocationSnapshotKind = Literal[
+    "manual_save",
+    "timer_start",
+    "timer_pause",
+    "timer_resume",
+    "timer_stop",
+    "bookmark",
+    "evidence_capture",
+]
+
+
+class LocationSnapshot(BaseModel):
+    """One device-GPS reading captured by the browser at a discrete event.
+
+    `lat` / `lng` may be omitted when the user denied permission OR explicitly
+    chose "Mark as Remote" — in which case `note` carries the override
+    ("Remote", "permission_denied", etc.).
+    """
+
+    kind: LocationSnapshotKind
+    captured_at: datetime
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lng: Optional[float] = Field(None, ge=-180, le=180)
+    accuracy_m: Optional[float] = Field(None, ge=0, le=1_000_000)
+    note: Optional[str] = Field(None, max_length=200)
+
 
 class RepsLogCreate(BaseModel):
     """Payload accepted by `POST /reps/log`.
@@ -33,8 +62,21 @@ class RepsLogCreate(BaseModel):
     description: str = Field(..., min_length=MIN_DESCRIPTION_LEN, max_length=5000)
     start_time: datetime
     end_time: datetime
+    # NEW: array of evidence URLs (the modal uploads files via /reps/upload-batch
+    # before calling /reps/log, then sends back the resulting URLs). Backed by
+    # the GCS folder that holds them; the folder URL — when present — comes
+    # first so the auditor sees the index page on top.
+    evidence_links: List[str] = Field(default_factory=list)
+    evidence_folder: Optional[str] = Field(None, max_length=2000)
+    # Legacy single-link field — accepted for backward compatibility, merged
+    # into `evidence_links` server-side.
     evidence_link: Optional[str] = Field(None, max_length=2000)
-    location: Optional[str] = Field(None, max_length=200)
+    # NEW: device-GPS breadcrumbs across the session. The backend formats
+    # these into a single human-readable string for the Sheet's Location col.
+    location_snapshots: List[LocationSnapshot] = Field(default_factory=list)
+    # Legacy free-text field — accepted as a single fallback "note" if no
+    # snapshots are sent.
+    location: Optional[str] = Field(None, max_length=2000)
     material_participation_rentals: bool = False
     people_involved: List[str] = Field(default_factory=list)
 
@@ -70,7 +112,10 @@ class RepsLogRes(BaseModel):
     end_time: str
     total_hours: float
     evidence_link: Optional[str]
+    evidence_links: List[str] = Field(default_factory=list)
+    evidence_folder: Optional[str] = None
     location: Optional[str]
+    location_snapshots: List[LocationSnapshot] = Field(default_factory=list)
     material_participation_rentals: bool
     people_involved: List[str]
     spreadsheet_id: str
@@ -147,3 +192,31 @@ class RepsPropertyOption(BaseModel):
 
 class RepsPropertyCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
+
+
+# --- Activity categories --- #
+
+class RepsActivityCategoryRes(BaseModel):
+    id: str
+    name: str
+    sort_order: int = 0
+    is_default: bool = False
+
+
+class RepsActivityCategoryCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+
+
+# --- Multi-file upload response --- #
+
+class RepsUploadedFile(BaseModel):
+    name: str
+    url: str
+    content_type: Optional[str] = None
+    size_bytes: int = 0
+
+
+class RepsUploadBatchRes(BaseModel):
+    folder_url: Optional[str] = None
+    folder_path: str
+    files: List[RepsUploadedFile] = Field(default_factory=list)

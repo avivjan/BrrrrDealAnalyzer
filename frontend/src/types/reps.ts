@@ -10,8 +10,9 @@ export const REPS_USER_DISPLAY: Record<RepsUser, string> = {
   Yarden2026: 'Yarden',
 };
 
-// Activity categories suggested in the entry form. Editable locally only.
-export const REPS_ACTIVITY_CATEGORIES = [
+// Built-in fallback list shown if /reps/activity-categories isn't reachable
+// (e.g. offline). Real categories come from the backend store.
+export const FALLBACK_REPS_ACTIVITY_CATEGORIES = [
   'Acquisition / Underwriting',
   'Construction / Rehab Oversight',
   'Property Management',
@@ -22,7 +23,47 @@ export const REPS_ACTIVITY_CATEGORIES = [
   'Refinance / Lender Calls',
   'Other',
 ] as const;
-export type RepsActivityCategory = (typeof REPS_ACTIVITY_CATEGORIES)[number];
+
+// Discrete moments at which the browser captures a GPS snapshot. Mirrors
+// `LocationSnapshotKind` in `repsReq.py`.
+export type LocationSnapshotKind =
+  | 'manual_save'
+  | 'timer_start'
+  | 'timer_pause'
+  | 'timer_resume'
+  | 'timer_stop'
+  | 'bookmark'
+  | 'evidence_capture';
+
+export interface LocationSnapshot {
+  kind: LocationSnapshotKind;
+  captured_at: string; // ISO 8601
+  lat?: number | null;
+  lng?: number | null;
+  accuracy_m?: number | null;
+  // Free-text override / context, e.g. "Remote", "permission_denied".
+  note?: string | null;
+}
+
+export interface RepsActivityCategoryRes {
+  id: string;
+  name: string;
+  sort_order?: number;
+  is_default?: boolean;
+}
+
+export interface RepsUploadedFile {
+  name: string;
+  url: string;
+  content_type?: string | null;
+  size_bytes?: number;
+}
+
+export interface RepsUploadBatchRes {
+  folder_url?: string | null;
+  folder_path: string;
+  files: RepsUploadedFile[];
+}
 
 export interface RepsLogPayload {
   user: RepsUser;
@@ -31,7 +72,14 @@ export interface RepsLogPayload {
   description: string;
   start_time: string; // ISO 8601 with timezone
   end_time: string;   // ISO 8601 with timezone
+  // NEW: array of evidence URLs (uploaded via /reps/upload-batch first).
+  evidence_links?: string[];
+  evidence_folder?: string | null;
+  // Legacy single-link, accepted for backward compat by the backend.
   evidence_link?: string | null;
+  // NEW: device-GPS breadcrumbs across the session.
+  location_snapshots?: LocationSnapshot[];
+  // Legacy free-text fallback.
   location?: string | null;
   material_participation_rentals: boolean;
   people_involved: string[];

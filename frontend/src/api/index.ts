@@ -19,6 +19,8 @@ import type {
   RepsPropertyOption,
   RepsPerson,
   RepsConfigStatus,
+  RepsActivityCategoryRes,
+  RepsUploadBatchRes,
 } from '../types/reps';
 
 export const apiClient = axios.create({
@@ -309,6 +311,46 @@ export default {
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     return response.data;
+  },
+
+  async uploadRepsEvidenceBatch(args: {
+    user: RepsUser;
+    files: File[];
+    propertyName?: string | null;
+    activityCategory?: string | null;
+    logTimestamp?: string | null;
+  }): Promise<RepsUploadBatchRes> {
+    const form = new FormData();
+    form.append('user', args.user);
+    if (args.propertyName) form.append('property_name', args.propertyName);
+    if (args.activityCategory) form.append('activity_category', args.activityCategory);
+    if (args.logTimestamp) form.append('log_timestamp', args.logTimestamp);
+    for (const f of args.files) {
+      form.append('files', f, f.name);
+    }
+    const response = await apiClient.post<RepsUploadBatchRes>(
+      '/reps/upload-batch',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  },
+
+  async getRepsActivityCategories(): Promise<RepsActivityCategoryRes[]> {
+    const response = await apiClient.get<RepsActivityCategoryRes[]>('/reps/activity-categories');
+    return response.data;
+  },
+
+  async createRepsActivityCategory(name: string): Promise<RepsActivityCategoryRes> {
+    const response = await apiClient.post<RepsActivityCategoryRes>(
+      '/reps/activity-categories',
+      { name },
+    );
+    return response.data;
+  },
+
+  async deleteRepsActivityCategory(id: string): Promise<void> {
+    await apiClient.delete(`/reps/activity-categories/${id}`);
   },
 
   async getRepsProperties(): Promise<RepsPropertyOption[]> {

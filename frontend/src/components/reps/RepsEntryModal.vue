@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import api from '../../api';
-import { useRepsStore } from '../../stores/repsStore';
+import { useRepsStore, captureGeoSnapshot } from '../../stores/repsStore';
 import {
-  REPS_ACTIVITY_CATEGORIES,
+  FALLBACK_REPS_ACTIVITY_CATEGORIES,
+  type LocationSnapshot,
   type RepsLogPayload,
   type RepsUser,
 } from '../../types/reps';
@@ -32,22 +33,46 @@ const propertyName = ref('');
 const propertyQuery = ref('');
 const showPropertyDropdown = ref(false);
 const activityCategory = ref<string>('');
+const newCategoryName = ref('');
+const addingCategory = ref(false);
+const showAddCategory = ref(false);
+
 const description = ref('');
 // HTML datetime-local inputs: yyyy-MM-ddTHH:mm
 const startLocal = ref('');
 const endLocal = ref('');
-const evidenceLink = ref('');
-const evidenceFile = ref<File | null>(null);
-const evidenceFileName = ref('');
-const location = ref('');
+
+// Multi-file evidence: any File queued before opening the modal (real-time
+// camera shots taken during a session) is merged with files added inside
+// the modal here.
+const localFiles = ref<File[]>([]);
+const evidenceError = ref('');
+
+// Optional manual location override / context (e.g. "Remote", "Property
+// site visit"). The actual GPS breadcrumbs come from `pendingSnapshots`
+// + a final manual_save snapshot taken when "Save" is clicked.
+const locationNote = ref('');
+const pendingSnapshots = ref<LocationSnapshot[]>([]);
+const capturingSnapshot = ref(false);
+
 const materialParticipation = ref(false);
 const peopleSelected = ref<Set<string>>(new Set());
 const newPersonName = ref('');
 
-const uploadingEvidence = ref(false);
-const evidenceError = ref('');
 const submitting = ref(false);
+const uploadingFiles = ref(false);
 const formError = ref('');
+
+const ALLOWED_FILE_EXTS = ['.pdf', '.jpg', '.jpeg', '.png', '.mov', '.mp4'];
+const ALLOWED_FILE_ACCEPT = ALLOWED_FILE_EXTS.join(',');
+
+// Files merged from the live timer session + files chosen in the modal.
+const allFiles = computed<File[]>(() => [...store.inFlightFilesByUser[props.user], ...localFiles.value]);
+
+const allSnapshots = computed<LocationSnapshot[]>(() => [
+  ...store.snapshotsByUser[props.user],
+  ...pendingSnapshots.value,
+]);
 
 function isoToLocal(iso?: string | null): string {
   if (!iso) return '';
@@ -66,19 +91,21 @@ function resetForm() {
   propertyQuery.value = '';
   showPropertyDropdown.value = false;
   activityCategory.value = '';
+  newCategoryName.value = '';
+  showAddCategory.value = false;
   description.value = '';
   startLocal.value = '';
   endLocal.value = '';
-  evidenceLink.value = '';
-  evidenceFile.value = null;
-  evidenceFileName.value = '';
-  location.value = '';
+  localFiles.value = [];
+  evidenceError.value = '';
+  locationNote.value = '';
+  pendingSnapshots.value = [];
+  capturingSnapshot.value = false;
   materialParticipation.value = false;
   peopleSelected.value = new Set();
   newPersonName.value = '';
-  uploadingEvidence.value = false;
-  evidenceError.value = '';
   submitting.value = false;
+  uploadingFiles.value = false;
   formError.value = '';
 }
 
@@ -89,12 +116,14 @@ watch(
     resetForm();
     startLocal.value = isoToLocal(props.initialStartIso) || isoToLocal(new Date().toISOString());
     endLocal.value = isoToLocal(props.initialEndIso) || isoToLocal(new Date().toISOString());
-    // Lazy-load reference data on first open.
     if (store.properties.length === 0) {
       try { await store.fetchProperties(); } catch (err) { console.warn(err); }
     }
     if (store.people.length === 0) {
       try { await store.fetchPeople(); } catch (err) { console.warn(err); }
+    }
+    if (store.activityCategories.length === 0) {
+      try { await store.fetchActivityCategories(); } catch (err) { console.warn(err); }
     }
   },
   { immediate: true },
@@ -118,11 +147,8 @@ function pickProperty(name: string) {
   showPropertyDropdown.value = false;
 }
 
-// Defer hide so a click on a dropdown entry registers before blur fires.
 function onPropertyBlur() {
-  window.setTimeout(() => {
-    showPropertyDropdown.value = false;
-  }, 150);
+  window.setTimeout(() => { showPropertyDropdown.value = false; }, 150);
 }
 
 const totalHours = computed(() => {
@@ -136,44 +162,56 @@ const totalHours = computed(() => {
 const descRemaining = computed(() => Math.max(0, MIN_DESC.value - description.value.trim().length));
 const descTooShort = computed(() => description.value.trim().length < MIN_DESC.value);
 
-const ALLOWED_FILE_EXTS = ['.pdf', '.jpg', '.jpeg', '.png', '.mov', '.mp4'];
-const ALLOWED_FILE_ACCEPT = ALLOWED_FILE_EXTS.join(',');
+// Categories shown in the dropdown — server-backed when available, fallback list otherwise.
+const categoryOptions = computed<string[]>(() => {
+  if (store.activityCategories.length > 0) {
+    return store.activityCategories.map(c => c.name);
+  }
+  return [...FALLBACK_REPS_ACTIVITY_CATEGORIES];
+});
 
-async function onFileSelected(e: Event) {
+// --- File handling --- //
+
+function validateAndAcceptFiles(files: FileList | File[] | null) {
+  evidenceError.value = '';
+  if (!files) return;
+  const accepted: File[] = [];
+  for (const f of Array.from(files)) {
+    const ext = ('.' + f.name.split('.').pop()!).toLowerCase();
+    if (!ALLOWED_FILE_EXTS.includes(ext)) {
+      evidenceError.value = `Skipped "${f.name}" — only ${ALLOWED_FILE_EXTS.join(', ')} allowed.`;
+      continue;
+    }
+    accepted.push(f);
+  }
+  if (accepted.length > 0) {
+    localFiles.value = [...localFiles.value, ...accepted];
+  }
+}
+
+function onFileInputChange(e: Event) {
   const input = e.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  evidenceError.value = '';
-  const ext = ('.' + file.name.split('.').pop()!).toLowerCase();
-  if (!ALLOWED_FILE_EXTS.includes(ext)) {
-    evidenceError.value = `Only ${ALLOWED_FILE_EXTS.join(', ')} allowed.`;
-    input.value = '';
-    return;
-  }
-  evidenceFile.value = file;
-  evidenceFileName.value = file.name;
-
-  // Trigger upload immediately on selection (per spec) so the URL is ready
-  // by the time the user clicks "Save".
-  uploadingEvidence.value = true;
-  try {
-    const res = await api.uploadRepsEvidence(props.user, file);
-    evidenceLink.value = res.url;
-  } catch (err: any) {
-    evidenceError.value = err?.response?.data?.detail || 'Upload failed';
-    evidenceFile.value = null;
-    evidenceFileName.value = '';
-  } finally {
-    uploadingEvidence.value = false;
-  }
+  validateAndAcceptFiles(input.files);
+  input.value = '';
 }
 
-function clearEvidence() {
-  evidenceFile.value = null;
-  evidenceFileName.value = '';
-  evidenceLink.value = '';
-  evidenceError.value = '';
+function removeFileFromLocal(idx: number) {
+  const list = [...localFiles.value];
+  list.splice(idx, 1);
+  localFiles.value = list;
 }
+
+function removeFileFromTimer(idx: number) {
+  store.removeInFlightFile(props.user, idx);
+}
+
+const cameraInputRef = ref<HTMLInputElement | null>(null);
+
+function openCameraDirect() {
+  cameraInputRef.value?.click();
+}
+
+// --- People handling --- //
 
 function togglePerson(name: string) {
   const s = new Set(peopleSelected.value);
@@ -194,6 +232,73 @@ async function quickAddPerson() {
   }
 }
 
+// --- Activity-category quick add --- //
+
+async function addCategoryInline() {
+  const name = newCategoryName.value.trim();
+  if (!name) return;
+  addingCategory.value = true;
+  try {
+    const cat = await store.addActivityCategory(name);
+    if (cat) activityCategory.value = cat.name;
+    newCategoryName.value = '';
+    showAddCategory.value = false;
+  } catch (err: any) {
+    formError.value = err?.response?.data?.detail || 'Failed to add category';
+  } finally {
+    addingCategory.value = false;
+  }
+}
+
+// --- Geolocation --- //
+
+async function captureSnapshotNow(kind: LocationSnapshot['kind'] = 'manual_save') {
+  capturingSnapshot.value = true;
+  try {
+    const snap = await captureGeoSnapshot(kind);
+    pendingSnapshots.value = [...pendingSnapshots.value, snap];
+  } finally {
+    capturingSnapshot.value = false;
+  }
+}
+
+function markRemote() {
+  pendingSnapshots.value = [
+    ...pendingSnapshots.value,
+    {
+      kind: 'manual_save',
+      captured_at: new Date().toISOString(),
+      note: locationNote.value.trim() || 'Remote',
+    },
+  ];
+}
+
+function dropPendingSnapshot(idx: number) {
+  const list = [...pendingSnapshots.value];
+  list.splice(idx, 1);
+  pendingSnapshots.value = list;
+}
+
+function snapshotLabel(s: LocationSnapshot): string {
+  const KIND_LABEL: Record<string, string> = {
+    manual_save: 'MANUAL',
+    timer_start: 'START',
+    timer_pause: 'PAUSE',
+    timer_resume: 'RESUME',
+    timer_stop: 'STOP',
+    bookmark: 'BOOKMARK',
+    evidence_capture: 'PHOTO',
+  };
+  return KIND_LABEL[s.kind] || s.kind.toUpperCase();
+}
+
+function snapshotMapHref(s: LocationSnapshot): string | null {
+  if (s.lat == null || s.lng == null) return null;
+  return `https://maps.google.com/?q=${s.lat.toFixed(5)},${s.lng.toFixed(5)}`;
+}
+
+// --- Save --- //
+
 async function save() {
   formError.value = '';
 
@@ -210,13 +315,37 @@ async function save() {
     return;
   }
 
-  // If user typed a property name not in the dropdown, persist it as a prospect.
   const finalProperty = (propertyName.value || propertyQuery.value).trim();
   if (finalProperty && !isExactMatch.value) {
+    try { await store.ensureProspect(finalProperty); }
+    catch (err) { console.warn('Failed to save prospect:', err); }
+  }
+
+  // Note: GPS snapshots are captured ONLY when the user explicitly clicks
+  // "Capture GPS now" in the modal or "Pin GPS now" on the timer. Save no
+  // longer auto-snaps — the audit trail reflects what the user chose to log.
+
+  // Step 1: upload all queued files into a per-log folder, get back URLs.
+  let evidenceFolder: string | null = null;
+  let evidenceLinks: string[] = [];
+  if (allFiles.value.length > 0) {
+    uploadingFiles.value = true;
     try {
-      await store.ensureProspect(finalProperty);
-    } catch (err) {
-      console.warn('Failed to save prospect:', err);
+      const batch = await api.uploadRepsEvidenceBatch({
+        user: props.user,
+        files: allFiles.value,
+        propertyName: finalProperty || null,
+        activityCategory: activityCategory.value || null,
+        logTimestamp: new Date().toISOString(),
+      });
+      evidenceFolder = batch.folder_url || null;
+      evidenceLinks = batch.files.map(f => f.url);
+    } catch (err: any) {
+      uploadingFiles.value = false;
+      formError.value = err?.response?.data?.detail || 'Failed to upload evidence';
+      return;
+    } finally {
+      uploadingFiles.value = false;
     }
   }
 
@@ -227,16 +356,18 @@ async function save() {
     description: description.value.trim(),
     start_time: localToIso(startLocal.value),
     end_time: localToIso(endLocal.value),
-    evidence_link: evidenceLink.value || null,
-    location: location.value.trim() || null,
+    evidence_links: evidenceLinks,
+    evidence_folder: evidenceFolder,
+    location_snapshots: allSnapshots.value,
+    location: locationNote.value.trim() || null,
     material_participation_rentals: materialParticipation.value,
     people_involved: Array.from(peopleSelected.value),
   };
 
+  // Step 2: append the row.
   submitting.value = true;
   try {
     await api.logRepsEntry(payload);
-    // Refresh the user's entries+stats from the sheet so the dashboard updates.
     await store.fetchEntries(props.user);
     emit('saved');
     emit('close');
@@ -248,7 +379,7 @@ async function save() {
 }
 
 function close() {
-  if (submitting.value) return;
+  if (submitting.value || uploadingFiles.value) return;
   emit('close');
 }
 </script>
@@ -270,10 +401,7 @@ function close() {
             · server stamps Created-At at save
           </p>
         </div>
-        <button
-          class="text-slate-400 hover:text-slate-700 transition-colors"
-          @click="close"
-        >
+        <button class="text-slate-400 hover:text-slate-700 transition-colors" @click="close">
           <i class="pi pi-times text-lg"></i>
         </button>
       </header>
@@ -325,14 +453,41 @@ function close() {
 
         <!-- Activity category -->
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Activity Category</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium text-slate-700">Activity Category</label>
+            <button
+              type="button"
+              class="text-[11px] font-mono text-blue-600 hover:underline"
+              @click="showAddCategory = !showAddCategory"
+            >
+              <i class="pi pi-plus mr-1"></i>{{ showAddCategory ? 'Cancel' : 'Add new' }}
+            </button>
+          </div>
           <select
             v-model="activityCategory"
             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
           >
             <option value="">— Select —</option>
-            <option v-for="c in REPS_ACTIVITY_CATEGORIES" :key="c" :value="c">{{ c }}</option>
+            <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
           </select>
+          <div v-if="showAddCategory" class="mt-2 flex gap-2">
+            <input
+              v-model="newCategoryName"
+              type="text"
+              placeholder="New category name..."
+              class="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              @keyup.enter="addCategoryInline"
+            />
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
+              :disabled="addingCategory || !newCategoryName.trim()"
+              @click="addCategoryInline"
+            >
+              <i v-if="addingCategory" class="pi pi-spin pi-spinner"></i>
+              <span v-else>Add</span>
+            </button>
+          </div>
         </div>
 
         <!-- Description -->
@@ -346,7 +501,7 @@ function close() {
           <textarea
             v-model="description"
             rows="3"
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             :class="descTooShort ? 'border-rose-300' : 'border-slate-300'"
           ></textarea>
           <div class="text-[11px] font-mono mt-1" :class="descTooShort ? 'text-rose-500' : 'text-emerald-600'">
@@ -390,47 +545,159 @@ function close() {
           </label>
         </div>
 
-        <!-- Location -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Location (GPS or Remote)</label>
+        <!-- Location: GPS breadcrumbs + manual override.
+             Capture is ALWAYS manual: nothing is recorded unless the user
+             taps "Capture GPS now" or "Mark as Remote". -->
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-slate-700">
+              Location · {{ allSnapshots.length }} GPS pin{{ allSnapshots.length === 1 ? '' : 's' }}
+            </label>
+            <div class="flex gap-1.5">
+              <button
+                type="button"
+                class="px-2.5 py-1 text-[11px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1 disabled:opacity-50"
+                :disabled="capturingSnapshot"
+                @click="captureSnapshotNow('manual_save')"
+              >
+                <i class="pi pi-map-marker text-[10px]"></i>
+                {{ capturingSnapshot ? 'Capturing...' : 'Capture GPS now' }}
+              </button>
+              <button
+                type="button"
+                class="px-2.5 py-1 text-[11px] bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg"
+                @click="markRemote"
+              >
+                Mark as Remote
+              </button>
+            </div>
+          </div>
+
+          <ul v-if="allSnapshots.length > 0" class="space-y-1 mb-2 max-h-32 overflow-y-auto">
+            <li
+              v-for="(s, idx) in allSnapshots"
+              :key="idx"
+              class="text-[11px] font-mono text-slate-700 flex items-start justify-between gap-2 py-0.5"
+            >
+              <span class="flex-1 truncate">
+                <span class="inline-block px-1.5 rounded bg-slate-100 text-slate-700 mr-1">{{ snapshotLabel(s) }}</span>
+                <span v-if="s.lat != null && s.lng != null">
+                  {{ s.lat.toFixed(5) }}, {{ s.lng.toFixed(5) }}<span v-if="s.accuracy_m"> (±{{ Math.round(s.accuracy_m) }}m)</span>
+                </span>
+                <span v-else class="text-slate-500">[{{ s.note || 'no GPS' }}]</span>
+                <a
+                  v-if="snapshotMapHref(s)"
+                  :href="snapshotMapHref(s)!"
+                  target="_blank"
+                  class="text-blue-600 hover:underline ml-1"
+                >map</a>
+              </span>
+              <!-- Only allow dropping breadcrumbs the modal added; timer-driven ones live in the store. -->
+              <button
+                v-if="idx >= store.snapshotsByUser[user].length"
+                type="button"
+                class="text-rose-500 hover:text-rose-700 text-xs"
+                @click="dropPendingSnapshot(idx - store.snapshotsByUser[user].length)"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </li>
+          </ul>
+          <div v-else class="text-[11px] text-slate-500 italic mb-2">
+            No location recorded yet. Tap "Capture GPS now" if you want to log
+            where you are; otherwise leave the column blank or use the note
+            below (e.g. "Remote — phone call").
+          </div>
+
           <input
-            v-model="location"
+            v-model="locationNote"
             type="text"
-            placeholder="e.g. Honda — 1234 Maple St, or Remote"
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Optional note (e.g. 'Remote — phone call', 'Honda — 1234 Maple St')"
+            class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
         </div>
 
-        <!-- Evidence upload -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">
-            Evidence (PDF / image / video)
-          </label>
-          <div class="flex items-center gap-2">
-            <input
-              type="file"
-              :accept="ALLOWED_FILE_ACCEPT"
-              :disabled="uploadingEvidence"
-              class="block w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:font-medium file:cursor-pointer"
-              @change="onFileSelected"
-            />
-            <button
-              v-if="evidenceLink || evidenceFileName"
-              type="button"
-              class="text-xs text-rose-600 hover:underline"
-              @click="clearEvidence"
+        <!-- Multi-asset evidence -->
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-slate-700">
+              Evidence
+              <span
+                v-if="allFiles.length > 0"
+                class="ml-1 inline-block px-2 py-0.5 text-[10px] font-mono rounded-full bg-blue-100 text-blue-700"
+              >
+                {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }} attached
+              </span>
+            </label>
+            <div class="flex gap-1.5">
+              <button
+                type="button"
+                class="px-2.5 py-1 text-[11px] bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1"
+                @click="openCameraDirect"
+              >
+                <i class="pi pi-camera text-[10px]"></i> Camera
+              </button>
+              <label
+                class="px-2.5 py-1 text-[11px] bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg flex items-center gap-1 cursor-pointer"
+              >
+                <i class="pi pi-paperclip text-[10px]"></i> Attach
+                <input
+                  type="file"
+                  :accept="ALLOWED_FILE_ACCEPT"
+                  multiple
+                  class="hidden"
+                  @change="onFileInputChange"
+                />
+              </label>
+            </div>
+          </div>
+
+          <input
+            ref="cameraInputRef"
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            multiple
+            class="hidden"
+            @change="onFileInputChange"
+          />
+
+          <ul v-if="allFiles.length > 0" class="space-y-1 max-h-40 overflow-y-auto">
+            <li
+              v-for="(f, idx) in store.inFlightFilesByUser[user]"
+              :key="`timer-${idx}-${f.name}`"
+              class="text-xs flex items-center justify-between gap-2 py-1 px-2 bg-emerald-50 rounded"
             >
-              Clear
-            </button>
-          </div>
-          <div v-if="uploadingEvidence" class="text-[11px] text-blue-600 mt-1">
-            <i class="pi pi-spin pi-spinner mr-1"></i> Uploading to Cloud Storage...
-          </div>
-          <div v-else-if="evidenceLink" class="text-[11px] text-emerald-600 mt-1 break-all">
-            <i class="pi pi-check-circle mr-1"></i>
-            <a :href="evidenceLink" target="_blank" class="underline">{{ evidenceFileName || 'Uploaded' }}</a>
-          </div>
+              <span class="truncate flex-1">
+                <i class="pi pi-clock text-[10px] mr-1 text-emerald-700"></i>
+                <span class="font-mono text-slate-700">{{ f.name }}</span>
+                <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
+                <span class="ml-1 text-[10px] uppercase text-emerald-700">timer</span>
+              </span>
+              <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
+                <i class="pi pi-times text-xs"></i>
+              </button>
+            </li>
+            <li
+              v-for="(f, idx) in localFiles"
+              :key="`local-${idx}-${f.name}`"
+              class="text-xs flex items-center justify-between gap-2 py-1 px-2 bg-slate-50 rounded"
+            >
+              <span class="truncate flex-1">
+                <i class="pi pi-file text-[10px] mr-1 text-slate-700"></i>
+                <span class="font-mono text-slate-700">{{ f.name }}</span>
+                <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
+              </span>
+              <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
+                <i class="pi pi-times text-xs"></i>
+              </button>
+            </li>
+          </ul>
           <div v-if="evidenceError" class="text-[11px] text-rose-600 mt-1">{{ evidenceError }}</div>
+          <div v-if="allFiles.length === 0" class="text-[11px] text-slate-500 italic">
+            Add photos/PDFs/videos. Each log gets its own GCS sub-folder; files are renamed
+            <span class="font-mono">Property_Activity_YYYY-MM-DD_HHMM.ext</span> for the auditor.
+          </div>
         </div>
 
         <!-- People involved -->
@@ -478,7 +745,7 @@ function close() {
           <button
             type="button"
             class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-colors"
-            :disabled="submitting"
+            :disabled="submitting || uploadingFiles"
             @click="close"
           >
             Cancel
@@ -486,11 +753,13 @@ function close() {
           <button
             type="button"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            :disabled="submitting || uploadingEvidence"
+            :disabled="submitting || uploadingFiles || capturingSnapshot"
             @click="save"
           >
-            <i v-if="submitting" class="pi pi-spin pi-spinner"></i>
-            {{ submitting ? 'Saving...' : 'Save Entry' }}
+            <i v-if="submitting || uploadingFiles" class="pi pi-spin pi-spinner"></i>
+            <span v-if="uploadingFiles">Uploading {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }}...</span>
+            <span v-else-if="submitting">Saving...</span>
+            <span v-else>Save Entry</span>
           </button>
         </div>
       </footer>

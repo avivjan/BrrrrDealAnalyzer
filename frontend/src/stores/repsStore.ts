@@ -10,6 +10,9 @@ import {
   type RepsPropertyOption,
   type RepsTimerState,
   type RepsUser,
+  type LocationSnapshot,
+  type LocationSnapshotKind,
+  type RepsActivityCategoryRes,
 } from '../types/reps';
 
 // Tip from the spec: each user has a unique key in localStorage so that
@@ -17,6 +20,12 @@ import {
 const TIMER_STORAGE_KEY: Record<RepsUser, string> = {
   Aviv2026: 'timer_state_aviv',
   Yarden2026: 'timer_state_yarden',
+};
+
+// Per-user breadcrumb buffer; survives refresh so a captured START isn't lost.
+const SNAPSHOTS_STORAGE_KEY: Record<RepsUser, string> = {
+  Aviv2026: 'reps_snapshots_aviv',
+  Yarden2026: 'reps_snapshots_yarden',
 };
 
 const ACTIVE_TAB_STORAGE_KEY = 'reps_active_tab';
@@ -46,6 +55,80 @@ function persistTimerState(user: RepsUser, state: RepsTimerState) {
   }
 }
 
+function loadSnapshots(user: RepsUser): LocationSnapshot[] {
+  try {
+    const raw = localStorage.getItem(SNAPSHOTS_STORAGE_KEY[user]);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as LocationSnapshot[]) : [];
+  } catch (err) {
+    console.warn('repsStore: failed to load snapshots for', user, err);
+    return [];
+  }
+}
+
+function persistSnapshots(user: RepsUser, snaps: LocationSnapshot[]) {
+  try {
+    localStorage.setItem(SNAPSHOTS_STORAGE_KEY[user], JSON.stringify(snaps));
+  } catch (err) {
+    console.warn('repsStore: failed to persist snapshots for', user, err);
+  }
+}
+
+/**
+ * Wrap navigator.geolocation.getCurrentPosition in a single Promise.
+ * Resolves with a snapshot regardless of success: GPS coords on permission
+ * grant, otherwise a snapshot with `note: <reason>` so the audit trail is
+ * still complete (an entry that says "permission_denied" is more honest than
+ * silently dropping the breadcrumb).
+ */
+export async function captureGeoSnapshot(
+  kind: LocationSnapshotKind,
+  noteOnFailure?: string,
+  options: PositionOptions = { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+): Promise<LocationSnapshot> {
+  const captured_at = new Date().toISOString();
+
+  if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+    return { kind, captured_at, note: noteOnFailure || 'unsupported' };
+  }
+
+  return new Promise(resolve => {
+    let settled = false;
+    const settle = (snap: LocationSnapshot) => {
+      if (!settled) {
+        settled = true;
+        resolve(snap);
+      }
+    };
+
+    try {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          settle({
+            kind,
+            captured_at,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy_m: pos.coords.accuracy,
+          });
+        },
+        err => {
+          let why = 'unknown_error';
+          if (err.code === err.PERMISSION_DENIED) why = 'permission_denied';
+          else if (err.code === err.POSITION_UNAVAILABLE) why = 'position_unavailable';
+          else if (err.code === err.TIMEOUT) why = 'timeout';
+          settle({ kind, captured_at, note: noteOnFailure || why });
+        },
+        options,
+      );
+    } catch (err) {
+      console.warn('captureGeoSnapshot: threw', err);
+      settle({ kind, captured_at, note: noteOnFailure || 'exception' });
+    }
+  });
+}
+
 export const useRepsStore = defineStore('reps', () => {
   // --- Active tab (persisted) --- //
   const initialActive: RepsUser =
@@ -67,8 +150,66 @@ export const useRepsStore = defineStore('reps', () => {
     Yarden2026: loadTimerState('Yarden2026'),
   });
 
+  // Per-user buffered location breadcrumbs + in-flight evidence files captured
+  // during the current session. Both are persisted; `inFlightFiles` only stores
+  // metadata in localStorage (Files themselves don't survive refresh).
+  const snapshotsByUser = reactive<Record<RepsUser, LocationSnapshot[]>>({
+    Aviv2026: loadSnapshots('Aviv2026'),
+    Yarden2026: loadSnapshots('Yarden2026'),
+  });
+
+  // Captured in-memory only; cleared on resetTimer(). Each entry is a real
+  // browser File object queued for upload at "Save".
+  const inFlightFilesByUser = reactive<Record<RepsUser, File[]>>({
+    Aviv2026: [],
+    Yarden2026: [],
+  });
+
   function _save(user: RepsUser) {
     persistTimerState(user, { ...timers[user] });
+  }
+
+  function _saveSnaps(user: RepsUser) {
+    persistSnapshots(user, snapshotsByUser[user]);
+  }
+
+  function pushSnapshot(user: RepsUser, snap: LocationSnapshot) {
+    snapshotsByUser[user] = [...snapshotsByUser[user], snap];
+    _saveSnaps(user);
+  }
+
+  function clearSnapshots(user: RepsUser) {
+    snapshotsByUser[user] = [];
+    _saveSnaps(user);
+  }
+
+  /**
+   * Capture a GPS reading at the moment of `kind` and append it to this user's
+   * snapshot buffer. Safe to await — never throws (snapshots have a `note`
+   * fallback if the browser can't get a reading).
+   */
+  async function captureAndPushSnapshot(
+    user: RepsUser,
+    kind: LocationSnapshotKind,
+    noteOnFailure?: string,
+  ): Promise<LocationSnapshot> {
+    const snap = await captureGeoSnapshot(kind, noteOnFailure);
+    pushSnapshot(user, snap);
+    return snap;
+  }
+
+  function addInFlightFile(user: RepsUser, file: File) {
+    inFlightFilesByUser[user] = [...inFlightFilesByUser[user], file];
+  }
+
+  function removeInFlightFile(user: RepsUser, idx: number) {
+    const list = [...inFlightFilesByUser[user]];
+    list.splice(idx, 1);
+    inFlightFilesByUser[user] = list;
+  }
+
+  function clearInFlightFiles(user: RepsUser) {
+    inFlightFilesByUser[user] = [];
   }
 
   function startTimer(user: RepsUser) {
@@ -99,6 +240,8 @@ export const useRepsStore = defineStore('reps', () => {
   function resetTimer(user: RepsUser) {
     timers[user] = { ...EMPTY_REPS_TIMER_STATE };
     _save(user);
+    clearSnapshots(user);
+    clearInFlightFiles(user);
   }
 
   function elapsedMs(user: RepsUser, nowMs: number = Date.now()): number {
@@ -118,6 +261,7 @@ export const useRepsStore = defineStore('reps', () => {
   const configStatus = ref<RepsConfigStatus | null>(null);
   const properties = ref<RepsPropertyOption[]>([]);
   const people = ref<RepsPerson[]>([]);
+  const activityCategories = ref<RepsActivityCategoryRes[]>([]);
   const entriesByUser = reactive<Record<RepsUser, RepsEntriesEnvelope | null>>({
     Aviv2026: null,
     Yarden2026: null,
@@ -193,10 +337,43 @@ export const useRepsStore = defineStore('reps', () => {
     return created;
   }
 
+  async function fetchActivityCategories() {
+    activityCategories.value = await api.getRepsActivityCategories();
+  }
+
+  async function addActivityCategory(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const existing = activityCategories.value.find(
+      c => c.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) return existing;
+    const created = await api.createRepsActivityCategory(trimmed);
+    // Insert sorted (server returns sort_order); rely on a re-sort on read.
+    activityCategories.value = [...activityCategories.value, created].sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name),
+    );
+    return created;
+  }
+
+  async function deleteActivityCategory(id: string) {
+    await api.deleteRepsActivityCategory(id);
+    activityCategories.value = activityCategories.value.filter(c => c.id !== id);
+  }
+
   return {
     activeUser,
     setActiveUser,
     timers,
+    snapshotsByUser,
+    inFlightFilesByUser,
+    pushSnapshot,
+    clearSnapshots,
+    captureAndPushSnapshot,
+    addInFlightFile,
+    removeInFlightFile,
+    clearInFlightFiles,
     startTimer,
     stopTimer,
     resumeTimer,
@@ -206,6 +383,7 @@ export const useRepsStore = defineStore('reps', () => {
     configStatus,
     properties,
     people,
+    activityCategories,
     entriesByUser,
     activeEntries,
     loadingByUser,
@@ -214,6 +392,9 @@ export const useRepsStore = defineStore('reps', () => {
     fetchEntries,
     fetchProperties,
     fetchPeople,
+    fetchActivityCategories,
+    addActivityCategory,
+    deleteActivityCategory,
     addPerson,
     updatePerson,
     removePerson,
