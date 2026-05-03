@@ -58,8 +58,13 @@ logger = logging.getLogger(__name__)
 # --- Sheet schema --------------------------------------------------------- #
 
 # IMPORTANT: order matters — this is the column order persisted to Sheets.
+# `Timestamp (Created At)` is the last column on purpose: the most useful
+# columns for at-a-glance scanning (User → Property → Activity → Description
+# → Start/End/Hours → Evidence → Location → Material Participation → People)
+# stay on the left side of the viewport, and the server-stamped audit
+# fingerprint sits in column L where it doesn't visually crowd the human-
+# entered fields.
 SHEET_COLUMNS: List[str] = [
-    "Timestamp (Created At)",
     "User",
     "Property Name",
     "Activity Category",
@@ -71,6 +76,7 @@ SHEET_COLUMNS: List[str] = [
     "Location (GPS/Remote)",
     "Material Participation in rentals?",
     "People Involved",
+    "Timestamp (Created At)",
 ]
 
 ALLOWED_EVIDENCE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".mov", ".mp4"}
@@ -376,8 +382,9 @@ def append_log_row(
     tab = cfg.sheet_tab
     _ensure_header(sid, tab)
 
+    # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
+    # column so the auditor's eye lands on the human-entered fields first.
     row = [
-        created_at_iso,
         user,
         property_name or "",
         activity_category or "",
@@ -389,6 +396,7 @@ def append_log_row(
         location or "",
         "TRUE" if material_participation_rentals else "FALSE",
         ", ".join(sorted({p.strip() for p in people_involved if p and p.strip()})),
+        created_at_iso,
     ]
     svc = get_sheets_client()
     last_col = _col_letter(len(SHEET_COLUMNS))
@@ -440,26 +448,30 @@ def read_log_rows(user: str) -> list[dict]:
     for raw in rows:
         # pad short rows so missing trailing cells become "".
         padded = list(raw) + [""] * (len(SHEET_COLUMNS) - len(raw))
+        # Indices below MUST match SHEET_COLUMNS:
+        #   0 User · 1 Property · 2 Activity · 3 Description · 4 Start · 5 End
+        #   6 TotalHours · 7 EvidenceLink · 8 Location · 9 MatlParticip
+        #   10 People · 11 CreatedAt
         try:
-            total_hours = float(padded[7]) if str(padded[7]).strip() else 0.0
+            total_hours = float(padded[6]) if str(padded[6]).strip() else 0.0
         except (TypeError, ValueError):
             total_hours = 0.0
-        people_str = padded[11] or ""
+        people_str = padded[10] or ""
         people = [p.strip() for p in people_str.split(",") if p.strip()]
         out.append(
             {
-                "created_at": padded[0] or None,
-                "user": padded[1] or None,
-                "property_name": padded[2] or None,
-                "activity_category": padded[3] or None,
-                "description": padded[4] or None,
-                "start_time": padded[5] or None,
-                "end_time": padded[6] or None,
+                "user": padded[0] or None,
+                "property_name": padded[1] or None,
+                "activity_category": padded[2] or None,
+                "description": padded[3] or None,
+                "start_time": padded[4] or None,
+                "end_time": padded[5] or None,
                 "total_hours": total_hours,
-                "evidence_link": padded[8] or None,
-                "location": padded[9] or None,
-                "material_participation_rentals": str(padded[10]).strip().upper() in {"TRUE", "1", "YES", "Y"},
+                "evidence_link": padded[7] or None,
+                "location": padded[8] or None,
+                "material_participation_rentals": str(padded[9]).strip().upper() in {"TRUE", "1", "YES", "Y"},
                 "people_involved": people,
+                "created_at": padded[11] or None,
             }
         )
     return out

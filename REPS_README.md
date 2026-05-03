@@ -91,18 +91,23 @@ append, so you don't need to set up columns manually:
 
 | # | Column |
 |---|--------|
-| A | Timestamp (Created At) |
-| B | User |
-| C | Property Name |
-| D | Activity Category |
-| E | Description |
-| F | Start Time |
-| G | End Time |
-| H | Total Hours (Decimal) |
-| I | Evidence Link (GCS URL) |
-| J | Location (GPS/Remote) |
-| K | Material Participation in rentals? |
-| L | People Involved |
+| A | User |
+| B | Property Name |
+| C | Activity Category |
+| D | Description |
+| E | Start Time |
+| F | End Time |
+| G | Total Hours (Decimal) |
+| H | Evidence Link (GCS URL) |
+| I | Location (GPS/Remote) |
+| J | Material Participation in rentals? |
+| K | People Involved |
+| L | Timestamp (Created At) |
+
+> Heads up: `Timestamp (Created At)` is the server-stamped audit
+> fingerprint and lives in column **L** on purpose so the human-entered
+> fields stay on the left. The user's "event date" is in **E / F**
+> (`Start Time` / `End Time`), never in column L.
 
 ---
 
@@ -258,7 +263,7 @@ is gated to secure origins (`https://` or `localhost`).
 | Spec rule | Where it's enforced |
 |---|---|
 | Append-only writes (no overwrites) | `reps_service.append_log_row` uses Sheets `.append()` exclusively. |
-| Server-stamped `created_at` | `reps_service.now_utc_iso` is called inside `/reps/log` after the request hits the server. The user's "event date" is stored in `start_time` / `end_time`, never in column A. |
+| Server-stamped `created_at` | `reps_service.now_utc_iso` is called inside `/reps/log` after the request hits the server and is written to column **L** (`Timestamp (Created At)`). The user's "event date" is stored in `start_time` / `end_time`, never in column L. |
 | User → sheet routing | `reps_service.sheet_id_for_user` maps `Aviv2026` → `REPS_SHEET_ID_AVIV` and `Yarden2026` → `REPS_SHEET_ID_YARDEN`. |
 | GCS folder routing | `reps_service.upload_evidence` writes to `<base_prefix>/aviv/…` or `<base_prefix>/yarden/…`. |
 | File-type whitelist | `.pdf, .jpg, .jpeg, .png, .mov, .mp4` — enforced both client-side (`<input accept>`) and server-side (`validate_evidence_file`). |

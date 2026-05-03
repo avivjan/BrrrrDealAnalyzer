@@ -12,6 +12,13 @@ onMounted(() => {
 
 const cards = [
   {
+    title: "REPS Tracker",
+    icon: "pi pi-clock",
+    action: "internal",
+    route: "/reps",
+    color: "bg-gradient-to-br from-rose-500 to-amber-500",
+  },
+  {
     title: "Daily Tasks",
     icon: "pi pi-check-square",
     action: "external",
@@ -52,13 +59,6 @@ const cards = [
     action: "internal",
     route: "/liquidity",
     color: "bg-gradient-to-br from-slate-700 to-indigo-800",
-  },
-  {
-    title: "REPS Tracker",
-    icon: "pi pi-clock",
-    action: "internal",
-    route: "/reps",
-    color: "bg-gradient-to-br from-rose-500 to-amber-500",
   },
 ];
 
