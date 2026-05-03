@@ -240,10 +240,67 @@ def get_storage_client():
 
 # --- Sheets ops ---------------------------------------------------------- #
 
+def _quote_sheet_title_for_a1(title: str) -> str:
+    """Wrap a worksheet tab name for A1 ranges; escape embedded apostrophes per Sheets rules."""
+
+    name = (title or "").strip()
+    if not name:
+        raise RepsValidationError("REPS sheet tab name is empty (set REPS_SHEET_TAB).")
+    return "'" + name.replace("'", "''") + "'"
+
+
+def _resolve_worksheet_title(spreadsheet_id: str, requested_tab: str) -> str:
+    """Return the spreadsheet's canonical tab title for requested_tab.
+
+    Google's error ``Unable to parse range: Sheet!…`` often indicates the tab named in
+    REPS_SHEET_TAB does not exist (fresh spreadsheets default to "Sheet1").
+    """
+
+    svc = get_sheets_client()
+    meta = (
+        svc.spreadsheets()
+        .get(spreadsheetId=spreadsheet_id, fields="sheets(properties(title))")
+        .execute()
+    )
+    titles: List[str] = []
+    for s in meta.get("sheets") or []:
+        prop = s.get("properties") or {}
+        t = prop.get("title")
+        if isinstance(t, str) and t:
+            titles.append(t)
+
+    rq = (requested_tab or "").strip()
+    if not rq:
+        raise RepsValidationError(
+            "REPS_SHEET_TAB is unset or empty. Set it to an existing worksheet name."
+        )
+
+    for t in titles:
+        if t == rq:
+            return t
+    for t in titles:
+        if t.lower() == rq.lower():
+            return t
+
+    raise RepsValidationError(
+        f"Worksheet [{rq}] not found in spreadsheet …{spreadsheet_id[-12:]}. "
+        f"Existing tab names: {titles!r}. "
+        'Rename a tab to match or set REPS_SHEET_TAB (often "Sheet1" on new files).'
+    )
+
+
+def _a1_range(spreadsheet_id: str, configured_tab: str, cell_fragment: str) -> str:
+    """Build a fully-qualified A1 range using a canonical, quoted worksheet title."""
+
+    canon = _resolve_worksheet_title(spreadsheet_id, configured_tab)
+    return f"{_quote_sheet_title_for_a1(canon)}!{cell_fragment}"
+
+
 def _ensure_header(spreadsheet_id: str, tab: str) -> None:
     """Write the column header row if the sheet is empty. Idempotent."""
     svc = get_sheets_client()
-    rng = f"{tab}!A1:{_col_letter(len(SHEET_COLUMNS))}1"
+    last_col = _col_letter(len(SHEET_COLUMNS))
+    rng = _a1_range(spreadsheet_id, tab, f"A1:{last_col}1")
     res = (
         svc.spreadsheets()
         .values()
@@ -305,12 +362,14 @@ def append_log_row(
         ", ".join(sorted({p.strip() for p in people_involved if p and p.strip()})),
     ]
     svc = get_sheets_client()
+    last_col = _col_letter(len(SHEET_COLUMNS))
+    rng = _a1_range(sid, tab, f"A:{last_col}")
     res = (
         svc.spreadsheets()
         .values()
         .append(
             spreadsheetId=sid,
-            range=f"{tab}!A:{_col_letter(len(SHEET_COLUMNS))}",
+            range=rng,
             valueInputOption="USER_ENTERED",
             insertDataOption="INSERT_ROWS",
             body={"values": [row]},
@@ -333,12 +392,16 @@ def read_log_rows(user: str) -> list[dict]:
     _ensure_header(sid, tab)
 
     svc = get_sheets_client()
+    last_col = _col_letter(len(SHEET_COLUMNS))
+    # Fully-specified rectangular range avoids ambiguous parsers (e.g. "A2:L"
+    # without row on the RHS).
+    data_rng = _a1_range(sid, tab, f"A2:{last_col}1048576")
     res = (
         svc.spreadsheets()
         .values()
         .get(
             spreadsheetId=sid,
-            range=f"{tab}!A2:{_col_letter(len(SHEET_COLUMNS))}",
+            range=data_rng,
         )
         .execute()
     )

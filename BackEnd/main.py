@@ -1595,6 +1595,8 @@ def reps_entries_route(user: str = Query(...)):
         rows = reps_service.read_log_rows(user)
     except reps_service.RepsConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+    except reps_service.RepsValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
         logger.exception("Failed to read REPS sheet")
         raise HTTPException(status_code=500, detail=f"Sheet read failed: {exc}")
