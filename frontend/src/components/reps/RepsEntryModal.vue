@@ -4,6 +4,7 @@ import api from '../../api';
 import { useRepsStore, captureGeoSnapshot } from '../../stores/repsStore';
 import {
   FALLBACK_REPS_ACTIVITY_CATEGORIES,
+  type EvidenceItem,
   type LocationSnapshot,
   type RepsLogPayload,
   type RepsUser,
@@ -44,9 +45,21 @@ const endLocal = ref('');
 
 // Multi-file evidence: any File queued before opening the modal (real-time
 // camera shots taken during a session) is merged with files added inside
-// the modal here.
+// the modal here. Each file has a parallel `label` so the user can edit the
+// short name shown in the Sheet's evidence cell (defaults to the filename
+// without extension).
 const localFiles = ref<File[]>([]);
+const localLabels = ref<string[]>([]);
+const timerLabels = ref<string[]>([]);
 const evidenceError = ref('');
+
+function deriveLabel(name: string): string {
+  // Strip extension and any trailing audit-style timestamp/index suffix so
+  // the user sees a clean default they're likely to keep ("Closing meeting"
+  // over "ClosingMeeting_2026-05-03_1200").
+  const stem = name.replace(/\.[^./\\]+$/, '');
+  return stem.length > 80 ? stem.slice(0, 80) : stem;
+}
 
 // Optional manual location override / context (e.g. "Remote", "Property
 // site visit"). The actual GPS breadcrumbs come from `pendingSnapshots`
@@ -67,7 +80,16 @@ const ALLOWED_FILE_EXTS = ['.pdf', '.jpg', '.jpeg', '.png', '.mov', '.mp4'];
 const ALLOWED_FILE_ACCEPT = ALLOWED_FILE_EXTS.join(',');
 
 // Files merged from the live timer session + files chosen in the modal.
-const allFiles = computed<File[]>(() => [...store.inFlightFilesByUser[props.user], ...localFiles.value]);
+// Order MUST match `allLabels` so we can zip URLs back to labels on save.
+const allFiles = computed<File[]>(() => [
+  ...store.inFlightFilesByUser[props.user],
+  ...localFiles.value,
+]);
+
+const allLabels = computed<string[]>(() => [
+  ...timerLabels.value,
+  ...localLabels.value,
+]);
 
 const allSnapshots = computed<LocationSnapshot[]>(() => [
   ...store.snapshotsByUser[props.user],
@@ -97,6 +119,9 @@ function resetForm() {
   startLocal.value = '';
   endLocal.value = '';
   localFiles.value = [];
+  localLabels.value = [];
+  // Seed timer-side labels from whatever the timer captured during clocking.
+  timerLabels.value = store.inFlightFilesByUser[props.user].map(f => deriveLabel(f.name));
   evidenceError.value = '';
   locationNote.value = '';
   pendingSnapshots.value = [];
@@ -186,6 +211,7 @@ function validateAndAcceptFiles(files: FileList | File[] | null) {
   }
   if (accepted.length > 0) {
     localFiles.value = [...localFiles.value, ...accepted];
+    localLabels.value = [...localLabels.value, ...accepted.map(f => deriveLabel(f.name))];
   }
 }
 
@@ -196,12 +222,20 @@ function onFileInputChange(e: Event) {
 }
 
 function removeFileFromLocal(idx: number) {
-  const list = [...localFiles.value];
-  list.splice(idx, 1);
-  localFiles.value = list;
+  const files = [...localFiles.value];
+  const labels = [...localLabels.value];
+  files.splice(idx, 1);
+  labels.splice(idx, 1);
+  localFiles.value = files;
+  localLabels.value = labels;
 }
 
 function removeFileFromTimer(idx: number) {
+  // Keep `timerLabels` in lock-step with the store's queue so the zip on
+  // save still maps each label to the right uploaded URL.
+  const labels = [...timerLabels.value];
+  labels.splice(idx, 1);
+  timerLabels.value = labels;
   store.removeInFlightFile(props.user, idx);
 }
 
@@ -325,9 +359,10 @@ async function save() {
   // "Capture GPS now" in the modal or "Pin GPS now" on the timer. Save no
   // longer auto-snaps — the audit trail reflects what the user chose to log.
 
-  // Step 1: upload all queued files into a per-log folder, get back URLs.
-  let evidenceFolder: string | null = null;
-  let evidenceLinks: string[] = [];
+  // Step 1: upload all queued files (no per-log folder anymore — they land
+  // flat in the property's GCS directory), then zip the returned URLs back
+  // to the user-supplied labels in input-order.
+  let evidenceItems: EvidenceItem[] = [];
   if (allFiles.value.length > 0) {
     uploadingFiles.value = true;
     try {
@@ -338,8 +373,11 @@ async function save() {
         activityCategory: activityCategory.value || null,
         logTimestamp: new Date().toISOString(),
       });
-      evidenceFolder = batch.folder_url || null;
-      evidenceLinks = batch.files.map(f => f.url);
+      const labels = allLabels.value;
+      evidenceItems = batch.files.map((f, i) => ({
+        url: f.url,
+        label: (labels[i] || '').trim() || deriveLabel(f.name),
+      }));
     } catch (err: any) {
       uploadingFiles.value = false;
       formError.value = err?.response?.data?.detail || 'Failed to upload evidence';
@@ -356,8 +394,7 @@ async function save() {
     description: description.value.trim(),
     start_time: localToIso(startLocal.value),
     end_time: localToIso(endLocal.value),
-    evidence_links: evidenceLinks,
-    evidence_folder: evidenceFolder,
+    evidence_items: evidenceItems,
     location_snapshots: allSnapshots.value,
     location: locationNote.value.trim() || null,
     material_participation_rentals: materialParticipation.value,
@@ -662,41 +699,59 @@ function close() {
             @change="onFileInputChange"
           />
 
-          <ul v-if="allFiles.length > 0" class="space-y-1 max-h-40 overflow-y-auto">
+          <ul v-if="allFiles.length > 0" class="space-y-2 max-h-72 overflow-y-auto">
             <li
               v-for="(f, idx) in store.inFlightFilesByUser[user]"
               :key="`timer-${idx}-${f.name}`"
-              class="text-xs flex items-center justify-between gap-2 py-1 px-2 bg-emerald-50 rounded"
+              class="text-xs py-1.5 px-2 bg-emerald-50 rounded"
             >
-              <span class="truncate flex-1">
-                <i class="pi pi-clock text-[10px] mr-1 text-emerald-700"></i>
-                <span class="font-mono text-slate-700">{{ f.name }}</span>
-                <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
-                <span class="ml-1 text-[10px] uppercase text-emerald-700">timer</span>
-              </span>
-              <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
-                <i class="pi pi-times text-xs"></i>
-              </button>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="truncate flex-1">
+                  <i class="pi pi-clock text-[10px] mr-1 text-emerald-700"></i>
+                  <span class="font-mono text-slate-700">{{ f.name }}</span>
+                  <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
+                  <span class="ml-1 text-[10px] uppercase text-emerald-700">timer</span>
+                </span>
+                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+              <input
+                v-model="timerLabels[idx]"
+                type="text"
+                placeholder="Short link name in the Sheet (e.g. 'Closing meeting photo')"
+                maxlength="120"
+                class="w-full px-2 py-1 text-[11px] border border-emerald-200 rounded bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+              />
             </li>
             <li
               v-for="(f, idx) in localFiles"
               :key="`local-${idx}-${f.name}`"
-              class="text-xs flex items-center justify-between gap-2 py-1 px-2 bg-slate-50 rounded"
+              class="text-xs py-1.5 px-2 bg-slate-50 rounded"
             >
-              <span class="truncate flex-1">
-                <i class="pi pi-file text-[10px] mr-1 text-slate-700"></i>
-                <span class="font-mono text-slate-700">{{ f.name }}</span>
-                <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
-              </span>
-              <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
-                <i class="pi pi-times text-xs"></i>
-              </button>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="truncate flex-1">
+                  <i class="pi pi-file text-[10px] mr-1 text-slate-700"></i>
+                  <span class="font-mono text-slate-700">{{ f.name }}</span>
+                  <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
+                </span>
+                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+              <input
+                v-model="localLabels[idx]"
+                type="text"
+                placeholder="Short link name in the Sheet (e.g. 'Inspection report')"
+                maxlength="120"
+                class="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none"
+              />
             </li>
           </ul>
           <div v-if="evidenceError" class="text-[11px] text-rose-600 mt-1">{{ evidenceError }}</div>
           <div v-if="allFiles.length === 0" class="text-[11px] text-slate-500 italic">
-            Add photos/PDFs/videos. Each log gets its own GCS sub-folder; files are renamed
-            <span class="font-mono">Property_Activity_YYYY-MM-DD_HHMM.ext</span> for the auditor.
+            Add photos/PDFs/videos. Each file becomes a clickable named link in the Sheet's
+            evidence column — type a short name once you've attached.
           </div>
         </div>
 

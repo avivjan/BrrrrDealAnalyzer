@@ -69,6 +69,7 @@ from ReqRes.reps.repsReq import (
     RepsPropertyOption, RepsPropertyCreate,
     RepsActivityCategoryRes, RepsActivityCategoryCreate,
     RepsUploadBatchRes, RepsUploadedFile,
+    EvidenceItem,
     MIN_DESCRIPTION_LEN,
 )
 import crud_reps
@@ -1546,9 +1547,10 @@ def _compute_stats(user: str, entries: list[dict]) -> RepsStats:
 def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
     """Append a new REPS entry to the user's Google Sheet (append-only).
 
-    Multi-asset evidence: `evidence_links` + optional `evidence_folder` get
-    folded into a single newline-joined cell so the auditor can see the
-    folder URL on top and each file underneath.
+    Evidence: each `evidence_items` entry becomes a clickable named link in
+    the Sheet's Evidence column (rich text). The user types the label in
+    the modal so the auditor sees `Closing meeting` instead of a 240-char
+    GCS URL.
 
     Location: `location_snapshots` get rendered as breadcrumbs (START/STOP/
     PAUSE/RESUME/BOOKMARK/MANUAL/PHOTO) so an auditor can verify the user
@@ -1569,11 +1571,22 @@ def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
             [s.model_dump() for s in payload.location_snapshots],
             fallback_note=payload.location,
         )
-        rendered_evidence = reps_service.join_evidence_links(
-            folder_url=payload.evidence_folder,
-            file_urls=list(payload.evidence_links or []),
-            legacy_single=payload.evidence_link,
-        )
+
+        # Prefer the v3 `evidence_items` schema; fall back to the legacy
+        # `evidence_links`/`evidence_link` fields with no custom labels.
+        items: list[reps_service.EvidenceItem]
+        if payload.evidence_items:
+            items = [
+                reps_service.EvidenceItem(url=it.url, label=it.label)
+                for it in payload.evidence_items
+            ]
+        else:
+            legacy_urls = list(payload.evidence_links or [])
+            if payload.evidence_link:
+                legacy_urls.append(payload.evidence_link)
+            items = [reps_service.EvidenceItem(url=u, label=None) for u in legacy_urls]
+
+        items = reps_service.normalize_evidence_items(items)
 
         sid, updated_range = reps_service.append_log_row(
             user=payload.user,
@@ -1584,7 +1597,7 @@ def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
             start_iso=payload.start_time.isoformat(),
             end_iso=payload.end_time.isoformat(),
             total_hours=total_hours,
-            evidence_link=rendered_evidence or None,
+            evidence_items=items,
             location=rendered_location or None,
             material_participation_rentals=payload.material_participation_rentals,
             people_involved=payload.people_involved,
@@ -1608,6 +1621,9 @@ def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
         logger.exception("Failed to append REPS log row")
         raise HTTPException(status_code=500, detail=f"Sheet append failed: {exc}")
 
+    rendered_evidence = reps_service.evidence_cell_text(items)
+    res_items = [EvidenceItem(url=it.url, label=it.label) for it in items]
+
     return RepsLogRes(
         created_at=created_at_iso,
         user=payload.user,
@@ -1617,9 +1633,10 @@ def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
         start_time=payload.start_time.isoformat(),
         end_time=payload.end_time.isoformat(),
         total_hours=total_hours,
+        evidence_items=res_items,
         evidence_link=rendered_evidence or None,
-        evidence_links=list(payload.evidence_links or []),
-        evidence_folder=payload.evidence_folder,
+        evidence_links=[it.url for it in items],
+        evidence_folder=None,
         location=rendered_location or None,
         location_snapshots=payload.location_snapshots,
         material_participation_rentals=payload.material_participation_rentals,

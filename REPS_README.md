@@ -53,23 +53,23 @@ gcloud storage buckets create gs://bigwhales-reps-evidence-2026 \
   --uniform-bucket-level-access
 ```
 
-> By default the app writes **permanent, Google-authenticated URLs**
-> (`https://storage.cloud.google.com/...`) into the Sheet. The viewer must
-> be signed in with a Google account that has `Storage Object Viewer`
-> on the bucket — perfect for a private REPS audit trail (you, Yarden,
-> your CPA). Grant access with:
+> **By default (v3+) the app writes permanent PUBLIC URLs**
+> (`https://storage.googleapis.com/<bucket>/<path>`) into the Sheet so
+> the auditor can open evidence in any browser without a Google login.
+> One-time setup — grant `allUsers` viewer on the bucket:
 >
 > ```bash
-> # Repeat for each viewer (and CPA)
 > gcloud storage buckets add-iam-policy-binding gs://bigwhales-reps-evidence-2026 \
->   --member="user:cpa@example.com" \
+>   --member="allUsers" \
 >   --role="roles/storage.objectViewer"
 > ```
 >
-> If you instead want **public links** (anyone with the URL can view), set
-> `REPS_LINK_STYLE=public` AND grant `roles/storage.objectViewer` to
-> `allUsers` at the bucket level. Use `REPS_LINK_STYLE=signed` to fall
-> back to 7-day signed URLs (NOT recommended — links rot).
+> If you'd rather keep the bucket private and require a Google sign-in
+> for each viewer, set `REPS_LINK_STYLE=auth` AND grant individual
+> Google accounts (yours, Yarden's, your CPA's) `Storage Object Viewer`
+> at the bucket level instead of `allUsers`. Use `REPS_LINK_STYLE=signed`
+> only as a last resort — those URLs expire after 7 days and break the
+> audit trail.
 
 ### 1d. Create the two Google Sheets
 
@@ -133,10 +133,12 @@ REPS_GCS_BUCKET=bigwhales-reps-evidence-2026
 REPS_GCS_BASE_PREFIX=evidence/2026
 
 # (Optional) Link style for the Evidence column.
-#   auth   = permanent storage.cloud.google.com URL (Google login required) — DEFAULT
-#   public = permanent storage.googleapis.com URL (bucket must be public)
-#   signed = 7-day expiring v4 URL (NOT recommended — links rot)
-REPS_LINK_STYLE=auth
+#   public = permanent storage.googleapis.com URL — bucket must grant
+#            `allUsers:objectViewer` (works for UBLA buckets via IAM). DEFAULT.
+#   auth   = permanent storage.cloud.google.com URL — viewer must be signed
+#            in with a Google account that has bucket read access.
+#   signed = 7-day expiring v4 URL (NOT recommended — links rot).
+REPS_LINK_STYLE=public
 
 # (Deprecated, back-compat only) "true" implies REPS_LINK_STYLE=public
 # REPS_PUBLIC_OBJECTS=false
@@ -214,47 +216,51 @@ curl 'http://localhost:8000/reps/entries?user=Aviv2026'
 
 ---
 
-## 6. New in v2 — Multi-asset evidence, real-time camera, GPS breadcrumbs, dynamic categories
+## 6. New in v3 — Named evidence links, flat per-property folders, public URLs by default
 
-The REPS Tracker now captures more audit-defensible context out of the box:
-
-- **Device GPS breadcrumbs.** The browser auto-snaps `navigator.geolocation`
-  on **Start / Stop / Pause / Resume**, on **"Pin GPS now"** during a
-  session, on **"Save"** for any entry, and each time you snap a photo via
-  the in-app camera. The full breadcrumb trail
-  (`START 2026-05-03T18:01:00Z @ 25.7741,-80.1937 (±15m) — maps.google.com/?q=…`)
-  is rendered into the **Location** column so the auditor can see you
-  stayed at the property during the session. If the user denies location
-  permission, the snapshot still goes into the trail with
-  `[permission_denied]` so the audit log is honest, not silent.
-- **Multi-asset evidence + real-time camera.** The modal accepts
-  multiple files, supports `Camera` (uses `<input capture="environment">`
-  to open the device's native camera) and `Attach`. Each log gets its own
-  GCS sub-folder
-  (`/<base_prefix>/<aviv|yarden>/<property-slug>/log_<utc_timestamp>_<rand>/`)
-  and uploaded files are renamed
-  `Property_Activity_YYYY-MM-DD_HHMM[_idx].ext` for grep-ability. The
-  Sheet's **Evidence Link** column gets the folder URL on top followed by
-  every individual file URL.
+- **Named evidence links in the Sheet.** Each uploaded file ships with a
+  short user-supplied label. The Sheet's **Evidence Link** column is
+  written as **rich text**: each label sits on its own line and is a
+  clickable hyperlink. The auditor sees `Closing meeting` instead of a
+  240-character GCS URL, and clicking opens the file in a new tab.
+  Multiple files per entry → one labelled link per line in the same cell.
+- **No more per-log subfolder.** Files now land in a flat
+  `<base_prefix>/<aviv|yarden>/<property-slug>/` directory. Filenames
+  carry HHMMSS + a 4-char random tag
+  (`Property_Activity_YYYY-MM-DD_HHMMSS_xxxx[_idx].ext`) so collisions
+  are impossible. The Sheet **does not** carry a folder URL anymore —
+  each file is its own labelled link.
+- **Permanent PUBLIC URLs by default.** `REPS_LINK_STYLE=public` is the
+  new default. Set up `allUsers:objectViewer` on the bucket once and the
+  links never expire and don't require a Google login. Switch to `auth`
+  if you'd rather keep the bucket private (see env-var docs above).
+- **GPS breadcrumbs are now manual-only.** Tap **"Pin GPS now"** in the
+  timer card (during clocking, on pause, before finish) or **"Capture
+  GPS now"** in the manual-entry modal to log a snapshot. Nothing is
+  captured automatically — what's in the audit trail is exactly what the
+  user chose to record.
+- **Multi-asset evidence + real-time camera.** The modal accepts multiple
+  files; **Camera** uses `<input capture="environment">` to open the
+  device's native camera, **Attach** opens the file picker. Each row in
+  the file list has an inline label input that defaults to the filename
+  but is fully editable.
 - **Real-time camera while clocked-in.** With the timer running you can
   hit **Take Photo / Video** straight from the timer card. The file is
-  queued for that user's session and a `PHOTO` snapshot is added to the
-  GPS breadcrumbs at the same moment.
-- **Dynamic activity categories.** The dropdown is now backed by the
+  queued for the active user's session; in the modal you'll see it in
+  the file list with a `timer` badge and can edit its label before save.
+- **Dynamic activity categories.** The dropdown is backed by the
   `reps_activity_categories` table (seeded with sensible defaults on
   first boot). Click **Add new** in the modal to create one inline; the
-  dropdown refreshes immediately and the new value is reused on the next
-  entry. Endpoint: `GET/POST/DELETE /reps/activity-categories`.
+  dropdown refreshes immediately and the new value is reused on the
+  next entry. Endpoint: `GET/POST/DELETE /reps/activity-categories`.
 - **File-count badge.** The modal shows a "N files attached" badge so
   you can verify your evidence is queued before saving. The Save button
   also shows an `Uploading N files...` state while the GCS batch upload
   runs.
 
-No new env vars are required for any of this — the same
-`GOOGLE_APPLICATION_CREDENTIALS`, `REPS_GCS_BUCKET`, `REPS_GCS_BASE_PREFIX`,
-`REPS_PUBLIC_OBJECTS`, and the two `REPS_SHEET_ID_*` vars cover the new
-behavior. **Don't forget to deploy over HTTPS** — `navigator.geolocation`
-is gated to secure origins (`https://` or `localhost`).
+**HTTPS reminder** — `navigator.geolocation` and `<input capture>` are
+gated to secure origins (`https://` or `localhost`). Render gives you
+HTTPS for free; on a custom box you'll need a TLS cert.
 
 ---
 
@@ -265,7 +271,7 @@ is gated to secure origins (`https://` or `localhost`).
 | Append-only writes (no overwrites) | `reps_service.append_log_row` uses Sheets `.append()` exclusively. |
 | Server-stamped `created_at` | `reps_service.now_utc_iso` is called inside `/reps/log` after the request hits the server and is written to column **L** (`Timestamp (Created At)`). The user's "event date" is stored in `start_time` / `end_time`, never in column L. |
 | User → sheet routing | `reps_service.sheet_id_for_user` maps `Aviv2026` → `REPS_SHEET_ID_AVIV` and `Yarden2026` → `REPS_SHEET_ID_YARDEN`. |
-| GCS folder routing | `reps_service.upload_evidence` writes to `<base_prefix>/aviv/…` or `<base_prefix>/yarden/…`. |
+| GCS routing | `reps_service.upload_evidence_batch` writes to `<base_prefix>/<aviv\|yarden>/<property-slug>/<audit-filename>`. Flat — one folder per property; filenames include HHMMSS so collisions are impossible. |
 | File-type whitelist | `.pdf, .jpg, .jpeg, .png, .mov, .mp4` — enforced both client-side (`<input accept>`) and server-side (`validate_evidence_file`). |
 | Total Hours = decimal, 2 dp | `reps_service.calc_total_hours` computes `(end-start)/3600` using `Decimal.quantize`. |
 | Description ≥ 20 chars | Pydantic validator on `RepsLogCreate.description` + live counter in the modal. |
@@ -289,22 +295,25 @@ is gated to secure origins (`https://` or `localhost`).
 - **`Permission denied` on bucket** → service account needs
   `roles/storage.objectAdmin` on the bucket (or just `objectCreator` +
   `objectViewer` if you want least privilege).
-- **Evidence link in the sheet expires / 403s after a week** → that's the
-  legacy `REPS_LINK_STYLE=signed` (or older `REPS_PUBLIC_OBJECTS=false`)
-  default — signed URLs are capped at 7 days. Switch to
-  `REPS_LINK_STYLE=auth` (default in v2+) for permanent links and
-  re-upload the rotting evidence (or just re-sign the URL by reading the
-  object path embedded in the link).
-- **`make_public` fails / "uniform bucket-level access" error** → the
-  bucket has UBLA enabled (default and recommended). Either keep
-  `REPS_LINK_STYLE=auth` (links work as long as the viewer is a
-  signed-in Google account with bucket access), or set
-  `REPS_LINK_STYLE=public` AND grant `allUsers` `objectViewer` at the
-  bucket level via IAM.
-- **403 on the evidence URL when opening it in an incognito window** →
-  expected for `auth` (default) links — it requires a Google login. Sign
-  in to the same Google account that has bucket access, or share access
-  with the auditor's Google account via `gcloud storage buckets add-iam-policy-binding`.
+- **Evidence link in the sheet 403s in an incognito window** → with the
+  v3 default (`REPS_LINK_STYLE=public`), the bucket needs `allUsers`
+  granted `objectViewer` at the bucket level for the links to be openable
+  without a Google login:
+  ```bash
+  gcloud storage buckets add-iam-policy-binding gs://<your-bucket> \
+    --member="allUsers" --role="roles/storage.objectViewer"
+  ```
+  If you'd rather keep the bucket private, set `REPS_LINK_STYLE=auth` and
+  share read access with each viewer's Google account (yours, Yarden's,
+  CPA's) — the link will then require a Google login.
+- **Evidence link expires / 403s after a week** → only happens with
+  `REPS_LINK_STYLE=signed`. Switch to `public` (default in v3) or `auth`
+  for permanent links.
+- **Evidence cell shows the URL instead of the label** → the rich-text
+  update (step 2 of the append) failed. Check the backend logs for
+  `rich-text update failed`. The cell still has all labels as plain text;
+  re-saving the row (after fixing whatever was wrong, e.g. transient
+  Sheets API rate limit) is unnecessary — the URLs are already in GCS.
 - **Timer drift** → the stopwatch only relies on the running segment's
   `startedAt` for the wall-clock portion; everything else is
   `accumulatedMs`. If you suspect drift, check that the tab using the

@@ -49,6 +49,19 @@ class LocationSnapshot(BaseModel):
     note: Optional[str] = Field(None, max_length=200)
 
 
+class EvidenceItem(BaseModel):
+    """One uploaded file paired with the user-provided display label.
+
+    The Sheet renders each item as a clickable named link (rich text), so
+    the auditor sees `Closing meeting` instead of a 240-char GCS URL.
+    `label` is optional; the backend falls back to the URL's filename when
+    the user didn't bother typing one.
+    """
+
+    url: str = Field(..., min_length=1, max_length=2000)
+    label: Optional[str] = Field(None, max_length=200)
+
+
 class RepsLogCreate(BaseModel):
     """Payload accepted by `POST /reps/log`.
 
@@ -62,14 +75,15 @@ class RepsLogCreate(BaseModel):
     description: str = Field(..., min_length=MIN_DESCRIPTION_LEN, max_length=5000)
     start_time: datetime
     end_time: datetime
-    # NEW: array of evidence URLs (the modal uploads files via /reps/upload-batch
-    # before calling /reps/log, then sends back the resulting URLs). Backed by
-    # the GCS folder that holds them; the folder URL — when present — comes
-    # first so the auditor sees the index page on top.
+    # NEW (v3): per-file labels. Each entry is `{url, label}` and the Sheet
+    # renders each label as a clickable hyperlink so the cell shows the
+    # auditor the readable name, not the URL.
+    evidence_items: List[EvidenceItem] = Field(default_factory=list)
+    # Legacy fields (v2): kept so older clients still work. If `evidence_items`
+    # is empty, the server constructs items from `evidence_links` with no
+    # custom labels (it'll display the filename derived from the URL).
     evidence_links: List[str] = Field(default_factory=list)
-    evidence_folder: Optional[str] = Field(None, max_length=2000)
-    # Legacy single-link field — accepted for backward compatibility, merged
-    # into `evidence_links` server-side.
+    evidence_folder: Optional[str] = Field(None, max_length=2000)  # ignored
     evidence_link: Optional[str] = Field(None, max_length=2000)
     # NEW: device-GPS breadcrumbs across the session. The backend formats
     # these into a single human-readable string for the Sheet's Location col.
@@ -111,9 +125,10 @@ class RepsLogRes(BaseModel):
     start_time: str
     end_time: str
     total_hours: float
-    evidence_link: Optional[str]
+    evidence_items: List[EvidenceItem] = Field(default_factory=list)
+    evidence_link: Optional[str] = None  # legacy: visible label string
     evidence_links: List[str] = Field(default_factory=list)
-    evidence_folder: Optional[str] = None
+    evidence_folder: Optional[str] = None  # always None since v3
     location: Optional[str]
     location_snapshots: List[LocationSnapshot] = Field(default_factory=list)
     material_participation_rentals: bool
@@ -133,7 +148,10 @@ class RepsEntryRow(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     total_hours: float = 0.0
+    # Plain-text fallback (newline-joined labels) so the field is always
+    # populated; the in-app entries list prefers `evidence_items` when present.
     evidence_link: Optional[str] = None
+    evidence_items: List[EvidenceItem] = Field(default_factory=list)
     location: Optional[str] = None
     material_participation_rentals: bool = False
     people_involved: List[str] = Field(default_factory=list)

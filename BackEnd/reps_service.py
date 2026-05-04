@@ -134,15 +134,20 @@ def get_config() -> RepsConfig:
         )
 
     # Permanent-by-default link style. Auditors can still revoke access by
-    # removing IAM bindings; the URLs themselves never rot. Signed URLs were
-    # the previous default but they expire after 7 days, breaking the trail.
+    # removing IAM bindings; the URLs themselves never rot. Signed URLs
+    # expire after 7 days, breaking the audit trail.
+    #
+    # Default is now "public" — REPS evidence is stored in a dedicated bucket
+    # and the user wants permanent, login-free links so anyone (CPA, IRS) can
+    # open them without needing a Google account. Grant `allUsers` viewer on
+    # the bucket once via `gcloud storage buckets add-iam-policy-binding`.
     raw_style = (os.getenv("REPS_LINK_STYLE") or "").strip().lower()
     if raw_style in _VALID_LINK_STYLES:
         link_style = raw_style
-    elif (os.getenv("REPS_PUBLIC_OBJECTS") or "").strip().lower() == "true":
-        link_style = "public"  # back-compat with the old toggle
+    elif (os.getenv("REPS_PUBLIC_OBJECTS") or "").strip().lower() == "false":
+        link_style = "auth"  # explicit opt-out
     else:
-        link_style = "auth"
+        link_style = "public"
 
     return RepsConfig(
         sheet_id_aviv=sheet_id_aviv,
@@ -371,16 +376,29 @@ def append_log_row(
     start_iso: str,
     end_iso: str,
     total_hours: float,
-    evidence_link: Optional[str],
+    evidence_items: List["EvidenceItem"],
     location: Optional[str],
     material_participation_rentals: bool,
     people_involved: Iterable[str],
 ) -> Tuple[str, str]:
-    """Append-only write. Returns (spreadsheet_id, updated_range)."""
+    """Append-only write. Returns `(spreadsheet_id, updated_range)`.
+
+    Two-step strategy for the Evidence cell:
+      1. `.append()` writes the row with the cell as plain newline-joined
+         labels (still legible if step 2 fails).
+      2. `batchUpdate.updateCells` rewrites just that one cell with rich
+         text where each label segment carries a clickable `link.uri`. The
+         row itself was created by `.append()` so the audit trail is still
+         append-only — we never overwrite a previously-saved row.
+    """
+
     cfg = get_config()
     sid = sheet_id_for_user(user, cfg)
     tab = cfg.sheet_tab
     _ensure_header(sid, tab)
+
+    items = normalize_evidence_items(evidence_items)
+    evidence_text = evidence_cell_text(items)
 
     # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
     # column so the auditor's eye lands on the human-entered fields first.
@@ -392,7 +410,7 @@ def append_log_row(
         start_iso,
         end_iso,
         total_hours,
-        evidence_link or "",
+        evidence_text,
         location or "",
         "TRUE" if material_participation_rentals else "FALSE",
         ", ".join(sorted({p.strip() for p in people_involved if p and p.strip()})),
@@ -414,6 +432,20 @@ def append_log_row(
         .execute()
     )
     updated_range = res.get("updates", {}).get("updatedRange", "")
+
+    # Step 2: enrich the just-appended evidence cell with clickable links.
+    if items:
+        row_idx = _row_index_from_updated_range(updated_range)
+        if row_idx is not None:
+            try:
+                write_evidence_rich_text(sid, tab, row_idx, items)
+            except Exception as exc:  # noqa: BLE001
+                # Non-fatal — the labels are already in the cell as plain text.
+                logger.warning(
+                    "REPS append: rich-text update failed; cell will display "
+                    "labels but won't be clickable. (%s)",
+                    exc,
+                )
     return sid, updated_range
 
 
@@ -444,8 +476,18 @@ def read_log_rows(user: str) -> list[dict]:
     )
     rows = res.get("values", []) or []
 
+    # Best-effort: pull the rich-text contents of the evidence column so the
+    # in-app entries list can render each label as a clickable link. If the
+    # rich-text fetch fails (transient API hiccup), we just fall back to the
+    # plain-text label string already in `padded[7]`.
+    evidence_by_row: dict[int, List[EvidenceItem]] = {}
+    try:
+        evidence_by_row = read_evidence_rich_text(sid, tab)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("REPS read: failed to read evidence rich-text (%s)", exc)
+
     out: list[dict] = []
-    for raw in rows:
+    for row_idx, raw in enumerate(rows):
         # pad short rows so missing trailing cells become "".
         padded = list(raw) + [""] * (len(SHEET_COLUMNS) - len(raw))
         # Indices below MUST match SHEET_COLUMNS:
@@ -458,6 +500,7 @@ def read_log_rows(user: str) -> list[dict]:
             total_hours = 0.0
         people_str = padded[10] or ""
         people = [p.strip() for p in people_str.split(",") if p.strip()]
+        items = evidence_by_row.get(row_idx, [])
         out.append(
             {
                 "user": padded[0] or None,
@@ -468,6 +511,9 @@ def read_log_rows(user: str) -> list[dict]:
                 "end_time": padded[5] or None,
                 "total_hours": total_hours,
                 "evidence_link": padded[7] or None,
+                "evidence_items": [
+                    {"url": it.url, "label": it.label or ""} for it in items
+                ],
                 "location": padded[8] or None,
                 "material_participation_rentals": str(padded[9]).strip().upper() in {"TRUE", "1", "YES", "Y"},
                 "people_involved": people,
@@ -511,7 +557,7 @@ def upload_evidence(
     return _make_url_for_blob(blob, cfg, object_name)
 
 
-# --- Multi-asset evidence (batch upload to a per-log folder) ------------ #
+# --- Multi-asset evidence (flat per-property uploads) ------------------- #
 
 # Slug used in object names when the user didn't pick a property/category.
 _DEFAULT_SLUG_PROPERTY = "property"
@@ -528,19 +574,20 @@ def _slugify(value: Optional[str], default: str) -> str:
     return (cleaned or default)[:60]
 
 
-def _log_folder_path(
+def _property_folder_path(
     cfg: "RepsConfig",
     user: str,
     property_name: Optional[str],
-    log_dt: datetime,
 ) -> str:
-    """`<base>/<user>/<property>/log_YYYYMMDDTHHMMSS_<rand>/`."""
+    """`<base>/<user>/<property>/` — flat, one folder per property.
+
+    No per-log subfolder anymore — files land directly under the property
+    folder. Filenames carry the timestamp so collisions are impossible.
+    """
 
     user_folder = USER_FOLDER_MAP[user]
     prop_slug = _slugify(property_name, _DEFAULT_SLUG_PROPERTY)
-    stamp = log_dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    rand = uuid.uuid4().hex[:6]
-    return f"{cfg.base_prefix}/{user_folder}/{prop_slug}/log_{stamp}_{rand}"
+    return f"{cfg.base_prefix}/{user_folder}/{prop_slug}"
 
 
 def _audit_filename(
@@ -550,14 +597,20 @@ def _audit_filename(
     original_filename: str,
     index: int,
 ) -> str:
-    """`<Property>_<Activity>_<YYYY-MM-DD_HHMM>[_<idx>].<ext>` — easy to grep."""
+    """`<Property>_<Activity>_<YYYY-MM-DD_HHMMSS>_<rand>[_<idx>].<ext>`.
+
+    HHMMSS + a 4-char random suffix make the name unique enough to keep
+    every file in the property's flat folder without collisions, even
+    when the user uploads two photos at the same minute.
+    """
 
     ext = os.path.splitext(original_filename or "")[1].lower() or ".bin"
     prop = _slugify(property_name, _DEFAULT_SLUG_PROPERTY).title().replace("-", "")
     act = _slugify(activity_category, _DEFAULT_SLUG_ACTIVITY).title().replace("-", "")
-    stamp = log_dt.astimezone(timezone.utc).strftime("%Y-%m-%d_%H%M")
+    stamp = log_dt.astimezone(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
+    rand = uuid.uuid4().hex[:4]
     suffix = f"_{index}" if index > 0 else ""
-    return f"{prop}_{act}_{stamp}{suffix}{ext}"
+    return f"{prop}_{act}_{stamp}_{rand}{suffix}{ext}"
 
 
 def _make_url_for_blob(blob, cfg: "RepsConfig", object_name: str) -> str:
@@ -615,6 +668,13 @@ class UploadedAsset:
 
 @dataclass(frozen=True)
 class UploadBatch:
+    """Result of a multi-file upload.
+
+    `folder_url` and `folder_path` are kept for API/frontend compatibility but
+    are deliberately empty strings / None: we no longer maintain a per-log
+    folder, and we no longer paste a folder link into the Sheet.
+    """
+
     folder_url: Optional[str]
     folder_path: str
     files: List[UploadedAsset]
@@ -628,12 +688,13 @@ def upload_evidence_batch(
     log_timestamp: Optional[datetime],
     items: List[Tuple[str, Optional[str], bytes]],
 ) -> UploadBatch:
-    """Upload one or many evidence files into a per-log GCS sub-folder.
+    """Upload one or many evidence files into the property's flat folder.
 
     `items` is a list of `(original_filename, content_type, file_bytes)`.
 
-    Returns the folder path / browseable folder URL plus per-file URLs that
-    the frontend will hand back to `/reps/log` to be persisted in the Sheet.
+    Returns one URL per file; the frontend then ships the URLs back to
+    `/reps/log` paired with user-supplied labels so the Sheet can render
+    each as a clickable named link.
     """
 
     if user not in USER_FOLDER_MAP:
@@ -647,7 +708,7 @@ def upload_evidence_batch(
     client = get_storage_client()
     bucket = client.bucket(cfg.bucket_name)
 
-    folder_path = _log_folder_path(cfg, user, property_name, log_dt)
+    folder_path = _property_folder_path(cfg, user, property_name)
     uploaded: List[UploadedAsset] = []
 
     for idx, (orig_name, content_type, file_bytes) in enumerate(items):
@@ -676,17 +737,9 @@ def upload_evidence_batch(
             )
         )
 
-    folder_url: Optional[str] = None
-    # Console folder browser — visible only to project members; convenient to
-    # paste into the Sheet for auditors who have project access. Files
-    # themselves are accessed via their (signed/public) URLs above.
-    if cfg.bucket_name:
-        folder_url = (
-            f"https://console.cloud.google.com/storage/browser/"
-            f"{cfg.bucket_name}/{folder_path}"
-        )
-
-    return UploadBatch(folder_url=folder_url, folder_path=folder_path, files=uploaded)
+    # Folder URL deliberately omitted — the Sheet now stores per-file labels
+    # only. Frontend keeps the field for API compatibility.
+    return UploadBatch(folder_url=None, folder_path=folder_path, files=uploaded)
 
 
 # --- Location snapshot rendering for the Sheet --- #
@@ -758,24 +811,252 @@ def format_location_snapshots(
     return (fallback_note or "").strip()
 
 
-def join_evidence_links(
-    folder_url: Optional[str],
-    file_urls: List[str],
-    legacy_single: Optional[str] = None,
-) -> str:
-    """One newline-joined string for the 'Evidence Link (GCS URL)' column.
+# --- Evidence labels + rich-text helpers --- #
 
-    Folder URL on top (auditor's index page), then each file URL, then any
-    legacy single-link backward-compat value.
+# Index of the Evidence column inside SHEET_COLUMNS — used when building the
+# updateCells request that sets rich-text for the just-appended row. Kept as
+# a function so reordering SHEET_COLUMNS does the right thing automatically.
+
+def _evidence_column_index() -> int:
+    return SHEET_COLUMNS.index("Evidence Link (GCS URL)")
+
+
+@dataclass(frozen=True)
+class EvidenceItem:
+    """One uploaded evidence file paired with the user-provided display label.
+
+    Stored in the Sheet as a clickable named link instead of the raw URL,
+    so the auditor sees `Closing meeting` instead of a 240-char GCS URL.
     """
 
-    out: List[str] = []
-    if folder_url:
-        out.append(folder_url.strip())
-    for u in file_urls or []:
-        u = (u or "").strip()
-        if u and u not in out:
-            out.append(u)
-    if legacy_single and legacy_single.strip() and legacy_single.strip() not in out:
-        out.append(legacy_single.strip())
-    return "\n".join(out)
+    url: str
+    label: Optional[str] = None
+
+
+def _safe_label(raw_label: Optional[str], fallback_url: str) -> str:
+    """Single-line, trimmed display label for the evidence cell.
+
+    Falls back to the URL's filename if the user didn't type anything.
+    Newlines are collapsed because the cell uses `\n` as the separator
+    between distinct evidence items.
+    """
+
+    base = (raw_label or "").strip()
+    if not base:
+        try:
+            base = os.path.splitext(os.path.basename(fallback_url.split("?", 1)[0]))[0]
+        except Exception:  # noqa: BLE001
+            base = ""
+    base = base or "evidence"
+    base = re.sub(r"\s+", " ", base).strip()
+    return base[:120]
+
+
+def normalize_evidence_items(
+    items: Iterable[Optional["EvidenceItem"]],
+) -> List["EvidenceItem"]:
+    """Drop empties + duplicates, sanitize labels."""
+
+    out: List[EvidenceItem] = []
+    seen: set[str] = set()
+    for it in items or []:
+        if not it:
+            continue
+        url = (it.url or "").strip()
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        out.append(EvidenceItem(url=url, label=_safe_label(it.label, url)))
+    return out
+
+
+def evidence_cell_text(items: List["EvidenceItem"]) -> str:
+    """Plain-text fallback the cell is initialized with on `.append()`.
+
+    The labels are joined by `\n` so the visible text in the cell matches
+    the rich-text we'll later write via `updateCells`. If the rich-text
+    update fails for any reason (transient API error), the cell is still
+    legible — just not clickable.
+    """
+
+    return "\n".join(it.label or "" for it in items if it)
+
+
+def _resolve_sheet_id(spreadsheet_id: str, sheet_title: str) -> int:
+    """Numeric `sheetId` (gridId) for the worksheet named `sheet_title`.
+
+    `batchUpdate.updateCells` needs the numeric ID, not the title.
+    """
+
+    canon = _resolve_worksheet_title(spreadsheet_id, sheet_title)
+    svc = get_sheets_client()
+    meta = (
+        svc.spreadsheets()
+        .get(spreadsheetId=spreadsheet_id, fields="sheets(properties(title,sheetId))")
+        .execute()
+    )
+    for s in meta.get("sheets") or []:
+        prop = s.get("properties") or {}
+        if prop.get("title") == canon:
+            return int(prop.get("sheetId", 0))
+    raise RepsValidationError(
+        f"Unable to resolve sheetId for tab {canon!r} in spreadsheet …{spreadsheet_id[-12:]}."
+    )
+
+
+_A1_RANGE_ROW_RE = re.compile(r"!\s*[A-Z]+(\d+)\s*:\s*[A-Z]+\d+\s*$")
+
+
+def _row_index_from_updated_range(updated_range: str) -> Optional[int]:
+    """Parse the `updatedRange` returned by Sheets `.append()` to a 0-based row.
+
+    Sheets returns ranges like `'Log'!A123:L123`. Returns `None` if we can't
+    confidently parse it (in which case the rich-text update is skipped and
+    we leave the plain-text labels in place — still legible to the auditor).
+    """
+
+    m = _A1_RANGE_ROW_RE.search(updated_range or "")
+    if not m:
+        return None
+    try:
+        return int(m.group(1)) - 1
+    except (TypeError, ValueError):  # pragma: no cover
+        return None
+
+
+def write_evidence_rich_text(
+    spreadsheet_id: str,
+    sheet_title: str,
+    row_index_zero_based: int,
+    items: List["EvidenceItem"],
+) -> None:
+    """Replace the evidence cell with rich text where each label is a link.
+
+    The cell value becomes the labels joined by `\n` and each label segment
+    carries a `link.uri` so it renders as a clickable hyperlink in Sheets.
+    No-ops if `items` is empty.
+    """
+
+    if not items:
+        return
+
+    sheet_id = _resolve_sheet_id(spreadsheet_id, sheet_title)
+    col = _evidence_column_index()
+
+    # Build the visible string + per-label link runs.
+    text = evidence_cell_text(items)
+    runs: List[dict] = []
+    cursor = 0
+    for it in items:
+        label = it.label or ""
+        if not label:
+            cursor += 1  # the `\n` separator we'd still emit
+            continue
+        runs.append(
+            {
+                "startIndex": cursor,
+                "format": {
+                    "link": {"uri": it.url},
+                    "underline": True,
+                    "foregroundColor": {"red": 0.07, "green": 0.42, "blue": 0.78},
+                },
+            }
+        )
+        cursor += len(label) + 1  # +1 for the `\n` separator
+
+    svc = get_sheets_client()
+    svc.spreadsheets().batchUpdate(
+        spreadsheetId=spreadsheet_id,
+        body={
+            "requests": [
+                {
+                    "updateCells": {
+                        "range": {
+                            "sheetId": sheet_id,
+                            "startRowIndex": row_index_zero_based,
+                            "endRowIndex": row_index_zero_based + 1,
+                            "startColumnIndex": col,
+                            "endColumnIndex": col + 1,
+                        },
+                        "rows": [
+                            {
+                                "values": [
+                                    {
+                                        "userEnteredValue": {"stringValue": text},
+                                        "textFormatRuns": runs,
+                                    }
+                                ]
+                            }
+                        ],
+                        "fields": "userEnteredValue,textFormatRuns",
+                    }
+                }
+            ]
+        },
+    ).execute()
+
+
+def read_evidence_rich_text(
+    spreadsheet_id: str,
+    sheet_title: str,
+) -> dict[int, List["EvidenceItem"]]:
+    """Read the rich-text contents of the evidence column for every data row.
+
+    Returns a map of `0-based-row-index -> [EvidenceItem]` so the caller can
+    enrich `read_log_rows` output with clickable links for the in-app entries
+    list. Pure read; no side effects.
+    """
+
+    canon = _resolve_worksheet_title(spreadsheet_id, sheet_title)
+    col = _evidence_column_index()
+    col_letter = _col_letter(col + 1)
+    rng = f"{_quote_sheet_title_for_a1(canon)}!{col_letter}2:{col_letter}1048576"
+
+    svc = get_sheets_client()
+    res = (
+        svc.spreadsheets()
+        .get(
+            spreadsheetId=spreadsheet_id,
+            ranges=[rng],
+            fields=(
+                "sheets(data(rowData(values("
+                "formattedValue,"
+                "userEnteredValue/stringValue,"
+                "textFormatRuns(startIndex,format(link/uri))"
+                "))))"
+            ),
+        )
+        .execute()
+    )
+
+    out: dict[int, List[EvidenceItem]] = {}
+    sheets_data = (res.get("sheets") or [{}])[0].get("data") or [{}]
+    row_data = sheets_data[0].get("rowData") or []
+    for row_idx, row in enumerate(row_data):
+        cells = row.get("values") or []
+        if not cells:
+            continue
+        cell = cells[0]
+        text: Optional[str] = (
+            cell.get("userEnteredValue", {}).get("stringValue")
+            or cell.get("formattedValue")
+        )
+        if not text:
+            continue
+        runs = cell.get("textFormatRuns") or []
+        items: List[EvidenceItem] = []
+        if runs:
+            # Slice the visible string between consecutive run startIndexes.
+            run_bounds = [(int(r.get("startIndex", 0)), r) for r in runs]
+            run_bounds.sort(key=lambda p: p[0])
+            for i, (start, run) in enumerate(run_bounds):
+                end = run_bounds[i + 1][0] if i + 1 < len(run_bounds) else len(text)
+                label = text[start:end].strip(" \n\r\t")
+                if not label:
+                    continue
+                uri = (run.get("format") or {}).get("link", {}).get("uri")
+                if uri:
+                    items.append(EvidenceItem(url=uri, label=label))
+        if items:
+            out[row_idx] = items
+    return out

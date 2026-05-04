@@ -65,6 +65,14 @@ export interface RepsUploadBatchRes {
   files: RepsUploadedFile[];
 }
 
+// One uploaded evidence file paired with a user-supplied display label.
+// The Sheet renders each label as a clickable named link; the auditor sees
+// "Closing meeting" instead of a 240-char GCS URL.
+export interface EvidenceItem {
+  url: string;
+  label?: string | null;
+}
+
 export interface RepsLogPayload {
   user: RepsUser;
   property_name?: string | null;
@@ -72,10 +80,12 @@ export interface RepsLogPayload {
   description: string;
   start_time: string; // ISO 8601 with timezone
   end_time: string;   // ISO 8601 with timezone
-  // NEW: array of evidence URLs (uploaded via /reps/upload-batch first).
+  // PREFERRED: per-file label + URL pairs. Each becomes a clickable named
+  // link in the Sheet's Evidence column.
+  evidence_items?: EvidenceItem[];
+  // Legacy fallback (no labels) — kept for backward-compat with older clients.
   evidence_links?: string[];
   evidence_folder?: string | null;
-  // Legacy single-link, accepted for backward compat by the backend.
   evidence_link?: string | null;
   // NEW: device-GPS breadcrumbs across the session.
   location_snapshots?: LocationSnapshot[];
@@ -90,6 +100,7 @@ export interface RepsLogRes extends RepsLogPayload {
   total_hours: number;
   spreadsheet_id: string;
   appended_range: string;
+  evidence_items: EvidenceItem[];
 }
 
 export interface RepsEntryRow {
@@ -101,7 +112,10 @@ export interface RepsEntryRow {
   start_time: string | null;
   end_time: string | null;
   total_hours: number;
+  // Plain-text label fallback (newline-joined) — always present.
   evidence_link: string | null;
+  // Per-file clickable items parsed from the Sheet's rich text.
+  evidence_items: EvidenceItem[];
   location: string | null;
   material_participation_rentals: boolean;
   people_involved: string[];

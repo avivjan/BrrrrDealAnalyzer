@@ -127,14 +127,34 @@ function fmtTimeRange(start: string | null, end: string | null) {
               <span v-if="e.people_involved.length > 0">
                 <i class="pi pi-users text-[10px] mr-1"></i>{{ e.people_involved.join(', ') }}
               </span>
+              <!-- Per-file labelled links (preferred) — one chip per file. -->
+              <span v-if="(e.evidence_items || []).length > 0" class="flex flex-wrap gap-x-2 gap-y-0.5">
+                <a
+                  v-for="(it, i) in e.evidence_items"
+                  :key="i + (it.url || '')"
+                  :href="it.url"
+                  target="_blank"
+                  class="text-blue-600 hover:underline"
+                >
+                  <i class="pi pi-paperclip text-[10px] mr-1"></i>{{ it.label || `Evidence ${i + 1}` }}
+                </a>
+              </span>
+              <!-- Legacy fallback: one bare URL per cell. -->
               <a
-                v-if="e.evidence_link"
+                v-else-if="e.evidence_link && /^https?:\/\//.test(e.evidence_link)"
                 :href="e.evidence_link"
                 target="_blank"
                 class="text-blue-600 hover:underline"
               >
                 <i class="pi pi-paperclip text-[10px] mr-1"></i>Evidence
               </a>
+              <span
+                v-else-if="e.evidence_link"
+                class="text-slate-500"
+                :title="e.evidence_link"
+              >
+                <i class="pi pi-paperclip text-[10px] mr-1"></i>{{ e.evidence_link.split('\n')[0] }}
+              </span>
             </div>
           </div>
           <div class="text-right shrink-0">
