@@ -57,3 +57,19 @@ export interface SimulationResult {
   breachesReserve: boolean
   reserveBreachDates: string[]
 }
+
+export interface MercuryAccountSummary {
+  id: string
+  name: string
+  type: string
+  status: string
+  current_balance_k: number
+  available_balance_k: number
+}
+
+export interface MercuryBalanceResponse {
+  total_balance_k: number
+  total_available_k: number
+  account_count: number
+  accounts: MercuryAccountSummary[]
+}

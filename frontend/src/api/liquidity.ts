@@ -5,6 +5,7 @@ import type {
   LiquidityTransactionUpdate,
   LiquiditySettings,
   LiquiditySettingsUpdate,
+  MercuryBalanceResponse,
 } from '../types/liquidity'
 
 export const liquidityApi = {
@@ -34,6 +35,11 @@ export const liquidityApi = {
 
   async updateSettings(data: LiquiditySettingsUpdate): Promise<LiquiditySettings> {
     const res = await apiClient.put<LiquiditySettings>('/liquidity/settings', data)
+    return res.data
+  },
+
+  async getMercuryBalance(): Promise<MercuryBalanceResponse> {
+    const res = await apiClient.get<MercuryBalanceResponse>('/liquidity/mercury-balance')
     return res.data
   },
 }

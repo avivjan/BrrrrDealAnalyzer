@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { LiquiditySeries, LiquidityTransaction, LiquiditySettings } from '../../types/liquidity'
+import type {
+  LiquiditySeries,
+  LiquidityTransaction,
+  LiquiditySettings,
+  MercuryBalanceResponse,
+} from '../../types/liquidity'
 import { todayISO, addDays } from '../../utils/liquidityEngine'
 
 const props = defineProps<{
   series: LiquiditySeries
   settings: LiquiditySettings
   transactions: LiquidityTransaction[]
+  mercuryBalance?: MercuryBalanceResponse | null
+  mercurySyncing?: boolean
+  mercuryError?: string | null
+  mercuryLastSyncedAt?: string | null
 }>()
 
 const today = todayISO()
@@ -20,6 +29,14 @@ function formatDate(iso: string): string {
 const todayBalance = computed(() => {
   const bucket = props.series.days.find(d => d.date === today)
   return bucket?.balance_k ?? null
+})
+
+const mercurySyncedTime = computed(() => {
+  if (!props.mercuryLastSyncedAt) return null
+  const d = new Date(props.mercuryLastSyncedAt)
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
 })
 
 const next90dMin = computed(() => {
@@ -53,9 +70,41 @@ const nextInflow = computed(() => {
   <div class="flex flex-col gap-3 text-xs font-mono">
     <!-- Today's balance -->
     <div class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Today's Balance</div>
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-slate-500">Today's Balance</div>
+        <div v-if="mercurySyncing" class="flex items-center gap-1 text-[10px] text-slate-500">
+          <i class="pi pi-spin pi-spinner text-[9px]"></i> syncing
+        </div>
+        <div
+          v-else-if="mercuryError"
+          class="flex items-center gap-1 text-[10px] text-red-400"
+          :title="mercuryError"
+        >
+          <i class="pi pi-exclamation-triangle text-[9px]"></i> mercury offline
+        </div>
+        <div
+          v-else-if="mercuryBalance"
+          class="flex items-center gap-1 text-[10px] text-emerald-400"
+          :title="`Synced ${mercuryBalance.account_count} Mercury account(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
+        >
+          <i class="pi pi-check-circle text-[9px]"></i> mercury
+        </div>
+      </div>
       <div class="text-xl font-bold" :class="todayBalance !== null && todayBalance < 0 ? 'text-red-400' : 'text-indigo-300'">
         {{ todayBalance !== null ? todayBalance.toFixed(1) + 'k' : '—' }}
+      </div>
+      <div
+        v-if="mercuryBalance && mercuryBalance.accounts.length > 0"
+        class="mt-2 pt-2 border-t border-[#2a2f45] space-y-0.5"
+      >
+        <div
+          v-for="a in mercuryBalance.accounts"
+          :key="a.id"
+          class="flex items-center justify-between text-[10px] text-slate-500"
+        >
+          <span class="truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
+          <span class="text-slate-400 whitespace-nowrap">{{ a.current_balance_k.toFixed(1) }}k</span>
+        </div>
       </div>
     </div>
 

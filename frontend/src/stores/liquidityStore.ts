@@ -8,6 +8,7 @@ import type {
   LiquiditySettings,
   LiquiditySettingsUpdate,
   LiquiditySeries,
+  MercuryBalanceResponse,
 } from '../types/liquidity'
 import {
   buildDailyLiquiditySeries,
@@ -28,6 +29,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const _version = ref(0)
+
+  const mercuryBalance = ref<MercuryBalanceResponse | null>(null)
+  const mercurySyncing = ref(false)
+  const mercuryError = ref<string | null>(null)
+  const mercuryLastSyncedAt = ref<string | null>(null)
 
   const series = computed<LiquiditySeries>(() => {
     void _version.value
@@ -124,12 +130,50 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     _version.value++
   }
 
+  /**
+   * Fetch the live sum of Mercury account balances and re-anchor the
+   * liquidity timeline's opening balance to today.
+   *
+   * On success: persists settings (opening_balance_k = Mercury sum,
+   * opening_balance_date = today). On failure: leaves existing settings
+   * untouched and stores the error on `mercuryError`.
+   */
+  async function syncFromMercury(): Promise<void> {
+    mercurySyncing.value = true
+    mercuryError.value = null
+    try {
+      const balance = await liquidityApi.getMercuryBalance()
+      mercuryBalance.value = balance
+      mercuryLastSyncedAt.value = new Date().toISOString()
+
+      const today = todayISO()
+      const needsUpdate =
+        settings.value.opening_balance_k !== balance.total_balance_k ||
+        settings.value.opening_balance_date !== today
+      if (needsUpdate) {
+        await updateSettings({
+          opening_balance_k: balance.total_balance_k,
+          opening_balance_date: today,
+        })
+      }
+    } catch (e: any) {
+      mercuryError.value =
+        e?.response?.data?.detail || e?.message || 'Failed to sync from Mercury'
+    } finally {
+      mercurySyncing.value = false
+    }
+  }
+
   return {
     transactions,
     settings,
     loading,
     error,
     series,
+    mercuryBalance,
+    mercurySyncing,
+    mercuryError,
+    mercuryLastSyncedAt,
     fetchAll,
     runSimulation,
     buildCandidateList,
@@ -137,6 +181,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     updateTransaction,
     deleteTransaction,
     updateSettings,
+    syncFromMercury,
     requiresSimulation,
   }
 })

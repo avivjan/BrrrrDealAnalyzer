@@ -74,6 +74,8 @@ from ReqRes.reps.repsReq import (
 )
 import crud_reps
 import reps_service
+import mercury_service
+from mercury_service import MercuryApiError, MercuryConfigError
 from calc_breakdown import CalcBreakdown, fmt_money, fmt_pct, fmt_num
 from deal_pdf import build_deal_pdf
 from sqlalchemy import text, inspect as sa_inspect
@@ -1445,6 +1447,22 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
         reserve_k=float(settings.reserve_k),
         updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
     )
+
+
+@app.get("/liquidity/mercury-balance")
+def get_mercury_balance():
+    """
+    Fetch the live sum of all active Mercury account balances, in $k.
+
+    The frontend uses this to re-anchor the liquidity timeline's opening
+    balance to today on page load.
+    """
+    try:
+        return mercury_service.summarize_balance()
+    except MercuryConfigError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except MercuryApiError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 # --- Pipeline Templates (bought-deal stages/substages) ---

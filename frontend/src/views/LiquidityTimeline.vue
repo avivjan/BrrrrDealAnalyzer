@@ -35,11 +35,30 @@ const selectedBucket = computed(() => {
   return store.series.days.find(d => d.date === selectedDate.value) ?? null
 })
 
-const hasData = computed(() => store.transactions.length > 0 || store.settings.opening_balance_k !== 0)
+const hasData = computed(() =>
+  store.transactions.length > 0 ||
+  store.settings.opening_balance_k !== 0 ||
+  !!store.mercuryBalance
+)
 
-onMounted(() => {
-  store.fetchAll()
+onMounted(async () => {
+  await store.fetchAll()
+  await store.syncFromMercury()
+  if (store.mercuryError) {
+    showToast('Mercury sync failed: ' + store.mercuryError)
+  }
 })
+
+async function refreshFromMercury() {
+  await store.syncFromMercury()
+  if (store.mercuryError) {
+    showToast('Mercury sync failed: ' + store.mercuryError)
+  } else if (store.mercuryBalance) {
+    const sum = store.mercuryBalance.total_balance_k
+    const n = store.mercuryBalance.account_count
+    showToast(`Synced from Mercury: ${sum.toFixed(1)}k across ${n} account${n === 1 ? '' : 's'}.`)
+  }
+}
 
 function onSelectDay(date: string) {
   selectedDate.value = date
@@ -189,6 +208,15 @@ function showToast(msg: string) {
           <i class="pi pi-crosshair text-[10px]"></i> Today
         </button>
         <button
+          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
+          :disabled="store.mercurySyncing"
+          :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
+          @click="refreshFromMercury"
+        >
+          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]"></i>
+          {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
+        </button>
+        <button
           class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
           @click="settingsOpen = true"
         >
@@ -289,6 +317,10 @@ function showToast(msg: string) {
           :series="store.series"
           :settings="store.settings"
           :transactions="store.transactions"
+          :mercury-balance="store.mercuryBalance"
+          :mercury-syncing="store.mercurySyncing"
+          :mercury-error="store.mercuryError"
+          :mercury-last-synced-at="store.mercuryLastSyncedAt"
         />
       </aside>
     </div>
