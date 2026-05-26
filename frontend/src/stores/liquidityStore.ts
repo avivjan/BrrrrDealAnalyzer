@@ -131,12 +131,13 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   }
 
   /**
-   * Fetch the live sum of Mercury account balances and re-anchor the
-   * liquidity timeline's opening balance to today.
+   * Fetch the live sum of Mercury account balances across every configured
+   * workspace and re-anchor the liquidity timeline's opening balance to today.
    *
-   * On success: persists settings (opening_balance_k = Mercury sum,
-   * opening_balance_date = today). On failure: leaves existing settings
-   * untouched and stores the error on `mercuryError`.
+   * Only rebases when ALL workspaces succeeded — a partial sum would
+   * understate true cash on hand and is unsafe to anchor against. On partial
+   * failure the per-workspace errors are exposed via `mercuryBalance.workspace_errors`
+   * and a summary is stored on `mercuryError`.
    */
   async function syncFromMercury(): Promise<void> {
     mercurySyncing.value = true
@@ -145,6 +146,13 @@ export const useLiquidityStore = defineStore('liquidity', () => {
       const balance = await liquidityApi.getMercuryBalance()
       mercuryBalance.value = balance
       mercuryLastSyncedAt.value = new Date().toISOString()
+
+      if (balance.workspace_errors.length > 0) {
+        mercuryError.value = balance.workspace_errors
+          .map(w => `${w.workspace}: ${w.error}`)
+          .join('; ')
+        return
+      }
 
       const today = todayISO()
       const needsUpdate =

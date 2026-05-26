@@ -65,11 +65,28 @@ export interface MercuryAccountSummary {
   status: string
   current_balance_k: number
   available_balance_k: number
+  workspace: string
+}
+
+export interface MercuryWorkspaceSummary {
+  workspace: string
+  total_balance_k: number
+  total_available_k: number
+  account_count: number
+  accounts: MercuryAccountSummary[]
+}
+
+export interface MercuryWorkspaceError {
+  workspace: string
+  error: string
 }
 
 export interface MercuryBalanceResponse {
   total_balance_k: number
   total_available_k: number
   account_count: number
+  workspace_count: number
+  workspaces: MercuryWorkspaceSummary[]
+  workspace_errors: MercuryWorkspaceError[]
   accounts: MercuryAccountSummary[]
 }

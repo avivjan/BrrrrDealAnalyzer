@@ -80,30 +80,56 @@ const nextInflow = computed(() => {
           class="flex items-center gap-1 text-[10px] text-red-400"
           :title="mercuryError"
         >
-          <i class="pi pi-exclamation-triangle text-[9px]"></i> mercury offline
+          <i class="pi pi-exclamation-triangle text-[9px]"></i>
+          {{ mercuryBalance && mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
         </div>
         <div
           v-else-if="mercuryBalance"
           class="flex items-center gap-1 text-[10px] text-emerald-400"
-          :title="`Synced ${mercuryBalance.account_count} Mercury account(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
+          :title="`Synced ${mercuryBalance.account_count} account(s) across ${mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
         >
-          <i class="pi pi-check-circle text-[9px]"></i> mercury
+          <i class="pi pi-check-circle text-[9px]"></i>
+          mercury · {{ mercuryBalance.workspace_count }}
         </div>
       </div>
       <div class="text-xl font-bold" :class="todayBalance !== null && todayBalance < 0 ? 'text-red-400' : 'text-indigo-300'">
         {{ todayBalance !== null ? todayBalance.toFixed(1) + 'k' : '—' }}
       </div>
+
+      <!-- Per-workspace breakdown -->
       <div
-        v-if="mercuryBalance && mercuryBalance.accounts.length > 0"
+        v-if="mercuryBalance && mercuryBalance.workspaces.length > 0"
+        class="mt-2 pt-2 border-t border-[#2a2f45] space-y-2"
+      >
+        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" class="space-y-0.5">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-slate-300 font-semibold uppercase tracking-wide">{{ ws.workspace }}</span>
+            <span class="text-slate-300 whitespace-nowrap">{{ ws.total_balance_k.toFixed(1) }}k</span>
+          </div>
+          <div
+            v-for="a in ws.accounts"
+            :key="a.id"
+            class="flex items-center justify-between text-[10px] text-slate-500 pl-2"
+          >
+            <span class="truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
+            <span class="text-slate-400 whitespace-nowrap">{{ a.current_balance_k.toFixed(1) }}k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-workspace errors -->
+      <div
+        v-if="mercuryBalance && mercuryBalance.workspace_errors.length > 0"
         class="mt-2 pt-2 border-t border-[#2a2f45] space-y-0.5"
       >
         <div
-          v-for="a in mercuryBalance.accounts"
-          :key="a.id"
-          class="flex items-center justify-between text-[10px] text-slate-500"
+          v-for="err in mercuryBalance.workspace_errors"
+          :key="err.workspace"
+          class="flex items-center justify-between text-[10px] text-red-400"
+          :title="err.error"
         >
-          <span class="truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-          <span class="text-slate-400 whitespace-nowrap">{{ a.current_balance_k.toFixed(1) }}k</span>
+          <span class="font-semibold uppercase tracking-wide">{{ err.workspace }}</span>
+          <span class="truncate pl-2">{{ err.error }}</span>
         </div>
       </div>
     </div>
