@@ -535,7 +535,14 @@ defineExpose({ centerOnToday })
               :key="txn.id"
               class="flex justify-between gap-3 items-baseline"
             >
-              <span class="text-[11px] font-mono text-slate-300 truncate">{{ txn.description }}</span>
+              <span class="text-[11px] font-mono text-slate-300 truncate flex items-center gap-1">
+                <i
+                  v-if="txn.recurring_rule_id"
+                  class="pi pi-refresh text-[8px] text-indigo-400 shrink-0"
+                  title="From a recurring rule"
+                ></i>
+                <span class="truncate">{{ txn.description }}</span>
+              </span>
               <span class="text-[11px] font-mono font-bold shrink-0" :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
                 {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
               </span>

@@ -3,19 +3,26 @@ import { computed } from 'vue'
 import type {
   LiquiditySeries,
   LiquidityTransaction,
+  LiquidityRecurringTransaction,
   LiquiditySettings,
   MercuryBalanceResponse,
 } from '../../types/liquidity'
-import { todayISO, addDays } from '../../utils/liquidityEngine'
+import { todayISO, addDays, describeRecurrence } from '../../utils/liquidityEngine'
 
 const props = defineProps<{
   series: LiquiditySeries
   settings: LiquiditySettings
   transactions: LiquidityTransaction[]
+  recurringRules?: LiquidityRecurringTransaction[]
   mercuryBalance?: MercuryBalanceResponse | null
   mercurySyncing?: boolean
   mercuryError?: string | null
   mercuryLastSyncedAt?: string | null
+}>()
+
+const emit = defineEmits<{
+  (e: 'editRecurring', ruleId: string): void
+  (e: 'deleteRecurring', ruleId: string): void
 }>()
 
 const today = todayISO()
@@ -64,6 +71,24 @@ const nextInflow = computed(() => {
     .sort((a, b) => a.effective_date.localeCompare(b.effective_date))
   return future[0] ?? null
 })
+
+const activeRecurringRules = computed(() => {
+  const list = props.recurringRules ?? []
+  // Sort outflows first so the most "interesting" series (HM interest,
+  // mortgage payments) bubble up. Inside each group keep start-date order.
+  return [...list].sort((a, b) => {
+    const aOut = a.amount_k < 0 ? 0 : 1
+    const bOut = b.amount_k < 0 ? 0 : 1
+    if (aOut !== bOut) return aOut - bOut
+    return a.start_date.localeCompare(b.start_date)
+  })
+})
+
+function endLabel(rule: LiquidityRecurringTransaction): string {
+  if (rule.end_date) return 'until ' + formatDate(rule.end_date)
+  if (rule.occurrences) return rule.occurrences + 'x'
+  return 'no end'
+}
 </script>
 
 <template>
@@ -175,6 +200,60 @@ const nextInflow = computed(() => {
     <div class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
       <div class="text-slate-500 mb-1">Reserve Threshold</div>
       <div class="text-slate-200 font-bold">{{ settings.reserve_k.toFixed(1) }}k</div>
+    </div>
+
+    <!-- Recurring series -->
+    <div
+      v-if="activeRecurringRules.length > 0"
+      class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]"
+    >
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-slate-500 flex items-center gap-1.5">
+          <i class="pi pi-refresh text-[10px] text-indigo-400"></i>
+          Recurring
+        </div>
+        <div class="text-[10px] text-slate-500">{{ activeRecurringRules.length }}</div>
+      </div>
+      <div class="space-y-1.5">
+        <div
+          v-for="rule in activeRecurringRules"
+          :key="rule.id"
+          class="rounded-lg bg-[#141722] border border-[#2a2f45] px-2 py-1.5 group"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-[11px] text-slate-200 truncate" :title="rule.description">
+              {{ rule.description }}
+            </div>
+            <div
+              class="text-[11px] font-bold shrink-0"
+              :class="rule.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'"
+            >
+              {{ rule.amount_k > 0 ? '+' : '' }}{{ rule.amount_k.toFixed(1) }}k
+            </div>
+          </div>
+          <div class="flex items-center justify-between mt-0.5">
+            <div class="text-[9px] text-slate-500 truncate">
+              {{ describeRecurrence(rule) }} · {{ endLabel(rule) }}
+            </div>
+            <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              <button
+                class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
+                title="Edit series"
+                @click="emit('editRecurring', rule.id)"
+              >
+                <i class="pi pi-pencil text-[9px]"></i>
+              </button>
+              <button
+                class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                title="Delete series"
+                @click="emit('deleteRecurring', rule.id)"
+              >
+                <i class="pi pi-trash text-[9px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

@@ -54,12 +54,23 @@ function formatDate(iso: string): string {
         v-for="txn in bucket.transactions"
         :key="txn.id"
         class="flex items-center gap-2 bg-[#1a1d2e] rounded-lg px-3 py-2 group"
+        :class="txn.recurring_rule_id ? 'border border-indigo-500/20' : ''"
       >
         <div class="w-1.5 h-1.5 rounded-full shrink-0"
           :class="txn.amount_k > 0 ? 'bg-emerald-400' : 'bg-red-400'"
         />
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-mono text-slate-300 truncate">{{ txn.description }}</div>
+          <div class="flex items-center gap-1.5">
+            <div class="text-xs font-mono text-slate-300 truncate">{{ txn.description }}</div>
+            <span
+              v-if="txn.recurring_rule_id"
+              class="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 rounded px-1 py-0.5 flex items-center gap-0.5 shrink-0"
+              title="Projected from a recurring rule. Edit/delete affects the whole series."
+            >
+              <i class="pi pi-refresh text-[8px]"></i>
+              recurring
+            </span>
+          </div>
         </div>
         <div class="text-xs font-mono font-bold shrink-0"
           :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'"
@@ -69,14 +80,14 @@ function formatDate(iso: string): string {
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <button
             class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
-            title="Edit"
+            :title="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
             @click="$emit('editTxn', txn.id)"
           >
             <i class="pi pi-pencil text-[10px]"></i>
           </button>
           <button
             class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-            title="Delete"
+            :title="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
             @click="$emit('deleteTxn', txn.id)"
           >
             <i class="pi pi-trash text-[10px]"></i>

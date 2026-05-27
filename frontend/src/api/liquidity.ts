@@ -3,6 +3,9 @@ import type {
   LiquidityTransaction,
   LiquidityTransactionCreate,
   LiquidityTransactionUpdate,
+  LiquidityRecurringTransaction,
+  LiquidityRecurringTransactionCreate,
+  LiquidityRecurringTransactionUpdate,
   LiquiditySettings,
   LiquiditySettingsUpdate,
   MercuryBalanceResponse,
@@ -26,6 +29,30 @@ export const liquidityApi = {
 
   async deleteTransaction(id: string): Promise<void> {
     await apiClient.delete(`/liquidity/transactions/${id}`)
+  },
+
+  async getRecurring(): Promise<LiquidityRecurringTransaction[]> {
+    const res = await apiClient.get<LiquidityRecurringTransaction[]>('/liquidity/recurring')
+    return res.data
+  },
+
+  async createRecurring(
+    data: LiquidityRecurringTransactionCreate,
+  ): Promise<LiquidityRecurringTransaction> {
+    const res = await apiClient.post<LiquidityRecurringTransaction>('/liquidity/recurring', data)
+    return res.data
+  },
+
+  async updateRecurring(
+    id: string,
+    data: LiquidityRecurringTransactionUpdate,
+  ): Promise<LiquidityRecurringTransaction> {
+    const res = await apiClient.put<LiquidityRecurringTransaction>(`/liquidity/recurring/${id}`, data)
+    return res.data
+  },
+
+  async deleteRecurring(id: string): Promise<void> {
+    await apiClient.delete(`/liquidity/recurring/${id}`)
   },
 
   async getSettings(): Promise<LiquiditySettings> {

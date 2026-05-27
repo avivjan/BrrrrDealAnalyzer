@@ -2,7 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
-import type { LiquidityTransaction, SimulationResult } from '../types/liquidity'
+import type {
+  LiquidityTransaction,
+  LiquidityRecurringTransaction,
+  LiquidityRecurringFrequency,
+  SimulationResult,
+} from '../types/liquidity'
 import { requiresSimulation } from '../utils/liquidityEngine'
 import TimelineChart from '../components/liquidity/TimelineChart.vue'
 import LiquiditySidebar from '../components/liquidity/LiquiditySidebar.vue'
@@ -14,17 +19,43 @@ import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
 const router = useRouter()
 const store = useLiquidityStore()
 
+// Save payloads emitted by TransactionForm. Mirrors the discriminated
+// union over there; duplicated locally so we can name it in template refs
+// and keep view <-> form coupling explicit.
+type OneOffSavePayload = {
+  kind: 'transaction'
+  id?: string
+  effective_date: string
+  description: string
+  amount_k: number
+}
+
+type RecurringSavePayload = {
+  kind: 'recurring'
+  id?: string
+  description: string
+  amount_k: number
+  start_date: string
+  end_date: string | null
+  occurrences: number | null
+  frequency: LiquidityRecurringFrequency
+  interval: number
+}
+
+type SavePayload = OneOffSavePayload | RecurringSavePayload
+
 const chartRef = ref<InstanceType<typeof TimelineChart> | null>(null)
 const selectedDate = ref<string | null>(null)
 const formOpen = ref(false)
 const editingTxn = ref<LiquidityTransaction | null>(null)
+const editingRecurring = ref<LiquidityRecurringTransaction | null>(null)
 const prefillDate = ref<string | null>(null)
 const settingsOpen = ref(false)
 
 const warningOpen = ref(false)
 const warningSeverity = ref<'hard' | 'soft' | 'none'>('none')
 const warningResult = ref<SimulationResult | null>(null)
-const pendingSave = ref<{ effective_date: string; description: string; amount_k: number; id?: string } | null>(null)
+const pendingSave = ref<SavePayload | null>(null)
 
 const toastMessage = ref('')
 const toastVisible = ref(false)
@@ -37,6 +68,7 @@ const selectedBucket = computed(() => {
 
 const hasData = computed(() =>
   store.transactions.length > 0 ||
+  store.recurringRules.length > 0 ||
   store.settings.opening_balance_k !== 0 ||
   !!store.mercuryBalance
 )
@@ -66,21 +98,42 @@ function onSelectDay(date: string) {
 
 function openAddForm(date?: string) {
   editingTxn.value = null
+  editingRecurring.value = null
   prefillDate.value = date ?? selectedDate.value
   formOpen.value = true
 }
 
 function openEditForm(txnId: string) {
+  // Editing a virtual recurring instance jumps straight to its source rule;
+  // the form switches into recurring mode automatically based on the
+  // `editRecurring` prop.
+  const virtual = store.effectiveTransactions.find(t => t.id === txnId)
+  if (virtual?.recurring_rule_id) {
+    const rule = store.findRecurringRule(virtual.recurring_rule_id)
+    if (rule) {
+      editingTxn.value = null
+      editingRecurring.value = rule
+      prefillDate.value = null
+      formOpen.value = true
+    }
+    return
+  }
   const txn = store.transactions.find(t => t.id === txnId)
   if (txn) {
     editingTxn.value = txn
+    editingRecurring.value = null
     prefillDate.value = null
     formOpen.value = true
   }
 }
 
-async function onFormSave(data: { effective_date: string; description: string; amount_k: number; id?: string }) {
+async function onFormSave(data: SavePayload) {
   formOpen.value = false
+
+  if (data.kind === 'recurring') {
+    await handleRecurringSave(data)
+    return
+  }
 
   const needsSim = data.id
     ? requiresSimulation(store.transactions.find(t => t.id === data.id)!, data.amount_k, data.effective_date)
@@ -113,7 +166,6 @@ async function onFormSave(data: { effective_date: string; description: string; a
       return
     }
 
-    // Comfortable — save and show toast
     await doSave(data)
     showToast(`Saved. Window min: ${result.min.toFixed(1)}k on ${result.minDates[0]}`)
     return
@@ -123,11 +175,65 @@ async function onFormSave(data: { effective_date: string; description: string; a
   showToast('Transaction saved.')
 }
 
+/**
+ * Recurring save path. Outflow series (or edits that worsen one) get the
+ * same negative/reserve check as one-offs, but candidate generation has to
+ * project the new rule across the timeline first or simulation only sees
+ * occurrence #1.
+ */
+async function handleRecurringSave(data: RecurringSavePayload) {
+  const candidateRule: LiquidityRecurringTransaction = {
+    id: data.id || '__candidate__',
+    description: data.description,
+    amount_k: data.amount_k,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    occurrences: data.occurrences,
+    frequency: data.frequency,
+    interval: data.interval,
+  }
+
+  // Always simulate outflows — a recurring outflow can sink the timeline
+  // far in the future even if amount-per-occurrence is small.
+  const needsSim = data.amount_k < 0 || !!data.id
+  if (needsSim) {
+    const action: 'add' | 'edit' = data.id ? 'edit' : 'add'
+    const candidateList = store.buildRecurringCandidateList(action, candidateRule, data.id)
+    const result = store.runSimulation(candidateList)
+
+    if (result.negativeDates.length > 0) {
+      warningSeverity.value = 'hard'
+      warningResult.value = result
+      pendingSave.value = data
+      warningOpen.value = true
+      return
+    }
+    if (result.breachesReserve) {
+      warningSeverity.value = 'soft'
+      warningResult.value = result
+      pendingSave.value = data
+      warningOpen.value = true
+      return
+    }
+
+    await doSaveRecurring(data)
+    showToast(`Series saved. Window min: ${result.min.toFixed(1)}k on ${result.minDates[0]}`)
+    return
+  }
+
+  await doSaveRecurring(data)
+  showToast('Recurring series saved.')
+}
+
 async function onWarningConfirm() {
   warningOpen.value = false
-  if (pendingSave.value) {
-    await doSave(pendingSave.value)
-    pendingSave.value = null
+  if (!pendingSave.value) return
+  const payload = pendingSave.value
+  pendingSave.value = null
+  if (payload.kind === 'recurring') {
+    await doSaveRecurring(payload)
+  } else {
+    await doSave(payload)
   }
 }
 
@@ -136,7 +242,7 @@ function onWarningCancel() {
   pendingSave.value = null
 }
 
-async function doSave(data: { effective_date: string; description: string; amount_k: number; id?: string }) {
+async function doSave(data: OneOffSavePayload) {
   try {
     if (data.id) {
       await store.updateTransaction(data.id, {
@@ -156,7 +262,81 @@ async function doSave(data: { effective_date: string; description: string; amoun
   }
 }
 
+async function doSaveRecurring(data: RecurringSavePayload) {
+  try {
+    if (data.id) {
+      await store.updateRecurring(data.id, {
+        description: data.description,
+        amount_k: data.amount_k,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        occurrences: data.occurrences,
+        frequency: data.frequency,
+        interval: data.interval,
+      })
+    } else {
+      await store.addRecurring({
+        description: data.description,
+        amount_k: data.amount_k,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        occurrences: data.occurrences,
+        frequency: data.frequency,
+        interval: data.interval,
+      })
+    }
+  } catch (e: any) {
+    showToast('Error: ' + (e?.response?.data?.detail || e.message))
+  }
+}
+
+function openEditRecurring(ruleId: string) {
+  const rule = store.findRecurringRule(ruleId)
+  if (!rule) return
+  editingTxn.value = null
+  editingRecurring.value = rule
+  prefillDate.value = null
+  formOpen.value = true
+}
+
+async function onDeleteRecurringRule(ruleId: string) {
+  const rule = store.findRecurringRule(ruleId)
+  if (!rule) return
+  const ok = window.confirm(
+    `Delete the entire recurring series "${rule.description}"? ` +
+    `This removes every projected occurrence from the timeline.`,
+  )
+  if (!ok) return
+  try {
+    await store.deleteRecurring(ruleId)
+    showToast('Recurring series deleted.')
+  } catch (e: any) {
+    showToast('Error: ' + (e?.response?.data?.detail || e.message))
+  }
+}
+
 async function onDeleteTxn(txnId: string) {
+  // Virtual recurring instances delete the source rule (and so the whole
+  // series). Confirm with the user first — a click-through deletion would
+  // be too destructive here.
+  const virtual = store.effectiveTransactions.find(t => t.id === txnId)
+  if (virtual?.recurring_rule_id) {
+    const rule = store.findRecurringRule(virtual.recurring_rule_id)
+    if (!rule) return
+    const ok = window.confirm(
+      `Delete the entire recurring series "${rule.description}"? ` +
+      `This removes every projected occurrence from the timeline.`,
+    )
+    if (!ok) return
+    try {
+      await store.deleteRecurring(rule.id)
+      showToast('Recurring series deleted.')
+    } catch (e: any) {
+      showToast('Error: ' + (e?.response?.data?.detail || e.message))
+    }
+    return
+  }
+
   try {
     await store.deleteTransaction(txnId)
     showToast('Transaction deleted.')
@@ -317,10 +497,13 @@ function showToast(msg: string) {
           :series="store.series"
           :settings="store.settings"
           :transactions="store.transactions"
+          :recurring-rules="store.recurringRules"
           :mercury-balance="store.mercuryBalance"
           :mercury-syncing="store.mercurySyncing"
           :mercury-error="store.mercuryError"
           :mercury-last-synced-at="store.mercuryLastSyncedAt"
+          @edit-recurring="openEditRecurring"
+          @delete-recurring="onDeleteRecurringRule"
         />
       </aside>
     </div>
@@ -329,6 +512,7 @@ function showToast(msg: string) {
     <TransactionForm
       :open="formOpen"
       :edit-txn="editingTxn"
+      :edit-recurring="editingRecurring"
       :prefill-date="prefillDate"
       @close="formOpen = false"
       @save="onFormSave"

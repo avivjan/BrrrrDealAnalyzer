@@ -197,6 +197,53 @@ class LiquidityTransaction(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+# Allowed `frequency` values on LiquidityRecurringTransaction. The frontend
+# uses the same labels in its picker. Each value defines how the next event
+# date is computed; `interval` multiplies the base unit (e.g. weekly+2 ==
+# every two weeks, monthly+3 == every quarter).
+LIQUIDITY_RECURRING_FREQUENCIES: tuple[str, ...] = (
+    "daily",
+    "weekly",
+    "biweekly",
+    "monthly",
+    "quarterly",
+    "yearly",
+)
+
+
+class LiquidityRecurringTransaction(Base):
+    """A repeating cash-flow rule (e.g. monthly hard-money interest).
+
+    A rule is expanded into virtual `LiquidityTransaction`-shaped events
+    on the frontend timeline at read time, so editing a rule retroactively
+    fixes every projected occurrence without rewriting per-row history.
+
+    Sign convention matches `LiquidityTransaction.amount_k`: positive ==
+    inflow, negative == outflow. All amounts in thousands of dollars ($k).
+    """
+
+    __tablename__ = "liquidity_recurring_transactions"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    description = Column(String, nullable=False)
+    amount_k = Column(Numeric(14, 4), nullable=False)
+    # First occurrence date. All later occurrences are derived from this
+    # anchor (so changing it shifts the entire series).
+    start_date = Column(Date, nullable=False, index=True)
+    # Optional hard stop. If both `end_date` and `occurrences` are NULL the
+    # series runs forever; the frontend caps it at the visible timeline.
+    end_date = Column(Date, nullable=True)
+    # Optional max number of events (1-based count). Useful for "interest
+    # for the next 12 months" style series. Mutually compatible with
+    # end_date; whichever cap fires first wins.
+    occurrences = Column(Integer, nullable=True)
+    frequency = Column(String, nullable=False)  # one of LIQUIDITY_RECURRING_FREQUENCIES
+    # "Every N units" multiplier on top of `frequency`. Defaults to 1.
+    interval = Column(Integer, nullable=False, default=1, server_default="1")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class RepsPerson(Base):
     """Audit-trail contact (contractor, agent, lender, etc.) referenced from REPS log entries."""
 

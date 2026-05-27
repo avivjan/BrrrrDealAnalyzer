@@ -6,6 +6,7 @@
 
 import type {
   LiquidityTransaction,
+  LiquidityRecurringTransaction,
   DayBucket,
   LiquiditySeries,
   SimulationResult,
@@ -262,4 +263,128 @@ export function requiresSimulation(
   if (amountDelta < 0) return true // net decrease
   if (newDate !== oldTxn.effective_date) return true // date moved — could shift balances
   return false
+}
+
+// ---------------------------------------------------------------------------
+// Recurring transactions: expand a rule into virtual instances
+// ---------------------------------------------------------------------------
+
+/** Add `n` calendar months to an ISO date, clamping the day-of-month so
+ *  Jan 31 + 1mo == Feb 28 (or 29) rather than rolling into March. */
+function addMonthsClamped(isoDate: string, months: number): string {
+  const d = new Date(isoDate + 'T00:00:00')
+  const targetMonth = d.getMonth() + months
+  const targetYear = d.getFullYear() + Math.floor(targetMonth / 12)
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12
+  const originalDay = d.getDate()
+  // Last day of the target month (0th day of next month).
+  const lastDay = new Date(targetYear, normalizedMonth + 1, 0).getDate()
+  const day = Math.min(originalDay, lastDay)
+  return toISO(new Date(targetYear, normalizedMonth, day))
+}
+
+/** Step the date by the rule's cadence × the (1-based) occurrence index. */
+function dateForOccurrence(
+  rule: LiquidityRecurringTransaction,
+  index: number,
+): string {
+  // index 0 returns start_date as-is, so the first event lands exactly on
+  // the user-picked start.
+  if (index === 0) return rule.start_date
+  const interval = Math.max(1, rule.interval || 1)
+  switch (rule.frequency) {
+    case 'daily':
+      return addDays(rule.start_date, index * interval)
+    case 'weekly':
+      return addDays(rule.start_date, index * 7 * interval)
+    case 'biweekly':
+      // `biweekly` is sugar for `weekly + interval=2`. We honor the rule's
+      // own `interval` on top of that base, so biweekly+interval=2 == every
+      // 4 weeks (rare, but lets us treat all frequencies symmetrically).
+      return addDays(rule.start_date, index * 14 * interval)
+    case 'monthly':
+      return addMonthsClamped(rule.start_date, index * interval)
+    case 'quarterly':
+      return addMonthsClamped(rule.start_date, index * 3 * interval)
+    case 'yearly':
+      return addMonthsClamped(rule.start_date, index * 12 * interval)
+    default:
+      // Unreachable while the Literal type holds; keep the timeline robust.
+      return rule.start_date
+  }
+}
+
+/**
+ * Expand a recurring rule into virtual transactions falling inside
+ * [rangeStart, rangeEnd]. Hard caps:
+ *   • rule.end_date (if set)
+ *   • rule.occurrences (if set)
+ *   • `safetyCap` (defaults to 2000) — defensive ceiling so a malformed
+ *     daily-forever rule can't melt the browser.
+ *
+ * Each virtual instance carries `recurring_rule_id` + `recurring_index`
+ * so the UI can edit/delete the source rule and so simulation can treat
+ * the projections as real flows.
+ */
+export function expandRecurringRule(
+  rule: LiquidityRecurringTransaction,
+  rangeStart: string,
+  rangeEnd: string,
+  safetyCap = 2000,
+): LiquidityTransaction[] {
+  if (rule.start_date > rangeEnd) return []
+
+  const out: LiquidityTransaction[] = []
+  const maxOccurrences = Math.min(
+    rule.occurrences ?? safetyCap,
+    safetyCap,
+  )
+
+  for (let i = 0; i < maxOccurrences; i++) {
+    const date = dateForOccurrence(rule, i)
+    if (date > rangeEnd) break
+    if (rule.end_date && date > rule.end_date) break
+    if (date < rangeStart) continue
+    out.push({
+      id: `recurring:${rule.id}:${i}`,
+      effective_date: date,
+      description: rule.description,
+      amount_k: rule.amount_k,
+      recurring_rule_id: rule.id,
+      recurring_index: i,
+    })
+  }
+  return out
+}
+
+/** Expand every recurring rule across the current display range. */
+export function expandAllRecurringRules(
+  rules: LiquidityRecurringTransaction[],
+  rangeStart: string,
+  rangeEnd: string,
+): LiquidityTransaction[] {
+  const out: LiquidityTransaction[] = []
+  for (const rule of rules) {
+    out.push(...expandRecurringRule(rule, rangeStart, rangeEnd))
+  }
+  return out
+}
+
+/** Human-readable cadence summary, used in tooltips and form previews. */
+export function describeRecurrence(
+  rule: Pick<LiquidityRecurringTransaction, 'frequency' | 'interval'>,
+): string {
+  const n = Math.max(1, rule.interval || 1)
+  const unit = (
+    {
+      daily: ['day', 'days'],
+      weekly: ['week', 'weeks'],
+      biweekly: ['2 weeks', '2-week blocks'],
+      monthly: ['month', 'months'],
+      quarterly: ['quarter', 'quarters'],
+      yearly: ['year', 'years'],
+    } as const
+  )[rule.frequency]
+  if (n === 1) return `Every ${unit[0]}`
+  return `Every ${n} ${unit[1]}`
 }

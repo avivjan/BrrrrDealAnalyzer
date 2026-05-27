@@ -36,6 +36,8 @@ from crud_bought_deal import (
 from crud_liquidity import (
     get_all_transactions, get_transaction, add_transaction,
     update_transaction, delete_transaction,
+    get_all_recurring, get_recurring, add_recurring,
+    update_recurring, delete_recurring,
     get_settings, upsert_settings,
 )
 from crud_pipeline_template import (
@@ -46,6 +48,8 @@ from crud_pipeline_template import (
 )
 from ReqRes.liquidity.liquidityReq import (
     LiquidityTransactionCreate, LiquidityTransactionUpdate, LiquidityTransactionRes,
+    LiquidityRecurringTransactionCreate, LiquidityRecurringTransactionUpdate,
+    LiquidityRecurringTransactionRes,
     LiquiditySettingsUpdate, LiquiditySettingsRes,
 )
 from ReqRes.pipelineTemplate import (
@@ -58,10 +62,11 @@ from ReqRes.email.sendOfferRes import SendOfferRes
 from db import Base, engine, SessionLocal, get_db
 from models import (
     BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
-    LiquidityTransaction, PipelineTemplate,
+    LiquidityTransaction, LiquidityRecurringTransaction, PipelineTemplate,
     RepsPerson, RepsProperty, RepsActivityCategory,
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
+    LIQUIDITY_RECURRING_FREQUENCIES,
 )
 from ReqRes.reps.repsReq import (
     RepsLogCreate, RepsLogRes, RepsEntryRow, RepsStats, RepsEntriesEnvelope,
@@ -176,6 +181,11 @@ def _run_migrations():
                     conn.execute(text(
                         f"ALTER TABLE liquidity_transactions DROP COLUMN {col}"
                     ))
+
+    # `liquidity_recurring_transactions` is created by `Base.metadata.create_all`
+    # on first boot; nothing else to migrate yet. If we later evolve the schema
+    # (e.g. add `notes` or `category` columns) the per-column backfill goes
+    # here, mirroring the pattern used for `liquidity_transactions` above.
 
     if "liquidity_settings" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]
@@ -1419,6 +1429,70 @@ def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
     if not delete_transaction(db, txn_id):
         raise HTTPException(status_code=404, detail="Transaction not found")
     return {"message": "Transaction deleted"}
+
+
+# --- Recurring transactions (e.g. monthly HM interest, weekly rent) ---
+# Stored as rules; the frontend expands each rule into virtual events on
+# the timeline. Editing the rule retroactively fixes every projected event.
+
+def _recurring_to_res(rule: LiquidityRecurringTransaction) -> LiquidityRecurringTransactionRes:
+    return LiquidityRecurringTransactionRes(
+        id=str(rule.id),
+        description=rule.description,
+        amount_k=float(rule.amount_k),
+        start_date=rule.start_date,
+        end_date=rule.end_date,
+        occurrences=rule.occurrences,
+        frequency=rule.frequency,  # type: ignore[arg-type]
+        interval=int(rule.interval or 1),
+        created_at=rule.created_at.isoformat() if rule.created_at else None,
+        updated_at=rule.updated_at.isoformat() if rule.updated_at else None,
+    )
+
+
+@app.get("/liquidity/recurring", response_model=List[LiquidityRecurringTransactionRes])
+def list_liquidity_recurring(db: Session = Depends(get_db)):
+    return [_recurring_to_res(r) for r in get_all_recurring(db)]
+
+
+@app.post(
+    "/liquidity/recurring",
+    response_model=LiquidityRecurringTransactionRes,
+    status_code=201,
+)
+def create_liquidity_recurring(
+    data: LiquidityRecurringTransactionCreate, db: Session = Depends(get_db)
+):
+    try:
+        rule = add_recurring(db, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _recurring_to_res(rule)
+
+
+@app.put(
+    "/liquidity/recurring/{rule_id}", response_model=LiquidityRecurringTransactionRes
+)
+def update_liquidity_recurring(
+    rule_id: str,
+    data: LiquidityRecurringTransactionUpdate,
+    db: Session = Depends(get_db),
+):
+    try:
+        rule = update_recurring(db, rule_id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    if not rule:
+        raise HTTPException(status_code=404, detail="Recurring rule not found")
+    return _recurring_to_res(rule)
+
+
+@app.delete("/liquidity/recurring/{rule_id}")
+def delete_liquidity_recurring(rule_id: str, db: Session = Depends(get_db)):
+    if not delete_recurring(db, rule_id):
+        raise HTTPException(status_code=404, detail="Recurring rule not found")
+    return {"message": "Recurring rule deleted"}
+
 
 @app.get("/liquidity/settings", response_model=LiquiditySettingsRes)
 def get_liquidity_settings(db: Session = Depends(get_db)):

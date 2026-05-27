@@ -5,6 +5,9 @@ import type {
   LiquidityTransaction,
   LiquidityTransactionCreate,
   LiquidityTransactionUpdate,
+  LiquidityRecurringTransaction,
+  LiquidityRecurringTransactionCreate,
+  LiquidityRecurringTransactionUpdate,
   LiquiditySettings,
   LiquiditySettingsUpdate,
   LiquiditySeries,
@@ -13,6 +16,7 @@ import type {
 import {
   buildDailyLiquiditySeries,
   computeDefaultRange,
+  expandAllRecurringRules,
   simulateImpact,
   requiresSimulation,
   todayISO,
@@ -21,6 +25,7 @@ import type { SimulationResult } from '../types/liquidity'
 
 export const useLiquidityStore = defineStore('liquidity', () => {
   const transactions = ref<LiquidityTransaction[]>([])
+  const recurringRules = ref<LiquidityRecurringTransaction[]>([])
   const settings = ref<LiquiditySettings>({
     opening_balance_k: 0,
     opening_balance_date: todayISO(),
@@ -35,6 +40,24 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const mercuryError = ref<string | null>(null)
   const mercuryLastSyncedAt = ref<string | null>(null)
 
+  // Effective transaction list = real one-off transactions + every virtual
+  // instance projected from a recurring rule across the visible window.
+  // The list is reused for the chart series and for simulation candidates
+  // so both stay perfectly aligned.
+  const effectiveTransactions = computed<LiquidityTransaction[]>(() => {
+    void _version.value
+    const { rangeStart, rangeEnd } = computeDefaultRange(
+      transactions.value,
+      settings.value.opening_balance_date,
+    )
+    const projected = expandAllRecurringRules(
+      recurringRules.value,
+      rangeStart,
+      rangeEnd,
+    )
+    return [...transactions.value, ...projected]
+  })
+
   const series = computed<LiquiditySeries>(() => {
     void _version.value
     const { rangeStart, rangeEnd } = computeDefaultRange(
@@ -42,7 +65,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
       settings.value.opening_balance_date,
     )
     return buildDailyLiquiditySeries(
-      transactions.value,
+      effectiveTransactions.value,
       settings.value.opening_balance_k,
       settings.value.opening_balance_date,
       rangeStart,
@@ -54,11 +77,13 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     loading.value = true
     error.value = null
     try {
-      const [txns, s] = await Promise.all([
+      const [txns, recurring, s] = await Promise.all([
         liquidityApi.getTransactions(),
+        liquidityApi.getRecurring(),
         liquidityApi.getSettings(),
       ])
       transactions.value = txns
+      recurringRules.value = recurring
       settings.value = s
     } catch (e: any) {
       error.value = e?.response?.data?.detail || e.message || 'Failed to load liquidity data'
@@ -85,8 +110,10 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   }
 
   /**
-   * Build the candidate transaction list for simulation.
-   * For add: baseline + new txn
+   * Build the candidate transaction list for simulation, including projected
+   * recurring instances so the warning reflects the full picture.
+   *
+   * For add: baseline (one-offs + recurring projections) + new txn
    * For edit: baseline with old replaced by new
    * For delete: baseline with txn removed
    */
@@ -95,7 +122,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     txn: LiquidityTransaction,
     oldTxnId?: string,
   ): LiquidityTransaction[] {
-    const base = [...transactions.value]
+    const base = [...effectiveTransactions.value]
     if (action === 'add') {
       return [...base, txn]
     } else if (action === 'edit') {
@@ -103,6 +130,38 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     } else {
       return base.filter(t => t.id !== txn.id)
     }
+  }
+
+  /**
+   * Build a simulation candidate list with one recurring rule swapped out
+   * (or added/removed). The currently-projected occurrences of the affected
+   * rule are stripped out before the new projection is added back so the
+   * timeline doesn't double-count.
+   */
+  function buildRecurringCandidateList(
+    action: 'add' | 'edit' | 'delete',
+    rule: LiquidityRecurringTransaction,
+    oldRuleId?: string,
+  ): LiquidityTransaction[] {
+    const base = [...transactions.value]
+    const otherRules = recurringRules.value.filter(
+      r => r.id !== (oldRuleId ?? rule.id),
+    )
+    const rulesAfter =
+      action === 'delete'
+        ? otherRules
+        : action === 'edit'
+          ? [...otherRules, rule]
+          : [...recurringRules.value, rule]
+
+    const { rangeStart, rangeEnd } = computeDefaultRange(
+      base,
+      settings.value.opening_balance_date,
+    )
+    return [
+      ...base,
+      ...expandAllRecurringRules(rulesAfter, rangeStart, rangeEnd),
+    ]
   }
 
   async function addTransaction(data: LiquidityTransactionCreate): Promise<LiquidityTransaction> {
@@ -123,6 +182,36 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     await liquidityApi.deleteTransaction(id)
     transactions.value = await liquidityApi.getTransactions()
     _version.value++
+  }
+
+  async function addRecurring(
+    data: LiquidityRecurringTransactionCreate,
+  ): Promise<LiquidityRecurringTransaction> {
+    const created = await liquidityApi.createRecurring(data)
+    recurringRules.value = await liquidityApi.getRecurring()
+    _version.value++
+    return created
+  }
+
+  async function updateRecurring(
+    id: string,
+    data: LiquidityRecurringTransactionUpdate,
+  ): Promise<LiquidityRecurringTransaction> {
+    const updated = await liquidityApi.updateRecurring(id, data)
+    recurringRules.value = await liquidityApi.getRecurring()
+    _version.value++
+    return updated
+  }
+
+  async function deleteRecurring(id: string): Promise<void> {
+    await liquidityApi.deleteRecurring(id)
+    recurringRules.value = await liquidityApi.getRecurring()
+    _version.value++
+  }
+
+  /** Resolve the source rule for a virtual recurring instance. */
+  function findRecurringRule(ruleId: string): LiquidityRecurringTransaction | null {
+    return recurringRules.value.find(r => r.id === ruleId) ?? null
   }
 
   async function updateSettings(data: LiquiditySettingsUpdate): Promise<void> {
@@ -174,6 +263,8 @@ export const useLiquidityStore = defineStore('liquidity', () => {
 
   return {
     transactions,
+    recurringRules,
+    effectiveTransactions,
     settings,
     loading,
     error,
@@ -185,9 +276,14 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     fetchAll,
     runSimulation,
     buildCandidateList,
+    buildRecurringCandidateList,
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    addRecurring,
+    updateRecurring,
+    deleteRecurring,
+    findRecurringRule,
     updateSettings,
     syncFromMercury,
     requiresSimulation,
