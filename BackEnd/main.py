@@ -283,10 +283,8 @@ with SessionLocal() as _seed_db:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://bigwhalescalculatorfront.netlify.app"
+    allow_origins=
+        "https://bigwhales.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
