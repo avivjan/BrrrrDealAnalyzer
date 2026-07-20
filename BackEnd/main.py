@@ -94,6 +94,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Register treasury ORM models so `create_all` picks up the new tables.
+import treasury.models  # noqa: F401
+from treasury.controllers import router as treasury_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -104,6 +108,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+app.include_router(treasury_router)
 
 def _add_brrr_column_if_missing(
     inspector,

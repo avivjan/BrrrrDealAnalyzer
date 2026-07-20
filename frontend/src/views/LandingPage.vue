@@ -93,6 +93,15 @@ const cards: FeatureCard[] = [
     gradient: "from-slate-700 via-indigo-700 to-blue-800",
     iconBg: "from-slate-500 to-indigo-500",
   },
+  {
+    title: "Reserve & Treasury",
+    subtitle: "Buckets & ledger",
+    icon: "pi pi-wallet",
+    action: "internal",
+    route: "/treasury",
+    gradient: "from-amber-600 via-orange-600 to-red-600",
+    iconBg: "from-amber-500 to-orange-500",
+  },
 ];
 
 interface ResourceLink {
