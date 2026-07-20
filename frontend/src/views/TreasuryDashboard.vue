@@ -2,36 +2,42 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTreasuryStore } from '../stores/treasuryStore'
-import type {
-  LLCConfiguration,
-  PropertyStatus,
-  TransactionLedger,
-  PropertyCashFlowHistory,
-  TransactionType,
-} from '../types/treasury'
-import {
-  SUB_BUCKET_OPTIONS,
-  TRANSACTION_TYPE_OPTIONS,
-} from '../types/treasury'
+import type { PropertyStatus } from '../types/treasury'
+import LlcSection from '../components/treasury/LlcSection.vue'
+import AuditLogTable from '../components/treasury/AuditLogTable.vue'
+import AddLlcModal from '../components/treasury/AddLlcModal.vue'
+import AddPropertyModal from '../components/treasury/AddPropertyModal.vue'
+import CashFlowDrawer from '../components/treasury/CashFlowDrawer.vue'
 
 const router = useRouter()
 const store = useTreasuryStore()
 
-type TabKey = 'llcs' | 'properties' | 'transactions' | 'history'
-const activeTab = ref<TabKey>('llcs')
 const toast = ref('')
 const toastVisible = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
-const tabs: Array<{ key: TabKey; label: string; icon: string }> = [
-  { key: 'llcs', label: 'LLC Config', icon: 'pi-building' },
-  { key: 'properties', label: 'Property Status', icon: 'pi-home' },
-  { key: 'transactions', label: 'Transaction Ledger', icon: 'pi-list' },
-  { key: 'history', label: 'Cash Flow History', icon: 'pi-chart-bar' },
-]
+const addLlcOpen = ref(false)
+const addPropertyOpen = ref(false)
+const cashFlowProperty = ref<PropertyStatus | null>(null)
 
-const llcNameById = computed(() =>
-  Object.fromEntries(store.llcs.map((llc) => [llc.llc_id, llc.llc_name])),
+const llcGroups = computed(() =>
+  store.llcs.map((llc) => ({
+    llc,
+    properties: store.properties.filter((p) => p.llc_id === llc.llc_id),
+  })),
+)
+
+const totalReserveBalance = computed(() =>
+  store.properties.reduce((sum, p) => sum + Number(p.reserve_bucket_balance), 0),
+)
+const totalDebt = computed(() =>
+  store.properties.reduce((sum, p) => sum + Number(p.reserve_debt), 0),
+)
+
+const cashFlowHistoryForProperty = computed(() =>
+  cashFlowProperty.value
+    ? store.cashFlowHistory.filter((row) => row.property_id === cashFlowProperty.value!.property_id)
+    : [],
 )
 
 onMounted(async () => {
@@ -51,117 +57,112 @@ function showToast(message: string) {
   }, 3200)
 }
 
-async function saveLlcField(llc: LLCConfiguration, field: 'llc_name' | 'checking_redline_buffer', raw: string) {
-  const payload =
-    field === 'checking_redline_buffer'
-      ? { checking_redline_buffer: Number(raw) }
-      : { llc_name: raw }
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+async function onPatchLlc(llcId: string, field: 'llc_name' | 'checking_redline_buffer', value: string | number) {
   try {
-    await store.patchLlc(llc.llc_id, payload)
-    showToast(`Saved ${field} for ${llc.llc_id}`)
+    await store.patchLlc(llcId, { [field]: value } as never)
   } catch {
     showToast(`Failed to save ${field}`)
   }
 }
 
-async function savePropertyField(
-  prop: PropertyStatus,
-  field: keyof PropertyStatus,
-  raw: string | boolean,
-) {
-  const numericFields = new Set([
-    'tax_bucket_balance',
-    'tax_to_settle',
-    'ins_bucket_balance',
-    'ins_to_settle',
-    'reserve_bucket_balance',
-    'reserve_to_settle',
-    'reserve_bucket_cap',
-    'reserve_debt',
-    'interest_earned_counter',
-    'base_rent_target',
-    'target_tax_allocation',
-    'target_ins_allocation',
-    'target_reserve_allocation',
-  ])
-  const value =
-    typeof raw === 'boolean'
-      ? raw
-      : numericFields.has(field)
-        ? Number(raw)
-        : raw
+async function onDeleteLlc(llcId: string) {
+  if (!window.confirm('Delete this LLC and every property/history nested inside it?')) return
   try {
-    await store.patchProperty(prop.property_id, { [field]: value } as never)
-    showToast(`Saved ${String(field)} for ${prop.property_id}`)
+    await store.removeLlc(llcId)
+    showToast('LLC deleted')
   } catch {
-    showToast(`Failed to save ${String(field)}`)
+    showToast('Failed to delete LLC')
   }
 }
 
-async function saveTransactionField(
-  txn: TransactionLedger,
-  field: keyof TransactionLedger,
-  raw: string | boolean,
-) {
-  let value: unknown = raw
-  if (field === 'amount') value = Number(raw)
-  if (field === 'is_real_bank_tx') value = Boolean(raw)
-  if (field === 'sub_bucket_assignment') {
-    value = raw === 'None' ? null : raw
-  }
+async function onPatchProperty(propertyId: string, field: string, value: number | boolean | string) {
   try {
-    await store.patchTransaction(txn.transaction_id, { [field]: value } as never)
-    showToast(`Saved ${String(field)} for ${txn.transaction_id.slice(0, 8)}…`)
+    await store.patchProperty(propertyId, { [field]: value } as never)
   } catch {
-    showToast(`Failed to save ${String(field)}`)
+    showToast(`Failed to save ${field}`)
   }
 }
 
-async function saveHistoryField(
-  row: PropertyCashFlowHistory,
+async function onDeleteProperty(propertyId: string) {
+  if (!window.confirm('Delete this property and its cash-flow history?')) return
+  try {
+    await store.removeProperty(propertyId)
+    if (cashFlowProperty.value?.property_id === propertyId) cashFlowProperty.value = null
+    showToast('Property deleted')
+  } catch {
+    showToast('Failed to delete property')
+  }
+}
+
+async function onMoveProperty(propertyId: string, llcId: string) {
+  try {
+    await store.patchProperty(propertyId, { llc_id: llcId })
+    showToast('Property re-parented to new LLC')
+  } catch {
+    showToast('Failed to move property')
+  }
+}
+
+function onOpenCashFlow(property: PropertyStatus) {
+  cashFlowProperty.value = property
+}
+
+async function onPatchCashFlowRow(
+  historyId: string,
   field: 'month_year' | 'monthly_cash_flow' | 'cumulative_cash_flow',
-  raw: string,
+  value: string | number,
 ) {
-  const value = field === 'month_year' ? raw : Number(raw)
   try {
-    await store.patchCashFlow(row.history_id, { [field]: value })
-    showToast(`Saved ${field} for ${row.month_year}`)
+    await store.patchCashFlow(historyId, { [field]: value } as never)
   } catch {
     showToast(`Failed to save ${field}`)
   }
 }
 
-async function addLlc() {
-  const name = window.prompt('LLC name?')
-  if (!name?.trim()) return
+async function onDeleteCashFlowRow(historyId: string) {
+  if (!window.confirm('Delete this snapshot?')) return
   try {
-    await store.createLlc({ llc_name: name.trim() })
-    showToast('LLC created')
+    await store.removeCashFlow(historyId)
   } catch {
-    showToast('Failed to create LLC')
+    showToast('Failed to delete snapshot')
   }
 }
 
-async function addProperty() {
-  if (store.llcs.length === 0) {
-    showToast('Create an LLC first')
-    return
-  }
-  const propertyId = window.prompt('Property ID (optional — leave blank to auto-generate)?') ?? ''
-  const llcId = store.llcs[0]?.llc_id
-  if (!llcId) return
+async function onAddCashFlowRow(monthYear: string) {
+  if (!cashFlowProperty.value) return
   try {
-    await store.createProperty({
-      llc_id: llcId,
-      ...(propertyId.trim() ? { property_id: propertyId.trim() } : {}),
-    })
-    showToast('Property created')
+    await store.createCashFlow({ property_id: cashFlowProperty.value.property_id, month_year: monthYear })
   } catch {
-    showToast('Failed to create property')
+    showToast('Failed to create snapshot')
   }
 }
 
-async function addTransaction() {
+async function onPatchTransaction(transactionId: string, field: string, value: number | boolean | string | null) {
+  try {
+    await store.patchTransaction(transactionId, { [field]: value } as never)
+  } catch {
+    showToast(`Failed to save ${field}`)
+  }
+}
+
+async function onDeleteTransaction(transactionId: string) {
+  if (!window.confirm('Delete this transaction?')) return
+  try {
+    await store.removeTransaction(transactionId)
+  } catch {
+    showToast('Failed to delete transaction')
+  }
+}
+
+async function onAddTransaction() {
   if (store.properties.length === 0) {
     showToast('Create a property first')
     return
@@ -174,615 +175,308 @@ async function addTransaction() {
       timestamp: new Date().toISOString(),
       transaction_type: 'Rent',
     })
-    showToast('Transaction created')
   } catch {
     showToast('Failed to create transaction')
   }
 }
 
-async function addHistory() {
-  if (store.properties.length === 0) {
-    showToast('Create a property first')
-    return
-  }
-  const month = window.prompt('Month (YYYY-MM)?', '2026-07')
-  if (!month?.trim()) return
+async function submitAddLlc(payload: { llc_name: string; checking_redline_buffer: number }) {
   try {
-    await store.createCashFlow({
-      property_id: store.properties[0]!.property_id,
-      month_year: month.trim(),
-    })
-    showToast('Snapshot created')
+    await store.createLlc(payload)
+    addLlcOpen.value = false
+    showToast('LLC created')
   } catch {
-    showToast('Failed to create snapshot')
+    showToast('Failed to create LLC')
   }
 }
 
-async function deleteLlc(id: string) {
-  if (!window.confirm('Delete LLC and all child properties/history?')) return
+async function submitAddProperty(payload: { property_id?: string; llc_id: string }) {
   try {
-    await store.removeLlc(id)
-    showToast('LLC deleted')
+    await store.createProperty(payload)
+    addPropertyOpen.value = false
+    showToast('Property created')
   } catch {
-    showToast('Failed to delete LLC')
+    showToast('Failed to create property')
   }
 }
 
-async function deleteProperty(id: string) {
-  if (!window.confirm('Delete property and its cash-flow history?')) return
-  try {
-    await store.removeProperty(id)
-    showToast('Property deleted')
-  } catch {
-    showToast('Failed to delete property')
-  }
-}
-
-async function deleteTransaction(id: string) {
-  if (!window.confirm('Delete transaction?')) return
-  try {
-    await store.removeTransaction(id)
-    showToast('Transaction deleted')
-  } catch {
-    showToast('Failed to delete transaction')
-  }
-}
-
-async function deleteHistory(id: string) {
-  if (!window.confirm('Delete snapshot?')) return
-  try {
-    await store.removeCashFlow(id)
-    showToast('Snapshot deleted')
-  } catch {
-    showToast('Failed to delete snapshot')
-  }
-}
-
-const propertyNumericFields: Array<{ key: keyof PropertyStatus; label: string }> = [
-  { key: 'tax_bucket_balance', label: 'Tax Balance' },
-  { key: 'tax_to_settle', label: 'Tax To Settle' },
-  { key: 'ins_bucket_balance', label: 'Ins Balance' },
-  { key: 'ins_to_settle', label: 'Ins To Settle' },
-  { key: 'reserve_bucket_balance', label: 'Reserve Balance' },
-  { key: 'reserve_to_settle', label: 'Reserve To Settle' },
-  { key: 'reserve_bucket_cap', label: 'Reserve Cap' },
-  { key: 'reserve_debt', label: 'Reserve Debt' },
-  { key: 'interest_earned_counter', label: 'Interest Counter' },
-  { key: 'base_rent_target', label: 'Base Rent Target' },
-  { key: 'target_tax_allocation', label: 'Tax Target' },
-  { key: 'target_ins_allocation', label: 'Ins Target' },
-  { key: 'target_reserve_allocation', label: 'Reserve Target' },
-]
 </script>
 
 <template>
   <div class="treasury-page">
     <header class="page-header">
-      <div class="header-left">
+      <div class="flex items-center gap-3">
         <button class="back-btn" title="Back" @click="router.push('/')">
           <i class="pi pi-arrow-left"></i>
         </button>
         <div>
-          <h1 class="page-title">Reserve & Treasury</h1>
-          <p class="page-subtitle">Human-in-the-loop overrides for every balance and flag</p>
+          <h1 class="page-title">Reserve &amp; Treasury</h1>
+          <p class="page-subtitle">Control room for every bucket, buffer, and flag</p>
         </div>
       </div>
-      <button class="refresh-btn" :disabled="store.loading" @click="store.fetchAll()">
-        <i class="pi pi-refresh" :class="{ spin: store.loading }"></i>
-        Refresh
-      </button>
+
+      <div class="header-stats">
+        <div class="stat-chip">
+          <span class="stat-chip-label">LLCs</span>
+          <span class="stat-chip-value text-white">{{ store.llcs.length }}</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-label">Properties</span>
+          <span class="stat-chip-value text-white">{{ store.properties.length }}</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-label">Reserve Balance</span>
+          <span class="stat-chip-value text-violet-300">{{ formatCurrency(totalReserveBalance) }}</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-label">Total Debt</span>
+          <span class="stat-chip-value" :class="totalDebt > 0 ? 'text-rose-400' : 'text-white/40'">
+            {{ formatCurrency(totalDebt) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" :disabled="store.loading" title="Refresh" @click="store.fetchAll()">
+          <i class="pi pi-refresh" :class="{ spin: store.loading }"></i>
+        </button>
+        <button class="action-btn action-btn-llc" @click="addLlcOpen = true">
+          <i class="pi pi-plus"></i> Add LLC
+        </button>
+        <button class="action-btn action-btn-property" @click="addPropertyOpen = true">
+          <i class="pi pi-plus"></i> Add Property
+        </button>
+      </div>
     </header>
 
-    <nav class="tab-bar">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.key }"
-        @click="activeTab = tab.key"
-      >
-        <i :class="['pi', tab.icon]"></i>
-        {{ tab.label }}
-      </button>
-    </nav>
+    <main class="page-body">
+      <div v-if="store.llcs.length === 0" class="landing-empty">
+        <i class="pi pi-building"></i>
+        <p>No LLCs yet — click <strong>+ Add LLC</strong> to stand up your first treasury container.</p>
+      </div>
 
-    <main class="panel">
-      <section v-if="activeTab === 'llcs'" class="section">
-        <div class="section-head">
-          <h2>LLC Configuration</h2>
-          <button class="primary-btn" @click="addLlc">Add LLC</button>
-        </div>
-        <div v-if="store.llcs.length === 0" class="empty">No LLCs yet.</div>
-        <div v-for="llc in store.llcs" :key="llc.llc_id" class="card">
-          <div class="card-head">
-            <code>{{ llc.llc_id }}</code>
-            <button class="danger-btn" @click="deleteLlc(llc.llc_id)">Delete</button>
-          </div>
-          <div class="field-grid">
-            <label>
-              LLC Name
-              <input
-                :value="llc.llc_name"
-                @change="saveLlcField(llc, 'llc_name', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-            <label>
-              Checking Redline Buffer ($)
-              <input
-                type="number"
-                step="0.01"
-                :value="llc.checking_redline_buffer"
-                @change="
-                  saveLlcField(
-                    llc,
-                    'checking_redline_buffer',
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </label>
-          </div>
-        </div>
-      </section>
+      <LlcSection
+        v-for="group in llcGroups"
+        :key="group.llc.llc_id"
+        :llc="group.llc"
+        :properties="group.properties"
+        :all-llcs="store.llcs"
+        :disabled="store.loading"
+        @patch-llc="(field, value) => onPatchLlc(group.llc.llc_id, field, value)"
+        @delete-llc="onDeleteLlc(group.llc.llc_id)"
+        @patch-property="onPatchProperty"
+        @delete-property="onDeleteProperty"
+        @open-cash-flow="onOpenCashFlow"
+        @move-property="onMoveProperty"
+      />
 
-      <section v-else-if="activeTab === 'properties'" class="section">
-        <div class="section-head">
-          <h2>Property Status</h2>
-          <button class="primary-btn" @click="addProperty">Add Property</button>
-        </div>
-        <div v-if="store.properties.length === 0" class="empty">No properties yet.</div>
-        <div v-for="prop in store.properties" :key="prop.property_id" class="card">
-          <div class="card-head">
-            <div>
-              <code>{{ prop.property_id }}</code>
-              <span class="muted"> · {{ llcNameById[prop.llc_id] ?? prop.llc_id }}</span>
-            </div>
-            <button class="danger-btn" @click="deleteProperty(prop.property_id)">Delete</button>
-          </div>
-          <div class="field-grid wide">
-            <label>
-              LLC
-              <select
-                :value="prop.llc_id"
-                @change="savePropertyField(prop, 'llc_id', ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-for="llc in store.llcs" :key="llc.llc_id" :value="llc.llc_id">
-                  {{ llc.llc_name }}
-                </option>
-              </select>
-            </label>
-            <label v-for="field in propertyNumericFields" :key="field.key">
-              {{ field.label }}
-              <input
-                type="number"
-                step="0.0001"
-                :value="prop[field.key] as number"
-                @change="
-                  savePropertyField(prop, field.key, ($event.target as HTMLInputElement).value)
-                "
-              />
-            </label>
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                :checked="prop.force_tax_ins_accrual"
-                @change="
-                  savePropertyField(
-                    prop,
-                    'force_tax_ins_accrual',
-                    ($event.target as HTMLInputElement).checked,
-                  )
-                "
-              />
-              Force Tax/Ins Accrual
-            </label>
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                :checked="prop.double_reserve_on_recovery"
-                @change="
-                  savePropertyField(
-                    prop,
-                    'double_reserve_on_recovery',
-                    ($event.target as HTMLInputElement).checked,
-                  )
-                "
-              />
-              Double Reserve On Recovery
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section v-else-if="activeTab === 'transactions'" class="section">
-        <div class="section-head">
-          <h2>Transaction Ledger</h2>
-          <button class="primary-btn" @click="addTransaction">Add Transaction</button>
-        </div>
-        <div v-if="store.transactions.length === 0" class="empty">No transactions yet.</div>
-        <div v-for="txn in store.transactions" :key="txn.transaction_id" class="card">
-          <div class="card-head">
-            <code>{{ txn.transaction_id.slice(0, 12) }}…</code>
-            <button class="danger-btn" @click="deleteTransaction(txn.transaction_id)">Delete</button>
-          </div>
-          <div class="field-grid wide">
-            <label>
-              Property
-              <select
-                :value="txn.property_id ?? ''"
-                @change="
-                  saveTransactionField(txn, 'property_id', ($event.target as HTMLSelectElement).value)
-                "
-              >
-                <option value="">None</option>
-                <option v-for="prop in store.properties" :key="prop.property_id" :value="prop.property_id">
-                  {{ prop.property_id }}
-                </option>
-              </select>
-            </label>
-            <label>
-              Amount ($)
-              <input
-                type="number"
-                step="0.01"
-                :value="txn.amount"
-                @change="saveTransactionField(txn, 'amount', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-            <label>
-              Description
-              <input
-                :value="txn.description"
-                @change="
-                  saveTransactionField(txn, 'description', ($event.target as HTMLInputElement).value)
-                "
-              />
-            </label>
-            <label>
-              Timestamp
-              <input
-                type="datetime-local"
-                :value="txn.timestamp.slice(0, 16)"
-                @change="
-                  saveTransactionField(
-                    txn,
-                    'timestamp',
-                    new Date(($event.target as HTMLInputElement).value).toISOString(),
-                  )
-                "
-              />
-            </label>
-            <label>
-              Sub Bucket
-              <select
-                :value="txn.sub_bucket_assignment ?? 'None'"
-                @change="
-                  saveTransactionField(
-                    txn,
-                    'sub_bucket_assignment',
-                    ($event.target as HTMLSelectElement).value,
-                  )
-                "
-              >
-                <option v-for="opt in SUB_BUCKET_OPTIONS" :key="String(opt)" :value="opt ?? 'None'">
-                  {{ opt ?? 'None' }}
-                </option>
-              </select>
-            </label>
-            <label>
-              Transaction Type
-              <select
-                :value="txn.transaction_type"
-                @change="
-                  saveTransactionField(
-                    txn,
-                    'transaction_type',
-                    ($event.target as HTMLSelectElement).value as TransactionType,
-                  )
-                "
-              >
-                <option v-for="opt in TRANSACTION_TYPE_OPTIONS" :key="opt" :value="opt">
-                  {{ opt }}
-                </option>
-              </select>
-            </label>
-            <label>
-              Settlement Batch ID
-              <input
-                :value="txn.settlement_batch_id ?? ''"
-                @change="
-                  saveTransactionField(
-                    txn,
-                    'settlement_batch_id',
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </label>
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                :checked="txn.is_real_bank_tx"
-                @change="
-                  saveTransactionField(
-                    txn,
-                    'is_real_bank_tx',
-                    ($event.target as HTMLInputElement).checked,
-                  )
-                "
-              />
-              Real Bank Transaction
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section v-else class="section">
-        <div class="section-head">
-          <h2>Property Cash Flow History</h2>
-          <button class="primary-btn" @click="addHistory">Add Snapshot</button>
-        </div>
-        <div v-if="store.cashFlowHistory.length === 0" class="empty">No snapshots yet.</div>
-        <div v-for="row in store.cashFlowHistory" :key="row.history_id" class="card">
-          <div class="card-head">
-            <code>{{ row.property_id }}</code>
-            <button class="danger-btn" @click="deleteHistory(row.history_id)">Delete</button>
-          </div>
-          <div class="field-grid">
-            <label>
-              Month (YYYY-MM)
-              <input
-                :value="row.month_year"
-                @change="
-                  saveHistoryField(row, 'month_year', ($event.target as HTMLInputElement).value)
-                "
-              />
-            </label>
-            <label>
-              Monthly Cash Flow ($)
-              <input
-                type="number"
-                step="0.01"
-                :value="row.monthly_cash_flow"
-                @change="
-                  saveHistoryField(row, 'monthly_cash_flow', ($event.target as HTMLInputElement).value)
-                "
-              />
-            </label>
-            <label>
-              Cumulative Cash Flow ($)
-              <input
-                type="number"
-                step="0.01"
-                :value="row.cumulative_cash_flow"
-                @change="
-                  saveHistoryField(
-                    row,
-                    'cumulative_cash_flow',
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </label>
-          </div>
-        </div>
-      </section>
+      <AuditLogTable
+        :transactions="store.transactions"
+        :properties="store.properties"
+        :llcs="store.llcs"
+        :disabled="store.loading"
+        @patch="onPatchTransaction"
+        @delete="onDeleteTransaction"
+        @add="onAddTransaction"
+      />
     </main>
 
-    <transition name="toast">
+    <AddLlcModal :is-open="addLlcOpen" @close="addLlcOpen = false" @submit="submitAddLlc" />
+    <AddPropertyModal
+      :is-open="addPropertyOpen"
+      :llcs="store.llcs"
+      @close="addPropertyOpen = false"
+      @submit="submitAddProperty"
+    />
+    <CashFlowDrawer
+      :open="!!cashFlowProperty"
+      :property="cashFlowProperty"
+      :history="cashFlowHistoryForProperty"
+      @close="cashFlowProperty = null"
+      @patch-row="onPatchCashFlowRow"
+      @delete-row="onDeleteCashFlowRow"
+      @add-row="onAddCashFlowRow"
+    />
+
+    <Transition name="toast">
       <div v-if="toastVisible" class="toast">{{ toast }}</div>
-    </transition>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
 .treasury-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  background: linear-gradient(160deg, #020617 0%, #0b0f1f 45%, #0f172a 100%);
+  color: #e2e8f0;
 }
 
 .page-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.85rem 1.25rem;
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid #e2e8f0;
-  backdrop-filter: blur(8px);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  padding: 0.9rem 1.5rem;
+  background: rgba(2, 6, 23, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .back-btn,
-.refresh-btn,
-.primary-btn,
-.danger-btn,
-.tab-btn {
-  border: none;
-  cursor: pointer;
-  font: inherit;
-}
-
-.back-btn {
+.icon-btn {
   width: 2.25rem;
   height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 0.65rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.back-btn:hover,
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .page-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: white;
+  letter-spacing: -0.01em;
 }
 
 .page-subtitle {
-  margin: 0.1rem 0 0;
-  font-size: 0.78rem;
-  color: #64748b;
+  margin: 0.05rem 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
-.refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #4338ca;
-  font-weight: 600;
-}
-
-.tab-bar {
+.header-stats {
   display: flex;
+  align-items: center;
+  gap: 0.6rem;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem 0;
 }
 
-.tab-btn {
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  min-width: 88px;
+}
+
+.stat-chip-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.stat-chip-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  color: #475569;
-  border: 1px solid #e2e8f0;
-}
-
-.tab-btn.active {
-  background: #4f46e5;
-  color: white;
-  border-color: #4f46e5;
-}
-
-.panel {
-  padding: 1rem 1.25rem 2rem;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.85rem;
-}
-
-.section-head h2 {
-  margin: 0;
-  font-size: 1rem;
-  color: #0f172a;
-}
-
-.primary-btn {
-  padding: 0.5rem 0.85rem;
-  border-radius: 0.65rem;
-  background: #4f46e5;
-  color: white;
-  font-weight: 600;
-}
-
-.danger-btn {
-  padding: 0.35rem 0.65rem;
-  border-radius: 0.5rem;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.9rem;
-  padding: 0.9rem;
-  margin-bottom: 0.75rem;
-  box-shadow: 0 8px 24px -18px rgba(15, 23, 42, 0.25);
-}
-
-.card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.muted {
-  color: #64748b;
+  padding: 0.55rem 0.95rem;
+  border-radius: 0.7rem;
   font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  color: white;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.field-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.65rem;
+.action-btn:hover {
+  transform: translateY(-1px);
 }
 
-.field-grid.wide {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+.action-btn-llc {
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  box-shadow: 0 10px 25px -10px rgba(99, 102, 241, 0.6);
 }
 
-label {
+.action-btn-property {
+  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  box-shadow: 0 10px 25px -10px rgba(16, 185, 129, 0.5);
+}
+
+.page-body {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
-input,
-select {
-  width: 100%;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.55rem;
-  font-size: 0.88rem;
-  color: #0f172a;
-  background: #fff;
-}
-
-.checkbox-label {
-  flex-direction: row;
+.landing-empty {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  text-transform: none;
-  font-size: 0.85rem;
-  color: #0f172a;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 1.5rem;
+  border-radius: 1.25rem;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
 }
 
-.empty {
-  padding: 2rem;
-  text-align: center;
-  color: #64748b;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 0.9rem;
-  border: 1px dashed #cbd5e1;
+.landing-empty i {
+  font-size: 2.2rem;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.landing-empty strong {
+  color: #a5b4fc;
 }
 
 .toast {
   position: fixed;
-  bottom: 1.25rem;
+  bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #0f172a;
+  background: #1e293b;
   color: white;
-  padding: 0.65rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.65rem 1.1rem;
   border-radius: 999px;
   font-size: 0.85rem;
-  z-index: 50;
+  z-index: 80;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }
 
 .spin {
@@ -804,5 +498,17 @@ select {
 .toast-leave-to {
   opacity: 0;
   transform: translate(-50%, 8px);
+}
+
+@media (max-width: 860px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-stats,
+  .header-actions {
+    justify-content: space-between;
+  }
 }
 </style>
