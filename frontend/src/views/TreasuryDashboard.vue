@@ -27,13 +27,6 @@ const llcGroups = computed(() =>
   })),
 )
 
-const totalReserveBalance = computed(() =>
-  store.properties.reduce((sum, p) => sum + Number(p.reserve_bucket_balance), 0),
-)
-const totalDebt = computed(() =>
-  store.properties.reduce((sum, p) => sum + Number(p.reserve_debt), 0),
-)
-
 const cashFlowHistoryForProperty = computed(() =>
   cashFlowProperty.value
     ? store.cashFlowHistory.filter((row) => row.property_id === cashFlowProperty.value!.property_id)
@@ -55,14 +48,6 @@ function showToast(message: string) {
   toastTimer = setTimeout(() => {
     toastVisible.value = false
   }, 3200)
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 async function onPatchLlc(llcId: string, field: 'llc_name' | 'checking_redline_buffer', value: string | number) {
@@ -215,27 +200,6 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
         </div>
       </div>
 
-      <div class="header-stats">
-        <div class="stat-chip">
-          <span class="stat-chip-label">LLCs</span>
-          <span class="stat-chip-value text-white">{{ store.llcs.length }}</span>
-        </div>
-        <div class="stat-chip">
-          <span class="stat-chip-label">Properties</span>
-          <span class="stat-chip-value text-white">{{ store.properties.length }}</span>
-        </div>
-        <div class="stat-chip">
-          <span class="stat-chip-label">Reserve Balance</span>
-          <span class="stat-chip-value text-violet-300">{{ formatCurrency(totalReserveBalance) }}</span>
-        </div>
-        <div class="stat-chip">
-          <span class="stat-chip-label">Total Debt</span>
-          <span class="stat-chip-value" :class="totalDebt > 0 ? 'text-rose-400' : 'text-white/40'">
-            {{ formatCurrency(totalDebt) }}
-          </span>
-        </div>
-      </div>
-
       <div class="header-actions">
         <button class="icon-btn" :disabled="store.loading" title="Refresh" @click="store.fetchAll()">
           <i class="pi pi-refresh" :class="{ spin: store.loading }"></i>
@@ -366,38 +330,6 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
   color: rgba(255, 255, 255, 0.4);
 }
 
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.stat-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.7rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  min-width: 88px;
-}
-
-.stat-chip-label {
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.stat-chip-value {
-  font-size: 0.95rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -506,7 +438,6 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
     align-items: stretch;
   }
 
-  .header-stats,
   .header-actions {
     justify-content: space-between;
   }
