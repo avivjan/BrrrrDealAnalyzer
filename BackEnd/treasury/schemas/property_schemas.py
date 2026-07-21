@@ -5,11 +5,10 @@ from pydantic import BaseModel, Field
 
 
 class PropertyStatusCreate(BaseModel):
-    property_id: Optional[str] = Field(
-        None,
-        description="Optional human-friendly id; generated when omitted.",
-    )
+    """Create a property. `property_id` is always server-generated (UUID hex)."""
+
     llc_id: str
+    property_name: str = Field(..., min_length=1, max_length=300)
     tax_bucket_balance: Decimal = Decimal("0")
     tax_to_settle: Decimal = Decimal("0")
     ins_bucket_balance: Decimal = Decimal("0")
@@ -29,6 +28,7 @@ class PropertyStatusCreate(BaseModel):
 
 class PropertyStatusUpdate(BaseModel):
     llc_id: Optional[str] = None
+    property_name: Optional[str] = Field(None, min_length=1, max_length=300)
     tax_bucket_balance: Optional[Decimal] = None
     tax_to_settle: Optional[Decimal] = None
     ins_bucket_balance: Optional[Decimal] = None
@@ -49,6 +49,7 @@ class PropertyStatusUpdate(BaseModel):
 class PropertyStatusRes(BaseModel):
     property_id: str
     llc_id: str
+    property_name: str
     tax_bucket_balance: Decimal
     tax_to_settle: Decimal
     ins_bucket_balance: Decimal

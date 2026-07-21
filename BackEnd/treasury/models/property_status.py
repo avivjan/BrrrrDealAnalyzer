@@ -28,6 +28,8 @@ class PropertyStatus(Base):
         nullable=False,
         index=True,
     )
+    # Human-readable address / label. Never used as a primary key.
+    property_name = Column(String, nullable=False, default="", server_default="")
 
     tax_bucket_balance = Column(Numeric(14, 2), nullable=False, default=0)
     tax_to_settle = Column(Numeric(14, 2), nullable=False, default=0)

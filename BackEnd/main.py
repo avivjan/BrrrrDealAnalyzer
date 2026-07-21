@@ -210,6 +210,16 @@ def _run_migrations():
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
 
+    # Treasury: human-readable property label (addresses must never be PKs).
+    if "property_status" in table_names:
+        prop_cols = [col["name"] for col in inspector.get_columns("property_status")]
+        if "property_name" not in prop_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE property_status "
+                    "ADD COLUMN property_name VARCHAR NOT NULL DEFAULT ''"
+                ))
+
     # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
     # to the stable slug IDs used by the default pipeline template. Idempotent.
     _migrate_bought_stage_to_string(inspector, "bought_brrrr_deals", DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT)

@@ -17,6 +17,7 @@ def _to_res(prop) -> PropertyStatusRes:
     return PropertyStatusRes(
         property_id=prop.property_id,
         llc_id=prop.llc_id,
+        property_name=prop.property_name or "",
         tax_bucket_balance=prop.tax_bucket_balance,
         tax_to_settle=prop.tax_to_settle,
         ins_bucket_balance=prop.ins_bucket_balance,
@@ -53,18 +54,22 @@ def create_property(payload: PropertyStatusCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("/{property_id}", response_model=PropertyStatusRes)
-def get_property(property_id: str, db: Session = Depends(get_db)):
+@router.get("/item", response_model=PropertyStatusRes)
+def get_property(
+    property_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+):
+    """Look up by query param so address-style IDs (spaces/commas) stay intact."""
     try:
         return _to_res(property_service.get_property(db, property_id))
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-@router.put("/{property_id}", response_model=PropertyStatusRes)
+@router.put("/item", response_model=PropertyStatusRes)
 def update_property(
-    property_id: str,
     payload: PropertyStatusUpdate,
+    property_id: str = Query(..., min_length=1),
     db: Session = Depends(get_db),
 ):
     try:
@@ -75,8 +80,11 @@ def update_property(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.delete("/{property_id}")
-def delete_property(property_id: str, db: Session = Depends(get_db)):
+@router.delete("/item")
+def delete_property(
+    property_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+):
     try:
         property_service.delete_property(db, property_id)
         return {"message": "Property deleted (cascaded to its cash-flow history)."}

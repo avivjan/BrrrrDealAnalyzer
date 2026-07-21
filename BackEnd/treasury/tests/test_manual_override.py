@@ -33,7 +33,7 @@ def test_manual_override_of_every_property_field_bypasses_automated_math(db_sess
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="Override LLC"))
     prop = property_service.create_property(
         db_session,
-        PropertyStatusCreate(property_id="override-prop", llc_id=llc.llc_id),
+        PropertyStatusCreate(property_name="override-prop", llc_id=llc.llc_id),
     )
     property_service.update_property(
         db_session,
@@ -74,7 +74,7 @@ def test_manual_override_toggles_control_flags_independently(db_session):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="Flag LLC"))
     prop = property_service.create_property(
         db_session,
-        PropertyStatusCreate(property_id="flag-prop", llc_id=llc.llc_id),
+        PropertyStatusCreate(property_name="flag-prop", llc_id=llc.llc_id),
     )
     property_service.update_property(
         db_session,
@@ -90,7 +90,7 @@ def test_manual_override_of_cash_flow_history_snapshot(db_session):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="History LLC"))
     prop = property_service.create_property(
         db_session,
-        PropertyStatusCreate(property_id="hist-prop", llc_id=llc.llc_id),
+        PropertyStatusCreate(property_name="hist-prop", llc_id=llc.llc_id),
     )
     snapshot = cash_flow_service.create_snapshot(
         db_session,

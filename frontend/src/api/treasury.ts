@@ -14,6 +14,11 @@ import type {
   PropertyCashFlowHistoryUpdate,
 } from '../types/treasury'
 
+/** Encode a path segment so address-style IDs (spaces, commas) survive the URL. */
+function pathSeg(id: string): string {
+  return encodeURIComponent(id)
+}
+
 export const treasuryApi = {
   async getLlcs(): Promise<LLCConfiguration[]> {
     const res = await apiClient.get<LLCConfiguration[]>('/treasury/llcs')
@@ -26,12 +31,12 @@ export const treasuryApi = {
   },
 
   async updateLlc(id: string, data: LLCConfigurationUpdate): Promise<LLCConfiguration> {
-    const res = await apiClient.put<LLCConfiguration>(`/treasury/llcs/${id}`, data)
+    const res = await apiClient.put<LLCConfiguration>(`/treasury/llcs/${pathSeg(id)}`, data)
     return res.data
   },
 
   async deleteLlc(id: string): Promise<void> {
-    await apiClient.delete(`/treasury/llcs/${id}`)
+    await apiClient.delete(`/treasury/llcs/${pathSeg(id)}`)
   },
 
   async getProperties(llcId?: string): Promise<PropertyStatus[]> {
@@ -47,12 +52,17 @@ export const treasuryApi = {
   },
 
   async updateProperty(id: string, data: PropertyStatusUpdate): Promise<PropertyStatus> {
-    const res = await apiClient.put<PropertyStatus>(`/treasury/properties/${id}`, data)
+    // Query-param identity — path segments break on address-style IDs with commas/spaces.
+    const res = await apiClient.put<PropertyStatus>('/treasury/properties/item', data, {
+      params: { property_id: id },
+    })
     return res.data
   },
 
   async deleteProperty(id: string): Promise<void> {
-    await apiClient.delete(`/treasury/properties/${id}`)
+    await apiClient.delete('/treasury/properties/item', {
+      params: { property_id: id },
+    })
   },
 
   async getTransactions(propertyId?: string): Promise<TransactionLedger[]> {
@@ -68,12 +78,15 @@ export const treasuryApi = {
   },
 
   async updateTransaction(id: string, data: TransactionLedgerUpdate): Promise<TransactionLedger> {
-    const res = await apiClient.put<TransactionLedger>(`/treasury/transactions/${id}`, data)
+    const res = await apiClient.put<TransactionLedger>(
+      `/treasury/transactions/${pathSeg(id)}`,
+      data,
+    )
     return res.data
   },
 
   async deleteTransaction(id: string): Promise<void> {
-    await apiClient.delete(`/treasury/transactions/${id}`)
+    await apiClient.delete(`/treasury/transactions/${pathSeg(id)}`)
   },
 
   async getCashFlowHistory(propertyId?: string): Promise<PropertyCashFlowHistory[]> {
@@ -98,13 +111,13 @@ export const treasuryApi = {
     data: PropertyCashFlowHistoryUpdate,
   ): Promise<PropertyCashFlowHistory> {
     const res = await apiClient.put<PropertyCashFlowHistory>(
-      `/treasury/cash-flow-history/${id}`,
+      `/treasury/cash-flow-history/${pathSeg(id)}`,
       data,
     )
     return res.data
   },
 
   async deleteCashFlowHistory(id: string): Promise<void> {
-    await apiClient.delete(`/treasury/cash-flow-history/${id}`)
+    await apiClient.delete(`/treasury/cash-flow-history/${pathSeg(id)}`)
   },
 }

@@ -27,7 +27,7 @@ def _make_property(db_session):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="Test LLC"))
     return property_service.create_property(
         db_session,
-        PropertyStatusCreate(property_id="prop-1", llc_id=llc.llc_id),
+        PropertyStatusCreate(property_name="prop-1", llc_id=llc.llc_id),
     )
 
 

@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from treasury.models.property_status import PropertyStatus
@@ -10,6 +12,11 @@ def create_property(db: Session, payload: PropertyStatusCreate) -> PropertyStatu
     if llc_repository.get_by_id(db, payload.llc_id) is None:
         raise ValidationError(f"LLC '{payload.llc_id}' not found.")
     data = payload.model_dump()
+    # Always mint an opaque UUID — never accept address strings as PKs.
+    data["property_id"] = uuid.uuid4().hex
+    data["property_name"] = data["property_name"].strip()
+    if not data["property_name"]:
+        raise ValidationError("property_name is required.")
     prop = PropertyStatus(**data)
     return property_repository.create(db, prop)
 
@@ -34,6 +41,10 @@ def update_property(
     changes = payload.model_dump(exclude_unset=True)
     if "llc_id" in changes and llc_repository.get_by_id(db, changes["llc_id"]) is None:
         raise ValidationError(f"LLC '{changes['llc_id']}' not found.")
+    if "property_name" in changes:
+        changes["property_name"] = str(changes["property_name"]).strip()
+        if not changes["property_name"]:
+            raise ValidationError("property_name cannot be empty.")
     return property_repository.update(db, prop, changes)
 
 

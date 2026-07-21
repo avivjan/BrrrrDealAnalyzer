@@ -30,6 +30,7 @@ export interface LLCConfigurationUpdate {
 export interface PropertyStatus {
   property_id: string
   llc_id: string
+  property_name: string
   tax_bucket_balance: number
   tax_to_settle: number
   ins_bucket_balance: number
@@ -50,8 +51,8 @@ export interface PropertyStatus {
 }
 
 export interface PropertyStatusCreate {
-  property_id?: string
   llc_id: string
+  property_name: string
   tax_bucket_balance?: number
   tax_to_settle?: number
   ins_bucket_balance?: number

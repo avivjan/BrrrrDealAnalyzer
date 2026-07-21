@@ -9,10 +9,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  submit: [payload: { property_id?: string; llc_id: string }]
+  submit: [payload: { property_name: string; llc_id: string }]
 }>()
 
-const propertyId = ref('')
+const propertyName = ref('')
 const llcId = ref('')
 const submitting = ref(false)
 const errorMsg = ref('')
@@ -21,7 +21,7 @@ watch(
   () => props.isOpen,
   (open) => {
     if (open) {
-      propertyId.value = ''
+      propertyName.value = ''
       llcId.value = props.llcs[0]?.llc_id ?? ''
       errorMsg.value = ''
       submitting.value = false
@@ -39,11 +39,15 @@ async function submit() {
     errorMsg.value = 'Select an LLC to attach this property to.'
     return
   }
+  const trimmed = propertyName.value.trim()
+  if (!trimmed) {
+    errorMsg.value = 'Property address / name is required.'
+    return
+  }
   submitting.value = true
   errorMsg.value = ''
   try {
-    const trimmed = propertyId.value.trim()
-    emit('submit', { llc_id: llcId.value, ...(trimmed ? { property_id: trimmed } : {}) })
+    emit('submit', { llc_id: llcId.value, property_name: trimmed })
   } finally {
     submitting.value = false
   }
@@ -82,12 +86,12 @@ async function submit() {
           </label>
 
           <label class="field">
-            <span class="field-label">Property ID / Address <span class="optional">(optional)</span></span>
+            <span class="field-label">Property Address / Name</span>
             <input
-              v-model="propertyId"
+              v-model="propertyName"
               type="text"
               class="dark-input"
-              placeholder="e.g. 2897-n-10th-st"
+              placeholder="e.g. 2897 N 10th St, Saint Augustine, FL 32084"
               @keydown.enter="submit"
             />
           </label>

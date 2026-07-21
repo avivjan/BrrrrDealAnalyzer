@@ -13,7 +13,7 @@ def _seed_llc_with_property_and_history(db_session, llc_name="Seed LLC"):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name=llc_name))
     prop = property_service.create_property(
         db_session,
-        PropertyStatusCreate(property_id=f"{llc.llc_id}-prop", llc_id=llc.llc_id),
+        PropertyStatusCreate(property_name=f"{llc.llc_id}-prop", llc_id=llc.llc_id),
     )
     snapshot = cash_flow_service.create_snapshot(
         db_session,
@@ -44,7 +44,7 @@ def test_deleting_llc_with_multiple_properties_removes_every_descendant(db_sessi
     props = [
         property_service.create_property(
             db_session,
-            PropertyStatusCreate(property_id=f"p{i}", llc_id=llc.llc_id),
+            PropertyStatusCreate(property_name=f"p{i}", llc_id=llc.llc_id),
         )
         for i in range(3)
     ]

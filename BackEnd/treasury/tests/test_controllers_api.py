@@ -40,13 +40,14 @@ def test_property_full_crud_via_api(client):
 
     create_res = client.post(
         "/treasury/properties",
-        json={"property_id": "456-oak-ave", "llc_id": llc_id, "reserve_debt": "5000"},
+        json={"property_name": "456 Oak Ave", "llc_id": llc_id, "reserve_debt": "5000"},
     )
     assert create_res.status_code == 201
     property_id = create_res.json()["property_id"]
 
     update_res = client.put(
-        f"/treasury/properties/{property_id}",
+        "/treasury/properties/item",
+        params={"property_id": property_id},
         json={"reserve_debt": "77.77", "force_tax_ins_accrual": True},
     )
     assert update_res.status_code == 200
@@ -57,14 +58,47 @@ def test_property_full_crud_via_api(client):
     assert list_res.status_code == 200
     assert len(list_res.json()) == 1
 
-    delete_res = client.delete(f"/treasury/properties/{property_id}")
+    delete_res = client.delete(
+        "/treasury/properties/item",
+        params={"property_id": property_id},
+    )
+    assert delete_res.status_code == 200
+
+
+def test_property_create_uses_uuid_and_stores_address_as_name(client):
+    """Addresses live in property_name; property_id is always a UUID hex."""
+    llc_res = client.post("/treasury/llcs", json={"llc_name": "Addr LLC"})
+    llc_id = llc_res.json()["llc_id"]
+    address = "2897 N 10th St, Saint Augustine, FL 32084"
+
+    create_res = client.post(
+        "/treasury/properties",
+        json={"property_name": address, "llc_id": llc_id},
+    )
+    assert create_res.status_code == 201
+    body = create_res.json()
+    assert body["property_name"] == address
+    assert len(body["property_id"]) == 32
+    assert body["property_id"] != address
+
+    get_res = client.get(
+        "/treasury/properties/item",
+        params={"property_id": body["property_id"]},
+    )
+    assert get_res.status_code == 200
+    assert get_res.json()["property_name"] == address
+
+    delete_res = client.delete(
+        "/treasury/properties/item",
+        params={"property_id": body["property_id"]},
+    )
     assert delete_res.status_code == 200
 
 
 def test_property_create_rejects_unknown_llc_via_api(client):
     res = client.post(
         "/treasury/properties",
-        json={"property_id": "ghost", "llc_id": "ghost-llc"},
+        json={"property_name": "ghost", "llc_id": "ghost-llc"},
     )
     assert res.status_code == 400
 
@@ -74,7 +108,7 @@ def test_cash_flow_history_full_crud_via_api(client):
     llc_id = llc_res.json()["llc_id"]
     prop_res = client.post(
         "/treasury/properties",
-        json={"property_id": "hist-prop", "llc_id": llc_id},
+        json={"property_name": "hist-prop", "llc_id": llc_id},
     )
     property_id = prop_res.json()["property_id"]
 
@@ -112,14 +146,17 @@ def test_deleting_llc_via_api_cascades_to_property(client):
     llc_id = llc_res.json()["llc_id"]
     prop_res = client.post(
         "/treasury/properties",
-        json={"property_id": "cascade-prop", "llc_id": llc_id},
+        json={"property_name": "cascade-prop", "llc_id": llc_id},
     )
     property_id = prop_res.json()["property_id"]
 
     delete_res = client.delete(f"/treasury/llcs/{llc_id}")
     assert delete_res.status_code == 200
 
-    missing_prop = client.get(f"/treasury/properties/{property_id}")
+    missing_prop = client.get(
+        "/treasury/properties/item",
+        params={"property_id": property_id},
+    )
     assert missing_prop.status_code == 404
 
 
@@ -128,7 +165,7 @@ def test_transaction_full_crud_via_api(client):
     llc_id = llc_res.json()["llc_id"]
     prop_res = client.post(
         "/treasury/properties",
-        json={"property_id": "txn-prop", "llc_id": llc_id},
+        json={"property_name": "txn-prop", "llc_id": llc_id},
     )
     property_id = prop_res.json()["property_id"]
 

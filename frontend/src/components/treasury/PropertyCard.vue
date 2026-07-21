@@ -19,17 +19,6 @@ const emit = defineEmits<{
   'move-llc': [llcId: string]
 }>()
 
-function prettifyId(id: string): string {
-  if (id.length > 24 && !/[-_]/.test(id)) return id
-  return id
-    .replace(/[-_]+/g, ' ')
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => (/^[a-zA-Z]/.test(word) ? word[0]!.toUpperCase() + word.slice(1) : word))
-    .join(' ')
-}
-
-const title = computed(() => prettifyId(props.property.property_id))
 const hasDebt = computed(() => props.property.reserve_debt > 0)
 
 function patch(field: string, value: number | boolean | string) {
@@ -41,8 +30,13 @@ function patch(field: string, value: number | boolean | string) {
   <div class="property-card">
     <div class="mb-3 flex items-start justify-between gap-2">
       <div class="min-w-0">
-        <h3 class="truncate text-[0.95rem] font-bold text-white">{{ title }}</h3>
-        <code class="text-[0.65rem] text-white/30">{{ property.property_id }}</code>
+        <InlineEditValue
+          :model-value="property.property_name"
+          :disabled="disabled"
+          class="text-[0.95rem] font-bold text-white"
+          @commit="(v) => patch('property_name', v)"
+        />
+        <code class="mt-0.5 block text-[0.6rem] text-white/25">{{ property.property_id.slice(0, 8) }}…</code>
       </div>
       <KebabMenu>
         <template #default="{ close }">

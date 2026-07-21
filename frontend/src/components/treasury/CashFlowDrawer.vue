@@ -38,7 +38,7 @@ function addRow() {
           <header class="drawer-head">
             <div>
               <h3 class="text-sm font-bold text-white">Cash Flow History</h3>
-              <p class="text-[0.72rem] text-white/40">{{ property?.property_id }}</p>
+              <p class="text-[0.72rem] text-white/40">{{ property?.property_name ?? property?.property_id }}</p>
             </div>
             <button class="close-btn" @click="emit('close')"><i class="pi pi-times"></i></button>
           </header>

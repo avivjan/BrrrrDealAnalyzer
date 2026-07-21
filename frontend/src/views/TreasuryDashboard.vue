@@ -190,7 +190,7 @@ async function submitAddLlc(payload: { llc_name: string; checking_redline_buffer
   }
 }
 
-async function submitAddProperty(payload: { property_id?: string; llc_id: string }) {
+async function submitAddProperty(payload: { property_name: string; llc_id: string }) {
   try {
     await store.createProperty(payload)
     addPropertyOpen.value = false

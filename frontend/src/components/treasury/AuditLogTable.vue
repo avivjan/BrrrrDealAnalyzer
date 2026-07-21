@@ -59,7 +59,7 @@ const emit = defineEmits<{
               >
                 <option value="">Unassigned</option>
                 <option v-for="prop in properties" :key="prop.property_id" :value="prop.property_id">
-                  {{ prop.property_id }}
+                  {{ prop.property_name || prop.property_id }}
                 </option>
               </select>
             </td>
