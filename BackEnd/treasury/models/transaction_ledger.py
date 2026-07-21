@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from db import Base
 
-VALID_SUB_BUCKETS = frozenset({"Tax", "Insurance", "General Reserve"})
+VALID_SUB_BUCKETS = frozenset({"Tax", "General Reserve"})
 VALID_TRANSACTION_TYPES = frozenset(
     {"Rent", "P&I", "Repair", "Emergency Advance", "Intercompany Loan"}
 )

@@ -84,6 +84,18 @@ function patch(field: string, value: number | boolean | string) {
         />
       </div>
       <div class="flex items-center gap-1">
+        <span class="text-white/35">Tax Target</span>
+        <InlineEditValue
+          :model-value="property.target_tax_allocation"
+          type="number"
+          currency
+          :decimals="0"
+          :disabled="disabled"
+          class="font-semibold text-sky-300"
+          @commit="(v) => patch('target_tax_allocation', v)"
+        />
+      </div>
+      <div class="flex items-center gap-1">
         <span class="text-white/35">Reserve Target</span>
         <InlineEditValue
           :model-value="property.target_reserve_allocation"
@@ -93,18 +105,6 @@ function patch(field: string, value: number | boolean | string) {
           :disabled="disabled"
           class="font-semibold text-violet-300"
           @commit="(v) => patch('target_reserve_allocation', v)"
-        />
-      </div>
-      <div class="flex items-center gap-1">
-        <span class="text-white/35">Interest Earned</span>
-        <InlineEditValue
-          :model-value="property.interest_earned_counter"
-          type="number"
-          currency
-          :decimals="4"
-          :disabled="disabled"
-          class="font-semibold text-cyan-300"
-          @commit="(v) => patch('interest_earned_counter', v)"
         />
       </div>
       <div class="debt-badge" :class="hasDebt ? 'debt-active' : 'debt-inactive'">
@@ -138,20 +138,6 @@ function patch(field: string, value: number | boolean | string) {
       />
       <div class="w-px bg-white/[0.06]" />
       <BucketRing
-        label="Insurance"
-        theme="insurance"
-        target-label="Target"
-        secondary-label="To Settle"
-        :balance="property.ins_bucket_balance"
-        :target="property.target_ins_allocation"
-        :secondary-value="property.ins_to_settle"
-        :disabled="disabled"
-        @update-balance="(v) => patch('ins_bucket_balance', v)"
-        @update-target="(v) => patch('target_ins_allocation', v)"
-        @update-secondary="(v) => patch('ins_to_settle', v)"
-      />
-      <div class="w-px bg-white/[0.06]" />
-      <BucketRing
         label="Reserve"
         theme="reserve"
         target-label="Cap"
@@ -166,23 +152,13 @@ function patch(field: string, value: number | boolean | string) {
       />
     </div>
 
-    <div class="flex flex-col gap-2 border-t border-white/[0.06] pt-3">
-      <label class="flex items-center justify-between gap-2">
-        <span class="text-[0.72rem] font-medium text-white/65">Force Tax/Ins Accrual</span>
-        <ToggleSwitch
-          :model-value="property.force_tax_ins_accrual"
-          :disabled="disabled"
-          @update:model-value="(v) => patch('force_tax_ins_accrual', v)"
-        />
-      </label>
-      <label class="flex items-center justify-between gap-2">
-        <span class="text-[0.72rem] font-medium text-white/65">Double Reserve On Recovery</span>
-        <ToggleSwitch
-          :model-value="property.double_reserve_on_recovery"
-          :disabled="disabled"
-          @update:model-value="(v) => patch('double_reserve_on_recovery', v)"
-        />
-      </label>
+    <div class="flex items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+      <span class="text-[0.72rem] font-medium text-white/65">Double Reserve On Recovery</span>
+      <ToggleSwitch
+        :model-value="property.double_reserve_on_recovery"
+        :disabled="disabled"
+        @update:model-value="(v) => patch('double_reserve_on_recovery', v)"
+      />
     </div>
   </div>
 </template>

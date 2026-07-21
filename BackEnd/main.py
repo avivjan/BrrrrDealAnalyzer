@@ -219,6 +219,28 @@ def _run_migrations():
                     "ALTER TABLE property_status "
                     "ADD COLUMN property_name VARCHAR NOT NULL DEFAULT ''"
                 ))
+        # Phase 1 simplification: drop insurance, interest counter, force-accrual.
+        for dropped_col in (
+            "ins_bucket_balance",
+            "ins_to_settle",
+            "target_ins_allocation",
+            "force_tax_ins_accrual",
+            "interest_earned_counter",
+        ):
+            if dropped_col in prop_cols:
+                with engine.begin() as conn:
+                    conn.execute(text(
+                        f"ALTER TABLE property_status DROP COLUMN {dropped_col}"
+                    ))
+                prop_cols.remove(dropped_col)
+
+    if "transaction_ledger" in table_names:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "UPDATE transaction_ledger "
+                "SET sub_bucket_assignment = NULL "
+                "WHERE sub_bucket_assignment = 'Insurance'"
+            ))
 
     # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
     # to the stable slug IDs used by the default pipeline template. Idempotent.

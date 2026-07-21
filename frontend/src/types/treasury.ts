@@ -1,6 +1,6 @@
 // Mirrored from BackEnd/treasury/schemas — keep in sync.
 
-export type SubBucketAssignment = 'Tax' | 'Insurance' | 'General Reserve' | null
+export type SubBucketAssignment = 'Tax' | 'General Reserve' | null
 export type TransactionType =
   | 'Rent'
   | 'P&I'
@@ -33,18 +33,13 @@ export interface PropertyStatus {
   property_name: string
   tax_bucket_balance: number
   tax_to_settle: number
-  ins_bucket_balance: number
-  ins_to_settle: number
   reserve_bucket_balance: number
   reserve_to_settle: number
   reserve_bucket_cap: number
   reserve_debt: number
-  interest_earned_counter: number
   base_rent_target: number
   target_tax_allocation: number
-  target_ins_allocation: number
   target_reserve_allocation: number
-  force_tax_ins_accrual: boolean
   double_reserve_on_recovery: boolean
   created_at?: string | null
   updated_at?: string | null
@@ -55,18 +50,13 @@ export interface PropertyStatusCreate {
   property_name: string
   tax_bucket_balance?: number
   tax_to_settle?: number
-  ins_bucket_balance?: number
-  ins_to_settle?: number
   reserve_bucket_balance?: number
   reserve_to_settle?: number
   reserve_bucket_cap?: number
   reserve_debt?: number
-  interest_earned_counter?: number
   base_rent_target?: number
   target_tax_allocation?: number
-  target_ins_allocation?: number
   target_reserve_allocation?: number
-  force_tax_ins_accrual?: boolean
   double_reserve_on_recovery?: boolean
 }
 
@@ -128,7 +118,6 @@ export type PropertyCashFlowHistoryUpdate = Partial<
 
 export const SUB_BUCKET_OPTIONS: Array<SubBucketAssignment | 'None'> = [
   'Tax',
-  'Insurance',
   'General Reserve',
   'None',
 ]

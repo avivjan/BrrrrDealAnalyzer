@@ -13,10 +13,10 @@ def _new_id() -> str:
 class PropertyStatus(Base):
     """Per-property treasury/reserve bookkeeping state.
 
-    Every balance/settle/cap/debt column, target metric, and both control
-    flags below are meant to be directly overridable by a human operator
-    through the API and UI — the platform never enforces "computed" values
-    over a manual edit.
+    Every balance/settle/cap/debt column, target metric, and control flag
+    below is meant to be directly overridable by a human operator through
+    the API and UI — the platform never enforces "computed" values over a
+    manual edit.
     """
 
     __tablename__ = "property_status"
@@ -28,25 +28,19 @@ class PropertyStatus(Base):
         nullable=False,
         index=True,
     )
-    # Human-readable address / label. Never used as a primary key.
     property_name = Column(String, nullable=False, default="", server_default="")
 
     tax_bucket_balance = Column(Numeric(14, 2), nullable=False, default=0)
     tax_to_settle = Column(Numeric(14, 2), nullable=False, default=0)
-    ins_bucket_balance = Column(Numeric(14, 2), nullable=False, default=0)
-    ins_to_settle = Column(Numeric(14, 2), nullable=False, default=0)
     reserve_bucket_balance = Column(Numeric(14, 2), nullable=False, default=0)
     reserve_to_settle = Column(Numeric(14, 2), nullable=False, default=0)
     reserve_bucket_cap = Column(Numeric(14, 2), nullable=False, default=0)
     reserve_debt = Column(Numeric(14, 2), nullable=False, default=0)
-    interest_earned_counter = Column(Numeric(14, 4), nullable=False, default=0)
 
     base_rent_target = Column(Numeric(14, 2), nullable=False, default=0)
     target_tax_allocation = Column(Numeric(14, 2), nullable=False, default=0)
-    target_ins_allocation = Column(Numeric(14, 2), nullable=False, default=0)
     target_reserve_allocation = Column(Numeric(14, 2), nullable=False, default=0)
 
-    force_tax_ins_accrual = Column(Boolean, nullable=False, default=False)
     double_reserve_on_recovery = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

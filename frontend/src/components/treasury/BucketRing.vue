@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import InlineEditValue from './InlineEditValue.vue'
 
-type Theme = 'tax' | 'insurance' | 'reserve'
+type Theme = 'tax' | 'reserve'
 
 const props = defineProps<{
   label: string
@@ -35,7 +35,6 @@ const gradientId = `ring-${props.theme}-${Math.random().toString(36).slice(2, 9)
 
 const THEME_STYLES: Record<Theme, { from: string; to: string; label: string }> = {
   tax: { from: '#38bdf8', to: '#0ea5e9', label: 'text-sky-300' },
-  insurance: { from: '#fbbf24', to: '#f59e0b', label: 'text-amber-300' },
   reserve: { from: '#a78bfa', to: '#7c3aed', label: 'text-violet-300' },
 }
 const themeStyle = computed(() => THEME_STYLES[props.theme])

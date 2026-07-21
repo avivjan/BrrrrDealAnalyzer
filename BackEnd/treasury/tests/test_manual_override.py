@@ -41,36 +41,28 @@ def test_manual_override_of_every_property_field_bypasses_automated_math(db_sess
         PropertyStatusUpdate(
             tax_bucket_balance=Decimal("-500.00"),
             tax_to_settle=Decimal("1234.56"),
-            ins_bucket_balance=Decimal("-10.00"),
-            ins_to_settle=Decimal("42.00"),
             reserve_bucket_balance=Decimal("999999.99"),
             reserve_to_settle=Decimal("1.00"),
             reserve_bucket_cap=Decimal("10.00"),
             reserve_debt=Decimal("123456.78"),
-            interest_earned_counter=Decimal("0.0007"),
             base_rent_target=Decimal("2500.00"),
             target_tax_allocation=Decimal("300.00"),
-            target_ins_allocation=Decimal("150.00"),
             target_reserve_allocation=Decimal("5000.00"),
-            force_tax_ins_accrual=True,
             double_reserve_on_recovery=True,
         ),
     )
     refetched = property_service.get_property(db_session, prop.property_id)
     assert refetched.tax_bucket_balance == Decimal("-500.00")
     assert refetched.tax_to_settle == Decimal("1234.56")
-    assert refetched.ins_bucket_balance == Decimal("-10.00")
-    assert refetched.ins_to_settle == Decimal("42.00")
     assert refetched.reserve_bucket_balance == Decimal("999999.99")
     assert refetched.reserve_to_settle == Decimal("1.00")
     assert refetched.reserve_bucket_cap == Decimal("10.00")
     assert refetched.reserve_debt == Decimal("123456.78")
-    assert refetched.interest_earned_counter == Decimal("0.0007")
-    assert refetched.force_tax_ins_accrual is True
+    assert refetched.target_tax_allocation == Decimal("300.00")
     assert refetched.double_reserve_on_recovery is True
 
 
-def test_manual_override_toggles_control_flags_independently(db_session):
+def test_manual_override_toggles_double_reserve_independently(db_session):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="Flag LLC"))
     prop = property_service.create_property(
         db_session,
@@ -79,11 +71,10 @@ def test_manual_override_toggles_control_flags_independently(db_session):
     property_service.update_property(
         db_session,
         prop.property_id,
-        PropertyStatusUpdate(force_tax_ins_accrual=True),
+        PropertyStatusUpdate(double_reserve_on_recovery=True),
     )
     refetched = property_service.get_property(db_session, prop.property_id)
-    assert refetched.force_tax_ins_accrual is True
-    assert refetched.double_reserve_on_recovery is False
+    assert refetched.double_reserve_on_recovery is True
 
 
 def test_manual_override_of_cash_flow_history_snapshot(db_session):

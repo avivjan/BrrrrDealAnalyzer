@@ -48,11 +48,11 @@ def test_property_full_crud_via_api(client):
     update_res = client.put(
         "/treasury/properties/item",
         params={"property_id": property_id},
-        json={"reserve_debt": "77.77", "force_tax_ins_accrual": True},
+        json={"reserve_debt": "77.77", "double_reserve_on_recovery": True},
     )
     assert update_res.status_code == 200
     assert float(update_res.json()["reserve_debt"]) == 77.77
-    assert update_res.json()["force_tax_ins_accrual"] is True
+    assert update_res.json()["double_reserve_on_recovery"] is True
 
     list_res = client.get("/treasury/properties", params={"llc_id": llc_id})
     assert list_res.status_code == 200
@@ -185,10 +185,17 @@ def test_transaction_full_crud_via_api(client):
 
     update_res = client.put(
         f"/treasury/transactions/{transaction_id}",
-        json={"amount": "-50.00", "sub_bucket_assignment": "Insurance"},
+        json={"amount": "-50.00", "sub_bucket_assignment": "General Reserve"},
     )
     assert update_res.status_code == 200
     assert float(update_res.json()["amount"]) == -50.0
+    assert update_res.json()["sub_bucket_assignment"] == "General Reserve"
+
+    invalid_res = client.put(
+        f"/treasury/transactions/{transaction_id}",
+        json={"sub_bucket_assignment": "Insurance"},
+    )
+    assert invalid_res.status_code == 422
 
     delete_res = client.delete(f"/treasury/transactions/{transaction_id}")
     assert delete_res.status_code == 200
