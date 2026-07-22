@@ -22,9 +22,11 @@ const inputRef = ref<HTMLInputElement | null>(null)
 
 const isNumber = computed(() => props.type === 'number')
 
+const numericModel = computed(() => Number(props.modelValue))
+
 const displayValue = computed(() => {
   if (isNumber.value) {
-    const n = Number(props.modelValue)
+    const n = numericModel.value
     if (props.treatZeroAsUnset && (!n || Number.isNaN(n))) {
       return props.emptyLabel ?? 'Unset'
     }
@@ -46,9 +48,10 @@ const displayValue = computed(() => {
   return s.length ? s : props.emptyLabel ?? '—'
 })
 
-function startEdit() {
+function startEdit(e: MouseEvent | KeyboardEvent) {
+  e.stopPropagation()
   if (props.disabled) return
-  draft.value = String(props.modelValue ?? '')
+  draft.value = isNumber.value ? String(numericModel.value) : String(props.modelValue ?? '')
   editing.value = true
   nextTick(() => {
     inputRef.value?.focus()
@@ -61,8 +64,11 @@ function commit() {
   editing.value = false
   const raw = draft.value.trim()
   if (isNumber.value) {
+    if (raw === '') return
     const n = Number(raw)
-    if (!Number.isNaN(n) && n !== Number(props.modelValue)) {
+    if (Number.isNaN(n)) return
+    const prev = numericModel.value
+    if (Number.isNaN(prev) || Math.abs(n - prev) > 1e-9) {
       emit('commit', n)
     }
     return
@@ -77,6 +83,7 @@ function cancel() {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  e.stopPropagation()
   if (e.key === 'Enter') {
     e.preventDefault()
     commit()
@@ -84,6 +91,10 @@ function onKeydown(e: KeyboardEvent) {
     e.preventDefault()
     cancel()
   }
+}
+
+function onInputMouseDown(e: MouseEvent) {
+  e.stopPropagation()
 }
 </script>
 
@@ -93,8 +104,10 @@ function onKeydown(e: KeyboardEvent) {
     class="inline-edit-value"
     :class="disabled ? 'cursor-default opacity-70' : 'cursor-text hover:bg-white/[0.06]'"
     tabindex="0"
+    role="button"
     @click="startEdit"
-    @keydown.enter="startEdit"
+    @mousedown.stop
+    @keydown.enter.prevent="startEdit"
   >
     <span class="inline-edit-text">{{ displayValue }}</span>
     <i v-if="!disabled" class="pi pi-pencil edit-affordance"></i>
@@ -106,6 +119,8 @@ function onKeydown(e: KeyboardEvent) {
     :type="isNumber ? 'number' : 'text'"
     step="any"
     class="inline-edit-input"
+    @mousedown="onInputMouseDown"
+    @click.stop
     @blur="commit"
     @keydown="onKeydown"
   />
@@ -139,14 +154,16 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .inline-edit-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px dashed rgba(129, 140, 248, 0.7);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: 0.35rem;
   outline: none;
   color: inherit;
   font: inherit;
   width: 100%;
   min-width: 3rem;
-  padding: 0.05rem 0.1rem;
+  padding: 0.15rem 0.35rem;
+  z-index: 10;
+  position: relative;
 }
 </style>

@@ -82,6 +82,11 @@ async function onPatchProperty(propertyId: string, field: string, value: number 
   }
 }
 
+function onPropertySaveError(propertyId: string, field: string) {
+  void propertyId
+  showToast(`Failed to save ${field}`)
+}
+
 async function onDeleteProperty(propertyId: string) {
   if (!window.confirm('Delete this property and its cash-flow history?')) return
   try {
@@ -207,6 +212,7 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
         :disabled="store.loading"
         @patch-llc="(field, value) => onPatchLlc(group.llc.llc_id, field, value)"
         @delete-llc="onDeleteLlc(group.llc.llc_id)"
+        @save-error="onPropertySaveError"
         @patch-property="onPatchProperty"
         @delete-property="onDeleteProperty"
         @open-cash-flow="onOpenCashFlow"

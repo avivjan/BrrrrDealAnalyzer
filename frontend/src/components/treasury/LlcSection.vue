@@ -15,6 +15,7 @@ const emit = defineEmits<{
   'patch-llc': [field: 'llc_name' | 'checking_redline_buffer', value: string | number]
   'delete-llc': []
   'patch-property': [propertyId: string, field: string, value: number | boolean | string]
+  'save-error': [propertyId: string, field: string]
   'delete-property': [propertyId: string]
   'open-cash-flow': [property: PropertyStatus]
   'open-settings': [property: PropertyStatus]
@@ -82,7 +83,7 @@ const emit = defineEmits<{
         :property="prop"
         :llcs="allLlcs"
         :disabled="disabled"
-        @patch="(field, value) => emit('patch-property', prop.property_id, field, value)"
+        @save-error="(field) => emit('save-error', prop.property_id, field)"
         @delete="emit('delete-property', prop.property_id)"
         @open-cash-flow="emit('open-cash-flow', prop)"
         @open-settings="emit('open-settings', prop)"
