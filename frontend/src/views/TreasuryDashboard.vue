@@ -4,10 +4,10 @@ import { useRouter } from 'vue-router'
 import { useTreasuryStore } from '../stores/treasuryStore'
 import type { PropertyStatus } from '../types/treasury'
 import LlcSection from '../components/treasury/LlcSection.vue'
-import AuditLogTable from '../components/treasury/AuditLogTable.vue'
 import AddLlcModal from '../components/treasury/AddLlcModal.vue'
 import AddPropertyModal from '../components/treasury/AddPropertyModal.vue'
 import CashFlowDrawer from '../components/treasury/CashFlowDrawer.vue'
+import PropertySettingsModal from '../components/treasury/PropertySettingsModal.vue'
 
 const router = useRouter()
 const store = useTreasuryStore()
@@ -19,6 +19,7 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined
 const addLlcOpen = ref(false)
 const addPropertyOpen = ref(false)
 const cashFlowProperty = ref<PropertyStatus | null>(null)
+const settingsProperty = ref<PropertyStatus | null>(null)
 
 const llcGroups = computed(() =>
   store.llcs.map((llc) => ({
@@ -32,6 +33,11 @@ const cashFlowHistoryForProperty = computed(() =>
     ? store.cashFlowHistory.filter((row) => row.property_id === cashFlowProperty.value!.property_id)
     : [],
 )
+
+const settingsPropertyLive = computed(() => {
+  if (!settingsProperty.value) return null
+  return store.properties.find((p) => p.property_id === settingsProperty.value!.property_id) ?? settingsProperty.value
+})
 
 onMounted(async () => {
   try {
@@ -81,6 +87,7 @@ async function onDeleteProperty(propertyId: string) {
   try {
     await store.removeProperty(propertyId)
     if (cashFlowProperty.value?.property_id === propertyId) cashFlowProperty.value = null
+    if (settingsProperty.value?.property_id === propertyId) settingsProperty.value = null
     showToast('Property deleted')
   } catch {
     showToast('Failed to delete property')
@@ -98,6 +105,10 @@ async function onMoveProperty(propertyId: string, llcId: string) {
 
 function onOpenCashFlow(property: PropertyStatus) {
   cashFlowProperty.value = property
+}
+
+function onOpenSettings(property: PropertyStatus) {
+  settingsProperty.value = property
 }
 
 async function onPatchCashFlowRow(
@@ -127,41 +138,6 @@ async function onAddCashFlowRow(monthYear: string) {
     await store.createCashFlow({ property_id: cashFlowProperty.value.property_id, month_year: monthYear })
   } catch {
     showToast('Failed to create snapshot')
-  }
-}
-
-async function onPatchTransaction(transactionId: string, field: string, value: number | boolean | string | null) {
-  try {
-    await store.patchTransaction(transactionId, { [field]: value } as never)
-  } catch {
-    showToast(`Failed to save ${field}`)
-  }
-}
-
-async function onDeleteTransaction(transactionId: string) {
-  if (!window.confirm('Delete this transaction?')) return
-  try {
-    await store.removeTransaction(transactionId)
-  } catch {
-    showToast('Failed to delete transaction')
-  }
-}
-
-async function onAddTransaction() {
-  if (store.properties.length === 0) {
-    showToast('Create a property first')
-    return
-  }
-  try {
-    await store.createTransaction({
-      property_id: store.properties[0]?.property_id ?? null,
-      amount: 0,
-      description: 'Manual entry',
-      timestamp: new Date().toISOString(),
-      transaction_type: 'Rent',
-    })
-  } catch {
-    showToast('Failed to create transaction')
   }
 }
 
@@ -204,6 +180,9 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
         <button class="icon-btn" :disabled="store.loading" title="Refresh" @click="store.fetchAll()">
           <i class="pi pi-refresh" :class="{ spin: store.loading }"></i>
         </button>
+        <button class="action-btn action-btn-audit" @click="router.push('/treasury/audit-log')">
+          <i class="pi pi-list"></i> Audit Log
+        </button>
         <button class="action-btn action-btn-llc" @click="addLlcOpen = true">
           <i class="pi pi-plus"></i> Add LLC
         </button>
@@ -231,17 +210,8 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
         @patch-property="onPatchProperty"
         @delete-property="onDeleteProperty"
         @open-cash-flow="onOpenCashFlow"
+        @open-settings="onOpenSettings"
         @move-property="onMoveProperty"
-      />
-
-      <AuditLogTable
-        :transactions="store.transactions"
-        :properties="store.properties"
-        :llcs="store.llcs"
-        :disabled="store.loading"
-        @patch="onPatchTransaction"
-        @delete="onDeleteTransaction"
-        @add="onAddTransaction"
       />
     </main>
 
@@ -260,6 +230,13 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
       @patch-row="onPatchCashFlowRow"
       @delete-row="onDeleteCashFlowRow"
       @add-row="onAddCashFlowRow"
+    />
+    <PropertySettingsModal
+      :open="!!settingsPropertyLive"
+      :property="settingsPropertyLive"
+      :disabled="store.loading"
+      @close="settingsProperty = null"
+      @patch="(field, value) => settingsPropertyLive && onPatchProperty(settingsPropertyLive.property_id, field, value)"
     />
 
     <Transition name="toast">
@@ -334,6 +311,7 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .action-btn {
@@ -352,6 +330,16 @@ async function submitAddProperty(payload: { property_name: string; llc_id: strin
 
 .action-btn:hover {
   transform: translateY(-1px);
+}
+
+.action-btn-audit {
+  background: rgba(99, 102, 241, 0.18);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.action-btn-audit:hover {
+  background: rgba(99, 102, 241, 0.28);
 }
 
 .action-btn-llc {

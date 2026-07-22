@@ -17,6 +17,7 @@ const emit = defineEmits<{
   'patch-property': [propertyId: string, field: string, value: number | boolean | string]
   'delete-property': [propertyId: string]
   'open-cash-flow': [property: PropertyStatus]
+  'open-settings': [property: PropertyStatus]
   'move-property': [propertyId: string, llcId: string]
 }>()
 </script>
@@ -84,6 +85,7 @@ const emit = defineEmits<{
         @patch="(field, value) => emit('patch-property', prop.property_id, field, value)"
         @delete="emit('delete-property', prop.property_id)"
         @open-cash-flow="emit('open-cash-flow', prop)"
+        @open-settings="emit('open-settings', prop)"
         @move-llc="(llcId) => emit('move-property', prop.property_id, llcId)"
       />
     </div>
@@ -130,7 +132,7 @@ const emit = defineEmits<{
 
 .property-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
 }
 

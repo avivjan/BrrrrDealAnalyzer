@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { LLCConfiguration, PropertyStatus } from '../../types/treasury'
 import BucketRing from './BucketRing.vue'
 import InlineEditValue from './InlineEditValue.vue'
-import ToggleSwitch from './ToggleSwitch.vue'
+import InfoTip from './InfoTip.vue'
 import KebabMenu from './KebabMenu.vue'
 
 const props = defineProps<{
@@ -16,10 +16,16 @@ const emit = defineEmits<{
   patch: [field: string, value: number | boolean | string]
   delete: []
   'open-cash-flow': []
+  'open-settings': []
   'move-llc': [llcId: string]
 }>()
 
 const hasDebt = computed(() => props.property.reserve_debt > 0)
+
+const TO_SETTLE_TIP =
+  'Amount still owed to this bucket this cycle — rent allocations not yet moved or reconciled.'
+const DEBT_TO_SAVINGS_TIP =
+  'Reserve shortfall carried forward from prior cycles — dollars still owed back to the savings bucket.'
 
 function patch(field: string, value: number | boolean | string) {
   emit('patch', field, value)
@@ -40,6 +46,13 @@ function patch(field: string, value: number | boolean | string) {
       </div>
       <KebabMenu>
         <template #default="{ close }">
+          <button
+            type="button"
+            class="kebab-item"
+            @click="emit('open-settings'); close()"
+          >
+            <i class="pi pi-cog"></i> Property Settings
+          </button>
           <button
             type="button"
             class="kebab-item"
@@ -70,46 +83,10 @@ function patch(field: string, value: number | boolean | string) {
       </KebabMenu>
     </div>
 
-    <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.72rem]">
-      <div class="flex items-center gap-1">
-        <span class="text-white/35">Rent Target</span>
-        <InlineEditValue
-          :model-value="property.base_rent_target"
-          type="number"
-          currency
-          :decimals="0"
-          :disabled="disabled"
-          class="font-bold text-emerald-300"
-          @commit="(v) => patch('base_rent_target', v)"
-        />
-      </div>
-      <div class="flex items-center gap-1">
-        <span class="text-white/35">Tax Target</span>
-        <InlineEditValue
-          :model-value="property.target_tax_allocation"
-          type="number"
-          currency
-          :decimals="0"
-          :disabled="disabled"
-          class="font-semibold text-sky-300"
-          @commit="(v) => patch('target_tax_allocation', v)"
-        />
-      </div>
-      <div class="flex items-center gap-1">
-        <span class="text-white/35">Reserve Target</span>
-        <InlineEditValue
-          :model-value="property.target_reserve_allocation"
-          type="number"
-          currency
-          :decimals="0"
-          :disabled="disabled"
-          class="font-semibold text-violet-300"
-          @commit="(v) => patch('target_reserve_allocation', v)"
-        />
-      </div>
+    <div class="mb-3 flex items-center justify-end">
       <div class="debt-badge" :class="hasDebt ? 'debt-active' : 'debt-inactive'">
-        <i class="pi pi-exclamation-circle text-[0.6rem]"></i>
-        <span>Debt</span>
+        <span>Debt to Savings</span>
+        <InfoTip :text="DEBT_TO_SAVINGS_TIP" />
         <InlineEditValue
           :model-value="property.reserve_debt"
           type="number"
@@ -122,42 +99,35 @@ function patch(field: string, value: number | boolean | string) {
       </div>
     </div>
 
-    <div class="mb-4 flex items-stretch justify-between gap-1 rounded-xl bg-black/25 px-2 py-3">
-      <BucketRing
-        label="Tax"
-        theme="tax"
-        target-label="Target"
-        secondary-label="To Settle"
-        :balance="property.tax_bucket_balance"
-        :target="property.target_tax_allocation"
-        :secondary-value="property.tax_to_settle"
-        :disabled="disabled"
-        @update-balance="(v) => patch('tax_bucket_balance', v)"
-        @update-target="(v) => patch('target_tax_allocation', v)"
-        @update-secondary="(v) => patch('tax_to_settle', v)"
-      />
-      <div class="w-px bg-white/[0.06]" />
+    <div class="mb-1 flex items-end justify-between gap-2 rounded-xl bg-black/25 px-2 py-3">
       <BucketRing
         label="Reserve"
         theme="reserve"
-        target-label="Cap"
+        size="primary"
+        :show-target-row="false"
         secondary-label="To Settle"
+        :secondary-tip="TO_SETTLE_TIP"
         :balance="property.reserve_bucket_balance"
         :target="property.reserve_bucket_cap"
         :secondary-value="property.reserve_to_settle"
         :disabled="disabled"
         @update-balance="(v) => patch('reserve_bucket_balance', v)"
-        @update-target="(v) => patch('reserve_bucket_cap', v)"
         @update-secondary="(v) => patch('reserve_to_settle', v)"
       />
-    </div>
-
-    <div class="flex items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
-      <span class="text-[0.72rem] font-medium text-white/65">Double Reserve On Recovery</span>
-      <ToggleSwitch
-        :model-value="property.double_reserve_on_recovery"
+      <div class="w-px self-stretch bg-white/[0.06]" />
+      <BucketRing
+        label="Tax"
+        theme="tax"
+        size="secondary"
+        :show-target-row="false"
+        secondary-label="To Settle"
+        :secondary-tip="TO_SETTLE_TIP"
+        :balance="property.tax_bucket_balance"
+        :target="property.target_tax_allocation"
+        :secondary-value="property.tax_to_settle"
         :disabled="disabled"
-        @update:model-value="(v) => patch('double_reserve_on_recovery', v)"
+        @update-balance="(v) => patch('tax_bucket_balance', v)"
+        @update-secondary="(v) => patch('tax_to_settle', v)"
       />
     </div>
   </div>

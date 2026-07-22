@@ -6,6 +6,7 @@ import BoughtDeals from '../views/BoughtDeals.vue'
 import LiquidityTimeline from '../views/LiquidityTimeline.vue'
 import RepsTracker from '../views/RepsTracker.vue'
 import TreasuryDashboard from '../views/TreasuryDashboard.vue'
+import TreasuryAuditLog from '../views/TreasuryAuditLog.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/treasury',
       name: 'treasury',
       component: TreasuryDashboard
+    },
+    {
+      path: '/treasury/audit-log',
+      name: 'treasury-audit-log',
+      component: TreasuryAuditLog
     }
   ]
 })
