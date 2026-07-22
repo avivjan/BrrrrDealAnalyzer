@@ -17,7 +17,13 @@ const emit = defineEmits<{
 }>()
 
 const editing = ref(false)
-const draft = ref('')
+// NOTE: the <input> below binds `type` dynamically (`:type="isNumber ? 'number' : 'text'"`).
+// Vue's runtime resolves that as `vModelDynamic`, which auto-detects `el.type === 'number'`
+// and — exactly like an implicit `.number` modifier — coerces the v-model value to an actual
+// JS `number` once the field contains a parseable value. So `draft` can hold either a string
+// or a number depending on what's been typed; always coerce with String(...) before treating
+// it as text (e.g. `.trim()`), or the commit silently throws and the edit is never saved.
+const draft = ref<string | number>('')
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const isNumber = computed(() => props.type === 'number')
@@ -62,7 +68,8 @@ function startEdit(e: MouseEvent | KeyboardEvent) {
 function commit() {
   if (!editing.value) return
   editing.value = false
-  const raw = draft.value.trim()
+  // draft.value may already be a `number` (see note above) — normalize to string first.
+  const raw = String(draft.value ?? '').trim()
   if (isNumber.value) {
     if (raw === '') return
     const n = Number(raw)
