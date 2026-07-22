@@ -28,11 +28,16 @@ function showToast(message: string) {
   }, 3200)
 }
 
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+  return typeof detail === 'string' && detail.length > 0 ? detail : fallback
+}
+
 async function onPatchTransaction(transactionId: string, field: string, value: number | boolean | string | null) {
   try {
     await store.patchTransaction(transactionId, { [field]: value } as never)
-  } catch {
-    showToast(`Failed to save ${field}`)
+  } catch (err) {
+    showToast(extractErrorMessage(err, `Failed to save ${field}`))
   }
 }
 
@@ -40,8 +45,8 @@ async function onDeleteTransaction(transactionId: string) {
   if (!window.confirm('Delete this transaction?')) return
   try {
     await store.removeTransaction(transactionId)
-  } catch {
-    showToast('Failed to delete transaction')
+  } catch (err) {
+    showToast(extractErrorMessage(err, 'Failed to delete transaction'))
   }
 }
 
@@ -58,8 +63,8 @@ async function onAddTransaction() {
       timestamp: new Date().toISOString(),
       transaction_type: 'Rent',
     })
-  } catch {
-    showToast('Failed to create transaction')
+  } catch (err) {
+    showToast(extractErrorMessage(err, 'Failed to create transaction'))
   }
 }
 </script>
@@ -181,12 +186,14 @@ async function onAddTransaction() {
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
+  max-width: min(90vw, 560px);
   background: #1e293b;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.65rem 1.1rem;
   border-radius: 999px;
   font-size: 0.85rem;
+  text-align: center;
   z-index: 80;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }

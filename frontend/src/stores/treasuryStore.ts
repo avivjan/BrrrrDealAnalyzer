@@ -82,9 +82,21 @@ export const useTreasuryStore = defineStore('treasury', () => {
     cashFlowHistory.value = cashFlowHistory.value.filter((item) => item.property_id !== id)
   }
 
+  /**
+   * Every transaction create/patch/delete can mutate one or two properties'
+   * bucket balances server-side in real time (ingestion effects, manual
+   * HITL reassignment, veil-protected transfers). Re-pull the property
+   * list after each mutation so cards reflect the recalculation instantly
+   * instead of going stale until the next full page load.
+   */
+  async function refreshProperties() {
+    properties.value = await treasuryApi.getProperties()
+  }
+
   async function createTransaction(data: TransactionLedgerCreate) {
     const row = await treasuryApi.createTransaction(data)
     transactions.value = [row, ...transactions.value]
+    await refreshProperties()
     return row
   }
 
@@ -93,12 +105,14 @@ export const useTreasuryStore = defineStore('treasury', () => {
     transactions.value = transactions.value.map((item) =>
       item.transaction_id === id ? row : item,
     )
+    await refreshProperties()
     return row
   }
 
   async function removeTransaction(id: string) {
     await treasuryApi.deleteTransaction(id)
     transactions.value = transactions.value.filter((item) => item.transaction_id !== id)
+    await refreshProperties()
   }
 
   async function createCashFlow(data: PropertyCashFlowHistoryCreate) {
@@ -130,6 +144,7 @@ export const useTreasuryStore = defineStore('treasury', () => {
     loading,
     error,
     fetchAll,
+    refreshProperties,
     createLlc,
     patchLlc,
     removeLlc,

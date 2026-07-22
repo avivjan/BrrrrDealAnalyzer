@@ -49,11 +49,13 @@ def client(db_session):
     from treasury.controllers.property_controller import router as property_router
     from treasury.controllers.cash_flow_controller import router as cash_flow_router
     from treasury.controllers.transaction_controller import router as transaction_router
+    from treasury.controllers.webhook_controller import router as webhook_router
 
     app.include_router(llc_router)
     app.include_router(property_router)
     app.include_router(cash_flow_router)
     app.include_router(transaction_router)
+    app.include_router(webhook_router)
 
     def _override_get_db():
         yield db_session

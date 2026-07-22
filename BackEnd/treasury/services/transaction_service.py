@@ -1,23 +1,28 @@
+"""Thin orchestration layer for the `/treasury/transactions` CRUD routes.
+
+All bucket-mutation-aware domain logic (real-time balance/settlement
+mutation, rent-milestone overflow, multi-LLC veil protection) lives in
+`transaction_routing_service` — this module exists so the controller's
+import surface stays stable while that logic evolves underneath it.
+"""
+
 from sqlalchemy.orm import Session
 
 from treasury.models.transaction_ledger import TransactionLedger
-from treasury.repositories import property_repository, transaction_repository
+from treasury.repositories import transaction_repository
 from treasury.schemas.transaction_schemas import (
     TransactionLedgerCreate,
     TransactionLedgerUpdate,
 )
-from treasury.services.exceptions import NotFoundError, ValidationError
+from treasury.services import transaction_routing_service
+from treasury.services.exceptions import NotFoundError
 
 
 def create_transaction(
     db: Session,
     payload: TransactionLedgerCreate,
 ) -> TransactionLedger:
-    if payload.property_id is not None and property_repository.get_by_id(db, payload.property_id) is None:
-        raise ValidationError(f"Property '{payload.property_id}' not found.")
-    data = payload.model_dump()
-    txn = TransactionLedger(**data)
-    return transaction_repository.create(db, txn)
+    return transaction_routing_service.create_transaction_with_effects(db, payload)
 
 
 def get_transaction(db: Session, transaction_id: str) -> TransactionLedger:
@@ -39,16 +44,8 @@ def update_transaction(
     transaction_id: str,
     payload: TransactionLedgerUpdate,
 ) -> TransactionLedger:
-    txn = get_transaction(db, transaction_id)
-    changes = payload.model_dump(exclude_unset=True)
-    if changes.pop("clear_property", None):
-        changes["property_id"] = None
-    if "property_id" in changes and changes["property_id"] is not None:
-        if property_repository.get_by_id(db, changes["property_id"]) is None:
-            raise ValidationError(f"Property '{changes['property_id']}' not found.")
-    return transaction_repository.update(db, txn, changes)
+    return transaction_routing_service.apply_manual_override(db, transaction_id, payload)
 
 
 def delete_transaction(db: Session, transaction_id: str) -> None:
-    txn = get_transaction(db, transaction_id)
-    transaction_repository.delete(db, txn)
+    transaction_routing_service.delete_transaction_with_effects(db, transaction_id)
