@@ -26,8 +26,9 @@ def _to_res(prop) -> PropertyStatusRes:
         reserve_debt=prop.reserve_debt,
         base_rent_target=prop.base_rent_target,
         target_tax_allocation=prop.target_tax_allocation,
+        precentage_of_rent_to_reserve=prop.precentage_of_rent_to_reserve,
         target_reserve_allocation=prop.target_reserve_allocation,
-        double_reserve_on_recovery=prop.double_reserve_on_recovery,
+        chase_reserves=prop.chase_reserves,
         created_at=prop.created_at.isoformat() if prop.created_at else None,
         updated_at=prop.updated_at.isoformat() if prop.updated_at else None,
     )

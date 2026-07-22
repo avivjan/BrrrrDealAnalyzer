@@ -48,11 +48,11 @@ def test_property_full_crud_via_api(client):
     update_res = client.put(
         "/treasury/properties/item",
         params={"property_id": property_id},
-        json={"reserve_debt": "77.77", "double_reserve_on_recovery": True},
+        json={"reserve_debt": "77.77", "chase_reserves": True},
     )
     assert update_res.status_code == 200
     assert float(update_res.json()["reserve_debt"]) == 77.77
-    assert update_res.json()["double_reserve_on_recovery"] is True
+    assert update_res.json()["chase_reserves"] is True
 
     list_res = client.get("/treasury/properties", params={"llc_id": llc_id})
     assert list_res.status_code == 200

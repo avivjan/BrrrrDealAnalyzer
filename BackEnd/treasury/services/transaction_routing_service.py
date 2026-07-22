@@ -19,7 +19,6 @@ from treasury.schemas.transaction_schemas import (
     TransactionLedgerCreate,
     TransactionLedgerUpdate,
 )
-from treasury.services import rent_milestone_service
 from treasury.services.exceptions import NotFoundError, ValidationError
 
 # Maps a sub-bucket assignment to the (balance, settlement-queue) columns
@@ -30,6 +29,11 @@ _BUCKET_FIELDS = {
     "Tax": ("tax_bucket_balance", "tax_to_settle"),
     "General Reserve": ("reserve_bucket_balance", "reserve_to_settle"),
 }
+
+
+def _is_waterfall_marker(txn: TransactionLedger) -> bool:
+    """Waterfall bookkeeping rows — balances already mutated by the engine."""
+    return (txn.settlement_batch_id or "").startswith("WATERFALL-")
 
 
 def _apply_bucket_delta(
@@ -57,10 +61,14 @@ def _apply_bucket_delta(
 
 
 def _apply_effect(db: Session, txn: TransactionLedger) -> None:
+    if _is_waterfall_marker(txn):
+        return
     _apply_bucket_delta(db, txn.property_id, txn.sub_bucket_assignment, Decimal(txn.amount))
 
 
 def _reverse_effect(db: Session, txn: TransactionLedger) -> None:
+    if _is_waterfall_marker(txn):
+        return
     _apply_bucket_delta(db, txn.property_id, txn.sub_bucket_assignment, -Decimal(txn.amount))
 
 
@@ -89,18 +97,46 @@ def _assert_same_llc_veil(
         )
 
 
+def _run_rent_waterfall(db: Session, created: TransactionLedger):
+    """Route a real-bank Rent payment through the 5-step waterfall.
+
+    Replaces the old "100% of rent-target overflow → reserve" milestone sweep.
+    Tax / reserve targets for the cycle are finished across partial installments
+    via remaining-need tracking inside `apply_waterfall_to_property`.
+    """
+    if (
+        created.transaction_type != "Rent"
+        or not created.is_real_bank_tx
+        or created.property_id is None
+    ):
+        return None
+
+    # Local import avoids a circular dependency at module load time.
+    from treasury.services import settlement_service
+
+    return settlement_service.apply_waterfall_to_property(
+        db,
+        created.property_id,
+        Decimal(created.amount),
+        checking_balance=Decimal("0"),
+        pi_amount=Decimal("0"),
+        as_of=created.timestamp,
+        source_transaction_id=created.transaction_id,
+    )
+
+
 def _ingest(
     db: Session,
     payload: TransactionLedgerCreate,
-) -> tuple[TransactionLedger, Optional[TransactionLedger]]:
+) -> tuple[TransactionLedger, Optional[object]]:
     if payload.property_id is not None and property_repository.get_by_id(db, payload.property_id) is None:
         raise ValidationError(f"Property '{payload.property_id}' not found.")
 
     txn = TransactionLedger(**payload.model_dump())
     created = transaction_repository.create(db, txn)
     _apply_effect(db, created)
-    overflow = rent_milestone_service.process_rent_milestone(db, created, _apply_effect)
-    return created, overflow
+    waterfall = _run_rent_waterfall(db, created)
+    return created, waterfall
 
 
 def create_transaction_with_effects(
@@ -109,11 +145,9 @@ def create_transaction_with_effects(
 ) -> TransactionLedger:
     """Manual HITL creation (e.g. "+ Add Transaction" in the audit log).
 
-    Same real-time bucket-mutation + rent-milestone pipeline as a webhook,
-    just without the overflow companion entry surfaced back to the caller
-    (the audit log will pick it up on its next refresh).
+    Same real-time bucket-mutation + rent-waterfall pipeline as a webhook.
     """
-    created, _overflow = _ingest(db, payload)
+    created, _waterfall = _ingest(db, payload)
     return created
 
 
@@ -123,12 +157,15 @@ def ingest_webhook_transaction(
 ) -> dict:
     """Webhook / nightly-sync entry point.
 
-    Returns both the primary ledger row and the overflow companion entry
-    (if the rent milestone was crossed), so the caller can surface the
-    full effect of a single bank event.
+    Returns the primary ledger row plus the waterfall result (when the
+    payload was a real-bank Rent payment that ran Steps 0–4).
     """
-    created, overflow = _ingest(db, payload)
-    return {"transaction": created, "overflow_transaction": overflow}
+    created, waterfall = _ingest(db, payload)
+    return {
+        "transaction": created,
+        "overflow_transaction": None,  # legacy field kept for API compat
+        "waterfall": waterfall.as_dict() if waterfall is not None else None,
+    }
 
 
 def apply_manual_override(

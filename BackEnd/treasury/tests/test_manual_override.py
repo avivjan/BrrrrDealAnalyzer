@@ -47,8 +47,8 @@ def test_manual_override_of_every_property_field_bypasses_automated_math(db_sess
             reserve_debt=Decimal("123456.78"),
             base_rent_target=Decimal("2500.00"),
             target_tax_allocation=Decimal("300.00"),
-            target_reserve_allocation=Decimal("5000.00"),
-            double_reserve_on_recovery=True,
+            precentage_of_rent_to_reserve=Decimal("10.00"),
+            chase_reserves=True,
         ),
     )
     refetched = property_service.get_property(db_session, prop.property_id)
@@ -59,10 +59,12 @@ def test_manual_override_of_every_property_field_bypasses_automated_math(db_sess
     assert refetched.reserve_bucket_cap == Decimal("10.00")
     assert refetched.reserve_debt == Decimal("123456.78")
     assert refetched.target_tax_allocation == Decimal("300.00")
-    assert refetched.double_reserve_on_recovery is True
+    assert refetched.precentage_of_rent_to_reserve == Decimal("10.00")
+    assert refetched.target_reserve_allocation == Decimal("250.00")  # derived
+    assert refetched.chase_reserves is True
 
 
-def test_manual_override_toggles_double_reserve_independently(db_session):
+def test_manual_override_toggles_chase_reserves_independently(db_session):
     llc = llc_service.create_llc(db_session, LLCConfigurationCreate(llc_name="Flag LLC"))
     prop = property_service.create_property(
         db_session,
@@ -71,10 +73,10 @@ def test_manual_override_toggles_double_reserve_independently(db_session):
     property_service.update_property(
         db_session,
         prop.property_id,
-        PropertyStatusUpdate(double_reserve_on_recovery=True),
+        PropertyStatusUpdate(chase_reserves=True),
     )
     refetched = property_service.get_property(db_session, prop.property_id)
-    assert refetched.double_reserve_on_recovery is True
+    assert refetched.chase_reserves is True
 
 
 def test_manual_override_of_cash_flow_history_snapshot(db_session):

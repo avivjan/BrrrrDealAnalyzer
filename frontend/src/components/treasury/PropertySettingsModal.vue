@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import type { PropertyStatus } from '../../types/treasury'
 import InlineEditValue from './InlineEditValue.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
@@ -15,41 +15,33 @@ const emit = defineEmits<{
   patch: [field: string, value: number | boolean]
 }>()
 
-const reservePctDraft = ref(0)
+// The reserve percentage is now a first-class stored field
+// (`precentage_of_rent_to_reserve`); the monthly dollar target is derived
+// (`base_rent_target * pct / 100`). Binding the input directly to the stored
+// percentage is what fixes the old "snaps back to 0%" bug — we no longer
+// round-trip through a dollar amount that collapses to $0 when rent is unset.
 
-watch(
-  () => [props.property?.base_rent_target, props.property?.target_reserve_allocation] as const,
-  ([rent, reserve]) => {
-    const monthlyRent = Number(rent ?? 0)
-    const monthlyReserve = Number(reserve ?? 0)
-    reservePctDraft.value =
-      monthlyRent > 0 ? Math.round((monthlyReserve / monthlyRent) * 10000) / 100 : 0
-  },
-  { immediate: true },
+const reservePct = computed(() => Number(props.property?.precentage_of_rent_to_reserve ?? 0))
+const monthlyRent = computed(() => Number(props.property?.base_rent_target ?? 0))
+
+// Dollar target updates live as either the percentage OR the base rent change.
+const reserveMonthlyPreview = computed(() =>
+  Math.round((monthlyRent.value * reservePct.value) / 100),
 )
-
-const reserveMonthlyPreview = computed(() => {
-  const rent = Number(props.property?.base_rent_target ?? 0)
-  return Math.round((rent * reservePctDraft.value) / 100)
-})
 
 function patch(field: string, value: number | boolean) {
   emit('patch', field, value)
 }
 
 function onReservePctCommit(value: number | string) {
-  const pct = Number(value)
-  reservePctDraft.value = pct
-  const rent = Number(props.property?.base_rent_target ?? 0)
-  const monthlyReserve = Math.round((rent * pct) / 100)
-  patch('target_reserve_allocation', monthlyReserve)
+  // Store the percentage as-is; the $ target is recomputed everywhere from it.
+  patch('precentage_of_rent_to_reserve', Number(value))
 }
 
 function onMonthlyRentCommit(value: number | string) {
-  const rent = Number(value)
-  patch('base_rent_target', rent)
-  const monthlyReserve = Math.round((rent * reservePctDraft.value) / 100)
-  patch('target_reserve_allocation', monthlyReserve)
+  // Only the base rent changes — the reserve % stays put, and the derived
+  // dollar target recalculates automatically across the system.
+  patch('base_rent_target', Number(value))
 }
 </script>
 
@@ -105,7 +97,7 @@ function onMonthlyRentCommit(value: number | string) {
                 <span class="field-label">Reserve (% of Rent)</span>
                 <div class="field-inline">
                   <InlineEditValue
-                    :model-value="reservePctDraft"
+                    :model-value="reservePct"
                     type="number"
                     :decimals="1"
                     :disabled="disabled"
@@ -135,13 +127,13 @@ function onMonthlyRentCommit(value: number | string) {
 
               <div class="toggle-row">
                 <div>
-                  <span class="field-label">Double Reserve On Recovery</span>
-                  <p class="field-hint">When enabled, reserve contributions double until the bucket recovers.</p>
+                  <span class="field-label">Chase Reserves</span>
+                  <p class="field-hint">When enabled, recovery rent also chases past uncollected reserve targets, not just the current month.</p>
                 </div>
                 <ToggleSwitch
-                  :model-value="property.double_reserve_on_recovery"
+                  :model-value="property.chase_reserves"
                   :disabled="disabled"
-                  @update:model-value="(v) => patch('double_reserve_on_recovery', v)"
+                  @update:model-value="(v) => patch('chase_reserves', v)"
                 />
               </div>
             </section>

@@ -5,7 +5,12 @@ from pydantic import BaseModel, Field
 
 
 class PropertyStatusCreate(BaseModel):
-    """Create a property. `property_id` is always server-generated (UUID hex)."""
+    """Create a property. `property_id` is always server-generated (UUID hex).
+
+    Note: `target_reserve_allocation` is NOT accepted here — it is derived
+    from `base_rent_target * precentage_of_rent_to_reserve / 100`. Set the
+    percentage instead.
+    """
 
     llc_id: str
     property_name: str = Field(..., min_length=1, max_length=300)
@@ -17,8 +22,8 @@ class PropertyStatusCreate(BaseModel):
     reserve_debt: Decimal = Decimal("0")
     base_rent_target: Decimal = Decimal("0")
     target_tax_allocation: Decimal = Decimal("0")
-    target_reserve_allocation: Decimal = Decimal("0")
-    double_reserve_on_recovery: bool = False
+    precentage_of_rent_to_reserve: Decimal = Decimal("0")
+    chase_reserves: bool = False
 
 
 class PropertyStatusUpdate(BaseModel):
@@ -32,8 +37,8 @@ class PropertyStatusUpdate(BaseModel):
     reserve_debt: Optional[Decimal] = None
     base_rent_target: Optional[Decimal] = None
     target_tax_allocation: Optional[Decimal] = None
-    target_reserve_allocation: Optional[Decimal] = None
-    double_reserve_on_recovery: Optional[bool] = None
+    precentage_of_rent_to_reserve: Optional[Decimal] = None
+    chase_reserves: Optional[bool] = None
 
 
 class PropertyStatusRes(BaseModel):
@@ -48,8 +53,10 @@ class PropertyStatusRes(BaseModel):
     reserve_debt: Decimal
     base_rent_target: Decimal
     target_tax_allocation: Decimal
+    precentage_of_rent_to_reserve: Decimal
+    # Derived, read-only: base_rent_target * precentage_of_rent_to_reserve / 100.
     target_reserve_allocation: Decimal
-    double_reserve_on_recovery: bool
+    chase_reserves: bool
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 

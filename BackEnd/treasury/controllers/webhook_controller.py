@@ -37,6 +37,7 @@ def _to_result(result: dict) -> WebhookIngestResult:
     return WebhookIngestResult(
         transaction=_to_res(result["transaction"]),
         overflow_transaction=_to_res(overflow) if overflow is not None else None,
+        waterfall=result.get("waterfall"),
     )
 
 

@@ -50,12 +50,14 @@ def client(db_session):
     from treasury.controllers.cash_flow_controller import router as cash_flow_router
     from treasury.controllers.transaction_controller import router as transaction_router
     from treasury.controllers.webhook_controller import router as webhook_router
+    from treasury.controllers.settlement_controller import router as settlement_router
 
     app.include_router(llc_router)
     app.include_router(property_router)
     app.include_router(cash_flow_router)
     app.include_router(transaction_router)
     app.include_router(webhook_router)
+    app.include_router(settlement_router)
 
     def _override_get_db():
         yield db_session

@@ -39,8 +39,11 @@ export interface PropertyStatus {
   reserve_debt: number
   base_rent_target: number
   target_tax_allocation: number
+  /** Explicit percentage input (e.g. 10.0 == 10% of rent to reserve). */
+  precentage_of_rent_to_reserve: number
+  /** Derived, read-only: base_rent_target * precentage_of_rent_to_reserve / 100. */
   target_reserve_allocation: number
-  double_reserve_on_recovery: boolean
+  chase_reserves: boolean
   created_at?: string | null
   updated_at?: string | null
 }
@@ -56,12 +59,13 @@ export interface PropertyStatusCreate {
   reserve_debt?: number
   base_rent_target?: number
   target_tax_allocation?: number
-  target_reserve_allocation?: number
-  double_reserve_on_recovery?: boolean
+  precentage_of_rent_to_reserve?: number
+  chase_reserves?: boolean
 }
 
+// `target_reserve_allocation` is derived server-side and never sent on writes.
 export type PropertyStatusUpdate = Partial<
-  Omit<PropertyStatus, 'property_id' | 'created_at' | 'updated_at'>
+  Omit<PropertyStatus, 'property_id' | 'target_reserve_allocation' | 'created_at' | 'updated_at'>
 >
 
 export interface TransactionLedger {

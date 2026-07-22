@@ -234,6 +234,55 @@ def _run_migrations():
                     ))
                 prop_cols.remove(dropped_col)
 
+        # Phase 3: reserve target is now derived from an explicit percentage.
+        # 1) Add `precentage_of_rent_to_reserve` (explicit % input).
+        if "precentage_of_rent_to_reserve" not in prop_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE property_status "
+                    "ADD COLUMN precentage_of_rent_to_reserve NUMERIC(6,2) "
+                    "NOT NULL DEFAULT 0"
+                ))
+                # Backfill the % from any legacy stored dollar target so existing
+                # rows keep the same effective reserve target after the switch.
+                if "target_reserve_allocation" in prop_cols and "base_rent_target" in prop_cols:
+                    conn.execute(text(
+                        "UPDATE property_status SET precentage_of_rent_to_reserve = "
+                        "CASE WHEN base_rent_target > 0 "
+                        "THEN ROUND(target_reserve_allocation / base_rent_target * 100, 2) "
+                        "ELSE 0 END"
+                    ))
+            prop_cols.append("precentage_of_rent_to_reserve")
+
+        # 2) Rename `double_reserve_on_recovery` -> `chase_reserves`
+        #    (or add the column fresh if neither exists).
+        if "double_reserve_on_recovery" in prop_cols and "chase_reserves" not in prop_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE property_status "
+                    "RENAME COLUMN double_reserve_on_recovery TO chase_reserves"
+                ))
+            prop_cols = [
+                "chase_reserves" if c == "double_reserve_on_recovery" else c
+                for c in prop_cols
+            ]
+        elif "chase_reserves" not in prop_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE property_status "
+                    "ADD COLUMN chase_reserves BOOLEAN NOT NULL DEFAULT FALSE"
+                ))
+            prop_cols.append("chase_reserves")
+
+        # 3) Drop the now-derived `target_reserve_allocation` column (computed
+        #    at read time from base_rent_target * precentage_of_rent_to_reserve).
+        if "target_reserve_allocation" in prop_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE property_status DROP COLUMN target_reserve_allocation"
+                ))
+            prop_cols.remove("target_reserve_allocation")
+
     if "transaction_ledger" in table_names:
         with engine.begin() as conn:
             conn.execute(text(

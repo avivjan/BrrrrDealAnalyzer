@@ -1,6 +1,6 @@
 """Integration tests for the webhook ingestion pipeline: category parsing,
-real vs. virtual classification, real-time bucket mutation, and the
-cumulative rent milestone / overflow engine.
+real vs. virtual classification, real-time bucket mutation, and rent
+payments running through the 5-step waterfall (percentage-based reserve).
 """
 
 from datetime import datetime, timezone
@@ -108,102 +108,104 @@ def test_continuous_webhook_ingestion_compounds_settlement_queue(db_session):
     assert refetched.reserve_to_settle == Decimal("85.00")
 
 
-# --- Cumulative rent milestone engine -------------------------------------------
+# --- Rent → waterfall (percentage-based, NOT 100% of rent) ----------------------
 
 
-def test_partial_rent_payments_aggregate_before_overflow_triggers(db_session):
+def test_rent_webhook_allocates_only_configured_reserve_percentage(db_session):
+    """The bug the operator hit: a $1500 rent webhook dumped the whole
+    amount into reserves. With a 10% reserve setting it must only sweep $150.
+    """
     llc = _make_llc(db_session)
-    prop = _make_property(db_session, llc.llc_id, base_rent_target=Decimal("1500.00"))
-
-    # First partial payment: well under target, no overflow.
-    parsed_1 = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "800.00", "rent", day=1)
+    prop = _make_property(
+        db_session,
+        llc.llc_id,
+        base_rent_target=Decimal("1500.00"),
+        precentage_of_rent_to_reserve=Decimal("10.00"),
+        target_tax_allocation=Decimal("0"),
     )
-    result_1 = transaction_routing_service.ingest_webhook_transaction(db_session, parsed_1)
-    assert result_1["overflow_transaction"] is None
-
-    prop_after_1 = property_service.get_property(db_session, prop.property_id)
-    assert prop_after_1.reserve_bucket_balance == Decimal("0")
-
-    # Second partial payment: brings cumulative to exactly the target —
-    # reaching it exactly is not "exceeding" it, so still no overflow.
-    parsed_2 = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "700.00", "rent", day=10)
-    )
-    result_2 = transaction_routing_service.ingest_webhook_transaction(db_session, parsed_2)
-    assert result_2["overflow_transaction"] is None
-
-    prop_after_2 = property_service.get_property(db_session, prop.property_id)
-    assert prop_after_2.reserve_bucket_balance == Decimal("0")
-
-    # Third payment: cumulative rent already met the target, so this
-    # entire payment is overflow and gets swept into the reserve bucket.
-    parsed_3 = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "200.00", "rent", day=20)
-    )
-    result_3 = transaction_routing_service.ingest_webhook_transaction(db_session, parsed_3)
-    overflow = result_3["overflow_transaction"]
-    assert overflow is not None
-    assert overflow.amount == Decimal("200.00")
-    assert overflow.sub_bucket_assignment == "General Reserve"
-    assert overflow.is_real_bank_tx is False
-
-    prop_after_3 = property_service.get_property(db_session, prop.property_id)
-    assert prop_after_3.reserve_bucket_balance == Decimal("200.00")
-    assert prop_after_3.reserve_to_settle == Decimal("200.00")
-
-
-def test_single_payment_crossing_target_only_overflows_the_excess(db_session):
-    llc = _make_llc(db_session)
-    prop = _make_property(db_session, llc.llc_id, base_rent_target=Decimal("1000.00"))
+    assert prop.target_reserve_allocation == Decimal("150.00")
 
     parsed = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "1300.00", "rent", day=3)
+        _webhook(prop.property_id, "1500.00", "rent", day=1)
     )
     result = transaction_routing_service.ingest_webhook_transaction(db_session, parsed)
-
-    overflow = result["overflow_transaction"]
-    assert overflow is not None
-    assert overflow.amount == Decimal("300.00")
+    assert result["waterfall"] is not None
+    assert Decimal(result["waterfall"]["reserve_filled"]) == Decimal("150.00")
+    assert Decimal(result["waterfall"]["clean_cash_flow"]) == Decimal("1350.00")
 
     refetched = property_service.get_property(db_session, prop.property_id)
-    assert refetched.reserve_bucket_balance == Decimal("300.00")
+    assert refetched.reserve_bucket_balance == Decimal("150.00")
+    assert refetched.reserve_to_settle == Decimal("150.00")
 
 
-def test_rent_milestone_window_resets_for_a_new_month(db_session):
+def test_rent_webhook_also_accrues_monthly_tax_and_queues_settlement(db_session):
     llc = _make_llc(db_session)
-    prop = _make_property(db_session, llc.llc_id, base_rent_target=Decimal("1000.00"))
-
-    july_full = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "1000.00", "rent", day=1)
+    prop = _make_property(
+        db_session,
+        llc.llc_id,
+        base_rent_target=Decimal("1500.00"),
+        precentage_of_rent_to_reserve=Decimal("10.00"),
+        target_tax_allocation=Decimal("200.00"),
     )
-    transaction_routing_service.ingest_webhook_transaction(db_session, july_full)
-
-    # New calendar month — cumulative rent resets, so a fresh partial
-    # payment must NOT immediately overflow just because July hit target.
-    august_partial = BankWebhookPayload(
-        property_id=prop.property_id,
-        amount=Decimal("400.00"),
-        description="August partial rent",
-        timestamp=datetime(2026, 8, 2, tzinfo=timezone.utc),
-        category="rent",
-    )
-    parsed_august = webhook_parser_service.parse_bank_webhook(august_partial)
-    result_august = transaction_routing_service.ingest_webhook_transaction(
-        db_session, parsed_august
-    )
-    assert result_august["overflow_transaction"] is None
-
-
-def test_property_without_base_rent_target_never_overflows(db_session):
-    llc = _make_llc(db_session)
-    prop = _make_property(db_session, llc.llc_id)  # base_rent_target defaults to 0
 
     parsed = webhook_parser_service.parse_bank_webhook(
-        _webhook(prop.property_id, "5000.00", "rent", day=1)
+        _webhook(prop.property_id, "1500.00", "rent", day=1)
+    )
+    transaction_routing_service.ingest_webhook_transaction(db_session, parsed)
+
+    refetched = property_service.get_property(db_session, prop.property_id)
+    assert refetched.tax_bucket_balance == Decimal("200.00")
+    assert refetched.tax_to_settle == Decimal("200.00")
+    assert refetched.reserve_bucket_balance == Decimal("150.00")
+
+
+def test_partial_rent_installments_finish_remaining_tax_and_reserve(db_session):
+    llc = _make_llc(db_session)
+    prop = _make_property(
+        db_session,
+        llc.llc_id,
+        base_rent_target=Decimal("1500.00"),
+        precentage_of_rent_to_reserve=Decimal("10.00"),  # $150
+        target_tax_allocation=Decimal("200.00"),
+    )
+
+    # First installment: enough to cover tax fully + part of reserve.
+    parsed_1 = webhook_parser_service.parse_bank_webhook(
+        _webhook(prop.property_id, "250.00", "rent", day=1)
+    )
+    transaction_routing_service.ingest_webhook_transaction(db_session, parsed_1)
+    after_1 = property_service.get_property(db_session, prop.property_id)
+    assert after_1.tax_bucket_balance == Decimal("200.00")
+    assert after_1.reserve_bucket_balance == Decimal("50.00")
+
+    # Second installment finishes the remaining $100 reserve; no double tax.
+    parsed_2 = webhook_parser_service.parse_bank_webhook(
+        _webhook(prop.property_id, "300.00", "rent", day=10)
+    )
+    transaction_routing_service.ingest_webhook_transaction(db_session, parsed_2)
+    after_2 = property_service.get_property(db_session, prop.property_id)
+    assert after_2.tax_bucket_balance == Decimal("200.00")  # unchanged
+    assert after_2.reserve_bucket_balance == Decimal("150.00")
+
+
+def test_rent_with_zero_percentage_does_not_touch_reserve(db_session):
+    llc = _make_llc(db_session)
+    prop = _make_property(
+        db_session,
+        llc.llc_id,
+        base_rent_target=Decimal("1500.00"),
+        precentage_of_rent_to_reserve=Decimal("0"),
+    )
+
+    parsed = webhook_parser_service.parse_bank_webhook(
+        _webhook(prop.property_id, "1500.00", "rent", day=1)
     )
     result = transaction_routing_service.ingest_webhook_transaction(db_session, parsed)
-    assert result["overflow_transaction"] is None
+    assert Decimal(result["waterfall"]["reserve_filled"]) == Decimal("0.00")
+    assert Decimal(result["waterfall"]["clean_cash_flow"]) == Decimal("1500.00")
+
+    refetched = property_service.get_property(db_session, prop.property_id)
+    assert refetched.reserve_bucket_balance == Decimal("0")
 
 
 # --- HTTP-level webhook + nightly sync routes -----------------------------------
@@ -263,7 +265,7 @@ def test_bank_transaction_webhook_route_rejects_unknown_category(client):
     assert res.status_code == 400
 
 
-def test_nightly_sync_route_ingests_a_batch_and_triggers_overflow(client):
+def test_nightly_sync_route_runs_waterfall_on_rent_batch(client):
     llc_res = client.post("/treasury/llcs", json={"llc_name": "Nightly Sync LLC"})
     llc_id = llc_res.json()["llc_id"]
     prop_res = client.post(
@@ -272,6 +274,8 @@ def test_nightly_sync_route_ingests_a_batch_and_triggers_overflow(client):
             "property_name": "nightly-prop",
             "llc_id": llc_id,
             "base_rent_target": "1000.00",
+            "precentage_of_rent_to_reserve": "10.00",
+            "target_tax_allocation": "100.00",
         },
     )
     property_id = prop_res.json()["property_id"]
@@ -288,7 +292,7 @@ def test_nightly_sync_route_ingests_a_batch_and_triggers_overflow(client):
             },
             {
                 "property_id": property_id,
-                "amount": "700.00",
+                "amount": "400.00",
                 "description": "Rent installment 2",
                 "timestamp": datetime(2026, 7, 15, tzinfo=timezone.utc).isoformat(),
                 "category": "rent",
@@ -297,11 +301,12 @@ def test_nightly_sync_route_ingests_a_batch_and_triggers_overflow(client):
     )
     assert res.status_code == 201
     results = res.json()
-    assert results[0]["overflow_transaction"] is None
-    assert results[1]["overflow_transaction"] is not None
-    assert float(results[1]["overflow_transaction"]["amount"]) == 300.0
+    assert results[0]["waterfall"] is not None
+    assert results[1]["waterfall"] is not None
 
     prop_after = client.get(
         "/treasury/properties/item", params={"property_id": property_id}
     ).json()
-    assert float(prop_after["reserve_bucket_balance"]) == 300.0
+    # Tax target $100 + reserve target $100 allocated across the two payments.
+    assert float(prop_after["tax_bucket_balance"]) == 100.0
+    assert float(prop_after["reserve_bucket_balance"]) == 100.0

@@ -29,4 +29,8 @@ class BankWebhookPayload(BaseModel):
 
 class WebhookIngestResult(BaseModel):
     transaction: TransactionLedgerRes
+    # Legacy companion field (always null since the waterfall replaced the
+    # 100%-of-overflow milestone sweep). Kept so older clients don't break.
     overflow_transaction: Optional[TransactionLedgerRes] = None
+    # Present when a real-bank Rent payment ran the 5-step waterfall.
+    waterfall: Optional[dict] = None
