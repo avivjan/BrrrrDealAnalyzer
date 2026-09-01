@@ -39,3 +39,65 @@
 
 - Start the backend first so the acquisition calculator can reach the `/CalcPrecentageOfARVRes` endpoint.
 - Refresh the browser after backend changes; frontend updates hot-reload when you refresh.
+
+## Adding an input to the deal form
+
+There are three places a user types deal numbers — the Analyze page, the My Deals
+card modal, and the Bought Deals card modal. All three render the **same**
+component, `frontend/src/components/DealInputsForm.vue`, so the form markup is
+written once and the three stay in sync automatically.
+
+To add a new field, work down this list. Steps 1–4 are the frontend, 5–11 the
+backend; the same checklist is repeated in the header comment of
+`DealInputsForm.vue`.
+
+**Frontend**
+
+1. **`components/DealInputsForm.vue`** — add the `<MoneyInput>` / `<NumberInput>` /
+   `<SliderField>` to the right section. Read with `get('field')`, write with
+   `set('field', v)`. This is the only UI edit.
+2. **`types/index.ts`** — add the field to `BaseDealReq` (shared by both deal
+   types) or to `BrrrAnalyzeReq` / `FlipAnalyzeReq` (type-specific).
+   `DealInputModel`, `BrrrDealCreate`, `FlipDealCreate` and `AnalyzeDealReq` all
+   derive from those, so they need no edit.
+3. **`utils/dealUtils.ts`** — add a starting value to `createEmptyDealForm`. If
+   it's a BRRRR field with a *server* default, also add it to
+   `BRRR_LEGACY_DEFAULTS` so `ensureBrrrLegacyDefaults` backfills deals saved
+   before the field existed. Add a line to `formatDealForClipboard` if it should
+   appear in the "Copy Summary for AI" text.
+4. **`utils/dealUtils.ts`** — add bounds checks to `validateDealInputs`.
+
+**Backend**
+
+5. **`ReqRes/`** — add the field to `analyzeBRRR/analyzeBRRRReq.py` and/or
+   `analyzeFlip/analyzeFlipReq.py` (the `/analyze/*` endpoints) *and* to
+   `activeDeal/activeDealReq.py` (`BaseDealReq`, or `BrrrActiveDealCreate` /
+   `FlipActiveDealCreate`). `boughtDeal/boughtDealReq.py` inherits from the
+   active-deal create models — verify rather than duplicate.
+   **The Pydantic `alias=` must exactly match the field name used in step 1.**
+6. **`ReqRes/.../analyzeBRRRRes.py` / `analyzeFlipRes.py`** — only for computed
+   *output* metrics, not raw inputs.
+7. **`models.py`** — add the `Column` to the `BaseDeal` mixin (shared) or to
+   **all four** of `BrrrActiveDeal`, `FlipActiveDeal`, `BoughtBrrrDeal`,
+   `BoughtFlipDeal`. The column name is the non-aliased snake_case name.
+8. **`main.py` `_run_migrations()`** — call `_add_column_if_missing` for every
+   affected existing table. `Base.metadata.create_all` only creates *new* tables,
+   so without this, existing rows lack the column. The migration `DEFAULT` must
+   match the model `default=` and the Pydantic default, because `update_*_deal`
+   dumps every field (no `exclude_unset`) on each PUT.
+9. **`main.py`** — use the field in `calculate_brrr_results` /
+   `calculate_flip_results` and `validate_brrr_inputs` / `validate_flip_inputs`;
+   register a `CalcStep` (see `calc_breakdown.py`) if it feeds a headline metric.
+10. **`crud_active_deal.py` / `crud_bought_deal.py`** — no change expected; they
+    iterate `__table__.columns` dynamically. Confirm only.
+11. **`deal_pdf.py`** — only if it's a headline metric; the PDF renders result
+    metrics and breakdowns, not raw inputs.
+
+**Then**
+
+12. Extend `components/DealInputsForm.test.ts`, run `npm test` and
+    `npm run build` (the latter runs `vue-tsc`), and smoke-test all three pages.
+
+> `DealInputsForm` mutates the deal object it is given **in place**. The card
+> modals drive auto-save and re-analyze from a deep `watch` on that object, so
+> the component deliberately writes through instead of emitting a replacement.

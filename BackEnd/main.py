@@ -105,14 +105,21 @@ app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
-def _add_brrr_column_if_missing(
+def _add_column_if_missing(
     inspector,
     table_name: str,
     column_name: str,
     column_ddl: str,
     backfill_value: str,
 ) -> None:
-    """Idempotently add a BRRRR column with a backfill on existing rows."""
+    """Idempotently add a column to an existing table, backfilling old rows.
+
+    `Base.metadata.create_all` only creates tables that do not exist yet, so
+    every column added after a table shipped needs a call here. Keep
+    `backfill_value` in step with the SQLAlchemy `default=` and the Pydantic
+    default: `update_*_deal` dumps every field on each PUT, so a mismatch
+    silently rewrites existing rows.
+    """
     if table_name not in inspector.get_table_names():
         return
     columns = [col["name"] for col in inspector.get_columns(table_name)]
@@ -136,14 +143,14 @@ def _run_migrations():
     # default from the model; existing rows are backfilled here so all reads
     # are safe (no NULLs, no surprise KeyErrors in the response models).
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
-        _add_brrr_column_if_missing(
+        _add_column_if_missing(
             inspector,
             brrr_table,
             "refi_points",
             "NUMERIC(5,2) DEFAULT 1.5",
             "1.5",
         )
-        _add_brrr_column_if_missing(
+        _add_column_if_missing(
             inspector,
             brrr_table,
             "cash_reserve_in_thousands",
