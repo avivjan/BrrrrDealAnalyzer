@@ -40,6 +40,49 @@
 - Start the backend first so the acquisition calculator can reach the `/CalcPrecentageOfARVRes` endpoint.
 - Refresh the browser after backend changes; frontend updates hot-reload when you refresh.
 
+## Tests
+
+**Backend** (`pytest`, in `BackEnd/tests/`):
+
+```bash
+cd BackEnd
+pip install -r requirements.txt
+pytest
+```
+
+Covers `/analyze/brrr` + `/analyze/flip` (with the BRRRR and Flip results pinned
+to reference values, so a formula change fails loudly), active-deal CRUD,
+duplicate/delete, Move to Bought, bought-deal autosave, and the PDF reports.
+
+> **Database safety.** `BackEnd/tests/conftest.py` redirects `$DATABASE_URL` to a
+> throwaway SQLite file *before* any application module is imported — which it
+> has to, because `db.py` builds its `Engine` at import time and `main.py` runs
+> `create_all`, `_run_migrations()` and seeding at import time. It also stubs out
+> `load_dotenv` so `BackEnd/.env` credentials never enter a test process.
+>
+> The redirect is then **verified**, at import, at session start, and before every
+> test: if the engine is not the temp SQLite file — or its URL contains a
+> Postgres/MySQL/Render/AWS marker — the run aborts with a
+> `TEST DATABASE SAFETY ABORT` banner instead of continuing. This matters because
+> a Render pre-deploy command runs with the production `DATABASE_URL` in its
+> environment. `tests/test_db_isolation.py` asserts the guard itself fires.
+>
+> `BackEnd/db.py` is untouched by any of this — normal runtime still reads
+> `$DATABASE_URL` and builds a standard engine.
+
+**Frontend** (Vitest):
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+Neither suite runs during a Netlify build (`npm run build` only compiles). To gate
+a Render deploy on the backend suite, set the service's **Pre-Deploy Command** to
+`cd BackEnd && pytest` — `pytest` and `httpx` are in `BackEnd/requirements.txt`, so
+plain `pytest` with nothing installed will fail with `command not found`.
+
 ## Adding an input to the deal form
 
 There are three places a user types deal numbers — the Analyze page, the My Deals
