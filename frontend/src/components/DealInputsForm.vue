@@ -64,6 +64,7 @@ import {
   DEFAULT_LONG_TERM_INTEREST_RATE,
   DEFAULT_LTV_PERCENT,
   DEFAULT_REFI_POINTS,
+  toNumber,
 } from "../utils/dealUtils";
 
 defineOptions({ inheritAttrs: false });
@@ -90,10 +91,16 @@ type NumericKey = {
     : never;
 }[keyof DealInputModel];
 
-/** Read a numeric field for display. PrimeVue inputs expect `null` when empty. */
+/**
+ * Read a numeric field for display. PrimeVue inputs expect `null` when empty.
+ *
+ * Goes through `toNumber` because a deal loaded from the API carries its money
+ * and percentage fields as *strings* (`"200.00"` — FastAPI serialises `Decimal`
+ * that way), while a deal the user is typing into carries real numbers. Checking
+ * `typeof === "number"` here would blank out every saved deal's inputs.
+ */
 function get(key: NumericKey, fallback: number | null = null): number | null {
-  const value = props.deal[key];
-  return typeof value === "number" && !Number.isNaN(value) ? value : fallback;
+  return toNumber(props.deal[key]) ?? fallback;
 }
 
 /**

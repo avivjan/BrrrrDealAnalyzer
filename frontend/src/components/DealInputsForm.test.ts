@@ -122,6 +122,140 @@ describe("DealInputsForm", () => {
     });
   });
 
+  describe("populating from a saved deal (API shape)", () => {
+    /**
+     * A deal as it actually arrives from `/active-deals` and `/bought-deals`:
+     * FastAPI serialises every `Decimal` column to a JSON *string*, so money and
+     * percentage fields are strings while `int`/`bool` columns are not. Binding
+     * these blank was a real regression — the modals showed empty inputs for
+     * every saved deal while the analysis results rendered correctly.
+     */
+    const savedBrrrr = () => ({
+      deal_type: "BRRRR" as const,
+      address: "2286 Laurel Grove Ln W",
+      purchasePrice: "200.00",
+      rehabCost: "50.00",
+      rehabContingency: "10.00",
+      closingCostsBuy: "5.00",
+      down_payment: "20.00",
+      hmlPoints: "2.00",
+      HMLInterestRate: "11.00",
+      annual_property_taxes: "3600.00",
+      annual_insurance: "1200.00",
+      montly_hoa: "0.00",
+      arv_in_thousands: "320.00",
+      monthsUntilRefi: "6.0",
+      closingCostsRefi: "6.00",
+      refiPoints: "1.50",
+      cashReserve: "0.00",
+      loanTermYears: 30,
+      ltv_as_precent: "80.00",
+      interestRate: "6.75",
+      rent: "2600.00",
+      vacancyPercent: "5.00",
+      property_managment_fee_precentages_from_rent: "8.00",
+      maintenancePercent: "5.00",
+      capexPercent: "5.00",
+      use_HM_for_rehab: true,
+    }) as unknown as DealInputModel;
+
+    const savedFlip = () => ({
+      deal_type: "FLIP" as const,
+      address: "2286 Laurel Grove Ln W",
+      purchasePrice: "200.00",
+      rehabCost: "50.00",
+      rehabContingency: "10.00",
+      closingCostsBuy: "5.00",
+      down_payment: "20.00",
+      hmlPoints: "2.00",
+      HMLInterestRate: "11.00",
+      annual_property_taxes: "3600.00",
+      annual_insurance: "1200.00",
+      montly_hoa: "0.00",
+      monthly_utilities: "250.00",
+      salePrice: "320.00",
+      holdingTime: 5,
+      buyerAgentSellingFee: "3.00",
+      sellerAgentSellingFee: "3.00",
+      sellingClosingCosts: "5.00",
+      capitalGainsTax: "20.00",
+      use_HM_for_rehab: true,
+    }) as unknown as DealInputModel;
+
+    /** The value a labelled input is actually bound to. */
+    const boundValue = (
+      wrapper: ReturnType<typeof mountForm>,
+      label: string,
+    ) => {
+      const target = FIELD_STUBS.flatMap((name) =>
+        wrapper.findAllComponents({ name }),
+      ).find((c) => c.props("label") === label);
+      expect(target, `no input labelled "${label}"`).toBeTruthy();
+      return target!.props("modelValue");
+    };
+
+    it.each([
+      ["Purchase Price", 200],
+      ["Rehab Cost", 50],
+      ["Contingency", 10],
+      ["Closing Costs (Buy)", 5],
+      ["Down Payment", 20],
+      ["Points", 2],
+      ["Interest Rate", 11],
+      ["ARV", 320],
+      ["Refi Points", 1.5],
+      ["Monthly Rent", 2600],
+      ["Annual Taxes", 3600],
+      ["Annual Insurance", 1200],
+      ["Vacancy", 5],
+      ["Prop. Mgmt", 8],
+      ["Loan Term", 30],
+    ])("BRRRR: %s is populated, not blank", (label, expected) => {
+      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), label)).toBe(expected);
+    });
+
+    it.each([
+      ["Purchase Price", 200],
+      ["Projected Sale Price", 320],
+      ["Holding Time", 5],
+      ["Buyer Agent Fee", 3],
+      ["Seller Agent Fee", 3],
+      ["Closing Costs", 5],
+      ["Capital Gains Tax Rate", 20],
+      ["Monthly Utilities", 250],
+      ["Annual Taxes", 3600],
+    ])("FLIP: %s is populated, not blank", (label, expected) => {
+      expect(boundValue(mountForm(savedFlip(), "FLIP"), label)).toBe(expected);
+    });
+
+    it("shows the deal's own slider values, not the defaults", () => {
+      // The dangerous case: a fallback silently replacing real data. This deal
+      // is 80% LTV at 6.75%, not the 75% / 6.5% defaults.
+      const wrapper = mountForm(savedBrrrr(), "BRRRR");
+      expect(boundValue(wrapper, "LTV")).toBe(80);
+      expect(boundValue(wrapper, "Long Term Interest Rate")).toBe(6.75);
+    });
+
+    it("keeps a real zero rather than falling back", () => {
+      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Monthly HOA")).toBe(0);
+      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Cash Reserve (paydown at refi)")).toBe(0);
+    });
+
+    it("leaves a genuinely absent field blank", () => {
+      const partial = { ...(savedBrrrr() as any), rehabCost: null, closingCostsBuy: "" };
+      const wrapper = mountForm(partial, "BRRRR");
+      expect(boundValue(wrapper, "Rehab Cost")).toBeNull();
+      expect(boundValue(wrapper, "Closing Costs (Buy)")).toBeNull();
+    });
+
+    it("reads a saved deal without mutating it (no autosave trigger on open)", () => {
+      const deal = savedBrrrr();
+      const before = JSON.stringify(deal);
+      mountForm(deal, "BRRRR");
+      expect(JSON.stringify(deal)).toBe(before);
+    });
+  });
+
   describe("writing values back", () => {
     it("mutates the caller's object in place rather than replacing it", async () => {
       // The card modals drive auto-save from a deep watcher on this exact

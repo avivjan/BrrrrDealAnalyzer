@@ -44,6 +44,34 @@ export function ensureBrrrLegacyDefaults(deal: BrrrLegacyShape): void {
 export const ensureBrrrRefiPointsDefault = ensureBrrrLegacyDefaults;
 
 /**
+ * Read a deal's numeric field, whatever representation it arrived in.
+ *
+ * A deal's numbers reach the UI in two different shapes, and every reader has to
+ * cope with both:
+ *
+ * - **Loaded from the API** — FastAPI serialises every `Decimal` column as a JSON
+ *   *string* (`"200.00"`), so `purchasePrice`, `rehabCost`, every percentage and
+ *   every money field arrive as strings. Only `int` columns (`holdingTime`,
+ *   `loanTermYears`) and `bool` (`use_HM_for_rehab`) arrive as real JSON values.
+ * - **Typed by the user** — `DealInputsForm` writes real numbers.
+ *
+ * The TypeScript types on `ActiveDealRes` / `BoughtDealRes` declare these as
+ * `number`, which is a lie for the first case. Anything that does arithmetic or
+ * a `typeof === "number"` check on a raw deal field must go through here instead.
+ *
+ * Returns `undefined` for null, empty string, or anything non-numeric, so callers
+ * can apply their own fallback with `??` (and a real `0` is preserved).
+ */
+export function toNumber(value: unknown): number | undefined {
+  if (typeof value === "number") return Number.isNaN(value) ? undefined : value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return undefined;
+}
+
+/**
  * Fallbacks for the two slider-backed BRRRR fields. `SliderField` always needs a
  * concrete number (a null thumb position is meaningless), so `DealInputsForm`
  * substitutes these when the bound deal has no value yet.
@@ -170,10 +198,16 @@ export const getStageName = (id: number) => {
 };
 
 export const formatDealForClipboard = (deal: ActiveDealRes): string => {
-  const formatMoney = (val?: number) =>
-    val !== undefined ? `$${val.toLocaleString()}` : "-";
-  const formatPercent = (val?: number) =>
-    val !== undefined ? `${val.toFixed(2)}%` : "-";
+  // `toNumber` because a saved deal's money/percentage fields arrive from the API
+  // as strings — calling `.toFixed()` on one throws.
+  const formatMoney = (val?: number) => {
+    const n = toNumber(val);
+    return n !== undefined ? `$${n.toLocaleString()}` : "-";
+  };
+  const formatPercent = (val?: number) => {
+    const n = toNumber(val);
+    return n !== undefined ? `${n.toFixed(2)}%` : "-";
+  };
 
   const isBrrr = !deal.deal_type || deal.deal_type === 'BRRRR';
   const brrr = isBrrr ? (deal as BrrrDealRes) : null;
