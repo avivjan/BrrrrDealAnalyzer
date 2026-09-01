@@ -147,6 +147,21 @@ export interface FlipDealRes extends FlipDealCreate, FlipAnalyzeRes {
 // Unions
 export type ActiveDealCreate = BrrrDealCreate | FlipDealCreate;
 export type ActiveDealRes = BrrrDealRes | FlipDealRes;
+
+/**
+ * Every user-editable deal input, across BRRRR + FLIP. This is the single shape
+ * that `AnalyzeDeal`'s local `form` ref and the `MyDeals` / `BoughtDeals` card
+ * modals' `editingDeal` both satisfy, so all three can drive the shared
+ * `DealInputsForm` component with one `v-model`.
+ *
+ * Field names live in `BaseDealReq` / `BrrrAnalyzeReq` / `FlipAnalyzeReq` — this
+ * type only unions them, so adding a field there is picked up here for free.
+ */
+export type DealInputModel = Partial<
+  BaseDealReq & BrrrAnalyzeReq & FlipAnalyzeReq
+> & {
+  deal_type?: 'BRRRR' | 'FLIP';
+};
 export type AnalyzeDealReq = (BrrrAnalyzeReq & Partial<BaseDealReq>) | (FlipAnalyzeReq & Partial<BaseDealReq>); // Simplified for analyze API
 export type AnalyzeDealRes = BrrrAnalyzeRes | FlipAnalyzeRes;
 

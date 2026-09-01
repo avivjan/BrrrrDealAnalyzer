@@ -1,4 +1,9 @@
-import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
+import type {
+  ActiveDealRes,
+  BrrrDealRes,
+  DealInputModel,
+  FlipDealRes,
+} from "../types";
 
 /**
  * Backend-side defaults for BRRRR fields that were added after the initial
@@ -37,6 +42,121 @@ export function ensureBrrrLegacyDefaults(deal: BrrrLegacyShape): void {
  * imports keep compiling while we migrate consumers.
  */
 export const ensureBrrrRefiPointsDefault = ensureBrrrLegacyDefaults;
+
+/**
+ * Fallbacks for the two slider-backed BRRRR fields. `SliderField` always needs a
+ * concrete number (a null thumb position is meaningless), so `DealInputsForm`
+ * substitutes these when the bound deal has no value yet.
+ */
+export const DEFAULT_LTV_PERCENT = 75;
+export const DEFAULT_LONG_TERM_INTEREST_RATE = 6.5;
+
+/**
+ * Initial values for a brand-new deal on the Analyze page.
+ *
+ * Returns BRRRR *and* FLIP fields regardless of `dealType`: the Analyze page
+ * lets the user toggle between the two after typing, and the ARV/sale-price
+ * mirror needs both keys to exist. The backend's discriminated-union create
+ * models ignore the fields that don't belong to the chosen type.
+ *
+ * When you add a new input to `DealInputsForm`, add its default here.
+ */
+export function createEmptyDealForm(
+  dealType: "BRRRR" | "FLIP" = "BRRRR",
+): DealInputModel {
+  return {
+    deal_type: dealType,
+
+    // Shared — buy & rehab
+    purchasePrice: 0,
+    rehabCost: 0,
+    rehabContingency: 0,
+    closingCostsBuy: 0,
+    down_payment: 0,
+    hmlPoints: 0,
+    HMLInterestRate: 11,
+    use_HM_for_rehab: false,
+
+    // Shared — holding costs
+    annual_property_taxes: 0,
+    annual_insurance: 0,
+    montly_hoa: 0,
+
+    // BRRRR
+    arv_in_thousands: 0,
+    monthsUntilRefi: 6,
+    closingCostsRefi: 0,
+    refiPoints: DEFAULT_REFI_POINTS,
+    cashReserve: DEFAULT_CASH_RESERVE,
+    loanTermYears: 30,
+    ltv_as_precent: DEFAULT_LTV_PERCENT,
+    interestRate: DEFAULT_LONG_TERM_INTEREST_RATE,
+    rent: 0,
+    vacancyPercent: 5,
+    property_managment_fee_precentages_from_rent: 0,
+    maintenancePercent: 5,
+    capexPercent: 5,
+
+    // Flip
+    salePrice: 0,
+    holdingTime: 6,
+    buyerAgentSellingFee: 0,
+    sellerAgentSellingFee: 0,
+    sellingClosingCosts: 0,
+    capitalGainsTax: 0,
+    monthly_utilities: 0,
+  };
+}
+
+/**
+ * Client-side bounds checks for the deal inputs, mirroring the backend's
+ * `validate_brrr_inputs` / `validate_flip_inputs`. Returns human-readable
+ * messages; an empty array means the deal is safe to submit.
+ *
+ * When you add a new input to `DealInputsForm`, add its bounds check here.
+ */
+export function validateDealInputs(
+  deal: DealInputModel,
+  dealType: "BRRRR" | "FLIP",
+): string[] {
+  const errors: string[] = [];
+  const num = (v: number | undefined) => (v == null ? 0 : Number(v));
+
+  if (!deal.purchasePrice || num(deal.purchasePrice) <= 0)
+    errors.push("Purchase price (in thousands) must be greater than 0.");
+  if (num(deal.rehabCost) < 0)
+    errors.push("Rehab cost (in thousands) cannot be negative.");
+  if (num(deal.rehabContingency) < 0 || num(deal.rehabContingency) > 100)
+    errors.push("Contingency must be between 0% and 100%.");
+  if (num(deal.down_payment) < 0 || num(deal.down_payment) > 100)
+    errors.push("Down payment percentage must be between 0% and 100%.");
+
+  if (dealType === "BRRRR") {
+    if (!deal.arv_in_thousands || num(deal.arv_in_thousands) <= 0)
+      errors.push("ARV (in thousands) must be greater than 0.");
+    if (!deal.rent || num(deal.rent) <= 0)
+      errors.push("Rent must be greater than 0.");
+    if (num(deal.ltv_as_precent) <= 0 || num(deal.ltv_as_precent) > 100)
+      errors.push("LTV must be between 0% and 100%.");
+    if (num(deal.refiPoints) < 0 || num(deal.refiPoints) > 100)
+      errors.push("Refi points must be between 0% and 100%.");
+    if (num(deal.cashReserve) < 0)
+      errors.push("Cash reserve cannot be negative.");
+  } else {
+    if (!deal.salePrice || num(deal.salePrice) <= 0)
+      errors.push("Sale Price (ARV) must be greater than 0.");
+    if (num(deal.holdingTime) <= 0)
+      errors.push("Holding time must be greater than 0.");
+    if (num(deal.buyerAgentSellingFee) < 0 || num(deal.buyerAgentSellingFee) > 100)
+      errors.push("Buyer agent fee must be between 0% and 100%.");
+    if (num(deal.sellerAgentSellingFee) < 0 || num(deal.sellerAgentSellingFee) > 100)
+      errors.push("Seller agent fee must be between 0% and 100%.");
+    if (num(deal.sellingClosingCosts) < 0)
+      errors.push("Closing costs cannot be negative.");
+  }
+
+  return errors;
+}
 
 export const getStageName = (id: number) => {
   const map: Record<number, string> = {
