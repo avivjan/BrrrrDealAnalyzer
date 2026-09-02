@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Union, List, Optional
 from decimal import Decimal
 from datetime import datetime, date as date_cls
@@ -135,7 +136,41 @@ def _add_column_if_missing(
         ))
 
 
+# Arbitrary but fixed key identifying "this app's schema migration".
+_MIGRATION_LOCK_KEY = 8_147_233_901
+
+
+@contextmanager
+def _migration_lock():
+    """Serialise `_run_migrations` across processes.
+
+    Migrations run at *import* time, so every uvicorn worker runs them at once
+    on boot. Two workers both seeing `days_until_refi` missing would both try
+    to add it; one wins, the other dies on "column already exists" and takes
+    the deploy with it. A Postgres advisory lock makes the second worker wait
+    and then find the work already done.
+
+    Held for the duration of the `with` block by its own transaction, and
+    released when that commits. A no-op off Postgres — SQLite in the tests is
+    single-process by construction.
+    """
+    if engine.dialect.name != "postgresql":
+        yield
+        return
+    with engine.begin() as lock_conn:
+        lock_conn.execute(
+            text("SELECT pg_advisory_xact_lock(:key)"),
+            {"key": _MIGRATION_LOCK_KEY},
+        )
+        yield
+
+
 def _run_migrations():
+    with _migration_lock():
+        _run_migrations_locked()
+
+
+def _run_migrations_locked():
     inspector = sa_inspect(engine)
     table_names = inspector.get_table_names()
 
@@ -219,10 +254,10 @@ def _run_migrations():
 
     # Replace `Months_until_refi` with whole `days_until_refi`. Idempotent.
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
-        _migrate_months_until_refi_to_days(inspector, brrr_table)
+        _migrate_months_until_refi_to_days(brrr_table)
 
     # Widen the money columns so a thousands value can hold an exact dollar.
-    _widen_money_columns(inspector)
+    _widen_money_columns()
 
 
 def _migrate_bought_stage_to_string(
@@ -278,7 +313,7 @@ def _migrate_bought_stage_to_string(
         ))
 
 
-def _migrate_months_until_refi_to_days(inspector, table_name: str) -> None:
+def _migrate_months_until_refi_to_days(table_name: str) -> None:
     """Replace the legacy `Months_until_refi` column with `days_until_refi`.
 
     The conversion is `months * 30`, and the calc moved to a 360-day banking
@@ -294,10 +329,16 @@ def _migrate_months_until_refi_to_days(inspector, table_name: str) -> None:
 
     Idempotent, and a no-op on SQLite (the test harness) which cannot
     `ALTER COLUMN` — its tables come out of `create_all` already correct.
+
+    Takes a *fresh* Inspector rather than sharing the caller's: an Inspector
+    memoises `get_columns`, so one reused across DDL hands back a stale picture
+    of the table. This is the migration that drops a column — it reads the
+    truth.
     """
-    if table_name not in inspector.get_table_names():
-        return
     if engine.dialect.name != "postgresql":
+        return
+    inspector = sa_inspect(engine)
+    if table_name not in inspector.get_table_names():
         return
     columns = [col["name"] for col in inspector.get_columns(table_name)]
     if "days_until_refi" in columns:
@@ -311,9 +352,12 @@ def _migrate_months_until_refi_to_days(inspector, table_name: str) -> None:
         return
     legacy = f'"{legacy_column}"'
 
+    # `IF NOT EXISTS` / `IF EXISTS` so a second process that got this far
+    # anyway (see `_migration_lock`) degrades to a no-op instead of crashing
+    # the boot on "column already exists".
     with engine.begin() as conn:
         conn.execute(text(
-            f"ALTER TABLE {table_name} ADD COLUMN days_until_refi INTEGER"
+            f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS days_until_refi INTEGER"
         ))
         conn.execute(text(
             f"UPDATE {table_name} "
@@ -331,7 +375,7 @@ def _migrate_months_until_refi_to_days(inspector, table_name: str) -> None:
             f"ALTER TABLE {table_name} ALTER COLUMN days_until_refi SET DEFAULT 180"
         ))
         conn.execute(text(
-            f"ALTER TABLE {table_name} DROP COLUMN {legacy}"
+            f"ALTER TABLE {table_name} DROP COLUMN IF EXISTS {legacy}"
         ))
 
 
@@ -362,10 +406,14 @@ _MONEY_COLUMNS_BY_TABLE = {
 }
 
 
-def _widen_money_columns(inspector) -> None:
-    """Bring every `*_in_thousands` column up to NUMERIC(14,4). Idempotent."""
+def _widen_money_columns() -> None:
+    """Bring every `*_in_thousands` column up to NUMERIC(14,4). Idempotent.
+
+    Reflects fresh, for the same reason as the days migration above.
+    """
     if engine.dialect.name != "postgresql":
         return
+    inspector = sa_inspect(engine)
     table_names = inspector.get_table_names()
     for table_name, column_names in _MONEY_COLUMNS_BY_TABLE.items():
         if table_name not in table_names:
@@ -545,12 +593,20 @@ def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     elif cash_flow <= 0: return Decimal("-2")
     else: return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * Decimal("100.0")
     
-def calc_holding_costs(taxes, insurance, hoa, days):
-    # Accrued per diem on the same 360-day banking year the HML interest uses,
-    # so a 30-day month costs exactly what the old monthly formula charged.
-    # Divide last: `/ 360` first would make an exact figure like $1,200/yr a
-    # repeating Decimal and leave rounding dust in every result.
-    annual_holding = taxes + insurance + hoa * MONTHS_PER_YEAR
+def calc_holding_costs(annual_taxes, annual_insurance, monthly_hoa, days):
+    """Taxes + insurance + HOA carried for `days`, accrued per diem.
+
+    Mind the units, which the deal record mixes: taxes and insurance are
+    ANNUAL figures, HOA is a MONTHLY one. So only the HOA is annualised here —
+    the other two already are. (The month-based version this replaced did the
+    mirror image: it divided taxes and insurance by 12 and added HOA as-is.)
+
+    The 360-day year matches the one the HML interest accrues on, which is what
+    makes a 30-day month cost exactly what the old monthly formula charged.
+    Divide last: `/ 360` up front would turn an exact figure like $1,200/yr
+    into a repeating Decimal and leave rounding dust in every result.
+    """
+    annual_holding = annual_taxes + annual_insurance + (monthly_hoa * MONTHS_PER_YEAR)
     return annual_holding * days / DAYS_PER_YEAR
 
 def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, days_until_refi, HML_interest_rate, use_HM_for_rehab):
