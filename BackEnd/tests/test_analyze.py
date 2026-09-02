@@ -8,7 +8,11 @@ silently different number on someone's deal board.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
+
+import main
 
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
@@ -178,6 +182,45 @@ class TestRefiTiming:
             "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 181}
         ).json()
         assert one_more["total_cash_needed_for_deal"] > base["total_cash_needed_for_deal"]
+
+
+class TestHoldingCosts:
+    """`calc_holding_costs` takes its three inputs in two different units.
+
+    Taxes and insurance are annual, HOA is monthly, so only the HOA is
+    multiplied by 12. Reading `taxes + insurance + hoa * 12` as if the `* 12`
+    were meant to apply to all three is an easy and expensive mistake, hence
+    these.
+    """
+
+    def test_a_monthly_hoa_is_annualised_but_annual_figures_are_not(self):
+        year = 360  # days, on the calc's banking year
+
+        only_taxes = main.calc_holding_costs(
+            Decimal("1200"), Decimal("0"), Decimal("0"), year
+        )
+        only_insurance = main.calc_holding_costs(
+            Decimal("0"), Decimal("1200"), Decimal("0"), year
+        )
+        # $100/month is the same annual burden as $1,200/year.
+        only_hoa = main.calc_holding_costs(
+            Decimal("0"), Decimal("0"), Decimal("100"), year
+        )
+
+        assert only_taxes == Decimal("1200")
+        assert only_insurance == Decimal("1200")
+        assert only_hoa == Decimal("1200")
+
+    def test_the_three_inputs_simply_add_up(self):
+        combined = main.calc_holding_costs(
+            Decimal("3600"), Decimal("1200"), Decimal("250"), 180
+        )
+        # ($3,600/yr + $1,200/yr)/12 + $250/mo = $650/mo, held six 30-day months.
+        assert combined == Decimal("3900")
+
+    def test_cost_scales_linearly_with_the_days_held(self):
+        args = (Decimal("3600"), Decimal("1200"), Decimal("250"))
+        assert main.calc_holding_costs(*args, 60) == 2 * main.calc_holding_costs(*args, 30)
 
 
 class TestAnalyzeFlip:
