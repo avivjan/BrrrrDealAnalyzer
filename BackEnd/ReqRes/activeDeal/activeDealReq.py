@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import List, Optional, Annotated, Literal
+from typing import Any, List, Optional, Annotated, Literal
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ReqRes.analyzeBRRR.analyzeBRRRRes import analyzeBRRRRes
 from ReqRes.analyzeFlip.analyzeFlipRes import analyzeFlipRes
+from ReqRes.refi_timing import days_from_legacy_months
 
 
 class SoldComp(BaseModel):
@@ -56,10 +57,20 @@ class BaseDealReq(BaseModel):
 
 class BrrrActiveDealCreate(BaseDealReq):
     deal_type: Literal["BRRRR"] = "BRRRR"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_months_until_refi(cls, data: Any) -> Any:
+        return days_from_legacy_months(data)
+
     arv_in_thousands: Optional[Decimal] = Field(Decimal("0"), description="ARV in thousands")
-    Months_until_refi: Annotated[Optional[Decimal], Field(alias="monthsUntilRefi")] = None
+    days_until_refi: Annotated[Optional[int], Field(alias="daysUntilRefi")] = 180
     closing_cost_refi_in_thousands: Annotated[Optional[Decimal], Field(alias="closingCostsRefi")] = Decimal("0.0")
-    refi_points: Annotated[Optional[Decimal], Field(alias="refiPoints")] = Decimal("1.5")
+    # NOTE: 2 is the default for a *new* deal. Rows saved before this column
+    # existed were backfilled to 1.5 by `_add_column_if_missing`, and the
+    # frontend's `ensureBrrrLegacyDefaults` always sends their stored value
+    # explicitly, so this default can never overwrite one of them.
+    refi_points: Annotated[Optional[Decimal], Field(alias="refiPoints")] = Decimal("2")
     cash_reserve_in_thousands: Annotated[Optional[Decimal], Field(alias="cashReserve")] = Decimal("0.0")
     loan_term_years: Annotated[Optional[int], Field(alias="loanTermYears")] = 30
     ltv_as_precent: Optional[Decimal] = Field(..., description="LTV for Refi")

@@ -217,6 +217,13 @@ def _run_migrations():
     _migrate_bought_stage_to_string(inspector, "bought_brrrr_deals", DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT)
     _migrate_bought_stage_to_string(inspector, "bought_flip_deals", DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT)
 
+    # Replace `Months_until_refi` with whole `days_until_refi`. Idempotent.
+    for brrr_table in ("active_deals", "bought_brrrr_deals"):
+        _migrate_months_until_refi_to_days(inspector, brrr_table)
+
+    # Widen the money columns so a thousands value can hold an exact dollar.
+    _widen_money_columns(inspector)
+
 
 def _migrate_bought_stage_to_string(
     inspector,
@@ -271,6 +278,113 @@ def _migrate_bought_stage_to_string(
         ))
 
 
+def _migrate_months_until_refi_to_days(inspector, table_name: str) -> None:
+    """Replace the legacy `Months_until_refi` column with `days_until_refi`.
+
+    The conversion is `months * 30`, and the calc moved to a 360-day banking
+    year at the same time, which makes the whole migration value-preserving:
+
+        HML interest  old: (rate/12/100)  * amount * months
+                      new: (rate/360/100) * amount * (months * 30)   -- equal
+        holding costs old: (taxes/12 + ins/12 + hoa)      * months
+                      new: (taxes/360 + ins/360 + hoa/30) * (months*30) -- equal
+
+    So every existing deal re-analyzes to exactly the figures it showed before.
+    The old default of 6 months lands on the new default of 180 days.
+
+    Idempotent, and a no-op on SQLite (the test harness) which cannot
+    `ALTER COLUMN` — its tables come out of `create_all` already correct.
+    """
+    if table_name not in inspector.get_table_names():
+        return
+    if engine.dialect.name != "postgresql":
+        return
+    columns = [col["name"] for col in inspector.get_columns(table_name)]
+    if "days_until_refi" in columns:
+        return
+    # SQLAlchemy created this one with a quoted mixed-case identifier, so match
+    # case-insensitively and then quote back whatever is actually there.
+    legacy_column = next(
+        (c for c in columns if c.lower() == "months_until_refi"), None
+    )
+    if legacy_column is None:
+        return
+    legacy = f'"{legacy_column}"'
+
+    with engine.begin() as conn:
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ADD COLUMN days_until_refi INTEGER"
+        ))
+        conn.execute(text(
+            f"UPDATE {table_name} "
+            f"SET days_until_refi = ROUND({legacy} * 30) "
+            f"WHERE {legacy} IS NOT NULL"
+        ))
+        conn.execute(text(
+            f"UPDATE {table_name} SET days_until_refi = 180 "
+            f"WHERE days_until_refi IS NULL"
+        ))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ALTER COLUMN days_until_refi SET NOT NULL"
+        ))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} ALTER COLUMN days_until_refi SET DEFAULT 180"
+        ))
+        conn.execute(text(
+            f"ALTER TABLE {table_name} DROP COLUMN {legacy}"
+        ))
+
+
+# Money columns are stored in thousands, so NUMERIC(_, 2) rounds to the nearest
+# $10 and cannot hold a $50,500 purchase price. Widening the scale to 4 is
+# lossless in Postgres.
+_MONEY_COLUMNS_BY_TABLE = {
+    "active_deals": (
+        "purchase_price_in_thousands", "rehab_cost_in_thousands",
+        "closing_costs_buy_in_thousands", "arv_in_thousands",
+        "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
+    ),
+    "bought_brrrr_deals": (
+        "purchase_price_in_thousands", "rehab_cost_in_thousands",
+        "closing_costs_buy_in_thousands", "arv_in_thousands",
+        "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
+    ),
+    "flip_deals": (
+        "purchase_price_in_thousands", "rehab_cost_in_thousands",
+        "closing_costs_buy_in_thousands", "sale_price_in_thousands",
+        "selling_closing_costs_in_thousands",
+    ),
+    "bought_flip_deals": (
+        "purchase_price_in_thousands", "rehab_cost_in_thousands",
+        "closing_costs_buy_in_thousands", "sale_price_in_thousands",
+        "selling_closing_costs_in_thousands",
+    ),
+}
+
+
+def _widen_money_columns(inspector) -> None:
+    """Bring every `*_in_thousands` column up to NUMERIC(14,4). Idempotent."""
+    if engine.dialect.name != "postgresql":
+        return
+    table_names = inspector.get_table_names()
+    for table_name, column_names in _MONEY_COLUMNS_BY_TABLE.items():
+        if table_name not in table_names:
+            continue
+        existing = {c["name"]: c for c in inspector.get_columns(table_name)}
+        for column_name in column_names:
+            col = existing.get(column_name)
+            if col is None:
+                continue
+            # `NUMERIC(14, 4)` — already widened, skip.
+            if getattr(col.get("type"), "scale", None) == 4:
+                continue
+            with engine.begin() as conn:
+                conn.execute(text(
+                    f"ALTER TABLE {table_name} "
+                    f"ALTER COLUMN {column_name} TYPE NUMERIC(14,4)"
+                ))
+
+
 _run_migrations()
 
 # Seed pipeline template rows (BRRRR + FLIP) on first boot. Safe to call often.
@@ -294,6 +408,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# The 360-day banking year hard money lenders quote per-diem interest on, and
+# the 30-day month it implies. Every days-driven accrual in the BRRRR calc uses
+# these two, which is what makes `days = months * 30` an exact translation of
+# the old month-based formulas.
+DAYS_PER_YEAR = Decimal("360")
+DAYS_PER_MONTH = Decimal("30")
+MONTHS_PER_YEAR = Decimal("12")
 
 
 def thousands_to_dollars(value: Decimal) -> Decimal:
@@ -346,8 +469,8 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
         validation_errors.append("HML interest rate must be between 0% and 100%.")
     
     # 4. Timeframes
-    if payload.Months_until_refi <= 0:
-        validation_errors.append("Months until refi must be a positive number.")
+    if payload.days_until_refi <= 0:
+        validation_errors.append("Days until refi must be a positive number.")
     if payload.loan_term_years <= 0:
         validation_errors.append("Loan term must be at least 1 year.")
 
@@ -422,15 +545,19 @@ def calc_roi(cash_out_from_deal, cash_flow, net_profit):
     elif cash_flow <= 0: return Decimal("-2")
     else: return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * Decimal("100.0")
     
-def calc_holding_costs(taxes, insurance, hoa, months):
-    monthly_taxes = taxes / Decimal("12.0")
-    monthly_insurance = insurance / Decimal("12.0")
-    monthly_holding = monthly_taxes + monthly_insurance + hoa
-    return monthly_holding * months
+def calc_holding_costs(taxes, insurance, hoa, days):
+    # Accrued per diem on the same 360-day banking year the HML interest uses,
+    # so a 30-day month costs exactly what the old monthly formula charged.
+    # Divide last: `/ 360` first would make an exact figure like $1,200/yr a
+    # repeating Decimal and leave rounding dust in every result.
+    annual_holding = taxes + insurance + hoa * MONTHS_PER_YEAR
+    return annual_holding * days / DAYS_PER_YEAR
 
-def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, Months_until_refi, HML_interest_rate, use_HM_for_rehab):
-    HML_montly_interest = HML_interest_rate / Decimal("12") / Decimal("100.0") * get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return HML_montly_interest * Months_until_refi  
+def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, days_until_refi, HML_interest_rate, use_HM_for_rehab):
+    # Hard money accrues per diem: loan amount * annual rate / 360. Divide last,
+    # for the same reason as above.
+    HML_amount = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
+    return HML_amount * HML_interest_rate * days_until_refi / DAYS_PER_YEAR / Decimal("100.0")
 
 def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
@@ -464,9 +591,9 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
     rehab_cost = rehab_cost_base + contingency
     
-    HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, payload.down_payment, rehab_cost, payload.Months_until_refi, payload.HML_interest_rate, payload.use_HM_for_rehab)
+    HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, payload.down_payment, rehab_cost, payload.days_until_refi, payload.HML_interest_rate, payload.use_HM_for_rehab)
     HML_points_in_cash = payload.HML_points/Decimal("100.0") * get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
-    holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.Months_until_refi)
+    holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.days_until_refi)
     
     operating_expenses = calc_montly_operating_expenses(payload)
     breakdown.add(
@@ -614,13 +741,13 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         "total_cash_needed_for_deal",
         "HML Interest (cash, until refi)",
         HML_interest_in_cash,
-        f"{fmt_money(HML_interest_in_cash)} accrued over {payload.Months_until_refi} months at {fmt_pct(payload.HML_interest_rate)}/yr",
+        f"{fmt_money(HML_interest_in_cash)} accrued over {payload.days_until_refi} days at {fmt_pct(payload.HML_interest_rate)}/yr ÷ 360 per diem",
     )
     breakdown.add(
         "total_cash_needed_for_deal",
         "Holding Costs (until refi)",
         holding_cost_until_refi,
-        f"Taxes + Insurance + HOA accrued over {payload.Months_until_refi} months = {fmt_money(holding_cost_until_refi)}",
+        f"Taxes + Insurance + HOA accrued over {payload.days_until_refi} days = {fmt_money(holding_cost_until_refi)}",
     )
     breakdown.add(
         "total_cash_needed_for_deal",

@@ -1,4 +1,20 @@
 <script setup lang="ts">
+/**
+ * A number box paired with a slider (LTV, long-term interest rate).
+ *
+ * Three deliberate details:
+ *
+ * - **One emit path**, for the same reason as `NumberInput` — binding `v-model`
+ *   *and* `@input` wrote twice per keystroke and made the caret jump.
+ * - **The slider's range is not the input's range.** `sliderMin`/`sliderMax`
+ *   bound where the thumb can travel, so it can cover the realistic span
+ *   (3-12% for a DSCR rate) and stay precise under the mouse, while `min`/`max`
+ *   let the typed box accept anything sensible. Previously they were the same,
+ *   so typing `65` into a rate box capped at 20 silently became `20`.
+ *   Out-of-range values are reported by `validateDealInputs`, not rewritten.
+ * - **No fraction mask** (`minFractionDigits: 0`), so `7` doesn't render as
+ *   `7.00` and eat your backspaces.
+ */
 import InputNumber from "primevue/inputnumber";
 import Slider from "primevue/slider";
 import { computed } from "vue";
@@ -6,8 +22,12 @@ import { computed } from "vue";
 const props = defineProps<{
   modelValue: number | null;
   label: string;
+  /** Bounds for the typed box. */
   min: number;
   max: number;
+  /** Bounds for the slider thumb. Defaults to `min`/`max`. */
+  sliderMin?: number;
+  sliderMax?: number;
   step?: number;
   suffix?: string;
   required?: boolean;
@@ -15,13 +35,18 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-const value = computed({
-  get: () => props.modelValue ?? 0, // Slider needs a number, default to 0 if null
-  set: (val) => emit("update:modelValue", val),
-});
+const thumbMin = computed(() => props.sliderMin ?? props.min);
+const thumbMax = computed(() => props.sliderMax ?? props.max);
 
-// For InputNumber, we want to allow nulls if needed, but slider sync implies a value.
-// We'll treat null as min or 0.
+/**
+ * The slider always needs a concrete position, so an empty field parks the
+ * thumb at the low end. The *number box* keeps the real `null` — that is what
+ * lets you clear it and retype instead of the value snapping back.
+ */
+const sliderValue = computed({
+  get: () => props.modelValue ?? thumbMin.value,
+  set: (val: number) => emit("update:modelValue", val),
+});
 </script>
 
 <template>
@@ -37,12 +62,14 @@ const value = computed({
       </label>
       <div class="w-24">
         <InputNumber
-          v-model="value"
+          :model-value="modelValue"
           :min="min"
           :max="max"
           :suffix="suffix"
           :step="step"
-          :minFractionDigits="step && step < 1 ? 2 : 0"
+          :allowEmpty="true"
+          :minFractionDigits="0"
+          :maxFractionDigits="3"
           inputClass="w-full text-right bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
           @input="(e: any) => emit('update:modelValue', e.value)"
         />
@@ -50,9 +77,9 @@ const value = computed({
     </div>
     <div class="px-1">
       <Slider
-        v-model="value"
-        :min="min"
-        :max="max"
+        v-model="sliderValue"
+        :min="thumbMin"
+        :max="thumbMax"
         :step="step"
         class="w-full h-2 bg-gray-200 rounded-full cursor-pointer relative"
         :pt="{
@@ -68,5 +95,3 @@ const value = computed({
     </div>
   </div>
 </template>
-
-

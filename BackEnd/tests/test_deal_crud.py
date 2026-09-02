@@ -26,7 +26,7 @@ SHARED_FORM_FIELDS = [
 ]
 BRRRR_ONLY_FIELDS = [
     "arv_in_thousands",
-    "monthsUntilRefi",
+    "daysUntilRefi",
     "closingCostsRefi",
     "refiPoints",
     "cashReserve",

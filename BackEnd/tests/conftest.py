@@ -244,7 +244,7 @@ def brrrr_payload() -> dict:
         "annual_insurance": 1200,
         "montly_hoa": 0,
         "arv_in_thousands": 320,
-        "monthsUntilRefi": 6,
+        "daysUntilRefi": 180,
         "closingCostsRefi": 6,
         "refiPoints": 1.5,
         "cashReserve": 0,

@@ -18,7 +18,16 @@ const BRRR_LEGACY_DEFAULTS = {
   cashReserve: 0,
 } as const;
 
-export const DEFAULT_REFI_POINTS = BRRR_LEGACY_DEFAULTS.refiPoints;
+/**
+ * What Refi Points starts at on a *brand-new* deal.
+ *
+ * Deliberately NOT the same constant as `BRRR_LEGACY_DEFAULTS.refiPoints`,
+ * which must stay 1.5 forever: that one backfills rows saved before the column
+ * existed, and it mirrors the DB `server_default='1.5'` and the already-run
+ * `_add_column_if_missing` migration. Changing it would silently re-price
+ * every old deal. Two different numbers, two different jobs.
+ */
+export const DEFAULT_REFI_POINTS = 2;
 export const DEFAULT_CASH_RESERVE = BRRR_LEGACY_DEFAULTS.cashReserve;
 
 type BrrrLegacyKey = keyof typeof BRRR_LEGACY_DEFAULTS;
@@ -77,7 +86,13 @@ export function toNumber(value: unknown): number | undefined {
  * substitutes these when the bound deal has no value yet.
  */
 export const DEFAULT_LTV_PERCENT = 75;
-export const DEFAULT_LONG_TERM_INTEREST_RATE = 6.5;
+export const DEFAULT_LONG_TERM_INTEREST_RATE = 7;
+
+/**
+ * Hold between purchase closing and refi closing, in days — 180 is the old
+ * 6-month default, which is exactly 180 days under the calc's 360-day year.
+ */
+export const DEFAULT_DAYS_UNTIL_REFI = 180;
 
 /**
  * Initial values for a brand-new deal on the Analyze page.
@@ -95,15 +110,17 @@ export function createEmptyDealForm(
   return {
     deal_type: dealType,
 
-    // Shared — buy & rehab
+    // Shared — buy & rehab.
+    // Money fields are in *thousands*: `closingCostsBuy: 5` is $5,000, which
+    // is what `MoneyInput` renders once it multiplies back up.
     purchasePrice: 0,
     rehabCost: 0,
-    rehabContingency: 0,
-    closingCostsBuy: 0,
-    down_payment: 0,
-    hmlPoints: 0,
-    HMLInterestRate: 11,
-    use_HM_for_rehab: false,
+    rehabContingency: 10,
+    closingCostsBuy: 5,
+    down_payment: 10,
+    hmlPoints: 2,
+    HMLInterestRate: 12,
+    use_HM_for_rehab: true,
 
     // Shared — holding costs
     annual_property_taxes: 0,
@@ -112,8 +129,8 @@ export function createEmptyDealForm(
 
     // BRRRR
     arv_in_thousands: 0,
-    monthsUntilRefi: 6,
-    closingCostsRefi: 0,
+    daysUntilRefi: DEFAULT_DAYS_UNTIL_REFI,
+    closingCostsRefi: 10,
     refiPoints: DEFAULT_REFI_POINTS,
     cashReserve: DEFAULT_CASH_RESERVE,
     loanTermYears: 30,
@@ -123,7 +140,7 @@ export function createEmptyDealForm(
     vacancyPercent: 5,
     property_managment_fee_precentages_from_rent: 0,
     maintenancePercent: 5,
-    capexPercent: 5,
+    capexPercent: 0,
 
     // Flip
     salePrice: 0,
@@ -170,6 +187,13 @@ export function validateDealInputs(
       errors.push("Refi points must be between 0% and 100%.");
     if (num(deal.cashReserve) < 0)
       errors.push("Cash reserve cannot be negative.");
+    // The slider's thumb only covers the realistic band, but the typed box is
+    // deliberately unclamped so it never rewrites what you meant — which makes
+    // this the only thing standing between a typo and a saved 70% mortgage.
+    if (num(deal.interestRate) < 0 || num(deal.interestRate) > 100)
+      errors.push("Long term interest rate must be between 0% and 100%.");
+    if (num(deal.daysUntilRefi) <= 0)
+      errors.push("Days until refi must be greater than 0.");
   } else {
     if (!deal.salePrice || num(deal.salePrice) <= 0)
       errors.push("Sale Price (ARV) must be greater than 0.");
@@ -224,7 +248,7 @@ Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : u
 Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
 Closing Costs (Buy): ${formatMoney(brrr.closingCostsBuy ? brrr.closingCostsBuy * 1000 : undefined)}
 ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)}
-Refi Points: ${Number(brrr.refiPoints ?? DEFAULT_REFI_POINTS)} pts
+Refi Points: ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts
 Cash Reserve: ${formatMoney(((brrr.cashReserve ?? DEFAULT_CASH_RESERVE)) * 1000)}
 Rent: ${formatMoney(brrr.rent)}
 `;

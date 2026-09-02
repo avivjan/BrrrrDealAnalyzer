@@ -12,7 +12,9 @@
  * ---------------------------------------------------------------------------
  * Frontend
  *  1. This file — add the <MoneyInput> / <NumberInput> / <SliderField> to the
- *     right section. Read with `get(...)`, write with `set(...)`.
+ *     right section. Read with `get(...)`, write with `set(...)`. Money fields
+ *     stored in thousands pass `:inThousands` — the input then shows real
+ *     dollars and scales on the way in and out.
  *  2. `types/index.ts` — add the field to `BaseDealReq` (shared by both deal
  *     types) or `BrrrAnalyzeReq` / `FlipAnalyzeReq` (type-specific).
  *     `DealInputModel`, `*DealCreate` and `AnalyzeDealReq` pick it up for free.
@@ -53,19 +55,14 @@
  * emitting a new one — exactly what the three inlined copies of this form did
  * before they were merged here.
  */
+import DaysUntilRefiField from "./ui/DaysUntilRefiField.vue";
 import MoneyInput from "./ui/MoneyInput.vue";
 import NumberInput from "./ui/NumberInput.vue";
 import SliderField from "./ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import { computed } from "vue";
 import type { DealInputModel } from "../types";
-import {
-  DEFAULT_CASH_RESERVE,
-  DEFAULT_LONG_TERM_INTEREST_RATE,
-  DEFAULT_LTV_PERCENT,
-  DEFAULT_REFI_POINTS,
-  toNumber,
-} from "../utils/dealUtils";
+import { toNumber } from "../utils/dealUtils";
 
 defineOptions({ inheritAttrs: false });
 
@@ -92,24 +89,39 @@ type NumericKey = {
 }[keyof DealInputModel];
 
 /**
- * Read a numeric field for display. PrimeVue inputs expect `null` when empty.
+ * Read a numeric field for display. Inputs expect `null` when empty.
+ *
+ * There is deliberately no default substituted here. Doing so is what made LTV
+ * and the long term rate impossible to retype: `set` stored `undefined` on
+ * clear, `get` immediately rendered the default back, and the box refilled
+ * itself between keystrokes. `SliderField` copes with a `null` on its own
+ * (the thumb parks at its low end while the box is empty), and real defaults
+ * are seeded once by `createEmptyDealForm` / `ensureBrrrLegacyDefaults`.
  *
  * Goes through `toNumber` because a deal loaded from the API carries its money
  * and percentage fields as *strings* (`"200.00"` — FastAPI serialises `Decimal`
  * that way), while a deal the user is typing into carries real numbers. Checking
  * `typeof === "number"` here would blank out every saved deal's inputs.
  */
-function get(key: NumericKey, fallback: number | null = null): number | null {
-  return toNumber(props.deal[key]) ?? fallback;
+function get(key: NumericKey): number | null {
+  return toNumber(props.deal[key]) ?? null;
 }
 
 /**
  * Write a numeric field back. Clearing an input stores `undefined`, not `0`, so
  * the field is omitted from the payload and the backend default applies.
+ *
+ * There is deliberately no per-field fallback here. Refi Points, LTV, the long
+ * term rate and Cash Reserve used to substitute their default whenever the
+ * input went empty, which meant deleting the last digit instantly wrote the
+ * default back — you could never blank the box to retype, and backspacing
+ * through a value fought you the whole way. Defaults belong at deal creation
+ * (`createEmptyDealForm`) and at load (`ensureBrrrLegacyDefaults`), not on
+ * every keystroke.
  */
-function set(key: NumericKey, value: number | null, fallback?: number): void {
+function set(key: NumericKey, value: number | null): void {
   (props.deal as Record<NumericKey, number | undefined>)[key] =
-    value ?? fallback;
+    value ?? undefined;
 }
 
 const useHmForRehab = computed({
@@ -280,22 +292,23 @@ const quickCalcSellingCosts = () => {
         :required="true"
       />
       <SliderField
-        :model-value="get('ltv_as_precent', DEFAULT_LTV_PERCENT)"
-        @update:model-value="
-          (v: number | null) => set('ltv_as_precent', v, DEFAULT_LTV_PERCENT)
-        "
+        :model-value="get('ltv_as_precent')"
+        @update:model-value="(v: number | null) => set('ltv_as_precent', v)"
         label="LTV"
-        :min="1"
+        :min="0"
         :max="100"
+        :sliderMin="1"
+        :sliderMax="100"
+        :step="0.1"
         suffix="%"
         :required="true"
       />
 
-      <NumberInput
-        :model-value="get('monthsUntilRefi')"
-        @update:model-value="(v: number | null) => set('monthsUntilRefi', v)"
-        label="Months until Refi"
-        suffix=" mos"
+      <DaysUntilRefiField
+        :model-value="get('daysUntilRefi')"
+        @update:model-value="(v: number | null) => set('daysUntilRefi', v)"
+        label="Days until Refi"
+        :required="true"
       />
       <MoneyInput
         :model-value="get('closingCostsRefi')"
@@ -304,34 +317,29 @@ const quickCalcSellingCosts = () => {
         :inThousands="true"
       />
       <NumberInput
-        :model-value="get('refiPoints', DEFAULT_REFI_POINTS)"
-        @update:model-value="
-          (v: number | null) => set('refiPoints', v, DEFAULT_REFI_POINTS)
-        "
+        :model-value="get('refiPoints')"
+        @update:model-value="(v: number | null) => set('refiPoints', v)"
         label="Refi Points"
         suffix=" pts"
         :min="0"
         :max="100"
       />
       <MoneyInput
-        :model-value="get('cashReserve', DEFAULT_CASH_RESERVE)"
-        @update:model-value="
-          (v: number | null) => set('cashReserve', v, DEFAULT_CASH_RESERVE)
-        "
+        :model-value="get('cashReserve')"
+        @update:model-value="(v: number | null) => set('cashReserve', v)"
         label="Cash Reserve (paydown at refi)"
         :inThousands="true"
       />
 
       <SliderField
-        :model-value="get('interestRate', DEFAULT_LONG_TERM_INTEREST_RATE)"
-        @update:model-value="
-          (v: number | null) =>
-            set('interestRate', v, DEFAULT_LONG_TERM_INTEREST_RATE)
-        "
+        :model-value="get('interestRate')"
+        @update:model-value="(v: number | null) => set('interestRate', v)"
         label="Long Term Interest Rate"
         :min="0"
-        :max="20"
-        :step="0.125"
+        :max="100"
+        :sliderMin="3"
+        :sliderMax="12"
+        :step="0.05"
         suffix="%"
         :required="true"
       />

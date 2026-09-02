@@ -6,9 +6,11 @@ import { reactive } from "vue";
 import DealInputsForm from "./DealInputsForm.vue";
 import {
   DEFAULT_CASH_RESERVE,
+  DEFAULT_DAYS_UNTIL_REFI,
   DEFAULT_LTV_PERCENT,
   DEFAULT_REFI_POINTS,
   createEmptyDealForm,
+  ensureBrrrLegacyDefaults,
 } from "../utils/dealUtils";
 import type { DealInputModel } from "../types";
 
@@ -25,12 +27,18 @@ const fieldStub = (name: string) => ({
 });
 
 /** Stub names that stand in for a labelled numeric input. */
-const FIELD_STUBS = ["MoneyInput", "NumberInput", "SliderField"] as const;
+const FIELD_STUBS = [
+  "MoneyInput",
+  "NumberInput",
+  "SliderField",
+  "DaysUntilRefiField",
+] as const;
 
 const stubs = {
   MoneyInput: fieldStub("MoneyInput"),
   NumberInput: fieldStub("NumberInput"),
   SliderField: fieldStub("SliderField"),
+  DaysUntilRefiField: fieldStub("DaysUntilRefiField"),
   ToggleSwitch: {
     name: "ToggleSwitch",
     props: ["modelValue"],
@@ -51,6 +59,15 @@ function labels(wrapper: ReturnType<typeof mountForm>): string[] {
   return wrapper
     .findAll("[data-label]")
     .map((el) => el.attributes("data-label") ?? "");
+}
+
+/** The value a labelled input is actually bound to. */
+function boundValue(wrapper: ReturnType<typeof mountForm>, label: string) {
+  const target = FIELD_STUBS.flatMap((name) =>
+    wrapper.findAllComponents({ name }),
+  ).find((c) => c.props("label") === label);
+  expect(target, `no input labelled "${label}"`).toBeTruthy();
+  return target!.props("modelValue");
 }
 
 /** Find a stubbed input by its label and emit a new value from it. */
@@ -79,6 +96,7 @@ describe("DealInputsForm", () => {
       // BRRRR-only
       expect(rendered).toContain("ARV");
       expect(rendered).toContain("LTV");
+      expect(rendered).toContain("Days until Refi");
       expect(rendered).toContain("Refi Points");
       expect(rendered).toContain("Cash Reserve (paydown at refi)");
       expect(rendered).toContain("Monthly Rent");
@@ -144,7 +162,7 @@ describe("DealInputsForm", () => {
       annual_insurance: "1200.00",
       montly_hoa: "0.00",
       arv_in_thousands: "320.00",
-      monthsUntilRefi: "6.0",
+      daysUntilRefi: 180,
       closingCostsRefi: "6.00",
       refiPoints: "1.50",
       cashReserve: "0.00",
@@ -182,18 +200,6 @@ describe("DealInputsForm", () => {
       use_HM_for_rehab: true,
     }) as unknown as DealInputModel;
 
-    /** The value a labelled input is actually bound to. */
-    const boundValue = (
-      wrapper: ReturnType<typeof mountForm>,
-      label: string,
-    ) => {
-      const target = FIELD_STUBS.flatMap((name) =>
-        wrapper.findAllComponents({ name }),
-      ).find((c) => c.props("label") === label);
-      expect(target, `no input labelled "${label}"`).toBeTruthy();
-      return target!.props("modelValue");
-    };
-
     it.each([
       ["Purchase Price", 200],
       ["Rehab Cost", 50],
@@ -203,6 +209,7 @@ describe("DealInputsForm", () => {
       ["Points", 2],
       ["Interest Rate", 11],
       ["ARV", 320],
+      ["Days until Refi", 180],
       ["Refi Points", 1.5],
       ["Monthly Rent", 2600],
       ["Annual Taxes", 3600],
@@ -281,17 +288,79 @@ describe("DealInputsForm", () => {
       expect(deal.closingCostsBuy).toBeUndefined();
     });
 
-    it("falls back to the documented default when a defaulted field is cleared", async () => {
+    it("leaves a defaulted field empty when cleared, instead of snapping back", async () => {
+      // This used to assert the opposite, and that was the bug: clearing one of
+      // these wrote the default straight back, so deleting the last digit of
+      // Refi Points instantly restored 1.5 and you could never retype it.
+      // Defaults belong at deal creation and load, not on every keystroke.
       const deal = reactive(createEmptyDealForm("BRRRR"));
       const wrapper = mountForm(deal, "BRRRR");
 
       await emitFrom(wrapper, "Refi Points", null);
       await emitFrom(wrapper, "Cash Reserve (paydown at refi)", null);
       await emitFrom(wrapper, "LTV", null);
+      await emitFrom(wrapper, "Long Term Interest Rate", null);
+
+      expect(deal.refiPoints).toBeUndefined();
+      expect(deal.cashReserve).toBeUndefined();
+      expect(deal.ltv_as_precent).toBeUndefined();
+      expect(deal.interestRate).toBeUndefined();
+    });
+
+    it("shows the cleared field as empty, not as the default again", async () => {
+      // The other half of the same bug, and the one you actually felt: even
+      // with `set` fixed, a default substituted on *read* refilled the box
+      // between keystrokes, so LTV and the rate could not be retyped.
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await emitFrom(wrapper, "Long Term Interest Rate", null);
+      await emitFrom(wrapper, "LTV", null);
+      await emitFrom(wrapper, "Refi Points", null);
+
+      expect(boundValue(wrapper, "Long Term Interest Rate")).toBeNull();
+      expect(boundValue(wrapper, "LTV")).toBeNull();
+      expect(boundValue(wrapper, "Refi Points")).toBeNull();
+    });
+
+    it("can be retyped digit by digit without the default fighting back", async () => {
+      // The lived complaint: backspacing through "1.5" and typing "2".
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await emitFrom(wrapper, "Refi Points", null); // cleared
+      expect(deal.refiPoints).toBeUndefined();
+      await emitFrom(wrapper, "Refi Points", 2);
+      expect(deal.refiPoints).toBe(2);
+    });
+
+    it("starts a new deal on the documented defaults", () => {
+      const deal = createEmptyDealForm("BRRRR");
 
       expect(deal.refiPoints).toBe(DEFAULT_REFI_POINTS);
       expect(deal.cashReserve).toBe(DEFAULT_CASH_RESERVE);
       expect(deal.ltv_as_precent).toBe(DEFAULT_LTV_PERCENT);
+      expect(deal.daysUntilRefi).toBe(DEFAULT_DAYS_UNTIL_REFI);
+      expect(deal.interestRate).toBe(7);
+      expect(deal.rehabContingency).toBe(10);
+      expect(deal.down_payment).toBe(10);
+      expect(deal.hmlPoints).toBe(2);
+      expect(deal.HMLInterestRate).toBe(12);
+      expect(deal.use_HM_for_rehab).toBe(true);
+      expect(deal.capexPercent).toBe(0);
+      // Money defaults are in thousands: $5,000 buy / $10,000 refi closing.
+      expect(deal.closingCostsBuy).toBe(5);
+      expect(deal.closingCostsRefi).toBe(10);
+    });
+
+    it("keeps the legacy 1.5 backfill separate from the new-deal default", () => {
+      // A deal saved before `refiPoints` existed must still read 1.5 — that is
+      // what is actually in the database. Only *new* deals start at 2.
+      const legacy = { deal_type: "BRRRR" as const } as DealInputModel;
+      ensureBrrrLegacyDefaults(legacy);
+
+      expect(legacy.refiPoints).toBe(1.5);
+      expect(createEmptyDealForm("BRRRR").refiPoints).toBe(2);
     });
 
     it("fills the three selling-cost fields from Quick Defaults", async () => {

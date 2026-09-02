@@ -1,12 +1,19 @@
 """Request model for cash flow calculation inputs."""
 
-from typing import Annotated
+from typing import Annotated, Any
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from ReqRes.refi_timing import days_from_legacy_months
 
 
 class analyzeBRRRReq(BaseModel):
     """Captures inputs required to calculate rental cash flow and DSCR."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_months_until_refi(cls, data: Any) -> Any:
+        return days_from_legacy_months(data)
 
     arv_in_thousands: Decimal = Field(..., description="After repair value (ARV) of the property in thousands")
     
@@ -24,13 +31,13 @@ class analyzeBRRRReq(BaseModel):
 
     HML_points: Annotated[Decimal, Field(alias="hmlPoints", description="Hard money lender points (percentage)")] = Decimal("0.0")
 
-    Months_until_refi: Annotated[Decimal, Field(alias="monthsUntilRefi", description="num of months from buying to refi")]
+    days_until_refi: Annotated[int, Field(alias="daysUntilRefi", description="whole days from purchase close to refi close")] = 180
     
     HML_interest_rate: Annotated[Decimal, Field(alias="HMLInterestRate", description="Interest paid during HML period (cash)")]   
 
     closing_cost_refi_in_thousands: Annotated[Decimal, Field(alias="closingCostsRefi", description="Closing costs during the refinance stage")] = Decimal("0.0")
 
-    refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Refi lender points as a percentage of the refi loan amount")] = Decimal("1.5")
+    refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Refi lender points as a percentage of the refi loan amount")] = Decimal("2")
 
     cash_reserve_in_thousands: Annotated[Decimal, Field(alias="cashReserve", description="Cash deposited toward the DSCR loan principal at refi (in thousands)")] = Decimal("0.0")
 

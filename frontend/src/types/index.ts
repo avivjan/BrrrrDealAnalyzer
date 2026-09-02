@@ -47,7 +47,13 @@ export interface BaseDealReq {
 // BRRRR Specific
 export interface BrrrAnalyzeReq {
   arv_in_thousands: number;
-  monthsUntilRefi: number;
+  /**
+   * Whole days from purchase closing to refi closing. Was `monthsUntilRefi`;
+   * the backend now accrues hard money interest per diem on a 360-day year, so
+   * days is the unit it stores and calculates in. A month is exactly 30 days
+   * under that convention, which is how existing deals were migrated.
+   */
+  daysUntilRefi: number;
   closingCostsRefi: number;
   /** % of refi loan amount; omit on request to use server default (1.5). */
   refiPoints?: number;

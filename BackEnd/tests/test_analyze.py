@@ -13,6 +13,12 @@ import pytest
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
 EXPECTED_FLIP_NET_PROFIT = 12620.0
+# Verified identical under the old month-based formulas at 6 months and the
+# per-diem ones at 180 days — the two agree to the last digit, which is what
+# `monthsUntilRefi` -> `daysUntilRefi` was designed to guarantee. This is the
+# metric the switch could plausibly have moved, so it is pinned alongside cash
+# flow (which never depended on the holding period at all).
+EXPECTED_BRRRR_CASH_NEEDED = 63525.0
 
 BRRRR_METRIC_KEYS = {
     "cash_flow",
@@ -100,7 +106,7 @@ class TestAnalyzeBrrr:
         response = client.post("/analyze/brrr", json=without)
         assert response.status_code == 200, response.text
         with_default = client.post(
-            "/analyze/brrr", json={**brrrr_payload, "refiPoints": 1.5}
+            "/analyze/brrr", json={**brrrr_payload, "refiPoints": 2}
         ).json()
         assert response.json()["cash_out"] == pytest.approx(with_default["cash_out"])
 
@@ -112,6 +118,7 @@ class TestAnalyzeBrrr:
             ("rent", 0, "Rent"),
             ("ltv_as_precent", 150, "LTV"),
             ("rehabCost", -5, "Rehab cost"),
+            ("daysUntilRefi", 0, "Days until refi"),
         ],
     )
     def test_validation_rejects_bad_input(
@@ -120,6 +127,57 @@ class TestAnalyzeBrrr:
         response = client.post("/analyze/brrr", json={**brrrr_payload, field: value})
         assert response.status_code == 400
         assert message.lower() in response.json()["detail"].lower()
+
+
+class TestRefiTiming:
+    """`monthsUntilRefi` became `daysUntilRefi`, accrued per diem on a 360-day
+    year. A month is exactly 30 days under that convention, which is what makes
+    the migration (`days = months * 30`) leave every saved deal's numbers alone.
+    """
+
+    def test_180_days_reproduces_the_old_6_month_result(self, client, brrrr_payload):
+        # The fixture is the pre-rename payload translated by that same *30, so
+        # this asserting the pinned cash-flow *and* the cash figures below is
+        # the proof the per-diem switch changed nothing for existing deals.
+        result = client.post("/analyze/brrr", json=brrrr_payload).json()
+        assert result["cash_flow"] == pytest.approx(EXPECTED_BRRRR_CASH_FLOW, abs=1e-9)
+        # 6 months of HML interest + holding costs, priced per diem.
+        assert result["total_cash_needed_for_deal"] == pytest.approx(
+            EXPECTED_BRRRR_CASH_NEEDED, abs=1e-9
+        )
+
+    def test_a_legacy_months_payload_is_converted_not_read_as_days(
+        self, client, brrrr_payload
+    ):
+        """A stale frontend still sends `monthsUntilRefi: 6` — that is 180 days,
+        not 6 days. Reading it literally would understate the hold by 29x."""
+        legacy = {k: v for k, v in brrrr_payload.items() if k != "daysUntilRefi"}
+        legacy["monthsUntilRefi"] = 6
+        legacy_result = client.post("/analyze/brrr", json=legacy).json()
+        current_result = client.post("/analyze/brrr", json=brrrr_payload).json()
+        assert legacy_result["total_cash_needed_for_deal"] == pytest.approx(
+            current_result["total_cash_needed_for_deal"]
+        )
+
+    def test_days_drive_the_holding_period_cost(self, client, brrrr_payload):
+        short = client.post(
+            "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 90}
+        ).json()
+        long = client.post(
+            "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 360}
+        ).json()
+        # Longer hold => more HML interest and holding cost => more cash in.
+        assert long["total_cash_needed_for_deal"] > short["total_cash_needed_for_deal"]
+        # ...but the stabilised rental does not care how long the rehab took.
+        assert long["cash_flow"] == pytest.approx(short["cash_flow"], abs=1e-9)
+
+    def test_a_single_day_is_meaningful(self, client, brrrr_payload):
+        """The whole point of the days switch: 181 != 180."""
+        base = client.post("/analyze/brrr", json=brrrr_payload).json()
+        one_more = client.post(
+            "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 181}
+        ).json()
+        assert one_more["total_cash_needed_for_deal"] > base["total_cash_needed_for_deal"]
 
 
 class TestAnalyzeFlip:
