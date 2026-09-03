@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from DAL.crud.pipeline_template import get_template
-from pipeline_defaults import default_stages_for
+from BL.pipelineTemplate.common.pipeline_defaults import default_stages_for
 
 
 def first_stage_id(db: Session, deal_type: str) -> str:

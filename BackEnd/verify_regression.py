@@ -270,7 +270,7 @@ ensure_pipeline_defaults = _resolve(
 )
 ensure_activity_category_defaults = _resolve(
     "ensure_activity_category_defaults",
-    "BL.reps.common.seed",
+    "DAL.crud.reps",
     "crud_reps",
 )
 

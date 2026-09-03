@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from DAL.data_models import BoughtBrrrDeal, BoughtFlipDeal, BrrrActiveDeal, FlipActiveDeal
-from ReqRes.boughtDeal.boughtDealReq import BoughtBrrrDealCreate, BoughtFlipDealCreate
+from ReqRes.common.bought_deal_schemas import BoughtBrrrDealCreate, BoughtFlipDealCreate
 
 
 def add_bought_brrr_deal(db: Session, deal_data: BoughtBrrrDealCreate) -> BoughtBrrrDeal:

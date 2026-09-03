@@ -9,8 +9,8 @@ import logging
 
 import DAL.data_models  # noqa: F401  -- registers every ORM table on Base.metadata
 import migrations
-from crud_pipeline_template import ensure_defaults as ensure_pipeline_defaults
-import crud_reps
+from BL.pipelineTemplate.common.seed import ensure_defaults as ensure_pipeline_defaults
+from DAL.crud.reps import ensure_activity_category_defaults
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,6 @@ def run(engine, SessionLocal) -> None:
         ensure_pipeline_defaults(_seed_db)
         # Seed REPS activity categories so the dropdown is never empty on first run.
         try:
-            crud_reps.ensure_activity_category_defaults(_seed_db)
+            ensure_activity_category_defaults(_seed_db)
         except Exception as _exc:  # pragma: no cover
             logger.warning("Failed to seed REPS activity categories: %s", _exc)

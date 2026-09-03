@@ -22,7 +22,7 @@ from DAL.data_models import (
     BoughtFlipDeal,
     DEFAULT_REPS_ACTIVITY_CATEGORIES,
 )
-from ReqRes.reps.repsReq import (
+from ReqRes.common.reps_schemas import (
     RepsPersonCreate,
     RepsPersonUpdate,
     RepsActivityCategoryCreate,

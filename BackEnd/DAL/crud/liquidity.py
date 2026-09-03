@@ -4,7 +4,7 @@ from DAL.data_models import (
     LiquidityRecurringTransaction,
     LiquiditySettings,
 )
-from ReqRes.liquidity.liquidityReq import (
+from ReqRes.common.liquidity_schemas import (
     LiquidityTransactionCreate,
     LiquidityTransactionUpdate,
     LiquidityRecurringTransactionCreate,

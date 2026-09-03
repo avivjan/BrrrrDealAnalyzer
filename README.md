@@ -57,8 +57,9 @@ duplicate/delete, Move to Bought, bought-deal autosave, and the PDF reports.
 > **Database safety.** `BackEnd/tests/conftest.py` redirects `$DATABASE_URL` to a
 > throwaway SQLite file *before* any application module is imported — which it
 > has to, because `db.py` builds its `Engine` at import time and `main.py` runs
-> `create_all`, `_run_migrations()` and seeding at import time. It also stubs out
-> `load_dotenv` so `BackEnd/.env` credentials never enter a test process.
+> `bootstrap.run(...)` (schema `create_all` + the migrations in `BackEnd/migrations/`
+> + seeding) at import time. It also stubs out `load_dotenv` so `BackEnd/.env`
+> credentials never enter a test process.
 >
 > The redirect is then **verified**, at import, at session start, and before every
 > test: if the engine is not the temp SQLite file — or its URL contains a
@@ -112,29 +113,35 @@ backend; the same checklist is repeated in the header comment of
 
 **Backend**
 
-5. **`ReqRes/`** — add the field to `analyzeBRRR/analyzeBRRRReq.py` and/or
-   `analyzeFlip/analyzeFlipReq.py` (the `/analyze/*` endpoints) *and* to
-   `activeDeal/activeDealReq.py` (`BaseDealReq`, or `BrrrActiveDealCreate` /
-   `FlipActiveDealCreate`). `boughtDeal/boughtDealReq.py` inherits from the
-   active-deal create models — verify rather than duplicate.
+5. **`BackEnd/ReqRes/common/analyze_inputs.py`** — add the field to
+   `analyzeBRRRReq` and/or `analyzeFlipReq` (the `/analyze/*` endpoints) *and*
+   to **`BackEnd/ReqRes/common/active_deal_schemas.py`** (`BaseDealReq`, or
+   `BrrrActiveDealCreate` / `FlipActiveDealCreate`). `bought_deal_schemas.py`
+   inherits from the active-deal create models — verify rather than
+   duplicate. Every division's per-endpoint `ReqRes/<division>/<endpoint>/`
+   file just re-exports these — there's nothing to add there.
    **The Pydantic `alias=` must exactly match the field name used in step 1.**
-6. **`ReqRes/.../analyzeBRRRRes.py` / `analyzeFlipRes.py`** — only for computed
-   *output* metrics, not raw inputs.
-7. **`models.py`** — add the `Column` to the `BaseDeal` mixin (shared) or to
-   **all four** of `BrrrActiveDeal`, `FlipActiveDeal`, `BoughtBrrrDeal`,
-   `BoughtFlipDeal`. The column name is the non-aliased snake_case name.
-8. **`main.py` `_run_migrations()`** — call `_add_column_if_missing` for every
-   affected existing table. `Base.metadata.create_all` only creates *new* tables,
-   so without this, existing rows lack the column. The migration `DEFAULT` must
-   match the model `default=` and the Pydantic default, because `update_*_deal`
-   dumps every field (no `exclude_unset`) on each PUT.
-9. **`main.py`** — use the field in `calculate_brrr_results` /
-   `calculate_flip_results` and `validate_brrr_inputs` / `validate_flip_inputs`;
-   register a `CalcStep` (see `calc_breakdown.py`) if it feeds a headline metric.
-10. **`crud_active_deal.py` / `crud_bought_deal.py`** — no change expected; they
-    iterate `__table__.columns` dynamically. Confirm only.
-11. **`deal_pdf.py`** — only if it's a headline metric; the PDF renders result
-    metrics and breakdowns, not raw inputs.
+6. **`BackEnd/ReqRes/common/analyze_results.py`** (`analyzeBRRRRes` /
+   `analyzeFlipRes`) — only for computed *output* metrics, not raw inputs.
+7. **`BackEnd/DAL/data_models/`** — add the `Column` to `common/base_deal.py`'s
+   `BaseDeal` mixin (shared) or to **all four** of `activeDeal/deals.py`'s
+   `BrrrActiveDeal` / `FlipActiveDeal` and `boughtDeal/deals.py`'s
+   `BoughtBrrrDeal` / `BoughtFlipDeal`. The column name is the non-aliased
+   snake_case name.
+8. **`BackEnd/migrations/runner.py`** — call `add_column_if_missing` for every
+   affected existing table (see `migrations/steps/` for the pattern).
+   `Base.metadata.create_all` only creates *new* tables, so without this,
+   existing rows lack the column. The migration `DEFAULT` must match the
+   model `default=` and the Pydantic default, because `update_*_deal` dumps
+   every field (no `exclude_unset`) on each PUT.
+9. **`BackEnd/BL/common/deal_analysis.py`** / **`deal_validation.py`** — use
+   the field in `calculate_brrr_results` / `calculate_flip_results` and
+   `validate_brrr_inputs` / `validate_flip_inputs`; register a `CalcStep`
+   (see `BL/common/calc_breakdown.py`) if it feeds a headline metric.
+10. **`BackEnd/DAL/crud/active_deal.py`** / **`bought_deal.py`** — no change
+    expected; they iterate `__table__.columns` dynamically. Confirm only.
+11. **`BackEnd/BL/reports/common/deal_pdf.py`** — only if it's a headline
+    metric; the PDF renders result metrics and breakdowns, not raw inputs.
 
 **Then**
 
