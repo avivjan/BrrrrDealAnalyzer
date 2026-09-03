@@ -13,7 +13,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import text, inspect as sa_inspect
 
-from models import (
+from DAL.data_models import (
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )

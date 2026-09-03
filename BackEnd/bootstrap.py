@@ -7,7 +7,7 @@ middleware). Kept as its own module so `main` stays a thin wiring file.
 
 import logging
 
-import models  # noqa: F401  -- registers every ORM table on Base.metadata
+import DAL.data_models  # noqa: F401  -- registers every ORM table on Base.metadata
 import migrations
 from crud_pipeline_template import ensure_defaults as ensure_pipeline_defaults
 import crud_reps
