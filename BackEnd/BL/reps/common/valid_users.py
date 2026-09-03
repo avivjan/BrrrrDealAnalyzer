@@ -1,0 +1,1 @@
+VALID_REPS_USERS = {"Aviv2026", "Yarden2026"}

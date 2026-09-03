@@ -25,7 +25,6 @@ from DAL.data_models import (
 from ReqRes.reps.repsReq import (
     RepsPersonCreate,
     RepsPersonUpdate,
-    RepsPropertyOption,
     RepsActivityCategoryCreate,
 )
 
@@ -75,39 +74,18 @@ def delete_person(db: Session, person_id: str) -> bool:
 
 # --- Properties / Prospects ---------------------------------------------- #
 
-def list_property_options(db: Session) -> List[RepsPropertyOption]:
-    """Bought-deal addresses (priority) + prospect names, deduplicated.
-
-    The autocomplete wants bought deals first (they are the source of truth
-    for properties the user actually owns) and prospects underneath. We
-    dedupe case-insensitively so a typed prospect that later becomes a
-    bought deal doesn't appear twice.
-    """
-    bought_addresses: List[str] = []
+def get_bought_deal_addresses(db: Session) -> List[str]:
+    """Raw `address` column from every bought BRRRR/FLIP deal, in that priority
+    order. May contain `None`/blank entries; the caller filters those."""
+    addresses: List[str] = []
     for cls in (BoughtBrrrDeal, BoughtFlipDeal):
         for row in db.query(cls.address).filter(cls.address.isnot(None)).all():
-            addr = (row[0] or "").strip()
-            if addr:
-                bought_addresses.append(addr)
+            addresses.append(row[0])
+    return addresses
 
-    seen: set[str] = set()
-    options: List[RepsPropertyOption] = []
-    for addr in bought_addresses:
-        key = addr.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        options.append(RepsPropertyOption(name=addr, source="bought"))
 
-    prospects = db.query(RepsProperty).order_by(RepsProperty.name.asc()).all()
-    for p in prospects:
-        key = (p.name or "").strip().lower()
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        options.append(RepsPropertyOption(name=p.name, source="prospect"))
-
-    return options
+def list_prospects(db: Session) -> List[RepsProperty]:
+    return db.query(RepsProperty).order_by(RepsProperty.name.asc()).all()
 
 
 def upsert_prospect(db: Session, name: str) -> RepsProperty:
