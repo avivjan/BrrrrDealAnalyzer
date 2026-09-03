@@ -3,16 +3,12 @@ from DAL.data_models import (
     LiquidityTransaction,
     LiquidityRecurringTransaction,
     LiquiditySettings,
-    LIQUIDITY_RECURRING_FREQUENCIES,
 )
 from ReqRes.liquidity.liquidityReq import (
     LiquidityTransactionCreate,
     LiquidityTransactionUpdate,
     LiquidityRecurringTransactionCreate,
-    LiquidityRecurringTransactionUpdate,
-    LiquiditySettingsUpdate,
 )
-from datetime import date
 
 
 # --- Transactions ---
@@ -80,13 +76,9 @@ def get_recurring(db: Session, rule_id: str) -> LiquidityRecurringTransaction | 
     )
 
 
-def add_recurring(
+def insert_recurring(
     db: Session, data: LiquidityRecurringTransactionCreate
 ) -> LiquidityRecurringTransaction:
-    if data.frequency not in LIQUIDITY_RECURRING_FREQUENCIES:
-        # Should already be guarded by the Literal type, but defense-in-depth
-        # so a hand-rolled HTTP client can't poison the DB.
-        raise ValueError(f"Unsupported frequency: {data.frequency!r}")
     rule = LiquidityRecurringTransaction(
         description=data.description,
         amount_k=data.amount_k,
@@ -102,48 +94,8 @@ def add_recurring(
     return rule
 
 
-def update_recurring(
-    db: Session, rule_id: str, data: LiquidityRecurringTransactionUpdate
-) -> LiquidityRecurringTransaction | None:
-    """Apply a partial update; raises ValueError if the merged row is invalid.
-
-    The `end_date >= start_date` invariant lives here (not in the schema)
-    because either field may be omitted from the patch payload.
-    """
-    rule = (
-        db.query(LiquidityRecurringTransaction)
-        .filter(LiquidityRecurringTransaction.id == rule_id)
-        .first()
-    )
-    if not rule:
-        return None
-
-    if data.description is not None:
-        rule.description = data.description
-    if data.amount_k is not None:
-        if data.amount_k == 0:
-            raise ValueError("amount_k must be non-zero.")
-        rule.amount_k = data.amount_k
-    if data.start_date is not None:
-        rule.start_date = data.start_date
-    # `end_date` is intentionally allowed to be set back to NULL via PATCH,
-    # but the Update schema can't distinguish "unset" from "explicit null"
-    # without a sentinel. Update endpoints treat `None` as "leave as-is" to
-    # match the rest of this codebase.
-    if data.end_date is not None:
-        rule.end_date = data.end_date
-    if data.occurrences is not None:
-        rule.occurrences = data.occurrences
-    if data.frequency is not None:
-        if data.frequency not in LIQUIDITY_RECURRING_FREQUENCIES:
-            raise ValueError(f"Unsupported frequency: {data.frequency!r}")
-        rule.frequency = data.frequency
-    if data.interval is not None:
-        rule.interval = data.interval
-
-    if rule.end_date is not None and rule.end_date < rule.start_date:
-        raise ValueError("end_date must be on or after start_date.")
-
+def save_recurring(db: Session, rule: LiquidityRecurringTransaction) -> LiquidityRecurringTransaction:
+    """Persist a `LiquidityRecurringTransaction` the caller has already mutated."""
     db.commit()
     db.refresh(rule)
     return rule
@@ -168,23 +120,23 @@ def get_settings(db: Session) -> LiquiditySettings | None:
     return db.query(LiquiditySettings).filter(LiquiditySettings.id == 1).first()
 
 
-def upsert_settings(db: Session, data: LiquiditySettingsUpdate) -> LiquiditySettings:
-    settings = db.query(LiquiditySettings).filter(LiquiditySettings.id == 1).first()
-    if not settings:
-        settings = LiquiditySettings(
-            id=1,
-            opening_balance_k=data.opening_balance_k if data.opening_balance_k is not None else 0,
-            opening_balance_date=data.opening_balance_date if data.opening_balance_date is not None else date.today(),
-            reserve_k=data.reserve_k if data.reserve_k is not None else 5,
-        )
-        db.add(settings)
-    else:
-        if data.opening_balance_k is not None:
-            settings.opening_balance_k = data.opening_balance_k
-        if data.opening_balance_date is not None:
-            settings.opening_balance_date = data.opening_balance_date
-        if data.reserve_k is not None:
-            settings.reserve_k = data.reserve_k
+def insert_settings(
+    db: Session, *, opening_balance_k, opening_balance_date, reserve_k
+) -> LiquiditySettings:
+    settings = LiquiditySettings(
+        id=1,
+        opening_balance_k=opening_balance_k,
+        opening_balance_date=opening_balance_date,
+        reserve_k=reserve_k,
+    )
+    db.add(settings)
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
+def save_settings(db: Session, settings: LiquiditySettings) -> LiquiditySettings:
+    """Persist a `LiquiditySettings` the caller has already mutated."""
     db.commit()
     db.refresh(settings)
     return settings

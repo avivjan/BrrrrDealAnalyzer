@@ -18,13 +18,6 @@ from ReqRes.boughtDeal.boughtDealReq import (
     BoughtFlipDealCreate, BoughtFlipDealRes
 )
 
-from crud_liquidity import (
-    get_all_transactions, get_transaction, add_transaction,
-    update_transaction, delete_transaction,
-    get_all_recurring, get_recurring, add_recurring,
-    update_recurring, delete_recurring,
-    get_settings, upsert_settings,
-)
 from crud_pipeline_template import (
     list_templates as list_pipeline_templates,
     upsert_template as upsert_pipeline_template,
@@ -60,7 +53,6 @@ from ReqRes.reps.repsReq import (
 )
 import crud_reps
 import reps_service
-import mercury_service
 from mercury_service import MercuryApiError, MercuryConfigError
 import bootstrap
 import smtplib
@@ -486,35 +478,29 @@ def send_offer_route(payload: SendOfferReq):
 
 # --- Liquidity Timeline ---
 
-def _txn_to_res(txn: LiquidityTransaction) -> LiquidityTransactionRes:
-    return LiquidityTransactionRes(
-        id=str(txn.id),
-        effective_date=txn.effective_date,
-        description=txn.description,
-        amount_k=float(txn.amount_k),
-        created_at=txn.created_at.isoformat() if txn.created_at else None,
-        updated_at=txn.updated_at.isoformat() if txn.updated_at else None,
-    )
+from BL.liquidity.listTransactions.listTransactions import list_transactions as list_transactions_bl
+from BL.liquidity.createTransaction.createTransaction import create_transaction as create_transaction_bl
+from BL.liquidity.updateTransaction.updateTransaction import update_transaction as update_transaction_bl
+from BL.liquidity.deleteTransaction.deleteTransaction import delete_transaction as delete_transaction_bl
 
 @app.get("/liquidity/transactions", response_model=List[LiquidityTransactionRes])
 def list_liquidity_transactions(db: Session = Depends(get_db)):
-    return [_txn_to_res(t) for t in get_all_transactions(db)]
+    return list_transactions_bl(db)
 
 @app.post("/liquidity/transactions", response_model=LiquidityTransactionRes, status_code=201)
 def create_liquidity_transaction(data: LiquidityTransactionCreate, db: Session = Depends(get_db)):
-    txn = add_transaction(db, data)
-    return _txn_to_res(txn)
+    return create_transaction_bl(db, data)
 
 @app.put("/liquidity/transactions/{txn_id}", response_model=LiquidityTransactionRes)
 def update_liquidity_transaction(txn_id: str, data: LiquidityTransactionUpdate, db: Session = Depends(get_db)):
-    txn = update_transaction(db, txn_id, data)
-    if not txn:
+    result = update_transaction_bl(db, txn_id, data)
+    if not result:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return _txn_to_res(txn)
+    return result
 
 @app.delete("/liquidity/transactions/{txn_id}")
 def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
-    if not delete_transaction(db, txn_id):
+    if not delete_transaction_bl(db, txn_id):
         raise HTTPException(status_code=404, detail="Transaction not found")
     return {"message": "Transaction deleted"}
 
@@ -523,24 +509,14 @@ def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
 # Stored as rules; the frontend expands each rule into virtual events on
 # the timeline. Editing the rule retroactively fixes every projected event.
 
-def _recurring_to_res(rule: LiquidityRecurringTransaction) -> LiquidityRecurringTransactionRes:
-    return LiquidityRecurringTransactionRes(
-        id=str(rule.id),
-        description=rule.description,
-        amount_k=float(rule.amount_k),
-        start_date=rule.start_date,
-        end_date=rule.end_date,
-        occurrences=rule.occurrences,
-        frequency=rule.frequency,  # type: ignore[arg-type]
-        interval=int(rule.interval or 1),
-        created_at=rule.created_at.isoformat() if rule.created_at else None,
-        updated_at=rule.updated_at.isoformat() if rule.updated_at else None,
-    )
-
+from BL.liquidity.listRecurring.listRecurring import list_recurring as list_recurring_bl
+from BL.liquidity.createRecurring.createRecurring import create_recurring as create_recurring_bl
+from BL.liquidity.updateRecurring.updateRecurring import update_recurring as update_recurring_bl
+from BL.liquidity.deleteRecurring.deleteRecurring import delete_recurring as delete_recurring_bl
 
 @app.get("/liquidity/recurring", response_model=List[LiquidityRecurringTransactionRes])
 def list_liquidity_recurring(db: Session = Depends(get_db)):
-    return [_recurring_to_res(r) for r in get_all_recurring(db)]
+    return list_recurring_bl(db)
 
 
 @app.post(
@@ -552,10 +528,9 @@ def create_liquidity_recurring(
     data: LiquidityRecurringTransactionCreate, db: Session = Depends(get_db)
 ):
     try:
-        rule = add_recurring(db, data)
+        return create_recurring_bl(db, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    return _recurring_to_res(rule)
 
 
 @app.put(
@@ -567,49 +542,34 @@ def update_liquidity_recurring(
     db: Session = Depends(get_db),
 ):
     try:
-        rule = update_recurring(db, rule_id, data)
+        result = update_recurring_bl(db, rule_id, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    if not rule:
+    if not result:
         raise HTTPException(status_code=404, detail="Recurring rule not found")
-    return _recurring_to_res(rule)
+    return result
 
 
 @app.delete("/liquidity/recurring/{rule_id}")
 def delete_liquidity_recurring(rule_id: str, db: Session = Depends(get_db)):
-    if not delete_recurring(db, rule_id):
+    if not delete_recurring_bl(db, rule_id):
         raise HTTPException(status_code=404, detail="Recurring rule not found")
     return {"message": "Recurring rule deleted"}
 
 
+from BL.liquidity.getSettings.getSettings import get_settings as get_settings_bl
+from BL.liquidity.updateSettings.updateSettings import update_settings as update_settings_bl
+
 @app.get("/liquidity/settings", response_model=LiquiditySettingsRes)
 def get_liquidity_settings(db: Session = Depends(get_db)):
-    settings = get_settings(db)
-    if not settings:
-        from datetime import date as date_type
-        default_data = LiquiditySettingsUpdate(
-            opening_balance_k=0,
-            opening_balance_date=date_type.today(),
-            reserve_k=5,
-        )
-        settings = upsert_settings(db, default_data)
-    return LiquiditySettingsRes(
-        opening_balance_k=float(settings.opening_balance_k),
-        opening_balance_date=settings.opening_balance_date,
-        reserve_k=float(settings.reserve_k),
-        updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
-    )
+    return get_settings_bl(db)
 
 @app.put("/liquidity/settings", response_model=LiquiditySettingsRes)
 def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depends(get_db)):
-    settings = upsert_settings(db, data)
-    return LiquiditySettingsRes(
-        opening_balance_k=float(settings.opening_balance_k),
-        opening_balance_date=settings.opening_balance_date,
-        reserve_k=float(settings.reserve_k),
-        updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
-    )
+    return update_settings_bl(db, data)
 
+
+from BL.liquidity.mercuryBalance.mercuryBalance import get_mercury_balance as get_mercury_balance_bl
 
 @app.get("/liquidity/mercury-balance")
 def get_mercury_balance():
@@ -620,7 +580,7 @@ def get_mercury_balance():
     balance to today on page load.
     """
     try:
-        return mercury_service.summarize_balance()
+        return get_mercury_balance_bl()
     except MercuryConfigError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except MercuryApiError as e:

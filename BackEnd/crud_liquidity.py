@@ -8,9 +8,10 @@ from DAL.crud.liquidity import (  # noqa: F401
     delete_transaction,
     get_all_recurring,
     get_recurring,
-    add_recurring,
-    update_recurring,
+    insert_recurring,
+    save_recurring,
     delete_recurring,
     get_settings,
-    upsert_settings,
+    insert_settings,
+    save_settings,
 )
