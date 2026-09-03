@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from typing import Union, List, Optional
 from decimal import Decimal
 from datetime import datetime, date as date_cls
@@ -42,7 +41,6 @@ from crud_liquidity import (
     get_settings, upsert_settings,
 )
 from crud_pipeline_template import (
-    ensure_defaults as ensure_pipeline_defaults,
     list_templates as list_pipeline_templates,
     upsert_template as upsert_pipeline_template,
     get_stats as get_pipeline_stats,
@@ -60,13 +58,11 @@ from ReqRes.pipelineTemplate import (
 )
 from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
-from db import Base, engine, SessionLocal, get_db
+from db import engine, SessionLocal, get_db
 from models import (
     BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
     LiquidityTransaction, LiquidityRecurringTransaction, PipelineTemplate,
     RepsPerson, RepsProperty, RepsActivityCategory,
-    DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
-    DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
     LIQUIDITY_RECURRING_FREQUENCIES,
 )
 from ReqRes.reps.repsReq import (
@@ -84,7 +80,7 @@ import mercury_service
 from mercury_service import MercuryApiError, MercuryConfigError
 from calc_breakdown import CalcBreakdown, fmt_money, fmt_pct, fmt_num
 from deal_pdf import build_deal_pdf
-from sqlalchemy import text, inspect as sa_inspect
+import bootstrap
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -104,345 +100,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
-
-def _add_column_if_missing(
-    inspector,
-    table_name: str,
-    column_name: str,
-    column_ddl: str,
-    backfill_value: str,
-) -> None:
-    """Idempotently add a column to an existing table, backfilling old rows.
-
-    `Base.metadata.create_all` only creates tables that do not exist yet, so
-    every column added after a table shipped needs a call here. Keep
-    `backfill_value` in step with the SQLAlchemy `default=` and the Pydantic
-    default: `update_*_deal` dumps every field on each PUT, so a mismatch
-    silently rewrites existing rows.
-    """
-    if table_name not in inspector.get_table_names():
-        return
-    columns = [col["name"] for col in inspector.get_columns(table_name)]
-    if column_name in columns:
-        return
-    with engine.begin() as conn:
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_ddl}"
-        ))
-        conn.execute(text(
-            f"UPDATE {table_name} SET {column_name} = {backfill_value} "
-            f"WHERE {column_name} IS NULL"
-        ))
-
-
-# Arbitrary but fixed key identifying "this app's schema migration".
-_MIGRATION_LOCK_KEY = 8_147_233_901
-
-
-@contextmanager
-def _migration_lock():
-    """Serialise `_run_migrations` across processes.
-
-    Migrations run at *import* time, so every uvicorn worker runs them at once
-    on boot. Two workers both seeing `days_until_refi` missing would both try
-    to add it; one wins, the other dies on "column already exists" and takes
-    the deploy with it. A Postgres advisory lock makes the second worker wait
-    and then find the work already done.
-
-    Held for the duration of the `with` block by its own transaction, and
-    released when that commits. A no-op off Postgres — SQLite in the tests is
-    single-process by construction.
-    """
-    if engine.dialect.name != "postgresql":
-        yield
-        return
-    with engine.begin() as lock_conn:
-        lock_conn.execute(
-            text("SELECT pg_advisory_xact_lock(:key)"),
-            {"key": _MIGRATION_LOCK_KEY},
-        )
-        yield
-
-
-def _run_migrations():
-    with _migration_lock():
-        _run_migrations_locked()
-
-
-def _run_migrations_locked():
-    inspector = sa_inspect(engine)
-    table_names = inspector.get_table_names()
-
-    # BRRRR-specific columns added after initial schema. New rows pick up the
-    # default from the model; existing rows are backfilled here so all reads
-    # are safe (no NULLs, no surprise KeyErrors in the response models).
-    for brrr_table in ("active_deals", "bought_brrrr_deals"):
-        _add_column_if_missing(
-            inspector,
-            brrr_table,
-            "refi_points",
-            "NUMERIC(5,2) DEFAULT 1.5",
-            "1.5",
-        )
-        _add_column_if_missing(
-            inspector,
-            brrr_table,
-            "cash_reserve_in_thousands",
-            "NUMERIC(12,2) DEFAULT 0",
-            "0",
-        )
-
-    if "liquidity_transactions" in table_names:
-        columns = [col["name"] for col in inspector.get_columns("liquidity_transactions")]
-
-        # Rename legacy columns to their current model names
-        renames = {"date": "effective_date", "amount": "amount_k"}
-        for old_name, new_name in renames.items():
-            if old_name in columns and new_name not in columns:
-                with engine.begin() as conn:
-                    conn.execute(text(
-                        f"ALTER TABLE liquidity_transactions RENAME COLUMN {old_name} TO {new_name}"
-                    ))
-                columns = [new_name if c == old_name else c for c in columns]
-            elif old_name in columns and new_name in columns:
-                with engine.begin() as conn:
-                    conn.execute(text(
-                        f"UPDATE liquidity_transactions SET {new_name} = {old_name} WHERE {new_name} IS NULL"
-                    ))
-                    conn.execute(text(
-                        f"ALTER TABLE liquidity_transactions DROP COLUMN {old_name}"
-                    ))
-                columns = [c for c in columns if c != old_name]
-
-        # Drop any leftover columns not in the current model
-        expected = {"id", "effective_date", "description", "amount_k", "created_at", "updated_at"}
-        for col in columns:
-            if col not in expected:
-                with engine.begin() as conn:
-                    conn.execute(text(
-                        f"ALTER TABLE liquidity_transactions DROP COLUMN {col}"
-                    ))
-
-    # `liquidity_recurring_transactions` is created by `Base.metadata.create_all`
-    # on first boot; nothing else to migrate yet. If we later evolve the schema
-    # (e.g. add `notes` or `category` columns) the per-column backfill goes
-    # here, mirroring the pattern used for `liquidity_transactions` above.
-
-    if "liquidity_settings" in table_names:
-        columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]
-        if "opening_balance_date" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_date DATE DEFAULT CURRENT_DATE NOT NULL"
-                ))
-        if "reserve_k" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE liquidity_settings ADD COLUMN reserve_k NUMERIC(14,4) DEFAULT 5 NOT NULL"
-                ))
-        if "opening_balance_k" not in columns:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
-                ))
-
-    # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
-    # to the stable slug IDs used by the default pipeline template. Idempotent.
-    _migrate_bought_stage_to_string(inspector, "bought_brrrr_deals", DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT)
-    _migrate_bought_stage_to_string(inspector, "bought_flip_deals", DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT)
-
-    # Replace `Months_until_refi` with whole `days_until_refi`. Idempotent.
-    for brrr_table in ("active_deals", "bought_brrrr_deals"):
-        _migrate_months_until_refi_to_days(brrr_table)
-
-    # Widen the money columns so a thousands value can hold an exact dollar.
-    _widen_money_columns()
-
-
-def _migrate_bought_stage_to_string(
-    inspector,
-    table_name: str,
-    slug_by_int: dict[int, str],
-) -> None:
-    if table_name not in inspector.get_table_names():
-        return
-    cols = {c["name"]: c for c in inspector.get_columns(table_name)}
-    col = cols.get("bought_stage")
-    if col is None:
-        return
-
-    col_type = str(col.get("type") or "").upper()
-    # Already text-like? Nothing to do.
-    if any(token in col_type for token in ("CHAR", "TEXT", "STRING", "VARCHAR")):
-        return
-
-    default_slug = slug_by_int.get(1, "purchase")
-    with engine.begin() as conn:
-        # 1) Add a temp text column with a safe default.
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ADD COLUMN bought_stage_new TEXT"
-        ))
-        # 2) Translate each legacy int to its canonical slug; anything unknown
-        #    clamps to the first default stage so the board never breaks.
-        for legacy_int, slug in slug_by_int.items():
-            conn.execute(
-                text(
-                    f"UPDATE {table_name} SET bought_stage_new = :slug "
-                    f"WHERE bought_stage = :legacy_int"
-                ),
-                {"slug": slug, "legacy_int": legacy_int},
-            )
-        conn.execute(
-            text(
-                f"UPDATE {table_name} SET bought_stage_new = :default_slug "
-                f"WHERE bought_stage_new IS NULL"
-            ),
-            {"default_slug": default_slug},
-        )
-        # 3) Drop the old int column and rename the new one into place.
-        conn.execute(text(f"ALTER TABLE {table_name} DROP COLUMN bought_stage"))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} RENAME COLUMN bought_stage_new TO bought_stage"
-        ))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ALTER COLUMN bought_stage SET NOT NULL"
-        ))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ALTER COLUMN bought_stage SET DEFAULT 'purchase'"
-        ))
-
-
-def _migrate_months_until_refi_to_days(table_name: str) -> None:
-    """Replace the legacy `Months_until_refi` column with `days_until_refi`.
-
-    The conversion is `months * 30`, and the calc moved to a 360-day banking
-    year at the same time, which makes the whole migration value-preserving:
-
-        HML interest  old: (rate/12/100)  * amount * months
-                      new: (rate/360/100) * amount * (months * 30)   -- equal
-        holding costs old: (taxes/12 + ins/12 + hoa)      * months
-                      new: (taxes/360 + ins/360 + hoa/30) * (months*30) -- equal
-
-    So every existing deal re-analyzes to exactly the figures it showed before.
-    The old default of 6 months lands on the new default of 180 days.
-
-    Idempotent, and a no-op on SQLite (the test harness) which cannot
-    `ALTER COLUMN` — its tables come out of `create_all` already correct.
-
-    Takes a *fresh* Inspector rather than sharing the caller's: an Inspector
-    memoises `get_columns`, so one reused across DDL hands back a stale picture
-    of the table. This is the migration that drops a column — it reads the
-    truth.
-    """
-    if engine.dialect.name != "postgresql":
-        return
-    inspector = sa_inspect(engine)
-    if table_name not in inspector.get_table_names():
-        return
-    columns = [col["name"] for col in inspector.get_columns(table_name)]
-    if "days_until_refi" in columns:
-        return
-    # SQLAlchemy created this one with a quoted mixed-case identifier, so match
-    # case-insensitively and then quote back whatever is actually there.
-    legacy_column = next(
-        (c for c in columns if c.lower() == "months_until_refi"), None
-    )
-    if legacy_column is None:
-        return
-    legacy = f'"{legacy_column}"'
-
-    # `IF NOT EXISTS` / `IF EXISTS` so a second process that got this far
-    # anyway (see `_migration_lock`) degrades to a no-op instead of crashing
-    # the boot on "column already exists".
-    with engine.begin() as conn:
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS days_until_refi INTEGER"
-        ))
-        conn.execute(text(
-            f"UPDATE {table_name} "
-            f"SET days_until_refi = ROUND({legacy} * 30) "
-            f"WHERE {legacy} IS NOT NULL"
-        ))
-        conn.execute(text(
-            f"UPDATE {table_name} SET days_until_refi = 180 "
-            f"WHERE days_until_refi IS NULL"
-        ))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ALTER COLUMN days_until_refi SET NOT NULL"
-        ))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ALTER COLUMN days_until_refi SET DEFAULT 180"
-        ))
-        conn.execute(text(
-            f"ALTER TABLE {table_name} DROP COLUMN IF EXISTS {legacy}"
-        ))
-
-
-# Money columns are stored in thousands, so NUMERIC(_, 2) rounds to the nearest
-# $10 and cannot hold a $50,500 purchase price. Widening the scale to 4 is
-# lossless in Postgres.
-_MONEY_COLUMNS_BY_TABLE = {
-    "active_deals": (
-        "purchase_price_in_thousands", "rehab_cost_in_thousands",
-        "closing_costs_buy_in_thousands", "arv_in_thousands",
-        "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
-    ),
-    "bought_brrrr_deals": (
-        "purchase_price_in_thousands", "rehab_cost_in_thousands",
-        "closing_costs_buy_in_thousands", "arv_in_thousands",
-        "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
-    ),
-    "flip_deals": (
-        "purchase_price_in_thousands", "rehab_cost_in_thousands",
-        "closing_costs_buy_in_thousands", "sale_price_in_thousands",
-        "selling_closing_costs_in_thousands",
-    ),
-    "bought_flip_deals": (
-        "purchase_price_in_thousands", "rehab_cost_in_thousands",
-        "closing_costs_buy_in_thousands", "sale_price_in_thousands",
-        "selling_closing_costs_in_thousands",
-    ),
-}
-
-
-def _widen_money_columns() -> None:
-    """Bring every `*_in_thousands` column up to NUMERIC(14,4). Idempotent.
-
-    Reflects fresh, for the same reason as the days migration above.
-    """
-    if engine.dialect.name != "postgresql":
-        return
-    inspector = sa_inspect(engine)
-    table_names = inspector.get_table_names()
-    for table_name, column_names in _MONEY_COLUMNS_BY_TABLE.items():
-        if table_name not in table_names:
-            continue
-        existing = {c["name"]: c for c in inspector.get_columns(table_name)}
-        for column_name in column_names:
-            col = existing.get(column_name)
-            if col is None:
-                continue
-            # `NUMERIC(14, 4)` — already widened, skip.
-            if getattr(col.get("type"), "scale", None) == 4:
-                continue
-            with engine.begin() as conn:
-                conn.execute(text(
-                    f"ALTER TABLE {table_name} "
-                    f"ALTER COLUMN {column_name} TYPE NUMERIC(14,4)"
-                ))
-
-
-_run_migrations()
-
-# Seed pipeline template rows (BRRRR + FLIP) on first boot. Safe to call often.
-with SessionLocal() as _seed_db:
-    ensure_pipeline_defaults(_seed_db)
-    # Seed REPS activity categories so the dropdown is never empty on first run.
-    try:
-        crud_reps.ensure_activity_category_defaults(_seed_db)
-    except Exception as _exc:  # pragma: no cover
-        logger.warning("Failed to seed REPS activity categories: %s", _exc)
+bootstrap.run(engine, SessionLocal)
 
 
 app.add_middleware(
