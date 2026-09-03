@@ -18,11 +18,6 @@ from ReqRes.boughtDeal.boughtDealReq import (
     BoughtFlipDealCreate, BoughtFlipDealRes
 )
 
-from crud_pipeline_template import (
-    list_templates as list_pipeline_templates,
-    upsert_template as upsert_pipeline_template,
-    get_stats as get_pipeline_stats,
-)
 from ReqRes.liquidity.liquidityReq import (
     LiquidityTransactionCreate, LiquidityTransactionUpdate, LiquidityTransactionRes,
     LiquidityRecurringTransactionCreate, LiquidityRecurringTransactionUpdate,
@@ -589,6 +584,10 @@ def get_mercury_balance():
 
 # --- Pipeline Templates (bought-deal stages/substages) ---
 
+from BL.pipelineTemplate.listTemplates.listTemplates import list_templates as list_templates_bl
+from BL.pipelineTemplate.updateTemplate.updateTemplate import update_template as update_template_bl
+from BL.pipelineTemplate.templateStats.templateStats import template_stats as template_stats_bl
+
 _VALID_DEAL_TYPES = {"BRRRR", "FLIP"}
 
 
@@ -600,7 +599,7 @@ def _require_valid_deal_type(deal_type: str) -> str:
 
 @app.get("/pipeline-templates", response_model=List[PipelineTemplateRes])
 def list_pipeline_templates_route(db: Session = Depends(get_db)):
-    return list_pipeline_templates(db)
+    return list_templates_bl(db)
 
 
 @app.put("/pipeline-templates/{deal_type}", response_model=PipelineTemplateRes)
@@ -610,18 +609,20 @@ def update_pipeline_template_route(
     db: Session = Depends(get_db),
 ):
     _require_valid_deal_type(deal_type)
-    return upsert_pipeline_template(db, deal_type, payload)  # type: ignore[arg-type]
+    return update_template_bl(db, deal_type, payload)  # type: ignore[arg-type]
 
 
 @app.get("/pipeline-templates/{deal_type}/stats", response_model=PipelineTemplateStatsRes)
 def pipeline_template_stats_route(deal_type: str, db: Session = Depends(get_db)):
     _require_valid_deal_type(deal_type)
-    return get_pipeline_stats(db, deal_type)  # type: ignore[arg-type]
+    return template_stats_bl(db, deal_type)  # type: ignore[arg-type]
 
+
+from BL.health.helloworld.helloworld import helloworld as helloworld_bl
 
 @app.get("/helloworld")
 def helloworld() -> dict:
-    return {"message": "Hello, World!"}
+    return helloworld_bl()
 
 
 # --- REPS (Real Estate Professional Status) tracker --- #
