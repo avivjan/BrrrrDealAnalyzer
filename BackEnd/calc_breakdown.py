@@ -13,8 +13,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Iterable, Union
 
-from pydantic import BaseModel
-
+from ReqRes.common.calc_step import CalcStep
 
 Number = Union[Decimal, float, int]
 
@@ -35,20 +34,6 @@ def fmt_pct(value: Number, decimals: int = 2) -> str:
 def fmt_num(value: Number, decimals: int = 2) -> str:
     """Render a plain number (e.g. DSCR ratio)."""
     return f"{float(value):.{decimals}f}"
-
-
-class CalcStep(BaseModel):
-    """A single self-documenting line in a calculation.
-
-    `label`   - human-readable name of the variable ("Operating Expenses").
-    `value`   - the numeric result of the step (always a float for JSON).
-    `formula` - the literal expression evaluated, with concrete values
-                substituted (e.g. "$2000 - $800 - $1000 = $200").
-    """
-
-    label: str
-    value: float
-    formula: str
 
 
 class CalcBreakdown:

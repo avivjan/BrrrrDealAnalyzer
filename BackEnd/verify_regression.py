@@ -431,6 +431,28 @@ _UUID_HEX_RE = re.compile(r"\b[0-9a-fA-F]{32}\b")
 _MEM_ADDRESS_RE = re.compile(r" at 0x[0-9a-fA-F]+")
 
 
+#: A qualified name like `ReqRes.common.comps.RentComp` or `decimal.Decimal`,
+#: matched so its module prefix can be stripped -- see `_strip_module_paths`.
+_QUALIFIED_NAME_RE = re.compile(r"\b(?:[A-Za-z_][A-Za-z0-9_]*\.)+([A-Za-z_][A-Za-z0-9_]*)\b")
+
+
+def _strip_module_paths(text: str) -> str:
+    """Reduce every dotted name in `text` to its last component.
+
+    `Pydantic FieldInfo.annotation` reprs (captured in snapshot 3) spell out
+    which *module* currently defines a nested type, e.g.
+    `List[ReqRes.activeDeal.activeDealReq.RentComp]`. A pure code-relocation
+    that moves `RentComp` to `ReqRes.common.comps` changes that string without
+    changing anything a caller can observe -- Pydantic validation, JSON
+    serialization and the OpenAPI `$ref` all key on the class's bare `__name__`
+    (asserted independently by the `openapi` and `models.schemas` snapshots).
+    Stripping module prefixes here keeps the `models` snapshot sensitive to a
+    real type change (the leaf name still differs) without flagging a legal
+    class-relocation as a behaviour change.
+    """
+    return _QUALIFIED_NAME_RE.sub(r"\1", text)
+
+
 def _scrub_text(text: str) -> str:
     text = _UUID_DASHED_RE.sub("<uuid>", text)
     text = _UUID_HEX_RE.sub("<uuid>", text)
@@ -923,7 +945,7 @@ def capture_models() -> dict[str, Any]:
                     "default_factory": getattr(finfo.default_factory, "__name__", None)
                     if finfo.default_factory
                     else None,
-                    "annotation": str(finfo.annotation),
+                    "annotation": _strip_module_paths(str(finfo.annotation)),
                 }
                 for fname, finfo in model.model_fields.items()
             },

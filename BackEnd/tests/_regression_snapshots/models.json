@@ -5,189 +5,189 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -201,308 +201,308 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "arv_in_thousands": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bought_stage": {
           "alias": "boughtStage",
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "'purchase'",
           "default_factory": null,
           "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "cash_reserve_in_thousands": {
           "alias": "cashReserve",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_cost_refi_in_thousands": {
           "alias": "closingCostsRefi",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "completed_substages": {
           "alias": "completedSubstages",
-          "annotation": "typing.Optional[typing.Dict[str, bool]]",
+          "annotation": "Optional[Dict[str, bool]]",
           "default": "{}",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "days_until_refi": {
           "alias": "daysUntilRefi",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "180",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR']",
+          "annotation": "Literal['BRRRR']",
           "default": "'BRRRR'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "interest_rate": {
           "alias": "interestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "loan_term_years": {
           "alias": "loanTermYears",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "30",
           "default_factory": null,
           "required": false
         },
         "ltv_as_precent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "maintenance_percent": {
           "alias": "maintenancePercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "property_managment_fee_precentages_from_rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "refi_points": {
           "alias": "refiPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('2')",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "source_deal_id": {
           "alias": "sourceDealId",
-          "annotation": "typing.Optional[uuid.UUID]",
+          "annotation": "Optional[UUID]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "vacancy_percent": {
           "alias": "vacancyPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -516,77 +516,77 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "arv_in_thousands": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bought_stage": {
           "alias": "boughtStage",
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "'purchase'",
           "default_factory": null,
           "required": false
         },
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -600,329 +600,329 @@
         },
         "cash_on_cash": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out_routi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_reserve_in_thousands": {
           "alias": "cashReserve",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_cost_refi_in_thousands": {
           "alias": "closingCostsRefi",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "completed_substages": {
           "alias": "completedSubstages",
-          "annotation": "typing.Optional[typing.Dict[str, bool]]",
+          "annotation": "Optional[Dict[str, bool]]",
           "default": "{}",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "created_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "days_until_refi": {
           "alias": "daysUntilRefi",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "180",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR']",
+          "annotation": "Literal['BRRRR']",
           "default": "'BRRRR'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "dscr": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "equity": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "id": {
           "alias": null,
-          "annotation": "<class 'uuid.UUID'>",
+          "annotation": "<class 'UUID'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "interest_rate": {
           "alias": "interestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "loan_term_years": {
           "alias": "loanTermYears",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "30",
           "default_factory": null,
           "required": false
         },
         "ltv_as_precent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "maintenance_percent": {
           "alias": "maintenancePercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "net_profit": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "property_managment_fee_precentages_from_rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "refi_points": {
           "alias": "refiPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('2')",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "roi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "source_deal_id": {
           "alias": "sourceDealId",
-          "annotation": "typing.Optional[uuid.UUID]",
+          "annotation": "Optional[UUID]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal_with_buffer": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "updated_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "vacancy_percent": {
           "alias": "vacancyPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -936,112 +936,112 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bought_stage": {
           "alias": "boughtStage",
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "'purchase'",
           "default_factory": null,
           "required": false
         },
         "buyer_agent_selling_fee": {
           "alias": "buyerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "capital_gains_tax_rate": {
           "alias": "capitalGainsTax",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "completed_substages": {
           "alias": "completedSubstages",
-          "annotation": "typing.Optional[typing.Dict[str, bool]]",
+          "annotation": "Optional[Dict[str, bool]]",
           "default": "{}",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['FLIP']",
+          "annotation": "Literal['FLIP']",
           "default": "'FLIP'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1055,154 +1055,154 @@
         },
         "monthly_utilities": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_price_in_thousands": {
           "alias": "salePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "seller_agent_selling_fee": {
           "alias": "sellerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "selling_closing_costs_in_thousands": {
           "alias": "sellingClosingCosts",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "source_deal_id": {
           "alias": "sourceDealId",
-          "annotation": "typing.Optional[uuid.UUID]",
+          "annotation": "Optional[UUID]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1216,35 +1216,35 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -1258,91 +1258,91 @@
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bought_stage": {
           "alias": "boughtStage",
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "'purchase'",
           "default_factory": null,
           "required": false
         },
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "buyer_agent_selling_fee": {
           "alias": "buyerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "capital_gains_tax_rate": {
           "alias": "capitalGainsTax",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "completed_substages": {
           "alias": "completedSubstages",
-          "annotation": "typing.Optional[typing.Dict[str, bool]]",
+          "annotation": "Optional[Dict[str, bool]]",
           "default": "{}",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "created_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['FLIP']",
+          "annotation": "Literal['FLIP']",
           "default": "'FLIP'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1356,28 +1356,28 @@
         },
         "id": {
           "alias": null,
-          "annotation": "<class 'uuid.UUID'>",
+          "annotation": "<class 'UUID'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "monthly_utilities": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -1391,56 +1391,56 @@
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1454,70 +1454,70 @@
         },
         "sale_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_price_in_thousands": {
           "alias": "salePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "seller_agent_selling_fee": {
           "alias": "sellerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "selling_closing_costs_in_thousands": {
           "alias": "sellingClosingCosts",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "source_deal_id": {
           "alias": "sourceDealId",
-          "annotation": "typing.Optional[uuid.UUID]",
+          "annotation": "Optional[UUID]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1552,21 +1552,21 @@
         },
         "updated_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1580,287 +1580,287 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "arv_in_thousands": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "cash_reserve_in_thousands": {
           "alias": "cashReserve",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_cost_refi_in_thousands": {
           "alias": "closingCostsRefi",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "days_until_refi": {
           "alias": "daysUntilRefi",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "180",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR']",
+          "annotation": "Literal['BRRRR']",
           "default": "'BRRRR'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "interest_rate": {
           "alias": "interestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "loan_term_years": {
           "alias": "loanTermYears",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "30",
           "default_factory": null,
           "required": false
         },
         "ltv_as_precent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "maintenance_percent": {
           "alias": "maintenancePercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "property_managment_fee_precentages_from_rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "refi_points": {
           "alias": "refiPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('2')",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "vacancy_percent": {
           "alias": "vacancyPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -1874,70 +1874,70 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "arv_in_thousands": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -1951,315 +1951,315 @@
         },
         "cash_on_cash": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out_routi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_reserve_in_thousands": {
           "alias": "cashReserve",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_cost_refi_in_thousands": {
           "alias": "closingCostsRefi",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "created_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "days_until_refi": {
           "alias": "daysUntilRefi",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "180",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR']",
+          "annotation": "Literal['BRRRR']",
           "default": "'BRRRR'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "dscr": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "equity": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "id": {
           "alias": null,
-          "annotation": "<class 'uuid.UUID'>",
+          "annotation": "<class 'UUID'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "interest_rate": {
           "alias": "interestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "loan_term_years": {
           "alias": "loanTermYears",
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "30",
           "default_factory": null,
           "required": false
         },
         "ltv_as_precent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "maintenance_percent": {
           "alias": "maintenancePercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "net_profit": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "property_managment_fee_precentages_from_rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "refi_points": {
           "alias": "refiPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('2')",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "roi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal_with_buffer": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "updated_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "vacancy_percent": {
           "alias": "vacancyPercent",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2301,7 +2301,7 @@
       "fields": {
         "label": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2322,98 +2322,98 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "buyer_agent_selling_fee": {
           "alias": "buyerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "capital_gains_tax_rate": {
           "alias": "capitalGainsTax",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['FLIP']",
+          "annotation": "Literal['FLIP']",
           "default": "'FLIP'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2427,147 +2427,147 @@
         },
         "monthly_utilities": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_price_in_thousands": {
           "alias": "salePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "seller_agent_selling_fee": {
           "alias": "sellerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "selling_closing_costs_in_thousands": {
           "alias": "sellingClosingCosts",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2581,35 +2581,35 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "address": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -2623,77 +2623,77 @@
         },
         "bathrooms": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "bedrooms": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "buyer_agent_selling_fee": {
           "alias": "buyerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "capital_gains_tax_rate": {
           "alias": "capitalGainsTax",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "contact": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "created_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "crime_rate": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "deal_type": {
           "alias": null,
-          "annotation": "typing.Literal['FLIP']",
+          "annotation": "Literal['FLIP']",
           "default": "'FLIP'",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2707,28 +2707,28 @@
         },
         "id": {
           "alias": null,
-          "annotation": "<class 'uuid.UUID'>",
+          "annotation": "<class 'UUID'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "monthly_utilities": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -2742,56 +2742,56 @@
         },
         "niche": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "overall_design": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "pics_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.RentComp]]",
+          "annotation": "Optional[List[RentComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2805,63 +2805,63 @@
         },
         "sale_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sale_price_in_thousands": {
           "alias": "salePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "section": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "seller_agent_selling_fee": {
           "alias": "sellerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "selling_closing_costs_in_thousands": {
           "alias": "sellingClosingCosts",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "sold_comps": {
           "alias": null,
-          "annotation": "typing.Optional[typing.List[ReqRes.activeDeal.activeDealReq.SoldComp]]",
+          "annotation": "Optional[List[SoldComp]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "sqft": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "stage": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "task": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2896,21 +2896,21 @@
         },
         "updated_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "use_HM_for_rehab": {
           "alias": "use_HM_for_rehab",
-          "annotation": "typing.Optional[bool]",
+          "annotation": "Optional[bool]",
           "default": "False",
           "default_factory": null,
           "required": false
         },
         "zillow_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2924,7 +2924,7 @@
       "fields": {
         "amount_k": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -2938,14 +2938,14 @@
         },
         "end_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "frequency": {
           "alias": null,
-          "annotation": "typing.Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']",
+          "annotation": "Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -2959,14 +2959,14 @@
         },
         "occurrences": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "start_date": {
           "alias": null,
-          "annotation": "<class 'datetime.date'>",
+          "annotation": "<class 'date'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -2987,7 +2987,7 @@
         },
         "created_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3001,14 +3001,14 @@
         },
         "end_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "frequency": {
           "alias": null,
-          "annotation": "typing.Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']",
+          "annotation": "Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3029,21 +3029,21 @@
         },
         "occurrences": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "start_date": {
           "alias": null,
-          "annotation": "<class 'datetime.date'>",
+          "annotation": "<class 'date'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "updated_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3057,49 +3057,49 @@
       "fields": {
         "amount_k": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "description": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "end_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "frequency": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']]",
+          "annotation": "Optional[Literal['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "interval": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "occurrences": {
           "alias": null,
-          "annotation": "typing.Optional[int]",
+          "annotation": "Optional[int]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "start_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3113,7 +3113,7 @@
       "fields": {
         "opening_balance_date": {
           "alias": null,
-          "annotation": "<class 'datetime.date'>",
+          "annotation": "<class 'date'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3134,7 +3134,7 @@
         },
         "updated_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3148,21 +3148,21 @@
       "fields": {
         "opening_balance_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "opening_balance_k": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "reserve_k": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3176,7 +3176,7 @@
       "fields": {
         "amount_k": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3190,7 +3190,7 @@
         },
         "effective_date": {
           "alias": null,
-          "annotation": "<class 'datetime.date'>",
+          "annotation": "<class 'date'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3211,7 +3211,7 @@
         },
         "created_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3225,7 +3225,7 @@
         },
         "effective_date": {
           "alias": null,
-          "annotation": "<class 'datetime.date'>",
+          "annotation": "<class 'date'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3239,7 +3239,7 @@
         },
         "updated_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3253,21 +3253,21 @@
       "fields": {
         "amount_k": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "description": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "effective_date": {
           "alias": null,
-          "annotation": "typing.Optional[datetime.date]",
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3281,42 +3281,42 @@
       "fields": {
         "accuracy_m": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "captured_at": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "kind": {
           "alias": null,
-          "annotation": "typing.Literal['manual_save', 'timer_start', 'timer_pause', 'timer_resume', 'timer_stop', 'bookmark', 'evidence_capture']",
+          "annotation": "Literal['manual_save', 'timer_start', 'timer_pause', 'timer_resume', 'timer_stop', 'bookmark', 'evidence_capture']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "lat": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "lng": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "note": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3344,7 +3344,7 @@
         },
         "subStages": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.pipelineTemplate.PipelineSubStage]",
+          "annotation": "List[PipelineSubStage]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
@@ -3372,7 +3372,7 @@
         },
         "substages": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.pipelineTemplate.PipelineSubstageStat]",
+          "annotation": "List[PipelineSubstageStat]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
@@ -3428,14 +3428,14 @@
       "fields": {
         "dealType": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR', 'FLIP']",
+          "annotation": "Literal['BRRRR', 'FLIP']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "stages": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.pipelineTemplate.PipelineStage]",
+          "annotation": "List[PipelineStage]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3456,7 +3456,7 @@
       "fields": {
         "dealType": {
           "alias": null,
-          "annotation": "typing.Literal['BRRRR', 'FLIP']",
+          "annotation": "Literal['BRRRR', 'FLIP']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3470,7 +3470,7 @@
         },
         "stages": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.pipelineTemplate.PipelineStageStat]",
+          "annotation": "List[PipelineStageStat]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3484,7 +3484,7 @@
       "fields": {
         "stages": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.pipelineTemplate.PipelineStage]",
+          "annotation": "List[PipelineStage]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3498,21 +3498,21 @@
       "fields": {
         "rent": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "time_on_market": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "url": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3575,21 +3575,21 @@
       "fields": {
         "entries": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.RepsEntryRow]",
+          "annotation": "List[RepsEntryRow]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "stats": {
           "alias": null,
-          "annotation": "<class 'ReqRes.reps.repsReq.RepsStats'>",
+          "annotation": "<class 'RepsStats'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "user": {
           "alias": null,
-          "annotation": "typing.Literal['Aviv2026', 'Yarden2026']",
+          "annotation": "Literal['Aviv2026', 'Yarden2026']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3603,49 +3603,49 @@
       "fields": {
         "activity_category": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "created_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "description": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "end_time": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "evidence_items": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.EvidenceItem]",
+          "annotation": "List[EvidenceItem]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "evidence_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "location": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3659,21 +3659,21 @@
         },
         "people_involved": {
           "alias": null,
-          "annotation": "typing.List[str]",
+          "annotation": "List[str]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "property_name": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "start_time": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3687,7 +3687,7 @@
         },
         "user": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3701,7 +3701,7 @@
       "fields": {
         "activity_category": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3715,49 +3715,49 @@
         },
         "end_time": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "evidence_folder": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "evidence_items": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.EvidenceItem]",
+          "annotation": "List[EvidenceItem]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "evidence_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "evidence_links": {
           "alias": null,
-          "annotation": "typing.List[str]",
+          "annotation": "List[str]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "location": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "location_snapshots": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.LocationSnapshot]",
+          "annotation": "List[LocationSnapshot]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
@@ -3771,28 +3771,28 @@
         },
         "people_involved": {
           "alias": null,
-          "annotation": "typing.List[str]",
+          "annotation": "List[str]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "property_name": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "start_time": {
           "alias": null,
-          "annotation": "<class 'datetime.datetime'>",
+          "annotation": "<class 'datetime'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "user": {
           "alias": null,
-          "annotation": "typing.Literal['Aviv2026', 'Yarden2026']",
+          "annotation": "Literal['Aviv2026', 'Yarden2026']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3806,7 +3806,7 @@
       "fields": {
         "activity_category": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3841,42 +3841,42 @@
         },
         "evidence_folder": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "evidence_items": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.EvidenceItem]",
+          "annotation": "List[EvidenceItem]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "evidence_link": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "evidence_links": {
           "alias": null,
-          "annotation": "typing.List[str]",
+          "annotation": "List[str]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
         },
         "location": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "location_snapshots": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.LocationSnapshot]",
+          "annotation": "List[LocationSnapshot]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
@@ -3890,14 +3890,14 @@
         },
         "people_involved": {
           "alias": null,
-          "annotation": "typing.List[str]",
+          "annotation": "List[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "property_name": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3925,7 +3925,7 @@
         },
         "user": {
           "alias": null,
-          "annotation": "typing.Literal['Aviv2026', 'Yarden2026']",
+          "annotation": "Literal['Aviv2026', 'Yarden2026']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -3946,14 +3946,14 @@
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "role": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3967,7 +3967,7 @@
       "fields": {
         "created_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -3988,21 +3988,21 @@
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "role": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "updated_at": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4016,21 +4016,21 @@
       "fields": {
         "name": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "notes": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "role": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4065,7 +4065,7 @@
         },
         "source": {
           "alias": null,
-          "annotation": "typing.Literal['bought', 'prospect']",
+          "annotation": "Literal['bought', 'prospect']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4149,7 +4149,7 @@
         },
         "user": {
           "alias": null,
-          "annotation": "typing.Literal['Aviv2026', 'Yarden2026']",
+          "annotation": "Literal['Aviv2026', 'Yarden2026']",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4170,7 +4170,7 @@
       "fields": {
         "files": {
           "alias": null,
-          "annotation": "typing.List[ReqRes.reps.repsReq.RepsUploadedFile]",
+          "annotation": "List[RepsUploadedFile]",
           "default": "PydanticUndefined",
           "default_factory": "list",
           "required": false
@@ -4184,7 +4184,7 @@
         },
         "folder_url": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4198,7 +4198,7 @@
       "fields": {
         "content_type": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4261,7 +4261,7 @@
         },
         "purchase_price": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4296,21 +4296,21 @@
       "fields": {
         "arv": {
           "alias": null,
-          "annotation": "typing.Optional[decimal.Decimal]",
+          "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "how_long_ago": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "url": {
           "alias": null,
-          "annotation": "typing.Optional[str]",
+          "annotation": "Optional[str]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4324,63 +4324,63 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "arv_in_thousands": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "cash_reserve_in_thousands": {
           "alias": "cashReserve",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_cost_refi_in_thousands": {
           "alias": "closingCostsRefi",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -4394,14 +4394,14 @@
         },
         "down_payment": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "interest_rate": {
           "alias": "interestRate",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4415,63 +4415,63 @@
         },
         "ltv_as_precent": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "maintenance_percent": {
           "alias": "maintenancePercent",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "property_managment_fee_precentages_from_rent": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "refi_points": {
           "alias": "refiPoints",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('2')",
           "default_factory": null,
           "required": false
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rent": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4485,7 +4485,7 @@
         },
         "vacancy_percent": {
           "alias": "vacancyPercent",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -4499,7 +4499,7 @@
       "fields": {
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4513,70 +4513,70 @@
         },
         "cash_on_cash": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "cash_out_routi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "dscr": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "equity": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "net_profit": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "roi": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "total_cash_needed_for_deal_with_buffer": {
           "alias": null,
-          "annotation": "typing.Optional[float]",
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -4590,56 +4590,56 @@
       "fields": {
         "HML_interest_rate": {
           "alias": "HMLInterestRate",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "HML_points": {
           "alias": "hmlPoints",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_insurance": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "annual_property_taxes": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "buyer_agent_selling_fee": {
           "alias": "buyerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "capital_gains_tax_rate": {
           "alias": "capitalGainsTax",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "closing_costs_buy_in_thousands": {
           "alias": "closingCostsBuy",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "down_payment": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -4653,56 +4653,56 @@
         },
         "monthly_utilities": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "montly_hoa": {
           "alias": null,
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "rehab_contingency_percent": {
           "alias": "rehabContingency",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "rehab_cost_in_thousands": {
           "alias": "rehabCost",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "sale_price_in_thousands": {
           "alias": "salePrice",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
         "seller_agent_selling_fee": {
           "alias": "sellerAgentSellingFee",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
         },
         "selling_closing_costs_in_thousands": {
           "alias": "sellingClosingCosts",
-          "annotation": "<class 'decimal.Decimal'>",
+          "annotation": "<class 'Decimal'>",
           "default": "Decimal('0.0')",
           "default_factory": null,
           "required": false
@@ -4730,14 +4730,14 @@
         },
         "breakdowns": {
           "alias": null,
-          "annotation": "typing.Optional[typing.Dict[str, typing.List[calc_breakdown.CalcStep]]]",
+          "annotation": "Optional[Dict[str, List[CalcStep]]]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
         "messages": {
           "alias": null,
-          "annotation": "typing.Optional[list[str]]",
+          "annotation": "Optional[list[str]]",
           "default": "None",
           "default_factory": null,
           "required": false

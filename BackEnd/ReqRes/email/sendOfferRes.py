@@ -1,6 +1,3 @@
-from pydantic import BaseModel
+"""Backwards-compatible shim -- moved to ReqRes/common/send_offer_schemas.py."""
 
-class SendOfferRes(BaseModel):
-    message: str
-    success: bool
-
+from ReqRes.common.send_offer_schemas import SendOfferRes  # noqa: F401

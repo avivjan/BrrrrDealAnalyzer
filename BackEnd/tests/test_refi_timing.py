@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from ReqRes.refi_timing import days_from_legacy_months
+from ReqRes.common.refi_timing import days_from_legacy_months
 
 
 class TestDaysFromLegacyMonths:
