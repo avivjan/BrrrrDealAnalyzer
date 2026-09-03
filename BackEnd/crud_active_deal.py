@@ -5,6 +5,8 @@ from DAL.crud.active_deal import (  # noqa: F401
     add_flip_deal,
     get_all_brrr_deals,
     get_all_flip_deals,
+    get_brrr_deal,
+    get_flip_deal,
     update_brrr_deal,
     update_flip_deal,
     delete_brrr_deal,

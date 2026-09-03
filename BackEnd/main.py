@@ -1,5 +1,4 @@
 from typing import Union, List, Optional
-from decimal import Decimal
 from datetime import datetime, date as date_cls
 
 from fastapi import Depends, FastAPI, HTTPException, Body, File, Form, UploadFile, Query
@@ -19,20 +18,6 @@ from ReqRes.boughtDeal.boughtDealReq import (
     BoughtFlipDealCreate, BoughtFlipDealRes
 )
 
-from crud_active_deal import (
-    add_brrr_deal, add_flip_deal,
-    get_all_brrr_deals, get_all_flip_deals,
-    update_brrr_deal, update_flip_deal,
-    delete_brrr_deal, delete_flip_deal,
-    duplicate_brrr_deal, duplicate_flip_deal
-)
-from crud_bought_deal import (
-    add_bought_brrr_deal, add_bought_flip_deal,
-    get_all_bought_brrr_deals, get_all_bought_flip_deals,
-    update_bought_brrr_deal, update_bought_flip_deal,
-    delete_bought_brrr_deal, delete_bought_flip_deal,
-    create_bought_from_active_brrr, create_bought_from_active_flip
-)
 from crud_liquidity import (
     get_all_transactions, get_transaction, add_transaction,
     update_transaction, delete_transaction,
@@ -60,9 +45,8 @@ from ReqRes.email.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOfferRes import SendOfferRes
 from db import engine, SessionLocal, get_db
 from models import (
-    BrrrActiveDeal, FlipActiveDeal, BoughtBrrrDeal, BoughtFlipDeal,
-    LiquidityTransaction, LiquidityRecurringTransaction, PipelineTemplate,
-    RepsPerson, RepsProperty, RepsActivityCategory,
+    LiquidityTransaction, LiquidityRecurringTransaction,
+    RepsPerson, RepsActivityCategory,
     LIQUIDITY_RECURRING_FREQUENCIES,
 )
 from ReqRes.reps.repsReq import (
@@ -78,8 +62,6 @@ import crud_reps
 import reps_service
 import mercury_service
 from mercury_service import MercuryApiError, MercuryConfigError
-from calc_breakdown import CalcBreakdown, fmt_money, fmt_pct, fmt_num
-from deal_pdf import build_deal_pdf
 import bootstrap
 import smtplib
 from email.mime.text import MIMEText
@@ -116,677 +98,26 @@ app.add_middleware(
 )
 
 
-# The 360-day banking year hard money lenders quote per-diem interest on, and
-# the 30-day month it implies. Every days-driven accrual in the BRRRR calc uses
-# these two, which is what makes `days = months * 30` an exact translation of
-# the old month-based formulas.
-DAYS_PER_YEAR = Decimal("360")
-DAYS_PER_MONTH = Decimal("30")
-MONTHS_PER_YEAR = Decimal("12")
-
-
-def thousands_to_dollars(value: Decimal) -> Decimal:
-    return value * Decimal("1000.0")
-
-def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab):
-    return purchase_price * (1 - down_payment_precent / Decimal("100.0")) + rehab_cost * int(use_HM_for_rehab)
-
-# --- BRRRR Logic ---
-
-def validate_brrr_inputs(payload: analyzeBRRRReq):
-    validation_errors = []
-    
-    # 1. Base Value Checks (Must be positive)
-    if payload.arv_in_thousands <= 0:
-        validation_errors.append("ARV (in thousands) must be greater than 0.")
-    if payload.purchase_price_in_thousands <= 0:
-        validation_errors.append("Purchase price (in thousands) must be greater than 0.")
-    if payload.rent <= 0:
-        validation_errors.append("Rent must be greater than 0.")
-
-    # 2. Non-Negative Checks
-    if payload.rehab_cost_in_thousands < 0:
-        validation_errors.append("Rehab cost cannot be negative.")
-    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
-        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
-    if payload.closing_costs_buy_in_thousands < 0:
-        validation_errors.append("Closing costs (buy) cannot be negative.")
-    if payload.closing_cost_refi_in_thousands < 0:
-        validation_errors.append("Refi closing costs cannot be negative.")
-    if payload.refi_points < 0 or payload.refi_points > 100:
-        validation_errors.append("Refi points must be between 0% and 100%.")
-    if payload.cash_reserve_in_thousands < 0:
-        validation_errors.append("Cash reserve cannot be negative.")
-    if payload.annual_property_taxes < 0:
-        validation_errors.append("Annual property taxes cannot be negative.")
-    if payload.annual_insurance < 0:
-        validation_errors.append("Annual insurance cannot be negative.")
-    if payload.montly_hoa < 0:
-        validation_errors.append("HOA dues cannot be negative.")
-
-    # 3. Lending Terms (Percentage Ranges 0-100)
-    if payload.down_payment < 0 or payload.down_payment > 100:
-        validation_errors.append("Down payment percentage must be between 0% and 100%.")
-    if payload.ltv_as_precent <= 0 or payload.ltv_as_precent > 100:
-        validation_errors.append("LTV must be between 0% and 100%.")
-    if payload.HML_points < 0 or payload.HML_points > 100:
-        validation_errors.append("HML points must be between 0% and 100%.")
-    if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
-        validation_errors.append("HML interest rate must be between 0% and 100%.")
-    
-    # 4. Timeframes
-    if payload.days_until_refi <= 0:
-        validation_errors.append("Days until refi must be a positive number.")
-    if payload.loan_term_years <= 0:
-        validation_errors.append("Loan term must be at least 1 year.")
-
-    # 5. Long-term Financing
-    if payload.interest_rate < 0 or payload.interest_rate > 100:
-        validation_errors.append("Interest rate must be between 0% and 100%.")
-
-    # 6. Operating Expenses (Percentage Ranges)
-    if payload.vacancy_percent < 0 or payload.vacancy_percent > 100:
-        validation_errors.append("Vacancy percentage must be between 0% and 100%.")
-    if payload.property_managment_fee_precentages_from_rent < 0 or payload.property_managment_fee_precentages_from_rent > 100:
-        validation_errors.append("Property management percentage must be between 0% and 100%.")
-    if payload.maintenance_percent < 0 or payload.maintenance_percent > 100:
-        validation_errors.append("Maintenance percentage must be between 0% and 100%.")
-    if payload.capex_percent_of_rent < 0 or payload.capex_percent_of_rent > 100:
-        validation_errors.append("CapEx percentage must be between 0% and 100%.")
-
-    if validation_errors:
-        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
-
-def calc_montly_operating_expenses(payload):
-    property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
-    maintenance = payload.rent * (payload.maintenance_percent / Decimal("100.0"))
-    capex = payload.rent * (payload.capex_percent_of_rent / Decimal("100.0"))
-    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
-    monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
-    monthly_insurance = payload.annual_insurance / Decimal("12.0")
-    hoa = payload.montly_hoa
-    return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
-
-def calcDSCR(rent, taxes, insurance, hoa, mortgage_payment):
-    monthly_taxes = taxes / Decimal("12.0")
-    monthly_insurance = insurance / Decimal("12.0")
-    pitia = mortgage_payment + monthly_taxes + monthly_insurance + hoa
-    if pitia == 0: return Decimal("0")
-    return rent / pitia
-
-def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, holding_costs_until_refi, cash_reserve_in_cash=Decimal("0")):
-    # `cash_reserve_in_cash` is committed at refi (paydown to DSCR principal),
-    # so it reduces what the investor walks away with.
-    loan_amount = arv * ltv
-    HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
-    total_cash_invested = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1-int(use_HM_for_rehab)) + HML_interest_in_cash + holding_costs_until_refi
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - cash_reserve_in_cash - total_cash_invested
-
-
-def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, cash_reserve_in_cash=Decimal("0")):
-    loan_amount = arv * ltv
-    HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - cash_reserve_in_cash
-
-
-
-def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
-    loan_amount = arv * ltv
-    monthly_interest_rate = (interest_rate / Decimal("100.0")) / Decimal("12.0")
-    total_payments = loan_term_years * 12
-    factor = (1 + monthly_interest_rate) ** total_payments
-    denominator = factor - 1
-    if denominator == 0:
-        raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment.")
-    return loan_amount * monthly_interest_rate * factor / denominator
-
-def calc_cash_on_cash(cash_out_from_deal, cash_flow):
-    if cash_out_from_deal >= 0: return Decimal("-1") 
-    elif cash_flow <= 0: return Decimal("-2")
-    else: return (cash_flow * 12 / abs(cash_out_from_deal)) * Decimal("100.0")
-        
-def calc_roi(cash_out_from_deal, cash_flow, net_profit):
-    if cash_out_from_deal >= 0: return Decimal("-1")
-    elif cash_flow <= 0: return Decimal("-2")
-    else: return ((cash_flow * 12 + net_profit )/ abs(cash_out_from_deal)) * Decimal("100.0")
-    
-def calc_holding_costs(annual_taxes, annual_insurance, monthly_hoa, days):
-    """Taxes + insurance + HOA carried for `days`, accrued per diem.
-
-    Mind the units, which the deal record mixes: taxes and insurance are
-    ANNUAL figures, HOA is a MONTHLY one. So only the HOA is annualised here —
-    the other two already are. (The month-based version this replaced did the
-    mirror image: it divided taxes and insurance by 12 and added HOA as-is.)
-
-    The 360-day year matches the one the HML interest accrues on, which is what
-    makes a 30-day month cost exactly what the old monthly formula charged.
-    Divide last: `/ 360` up front would turn an exact figure like $1,200/yr
-    into a repeating Decimal and leave rounding dust in every result.
-    """
-    annual_holding = annual_taxes + annual_insurance + (monthly_hoa * MONTHS_PER_YEAR)
-    return annual_holding * days / DAYS_PER_YEAR
-
-def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, days_until_refi, HML_interest_rate, use_HM_for_rehab):
-    # Hard money accrues per diem: loan amount * annual rate / 360. Divide last,
-    # for the same reason as above.
-    HML_amount = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return HML_amount * HML_interest_rate * days_until_refi / DAYS_PER_YEAR / Decimal("100.0")
-
-def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
-    down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
-    rehab_cash = rehab_cost if not use_HM_for_rehab else Decimal("0")
-    total_cash_needed_without_buffer = down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash
-    
-    # 1. Direct Rehab Cash (if not funded) + Float Buffer (for draws)
-    # Even if HML pays, we need 10% on hand to start work/pay deposits
-    rehab_float_buffer = Decimal("0.1") * rehab_cost
-    rehab_out_of_pocket = rehab_cost if not use_HM_for_rehab else Decimal("0")
-    total_rehab_cash_needed = rehab_out_of_pocket + rehab_float_buffer
-
-    # 2. Time Contingency (The "Safety Multiplier")
-    # Doubling these accounts for delays in permits, rehab, or tenant placement
-    total_holding_cash = holding_cost_until_refi * Decimal("1.5")
-    total_interest_cash = HML_interest_in_cash * Decimal("1.5")
-    
-    # 3. Closing Buffer
-    total_closing_buy = closing_costs_buy * Decimal("1.1")
-    total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash
-    return (total_cash_needed_without_buffer, total_cash_needed_with_buffer)
-
-def calculate_brrr_results(payload) -> analyzeBRRRRes:
-    # Self-documenting calculation: each intermediate variable below registers
-    # its own CalcStep next to the line that produces it. Math is unchanged.
-    breakdown = CalcBreakdown()
-
-    arv = thousands_to_dollars(payload.arv_in_thousands)
-    purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
-    rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
-    contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
-    rehab_cost = rehab_cost_base + contingency
-    
-    HML_interest_in_cash = calc_HML_interest_in_cash(purchase_price, payload.down_payment, rehab_cost, payload.days_until_refi, payload.HML_interest_rate, payload.use_HM_for_rehab)
-    HML_points_in_cash = payload.HML_points/Decimal("100.0") * get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
-    holding_cost_until_refi = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.days_until_refi)
-    
-    operating_expenses = calc_montly_operating_expenses(payload)
-    breakdown.add(
-        "cash_flow",
-        "Monthly Operating Expenses",
-        operating_expenses,
-        f"Rent ({fmt_money(payload.rent)}) × (Vacancy {fmt_pct(payload.vacancy_percent)} + Mgmt {fmt_pct(payload.property_managment_fee_precentages_from_rent)} + Maint {fmt_pct(payload.maintenance_percent)} + CapEx {fmt_pct(payload.capex_percent_of_rent)}) + Taxes ({fmt_money(payload.annual_property_taxes)})/12 + Insurance ({fmt_money(payload.annual_insurance)})/12 + HOA ({fmt_money(payload.montly_hoa)}) = {fmt_money(operating_expenses)}",
-    )
-    closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
-    closing_cost_refi = thousands_to_dollars(payload.closing_cost_refi_in_thousands)
-    ltv = payload.ltv_as_precent/Decimal("100")
-    refi_points_in_cash = (payload.refi_points / Decimal("100")) * arv * ltv
-    cash_reserve_in_cash = thousands_to_dollars(payload.cash_reserve_in_thousands)
-
-    cash_out_from_deal = calc_cash_out_from_deal(arv, ltv, payload.down_payment, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, holding_cost_until_refi, cash_reserve_in_cash)
-    # Decompose the helper's inputs only for the formula narrative (no math change).
-    _brrr_loan_amount = arv * ltv
-    breakdown.add(
-        ["cash_out", "equity"],
-        "Refi Loan Amount",
-        _brrr_loan_amount,
-        f"ARV ({fmt_money(arv)}) × LTV {fmt_pct(payload.ltv_as_precent)} = {fmt_money(_brrr_loan_amount)}",
-    )
-    _brrr_hml_payoff = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
-    breakdown.add(
-        "cash_out",
-        "HML Payoff at Refi",
-        _brrr_hml_payoff,
-        (f"Purchase Loan + Rehab ({fmt_money(_brrr_hml_payoff)}) — full HM stack carried into refi"
-         if payload.use_HM_for_rehab
-         else f"Purchase Loan only = (1 − Down Payment {fmt_pct(payload.down_payment)}) × Purchase ({fmt_money(purchase_price)}) = {fmt_money(_brrr_hml_payoff)}"),
-    )
-    _brrr_down_payment_cash = (payload.down_payment / Decimal("100")) * purchase_price
-    _brrr_total_cash_invested = _brrr_down_payment_cash + closing_costs_buy + HML_points_in_cash + rehab_cost * (1 - int(payload.use_HM_for_rehab)) + HML_interest_in_cash + holding_cost_until_refi
-    breakdown.add(
-        "cash_out",
-        "Total Cash Invested (pre-refi)",
-        _brrr_total_cash_invested,
-        f"Down Payment ({fmt_money(_brrr_down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Out-of-Pocket ({fmt_money(rehab_cost * (1 - int(payload.use_HM_for_rehab)))}) + HML Interest ({fmt_money(HML_interest_in_cash)}) + Holding ({fmt_money(holding_cost_until_refi)}) = {fmt_money(_brrr_total_cash_invested)}",
-    )
-    breakdown.add(
-        ["net_profit", "roi", "cash_on_cash", "cash_out"],
-        "Cash Out from Deal",
-        cash_out_from_deal,
-        f"Refi Loan ({fmt_money(_brrr_loan_amount)}) − HML Payoff ({fmt_money(_brrr_hml_payoff)}) − Refi Closing ({fmt_money(closing_cost_refi)}) − Refi Points ({fmt_money(refi_points_in_cash)}) − Cash Reserve ({fmt_money(cash_reserve_in_cash)}) − Total Cash Invested ({fmt_money(_brrr_total_cash_invested)}) = {fmt_money(cash_out_from_deal)}",
-    )
-    cash_out_routi = calc_cash_out_routi(arv, ltv, payload.down_payment, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, payload.use_HM_for_rehab, cash_reserve_in_cash)
-    mortgage_payment = calc_mortgage_payment(arv, ltv, payload.interest_rate, payload.loan_term_years)
-    breakdown.add(
-        ["cash_flow", "dscr"],
-        "Monthly Mortgage Payment",
-        mortgage_payment,
-        f"Amortize Loan ({fmt_money(_brrr_loan_amount)} = ARV {fmt_money(arv)} × LTV {fmt_pct(payload.ltv_as_precent)}) at {fmt_pct(payload.interest_rate)}/yr over {payload.loan_term_years} years = {fmt_money(mortgage_payment)}",
-    )
-
-    net_operating_income = payload.rent - operating_expenses
-    breakdown.add(
-        "cash_flow",
-        "Net Operating Income (NOI)",
-        net_operating_income,
-        f"Rent ({fmt_money(payload.rent)}) − Operating Expenses ({fmt_money(operating_expenses)}) = {fmt_money(net_operating_income)}",
-    )
-    cash_flow = net_operating_income - mortgage_payment
-    breakdown.add(
-        ["cash_flow", "roi", "cash_on_cash"],
-        "Monthly Cash Flow",
-        cash_flow,
-        f"NOI ({fmt_money(net_operating_income)}) − Mortgage ({fmt_money(mortgage_payment)}) = {fmt_money(cash_flow)}",
-    )
-    dscr =  calcDSCR(payload.rent, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, mortgage_payment)
-    # Decompose PITIA only for the formula narrative (matches calcDSCR internals).
-    _brrr_pitia = mortgage_payment + payload.annual_property_taxes / Decimal("12.0") + payload.annual_insurance / Decimal("12.0") + payload.montly_hoa
-    breakdown.add(
-        "dscr",
-        "DSCR",
-        dscr,
-        (f"Rent ({fmt_money(payload.rent)}) / PITIA ({fmt_money(_brrr_pitia)} = Mortgage + Taxes/12 + Ins/12 + HOA) = {fmt_num(dscr)}"
-         if _brrr_pitia else "PITIA is 0 → DSCR undefined"),
-    )
-    cash_on_cash = calc_cash_on_cash(cash_out_from_deal, cash_flow)
-    if cash_out_from_deal >= 0:
-        _brrr_coc_formula = f"Cash Out ({fmt_money(cash_out_from_deal)}) ≥ 0 → no equity at risk (∞)"
-    elif cash_flow <= 0:
-        _brrr_coc_formula = f"Cash Flow ({fmt_money(cash_flow)}) ≤ 0 → CoC undefined (-∞)"
-    else:
-        _brrr_coc_formula = f"Annual Cash Flow ({fmt_money(cash_flow * 12)}) / |Cash Out| ({fmt_money(abs(cash_out_from_deal))}) × 100 = {fmt_pct(cash_on_cash)}"
-    breakdown.add("cash_on_cash", "Cash on Cash", cash_on_cash, _brrr_coc_formula)
-    # Cash reserve is treated as an immediate principal paydown on the DSCR
-    # loan, so the post-refi loan balance is `arv*ltv - cash_reserve`. That
-    # paydown converts cash_out into equity 1:1, leaving net_profit unchanged
-    # (CoC and ROI still drop because more capital is tied up in the deal).
-    equity = arv * (1 - ltv) + cash_reserve_in_cash
-    breakdown.add(
-        ["net_profit", "roi", "equity"],
-        "Equity (post-refi)",
-        equity,
-        f"ARV ({fmt_money(arv)}) × (1 − LTV {fmt_pct(payload.ltv_as_precent)}) + Cash Reserve ({fmt_money(cash_reserve_in_cash)}) = {fmt_money(equity)}",
-    )
-    net_profit = equity + cash_out_from_deal
-    breakdown.add(
-        ["net_profit", "roi"],
-        "Net Profit",
-        net_profit,
-        f"Equity ({fmt_money(equity)}) + Cash Out ({fmt_money(cash_out_from_deal)}) = {fmt_money(net_profit)}",
-    )
-    roi = calc_roi(cash_out_from_deal, cash_flow, net_profit)
-    if cash_out_from_deal >= 0:
-        _brrr_roi_formula = f"Cash Out ({fmt_money(cash_out_from_deal)}) ≥ 0 → no equity at risk (∞)"
-    elif cash_flow <= 0:
-        _brrr_roi_formula = f"Cash Flow ({fmt_money(cash_flow)}) ≤ 0 → ROI undefined (-∞)"
-    else:
-        _brrr_roi_formula = f"(Annual Cash Flow ({fmt_money(cash_flow * 12)}) + Net Profit ({fmt_money(net_profit)})) / |Cash Out| ({fmt_money(abs(cash_out_from_deal))}) × 100 = {fmt_pct(roi)}"
-    breakdown.add("roi", "ROI", roi, _brrr_roi_formula)
-    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
-    # Surface the same components the helper sums internally so the user can
-    # follow each dollar that goes into the unbuffered total.
-    _brrr_rehab_cash_needed = rehab_cost * (1 - int(payload.use_HM_for_rehab))
-    breakdown.add(
-        ["total_cash_needed_for_deal", "total_cash_needed_for_deal_with_buffer"],
-        "Down Payment (cash)",
-        _brrr_down_payment_cash,
-        f"{fmt_pct(payload.down_payment)} × Purchase ({fmt_money(purchase_price)}) = {fmt_money(_brrr_down_payment_cash)}",
-    )
-    breakdown.add(
-        ["total_cash_needed_for_deal", "total_cash_needed_for_deal_with_buffer"],
-        "Closing Costs (Buy)",
-        closing_costs_buy,
-        f"{fmt_money(closing_costs_buy)}",
-    )
-    breakdown.add(
-        ["total_cash_needed_for_deal", "total_cash_needed_for_deal_with_buffer"],
-        "HML Points (cash)",
-        HML_points_in_cash,
-        f"{fmt_pct(payload.HML_points)} × HML Amount ({fmt_money(_brrr_hml_payoff)}) = {fmt_money(HML_points_in_cash)}",
-    )
-    breakdown.add(
-        ["total_cash_needed_for_deal", "total_cash_needed_for_deal_with_buffer"],
-        "Rehab Cash (out-of-pocket)",
-        _brrr_rehab_cash_needed,
-        (f"Rehab ({fmt_money(rehab_cost)}) is financed via HM → no out-of-pocket = {fmt_money(_brrr_rehab_cash_needed)}"
-         if payload.use_HM_for_rehab
-         else f"Rehab ({fmt_money(rehab_cost)}) paid in cash = {fmt_money(_brrr_rehab_cash_needed)}"),
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal",
-        "HML Interest (cash, until refi)",
-        HML_interest_in_cash,
-        f"{fmt_money(HML_interest_in_cash)} accrued over {payload.days_until_refi} days at {fmt_pct(payload.HML_interest_rate)}/yr ÷ 360 per diem",
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal",
-        "Holding Costs (until refi)",
-        holding_cost_until_refi,
-        f"Taxes + Insurance + HOA accrued over {payload.days_until_refi} days = {fmt_money(holding_cost_until_refi)}",
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal",
-        "Total Cash Needed",
-        total_cash_needed_without_buffer,
-        f"Down Payment ({fmt_money(_brrr_down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + HML Interest ({fmt_money(HML_interest_in_cash)}) + Holding ({fmt_money(holding_cost_until_refi)}) = {fmt_money(total_cash_needed_without_buffer)}",
-    )
-    # Buffered version applies the same multipliers the helper uses internally
-    # (closing × 1.1, holding × 1.5, HML interest × 1.5, rehab × 1.5).
-    _brrr_buffered_closing = closing_costs_buy * Decimal("1.1")
-    _brrr_buffered_holding = holding_cost_until_refi * Decimal("1.5")
-    _brrr_buffered_interest = HML_interest_in_cash * Decimal("1.5")
-    breakdown.add(
-        "total_cash_needed_for_deal_with_buffer",
-        "Closing × 1.1 buffer",
-        _brrr_buffered_closing,
-        f"Closing ({fmt_money(closing_costs_buy)}) × 1.1 = {fmt_money(_brrr_buffered_closing)}",
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal_with_buffer",
-        "HML Interest × 1.5 buffer",
-        _brrr_buffered_interest,
-        f"HML Interest ({fmt_money(HML_interest_in_cash)}) × 1.5 = {fmt_money(_brrr_buffered_interest)}",
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal_with_buffer",
-        "Holding × 1.5 buffer",
-        _brrr_buffered_holding,
-        f"Holding ({fmt_money(holding_cost_until_refi)}) × 1.5 = {fmt_money(_brrr_buffered_holding)}",
-    )
-    breakdown.add(
-        "total_cash_needed_for_deal_with_buffer",
-        "Total Cash Needed (Buffered)",
-        total_cash_needed_with_buffer,
-        f"Down Payment ({fmt_money(_brrr_down_payment_cash)}) + Closing×1.1 ({fmt_money(_brrr_buffered_closing)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + HML Interest×1.5 ({fmt_money(_brrr_buffered_interest)}) + Holding×1.5 ({fmt_money(_brrr_buffered_holding)}) = {fmt_money(total_cash_needed_with_buffer)}",
-    )
-
-    return analyzeBRRRRes(
-        cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_out_routi=cash_out_routi, cash_on_cash=cash_on_cash,
-        roi=roi, equity=equity, net_profit=net_profit,
-        total_cash_needed_for_deal=total_cash_needed_without_buffer,
-        total_cash_needed_for_deal_with_buffer=total_cash_needed_with_buffer,
-        messages=None,
-        breakdowns=breakdown.to_dict(),
-    )
-
-
-# --- Flip Logic ---
-
-def validate_flip_inputs(payload: analyzeFlipReq):
-    validation_errors = []
-    
-    if payload.sale_price_in_thousands <= 0:
-        validation_errors.append("Sale price (ARV) must be greater than 0.")
-    if payload.purchase_price_in_thousands <= 0:
-        validation_errors.append("Purchase price must be greater than 0.")
-    
-    if payload.holding_time_months <= 0:
-        validation_errors.append("Holding time must be greater than 0 months.")
-
-    if payload.rehab_cost_in_thousands < 0:
-        validation_errors.append("Rehab cost cannot be negative.")
-    
-    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
-        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
-
-    if payload.down_payment < 0 or payload.down_payment > 100:
-        validation_errors.append("Down payment percentage must be between 0% and 100%.")
-        
-    if payload.HML_points < 0 or payload.HML_points > 100:
-        validation_errors.append("HML points must be between 0% and 100%.")
-        
-    if payload.buyer_agent_selling_fee < 0 or payload.buyer_agent_selling_fee > 100:
-        validation_errors.append("Buyer agent fee must be between 0% and 100%.")
-    if payload.seller_agent_selling_fee < 0 or payload.seller_agent_selling_fee > 100:
-        validation_errors.append("Seller agent fee must be between 0% and 100%.")
-    if payload.selling_closing_costs_in_thousands < 0:
-        validation_errors.append("Selling closing cost cannot be negative.")
-
-    if validation_errors:
-        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
-
-def calculate_flip_results(payload: analyzeFlipReq) -> analyzeFlipRes:
-    # Self-documenting calculation: each intermediate variable below registers
-    # its own CalcStep next to the line that produces it. Math is unchanged.
-    breakdown = CalcBreakdown()
-
-    purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
-    rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
-    contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
-    rehab_cost = rehab_cost_base + contingency
-    breakdown.add(
-        "net_profit",
-        "Rehab Cost (with contingency)",
-        rehab_cost,
-        f"Base ({fmt_money(rehab_cost_base)}) + Contingency {fmt_pct(payload.rehab_contingency_percent)} ({fmt_money(contingency)}) = {fmt_money(rehab_cost)}",
-    )
-    sale_price = thousands_to_dollars(payload.sale_price_in_thousands)
-    closing_costs_buy = thousands_to_dollars(payload.closing_costs_buy_in_thousands)
-    
-    hml_amount = get_HML_amount(purchase_price, payload.down_payment, rehab_cost, payload.use_HM_for_rehab)
-    breakdown.add(
-        "total_hml_interest",
-        "HML Amount",
-        hml_amount,
-        (f"Purchase Loan + Rehab ({fmt_money(hml_amount)}) — full HM stack"
-         if payload.use_HM_for_rehab
-         else f"Purchase Loan only = (1 − Down Payment {fmt_pct(payload.down_payment)}) × Purchase ({fmt_money(purchase_price)}) = {fmt_money(hml_amount)}"),
-    )
-    hml_points_cash = (payload.HML_points / Decimal("100.0")) * hml_amount
-    breakdown.add(
-        "net_profit",
-        "HML Points (cash)",
-        hml_points_cash,
-        f"{fmt_pct(payload.HML_points)} × HML Amount ({fmt_money(hml_amount)}) = {fmt_money(hml_points_cash)}",
-    )
-    
-    monthly_interest = (payload.HML_interest_rate / Decimal("100.0") / Decimal("12.0")) * hml_amount
-    breakdown.add(
-        "total_hml_interest",
-        "Monthly HML Interest",
-        monthly_interest,
-        f"HML Amount ({fmt_money(hml_amount)}) × {fmt_pct(payload.HML_interest_rate)}/yr ÷ 12 = {fmt_money(monthly_interest)}",
-    )
-    total_hml_interest = monthly_interest * payload.holding_time_months
-    breakdown.add(
-        ["net_profit", "total_hml_interest", "total_holding_costs"],
-        "Total HML Interest (over holding period)",
-        total_hml_interest,
-        f"Monthly Interest ({fmt_money(monthly_interest)}) × {payload.holding_time_months} mos = {fmt_money(total_hml_interest)}",
-    )
-    
-    monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
-    monthly_insurance = payload.annual_insurance / Decimal("12.0")
-    monthly_operating = monthly_taxes + monthly_insurance + payload.montly_hoa + payload.monthly_utilities
-    total_operating = monthly_operating * payload.holding_time_months
-    breakdown.add(
-        ["net_profit", "total_holding_costs"],
-        "Total Operating Costs (during holding)",
-        total_operating,
-        f"(Taxes/12 ({fmt_money(monthly_taxes)}) + Insurance/12 ({fmt_money(monthly_insurance)}) + HOA ({fmt_money(payload.montly_hoa)}) + Utilities ({fmt_money(payload.monthly_utilities)})) × {payload.holding_time_months} mos = {fmt_money(total_operating)}",
-    )
-    
-    total_holding_costs = total_hml_interest + total_operating
-    breakdown.add(
-        ["net_profit", "total_holding_costs"],
-        "Total Holding Costs",
-        total_holding_costs,
-        f"HML Interest ({fmt_money(total_hml_interest)}) + Operating ({fmt_money(total_operating)}) = {fmt_money(total_holding_costs)}",
-    )
-    
-    agent_fees_percent = payload.buyer_agent_selling_fee + payload.seller_agent_selling_fee
-    selling_costs = sale_price * (agent_fees_percent / Decimal("100.0")) + thousands_to_dollars(payload.selling_closing_costs_in_thousands)
-    breakdown.add(
-        "net_profit",
-        "Selling Costs",
-        selling_costs,
-        f"Sale Price ({fmt_money(sale_price)}) × Agent Fees {fmt_pct(agent_fees_percent)} + Closing ({fmt_money(thousands_to_dollars(payload.selling_closing_costs_in_thousands))}) = {fmt_money(selling_costs)}",
-    )
-    
-    down_payment_cash = (payload.down_payment / Decimal("100.0")) * purchase_price
-    breakdown.add(
-        ["total_cash_needed", "total_cash_needed_with_buffer"],
-        "Down Payment (cash)",
-        down_payment_cash,
-        f"{fmt_pct(payload.down_payment)} × Purchase ({fmt_money(purchase_price)}) = {fmt_money(down_payment_cash)}",
-    )
-    breakdown.add(
-        ["total_cash_needed", "total_cash_needed_with_buffer"],
-        "Closing Costs (Buy)",
-        closing_costs_buy,
-        f"{fmt_money(closing_costs_buy)}",
-    )
-    breakdown.add(
-        ["total_cash_needed", "total_cash_needed_with_buffer"],
-        "HML Points (cash)",
-        hml_points_cash,
-        f"{fmt_pct(payload.HML_points)} × HML Amount ({fmt_money(hml_amount)}) = {fmt_money(hml_points_cash)}",
-    )
-
-    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, total_operating, closing_costs_buy, hml_points_cash, rehab_cost, total_hml_interest, payload.use_HM_for_rehab)
-    rehab_cash = rehab_cost if not payload.use_HM_for_rehab else Decimal("0")
-    breakdown.add(
-        ["total_cash_needed", "total_cash_needed_with_buffer"],
-        "Rehab Cash (out-of-pocket)",
-        rehab_cash,
-        (f"Rehab ({fmt_money(rehab_cost)}) is financed via HM → no out-of-pocket = {fmt_money(rehab_cash)}"
-         if payload.use_HM_for_rehab
-         else f"Rehab ({fmt_money(rehab_cost)}) paid in cash = {fmt_money(rehab_cash)}"),
-    )
-    breakdown.add(
-        "total_cash_needed",
-        "HML Interest (cash, during holding)",
-        total_hml_interest,
-        f"Monthly Interest × {payload.holding_time_months} mos = {fmt_money(total_hml_interest)}",
-    )
-    breakdown.add(
-        "total_cash_needed",
-        "Operating Costs (during holding)",
-        total_operating,
-        f"Monthly Operating × {payload.holding_time_months} mos = {fmt_money(total_operating)}",
-    )
-    breakdown.add(
-        "total_cash_needed",
-        "Total Cash Needed",
-        total_cash_needed_without_buffer,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(hml_points_cash)}) + Rehab Cash ({fmt_money(rehab_cash)}) + HML Interest ({fmt_money(total_hml_interest)}) + Operating ({fmt_money(total_operating)}) = {fmt_money(total_cash_needed_without_buffer)}",
-    )
-    # Buffered version mirrors `get_total_cash_needed_for_deal` internals:
-    # operating × 1.5, interest × 1.5, closing × 1.1.
-    _flip_buffered_closing = closing_costs_buy * Decimal("1.1")
-    _flip_buffered_interest = total_hml_interest * Decimal("1.5")
-    _flip_buffered_operating = total_operating * Decimal("1.5")
-    breakdown.add(
-        "total_cash_needed_with_buffer",
-        "Closing × 1.1 buffer",
-        _flip_buffered_closing,
-        f"Closing ({fmt_money(closing_costs_buy)}) × 1.1 = {fmt_money(_flip_buffered_closing)}",
-    )
-    breakdown.add(
-        "total_cash_needed_with_buffer",
-        "HML Interest × 1.5 buffer",
-        _flip_buffered_interest,
-        f"HML Interest ({fmt_money(total_hml_interest)}) × 1.5 = {fmt_money(_flip_buffered_interest)}",
-    )
-    breakdown.add(
-        "total_cash_needed_with_buffer",
-        "Operating × 1.5 buffer",
-        _flip_buffered_operating,
-        f"Operating ({fmt_money(total_operating)}) × 1.5 = {fmt_money(_flip_buffered_operating)}",
-    )
-    breakdown.add(
-        "total_cash_needed_with_buffer",
-        "Total Cash Needed (Buffered)",
-        total_cash_needed_with_buffer,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing×1.1 ({fmt_money(_flip_buffered_closing)}) + HML Points ({fmt_money(hml_points_cash)}) + Rehab Cash ({fmt_money(rehab_cash)}) + HML Interest×1.5 ({fmt_money(_flip_buffered_interest)}) + Operating×1.5 ({fmt_money(_flip_buffered_operating)}) = {fmt_money(total_cash_needed_with_buffer)}",
-    )
-    
-    total_cash_invested = down_payment_cash + closing_costs_buy + hml_points_cash + total_holding_costs + rehab_cash
-    breakdown.add(
-        "roi",
-        "Total Cash Invested",
-        total_cash_invested,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(hml_points_cash)}) + Holding ({fmt_money(total_holding_costs)}) + Rehab Out-of-Pocket ({fmt_money(rehab_cash)}) = {fmt_money(total_cash_invested)}",
-    )
-    
-    # Cost basis for profit calc
-    total_cost_basis = purchase_price + rehab_cost + closing_costs_buy + total_holding_costs + selling_costs + hml_points_cash
-    breakdown.add(
-        "net_profit",
-        "Total Cost Basis",
-        total_cost_basis,
-        f"Purchase ({fmt_money(purchase_price)}) + Rehab ({fmt_money(rehab_cost)}) + Closing ({fmt_money(closing_costs_buy)}) + Holding ({fmt_money(total_holding_costs)}) + Selling ({fmt_money(selling_costs)}) + HML Points ({fmt_money(hml_points_cash)}) = {fmt_money(total_cost_basis)}",
-    )
-    
-    gross_profit = sale_price - total_cost_basis
-    breakdown.add(
-        "net_profit",
-        "Gross Profit",
-        gross_profit,
-        f"Sale Price ({fmt_money(sale_price)}) − Total Cost Basis ({fmt_money(total_cost_basis)}) = {fmt_money(gross_profit)}",
-    )
-    
-    cap_gains = Decimal("0")
-    if gross_profit > 0:
-        cap_gains = gross_profit * (payload.capital_gains_tax_rate / Decimal("100.0"))
-    breakdown.add(
-        "net_profit",
-        "Capital Gains Tax",
-        cap_gains,
-        (f"Gross Profit ({fmt_money(gross_profit)}) × {fmt_pct(payload.capital_gains_tax_rate)} = {fmt_money(cap_gains)}"
-         if gross_profit > 0 else f"Gross Profit ≤ 0 → no tax owed = {fmt_money(cap_gains)}"),
-    )
-        
-    net_profit = gross_profit - cap_gains
-    breakdown.add(
-        ["net_profit", "roi"],
-        "Net Profit (after tax)",
-        net_profit,
-        f"Gross Profit ({fmt_money(gross_profit)}) − Capital Gains Tax ({fmt_money(cap_gains)}) = {fmt_money(net_profit)}",
-    )
-    
-    roi = (net_profit / total_cash_invested) * Decimal("100.0") if total_cash_invested > 0 else Decimal("0")
-    breakdown.add(
-        ["roi", "annualized_roi"],
-        "ROI",
-        roi,
-        (f"Net Profit ({fmt_money(net_profit)}) / Total Cash Invested ({fmt_money(total_cash_invested)}) × 100 = {fmt_pct(roi)}"
-         if total_cash_invested > 0 else "Total Cash Invested is 0 → ROI = 0%"),
-    )
-    years = payload.holding_time_months / Decimal("12.0")
-    annualized_roi = (roi / years) if years > 0 else Decimal("0")
-    breakdown.add(
-        "annualized_roi",
-        "Annualized ROI",
-        annualized_roi,
-        (f"ROI ({fmt_pct(roi)}) / Holding Years ({fmt_num(years)}) = {fmt_pct(annualized_roi)}"
-         if years > 0 else "Holding time is 0 → Annualized ROI = 0%"),
-    )
-    
-    return analyzeFlipRes(
-        net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
-        total_cash_needed=total_cash_needed_without_buffer,
-        total_cash_needed_with_buffer=total_cash_needed_with_buffer,
-        total_holding_costs=total_holding_costs,
-        total_hml_interest=total_hml_interest, messages=[],
-        breakdowns=breakdown.to_dict(),
-    )
-
 # --- Endpoints ---
+
+from BL.analyze.analyzeBRRR.analyzeBRRR import analyze_brrr as analyze_brrr_bl
+from BL.analyze.analyzeFlip.analyzeFlip import analyze_flip as analyze_flip_bl
 
 @app.post("/analyze/brrr", response_model=analyzeBRRRRes)
 def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
-    validate_brrr_inputs(payload)
-    return calculate_brrr_results(payload)
+    return analyze_brrr_bl(payload)
 
 @app.post("/analyze/flip", response_model=analyzeFlipRes)
 def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
-    validate_flip_inputs(payload)
-    return calculate_flip_results(payload)
+    return analyze_flip_bl(payload)
 
 
 # --- PDF Deal Report ---
 
 from fastapi.responses import Response
+
+from BL.reports.reportBrrrPdf.reportBrrrPdf import report_brrr_pdf as report_brrr_pdf_bl
+from BL.reports.reportFlipPdf.reportFlipPdf import report_flip_pdf as report_flip_pdf_bl
 
 
 def _safe_filename(address: str) -> str:
@@ -806,13 +137,7 @@ def report_brrr_pdf(
     address: str = "Property",
     disposition: str = "inline",
 ) -> Response:
-    validate_brrr_inputs(payload)
-    result = calculate_brrr_results(payload)
-    pdf_bytes = build_deal_pdf(
-        address=address,
-        deal_type="BRRRR",
-        result=result.model_dump(),
-    )
+    pdf_bytes = report_brrr_pdf_bl(payload, address)
     filename = f"BigWhales_BRRRR_{_safe_filename(address)}.pdf"
     return Response(
         content=pdf_bytes,
@@ -827,13 +152,7 @@ def report_flip_pdf(
     address: str = "Property",
     disposition: str = "inline",
 ) -> Response:
-    validate_flip_inputs(payload)
-    result = calculate_flip_results(payload)
-    pdf_bytes = build_deal_pdf(
-        address=address,
-        deal_type="FLIP",
-        result=result.model_dump(),
-    )
+    pdf_bytes = report_flip_pdf_bl(payload, address)
     filename = f"BigWhales_FLIP_{_safe_filename(address)}.pdf"
     return Response(
         content=pdf_bytes,
@@ -842,33 +161,15 @@ def report_flip_pdf(
     )
 
 
-def create_deal_response(deal: Union[BrrrActiveDeal, FlipActiveDeal]):
-    if isinstance(deal, BrrrActiveDeal):
-        calc = calculate_brrr_results(deal)
-        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
-        deal_data.update(calc.model_dump())
-        deal_data['deal_type'] = "BRRRR"
-        return BrrrActiveDealRes.model_validate(deal_data)
-    elif isinstance(deal, FlipActiveDeal):
-        calc = calculate_flip_results(deal)
-        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
-        deal_data.update(calc.model_dump())
-        deal_data['deal_type'] = "FLIP"
-        return FlipActiveDealRes.model_validate(deal_data)
-    return None
+from BL.activeDeal.getActiveDeals.getActiveDeals import get_active_deals as get_active_deals_bl
+from BL.activeDeal.addActiveDeal.addActiveDeal import add_active_deal as add_active_deal_bl
+from BL.activeDeal.updateActiveDeal.updateActiveDeal import update_deal as update_deal_bl
+from BL.activeDeal.deleteActiveDeal.deleteActiveDeal import delete_deal as delete_deal_bl
+from BL.activeDeal.duplicateActiveDeal.duplicateActiveDeal import duplicate_deal as duplicate_deal_bl
 
 @app.get("/active-deals", response_model=List[Union[BrrrActiveDealRes, FlipActiveDealRes]])
 def get_active_deals(db: Session = Depends(get_db)):
-    brrr_deals = get_all_brrr_deals(db)
-    flip_deals = get_all_flip_deals(db)
-    
-    all_deals = []
-    all_deals.extend([create_deal_response(d) for d in brrr_deals])
-    all_deals.extend([create_deal_response(d) for d in flip_deals])
-    
-    # Sort by created_at desc
-    all_deals.sort(key=lambda x: x.created_at, reverse=True)
-    return all_deals
+    return get_active_deals_bl(db)
 
 
 @app.post("/active-deals", response_model=Union[BrrrActiveDealRes, FlipActiveDealRes])
@@ -876,141 +177,80 @@ def add_active_deal(
     deal: Union[BrrrActiveDealCreate, FlipActiveDealCreate] = Body(..., discriminator='deal_type'),
     db: Session = Depends(get_db)
 ):
-    if deal.deal_type == "BRRRR":
-        created = add_brrr_deal(db, deal)
-        return create_deal_response(created)
-    elif deal.deal_type == "FLIP":
-        created = add_flip_deal(db, deal)
-        return create_deal_response(created)
+    result = add_active_deal_bl(db, deal)
+    if result is not None:
+        return result
     raise HTTPException(status_code=400, detail="Invalid deal type")
 
 @app.put("/active-deals/{deal_id}", response_model=Union[BrrrActiveDealRes, FlipActiveDealRes])
 def update_deal(deal_id: str, deal: Union[BrrrActiveDealCreate, FlipActiveDealCreate], db: Session = Depends(get_db)):
-    # Note: IDs might clash if tables use separate auto-increment and we look up just by ID.
-    # Ideally we need deal_type in query or unique IDs across tables (UUIDs).
-    # Since we have separate tables with independent integer PKs, ID=1 can exist in both.
-    # The frontend needs to pass ID AND Type or we need to try both.
-    # Current API structure `/active-deals/{deal_id}` implies ID uniqueness or we check both.
-    # If the user provides the payload with the type, we know which one to update.
-    # But if ID=1 exists in both...
-    # Assumption: The user selects a specific deal which has a type known to Frontend.
-    # The backend receives the payload with `deal_type`.
-    
-    if deal.deal_type == "BRRRR":
-        updated = update_brrr_deal(db, deal_id, deal)
-        if updated: return create_deal_response(updated)
-    elif deal.deal_type == "FLIP":
-        updated = update_flip_deal(db, deal_id, deal)
-        if updated: return create_deal_response(updated)
-        
+    result = update_deal_bl(db, deal_id, deal)
+    if result is not None:
+        return result
     raise HTTPException(status_code=404, detail="Deal not found")
 
 @app.delete("/active-deals/{deal_id}")
 def delete_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
-    # We need deal_type here to know which table to delete from.
-    # Or we try both.
-    # Let's try deleting from BRRRR first, if not found try Flip.
-    # Risk: Deleting wrong deal if ID exists in both.
-    # BETTER: Require type param. Defaults to BRRRR for backward compatibility?
-    # Actually, let's try to pass it as query param.
-    
-    if deal_type == "BRRRR":
-        if delete_brrr_deal(db, deal_id): return {"message": "Deal deleted"}
-    elif deal_type == "FLIP":
-        if delete_flip_deal(db, deal_id): return {"message": "Deal deleted"}
-        
-    # If not specified or failed, maybe try the other if strict mode is off?
-    # Let's return 404.
+    if delete_deal_bl(db, deal_id, deal_type):
+        return {"message": "Deal deleted"}
     raise HTTPException(status_code=404, detail="Deal not found")
 
 @app.post("/active-deals/{deal_id}/duplicate", response_model=Union[BrrrActiveDealRes, FlipActiveDealRes])
 def duplicate_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
-    if deal_type == "BRRRR":
-        new_deal = duplicate_brrr_deal(db, deal_id)
-        if new_deal: return create_deal_response(new_deal)
-    elif deal_type == "FLIP":
-        new_deal = duplicate_flip_deal(db, deal_id)
-        if new_deal: return create_deal_response(new_deal)
-        
+    result = duplicate_deal_bl(db, deal_id, deal_type)
+    if result is not None:
+        return result
     raise HTTPException(status_code=404, detail="Deal not found")
 
 
 # --- Bought Deals ---
 
-def create_bought_deal_response(deal: Union[BoughtBrrrDeal, BoughtFlipDeal]):
-    if isinstance(deal, BoughtBrrrDeal):
-        calc = calculate_brrr_results(deal)
-        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
-        deal_data.update(calc.model_dump())
-        deal_data['deal_type'] = "BRRRR"
-        return BoughtBrrrDealRes.model_validate(deal_data)
-    elif isinstance(deal, BoughtFlipDeal):
-        calc = calculate_flip_results(deal)
-        deal_data = {c.name: getattr(deal, c.name) for c in deal.__table__.columns}
-        deal_data.update(calc.model_dump())
-        deal_data['deal_type'] = "FLIP"
-        return BoughtFlipDealRes.model_validate(deal_data)
-    return None
+from BL.boughtDeal.getBoughtDeals.getBoughtDeals import get_bought_deals as get_bought_deals_bl
+from BL.boughtDeal.addBoughtDeal.addBoughtDeal import add_bought_deal as add_bought_deal_bl
+from BL.boughtDeal.updateBoughtDeal.updateBoughtDeal import update_bought_deal as update_bought_deal_bl
+from BL.boughtDeal.deleteBoughtDeal.deleteBoughtDeal import delete_bought_deal as delete_bought_deal_bl
+from BL.boughtDeal.moveToBought.moveToBought import move_to_bought as move_to_bought_bl
+from DAL.crud.active_deal import get_brrr_deal, get_flip_deal
 
 @app.get("/bought-deals", response_model=List[Union[BoughtBrrrDealRes, BoughtFlipDealRes]])
 def get_bought_deals(db: Session = Depends(get_db)):
-    brrr_deals = get_all_bought_brrr_deals(db)
-    flip_deals = get_all_bought_flip_deals(db)
-
-    all_deals = []
-    all_deals.extend([create_bought_deal_response(d) for d in brrr_deals])
-    all_deals.extend([create_bought_deal_response(d) for d in flip_deals])
-
-    all_deals.sort(key=lambda x: x.created_at, reverse=True)
-    return all_deals
+    return get_bought_deals_bl(db)
 
 @app.post("/bought-deals", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
 def add_bought_deal(
     deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate] = Body(..., discriminator='deal_type'),
     db: Session = Depends(get_db)
 ):
-    if deal.deal_type == "BRRRR":
-        created = add_bought_brrr_deal(db, deal)
-        return create_bought_deal_response(created)
-    elif deal.deal_type == "FLIP":
-        created = add_bought_flip_deal(db, deal)
-        return create_bought_deal_response(created)
+    result = add_bought_deal_bl(db, deal)
+    if result is not None:
+        return result
     raise HTTPException(status_code=400, detail="Invalid deal type")
 
 @app.put("/bought-deals/{deal_id}", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
 def update_bought_deal(deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate], db: Session = Depends(get_db)):
-    if deal.deal_type == "BRRRR":
-        updated = update_bought_brrr_deal(db, deal_id, deal)
-        if updated: return create_bought_deal_response(updated)
-    elif deal.deal_type == "FLIP":
-        updated = update_bought_flip_deal(db, deal_id, deal)
-        if updated: return create_bought_deal_response(updated)
-
+    result = update_bought_deal_bl(db, deal_id, deal)
+    if result is not None:
+        return result
     raise HTTPException(status_code=404, detail="Bought deal not found")
 
 @app.delete("/bought-deals/{deal_id}")
 def delete_bought_deal(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
-    if deal_type == "BRRRR":
-        if delete_bought_brrr_deal(db, deal_id): return {"message": "Bought deal deleted"}
-    elif deal_type == "FLIP":
-        if delete_bought_flip_deal(db, deal_id): return {"message": "Bought deal deleted"}
-
+    if delete_bought_deal_bl(db, deal_id, deal_type):
+        return {"message": "Bought deal deleted"}
     raise HTTPException(status_code=404, detail="Bought deal not found")
 
 @app.post("/bought-deals/from-active/{deal_id}", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
 def move_to_bought(deal_id: str, deal_type: str = "BRRRR", db: Session = Depends(get_db)):
     if deal_type == "BRRRR":
-        source = db.query(BrrrActiveDeal).filter(BrrrActiveDeal.id == deal_id).first()
+        source = get_brrr_deal(db, deal_id)
         if not source:
             raise HTTPException(status_code=404, detail="Source BRRRR deal not found")
-        new_deal = create_bought_from_active_brrr(db, source)
-        return create_bought_deal_response(new_deal)
+        return move_to_bought_bl(db, source, "BRRRR")
     elif deal_type == "FLIP":
-        source = db.query(FlipActiveDeal).filter(FlipActiveDeal.id == deal_id).first()
+        source = get_flip_deal(db, deal_id)
         if not source:
             raise HTTPException(status_code=404, detail="Source FLIP deal not found")
-        new_deal = create_bought_from_active_flip(db, source)
-        return create_bought_deal_response(new_deal)
+        return move_to_bought_bl(db, source, "FLIP")
 
     raise HTTPException(status_code=400, detail="Invalid deal type")
 

@@ -31,6 +31,14 @@ def get_all_flip_deals(db: Session) -> List[FlipActiveDeal]:
     return db.query(FlipActiveDeal).order_by(FlipActiveDeal.created_at.desc()).all()
 
 
+def get_brrr_deal(db: Session, deal_id: str) -> BrrrActiveDeal | None:
+    return db.query(BrrrActiveDeal).filter(BrrrActiveDeal.id == deal_id).first()
+
+
+def get_flip_deal(db: Session, deal_id: str) -> FlipActiveDeal | None:
+    return db.query(FlipActiveDeal).filter(FlipActiveDeal.id == deal_id).first()
+
+
 def update_brrr_deal(db: Session, deal_id: str, deal_data: BrrrActiveDealCreate) -> BrrrActiveDeal | None:
     db_deal = db.query(BrrrActiveDeal).filter(BrrrActiveDeal.id == deal_id).first()
     if not db_deal:

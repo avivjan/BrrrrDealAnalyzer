@@ -9,6 +9,6 @@ from DAL.crud.bought_deal import (  # noqa: F401
     update_bought_flip_deal,
     delete_bought_brrr_deal,
     delete_bought_flip_deal,
-    create_bought_from_active_brrr,
-    create_bought_from_active_flip,
+    insert_bought_from_active_brrr,
+    insert_bought_from_active_flip,
 )
