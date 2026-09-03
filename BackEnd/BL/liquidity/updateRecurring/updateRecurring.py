@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from DAL.data_models import LIQUIDITY_RECURRING_FREQUENCIES
 from ReqRes.common.liquidity_schemas import LiquidityRecurringTransactionUpdate
-from DAL.crud.liquidity import get_recurring, save_recurring
+from DAL.crud.liquidity import get_recurring
 from BL.liquidity.common.mappers import recurring_to_res
 
 
@@ -43,5 +43,6 @@ def update_recurring(db: Session, rule_id: str, data: LiquidityRecurringTransact
     if rule.end_date is not None and rule.end_date < rule.start_date:
         raise ValueError("end_date must be on or after start_date.")
 
-    rule = save_recurring(db, rule)
+    db.commit()
+    db.refresh(rule)
     return recurring_to_res(rule)

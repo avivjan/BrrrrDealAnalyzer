@@ -20,13 +20,4 @@ def get_all_templates(db: Session) -> list[PipelineTemplate]:
 def insert_template(db: Session, deal_type: DealType, stages: list[dict]) -> PipelineTemplate:
     row = PipelineTemplate(deal_type=deal_type, stages=stages)
     db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-def save_template(db: Session, row: PipelineTemplate) -> PipelineTemplate:
-    """Persist a `PipelineTemplate` the caller has already mutated."""
-    db.commit()
-    db.refresh(row)
     return row

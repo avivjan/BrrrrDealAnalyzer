@@ -7,4 +7,6 @@ from DAL.crud.reps import upsert_prospect
 def create_prospect(db: Session, name: str) -> RepsPropertyOption:
     """Raises ValueError for a blank name."""
     prospect = upsert_prospect(db, name)
+    db.commit()
+    db.refresh(prospect)
     return RepsPropertyOption(name=prospect.name, source="prospect")

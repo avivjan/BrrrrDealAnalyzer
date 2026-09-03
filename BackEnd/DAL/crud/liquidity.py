@@ -28,8 +28,6 @@ def add_transaction(db: Session, data: LiquidityTransactionCreate) -> LiquidityT
         amount_k=data.amount_k,
     )
     db.add(txn)
-    db.commit()
-    db.refresh(txn)
     return txn
 
 
@@ -43,8 +41,6 @@ def update_transaction(db: Session, txn_id: str, data: LiquidityTransactionUpdat
         txn.description = data.description
     if data.amount_k is not None:
         txn.amount_k = data.amount_k
-    db.commit()
-    db.refresh(txn)
     return txn
 
 
@@ -53,7 +49,6 @@ def delete_transaction(db: Session, txn_id: str) -> bool:
     if not txn:
         return False
     db.delete(txn)
-    db.commit()
     return True
 
 
@@ -89,15 +84,6 @@ def insert_recurring(
         interval=data.interval,
     )
     db.add(rule)
-    db.commit()
-    db.refresh(rule)
-    return rule
-
-
-def save_recurring(db: Session, rule: LiquidityRecurringTransaction) -> LiquidityRecurringTransaction:
-    """Persist a `LiquidityRecurringTransaction` the caller has already mutated."""
-    db.commit()
-    db.refresh(rule)
     return rule
 
 
@@ -110,7 +96,6 @@ def delete_recurring(db: Session, rule_id: str) -> bool:
     if not rule:
         return False
     db.delete(rule)
-    db.commit()
     return True
 
 
@@ -130,13 +115,4 @@ def insert_settings(
         reserve_k=reserve_k,
     )
     db.add(settings)
-    db.commit()
-    db.refresh(settings)
-    return settings
-
-
-def save_settings(db: Session, settings: LiquiditySettings) -> LiquiditySettings:
-    """Persist a `LiquiditySettings` the caller has already mutated."""
-    db.commit()
-    db.refresh(settings)
     return settings

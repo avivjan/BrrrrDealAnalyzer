@@ -13,9 +13,13 @@ def delete_deal(db: Session, deal_id: str, deal_type: str) -> bool:
     Actually, let's try to pass it as query param.
     """
     if deal_type == "BRRRR":
-        if delete_brrr_deal(db, deal_id): return True
+        if delete_brrr_deal(db, deal_id):
+            db.commit()
+            return True
     elif deal_type == "FLIP":
-        if delete_flip_deal(db, deal_id): return True
+        if delete_flip_deal(db, deal_id):
+            db.commit()
+            return True
 
     # If not specified or failed, maybe try the other if strict mode is off?
     # Let's return False (the router turns this into a 404).

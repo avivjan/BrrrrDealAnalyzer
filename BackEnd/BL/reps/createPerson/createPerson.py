@@ -8,4 +8,6 @@ from BL.reps.common.mappers import person_to_res
 def create_person(db: Session, payload: RepsPersonCreate):
     """Raises on failure (most likely a UNIQUE-name collision); router maps to 400."""
     person = add_person(db, payload)
+    db.commit()
+    db.refresh(person)
     return person_to_res(person)

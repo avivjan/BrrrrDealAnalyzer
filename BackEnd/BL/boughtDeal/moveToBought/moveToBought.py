@@ -16,4 +16,6 @@ def move_to_bought(db: Session, source_deal, deal_type: str):
         new_deal = insert_bought_from_active_flip(db, source_deal, stage)
     else:
         return None
+    db.commit()
+    db.refresh(new_deal)
     return create_bought_deal_response(new_deal)

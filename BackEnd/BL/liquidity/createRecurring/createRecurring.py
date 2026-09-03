@@ -13,4 +13,6 @@ def create_recurring(db: Session, data: LiquidityRecurringTransactionCreate):
         # so a hand-rolled HTTP client can't poison the DB.
         raise ValueError(f"Unsupported frequency: {data.frequency!r}")
     rule = insert_recurring(db, data)
+    db.commit()
+    db.refresh(rule)
     return recurring_to_res(rule)

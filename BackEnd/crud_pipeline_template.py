@@ -6,7 +6,6 @@ from DAL.crud.pipeline_template import (  # noqa: F401
     get_template,
     get_all_templates,
     insert_template,
-    save_template,
 )
 from BL.pipelineTemplate.common.seed import ensure_defaults  # noqa: F401
 from BL.pipelineTemplate.common.mappers import to_res as _to_res  # noqa: F401

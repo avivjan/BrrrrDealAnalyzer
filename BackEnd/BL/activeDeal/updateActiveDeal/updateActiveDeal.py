@@ -21,9 +21,15 @@ def update_deal(db: Session, deal_id: str, deal: Union[BrrrActiveDealCreate, Fli
     """
     if deal.deal_type == "BRRRR":
         updated = update_brrr_deal(db, deal_id, deal)
-        if updated: return create_deal_response(updated)
+        if updated:
+            db.commit()
+            db.refresh(updated)
+            return create_deal_response(updated)
     elif deal.deal_type == "FLIP":
         updated = update_flip_deal(db, deal_id, deal)
-        if updated: return create_deal_response(updated)
+        if updated:
+            db.commit()
+            db.refresh(updated)
+            return create_deal_response(updated)
 
     return None

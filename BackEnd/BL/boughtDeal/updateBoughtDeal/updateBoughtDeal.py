@@ -10,9 +10,15 @@ def update_bought_deal(db: Session, deal_id: str, deal: Union[BoughtBrrrDealCrea
     """Returns the updated deal's response, or `None` if no matching row was found."""
     if deal.deal_type == "BRRRR":
         updated = update_bought_brrr_deal(db, deal_id, deal)
-        if updated: return create_bought_deal_response(updated)
+        if updated:
+            db.commit()
+            db.refresh(updated)
+            return create_bought_deal_response(updated)
     elif deal.deal_type == "FLIP":
         updated = update_bought_flip_deal(db, deal_id, deal)
-        if updated: return create_bought_deal_response(updated)
+        if updated:
+            db.commit()
+            db.refresh(updated)
+            return create_bought_deal_response(updated)
 
     return None

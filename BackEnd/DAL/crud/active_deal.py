@@ -9,8 +9,6 @@ def add_brrr_deal(db: Session, deal_data: BrrrActiveDealCreate) -> BrrrActiveDea
     data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
     db_deal = BrrrActiveDeal(**data)
     db.add(db_deal)
-    db.commit()
-    db.refresh(db_deal)
     return db_deal
 
 
@@ -18,8 +16,6 @@ def add_flip_deal(db: Session, deal_data: FlipActiveDealCreate) -> FlipActiveDea
     data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
     db_deal = FlipActiveDeal(**data)
     db.add(db_deal)
-    db.commit()
-    db.refresh(db_deal)
     return db_deal
 
 
@@ -49,8 +45,6 @@ def update_brrr_deal(db: Session, deal_id: str, deal_data: BrrrActiveDealCreate)
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
 
-    db.commit()
-    db.refresh(db_deal)
     return db_deal
 
 
@@ -64,8 +58,6 @@ def update_flip_deal(db: Session, deal_id: str, deal_data: FlipActiveDealCreate)
         if hasattr(db_deal, key):
             setattr(db_deal, key, value)
 
-    db.commit()
-    db.refresh(db_deal)
     return db_deal
 
 
@@ -75,7 +67,6 @@ def delete_brrr_deal(db: Session, deal_id: str) -> bool:
         return False
 
     db.delete(db_deal)
-    db.commit()
     return True
 
 
@@ -85,7 +76,6 @@ def delete_flip_deal(db: Session, deal_id: str) -> bool:
         return False
 
     db.delete(db_deal)
-    db.commit()
     return True
 
 
@@ -102,8 +92,6 @@ def duplicate_brrr_deal(db: Session, deal_id: str) -> BrrrActiveDeal | None:
 
     new_deal = BrrrActiveDeal(**data)
     db.add(new_deal)
-    db.commit()
-    db.refresh(new_deal)
     return new_deal
 
 def duplicate_flip_deal(db: Session, deal_id: str) -> FlipActiveDeal | None:
@@ -119,6 +107,4 @@ def duplicate_flip_deal(db: Session, deal_id: str) -> FlipActiveDeal | None:
 
     new_deal = FlipActiveDeal(**data)
     db.add(new_deal)
-    db.commit()
-    db.refresh(new_deal)
     return new_deal

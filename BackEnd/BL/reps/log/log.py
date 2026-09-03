@@ -76,6 +76,7 @@ def create_log(db: Session, payload: RepsLogCreate) -> RepsLogRes:
                 db,
                 RepsActivityCategoryCreate(name=payload.activity_category.strip()),
             )
+            db.commit()
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to persist new activity category: %s", exc)
 

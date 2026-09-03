@@ -42,8 +42,6 @@ def add_person(db: Session, payload: RepsPersonCreate) -> RepsPerson:
         notes=(payload.notes or None),
     )
     db.add(person)
-    db.commit()
-    db.refresh(person)
     return person
 
 
@@ -58,8 +56,6 @@ def update_person(
         if isinstance(value, str):
             value = value.strip() or None
         setattr(person, key, value)
-    db.commit()
-    db.refresh(person)
     return person
 
 
@@ -68,7 +64,6 @@ def delete_person(db: Session, person_id: str) -> bool:
     if not person:
         return False
     db.delete(person)
-    db.commit()
     return True
 
 
@@ -104,8 +99,6 @@ def upsert_prospect(db: Session, name: str) -> RepsProperty:
 
     prospect = RepsProperty(name=name, is_prospect=True)
     db.add(prospect)
-    db.commit()
-    db.refresh(prospect)
     return prospect
 
 
@@ -114,7 +107,6 @@ def delete_prospect(db: Session, prospect_id: str) -> bool:
     if not prospect:
         return False
     db.delete(prospect)
-    db.commit()
     return True
 
 
@@ -170,8 +162,6 @@ def add_activity_category(
 
     cat = RepsActivityCategory(name=name, sort_order=next_order, is_default=False)
     db.add(cat)
-    db.commit()
-    db.refresh(cat)
     return cat
 
 
@@ -180,5 +170,4 @@ def delete_activity_category(db: Session, cat_id: str) -> bool:
     if not cat:
         return False
     db.delete(cat)
-    db.commit()
     return True

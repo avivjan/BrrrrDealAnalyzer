@@ -10,4 +10,6 @@ def update_transaction(db: Session, txn_id: str, data: LiquidityTransactionUpdat
     txn = _update_transaction(db, txn_id, data)
     if not txn:
         return None
+    db.commit()
+    db.refresh(txn)
     return txn_to_res(txn)

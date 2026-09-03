@@ -2,7 +2,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from ReqRes.common.liquidity_schemas import LiquiditySettingsUpdate
-from DAL.crud.liquidity import get_settings as _get_settings, insert_settings, save_settings
+from DAL.crud.liquidity import get_settings as _get_settings, insert_settings
 from BL.liquidity.common.mappers import settings_to_res
 
 
@@ -22,5 +22,6 @@ def update_settings(db: Session, data: LiquiditySettingsUpdate):
             settings.opening_balance_date = data.opening_balance_date
         if data.reserve_k is not None:
             settings.reserve_k = data.reserve_k
-        settings = save_settings(db, settings)
+    db.commit()
+    db.refresh(settings)
     return settings_to_res(settings)

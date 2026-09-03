@@ -10,8 +10,12 @@ def add_bought_deal(db: Session, deal: Union[BoughtBrrrDealCreate, BoughtFlipDea
     """Returns the created deal's response, or `None` for an unrecognized deal_type."""
     if deal.deal_type == "BRRRR":
         created = add_bought_brrr_deal(db, deal)
+        db.commit()
+        db.refresh(created)
         return create_bought_deal_response(created)
     elif deal.deal_type == "FLIP":
         created = add_bought_flip_deal(db, deal)
+        db.commit()
+        db.refresh(created)
         return create_bought_deal_response(created)
     return None

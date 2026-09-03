@@ -9,4 +9,6 @@ def create_activity_category(db: Session, payload: RepsActivityCategoryCreate):
     """Raises ValueError for a blank name; any other exception also propagates
     -- the router maps both to 400 (with different messages)."""
     cat = add_activity_category(db, payload)
+    db.commit()
+    db.refresh(cat)
     return category_to_res(cat)

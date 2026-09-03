@@ -10,4 +10,6 @@ def update_person(db: Session, person_id: str, payload: RepsPersonUpdate):
     person = _update_person(db, person_id, payload)
     if not person:
         return None
+    db.commit()
+    db.refresh(person)
     return person_to_res(person)
