@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import pytest
 
-import main
+from BL.common.deal_math import calc_holding_costs
 
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
@@ -196,14 +196,14 @@ class TestHoldingCosts:
     def test_a_monthly_hoa_is_annualised_but_annual_figures_are_not(self):
         year = 360  # days, on the calc's banking year
 
-        only_taxes = main.calc_holding_costs(
+        only_taxes = calc_holding_costs(
             Decimal("1200"), Decimal("0"), Decimal("0"), year
         )
-        only_insurance = main.calc_holding_costs(
+        only_insurance = calc_holding_costs(
             Decimal("0"), Decimal("1200"), Decimal("0"), year
         )
         # $100/month is the same annual burden as $1,200/year.
-        only_hoa = main.calc_holding_costs(
+        only_hoa = calc_holding_costs(
             Decimal("0"), Decimal("0"), Decimal("100"), year
         )
 
@@ -212,7 +212,7 @@ class TestHoldingCosts:
         assert only_hoa == Decimal("1200")
 
     def test_the_three_inputs_simply_add_up(self):
-        combined = main.calc_holding_costs(
+        combined = calc_holding_costs(
             Decimal("3600"), Decimal("1200"), Decimal("250"), 180
         )
         # ($3,600/yr + $1,200/yr)/12 + $250/mo = $650/mo, held six 30-day months.
@@ -220,7 +220,7 @@ class TestHoldingCosts:
 
     def test_cost_scales_linearly_with_the_days_held(self):
         args = (Decimal("3600"), Decimal("1200"), Decimal("250"))
-        assert main.calc_holding_costs(*args, 60) == 2 * main.calc_holding_costs(*args, 30)
+        assert calc_holding_costs(*args, 60) == 2 * calc_holding_costs(*args, 30)
 
 
 class TestAnalyzeFlip:

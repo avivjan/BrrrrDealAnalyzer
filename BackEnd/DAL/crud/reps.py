@@ -1,0 +1,173 @@
+"""DB-backed CRUD for the REPS feature.
+
+Two small reference tables live in the app DB:
+- `reps_people`     — contractors / agents the user tags on log entries.
+- `reps_properties` — prospect addresses the user types into the autocomplete
+                      that aren't yet in `bought_brrrr_deals` / `bought_flip_deals`.
+
+The actual time entries themselves are NOT stored here — those go directly to
+each user's Google Sheet, which is the audit-of-record. This file only manages
+the reference data the frontend needs to render the entry form.
+"""
+
+from typing import List, Optional
+
+from sqlalchemy.orm import Session
+
+from DAL.data_models import (
+    RepsPerson,
+    RepsProperty,
+    RepsActivityCategory,
+    BoughtBrrrDeal,
+    BoughtFlipDeal,
+    DEFAULT_REPS_ACTIVITY_CATEGORIES,
+)
+from ReqRes.common.reps_schemas import (
+    RepsPersonCreate,
+    RepsPersonUpdate,
+    RepsActivityCategoryCreate,
+)
+
+
+# --- People --------------------------------------------------------------- #
+
+def list_people(db: Session) -> List[RepsPerson]:
+    return db.query(RepsPerson).order_by(RepsPerson.name.asc()).all()
+
+
+def add_person(db: Session, payload: RepsPersonCreate) -> RepsPerson:
+    person = RepsPerson(
+        name=payload.name.strip(),
+        role=(payload.role or None),
+        notes=(payload.notes or None),
+    )
+    db.add(person)
+    return person
+
+
+def update_person(
+    db: Session, person_id: str, payload: RepsPersonUpdate
+) -> Optional[RepsPerson]:
+    person = db.query(RepsPerson).filter(RepsPerson.id == person_id).first()
+    if not person:
+        return None
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        if isinstance(value, str):
+            value = value.strip() or None
+        setattr(person, key, value)
+    return person
+
+
+def delete_person(db: Session, person_id: str) -> bool:
+    person = db.query(RepsPerson).filter(RepsPerson.id == person_id).first()
+    if not person:
+        return False
+    db.delete(person)
+    return True
+
+
+# --- Properties / Prospects ---------------------------------------------- #
+
+def get_bought_deal_addresses(db: Session) -> List[str]:
+    """Raw `address` column from every bought BRRRR/FLIP deal, in that priority
+    order. May contain `None`/blank entries; the caller filters those."""
+    addresses: List[str] = []
+    for cls in (BoughtBrrrDeal, BoughtFlipDeal):
+        for row in db.query(cls.address).filter(cls.address.isnot(None)).all():
+            addresses.append(row[0])
+    return addresses
+
+
+def list_prospects(db: Session) -> List[RepsProperty]:
+    return db.query(RepsProperty).order_by(RepsProperty.name.asc()).all()
+
+
+def upsert_prospect(db: Session, name: str) -> RepsProperty:
+    """Save a free-typed property name as a prospect. Idempotent on name (case-insensitive)."""
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("Property name cannot be empty.")
+
+    existing = (
+        db.query(RepsProperty)
+        .filter(RepsProperty.name.ilike(name))
+        .first()
+    )
+    if existing:
+        return existing
+
+    prospect = RepsProperty(name=name, is_prospect=True)
+    db.add(prospect)
+    return prospect
+
+
+def delete_prospect(db: Session, prospect_id: str) -> bool:
+    prospect = db.query(RepsProperty).filter(RepsProperty.id == prospect_id).first()
+    if not prospect:
+        return False
+    db.delete(prospect)
+    return True
+
+
+# --- Activity categories ------------------------------------------------- #
+
+def ensure_activity_category_defaults(db: Session) -> None:
+    """Idempotently seed the dropdown with the curated default categories."""
+
+    existing = {
+        (c.name or "").strip().lower()
+        for c in db.query(RepsActivityCategory).all()
+    }
+    added = False
+    for idx, name in enumerate(DEFAULT_REPS_ACTIVITY_CATEGORIES):
+        if name.lower() in existing:
+            continue
+        db.add(RepsActivityCategory(name=name, sort_order=idx, is_default=True))
+        added = True
+    if added:
+        db.commit()
+
+
+def list_activity_categories(db: Session) -> List[RepsActivityCategory]:
+    return (
+        db.query(RepsActivityCategory)
+        .order_by(RepsActivityCategory.sort_order.asc(), RepsActivityCategory.name.asc())
+        .all()
+    )
+
+
+def add_activity_category(
+    db: Session, payload: RepsActivityCategoryCreate
+) -> RepsActivityCategory:
+    name = (payload.name or "").strip()
+    if not name:
+        raise ValueError("Activity category name cannot be empty.")
+
+    existing = (
+        db.query(RepsActivityCategory)
+        .filter(RepsActivityCategory.name.ilike(name))
+        .first()
+    )
+    if existing:
+        return existing
+
+    # Place new categories at the end of the list.
+    last = (
+        db.query(RepsActivityCategory)
+        .order_by(RepsActivityCategory.sort_order.desc())
+        .first()
+    )
+    next_order = (last.sort_order if last else 0) + 1
+
+    cat = RepsActivityCategory(name=name, sort_order=next_order, is_default=False)
+    db.add(cat)
+    return cat
+
+
+def delete_activity_category(db: Session, cat_id: str) -> bool:
+    cat = db.query(RepsActivityCategory).filter(RepsActivityCategory.id == cat_id).first()
+    if not cat:
+        return False
+    db.delete(cat)
+    return True

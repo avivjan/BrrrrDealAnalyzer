@@ -166,9 +166,9 @@ import db as app_db  # noqa: E402
 
 assert_isolated(app_db.engine)
 
-import crud_reps  # noqa: E402
 import main as app_main  # noqa: E402
-from crud_pipeline_template import ensure_defaults as ensure_pipeline_defaults  # noqa: E402
+from BL.pipelineTemplate.common.seed import ensure_defaults as ensure_pipeline_defaults  # noqa: E402
+from DAL.crud.reps import ensure_activity_category_defaults  # noqa: E402
 
 # `main` ran create_all + migrations + seeding on import. Re-verify that all of
 # that landed on the temp file and not somewhere else.
@@ -214,7 +214,7 @@ def clean_database():
     # to exist again after the wipe.
     with app_db.SessionLocal() as session:
         ensure_pipeline_defaults(session)
-        crud_reps.ensure_activity_category_defaults(session)
+        ensure_activity_category_defaults(session)
 
     yield
 
