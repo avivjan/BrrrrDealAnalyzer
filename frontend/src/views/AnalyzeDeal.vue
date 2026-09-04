@@ -223,14 +223,14 @@ const saveDeal = async () => {
                 <div class="flex items-start gap-3">
                   <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">2</div>
                   <div>
-                    <p class="text-sm font-medium text-fg">Analyze &amp; Save</p>
+                    <p class="text-sm font-medium text-fg">Analyze & Save</p>
                     <p class="mt-0.5 text-xs text-fg-muted">Click the button, enter the property address, and save it to your board.</p>
                   </div>
                 </div>
                 <div class="flex items-start gap-3">
                   <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-positive/10 text-sm font-bold text-positive">3</div>
                   <div>
-                    <p class="text-sm font-medium text-fg">See results &amp; refine</p>
+                    <p class="text-sm font-medium text-fg">See results & refine</p>
                     <p class="mt-0.5 text-xs text-fg-muted">View full analysis on your deal board. Changes auto-save as you tweak numbers.</p>
                   </div>
                 </div>
