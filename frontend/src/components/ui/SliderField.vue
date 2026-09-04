@@ -85,15 +85,6 @@ const sliderValue = computed({
         :max="thumbMax"
         :step="step"
         class="w-full h-2 bg-gray-200 rounded-full cursor-pointer relative"
-        :pt="{
-          range: {
-            class: 'bg-blue-500 h-full rounded-full absolute top-0 left-0',
-          },
-          handle: {
-            class:
-              'bg-white border-2 border-blue-500 w-5 h-5 rounded-full absolute top-1/2 -mt-2.5 -ml-2.5 shadow-md hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-300',
-          },
-        }"
       />
     </div>
   </div>

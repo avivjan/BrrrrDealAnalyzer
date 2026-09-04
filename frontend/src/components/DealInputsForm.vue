@@ -272,11 +272,6 @@ const quickCalcSellingCosts = () => {
             <ToggleSwitch
               data-testid="form.hm-toggle"
               v-model="useHmForRehab"
-              :pt="{
-                slider: ({ props: sliderProps }: any) => ({
-                  class: sliderProps.modelValue ? 'bg-blue-500' : 'bg-gray-400',
-                }),
-              }"
             />
           </div>
         </div>
