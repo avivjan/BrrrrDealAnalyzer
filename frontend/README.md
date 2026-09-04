@@ -180,6 +180,19 @@ The audits on their own:
 - `npm run audit:baseline` — regenerates those manifests. Only run it when a change to behaviour
   has been agreed, and commit the result on its own with a `Golden update:` subject.
 
+G4 knows about the primitives. On an element whose tag is one of them it ignores
+a presentational prop (`variant`, `size`, `tone`, `status`, `loading`, … — the
+full list is `PRESENTATIONAL_PROPS` in `scripts/audit/bindings.mjs`) as long as
+the expression neither calls nor assigns anything, and it ignores the `v-slot` /
+`#name` bindings that carry the copy, on the primitive and on the `<template>`
+that names the slot. So `<button :class="c ? a : b" @click="f">` becoming
+`<UiButton :variant="v" :active="c" @click="f">` is no drift, while
+`:disabled`, `:type`, `:href`, `:value`, `:is`, `:to`, any `@event`, `v-model`,
+`v-for`, `v-show`, a `v-if` chain — and a presentational prop that calls
+something, such as `:tone="toneFor(deal)"` — are recorded on every tag and still
+have to be justified. A slot on a `RouterView`, a `VueDraggable` or any other
+component stays recorded.
+
 For UI work, also run the end-to-end suite described above:
 
 ```

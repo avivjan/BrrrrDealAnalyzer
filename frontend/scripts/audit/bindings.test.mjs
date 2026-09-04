@@ -285,3 +285,122 @@ describe('G4 routerview-transition-slot exemption', () => {
     expect(result.ok).toBe(true);
   });
 });
+
+/**
+ * Phase 3 replaces styled markup with the Ui* primitives. The swap moves
+ * styling only, so the props that carry that styling — and the slots that carry
+ * the copy — must be invisible to the gate, while anything that could change
+ * what the app *does* must not be.
+ */
+describe('G4 primitive-aware collection', () => {
+  it('(i) ignores presentational props when a button becomes a UiButton', () => {
+    const result = compare(
+      '<button class="btn primary" @click="save">x</button>',
+      '<UiButton variant="primary" :active="isOpen" @click="save">x</UiButton>',
+    );
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('(ii) records a :disabled added to a UiButton', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiButton :disabled="busy" @click="save">x</UiButton>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:disabled'))).toBe(true);
+  });
+
+  it('(iii) ignores a new UiSaveStatus that only takes a presentational prop', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiSaveStatus :status="saveStatus" /><button @click="save">x</button>',
+    );
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('(iv) records a new UiCard that takes a handler', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiCard @click="open" /><button @click="save">x</button>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('(v) ignores a UiField scoped slot wrapped around an unchanged input', () => {
+    const before = '<input v-model="a" />';
+    const after = '<UiField #default="{ id }"><input v-model="a" :id="id" /></UiField>';
+    const result = compare(before, after);
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+    const manifest = manifestFromSource(sfc(after), FILE);
+    expect(manifest.elements.map((e) => e.tag)).toEqual(['input']);
+  });
+
+  it('(vi) ignores a <template #header> moved into a UiModalPanel', () => {
+    const before = '<div class="modal"><h3 class="t">Title</h3></div>';
+    const after = '<UiModalPanel><template #header><h3 class="t">Title</h3></template></UiModalPanel>';
+    const result = compare(before, after);
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+    expect(manifestFromSource(sfc(after), FILE).elements).toEqual([]);
+  });
+
+  it('(vii) records a presentational prop whose expression calls something', () => {
+    const result = compare(
+      '<div class="tile">x</div>',
+      '<UiStatTile :tone="toneFor(deal)">x</UiStatTile>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:tone'))).toBe(true);
+  });
+
+  it('(vii) records a presentational prop holding an arrow function', () => {
+    const result = compare('<div class="tile">x</div>', '<UiStatTile :tone="v => v">x</UiStatTile>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:tone'))).toBe(true);
+  });
+
+  it('accepts identifiers, member access, comparisons and ternaries as side-effect-free', () => {
+    const manifest = manifestFromSource(
+      sfc(
+        '<UiBadge :tone="deal.type === \'BRRRR\' ? \'positive\' : \'negative\'" :count="rows.length" ' +
+          ':compact="!wide && dense" size="sm">x</UiBadge>',
+      ),
+      FILE,
+    );
+    expect(manifest.elements).toEqual([]);
+  });
+
+  it('records an assignment hidden in a presentational prop', () => {
+    const manifest = manifestFromSource(sfc('<UiBadge :tone="t = 1">x</UiBadge>'), FILE);
+    expect(manifest.elements[0].bindings).toEqual([
+      { kind: 'bind:tone', arg: 'tone', modifiers: [], expression: 't = 1' },
+    ]);
+  });
+
+  it('keeps presentational names behavioural on a native element', () => {
+    const result = compare('<input :required="r" />', '<input :required="s" />');
+    expect(result.ok).toBe(false);
+  });
+
+  it('(viii) still records a slot on RouterView and on other components', () => {
+    const routerView = manifestFromSource(
+      sfc('<RouterView v-slot="{ Component }"><div class="x" /></RouterView>'),
+      FILE,
+    );
+    expect(routerView.elements).toEqual([
+      {
+        tag: 'RouterView',
+        line: 7,
+        bindings: [{ kind: 'slot', arg: null, modifiers: [], expression: '{ Component }' }],
+      },
+    ]);
+    const draggable = manifestFromSource(sfc('<VueDraggable #item="{ element }"><div /></VueDraggable>'), FILE);
+    expect(draggable.elements[0].bindings).toEqual([
+      { kind: 'slot', arg: 'item', modifiers: [], expression: '{ element }' },
+    ]);
+  });
+});

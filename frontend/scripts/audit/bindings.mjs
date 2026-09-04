@@ -7,6 +7,27 @@
  * with no behaviour at all are skipped, so adding, removing or nesting purely
  * presentational wrappers is invisible to the gate, while re-ordering a
  * `v-else-if` chain or renaming a handler is not.
+ *
+ * The Ui* primitives (Task 3.0) are the same idea one level up: a view adopts
+ * them to move styling, so on an element whose tag is a primitive the collector
+ * additionally ignores
+ *
+ *   1. a bound or static **presentational prop** (`PRESENTATIONAL_PROPS` —
+ *      `variant`, `tone`, `status`, `size`, …) whose expression is
+ *      side-effect-free, and
+ *   2. a **slot** binding (`v-slot` / `#name`, scoped or not), which is where
+ *      the copy the primitive renders now lives.
+ *
+ * Everything that could change what the app does is recorded on every tag,
+ * primitive or not: `bind:disabled|type|href|value|is|to`, every `v-on`,
+ * `v-model`, `v-for`, `v-show` and every `v-if` / `v-else-if` / `v-else`. A
+ * presentational prop that calls something (`:tone="toneFor(deal)"`) is
+ * recorded too, so it surfaces as a diff and has to be justified.
+ *
+ * A primitive left with no recorded binding does not appear in the manifest at
+ * all — exactly like a styling `div`. These are collection rules, so the
+ * goldens (recorded from templates that contain no Ui* element and no slot
+ * binding) are unaffected.
  */
 import { join } from 'node:path';
 import { diffArrays } from 'diff';
@@ -90,6 +111,28 @@ const PRESENTATIONAL_TAGS = new Set([
   'li', 'ul', 'ol', 'dl', 'dt', 'dd', 'label', 'small', 'strong',
 ]);
 
+/** Every primitive: the two that alias to `button`, plus the presentational ones. */
+const UI_TAGS = new Set([...PRESENTATIONAL_UI, 'UiButton', 'UiIconButton']);
+
+/**
+ * The props the primitives take to choose an appearance. On a primitive these
+ * are styling, so they are ignored exactly as `class` is; on any other tag they
+ * keep whatever meaning they already had (`:required` on an `<input>` is still
+ * behaviour). Both spellings are listed where a template may use either.
+ */
+const PRESENTATIONAL_PROPS = new Set([
+  'variant', 'size', 'active', 'tone', 'dealType', 'deal-type', 'loading', 'block',
+  'padding', 'as', 'icon', 'lines', 'rounded', 'status', 'count', 'compact',
+  'labelledBy', 'labelled-by', 'invalid', 'required', 'inline', 'label',
+  'ariaLabel', 'aria-label', 'interactive', 'hint',
+]);
+
+/**
+ * Bindings recorded on every tag, primitive or not. Listed explicitly so that
+ * a name added to `PRESENTATIONAL_PROPS` by mistake can never silence one.
+ */
+const ALWAYS_RECORDED_PROPS = new Set(['disabled', 'type', 'href', 'value', 'is', 'to']);
+
 const TRANSITION_TAGS = new Set(['UiTransition', 'UiTransitionGroup', 'Transition', 'TransitionGroup']);
 const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name', 'mode', 'css']);
 
@@ -129,10 +172,34 @@ function binding(kind, { arg = null, modifiers = [], expression = '' } = {}) {
   return { kind, arg, modifiers, expression };
 }
 
+/**
+ * True when the expression can neither call nor assign anything, so passing it
+ * to a primitive cannot run code the template did not already run: identifiers,
+ * member access, literals, `!x`, `&&`/`||`/`??`, ternaries and the comparisons
+ * `=== !== >= <=`. A call (`(`), an arrow (`=>`) or any other `=` fails.
+ */
+function isSideEffectFree(expression) {
+  if (expression.includes('(') || expression.includes('=>')) return false;
+  return !expression.replace(/===|!==|>=|<=/g, '').includes('=');
+}
+
+/** True when `name` is presentational *on this tag* and therefore not recorded. */
+function isPresentationalOn(tag, name, expression) {
+  if (!UI_TAGS.has(tag)) return false;
+  if (ALWAYS_RECORDED_PROPS.has(name)) return false;
+  if (!PRESENTATIONAL_PROPS.has(name)) return false;
+  return isSideEffectFree(expression);
+}
+
 /** Turn one prop into a manifest binding, or `null` when it is not behavioural. */
-function bindingFor(prop, branch) {
+function bindingFor(prop, branch, tag) {
   if (prop.type === NODE_ATTRIBUTE) {
     if (isIgnoredProp(prop.name) || !BEHAVIOURAL_ATTRS.has(prop.name)) return null;
+    // Rule 1 for a static attribute. No name is in both `PRESENTATIONAL_PROPS`
+    // and `BEHAVIOURAL_ATTRS` today, so this is a guard that keeps the rule
+    // true if either list grows, rather than a live path. A static value can
+    // neither call nor assign, so the name alone decides.
+    if (isPresentationalOn(tag, prop.name, '')) return null;
     return binding(`attr:${prop.name}`, { expression: collapse(prop.value?.content ?? '') });
   }
   if (prop.type !== NODE_DIRECTIVE) return null;
@@ -144,6 +211,7 @@ function bindingFor(prop, branch) {
   switch (prop.name) {
     case 'bind': {
       if (arg !== null && isIgnoredProp(arg)) return null;
+      if (arg !== null && isPresentationalOn(tag, arg, expression)) return null;
       return binding(arg === null ? 'bind' : `bind:${arg}`, { arg, modifiers, expression });
     }
     case 'on':
@@ -151,6 +219,10 @@ function bindingFor(prop, branch) {
     case 'model':
       return binding('model', { arg, modifiers, expression });
     case 'slot':
+      // Copy handed to a primitive through a slot, and the `<template>` that
+      // names one, are presentation. A slot on anything else — `RouterView`,
+      // `VueDraggable`, `Teleport`, a real component — is behaviour.
+      if (tag === 'template' || UI_TAGS.has(tag)) return null;
       return binding('slot', { arg, modifiers, expression });
     case 'show':
     case 'for':
@@ -211,7 +283,7 @@ export function collectElements(descriptor) {
       if (node.type !== NODE_ELEMENT) continue;
       if (!isTransitionWrapper(node)) {
         const bindings = node.props
-          .map((prop) => bindingFor(prop, branches.get(node)))
+          .map((prop) => bindingFor(prop, branches.get(node), node.tag))
           .filter(Boolean);
         if (bindings.length > 0) {
           elements.push({
