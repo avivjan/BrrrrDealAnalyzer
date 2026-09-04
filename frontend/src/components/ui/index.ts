@@ -9,3 +9,4 @@ export { default as UiIconButton } from "./UiIconButton.vue";
 export { default as UiCard } from "./UiCard.vue";
 export { default as UiBadge } from "./UiBadge.vue";
 export { default as UiStatTile } from "./UiStatTile.vue";
+export { default as UiField } from "./UiField.vue";
