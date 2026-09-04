@@ -1,5 +1,12 @@
 {
   "scripts": [],
-  "bindings": [],
+  "bindings": [
+    {
+      "file": "src/views/AnalyzeDeal.vue",
+      "tag": "UiSectionHeader",
+      "bindings": ["attr:as=h1"],
+      "reason": "Task 3.3 replaces the page header with <UiSectionHeader>, whose default level is h2. The view's title is the /analyze route's only <h1>, and the axe baseline for that route has no page-has-heading-one entry -- dropping to h2 would add a new rule and fail the a11y gate. as=\"h1\" keeps the document outline the baseline was recorded against; it picks a heading tag and nothing else."
+    }
+  ],
   "text": []
 }
