@@ -44,3 +44,18 @@ npm run build
 ```
 
 Both must complete successfully.
+
+For UI work there is one more command, which runs the whole behaviour-freeze gate
+set (the two above plus the audits below) and exits non-zero if any gate fails:
+
+```
+npm run verify:ui
+```
+
+The audits on their own:
+
+- `npm run audit` — checks the working tree against the committed baseline manifests in
+  `scripts/audit/golden/`: script blocks frozen (G3), template bindings frozen (G4), on-screen
+  copy frozen (G4b). Accepted, reasoned deviations are declared in `scripts/audit/allowlist.json`.
+- `npm run audit:baseline` — regenerates those manifests. Only run it when a change to behaviour
+  has been agreed, and commit the result on its own with a `Golden update:` subject.

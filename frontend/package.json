@@ -8,7 +8,10 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "audit:baseline": "node scripts/audit/script-blocks.mjs --write && node scripts/audit/bindings.mjs --write && node scripts/audit/text.mjs --write",
+    "audit": "node scripts/audit/script-blocks.mjs && node scripts/audit/bindings.mjs && node scripts/audit/text.mjs",
+    "verify:ui": "node scripts/audit/verify-ui.mjs"
   },
   "dependencies": {
     "@primevue/themes": "^4.5.1",
@@ -26,9 +29,11 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/compiler-sfc": "^3.5.25",
     "@vue/test-utils": "^2.5.0",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.22",
+    "diff": "^9.0.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
