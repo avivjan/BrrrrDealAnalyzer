@@ -63,12 +63,14 @@ function fmtTimeRange(start: string | null, end: string | null) {
       <h3 class="text-lg font-bold text-slate-800">Logged Entries</h3>
       <div class="flex flex-wrap items-center gap-2">
         <input
+          data-testid="repsentries.search"
           v-model="search"
           type="text"
           placeholder="Search descriptions..."
           class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         <select
+          data-testid="repsentries.filter-material"
           v-model="filterMaterial"
           class="px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
         >
@@ -78,28 +80,30 @@ function fmtTimeRange(start: string | null, end: string | null) {
         </select>
         <select
           v-if="allPeople.length > 0"
+          data-testid="repsentries.filter-person"
           v-model="filterPerson"
           class="px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
         >
           <option value="">Filter person...</option>
-          <option v-for="p in allPeople" :key="p" :value="p">{{ p }}</option>
+          <option v-for="p in allPeople" :key="p" :data-testid="`repsentries.person-option.${p}`" :value="p">{{ p }}</option>
         </select>
       </div>
     </div>
 
-    <div v-if="loading" class="p-6 text-center text-sm text-slate-500">
+    <div v-if="loading" data-testid="repsentries.loading" class="p-6 text-center text-sm text-slate-500">
       <i class="pi pi-spin pi-spinner mr-1"></i> Loading entries from sheet...
     </div>
-    <div v-else-if="error" class="p-6 text-center text-sm text-rose-600">
+    <div v-else-if="error" data-testid="repsentries.error" class="p-6 text-center text-sm text-rose-600">
       {{ error }}
     </div>
-    <div v-else-if="filtered.length === 0" class="p-6 text-center text-sm text-slate-500">
+    <div v-else-if="filtered.length === 0" data-testid="repsentries.empty" class="p-6 text-center text-sm text-slate-500">
       No entries match your filters.
     </div>
     <ul v-else class="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
       <li
         v-for="(e, idx) in filtered"
         :key="(e.created_at || '') + idx"
+        :data-testid="`repsentries.entry.${idx}`"
         class="p-4 flex flex-col gap-1 hover:bg-slate-50 transition-colors"
       >
         <div class="flex items-start justify-between gap-3">
@@ -132,6 +136,7 @@ function fmtTimeRange(start: string | null, end: string | null) {
                 <a
                   v-for="(it, i) in e.evidence_items"
                   :key="i + (it.url || '')"
+                  :data-testid="`repsentries.entry.${idx}.evidence.${i}`"
                   :href="it.url"
                   target="_blank"
                   class="text-blue-600 hover:underline"

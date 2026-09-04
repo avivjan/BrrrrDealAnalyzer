@@ -38,7 +38,7 @@ function onSave() {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="open" data-testid="settings.root" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')" />
         <div class="relative bg-[#141722] border border-[#2a2f45] rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
           <h2 class="text-lg font-bold text-slate-100 mb-5 font-mono">Liquidity Settings</h2>
@@ -47,6 +47,7 @@ function onSave() {
             <label class="block text-xs text-slate-400 mb-1 font-mono">Opening Balance ($k)</label>
             <div class="relative">
               <input
+                data-testid="settings.balance"
                 v-model="balanceK"
                 type="number"
                 step="0.01"
@@ -60,6 +61,7 @@ function onSave() {
           <div class="mb-4">
             <label class="block text-xs text-slate-400 mb-1 font-mono">As-of Date</label>
             <input
+              data-testid="settings.date"
               v-model="balanceDate"
               type="date"
               class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
@@ -70,6 +72,7 @@ function onSave() {
             <label class="block text-xs text-slate-400 mb-1 font-mono">Reserve Threshold ($k)</label>
             <div class="relative">
               <input
+                data-testid="settings.reserve"
                 v-model="reserveK"
                 type="number"
                 step="0.1"
@@ -83,12 +86,14 @@ function onSave() {
 
           <div class="flex gap-3 justify-end">
             <button
+              data-testid="settings.cancel"
               class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
               @click="$emit('close')"
             >
               Cancel
             </button>
             <button
+              data-testid="settings.save"
               class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 transition-all"
               @click="onSave"
             >

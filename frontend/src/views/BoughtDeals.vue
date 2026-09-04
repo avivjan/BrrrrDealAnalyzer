@@ -426,6 +426,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
     >
       <div class="flex items-center gap-4">
         <button
+          data-testid="boughtdeals.home"
           @click="$router.push('/')"
           class="text-gray-500 hover:text-blue-600 transition-colors"
         >
@@ -444,6 +445,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             { id: 'BRRRR' as const, label: 'BRRRR', count: store.countByType.BRRRR },
           ]"
           :key="tab.id"
+          :data-testid="`boughtdeals.tab.${tab.id}`"
           @click="activeTab = tab.id"
           class="px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2"
           :class="
@@ -463,6 +465,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       <div class="flex items-center gap-2 shrink-0">
         <button
           type="button"
+          data-testid="boughtdeals.edit-pipeline"
           @click="openPipelineEditor"
           class="text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
           :title="`Edit ${activeTab} pipeline stages & substages`"
@@ -482,6 +485,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </button>
         <button
           type="button"
+          data-testid="boughtdeals.my-deals"
           @click="$router.push('/my-deals')"
           class="text-sm font-medium text-blue-700 hover:text-blue-800 border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
           title="Back to active deal pipeline"
@@ -500,6 +504,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         <div
           v-for="stage in currentStages"
           :key="stage.id"
+          :data-testid="`boughtdeals.stage.${stage.id}`"
           class="flex flex-col w-full rounded-xl border shadow-sm transition-colors bg-white border-gray-200"
         >
           <!-- Row Header -->
@@ -523,6 +528,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           <div class="p-4 bg-white/50">
             <VueDraggable
               v-if="columns[stage.id]"
+              :data-testid="`boughtdeals.draggable.${stage.id}`"
               v-model="columns[stage.id]!"
               group="bought-deals"
               @change="(e: any) => onDrop(e, stage.id)"
@@ -534,6 +540,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <div
                 v-for="deal in columns[stage.id]"
                 :key="deal.id"
+                :data-testid="`boughtdeals.card.${deal.id}`"
                 @click="openDeal(deal)"
                 class="h-full"
               >
@@ -552,6 +559,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
     <!-- Detail Modal -->
     <div
       v-if="showDetailModal && editingDeal"
+      data-testid="boughtdeals.modal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       @click.self="closeModal"
     >
@@ -580,12 +588,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               </span>
             </div>
             <input
+              data-testid="boughtdeals.modal.address"
               v-model="editingDeal.address"
               class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
             />
           </div>
           <div class="flex items-center gap-4">
             <button
+              data-testid="boughtdeals.modal.copy"
               @click="copyToClipboard(editingDeal)"
               class="transition-colors"
               :class="
@@ -601,6 +611,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               ></i>
             </button>
             <button
+              data-testid="boughtdeals.modal.close"
               @click="closeModal"
               class="text-gray-400 hover:text-gray-600"
             >
@@ -636,6 +647,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                   ></div>
                   <div
+                    :data-testid="`boughtdeals.modal.stage-step.${pStage.id}`"
                     class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
                     :class="
                       idx < editingStageIndex
@@ -658,6 +670,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <span
                 v-for="(pStage, idx) in editingPipeline.stages"
                 :key="pStage.id"
+                :data-testid="`boughtdeals.modal.stage-label.${pStage.id}`"
                 class="text-[9px] text-gray-500 text-center"
                 :class="idx === 0 ? 'text-left' : idx === editingPipeline.stages.length - 1 ? 'text-right' : ''"
                 :style="{ width: 100 / editingPipeline.stages.length + '%' }"
@@ -687,10 +700,12 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <label
                 v-for="sub in editingSubStages"
                 :key="sub.id"
+                :data-testid="`boughtdeals.modal.substage.${sub.id}`"
                 class="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
+                  :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
                   :checked="editingDeal.completedSubstages[sub.id] === true"
                   @change="toggleModalSubstage(sub.id)"
                   class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -708,6 +723,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             </div>
             <button
               v-if="editingCanAdvance && !editingIsTerminal"
+              data-testid="boughtdeals.modal.advance"
               @click="advanceEditingDeal"
               class="mt-3 w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow flex items-center justify-center gap-2 transition-all"
             >
@@ -725,6 +741,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 >Current Task / Status</label
               >
               <textarea
+                data-testid="boughtdeals.modal.task"
                 v-model="editingDeal.task"
                 class="w-full h-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
                 placeholder="What needs to be done?"
@@ -734,6 +751,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
                 <NumberInput
+                  data-testid="boughtdeals.modal.sqft"
                   :model-value="editingDeal.sqft ?? null"
                   @update:model-value="
                     (val) => (editingDeal!.sqft = val ?? undefined)
@@ -745,6 +763,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     >Pipeline Stage</label
                   >
                   <select
+                    data-testid="boughtdeals.modal.stage-select"
                     v-model="editingDeal.boughtStage"
                     class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   >
@@ -760,6 +779,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <NumberInput
+                  data-testid="boughtdeals.modal.bedrooms"
                   :model-value="editingDeal.bedrooms ?? null"
                   @update:model-value="
                     (val) => (editingDeal!.bedrooms = val ?? undefined)
@@ -767,6 +787,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   label="Beds"
                 />
                 <NumberInput
+                  data-testid="boughtdeals.modal.bathrooms"
                   :model-value="editingDeal.bathrooms ?? null"
                   @update:model-value="
                     (val) => (editingDeal!.bathrooms = val ?? undefined)
@@ -785,12 +806,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Zillow Link</label
                 >
                 <input
+                  data-testid="boughtdeals.modal.zillow-link"
                   v-model="editingDeal.zillow_link"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="https://..."
                 />
                 <a
                   v-if="editingDeal.zillow_link"
+                  data-testid="boughtdeals.modal.zillow-open"
                   :href="editingDeal.zillow_link"
                   target="_blank"
                   class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
@@ -802,12 +825,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Photos Link</label
                 >
                 <input
+                  data-testid="boughtdeals.modal.pics-link"
                   v-model="editingDeal.pics_link"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="Google Drive / Dropbox..."
                 />
                 <a
                   v-if="editingDeal.pics_link"
+                  data-testid="boughtdeals.modal.pics-open"
                   :href="editingDeal.pics_link"
                   target="_blank"
                   class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
@@ -821,6 +846,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Overall Design</label
                 >
                 <input
+                  data-testid="boughtdeals.modal.overall-design"
                   v-model="editingDeal.overall_design"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Modern Farmhouse"
@@ -831,6 +857,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Crime Rate</label
                 >
                 <input
+                  data-testid="boughtdeals.modal.crime-rate"
                   v-model="editingDeal.crime_rate"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Low / B-"
@@ -843,6 +870,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Contact Info</label
                 >
                 <textarea
+                  data-testid="boughtdeals.modal.contact"
                   v-model="editingDeal.contact"
                   rows="2"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
@@ -854,6 +882,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   >Niche</label
                 >
                 <input
+                  data-testid="boughtdeals.modal.niche"
                   v-model="editingDeal.niche"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                 />
@@ -873,6 +902,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <div
               ref="analysisResultsEl"
               v-if="currentAnalysis"
+              data-testid="boughtdeals.modal.results"
               class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6"
             >
               <h4 class="font-semibold text-gray-700 mb-3">
@@ -885,6 +915,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Cash Flow</div>
                     <div
+                      data-testid="boughtdeals.modal.result.cash_flow"
                       class="font-bold"
                       :class="
                         getCashFlowColor(
@@ -902,6 +933,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Cash Out</div>
                     <div
+                      data-testid="boughtdeals.modal.result.cash_out"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -919,6 +951,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Cash Out Routi</div>
                     <div
+                      data-testid="boughtdeals.modal.result.cash_out_routi"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -936,6 +969,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">CoC</div>
                     <div
+                      data-testid="boughtdeals.modal.result.cash_on_cash"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -953,6 +987,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">DSCR</div>
                     <div
+                      data-testid="boughtdeals.modal.result.dscr"
                       class="font-bold"
                       :class="
                         getDSCRColor(
@@ -968,7 +1003,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </div>
                   <div>
                     <div class="text-gray-500">Equity</div>
-                    <div class="font-bold text-emerald-600">
+                    <div data-testid="boughtdeals.modal.result.equity" class="font-bold text-emerald-600">
                       {{
                         formatCurrency(
                           (currentAnalysis as any).equity
@@ -979,6 +1014,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">ROI</div>
                     <div
+                      data-testid="boughtdeals.modal.result.roi"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -996,6 +1032,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Net Profit</div>
                     <div
+                      data-testid="boughtdeals.modal.result.net_profit"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -1014,7 +1051,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     <div class="text-gray-500">
                       Total Cash Needed
                     </div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any)
@@ -1027,7 +1064,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     <div class="text-gray-500">
                       Cash Needed (Buffered)
                     </div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any)
@@ -1041,6 +1078,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Net Profit</div>
                     <div
+                      data-testid="boughtdeals.modal.result.net_profit"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -1058,6 +1096,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">ROI</div>
                     <div
+                      data-testid="boughtdeals.modal.result.roi"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -1075,6 +1114,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <div>
                     <div class="text-gray-500">Annualized ROI</div>
                     <div
+                      data-testid="boughtdeals.modal.result.annualized_roi"
                       class="font-bold"
                       :class="
                         getPerformanceColor(
@@ -1091,7 +1131,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </div>
                   <div>
                     <div class="text-gray-500">Cash Needed</div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any).total_cash_needed
@@ -1101,7 +1141,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </div>
                   <div>
                     <div class="text-gray-500">Cash Needed (Buffered)</div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any).total_cash_needed_with_buffer
@@ -1111,7 +1151,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </div>
                   <div>
                     <div class="text-gray-500">Holding Costs</div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any).total_holding_costs
@@ -1121,7 +1161,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </div>
                   <div>
                     <div class="text-gray-500">HML Interest</div>
-                    <div class="font-bold">
+                    <div data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
                       {{
                         formatCurrency(
                           (currentAnalysis as any).total_hml_interest
@@ -1141,6 +1181,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               >Notes</label
             >
             <textarea
+              data-testid="boughtdeals.modal.notes"
               v-model="editingDeal.notes"
               rows="4"
               class="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-900 text-sm outline-none focus:border-blue-500"
@@ -1155,6 +1196,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <div class="flex justify-between items-center mb-4">
                 <h4 class="font-semibold text-gray-700">Sold Comps</h4>
                 <button
+                  data-testid="boughtdeals.sold-comp.add"
                   @click="editingDeal.sold_comps ? editingDeal.sold_comps.push({ url: '', arv: 0, how_long_ago: '' }) : (editingDeal.sold_comps = [{ url: '', arv: 0, how_long_ago: '' }])"
                   class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
                 >
@@ -1162,15 +1204,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </button>
               </div>
               <div v-if="editingDeal.sold_comps && editingDeal.sold_comps.length > 0" class="space-y-3">
-                <div v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                  <button @click="editingDeal.sold_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
+                  <button :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
                   <div class="flex items-center gap-2 mb-1">
-                    <input v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                    <a v-if="comp.url" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                    <a v-if="comp.url" :data-testid="`boughtdeals.sold-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
                   </div>
                   <div class="flex gap-2">
-                    <input v-model="comp.arv" type="number" placeholder="ARV" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                    <input v-model="comp.how_long_ago" placeholder="When?" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="ARV" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="When?" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
                   </div>
                 </div>
               </div>
@@ -1184,6 +1226,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   {{ editingDealType === 'FLIP' ? 'For Sale Comps' : 'Rent Comps' }}
                 </h4>
                 <button
+                  data-testid="boughtdeals.comp2.add"
                   @click="editingDealType === 'FLIP' ? ((editingDeal as any).sale_comps ? (editingDeal as any).sale_comps.push({ url: '', arv: 0, how_long_ago: '' }) : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])) : (editingDeal.rent_comps ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' }) : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }]))"
                   class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
                 >
@@ -1194,15 +1237,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <!-- Flip Sale Comps -->
               <div v-if="editingDealType === 'FLIP'">
                 <div v-if="(editingDeal as any).sale_comps && (editingDeal as any).sale_comps.length > 0" class="space-y-3">
-                  <div v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                    <button @click="(editingDeal as any).sale_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                  <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
+                    <button :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
                     <div class="flex items-center gap-2 mb-1">
-                      <input v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <a v-if="comp.url" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <a v-if="comp.url" :data-testid="`boughtdeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
                     </div>
                     <div class="flex gap-2">
-                      <input v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <input v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
                     </div>
                   </div>
                 </div>
@@ -1212,15 +1255,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <!-- BRRRR Rent Comps -->
               <div v-else>
                 <div v-if="editingDeal.rent_comps && editingDeal.rent_comps.length > 0" class="space-y-3">
-                  <div v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                    <button @click="editingDeal.rent_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                  <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
+                    <button :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
                     <div class="flex items-center gap-2 mb-1">
-                      <input v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <a v-if="comp.url" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <a v-if="comp.url" :data-testid="`boughtdeals.rent-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
                     </div>
                     <div class="flex gap-2">
-                      <input v-model="comp.rent" type="number" placeholder="Rent" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <input v-model="comp.time_on_market" placeholder="Time on Market" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.rent`" v-model="comp.rent" type="number" placeholder="Rent" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.age`" v-model="comp.time_on_market" placeholder="Time on Market" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
                     </div>
                   </div>
                 </div>
@@ -1242,6 +1285,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           </div>
           <div class="flex items-center gap-4">
             <div
+              data-testid="boughtdeals.modal.save-status"
+              :data-state="saveStatus"
               class="flex items-center gap-1.5 text-xs transition-opacity duration-300"
             >
               <template v-if="saveStatus === 'saving'">
@@ -1260,12 +1305,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               </template>
             </div>
             <button
+              data-testid="boughtdeals.modal.delete"
               @click="deleteEditingDeal"
               class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"
             >
               <i class="pi pi-trash"></i> Delete
             </button>
             <button
+              data-testid="boughtdeals.modal.footer-close"
               @click="closeModal"
               class="text-gray-500 hover:text-gray-700 px-4 py-2 flex items-center gap-2"
             >

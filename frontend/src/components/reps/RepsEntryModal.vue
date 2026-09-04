@@ -424,6 +424,7 @@ function close() {
 <template>
   <div
     v-if="open"
+    data-testid="repsmodal.root"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
     @click.self="close"
   >
@@ -438,13 +439,13 @@ function close() {
             · server stamps Created-At at save
           </p>
         </div>
-        <button class="text-slate-400 hover:text-slate-700 transition-colors" @click="close">
+        <button data-testid="repsmodal.close" class="text-slate-400 hover:text-slate-700 transition-colors" @click="close">
           <i class="pi pi-times text-lg"></i>
         </button>
       </header>
 
       <div class="p-6 space-y-4 overflow-y-auto flex-1">
-        <div v-if="formError" class="p-3 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium">
+        <div v-if="formError" data-testid="repsmodal.error" class="p-3 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium">
           {{ formError }}
         </div>
 
@@ -452,6 +453,7 @@ function close() {
         <div class="relative">
           <label class="block text-sm font-medium text-slate-700 mb-1">Property Name</label>
           <input
+            data-testid="repsmodal.property-query"
             v-model="propertyQuery"
             type="text"
             placeholder="Type or pick a property... (e.g. 10th St, Honda, Galveston)"
@@ -462,11 +464,13 @@ function close() {
           />
           <div
             v-if="showPropertyDropdown && (filteredProperties.length > 0 || (propertyQuery.trim() && !isExactMatch))"
+            data-testid="repsmodal.property-dropdown"
             class="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg"
           >
             <button
               v-for="opt in filteredProperties"
               :key="opt.name"
+              :data-testid="`repsmodal.property-option.${opt.name}`"
               type="button"
               class="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center justify-between"
               @mousedown.prevent="pickProperty(opt.name)"
@@ -494,6 +498,7 @@ function close() {
             <label class="block text-sm font-medium text-slate-700">Activity Category</label>
             <button
               type="button"
+              data-testid="repsmodal.category-toggle"
               class="text-[11px] font-mono text-blue-600 hover:underline"
               @click="showAddCategory = !showAddCategory"
             >
@@ -501,14 +506,16 @@ function close() {
             </button>
           </div>
           <select
+            data-testid="repsmodal.category-select"
             v-model="activityCategory"
             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
           >
             <option value="">— Select —</option>
-            <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
+            <option v-for="c in categoryOptions" :key="c" :data-testid="`repsmodal.category-option.${c}`" :value="c">{{ c }}</option>
           </select>
           <div v-if="showAddCategory" class="mt-2 flex gap-2">
             <input
+              data-testid="repsmodal.category-name"
               v-model="newCategoryName"
               type="text"
               placeholder="New category name..."
@@ -517,6 +524,7 @@ function close() {
             />
             <button
               type="button"
+              data-testid="repsmodal.category-add"
               class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
               :disabled="addingCategory || !newCategoryName.trim()"
               @click="addCategoryInline"
@@ -536,6 +544,7 @@ function close() {
             </span>
           </label>
           <textarea
+            data-testid="repsmodal.description"
             v-model="description"
             rows="3"
             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -552,6 +561,7 @@ function close() {
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Start Time <span class="text-rose-500">*</span></label>
             <input
+              data-testid="repsmodal.start-time"
               v-model="startLocal"
               type="datetime-local"
               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -560,6 +570,7 @@ function close() {
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">End Time <span class="text-rose-500">*</span></label>
             <input
+              data-testid="repsmodal.end-time"
               v-model="endLocal"
               type="datetime-local"
               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -570,7 +581,7 @@ function close() {
         <!-- Material participation -->
         <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
           <label class="flex items-start gap-2 cursor-pointer">
-            <input v-model="materialParticipation" type="checkbox" class="mt-1" />
+            <input data-testid="repsmodal.material-checkbox" v-model="materialParticipation" type="checkbox" class="mt-1" />
             <div>
               <div class="text-sm font-medium text-slate-700">
                 Material Participation in rentals?
@@ -593,6 +604,7 @@ function close() {
             <div class="flex gap-1.5">
               <button
                 type="button"
+                data-testid="repsmodal.capture-gps"
                 class="px-2.5 py-1 text-[11px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1 disabled:opacity-50"
                 :disabled="capturingSnapshot"
                 @click="captureSnapshotNow('manual_save')"
@@ -602,6 +614,7 @@ function close() {
               </button>
               <button
                 type="button"
+                data-testid="repsmodal.mark-remote"
                 class="px-2.5 py-1 text-[11px] bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg"
                 @click="markRemote"
               >
@@ -614,6 +627,7 @@ function close() {
             <li
               v-for="(s, idx) in allSnapshots"
               :key="idx"
+              :data-testid="`repsmodal.snapshot.${idx}`"
               class="text-[11px] font-mono text-slate-700 flex items-start justify-between gap-2 py-0.5"
             >
               <span class="flex-1 truncate">
@@ -624,6 +638,7 @@ function close() {
                 <span v-else class="text-slate-500">[{{ s.note || 'no GPS' }}]</span>
                 <a
                   v-if="snapshotMapHref(s)"
+                  :data-testid="`repsmodal.snapshot.${idx}.map`"
                   :href="snapshotMapHref(s)!"
                   target="_blank"
                   class="text-blue-600 hover:underline ml-1"
@@ -633,6 +648,7 @@ function close() {
               <button
                 v-if="idx >= store.snapshotsByUser[user].length"
                 type="button"
+                :data-testid="`repsmodal.snapshot.${idx}.delete`"
                 class="text-rose-500 hover:text-rose-700 text-xs"
                 @click="dropPendingSnapshot(idx - store.snapshotsByUser[user].length)"
               >
@@ -640,13 +656,14 @@ function close() {
               </button>
             </li>
           </ul>
-          <div v-else class="text-[11px] text-slate-500 italic mb-2">
+          <div v-else data-testid="repsmodal.snapshot-empty" class="text-[11px] text-slate-500 italic mb-2">
             No location recorded yet. Tap "Capture GPS now" if you want to log
             where you are; otherwise leave the column blank or use the note
             below (e.g. "Remote — phone call").
           </div>
 
           <input
+            data-testid="repsmodal.location-note"
             v-model="locationNote"
             type="text"
             placeholder="Optional note (e.g. 'Remote — phone call', 'Honda — 1234 Maple St')"
@@ -669,6 +686,7 @@ function close() {
             <div class="flex gap-1.5">
               <button
                 type="button"
+                data-testid="repsmodal.evidence-camera"
                 class="px-2.5 py-1 text-[11px] bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1"
                 @click="openCameraDirect"
               >
@@ -679,6 +697,7 @@ function close() {
               >
                 <i class="pi pi-paperclip text-[10px]"></i> Attach
                 <input
+                  data-testid="repsmodal.file-input"
                   type="file"
                   :accept="ALLOWED_FILE_ACCEPT"
                   multiple
@@ -691,6 +710,7 @@ function close() {
 
           <input
             ref="cameraInputRef"
+            data-testid="repsmodal.camera-input"
             type="file"
             accept="image/*,video/*"
             capture="environment"
@@ -703,6 +723,7 @@ function close() {
             <li
               v-for="(f, idx) in store.inFlightFilesByUser[user]"
               :key="`timer-${idx}-${f.name}`"
+              :data-testid="`repsmodal.timer-file.${idx}`"
               class="text-xs py-1.5 px-2 bg-emerald-50 rounded"
             >
               <div class="flex items-center justify-between gap-2 mb-1">
@@ -712,11 +733,12 @@ function close() {
                   <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
                   <span class="ml-1 text-[10px] uppercase text-emerald-700">timer</span>
                 </span>
-                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
+                <button type="button" :data-testid="`repsmodal.timer-file.${idx}.delete`" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
                   <i class="pi pi-times text-xs"></i>
                 </button>
               </div>
               <input
+                :data-testid="`repsmodal.timer-file.${idx}.label`"
                 v-model="timerLabels[idx]"
                 type="text"
                 placeholder="Short link name in the Sheet (e.g. 'Closing meeting photo')"
@@ -727,6 +749,7 @@ function close() {
             <li
               v-for="(f, idx) in localFiles"
               :key="`local-${idx}-${f.name}`"
+              :data-testid="`repsmodal.local-file.${idx}`"
               class="text-xs py-1.5 px-2 bg-slate-50 rounded"
             >
               <div class="flex items-center justify-between gap-2 mb-1">
@@ -735,11 +758,12 @@ function close() {
                   <span class="font-mono text-slate-700">{{ f.name }}</span>
                   <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
                 </span>
-                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
+                <button type="button" :data-testid="`repsmodal.local-file.${idx}.delete`" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
                   <i class="pi pi-times text-xs"></i>
                 </button>
               </div>
               <input
+                :data-testid="`repsmodal.local-file.${idx}.label`"
                 v-model="localLabels[idx]"
                 type="text"
                 placeholder="Short link name in the Sheet (e.g. 'Inspection report')"
@@ -748,8 +772,8 @@ function close() {
               />
             </li>
           </ul>
-          <div v-if="evidenceError" class="text-[11px] text-rose-600 mt-1">{{ evidenceError }}</div>
-          <div v-if="allFiles.length === 0" class="text-[11px] text-slate-500 italic">
+          <div v-if="evidenceError" data-testid="repsmodal.evidence-error" class="text-[11px] text-rose-600 mt-1">{{ evidenceError }}</div>
+          <div v-if="allFiles.length === 0" data-testid="repsmodal.evidence-empty" class="text-[11px] text-slate-500 italic">
             Add photos/PDFs/videos. Each file becomes a clickable named link in the Sheet's
             evidence column — type a short name once you've attached.
           </div>
@@ -758,13 +782,14 @@ function close() {
         <!-- People involved -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">People Involved</label>
-          <div v-if="store.people.length === 0" class="text-xs text-slate-500 mb-2">
+          <div v-if="store.people.length === 0" data-testid="repsmodal.people-empty" class="text-xs text-slate-500 mb-2">
             No people yet. Add some on the People tab, or quick-add below.
           </div>
           <div v-else class="flex flex-wrap gap-1.5 mb-2">
             <button
               v-for="p in store.people"
               :key="p.id"
+              :data-testid="`repsmodal.person.${p.id}`"
               type="button"
               class="px-2.5 py-1 text-xs rounded-full border transition-colors"
               :class="peopleSelected.has(p.name) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'"
@@ -775,6 +800,7 @@ function close() {
           </div>
           <div class="flex gap-2">
             <input
+              data-testid="repsmodal.person-name"
               v-model="newPersonName"
               type="text"
               placeholder="Quick add a person..."
@@ -783,6 +809,7 @@ function close() {
             />
             <button
               type="button"
+              data-testid="repsmodal.person-add"
               class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700"
               @click="quickAddPerson"
             >
@@ -799,6 +826,7 @@ function close() {
         <div class="flex gap-2">
           <button
             type="button"
+            data-testid="repsmodal.cancel"
             class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-colors"
             :disabled="submitting || uploadingFiles"
             @click="close"
@@ -807,6 +835,7 @@ function close() {
           </button>
           <button
             type="button"
+            data-testid="repsmodal.save"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             :disabled="submitting || uploadingFiles || capturingSnapshot"
             @click="save"

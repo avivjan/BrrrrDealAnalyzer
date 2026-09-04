@@ -232,6 +232,7 @@ function formatPreviewDate(iso: string): string {
     <Transition name="modal">
       <div
         v-if="open"
+        data-testid="txnform.root"
         class="fixed inset-0 z-50 flex items-center justify-center"
         @keydown="onKeyDown"
       >
@@ -245,6 +246,7 @@ function formatPreviewDate(iso: string): string {
           <!-- Recurring toggle (only for new entries; editing locks the type) -->
           <div v-if="canToggleRecurring" class="flex gap-2 mb-4">
             <button
+              data-testid="txnform.mode-onetime"
               class="flex-1 py-2 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
               :class="!isRecurring ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
               @click="isRecurring = false"
@@ -252,6 +254,7 @@ function formatPreviewDate(iso: string): string {
               <i class="pi pi-circle-fill text-[8px]"></i> One-time
             </button>
             <button
+              data-testid="txnform.mode-recurring"
               class="flex-1 py-2 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
               :class="isRecurring ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
               @click="isRecurring = true"
@@ -263,6 +266,7 @@ function formatPreviewDate(iso: string): string {
           <!-- Direction toggle -->
           <div class="flex gap-2 mb-4">
             <button
+              data-testid="txnform.inflow"
               class="flex-1 py-2 rounded-lg text-sm font-mono font-semibold transition-all"
               :class="!isOutflow ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
               @click="isOutflow = false"
@@ -270,6 +274,7 @@ function formatPreviewDate(iso: string): string {
               + Inflow
             </button>
             <button
+              data-testid="txnform.outflow"
               class="flex-1 py-2 rounded-lg text-sm font-mono font-semibold transition-all"
               :class="isOutflow ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
               @click="isOutflow = true"
@@ -285,6 +290,7 @@ function formatPreviewDate(iso: string): string {
             </label>
             <div class="relative">
               <input
+                data-testid="txnform.amount"
                 v-model="amount"
                 type="number"
                 step="0.01"
@@ -301,6 +307,7 @@ function formatPreviewDate(iso: string): string {
           <div v-if="!isRecurring" class="mb-4">
             <label class="block text-xs text-slate-400 mb-1 font-mono">Date</label>
             <input
+              data-testid="txnform.date"
               v-model="effectiveDate"
               type="date"
               class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
@@ -312,6 +319,7 @@ function formatPreviewDate(iso: string): string {
             <div>
               <label class="block text-xs text-slate-400 mb-1 font-mono">First occurrence</label>
               <input
+                data-testid="txnform.start-date"
                 v-model="startDate"
                 type="date"
                 class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
@@ -322,6 +330,7 @@ function formatPreviewDate(iso: string): string {
               <div class="col-span-2">
                 <label class="block text-xs text-slate-400 mb-1 font-mono">Frequency</label>
                 <select
+                  data-testid="txnform.frequency"
                   v-model="frequency"
                   class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
                 >
@@ -333,6 +342,7 @@ function formatPreviewDate(iso: string): string {
                   Every
                 </label>
                 <input
+                  data-testid="txnform.interval"
                   v-model="interval"
                   type="number"
                   min="1"
@@ -347,6 +357,7 @@ function formatPreviewDate(iso: string): string {
               <div class="flex gap-1.5 mb-2">
                 <button
                   type="button"
+                  data-testid="txnform.end-never"
                   class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
                   :class="endMode === 'never' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
                   @click="endMode = 'never'"
@@ -355,6 +366,7 @@ function formatPreviewDate(iso: string): string {
                 </button>
                 <button
                   type="button"
+                  data-testid="txnform.end-on"
                   class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
                   :class="endMode === 'on' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
                   @click="endMode = 'on'"
@@ -363,6 +375,7 @@ function formatPreviewDate(iso: string): string {
                 </button>
                 <button
                   type="button"
+                  data-testid="txnform.end-after"
                   class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
                   :class="endMode === 'after' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
                   @click="endMode = 'after'"
@@ -373,6 +386,7 @@ function formatPreviewDate(iso: string): string {
 
               <input
                 v-if="endMode === 'on'"
+                data-testid="txnform.end-date"
                 v-model="endDate"
                 type="date"
                 :min="startDate"
@@ -380,6 +394,7 @@ function formatPreviewDate(iso: string): string {
               />
               <div v-else-if="endMode === 'after'" class="relative">
                 <input
+                  data-testid="txnform.occurrences"
                   v-model="occurrences"
                   type="number"
                   min="1"
@@ -409,6 +424,7 @@ function formatPreviewDate(iso: string): string {
               <div
                 v-for="(p, idx) in recurrencePreview.upcoming"
                 :key="idx"
+                :data-testid="`txnform.preview.${idx}`"
                 class="flex items-baseline justify-between text-[11px] font-mono"
               >
                 <span class="text-slate-400">{{ formatPreviewDate(p.effective_date) }}</span>
@@ -429,6 +445,7 @@ function formatPreviewDate(iso: string): string {
           <div class="mb-6">
             <label class="block text-xs text-slate-400 mb-1 font-mono">Description</label>
             <input
+              data-testid="txnform.description"
               v-model="description"
               type="text"
               :placeholder="isRecurring ? 'HM interest, 123 Main' : 'Rehab draw #2, 123 Main St'"
@@ -440,12 +457,14 @@ function formatPreviewDate(iso: string): string {
           <!-- Actions -->
           <div class="flex gap-3 justify-end">
             <button
+              data-testid="txnform.cancel"
               class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
               @click="$emit('close')"
             >
               Cancel
             </button>
             <button
+              data-testid="txnform.save"
               :disabled="!isValid"
               class="px-5 py-2 rounded-lg text-sm font-mono font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               :class="isOutflow

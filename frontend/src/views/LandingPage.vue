@@ -156,7 +156,7 @@ const logExternal = (card: FeatureCard) => {
           <p class="subtitle">Your real-estate command center</p>
         </div>
 
-        <button class="offer-btn" @click="isOfferModalOpen = true">
+        <button data-testid="landing.offer" class="offer-btn" @click="isOfferModalOpen = true">
           <span class="offer-btn-glow"></span>
           <i class="pi pi-send offer-btn-icon"></i>
           <span class="offer-btn-text">Send Market Offer</span>
@@ -168,6 +168,7 @@ const logExternal = (card: FeatureCard) => {
         <component
           v-for="(card, idx) in cards"
           :key="card.title"
+          :data-testid="`landing.card.${idx}`"
           :is="card.action === 'internal' ? 'RouterLink' : 'a'"
           :to="card.action === 'internal' ? card.route : undefined"
           :href="card.action === 'external' ? card.url : undefined"
@@ -207,6 +208,7 @@ const logExternal = (card: FeatureCard) => {
           <a
             v-for="r in resources"
             :key="r.title"
+            :data-testid="`landing.resource.${r.title}`"
             :href="r.url"
             target="_blank"
             rel="noopener"

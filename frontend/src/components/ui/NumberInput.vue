@@ -46,6 +46,7 @@ const handleKeydown = (e: KeyboardEvent) => {
   <div class="flex flex-col gap-1.5">
     <label
       v-if="label"
+      data-part="label"
       class="text-sm font-medium text-gray-700"
       :class="{
         'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
@@ -54,6 +55,7 @@ const handleKeydown = (e: KeyboardEvent) => {
       {{ label }}
     </label>
     <InputNumber
+      data-part="input"
       :model-value="modelValue"
       :suffix="suffix"
       :min="min"

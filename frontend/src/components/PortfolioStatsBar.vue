@@ -63,6 +63,7 @@ function formatMoney(val: number): string {
   <Transition name="stats-bar">
     <div
       v-if="hasDeals"
+      data-testid="statsbar.root"
       class="stats-bar relative overflow-hidden"
     >
       <div class="stats-bg absolute inset-0"></div>

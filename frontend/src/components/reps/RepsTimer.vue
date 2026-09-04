@@ -136,6 +136,7 @@ function onCameraFiles(e: Event) {
     <div class="flex flex-wrap gap-2 justify-center">
       <button
         v-if="!hasSession"
+        data-testid="repstimer.start"
         class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
         @click="start"
       >
@@ -143,6 +144,7 @@ function onCameraFiles(e: Event) {
       </button>
       <button
         v-else-if="isRunning"
+        data-testid="repstimer.stop"
         class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
         @click="stop"
       >
@@ -150,18 +152,21 @@ function onCameraFiles(e: Event) {
       </button>
       <template v-else>
         <button
+          data-testid="repstimer.resume"
           class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
           @click="resume"
         >
           <i class="pi pi-play"></i> Resume
         </button>
         <button
+          data-testid="repstimer.finish"
           class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
           @click="finish"
         >
           <i class="pi pi-check"></i> Finish &amp; Log
         </button>
         <button
+          data-testid="repstimer.discard"
           class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors flex items-center gap-2"
           @click="discard"
         >
@@ -177,6 +182,7 @@ function onCameraFiles(e: Event) {
     <div v-if="hasSession" class="flex flex-wrap items-center gap-2 justify-center pt-1">
       <button
         type="button"
+        data-testid="repstimer.pin-gps"
         class="px-3 py-1.5 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
         :disabled="capturing"
         :title="isRunning ? 'Capture GPS while clocked in' : 'Capture GPS at pause / before finish'"
@@ -187,6 +193,7 @@ function onCameraFiles(e: Event) {
       </button>
       <button
         type="button"
+        data-testid="repstimer.take-photo"
         class="px-3 py-1.5 text-xs bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1.5"
         @click="openCamera"
       >
@@ -194,6 +201,7 @@ function onCameraFiles(e: Event) {
       </button>
       <button
         type="button"
+        data-testid="repstimer.attach-file"
         class="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center gap-1.5"
         @click="openGallery"
       >
@@ -216,6 +224,7 @@ function onCameraFiles(e: Event) {
 
     <input
       ref="cameraInput"
+      data-testid="repstimer.camera-input"
       type="file"
       accept="image/*,video/*"
       capture="environment"
@@ -225,6 +234,7 @@ function onCameraFiles(e: Event) {
     />
     <input
       ref="galleryInput"
+      data-testid="repstimer.gallery-input"
       type="file"
       accept=".pdf,.jpg,.jpeg,.png,.mov,.mp4"
       class="hidden"

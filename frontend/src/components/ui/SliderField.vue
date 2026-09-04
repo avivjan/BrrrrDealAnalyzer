@@ -53,6 +53,7 @@ const sliderValue = computed({
   <div class="flex flex-col gap-3">
     <div class="flex justify-between items-center">
       <label
+        data-part="label"
         class="text-sm font-medium text-gray-700"
         :class="{
           'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
@@ -62,6 +63,7 @@ const sliderValue = computed({
       </label>
       <div class="w-24">
         <InputNumber
+          data-part="input"
           :model-value="modelValue"
           :min="min"
           :max="max"

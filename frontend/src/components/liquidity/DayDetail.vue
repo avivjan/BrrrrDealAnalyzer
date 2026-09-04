@@ -19,10 +19,11 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-  <div v-if="bucket" class="bg-[#141722] border border-[#2a2f45] rounded-xl p-4">
+  <div v-if="bucket" data-testid="daydetail.root" class="bg-[#141722] border border-[#2a2f45] rounded-xl p-4">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-mono font-bold text-slate-200">{{ formatDate(bucket.date) }}</h3>
       <button
+        data-testid="daydetail.add"
         class="text-xs font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
         @click="$emit('addOnDate', bucket.date)"
       >
@@ -45,7 +46,7 @@ function formatDate(iso: string): string {
       </div>
     </div>
 
-    <div v-if="bucket.transactions.length === 0" class="text-xs text-slate-500 font-mono py-2">
+    <div v-if="bucket.transactions.length === 0" data-testid="daydetail.empty" class="text-xs text-slate-500 font-mono py-2">
       No transactions on this date.
     </div>
 
@@ -53,6 +54,7 @@ function formatDate(iso: string): string {
       <div
         v-for="txn in bucket.transactions"
         :key="txn.id"
+        :data-testid="`daydetail.txn.${txn.id}`"
         class="flex items-center gap-2 bg-[#1a1d2e] rounded-lg px-3 py-2 group"
         :class="txn.recurring_rule_id ? 'border border-indigo-500/20' : ''"
       >
@@ -79,6 +81,7 @@ function formatDate(iso: string): string {
         </div>
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <button
+            :data-testid="`daydetail.txn.${txn.id}.edit`"
             class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
             :title="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
             @click="$emit('editTxn', txn.id)"
@@ -86,6 +89,7 @@ function formatDate(iso: string): string {
             <i class="pi pi-pencil text-[10px]"></i>
           </button>
           <button
+            :data-testid="`daydetail.txn.${txn.id}.delete`"
             class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
             :title="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
             @click="$emit('deleteTxn', txn.id)"

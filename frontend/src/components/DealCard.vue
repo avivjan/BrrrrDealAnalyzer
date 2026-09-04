@@ -107,6 +107,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Delete Button -->
     <button
+      data-testid="dealcard.delete"
       @click.stop="onDelete(deal.id)"
       class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
       title="Delete Deal"
@@ -116,6 +117,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Duplicate Button -->
     <button
+      data-testid="dealcard.duplicate"
       @click.stop="onDuplicate(deal.id)"
       class="absolute top-2 right-9 p-1.5 rounded-full bg-blue-100 text-blue-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-200 hover:scale-110 z-10"
       title="Duplicate Deal"
@@ -125,6 +127,7 @@ const formatMoney = (val?: number) =>
     <!-- Move to Bought Button (only for Brought stage) -->
     <button
       v-if="deal.stage === 3"
+      data-testid="dealcard.move-to-bought"
       @click.stop="onMoveToBought(deal.id)"
       class="absolute top-2 right-[5.75rem] p-1.5 rounded-full bg-emerald-100 text-emerald-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-200 hover:scale-110 z-10"
       title="Move to Bought Deals"
@@ -134,6 +137,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Copy to AI Button -->
     <button
+      data-testid="dealcard.copy"
       @click.stop="copyToClipboard(deal)"
       class="absolute top-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
       :class="[

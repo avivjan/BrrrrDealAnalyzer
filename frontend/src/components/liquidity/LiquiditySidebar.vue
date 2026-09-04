@@ -126,7 +126,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
         v-if="mercuryBalance && mercuryBalance.workspaces.length > 0"
         class="mt-2 pt-2 border-t border-[#2a2f45] space-y-2"
       >
-        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" class="space-y-0.5">
+        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
           <div class="flex items-center justify-between text-[10px]">
             <span class="text-slate-300 font-semibold uppercase tracking-wide">{{ ws.workspace }}</span>
             <span class="text-slate-300 whitespace-nowrap">{{ ws.total_balance_k.toFixed(1) }}k</span>
@@ -134,6 +134,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
           <div
             v-for="a in ws.accounts"
             :key="a.id"
+            :data-testid="`sidebar.account.${a.id}`"
             class="flex items-center justify-between text-[10px] text-slate-500 pl-2"
           >
             <span class="truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
@@ -150,6 +151,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
         <div
           v-for="err in mercuryBalance.workspace_errors"
           :key="err.workspace"
+          :data-testid="`sidebar.workspace-error.${err.workspace}`"
           class="flex items-center justify-between text-[10px] text-red-400"
           :title="err.error"
         >
@@ -218,6 +220,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
         <div
           v-for="rule in activeRecurringRules"
           :key="rule.id"
+          :data-testid="`sidebar.recurring.${rule.id}`"
           class="rounded-lg bg-[#141722] border border-[#2a2f45] px-2 py-1.5 group"
         >
           <div class="flex items-center justify-between gap-2">
@@ -237,6 +240,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
             </div>
             <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
               <button
+                :data-testid="`sidebar.recurring.${rule.id}.edit`"
                 class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
                 title="Edit series"
                 @click="emit('editRecurring', rule.id)"
@@ -244,6 +248,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
                 <i class="pi pi-pencil text-[9px]"></i>
               </button>
               <button
+                :data-testid="`sidebar.recurring.${rule.id}.delete`"
                 class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
                 title="Delete series"
                 @click="emit('deleteRecurring', rule.id)"

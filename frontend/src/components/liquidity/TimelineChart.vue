@@ -489,12 +489,14 @@ defineExpose({ centerOnToday })
 <template>
   <div
     ref="containerRef"
+    data-testid="chart.container"
     class="relative w-full h-full select-none outline-none"
     tabindex="0"
     @keydown="onKeyDown"
   >
     <canvas
       ref="canvasRef"
+      data-testid="chart.canvas"
       class="absolute inset-0 cursor-crosshair"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
@@ -507,6 +509,7 @@ defineExpose({ centerOnToday })
     <Transition name="fade">
       <div
         v-if="activeDay"
+        data-testid="chart.tooltip"
         class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-4 py-3 shadow-xl pointer-events-none z-10 min-w-[200px] max-w-[280px]"
       >
         <div class="text-xs text-slate-400 font-mono mb-1.5 tracking-wide">
@@ -533,6 +536,7 @@ defineExpose({ centerOnToday })
             <div
               v-for="txn in activeDay.transactions.slice(0, 6)"
               :key="txn.id"
+              :data-testid="`chart.txn.${txn.id}`"
               class="flex justify-between gap-3 items-baseline"
             >
               <span class="text-[11px] font-mono text-slate-300 truncate flex items-center gap-1">

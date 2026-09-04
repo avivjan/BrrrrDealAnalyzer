@@ -116,6 +116,7 @@ const onKeydown = (e: KeyboardEvent) => {
          nothing shifts when the hint appears mid-typing. -->
     <div class="flex justify-between items-baseline gap-2">
       <label
+        data-part="label"
         class="text-sm font-medium text-gray-700"
         :class="{
           'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
@@ -123,9 +124,10 @@ const onKeydown = (e: KeyboardEvent) => {
       >
         {{ label }}
       </label>
-      <span v-if="hint" class="text-xs font-medium text-blue-600">{{ hint }}</span>
+      <span v-if="hint" data-part="hint" class="text-xs font-medium text-blue-600">{{ hint }}</span>
     </div>
     <input
+      data-part="input"
       type="text"
       inputmode="decimal"
       autocomplete="off"

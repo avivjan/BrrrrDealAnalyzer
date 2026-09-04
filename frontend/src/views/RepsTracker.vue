@@ -71,6 +71,7 @@ function onSaved() {
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <button
+            data-testid="reps.back"
             class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
             title="Back"
             @click="router.push('/')"
@@ -83,6 +84,7 @@ function onSaved() {
           </h1>
         </div>
         <button
+          data-testid="reps.people-toggle"
           class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           :class="showPeoplePanel ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
           @click="showPeoplePanel = !showPeoplePanel"
@@ -96,6 +98,7 @@ function onSaved() {
         <button
           v-for="u in REPS_USERS"
           :key="u"
+          :data-testid="`reps.tab.${u}`"
           class="px-5 py-2.5 text-sm font-semibold border-b-2 transition-all flex items-center gap-2"
           :class="store.activeUser === u
             ? 'border-blue-600 text-blue-700'
@@ -122,6 +125,7 @@ function onSaved() {
       <!-- Config banner -->
       <div
         v-if="store.configStatus && !isConfigured"
+        data-testid="reps.config-banner"
         class="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800"
       >
         <div class="font-semibold mb-1 flex items-center gap-2">
@@ -146,6 +150,7 @@ function onSaved() {
         <div class="text-xs font-mono text-slate-500">
           Each entry is server-stamped at save time and appended to {{ store.activeUser }}'s sheet.
           <button
+            data-testid="reps.refresh"
             class="ml-2 underline hover:text-slate-700"
             @click="refreshActive"
             :disabled="activeLoading"
@@ -154,6 +159,7 @@ function onSaved() {
           </button>
         </div>
         <button
+          data-testid="reps.manual-entry"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
           @click="openManualEntry"
         >

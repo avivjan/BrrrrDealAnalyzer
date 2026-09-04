@@ -24,6 +24,7 @@ function formatDate(iso: string): string {
     <Transition name="modal">
       <div
         v-if="open && result"
+        data-testid="simwarn.root"
         class="fixed inset-0 z-[60] flex items-center justify-center"
       >
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="$emit('cancel')" />
@@ -50,6 +51,7 @@ function formatDate(iso: string): string {
                 <div
                   v-for="date in result.negativeDates.slice(0, 10)"
                   :key="date"
+                  :data-testid="`simwarn.negative-date.${date}`"
                   class="text-[11px] text-red-400/80 font-mono"
                 >
                   {{ formatDate(date) }}
@@ -68,12 +70,14 @@ function formatDate(iso: string): string {
 
             <div class="flex gap-3 justify-end">
               <button
+                data-testid="simwarn.cancel"
                 class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
                 @click="$emit('cancel')"
               >
                 Cancel
               </button>
               <button
+                data-testid="simwarn.confirm"
                 class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 transition-all"
                 @click="$emit('confirm')"
               >
@@ -102,12 +106,14 @@ function formatDate(iso: string): string {
 
             <div class="flex gap-3 justify-end">
               <button
+                data-testid="simwarn.cancel"
                 class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
                 @click="$emit('cancel')"
               >
                 Cancel
               </button>
               <button
+                data-testid="simwarn.confirm"
                 class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 transition-all"
                 @click="$emit('confirm')"
               >

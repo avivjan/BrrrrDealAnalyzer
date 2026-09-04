@@ -69,29 +69,33 @@ async function remove(id: string) {
       <span class="text-xs font-mono text-slate-500">{{ store.people.length }} contacts</span>
     </div>
 
-    <div v-if="error" class="p-2 mb-3 bg-rose-100 text-rose-700 text-xs rounded">{{ error }}</div>
+    <div v-if="error" data-testid="repspeople.error" class="p-2 mb-3 bg-rose-100 text-rose-700 text-xs rounded">{{ error }}</div>
 
     <!-- Add new -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-slate-50 border border-slate-100">
       <input
+        data-testid="repspeople.new-name"
         v-model="newName"
         type="text"
         placeholder="Name *"
         class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       <input
+        data-testid="repspeople.new-role"
         v-model="newRole"
         type="text"
         placeholder="Role (e.g. Plumber)"
         class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       <input
+        data-testid="repspeople.new-notes"
         v-model="newNotes"
         type="text"
         placeholder="Notes"
         class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       <button
+        data-testid="repspeople.add"
         class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
         @click="add"
       >
@@ -99,7 +103,7 @@ async function remove(id: string) {
       </button>
     </div>
 
-    <div v-if="store.people.length === 0" class="text-center text-sm text-slate-500 py-6">
+    <div v-if="store.people.length === 0" data-testid="repspeople.empty" class="text-center text-sm text-slate-500 py-6">
       No people yet. Add contractors, agents, lenders, etc. to tag on log entries.
     </div>
 
@@ -107,22 +111,26 @@ async function remove(id: string) {
       <li
         v-for="p in store.people"
         :key="p.id"
+        :data-testid="`repspeople.person.${p.id}`"
         class="py-3 flex items-start gap-3"
       >
         <template v-if="editingId === p.id">
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
             <input
+              :data-testid="`repspeople.person.${p.id}.edit-name`"
               v-model="editName"
               type="text"
               class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg"
             />
             <input
+              :data-testid="`repspeople.person.${p.id}.edit-role`"
               v-model="editRole"
               type="text"
               placeholder="Role"
               class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg"
             />
             <input
+              :data-testid="`repspeople.person.${p.id}.edit-notes`"
               v-model="editNotes"
               type="text"
               placeholder="Notes"
@@ -131,12 +139,14 @@ async function remove(id: string) {
           </div>
           <div class="flex gap-1 shrink-0">
             <button
+              :data-testid="`repspeople.person.${p.id}.save`"
               class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
               @click="saveEdit"
             >
               <i class="pi pi-check"></i>
             </button>
             <button
+              :data-testid="`repspeople.person.${p.id}.cancel`"
               class="px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
               @click="editingId = null"
             >
@@ -154,12 +164,14 @@ async function remove(id: string) {
           </div>
           <div class="flex gap-1 shrink-0">
             <button
+              :data-testid="`repspeople.person.${p.id}.edit`"
               class="px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
               @click="startEdit(p)"
             >
               <i class="pi pi-pencil"></i>
             </button>
             <button
+              :data-testid="`repspeople.person.${p.id}.delete`"
               class="px-2 py-1 text-xs bg-rose-100 text-rose-700 rounded hover:bg-rose-200"
               @click="remove(p.id)"
             >

@@ -89,6 +89,7 @@ const onToggleSubstage = (substageId: string) => {
 
     <!-- Delete Button -->
     <button
+      data-testid="boughtcard.delete"
       @click.stop="onDelete(deal.id)"
       class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
       title="Delete Deal"
@@ -98,6 +99,7 @@ const onToggleSubstage = (substageId: string) => {
 
     <!-- Copy to AI Button -->
     <button
+      data-testid="boughtcard.copy"
       @click.stop="copyToClipboard(deal)"
       class="absolute top-2 right-9 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
       :class="isCopied ? 'bg-green-100 text-green-600' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'"
@@ -185,9 +187,10 @@ const onToggleSubstage = (substageId: string) => {
 
     <!-- Sub-stage Checklist -->
     <div v-if="subStages.length > 0" class="mt-3 pt-2 border-t border-gray-200">
-      <div v-for="sub in subStages" :key="sub.id" class="flex items-center gap-2 py-0.5">
+      <div v-for="sub in subStages" :key="sub.id" :data-testid="`boughtcard.substage.${sub.id}`" class="flex items-center gap-2 py-0.5">
         <input
           type="checkbox"
+          :data-testid="`boughtcard.substage.${sub.id}.input`"
           :checked="deal.completedSubstages[sub.id] === true"
           @click.stop="onToggleSubstage(sub.id)"
           class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"

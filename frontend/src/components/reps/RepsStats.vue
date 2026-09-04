@@ -23,10 +23,10 @@ function fmt(n: number | undefined | null) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+  <div data-testid="repsstats.root" class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-lg font-bold text-slate-800">REPS Progress</h3>
-      <div v-if="loading" class="text-xs font-mono text-slate-500 flex items-center gap-2">
+      <div v-if="loading" data-testid="repsstats.loading" class="text-xs font-mono text-slate-500 flex items-center gap-2">
         <i class="pi pi-spin pi-spinner"></i> Loading from sheet...
       </div>
       <div v-else-if="stats" class="text-xs font-mono text-slate-500">

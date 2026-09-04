@@ -111,6 +111,7 @@ const saveDeal = async () => {
             class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex"
           >
             <button
+              data-testid="analyze.type-brrrr"
               @click="selectedType = 'BRRRR'"
               :class="
                 selectedType === 'BRRRR'
@@ -122,6 +123,7 @@ const saveDeal = async () => {
               BRRRR
             </button>
             <button
+              data-testid="analyze.type-flip"
               @click="selectedType = 'FLIP'"
               :class="
                 selectedType === 'FLIP'
@@ -135,6 +137,7 @@ const saveDeal = async () => {
           </div>
 
           <button
+            data-testid="analyze.home"
             @click="$router.push('/')"
             class="text-gray-500 hover:text-blue-600 transition-colors"
           >
@@ -152,11 +155,13 @@ const saveDeal = async () => {
         <div class="flex flex-col items-end pt-2 gap-2">
           <div
             v-if="validationErrors.length > 0"
+            data-testid="analyze.errors"
             class="flex flex-col items-end gap-1 w-full"
           >
             <div
               v-for="(error, index) in validationErrors"
               :key="index"
+              :data-testid="`analyze.error.${index}`"
               class="text-red-500 text-sm font-medium animate-pulse flex items-center justify-end"
             >
               <i class="pi pi-exclamation-circle mr-1"></i>
@@ -164,6 +169,7 @@ const saveDeal = async () => {
             </div>
           </div>
           <button
+            data-testid="analyze.analyze-save"
             @click="onAnalyzeAndSaveClick"
             class="w-full md:w-auto text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-lg"
             :class="
@@ -239,6 +245,7 @@ const saveDeal = async () => {
 
           <!-- My Deals Button -->
           <button
+            data-testid="analyze.my-deals"
             @click="$router.push('/my-deals')"
             class="w-full bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
           >
@@ -251,6 +258,7 @@ const saveDeal = async () => {
     <!-- Save Modal Overlay -->
     <div
       v-if="showSaveModal"
+      data-testid="analyze.modal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       @click.self="!isSaving && (showSaveModal = false)"
     >
@@ -268,6 +276,7 @@ const saveDeal = async () => {
               >Property Address *</label
             >
             <input
+              data-testid="analyze.modal.address"
               v-model="saveForm.address"
               class="w-full bg-white border rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
               :class="saveError && !saveForm.address.trim() ? 'border-red-400' : 'border-gray-300'"
@@ -280,6 +289,7 @@ const saveDeal = async () => {
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-medium text-gray-700">Section</label>
               <select
+                data-testid="analyze.modal.section"
                 v-model="saveForm.section"
                 class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
               >
@@ -291,6 +301,7 @@ const saveDeal = async () => {
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-medium text-gray-700">Stage</label>
               <select
+                data-testid="analyze.modal.stage"
                 v-model="saveForm.stage"
                 class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
               >
@@ -304,7 +315,7 @@ const saveDeal = async () => {
           </div>
         </div>
 
-        <div v-if="saveError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div v-if="saveError" data-testid="analyze.modal.error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p class="text-sm text-red-600 flex items-center gap-2">
             <i class="pi pi-exclamation-circle"></i>
             {{ saveError }}
@@ -313,6 +324,7 @@ const saveDeal = async () => {
 
         <div class="flex justify-end gap-3 mt-8">
           <button
+            data-testid="analyze.modal.cancel"
             @click="showSaveModal = false"
             :disabled="isSaving"
             class="px-4 py-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -320,6 +332,7 @@ const saveDeal = async () => {
             Cancel
           </button>
           <button
+            data-testid="analyze.modal.save"
             @click="saveDeal"
             :disabled="isSaving"
             class="px-6 py-2 text-white rounded-lg font-medium shadow-lg transition-all flex items-center gap-2 disabled:opacity-70"

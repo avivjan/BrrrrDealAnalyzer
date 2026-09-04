@@ -369,6 +369,7 @@ function showToast(msg: string) {
     <header class="flex items-center justify-between px-4 py-3 border-b border-[#1e2030] bg-[#0f1117]/90 backdrop-blur-sm sticky top-0 z-30">
       <div class="flex items-center gap-3">
         <button
+          data-testid="liquidity.back"
           class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] transition-all"
           title="Back"
           @click="router.push('/')"
@@ -382,12 +383,14 @@ function showToast(msg: string) {
       </div>
       <div class="flex items-center gap-2">
         <button
+          data-testid="liquidity.today"
           class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
           @click="chartRef?.centerOnToday()"
         >
           <i class="pi pi-crosshair text-[10px]"></i> Today
         </button>
         <button
+          data-testid="liquidity.mercury-sync"
           class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
           :disabled="store.mercurySyncing"
           :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
@@ -397,12 +400,14 @@ function showToast(msg: string) {
           {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
         </button>
         <button
+          data-testid="liquidity.settings-open"
           class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
           @click="settingsOpen = true"
         >
           <i class="pi pi-cog text-[10px]"></i> Settings
         </button>
         <button
+          data-testid="liquidity.add-flow"
           class="px-3 py-1.5 text-xs font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all flex items-center gap-1.5"
           @click="openAddForm()"
         >
@@ -412,7 +417,7 @@ function showToast(msg: string) {
     </header>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="flex-1 flex items-center justify-center">
+    <div v-if="store.loading" data-testid="liquidity.loading" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <i class="pi pi-spin pi-spinner text-2xl text-indigo-400 mb-3"></i>
         <p class="text-sm font-mono text-slate-500">Loading liquidity data...</p>
@@ -420,12 +425,13 @@ function showToast(msg: string) {
     </div>
 
     <!-- Error -->
-    <div v-else-if="store.error" class="flex-1 flex items-center justify-center">
+    <div v-else-if="store.error" data-testid="liquidity.error" class="flex-1 flex items-center justify-center">
       <div class="text-center max-w-sm">
         <i class="pi pi-exclamation-circle text-3xl text-red-400 mb-3"></i>
         <p class="text-sm font-mono text-red-300 mb-2">Failed to load</p>
         <p class="text-xs font-mono text-slate-500 mb-4">{{ store.error }}</p>
         <button
+          data-testid="liquidity.retry"
           class="px-4 py-2 text-xs font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
           @click="store.fetchAll()"
         >
@@ -435,7 +441,7 @@ function showToast(msg: string) {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!hasData && !store.loading" class="flex-1 flex items-center justify-center">
+    <div v-else-if="!hasData && !store.loading" data-testid="liquidity.empty" class="flex-1 flex items-center justify-center">
       <div class="text-center max-w-md">
         <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
           <i class="pi pi-chart-line text-3xl text-indigo-400"></i>
@@ -446,12 +452,14 @@ function showToast(msg: string) {
         </p>
         <div class="flex gap-3 justify-center">
           <button
+            data-testid="liquidity.empty.settings"
             class="px-4 py-2 text-sm font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
             @click="settingsOpen = true"
           >
             Set Opening Balance
           </button>
           <button
+            data-testid="liquidity.empty.add"
             class="px-4 py-2 text-sm font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all"
             @click="openAddForm()"
           >
@@ -537,6 +545,7 @@ function showToast(msg: string) {
     <Transition name="toast">
       <div
         v-if="toastVisible"
+        data-testid="liquidity.toast"
         class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1e2030] border border-[#2a2f45] rounded-lg px-4 py-2.5 shadow-xl text-xs font-mono text-slate-300 max-w-md"
       >
         {{ toastMessage }}

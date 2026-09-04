@@ -227,6 +227,7 @@ function close() {
 <template>
   <div
     v-if="open"
+    data-testid="pipeline.root"
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     @click.self="close"
   >
@@ -248,6 +249,7 @@ function close() {
           </p>
         </div>
         <button
+          data-testid="pipeline.close"
           @click="close"
           class="text-gray-400 hover:text-gray-600"
           title="Close"
@@ -262,6 +264,7 @@ function close() {
           <button
             v-for="tab in (['BRRRR', 'FLIP'] as const)"
             :key="tab"
+            :data-testid="`pipeline.tab.${tab}`"
             @click="activeTab = tab"
             class="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
             :class="
@@ -292,16 +295,18 @@ function close() {
       <!-- Validation banner -->
       <div
         v-if="validationIssues.length"
+        data-testid="pipeline.validation-banner"
         class="mx-5 mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
       >
         <div class="font-semibold mb-1">Please fix before saving:</div>
         <ul class="list-disc pl-5 space-y-0.5">
-          <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
+          <li v-for="issue in validationIssues" :key="issue" :data-testid="`pipeline.issue.${issue}`">{{ issue }}</li>
         </ul>
       </div>
 
       <div
         v-if="saveError"
+        data-testid="pipeline.save-error"
         class="mx-5 mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
       >
         {{ saveError }}
@@ -310,6 +315,7 @@ function close() {
       <!-- Stage list -->
       <div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
         <VueDraggable
+          data-testid="pipeline.stages-draggable"
           v-model="currentStages"
           handle=".stage-drag-handle"
           :animation="150"
@@ -319,6 +325,7 @@ function close() {
           <div
             v-for="(stage, stageIdx) in currentStages"
             :key="stage.id"
+            :data-testid="`pipeline.stage.${stageIdx}`"
             class="rounded-xl border border-gray-200 bg-white shadow-sm"
           >
             <!-- Stage header row -->
@@ -326,12 +333,14 @@ function close() {
               class="flex items-center gap-3 p-3 border-b border-gray-100 bg-gray-50/60 rounded-t-xl"
             >
               <button
+                :data-testid="`pipeline.stage.${stageIdx}.drag`"
                 class="stage-drag-handle text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
                 title="Drag to reorder"
               >
                 <i class="pi pi-bars"></i>
               </button>
               <input
+                :data-testid="`pipeline.stage.${stageIdx}.name`"
                 v-model="stage.name"
                 class="flex-1 bg-transparent text-base font-semibold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
                 placeholder="Stage name"
@@ -353,6 +362,7 @@ function close() {
               </span>
               <div class="flex items-center gap-1">
                 <button
+                  :data-testid="`pipeline.stage.${stageIdx}.move-up`"
                   @click="moveStage(stageIdx, -1)"
                   :disabled="stageIdx === 0"
                   class="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed px-1"
@@ -361,6 +371,7 @@ function close() {
                   <i class="pi pi-arrow-up text-xs"></i>
                 </button>
                 <button
+                  :data-testid="`pipeline.stage.${stageIdx}.move-down`"
                   @click="moveStage(stageIdx, 1)"
                   :disabled="stageIdx === currentStages.length - 1"
                   class="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed px-1"
@@ -369,6 +380,7 @@ function close() {
                   <i class="pi pi-arrow-down text-xs"></i>
                 </button>
                 <button
+                  :data-testid="`pipeline.stage.${stageIdx}.delete`"
                   @click="removeStage(stageIdx)"
                   class="text-red-500 hover:text-red-700 px-1"
                   title="Delete stage"
@@ -382,6 +394,7 @@ function close() {
             <div class="p-3 space-y-2">
               <div
                 v-if="stage.subStages.length === 0"
+                :data-testid="`pipeline.stage.${stageIdx}.substages-empty`"
                 class="text-xs italic text-gray-400 px-2 py-1"
               >
                 No substages.
@@ -389,10 +402,12 @@ function close() {
               <div
                 v-for="(sub, subIdx) in stage.subStages"
                 :key="sub.id"
+                :data-testid="`pipeline.substage.${sub.id}`"
                 class="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5"
               >
                 <i class="pi pi-check-square text-xs text-gray-400"></i>
                 <input
+                  :data-testid="`pipeline.substage.${sub.id}.name`"
                   v-model="sub.label"
                   class="flex-1 bg-transparent text-sm text-gray-800 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none"
                   placeholder="Substage label"
@@ -411,6 +426,7 @@ function close() {
                   {{ substageCompletions(stage.id, sub.id) }}
                 </span>
                 <button
+                  :data-testid="`pipeline.substage.${sub.id}.move-up`"
                   @click="moveSubstage(stageIdx, subIdx, -1)"
                   :disabled="subIdx === 0"
                   class="text-gray-400 hover:text-gray-700 disabled:opacity-30"
@@ -419,6 +435,7 @@ function close() {
                   <i class="pi pi-arrow-up text-[10px]"></i>
                 </button>
                 <button
+                  :data-testid="`pipeline.substage.${sub.id}.move-down`"
                   @click="moveSubstage(stageIdx, subIdx, 1)"
                   :disabled="subIdx === stage.subStages.length - 1"
                   class="text-gray-400 hover:text-gray-700 disabled:opacity-30"
@@ -427,6 +444,7 @@ function close() {
                   <i class="pi pi-arrow-down text-[10px]"></i>
                 </button>
                 <button
+                  :data-testid="`pipeline.substage.${sub.id}.delete`"
                   @click="removeSubstage(stageIdx, subIdx)"
                   class="text-red-400 hover:text-red-600"
                   title="Delete substage"
@@ -435,6 +453,7 @@ function close() {
                 </button>
               </div>
               <button
+                :data-testid="`pipeline.stage.${stageIdx}.add-substage`"
                 @click="addSubstage(stageIdx)"
                 class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1"
               >
@@ -445,6 +464,7 @@ function close() {
         </VueDraggable>
 
         <button
+          data-testid="pipeline.add-stage"
           @click="addStage"
           class="w-full mt-2 py-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:text-blue-600 hover:border-blue-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
         >
@@ -453,6 +473,7 @@ function close() {
 
         <p
           v-if="currentStats && currentStats.orphanStageDealCount > 0"
+          data-testid="pipeline.orphan-banner"
           class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mt-2"
         >
           <i class="pi pi-exclamation-triangle"></i>
@@ -473,12 +494,14 @@ function close() {
         </div>
         <div class="flex items-center gap-2">
           <button
+            data-testid="pipeline.cancel"
             @click="close"
             class="px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900"
           >
             Cancel
           </button>
           <button
+            data-testid="pipeline.save"
             @click="saveAndClose"
             :disabled="!canSave"
             class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"

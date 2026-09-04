@@ -72,6 +72,7 @@ const dateInputClass =
   <div class="flex flex-col gap-1.5">
     <div class="flex items-center justify-between">
       <label
+        data-part="label"
         class="text-sm font-medium text-gray-700"
         :class="{
           'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
@@ -81,6 +82,7 @@ const dateInputClass =
       </label>
       <button
         type="button"
+        data-part="toggle"
         class="text-xs text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded px-1"
         @click="picking ? (picking = false) : openPicker()"
       >
@@ -92,6 +94,7 @@ const dateInputClass =
     <!-- Default: type the number of days straight in. -->
     <NumberInput
       v-if="!picking"
+      data-part="input"
       :model-value="modelValue"
       suffix=" days"
       :min="1"
@@ -106,11 +109,12 @@ const dateInputClass =
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1">
           <span class="text-xs font-medium text-gray-600">Purchase closing</span>
-          <input v-model="purchaseDate" type="date" :class="dateInputClass" />
+          <input data-part="date-purchase" v-model="purchaseDate" type="date" :class="dateInputClass" />
         </div>
         <div class="flex flex-col gap-1">
           <span class="text-xs font-medium text-gray-600">Refi closing</span>
           <input
+            data-part="date-refi"
             v-model="refiDate"
             type="date"
             :min="purchaseDate || undefined"
@@ -134,6 +138,7 @@ const dateInputClass =
 
         <button
           type="button"
+          data-part="done"
           :disabled="pickedDays == null"
           class="px-3 py-1.5 text-sm rounded-lg bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
           @click="applyPickedDates"

@@ -50,6 +50,7 @@ onMounted(() => {
   >
     <!-- Server Status Indicator -->
     <div
+      data-testid="app.status"
       class="fixed top-2 right-2 z-50 w-3 h-3 rounded-full shadow-sm transition-colors duration-300"
       :class="
         connectionStore.isChecking || !connectionStore.isConnected

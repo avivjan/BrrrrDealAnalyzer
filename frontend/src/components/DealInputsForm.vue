@@ -186,9 +186,9 @@ const quickCalcSellingCosts = () => {
 </script>
 
 <template>
-  <div :class="rootSpacingClass">
+  <div data-testid="form.root" :data-surface="surface" :class="rootSpacingClass">
   <!-- Group 1: Buy & Rehab (shared by BRRRR + FLIP) -->
-  <section :class="sectionClass">
+  <section :data-surface="surface" :class="sectionClass">
     <h2
       class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
     >
@@ -196,20 +196,23 @@ const quickCalcSellingCosts = () => {
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MoneyInput
+        data-testid="form.field.purchasePrice"
         :model-value="get('purchasePrice')"
         @update:model-value="(v: number | null) => set('purchasePrice', v)"
         label="Purchase Price"
         :inThousands="true"
         :required="true"
       />
-      <div :class="rehabPairClass">
+      <div :data-layout="surface === 'panel' ? 'paired' : 'flat'" :class="rehabPairClass">
         <MoneyInput
+          data-testid="form.field.rehabCost"
           :model-value="get('rehabCost')"
           @update:model-value="(v: number | null) => set('rehabCost', v)"
           label="Rehab Cost"
           :inThousands="true"
         />
         <NumberInput
+          data-testid="form.field.rehabContingency"
           :model-value="get('rehabContingency')"
           @update:model-value="(v: number | null) => set('rehabContingency', v)"
           label="Contingency"
@@ -219,6 +222,7 @@ const quickCalcSellingCosts = () => {
         />
       </div>
       <MoneyInput
+        data-testid="form.field.closingCostsBuy"
         :model-value="get('closingCostsBuy')"
         @update:model-value="(v: number | null) => set('closingCostsBuy', v)"
         label="Closing Costs (Buy)"
@@ -231,6 +235,7 @@ const quickCalcSellingCosts = () => {
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <NumberInput
+            data-testid="form.field.down_payment"
             :model-value="get('down_payment')"
             @update:model-value="(v: number | null) => set('down_payment', v)"
             label="Down Payment"
@@ -239,6 +244,7 @@ const quickCalcSellingCosts = () => {
             :max="100"
           />
           <NumberInput
+            data-testid="form.field.hmlPoints"
             :model-value="get('hmlPoints')"
             @update:model-value="(v: number | null) => set('hmlPoints', v)"
             label="Points"
@@ -247,6 +253,7 @@ const quickCalcSellingCosts = () => {
             :max="100"
           />
           <NumberInput
+            data-testid="form.field.HMLInterestRate"
             :model-value="get('HMLInterestRate')"
             @update:model-value="(v: number | null) => set('HMLInterestRate', v)"
             label="Interest Rate"
@@ -263,6 +270,7 @@ const quickCalcSellingCosts = () => {
               Use HM for Rehab
             </span>
             <ToggleSwitch
+              data-testid="form.hm-toggle"
               v-model="useHmForRehab"
               :pt="{
                 slider: ({ props: sliderProps }: any) => ({
@@ -277,7 +285,7 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 2a: Refinance (BRRRR only) -->
-  <section v-if="isBrrr" :class="sectionClass">
+  <section v-if="isBrrr" :data-surface="surface" :class="sectionClass">
     <h2
       class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
     >
@@ -285,6 +293,7 @@ const quickCalcSellingCosts = () => {
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
+        data-testid="form.field.arv_in_thousands"
         :model-value="get('arv_in_thousands')"
         @update:model-value="(v: number | null) => set('arv_in_thousands', v)"
         label="ARV"
@@ -292,6 +301,7 @@ const quickCalcSellingCosts = () => {
         :required="true"
       />
       <SliderField
+        data-testid="form.field.ltv_as_precent"
         :model-value="get('ltv_as_precent')"
         @update:model-value="(v: number | null) => set('ltv_as_precent', v)"
         label="LTV"
@@ -305,18 +315,21 @@ const quickCalcSellingCosts = () => {
       />
 
       <DaysUntilRefiField
+        data-testid="form.field.daysUntilRefi"
         :model-value="get('daysUntilRefi')"
         @update:model-value="(v: number | null) => set('daysUntilRefi', v)"
         label="Days until Refi"
         :required="true"
       />
       <MoneyInput
+        data-testid="form.field.closingCostsRefi"
         :model-value="get('closingCostsRefi')"
         @update:model-value="(v: number | null) => set('closingCostsRefi', v)"
         label="Refi Closing Costs"
         :inThousands="true"
       />
       <NumberInput
+        data-testid="form.field.refiPoints"
         :model-value="get('refiPoints')"
         @update:model-value="(v: number | null) => set('refiPoints', v)"
         label="Refi Points"
@@ -325,6 +338,7 @@ const quickCalcSellingCosts = () => {
         :max="100"
       />
       <MoneyInput
+        data-testid="form.field.cashReserve"
         :model-value="get('cashReserve')"
         @update:model-value="(v: number | null) => set('cashReserve', v)"
         label="Cash Reserve (paydown at refi)"
@@ -332,6 +346,7 @@ const quickCalcSellingCosts = () => {
       />
 
       <SliderField
+        data-testid="form.field.interestRate"
         :model-value="get('interestRate')"
         @update:model-value="(v: number | null) => set('interestRate', v)"
         label="Long Term Interest Rate"
@@ -344,6 +359,7 @@ const quickCalcSellingCosts = () => {
         :required="true"
       />
       <NumberInput
+        data-testid="form.field.loanTermYears"
         :model-value="get('loanTermYears')"
         @update:model-value="(v: number | null) => set('loanTermYears', v)"
         label="Loan Term"
@@ -353,7 +369,7 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 2b: Flip Strategy (FLIP only) -->
-  <section v-else :class="sectionClass">
+  <section v-else :data-surface="surface" :class="sectionClass">
     <h2
       class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
     >
@@ -361,6 +377,7 @@ const quickCalcSellingCosts = () => {
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
+        data-testid="form.field.salePrice"
         :model-value="get('salePrice')"
         @update:model-value="(v: number | null) => set('salePrice', v)"
         label="Projected Sale Price"
@@ -368,6 +385,7 @@ const quickCalcSellingCosts = () => {
         :required="true"
       />
       <NumberInput
+        data-testid="form.field.holdingTime"
         :model-value="get('holdingTime')"
         @update:model-value="(v: number | null) => set('holdingTime', v)"
         label="Holding Time"
@@ -385,6 +403,7 @@ const quickCalcSellingCosts = () => {
           </h3>
           <button
             type="button"
+            data-testid="form.quick-defaults"
             @click="quickCalcSellingCosts"
             class="px-2 py-1 text-xs border rounded text-gray-600 transition-colors shadow-sm"
             :class="quickButtonClass"
@@ -394,6 +413,7 @@ const quickCalcSellingCosts = () => {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NumberInput
+            data-testid="form.field.buyerAgentSellingFee"
             :model-value="get('buyerAgentSellingFee')"
             @update:model-value="
               (v: number | null) => set('buyerAgentSellingFee', v)
@@ -402,6 +422,7 @@ const quickCalcSellingCosts = () => {
             suffix="%"
           />
           <NumberInput
+            data-testid="form.field.sellerAgentSellingFee"
             :model-value="get('sellerAgentSellingFee')"
             @update:model-value="
               (v: number | null) => set('sellerAgentSellingFee', v)
@@ -410,6 +431,7 @@ const quickCalcSellingCosts = () => {
             suffix="%"
           />
           <MoneyInput
+            data-testid="form.field.sellingClosingCosts"
             :model-value="get('sellingClosingCosts')"
             @update:model-value="
               (v: number | null) => set('sellingClosingCosts', v)
@@ -421,6 +443,7 @@ const quickCalcSellingCosts = () => {
       </div>
 
       <NumberInput
+        data-testid="form.field.capitalGainsTax"
         :model-value="get('capitalGainsTax')"
         @update:model-value="(v: number | null) => set('capitalGainsTax', v)"
         label="Capital Gains Tax Rate"
@@ -430,7 +453,7 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 3: Expenses (shared, with per-type extras) -->
-  <section :class="sectionClass">
+  <section :data-surface="surface" :class="sectionClass">
     <h2
       class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
     >
@@ -443,6 +466,7 @@ const quickCalcSellingCosts = () => {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MoneyInput
         v-if="isBrrr"
+        data-testid="form.field.rent"
         :model-value="get('rent')"
         @update:model-value="(v: number | null) => set('rent', v)"
         label="Monthly Rent"
@@ -450,6 +474,7 @@ const quickCalcSellingCosts = () => {
       />
 
       <MoneyInput
+        data-testid="form.field.annual_property_taxes"
         :model-value="get('annual_property_taxes')"
         @update:model-value="
           (v: number | null) => set('annual_property_taxes', v)
@@ -457,17 +482,20 @@ const quickCalcSellingCosts = () => {
         label="Annual Taxes"
       />
       <MoneyInput
+        data-testid="form.field.annual_insurance"
         :model-value="get('annual_insurance')"
         @update:model-value="(v: number | null) => set('annual_insurance', v)"
         label="Annual Insurance"
       />
       <MoneyInput
+        data-testid="form.field.montly_hoa"
         :model-value="get('montly_hoa')"
         @update:model-value="(v: number | null) => set('montly_hoa', v)"
         label="Monthly HOA"
       />
       <MoneyInput
         v-if="!isBrrr"
+        data-testid="form.field.monthly_utilities"
         :model-value="get('monthly_utilities')"
         @update:model-value="(v: number | null) => set('monthly_utilities', v)"
         label="Monthly Utilities"
@@ -478,12 +506,14 @@ const quickCalcSellingCosts = () => {
         class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mt-2"
       >
         <NumberInput
+          data-testid="form.field.vacancyPercent"
           :model-value="get('vacancyPercent')"
           @update:model-value="(v: number | null) => set('vacancyPercent', v)"
           label="Vacancy"
           suffix="%"
         />
         <NumberInput
+          data-testid="form.field.maintenancePercent"
           :model-value="get('maintenancePercent')"
           @update:model-value="
             (v: number | null) => set('maintenancePercent', v)
@@ -492,12 +522,14 @@ const quickCalcSellingCosts = () => {
           suffix="%"
         />
         <NumberInput
+          data-testid="form.field.capexPercent"
           :model-value="get('capexPercent')"
           @update:model-value="(v: number | null) => set('capexPercent', v)"
           label="CapEx"
           suffix="%"
         />
         <NumberInput
+          data-testid="form.field.property_managment_fee_precentages_from_rent"
           :model-value="get('property_managment_fee_precentages_from_rent')"
           @update:model-value="
             (v: number | null) =>

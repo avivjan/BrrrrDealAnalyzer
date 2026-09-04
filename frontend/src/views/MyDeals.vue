@@ -501,6 +501,7 @@ console.groupEnd();
     >
       <div class="flex items-center gap-4">
         <button
+          data-testid="mydeals.home"
           @click="$router.push('/')"
           class="text-gray-500 hover:text-blue-600 transition-colors"
         >
@@ -511,6 +512,7 @@ console.groupEnd();
         </h1>
         <button
           type="button"
+          data-testid="mydeals.bought-deals"
           @click="$router.push('/bought-deals')"
           class="text-sm font-medium text-emerald-700 hover:text-emerald-800 border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
           title="Open bought deals pipeline"
@@ -541,6 +543,7 @@ console.groupEnd();
             },
           ]"
           :key="tab.id"
+          :data-testid="`mydeals.tab.${tab.id}`"
           @click="activeTab = tab.id"
           class="px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2"
           :class="
@@ -558,6 +561,7 @@ console.groupEnd();
       </div>
 
       <button
+        data-testid="mydeals.add-deal"
         @click="$router.push('/analyze')"
         class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all"
       >
@@ -574,6 +578,7 @@ console.groupEnd();
         <div
           v-for="stage in stages"
           :key="stage.id"
+          :data-testid="`mydeals.stage.${stage.id}`"
           class="flex flex-col w-full rounded-xl border shadow-sm transition-colors bg-white"
           :class="stage.color"
         >
@@ -595,6 +600,7 @@ console.groupEnd();
           <div class="p-4 bg-white/50">
             <VueDraggable
               v-if="useSortableBoard && columns[stage.id]"
+              :data-testid="`mydeals.draggable.${stage.id}`"
               v-model="columns[stage.id]!"
               group="deals"
               @change="(e) => onDrop(e, stage.id)"
@@ -606,6 +612,7 @@ console.groupEnd();
               <div
                 v-for="deal in columns[stage.id]"
                 :key="deal.id"
+                :data-testid="`mydeals.card.${deal.id}`"
                 @click="openDeal(deal)"
                 class="h-full"
               >
@@ -625,6 +632,7 @@ console.groupEnd();
               <div
                 v-for="deal in columns[stage.id]"
                 :key="deal.id"
+                :data-testid="`mydeals.card.${deal.id}`"
                 @click="openDeal(deal)"
                 class="h-full"
               >
@@ -645,6 +653,7 @@ console.groupEnd();
     <!-- Detail Modal -->
     <div
       v-if="showDetailModal && editingDeal"
+      data-testid="mydeals.modal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       @click.self="closeModal"
     >
@@ -667,12 +676,14 @@ console.groupEnd();
                 </span>
             </div>
             <input
+              data-testid="mydeals.modal.address"
               v-model="editingDeal.address"
               class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
             />
           </div>
           <div class="flex items-center gap-4">
             <button
+              data-testid="mydeals.modal.view-report"
               @click="viewDealReport"
               :disabled="isPreparingPdf"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium"
@@ -687,6 +698,7 @@ console.groupEnd();
               </span>
             </button>
             <button
+              data-testid="mydeals.modal.copy"
               @click="copyToClipboard(editingDeal)"
               class="transition-colors"
               :class="
@@ -702,6 +714,7 @@ console.groupEnd();
               ></i>
             </button>
             <button
+              data-testid="mydeals.modal.close"
               @click="closeModal"
               class="text-gray-400 hover:text-gray-600"
             >
@@ -722,6 +735,7 @@ console.groupEnd();
                 >Current Task / Status</label
               >
               <textarea
+                data-testid="mydeals.modal.task"
                 v-model="editingDeal.task"
                 class="w-full h-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
                 placeholder="What needs to be done?"
@@ -732,6 +746,7 @@ console.groupEnd();
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
                 <NumberInput
+                  data-testid="mydeals.modal.sqft"
                   :model-value="editingDeal.sqft ?? null"
                   @update:model-value="(val) => (editingDeal!.sqft = val ?? undefined)"
                   label="SqFt"
@@ -739,6 +754,7 @@ console.groupEnd();
                 <div class="flex flex-col gap-1">
                   <label class="text-xs text-gray-600 font-medium">Stage</label>
                   <select
+                    data-testid="mydeals.modal.stage-select"
                     v-model="editingDeal.stage"
                     class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   >
@@ -750,6 +766,7 @@ console.groupEnd();
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <NumberInput
+                  data-testid="mydeals.modal.bedrooms"
                   :model-value="editingDeal.bedrooms ?? null"
                   @update:model-value="(val) => (editingDeal!.bedrooms = val ?? undefined)"
                   label="Beds"
@@ -759,6 +776,7 @@ console.groupEnd();
                     >Section</label
                   >
                   <select
+                    data-testid="mydeals.modal.section"
                     v-model="editingDeal.section"
                     class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   >
@@ -770,6 +788,7 @@ console.groupEnd();
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <NumberInput
+                  data-testid="mydeals.modal.bathrooms"
                   :model-value="editingDeal.bathrooms ?? null"
                   @update:model-value="(val) => (editingDeal!.bathrooms = val ?? undefined)"
                   label="Baths"
@@ -788,12 +807,14 @@ console.groupEnd();
                   >Zillow Link</label
                 >
                 <input
+                  data-testid="mydeals.modal.zillow-link"
                   v-model="editingDeal.zillow_link"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="https://..."
                 />
                 <a
                   v-if="editingDeal.zillow_link"
+                  data-testid="mydeals.modal.zillow-open"
                   :href="editingDeal.zillow_link"
                   target="_blank"
                   class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
@@ -805,12 +826,14 @@ console.groupEnd();
                   >Photos Link</label
                 >
                 <input
+                  data-testid="mydeals.modal.pics-link"
                   v-model="editingDeal.pics_link"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="Google Drive / Dropbox..."
                 />
                 <a
                   v-if="editingDeal.pics_link"
+                  data-testid="mydeals.modal.pics-open"
                   :href="editingDeal.pics_link"
                   target="_blank"
                   class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
@@ -824,6 +847,7 @@ console.groupEnd();
                   >Overall Design</label
                 >
                 <input
+                  data-testid="mydeals.modal.overall-design"
                   v-model="editingDeal.overall_design"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Modern Farmhouse"
@@ -834,6 +858,7 @@ console.groupEnd();
                   >Crime Rate</label
                 >
                 <input
+                  data-testid="mydeals.modal.crime-rate"
                   v-model="editingDeal.crime_rate"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                   placeholder="e.g. Low / B-"
@@ -846,6 +871,7 @@ console.groupEnd();
                   >Contact Info</label
                 >
                 <textarea
+                  data-testid="mydeals.modal.contact"
                   v-model="editingDeal.contact"
                   rows="2"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
@@ -855,6 +881,7 @@ console.groupEnd();
               <div class="flex flex-col gap-1">
                 <label class="text-xs text-gray-600 font-medium">Niche</label>
                 <input
+                  data-testid="mydeals.modal.niche"
                   v-model="editingDeal.niche"
                   class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
                 />
@@ -872,79 +899,79 @@ console.groupEnd();
             />
 
             <!-- Results Preview -->
-            <div ref="analysisResultsEl" v-if="currentAnalysis" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+            <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
                 <h4 class="font-semibold text-gray-700 mb-3">Analysis Results</h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                         <div>
                             <div class="text-gray-500">Cash Flow</div>
-                            <div class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
+                            <div data-testid="mydeals.modal.result.cash_flow" class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Out</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
+                            <div data-testid="mydeals.modal.result.cash_out" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Out Routi</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
+                            <div data-testid="mydeals.modal.result.cash_out_routi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">CoC</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                            <div data-testid="mydeals.modal.result.cash_on_cash" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
                         </div>
                          <div>
                             <div class="text-gray-500">DSCR</div>
-                            <div class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
+                            <div data-testid="mydeals.modal.result.dscr" class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Equity</div>
-                            <div class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
+                            <div data-testid="mydeals.modal.result.equity" class="font-bold text-emerald-600">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">ROI</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                            <div data-testid="mydeals.modal.result.roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Net Profit</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                            <div data-testid="mydeals.modal.result.net_profit" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Total Cash Needed</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
+                            <div data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Needed (Buffered)</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
+                            <div data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
                         </div>
                     </template>
                     <template v-else>
                         <div>
                             <div class="text-gray-500">Net Profit</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                            <div data-testid="mydeals.modal.result.net_profit" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">ROI</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                            <div data-testid="mydeals.modal.result.roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Annualized ROI</div>
-                            <div class="font-bold" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                            <div data-testid="mydeals.modal.result.annualized_roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Needed</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
+                            <div data-testid="mydeals.modal.result.total_cash_needed" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Cash Needed (Buffered)</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
+                            <div data-testid="mydeals.modal.result.total_cash_needed_with_buffer" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">Holding Costs</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
+                            <div data-testid="mydeals.modal.result.total_holding_costs" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
                         </div>
                         <div>
                             <div class="text-gray-500">HML Interest</div>
-                            <div class="font-bold">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
+                            <div data-testid="mydeals.modal.result.total_hml_interest" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
                         </div>
                     </template>
                 </div>
@@ -958,6 +985,7 @@ console.groupEnd();
               >Notes</label
             >
             <textarea
+              data-testid="mydeals.modal.notes"
               v-model="editingDeal.notes"
               rows="4"
               class="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-900 text-sm outline-none focus:border-blue-500"
@@ -972,6 +1000,7 @@ console.groupEnd();
               <div class="flex justify-between items-center mb-4">
                 <h4 class="font-semibold text-gray-700">Sold Comps</h4>
                 <button
+                  data-testid="mydeals.sold-comp.add"
                   @click="
                     editingDeal.sold_comps
                       ? editingDeal.sold_comps.push({
@@ -997,9 +1026,11 @@ console.groupEnd();
                 <div
                   v-for="(comp, index) in editingDeal.sold_comps"
                   :key="index"
+                  :data-testid="`mydeals.sold-comp.${index}`"
                   class="bg-white p-2 rounded relative group border border-gray-100"
                 >
                   <button
+                    :data-testid="`mydeals.sold-comp.${index}.delete`"
                     @click="editingDeal.sold_comps!.splice(index, 1)"
                     class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
@@ -1007,12 +1038,14 @@ console.groupEnd();
                   </button>
                   <div class="flex items-center gap-2 mb-1">
                     <input
+                      :data-testid="`mydeals.sold-comp.${index}.url`"
                       v-model="comp.url"
                       placeholder="URL"
                       class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <a
                       v-if="comp.url"
+                      :data-testid="`mydeals.sold-comp.${index}.open`"
                       :href="comp.url"
                       target="_blank"
                       class="text-xs text-blue-500 hover:text-blue-700 flex-none"
@@ -1021,12 +1054,14 @@ console.groupEnd();
                   </div>
                   <div class="flex gap-2">
                     <input
+                      :data-testid="`mydeals.sold-comp.${index}.arv`"
                       v-model="comp.arv"
                       type="number"
                       placeholder="ARV"
                       class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <input
+                      :data-testid="`mydeals.sold-comp.${index}.age`"
                       v-model="comp.how_long_ago"
                       placeholder="When?"
                       class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
@@ -1046,6 +1081,7 @@ console.groupEnd();
                     {{ editingDeal.deal_type === 'FLIP' ? 'For Sale Comps' : 'Rent Comps' }}
                 </h4>
                 <button
+                  data-testid="mydeals.comp2.add"
                   @click="
                     editingDeal.deal_type === 'FLIP'
                     ? (
@@ -1074,21 +1110,23 @@ console.groupEnd();
                     <div
                       v-for="(comp, index) in (editingDeal as any).sale_comps"
                       :key="index"
+                      :data-testid="`mydeals.sale-comp.${index}`"
                       class="bg-white p-2 rounded relative group border border-gray-100"
                     >
                        <button
+                        :data-testid="`mydeals.sale-comp.${index}.delete`"
                         @click="(editingDeal as any).sale_comps!.splice(index, 1)"
                         class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                       >
                         ×
                       </button>
                       <div class="flex items-center gap-2 mb-1">
-                        <input v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                        <a v-if="comp.url" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                        <input :data-testid="`mydeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                        <a v-if="comp.url" :data-testid="`mydeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
                       </div>
                       <div class="flex gap-2">
-                        <input v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                         <input v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                        <input :data-testid="`mydeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                         <input :data-testid="`mydeals.sale-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
                       </div>
                     </div>
                  </div>
@@ -1106,9 +1144,11 @@ console.groupEnd();
                 <div
                   v-for="(comp, index) in editingDeal.rent_comps"
                   :key="index"
+                  :data-testid="`mydeals.rent-comp.${index}`"
                   class="bg-white p-2 rounded relative group border border-gray-100"
                 >
                   <button
+                    :data-testid="`mydeals.rent-comp.${index}.delete`"
                     @click="editingDeal.rent_comps!.splice(index, 1)"
                     class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
@@ -1116,12 +1156,14 @@ console.groupEnd();
                   </button>
                   <div class="flex items-center gap-2 mb-1">
                     <input
+                      :data-testid="`mydeals.rent-comp.${index}.url`"
                       v-model="comp.url"
                       placeholder="URL"
                       class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <a
                       v-if="comp.url"
+                      :data-testid="`mydeals.rent-comp.${index}.open`"
                       :href="comp.url"
                       target="_blank"
                       class="text-xs text-blue-500 hover:text-blue-700 flex-none"
@@ -1130,12 +1172,14 @@ console.groupEnd();
                   </div>
                   <div class="flex gap-2">
                     <input
+                      :data-testid="`mydeals.rent-comp.${index}.rent`"
                       v-model="comp.rent"
                       type="number"
                       placeholder="Rent"
                       class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
                     />
                     <input
+                      :data-testid="`mydeals.rent-comp.${index}.age`"
                       v-model="comp.time_on_market"
                       placeholder="Time on Market"
                       class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700"
@@ -1159,7 +1203,7 @@ console.groupEnd();
             Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
           </div>
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-1.5 text-xs transition-opacity duration-300">
+            <div data-testid="mydeals.modal.save-status" :data-state="saveStatus" class="flex items-center gap-1.5 text-xs transition-opacity duration-300">
               <template v-if="saveStatus === 'saving'">
                 <i class="pi pi-spin pi-spinner text-blue-500"></i>
                 <span class="text-blue-500">Saving...</span>
@@ -1175,24 +1219,28 @@ console.groupEnd();
             </div>
             <button
               v-if="editingDeal.stage === 3"
+              data-testid="mydeals.modal.move-to-bought"
               @click="moveToBoughtFromModal"
               class="text-emerald-600 hover:text-emerald-800 px-4 py-2 flex items-center gap-2"
             >
               <i class="pi pi-arrow-right"></i> Move to Bought
             </button>
             <button
+              data-testid="mydeals.modal.delete"
               @click="deleteEditingDeal"
               class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"
             >
               <i class="pi pi-trash"></i> Delete
             </button>
             <button
+              data-testid="mydeals.modal.duplicate"
               @click="duplicateEditingDeal"
               class="text-blue-600 hover:text-blue-800 px-4 py-2 flex items-center gap-2"
             >
               <i class="pi pi-copy"></i> Duplicate
             </button>
             <button
+              data-testid="mydeals.modal.footer-close"
               @click="closeModal"
               class="text-gray-500 hover:text-gray-700 px-4 py-2 flex items-center gap-2"
             >
@@ -1206,6 +1254,7 @@ console.groupEnd();
     <!-- PDF Preview Modal -->
     <div
       v-if="pdfPreview"
+      data-testid="mydeals.pdf-modal"
       class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
       @click.self="closePdfPreview"
     >
@@ -1227,6 +1276,7 @@ console.groupEnd();
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <button
+              data-testid="mydeals.pdf-modal.download"
               @click="downloadFromPreview"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors text-sm font-medium"
               title="Download this PDF"
@@ -1235,6 +1285,7 @@ console.groupEnd();
               <span class="hidden sm:inline">Download</span>
             </button>
             <button
+              data-testid="mydeals.pdf-modal.close"
               @click="closePdfPreview"
               class="text-gray-400 hover:text-gray-600 p-1.5"
               title="Close preview"
@@ -1244,6 +1295,7 @@ console.groupEnd();
           </div>
         </div>
         <iframe
+          data-testid="mydeals.pdf-modal.iframe"
           :src="pdfPreview.url"
           class="flex-1 w-full bg-gray-100"
           title="Deal Report PDF"
