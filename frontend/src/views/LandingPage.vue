@@ -156,11 +156,17 @@ const logExternal = (card: FeatureCard) => {
           <p class="subtitle">Your real-estate command center</p>
         </div>
 
-        <button data-testid="landing.offer" class="offer-btn" @click="isOfferModalOpen = true">
+        <UiButton
+          data-testid="landing.offer"
+          variant="primary"
+          size="lg"
+          class="offer-btn rounded-full"
+          @click="isOfferModalOpen = true"
+        >
           <span class="offer-btn-glow"></span>
           <i class="pi pi-send offer-btn-icon"></i>
           <span class="offer-btn-text">Send Market Offer</span>
-        </button>
+        </UiButton>
       </header>
 
       <!-- Main feature grid (7 cards: 4 + 3) -->
@@ -201,7 +207,7 @@ const logExternal = (card: FeatureCard) => {
       <!-- Professional resources -->
       <div class="resources">
         <div class="resources-label">
-          <i class="pi pi-bookmark text-amber-300 text-xs"></i>
+          <i class="pi pi-bookmark text-xs text-warning"></i>
           <span>Professional Resources</span>
         </div>
         <div class="resources-grid">
@@ -229,35 +235,59 @@ const logExternal = (card: FeatureCard) => {
 </template>
 
 <style scoped>
-/* ===== Layout shell ===== */
+/* ===== Layout shell =====
+ *
+ * The height is the App shell's now: its root is a `min-h-dvh` column and the
+ * `RouterView` column is `flex-1`, so this fills what is left after the
+ * portfolio bar instead of guessing at it. That is what retired the
+ * `.has-bar { height: calc(100dvh - 60px) }` hack — the bar is 65 px tall, not
+ * 60, so the page used to overflow by five pixels whenever it was shown.
+ *
+ * `has-bar` still lands on the element as a state hook; nothing styles it.
+ */
 .landing-root {
   position: relative;
-  height: 100dvh;
+  height: 100%;
   min-height: 560px;
   overflow: hidden;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
-    radial-gradient(1000px 600px at 110% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    radial-gradient(
+      1200px 600px at 10% -10%,
+      rgb(var(--color-primary) / 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      1000px 600px at 110% 10%,
+      rgb(var(--color-chart-4) / 0.16),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(var(--color-primary) / 0) 0%,
+      rgb(var(--color-primary) / 0.07) 100%
+    ),
+    linear-gradient(rgb(var(--color-page)), rgb(var(--color-page)));
   isolation: isolate;
 }
 
-/* When the PortfolioStatsBar is visible above, leave room for it */
-.landing-root.has-bar {
-  height: calc(100dvh - 60px);
-}
-
+/*
+ * `max()` on every inline edge, and the bottom inset added to the padding
+ * rather than replacing it, so the home indicator never sits on the resource
+ * row on a notched phone (`index.html` sets `viewport-fit=cover`).
+ */
 .landing-content {
   position: relative;
   z-index: 1;
   height: 100%;
   width: 100%;
-  max-width: 1400px;
+  max-width: 87.5rem;
   margin: 0 auto;
-  padding: 1rem 1.25rem 1rem;
+  padding: var(--space-4) max(var(--space-5), env(safe-area-inset-right))
+    calc(var(--space-4) + env(safe-area-inset-bottom))
+    max(var(--space-5), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: var(--space-3);
 }
 
 /* ===== Background decor ===== */
@@ -268,10 +298,15 @@ const logExternal = (card: FeatureCard) => {
   overflow: hidden;
 }
 
+/*
+ * 60 px is the cap: `blur()` is the most expensive filter on the page and a
+ * larger radius costs a bigger offscreen buffer for no visible difference at
+ * this scale.
+ */
 .blob {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(80px);
+  filter: blur(60px);
   opacity: 0.5;
   animation: float 18s ease-in-out infinite;
 }
@@ -281,14 +316,14 @@ const logExternal = (card: FeatureCard) => {
   left: -120px;
   width: 460px;
   height: 460px;
-  background: radial-gradient(circle, #6366f1, transparent 60%);
+  background: radial-gradient(circle, rgb(var(--color-primary)), transparent 60%);
 }
 .blob-2 {
   bottom: -160px;
   right: -120px;
   width: 520px;
   height: 520px;
-  background: radial-gradient(circle, #0ea5e9, transparent 60%);
+  background: radial-gradient(circle, rgb(var(--color-chart-4)), transparent 60%);
   animation-delay: -6s;
 }
 .blob-3 {
@@ -296,7 +331,7 @@ const logExternal = (card: FeatureCard) => {
   left: 45%;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, #a855f7, transparent 60%);
+  background: radial-gradient(circle, rgb(var(--color-chart-6)), transparent 60%);
   opacity: 0.25;
   animation-delay: -12s;
 }
@@ -305,16 +340,38 @@ const logExternal = (card: FeatureCard) => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    linear-gradient(rgb(var(--color-fg) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--color-fg) / 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
+  /* Unprefixed `mask-image` only lands in Safari 15.4; iOS 15.0 is in scope. */
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
   mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(20px, -30px) scale(1.05); }
-  66% { transform: translate(-25px, 25px) scale(0.97); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+  66% {
+    transform: translate(-25px, 25px) scale(0.97);
+  }
+}
+
+/*
+ * Three 460-520 px blurred layers animating forever is the page's whole GPU
+ * budget. It buys nothing where the decor is mostly off-screen (narrow) or
+ * where the device is likely to be battery-bound (coarse pointer), so it is
+ * spent only on a wide pointer-driven screen. `prefers-reduced-motion` is
+ * handled globally in `main.css`.
+ */
+@media (hover: none), (max-width: 900px) {
+  .blob {
+    animation: none;
+  }
 }
 
 /* ===== Header ===== */
@@ -322,88 +379,84 @@ const logExternal = (card: FeatureCard) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 
 .title-block {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.125rem;
 }
 
+/* 24 -> 32 px: the top two steps of the approved type scale. */
 .title {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  font-size: clamp(1.65rem, 3vw, 2.6rem);
-  font-weight: 800;
+  gap: var(--space-2);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.1;
   margin: 0;
 }
 
 .title-gradient {
-  background: linear-gradient(135deg, #2563eb 0%, #6366f1 45%, #8b5cf6 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-primary)) 0%,
+    rgb(var(--color-ring)) 55%,
+    rgb(var(--color-chart-6)) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .title-accent {
-  color: #0f172a;
-  font-weight: 700;
+  color: rgb(var(--color-fg));
+  font-weight: 600;
 }
 
+/* slate-500 -> `fg-muted` (slate-600): 4.8:1 -> 7.5:1 on this ground. */
 .subtitle {
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: #64748b;
-  letter-spacing: 0.02em;
+  color: rgb(var(--color-fg-muted));
+  letter-spacing: 0.01em;
   margin: 0;
 }
 
+/*
+ * `UiButton variant="primary" size="lg"` owns the fill, the ink, the padding,
+ * the focus ring and the pressed scale. Only the pill radius (a class, so
+ * `tailwind-merge` drops `rounded-ctl`), the elevation and the sweep are left.
+ */
 .offer-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow:
-    0 10px 30px -10px rgba(79, 70, 229, 0.6),
-    0 2px 6px rgba(79, 70, 229, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
   white-space: nowrap;
+  box-shadow: var(--shadow-3);
 }
-.offer-btn:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 18px 40px -10px rgba(79, 70, 229, 0.7),
-    0 6px 14px rgba(79, 70, 229, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
+
 .offer-btn-glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgb(var(--color-primary-fg) / 0) 30%,
+    rgb(var(--color-primary-fg) / 0.35) 50%,
+    rgb(var(--color-primary-fg) / 0) 70%
+  );
   transform: translateX(-100%);
-  transition: transform 0.7s ease;
+  transition: transform var(--dur-slow) var(--ease-standard);
 }
-.offer-btn:hover .offer-btn-glow {
-  transform: translateX(100%);
-}
+
 .offer-btn-icon {
-  font-size: 0.95rem;
+  font-size: 1em;
 }
+
+/* Positioned, and after the glow, so the sweep passes *under* the label. */
 .offer-btn-text {
   position: relative;
 }
@@ -415,19 +468,22 @@ const logExternal = (card: FeatureCard) => {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-template-rows: 1fr 1fr;
-  gap: 0.85rem;
+  gap: var(--space-3);
 }
 
 .feature-card {
   position: relative;
-  border-radius: 1.1rem;
+  border-radius: var(--radius-lg);
   padding: 2px;
   cursor: pointer;
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease;
   min-height: 0;
+  box-shadow: var(--shadow-2);
+  transition:
+    transform var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
 }
 
 .feature-card.tile {
@@ -438,47 +494,52 @@ const logExternal = (card: FeatureCard) => {
   grid-column: span 4;
 }
 
-.feature-card:hover {
-  transform: translateY(-4px) scale(1.015);
-  filter: brightness(1.04);
-}
-
 .card-gradient {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   opacity: 1;
-  transition: opacity 0.3s ease, transform 0.5s ease;
+  transition: transform var(--dur-slow) var(--ease-standard);
 }
 
-.feature-card:hover .card-gradient {
-  transform: scale(1.05);
-}
-
+/*
+ * `isolation: isolate` because this box combines a backdrop filter, a radius
+ * and `overflow: hidden` — the combination WebKit is happy to render one frame
+ * behind unless the element owns its stacking context outright.
+ */
 .card-inner {
   position: relative;
   z-index: 1;
+  isolation: isolate;
   height: 100%;
   width: 100%;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  border-radius: calc(1.1rem - 2px);
-  padding: 1.1rem 1.2rem;
+  background: rgb(var(--color-surface));
+  border-radius: calc(var(--radius-lg) - 2px);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 12px 28px -16px rgba(15, 23, 42, 0.18);
-  transition: background 0.3s ease;
+    inset 0 1px 0 rgb(var(--color-surface) / 0.8),
+    var(--shadow-1);
+  transition: background var(--dur-base) var(--ease-standard);
   overflow: hidden;
 }
 
-.feature-card:hover .card-inner {
-  background: rgba(255, 255, 255, 0.99);
+/*
+ * The blur is an enhancement from `md` up; the solid wash above is what every
+ * narrower (and every unsupporting) viewport gets. A phone paints seven of
+ * these at once, which is where a backdrop filter actually costs frames.
+ */
+@media (min-width: 768px) {
+  .card-inner {
+    background: rgb(var(--color-surface) / 0.88);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
 }
 
 .card-ghost-icon {
@@ -486,15 +547,12 @@ const logExternal = (card: FeatureCard) => {
   bottom: -22px;
   right: -18px;
   font-size: 7rem;
-  color: rgba(15, 23, 42, 0.045);
+  color: rgb(var(--color-fg) / 0.045);
   pointer-events: none;
   transform: rotate(-12deg);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), color 0.4s ease;
-}
-
-.feature-card:hover .card-ghost-icon {
-  transform: rotate(-6deg) translate(-4px, -4px) scale(1.05);
-  color: rgba(79, 70, 229, 0.07);
+  transition:
+    transform var(--dur-slow) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard);
 }
 
 .card-body {
@@ -503,51 +561,46 @@ const logExternal = (card: FeatureCard) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.7rem;
+  gap: var(--space-2);
 }
 
 .card-icon-wrap {
   width: 52px;
   height: 52px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: rgb(var(--color-primary-fg));
   box-shadow:
-    0 8px 20px -6px rgba(15, 23, 42, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.feature-card:hover .card-icon-wrap {
-  transform: scale(1.1) rotate(-4deg);
+    var(--shadow-2),
+    inset 0 1px 0 rgb(var(--color-surface) / 0.45);
+  transition: transform var(--dur-base) var(--ease-standard);
 }
 
 .card-icon {
-  font-size: 1.55rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  font-size: 1.5rem;
 }
 
 .card-text {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.125rem;
 }
 
 .card-title {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: rgb(var(--color-fg));
   letter-spacing: -0.015em;
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .card-subtitle {
-  font-size: 0.73rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: rgb(var(--color-fg-muted));
   font-weight: 500;
   margin: 0;
   letter-spacing: 0.02em;
@@ -556,20 +609,17 @@ const logExternal = (card: FeatureCard) => {
 
 .card-arrow {
   position: absolute;
-  top: 0.85rem;
-  right: 0.95rem;
-  font-size: 0.85rem;
-  color: #94a3b8;
+  top: var(--space-3);
+  right: var(--space-3);
+  font-size: 0.875rem;
+  color: rgb(var(--color-fg-muted));
   opacity: 0;
   transform: translate(-4px, 4px);
-  transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
   z-index: 2;
-}
-
-.feature-card:hover .card-arrow {
-  opacity: 1;
-  transform: translate(0, 0);
-  color: #4f46e5;
 }
 
 /* ===== Resources ===== */
@@ -577,81 +627,87 @@ const logExternal = (card: FeatureCard) => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .resources-label {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.65rem;
+  gap: var(--space-2);
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: #64748b;
-  padding-left: 0.25rem;
+  letter-spacing: 0.14em;
+  color: rgb(var(--color-fg-muted));
+  padding-left: var(--space-1);
 }
 
 .resources-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
+/* 44 px is the WCAG 2.2 target-size floor; the old pill measured 41. */
 .resource-pill {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.85rem;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  border-radius: 0.85rem;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  background: rgb(var(--color-surface));
+  border: 1px solid rgb(var(--color-line));
+  border-radius: var(--radius-md);
   text-decoration: none;
-  color: #0f172a;
+  color: rgb(var(--color-fg));
   font-weight: 600;
-  font-size: 0.9rem;
-  backdrop-filter: blur(8px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 8px 18px -12px rgba(15, 23, 42, 0.18);
-  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-1);
+  transition:
+    transform var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard);
   overflow: hidden;
+  isolation: isolate;
+}
+
+@media (min-width: 768px) {
+  .resource-pill {
+    background: rgb(var(--color-surface) / 0.8);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
 }
 
 .resource-pill::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, transparent 35%, rgba(99, 102, 241, 0.08) 50%, transparent 65%);
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgb(var(--color-primary) / 0) 35%,
+    rgb(var(--color-primary) / 0.1) 50%,
+    rgb(var(--color-primary) / 0) 65%
+  );
   transform: translateX(-100%);
-  transition: transform 0.6s ease;
-}
-
-.resource-pill:hover {
-  transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 14px 26px -14px rgba(79, 70, 229, 0.35);
-}
-
-.resource-pill:hover::before {
-  transform: translateX(100%);
+  transition: transform var(--dur-slow) var(--ease-standard);
 }
 
 .resource-icon {
   width: 32px;
   height: 32px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 0.9rem;
+  color: rgb(var(--color-primary-fg));
+  font-size: 0.875rem;
   box-shadow:
-    0 4px 10px -3px rgba(15, 23, 42, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    var(--shadow-1),
+    inset 0 1px 0 rgb(var(--color-surface) / 0.35);
   flex-shrink: 0;
 }
 
@@ -660,28 +716,104 @@ const logExternal = (card: FeatureCard) => {
 }
 
 .resource-ext {
-  font-size: 0.72rem;
-  color: #94a3b8;
+  font-size: 0.75rem;
+  color: rgb(var(--color-fg-muted));
   opacity: 0;
   transform: translate(-4px, 0);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
 }
 
-.resource-pill:hover .resource-ext {
-  opacity: 1;
-  transform: translate(0, 0);
-  color: #4f46e5;
+/* ===== Hover choreography =====
+ *
+ * All of it behind `(hover: hover)`. On a touch device these rules fire on
+ * tap-and-hold and then stick until the next tap somewhere else, which reads
+ * as a card that got selected — and the two *reveals* below (the arrow and the
+ * external-link mark) would simply never appear at all.
+ */
+@media (hover: hover) {
+  .offer-btn:hover {
+    box-shadow: 0 18px 40px -10px rgb(var(--color-primary) / 0.55);
+  }
+  .offer-btn:hover .offer-btn-glow {
+    transform: translateX(100%);
+  }
+
+  .feature-card:hover {
+    transform: translateY(-4px) scale(1.015);
+    box-shadow: var(--shadow-3);
+  }
+  .feature-card:hover .card-gradient {
+    transform: scale(1.05);
+  }
+  .feature-card:hover .card-inner {
+    background: rgb(var(--color-surface));
+  }
+  .feature-card:hover .card-ghost-icon {
+    transform: rotate(-6deg) translate(-4px, -4px) scale(1.05);
+    color: rgb(var(--color-primary) / 0.07);
+  }
+  .feature-card:hover .card-icon-wrap {
+    transform: scale(1.1) rotate(-4deg);
+  }
+  .feature-card:hover .card-arrow {
+    opacity: 1;
+    transform: translate(0, 0);
+    color: rgb(var(--color-primary));
+  }
+
+  .resource-pill:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--color-primary) / 0.4);
+    box-shadow: var(--shadow-2);
+  }
+  .resource-pill:hover::before {
+    transform: translateX(100%);
+  }
+  .resource-pill:hover .resource-ext {
+    opacity: 1;
+    transform: translate(0, 0);
+    color: rgb(var(--color-primary));
+  }
+}
+
+/*
+ * The touch half of the same bargain: a pressed state a finger can see, and
+ * the two hover-only marks shown outright, since there is no hover to reveal
+ * them with.
+ */
+.feature-card:active {
+  transform: scale(0.985);
+}
+
+.feature-card:active .card-inner {
+  background: rgb(var(--color-surface-muted));
+}
+
+.resource-pill:active {
+  transform: scale(0.985);
+  background: rgb(var(--color-surface-muted));
+}
+
+@media (hover: none) {
+  .card-arrow,
+  .resource-ext {
+    opacity: 0.7;
+    transform: translate(0, 0);
+  }
 }
 
 /* ===== Responsive tweaks ===== */
 @media (max-width: 900px) {
   .landing-root {
     height: auto;
-    min-height: calc(100dvh - 60px);
+    min-height: 100%;
     overflow: visible;
   }
   .landing-content {
-    gap: 0.9rem;
+    gap: var(--space-3);
   }
   .feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -690,7 +822,7 @@ const logExternal = (card: FeatureCard) => {
   .feature-card.tile,
   .feature-card.wide {
     grid-column: span 1;
-    min-height: 110px;
+    min-height: 6.875rem;
   }
   .resources-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -701,7 +833,6 @@ const logExternal = (card: FeatureCard) => {
   }
   .offer-btn {
     align-self: stretch;
-    justify-content: center;
   }
 }
 
@@ -712,10 +843,9 @@ const logExternal = (card: FeatureCard) => {
   .card-icon-wrap {
     width: 60px;
     height: 60px;
-    border-radius: 16px;
   }
   .card-icon {
-    font-size: 1.8rem;
+    font-size: 1.75rem;
   }
   .card-ghost-icon {
     font-size: 8.5rem;
