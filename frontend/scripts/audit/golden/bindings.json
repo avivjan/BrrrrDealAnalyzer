@@ -2286,6 +2286,18 @@
   "src/components/liquidity/SettingsPanel.vue": {
     "elements": [
       {
+        "tag": "Teleport",
+        "line": 39,
+        "bindings": [
+          {
+            "kind": "attr:to",
+            "arg": null,
+            "modifiers": [],
+            "expression": "body"
+          }
+        ]
+      },
+      {
         "tag": "div",
         "line": 41,
         "bindings": [
@@ -2415,6 +2427,18 @@
   },
   "src/components/liquidity/SimulationWarning.vue": {
     "elements": [
+      {
+        "tag": "Teleport",
+        "line": 23,
+        "bindings": [
+          {
+            "kind": "attr:to",
+            "arg": null,
+            "modifiers": [],
+            "expression": "body"
+          }
+        ]
+      },
       {
         "tag": "div",
         "line": 25,
@@ -2730,6 +2754,18 @@
   },
   "src/components/liquidity/TransactionForm.vue": {
     "elements": [
+      {
+        "tag": "Teleport",
+        "line": 231,
+        "bindings": [
+          {
+            "kind": "attr:to",
+            "arg": null,
+            "modifiers": [],
+            "expression": "body"
+          }
+        ]
+      },
       {
         "tag": "div",
         "line": 233,
