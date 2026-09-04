@@ -39,7 +39,7 @@ function onSave() {
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="open" data-testid="settings.root" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')" />
+        <div data-testid="settings.backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')" />
         <div class="relative bg-[#141722] border border-[#2a2f45] rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
           <h2 class="text-lg font-bold text-slate-100 mb-5 font-mono">Liquidity Settings</h2>
 

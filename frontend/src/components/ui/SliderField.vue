@@ -79,6 +79,7 @@ const sliderValue = computed({
     </div>
     <div class="px-1">
       <Slider
+        data-part="slider"
         v-model="sliderValue"
         :min="thumbMin"
         :max="thumbMax"

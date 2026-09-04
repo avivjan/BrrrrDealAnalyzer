@@ -27,7 +27,7 @@ function formatDate(iso: string): string {
         data-testid="simwarn.root"
         class="fixed inset-0 z-[60] flex items-center justify-center"
       >
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="$emit('cancel')" />
+        <div data-testid="simwarn.backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="$emit('cancel')" />
         <div class="relative bg-[#141722] border rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6"
           :class="severity === 'hard' ? 'border-red-500/50' : 'border-amber-500/40'"
         >

@@ -147,6 +147,7 @@ function fmtTimeRange(start: string | null, end: string | null) {
               <!-- Legacy fallback: one bare URL per cell. -->
               <a
                 v-else-if="e.evidence_link && /^https?:\/\//.test(e.evidence_link)"
+                :data-testid="`repsentries.entry.${idx}.evidence-legacy`"
                 :href="e.evidence_link"
                 target="_blank"
                 class="text-blue-600 hover:underline"

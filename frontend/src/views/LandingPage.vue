@@ -168,7 +168,7 @@ const logExternal = (card: FeatureCard) => {
         <component
           v-for="(card, idx) in cards"
           :key="card.title"
-          :data-testid="`landing.card.${idx}`"
+          :data-testid="`landing.card.${card.title}`"
           :is="card.action === 'internal' ? 'RouterLink' : 'a'"
           :to="card.action === 'internal' ? card.route : undefined"
           :href="card.action === 'external' ? card.url : undefined"
