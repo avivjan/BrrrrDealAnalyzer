@@ -128,6 +128,16 @@
      * — a `<select>` is a replaced element and renders no pseudo-element — so
      * the colour is the resolved `--color-fg-muted` rather than the variable,
      * and the `.dark` override below carries that theme's value.
+     *
+     * The two hex literals are the only ones in this file, and each one
+     * mirrors a single declaration in `tokens.css`; when either moves, both
+     * move together:
+     *
+     *   #475569  ←  `:root  { --color-fg-muted: 71 85 105 }`   (slate-600)
+     *   #cbd5e1  ←  `.dark  { --color-fg-muted: 203 213 225 }` (slate-300)
+     *
+     * The control's border needs no literal of its own: `@apply border-line`
+     * above reaches `--color-line` through Tailwind and re-resolves per theme.
      */
     background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23475569'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;

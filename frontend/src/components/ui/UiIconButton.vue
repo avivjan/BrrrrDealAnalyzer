@@ -61,12 +61,20 @@ if (import.meta.env.DEV && !props.label?.trim()) {
 
 const attrs = useAttrs();
 
-/** Everything except `class`, which `rootClass` folds through `cn()` instead. */
-const passthrough = computed(() => {
+/**
+ * Everything except `class`, which `rootClass` folds through `cn()` instead.
+ *
+ * A plain function rather than a `computed`, and it matters: the object
+ * `useAttrs()` hands back tracks a read of a *key*, so spreading it while it
+ * holds no keys registers no dependency at all. A computed would cache that
+ * first empty result for the life of the component and quietly swallow every
+ * attribute the parent adds later. Recomputing per render costs one object.
+ */
+function passthrough() {
   const rest: Record<string, unknown> = { ...attrs };
   delete rest.class;
   return rest;
-});
+}
 
 const rootClass = computed(() =>
   cn(BASE, SIZES[props.size], VARIANTS[props.variant], attrs.class as string),
@@ -79,7 +87,7 @@ const rootClass = computed(() =>
     :type="type"
     :aria-label="label"
     :class="rootClass"
-    v-bind="passthrough"
+    v-bind="passthrough()"
   >
     <slot />
   </button>

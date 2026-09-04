@@ -102,6 +102,24 @@ describe("UiCard", () => {
       expect(onClick).toHaveBeenCalledTimes(1);
     });
 
+    /**
+     * The regression this guards: `useAttrs()` returns a proxy that only
+     * tracks a *read of a key*, so spreading it while it is empty registers no
+     * dependency at all. Behind a `computed` that first render caches `{}`
+     * forever, and every attribute the parent adds later — a `data-testid`, a
+     * late `aria-*`, a listener bound after a `v-if` flips — is dropped.
+     */
+    it("passes an attribute added after a zero-attr mount", async () => {
+      const wrapper = mount(UiCard, { slots: { default: "Body" } });
+      expect(wrapper.attributes("data-testid")).toBeUndefined();
+
+      // `setProps` is VTU's handle on the parent's binding object, so an
+      // undeclared key lands in `$attrs` — the case at issue. The cast is
+      // only because the signature is typed against the declared props.
+      await wrapper.setProps({ "data-testid": "deal.card" } as never);
+      expect(wrapper.attributes("data-testid")).toBe("deal.card");
+    });
+
     it("passes data-* and aria-* through to the root", () => {
       const wrapper = mountCard(
         {},

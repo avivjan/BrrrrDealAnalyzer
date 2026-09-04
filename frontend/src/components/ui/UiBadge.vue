@@ -32,6 +32,9 @@ const props = withDefaults(
 
 defineOptions({ inheritAttrs: false });
 
+// No transition utilities here on purpose: a badge has no hover, focus or
+// active state to travel between, so a transition would only ever animate a
+// tone prop changing under it — a jump the reader should see immediately.
 const BASE = "inline-flex items-center gap-1 rounded-full text-xs font-medium leading-none";
 
 /**
@@ -63,12 +66,20 @@ const dealType = computed(() => (props.dealType ? DEAL_TYPES[props.dealType] : n
 
 const attrs = useAttrs();
 
-/** Everything except `class`, which `rootClass` folds through `cn()` instead. */
-const passthrough = computed(() => {
+/**
+ * Everything except `class`, which `rootClass` folds through `cn()` instead.
+ *
+ * A plain function rather than a `computed`, and it matters: the object
+ * `useAttrs()` hands back tracks a read of a *key*, so spreading it while it
+ * holds no keys registers no dependency at all. A computed would cache that
+ * first empty result for the life of the component and quietly swallow every
+ * attribute the parent adds later. Recomputing per render costs one object.
+ */
+function passthrough() {
   const rest: Record<string, unknown> = { ...attrs };
   delete rest.class;
   return rest;
-});
+}
 
 const rootClass = computed(() =>
   cn(BASE, TONES[dealType.value?.tone ?? props.tone], SIZES[props.size], attrs.class as string),
@@ -76,7 +87,7 @@ const rootClass = computed(() =>
 </script>
 
 <template>
-  <span data-ui="badge" :class="rootClass" v-bind="passthrough">
+  <span data-ui="badge" :class="rootClass" v-bind="passthrough()">
     <i v-if="dealType" :class="dealType.icon" aria-hidden="true" />
     <slot />
   </span>

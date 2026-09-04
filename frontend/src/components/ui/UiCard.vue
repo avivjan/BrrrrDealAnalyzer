@@ -54,12 +54,20 @@ const PADDINGS: Record<Padding, string> = {
 
 const attrs = useAttrs();
 
-/** Everything except `class`, which `rootClass` folds through `cn()` instead. */
-const passthrough = computed(() => {
+/**
+ * Everything except `class`, which `rootClass` folds through `cn()` instead.
+ *
+ * A plain function rather than a `computed`, and it matters: the object
+ * `useAttrs()` hands back tracks a read of a *key*, so spreading it while it
+ * holds no keys registers no dependency at all. A computed would cache that
+ * first empty result for the life of the component and quietly swallow every
+ * attribute the parent adds later. Recomputing per render costs one object.
+ */
+function passthrough() {
   const rest: Record<string, unknown> = { ...attrs };
   delete rest.class;
   return rest;
-});
+}
 
 const rootClass = computed(() =>
   cn(BASE, TONES[props.tone], props.interactive && INTERACTIVE, attrs.class as string),
@@ -69,7 +77,7 @@ const regionClass = computed(() => PADDINGS[props.padding]);
 </script>
 
 <template>
-  <component :is="as" data-ui="card" :class="rootClass" v-bind="passthrough">
+  <component :is="as" data-ui="card" :class="rootClass" v-bind="passthrough()">
     <div v-if="$slots.header" data-part="header" :class="cn('border-b border-line', regionClass)">
       <slot name="header" />
     </div>

@@ -35,6 +35,9 @@ const props = withDefaults(
 
 defineOptions({ inheritAttrs: false });
 
+// No transition utilities: the tile is a read-only readout with no hover,
+// focus or active state, and easing a value or its tone into place would
+// delay the number rather than explain it.
 const BASE = "rounded-card bg-surface-muted p-3";
 
 /**
@@ -56,12 +59,20 @@ const VALUE_SIZES: Record<Size, string> = {
 const slots = useSlots();
 const attrs = useAttrs();
 
-/** Everything except `class`, which `rootClass` folds through `cn()` instead. */
-const passthrough = computed(() => {
+/**
+ * Everything except `class`, which `rootClass` folds through `cn()` instead.
+ *
+ * A plain function rather than a `computed`, and it matters: the object
+ * `useAttrs()` hands back tracks a read of a *key*, so spreading it while it
+ * holds no keys registers no dependency at all. A computed would cache that
+ * first empty result for the life of the component and quietly swallow every
+ * attribute the parent adds later. Recomputing per render costs one object.
+ */
+function passthrough() {
   const rest: Record<string, unknown> = { ...attrs };
   delete rest.class;
   return rest;
-});
+}
 
 const tone = computed(() => TONES[props.tone]);
 const hasLabel = computed(() => Boolean(slots.label || props.label));
@@ -72,7 +83,7 @@ const valueClass = computed(() =>
 </script>
 
 <template>
-  <div data-ui="stat-tile" :class="rootClass" v-bind="passthrough">
+  <div data-ui="stat-tile" :class="rootClass" v-bind="passthrough()">
     <span v-if="hasLabel" data-part="label" class="block text-xs font-medium text-fg-muted">
       <slot name="label">{{ label }}</slot>
     </span>
