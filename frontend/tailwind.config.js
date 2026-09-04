@@ -14,6 +14,10 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
+    // Class names written inside a test are assertions, not markup: without
+    // this a `expect(cn(...)).toBe('rotate-[13deg]')` ships a live rule. The
+    // `scripts/audit/*.test.mjs` suites need no row — they are outside `src/`.
+    "!./src/**/*.test.ts",
   ],
   theme: {
     extend: {

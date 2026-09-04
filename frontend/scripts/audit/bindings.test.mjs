@@ -39,6 +39,36 @@ describe('G4 behaviour manifest', () => {
     expect(compare('<button @click="a">x</button>', '<UiIconButton @click="a">x</UiIconButton>').ok).toBe(true);
   });
 
+  describe('presentational Ui* aliases', () => {
+    it('accepts a div swapped for a presentational UiCard', () => {
+      expect(compare('<div @click="a">x</div>', '<UiCard @click="a">x</UiCard>').ok).toBe(true);
+    });
+
+    it('accepts a section swapped for a presentational UiCard', () => {
+      expect(compare('<section v-for="r in rows">x</section>', '<UiCard v-for="r in rows">x</UiCard>').ok).toBe(
+        true,
+      );
+    });
+
+    it('never aliases a native control: input -> UiField fails', () => {
+      const result = compare('<input v-model="a" />', '<UiField v-model="a" />');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+
+    it('still compares bindings exactly under the alias', () => {
+      const result = compare('<div @click="a">x</div>', '<UiCard @click="b">x</UiCard>');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+
+    it('never aliases an anchor: a[href] -> UiCard fails', () => {
+      const result = compare('<a href="/x" @click="a">x</a>', '<UiCard href="/x" @click="a">x</UiCard>');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+  });
+
   it('treats a preset-only transition as a wrapper', () => {
     const result = compare(
       '<button @click="a">x</button>',

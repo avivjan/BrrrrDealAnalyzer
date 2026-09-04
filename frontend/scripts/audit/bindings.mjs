@@ -56,6 +56,40 @@ const VALUELESS_MOTION_DIRECTIVES = new Set(['reveal', 'press', 'hover-lift', 'f
 /** Presentational component aliases collapsed to their underlying element. */
 const TAG_ALIASES = { UiButton: 'button', UiIconButton: 'button' };
 
+/**
+ * The presentational primitives, and the tags they are allowed to replace.
+ *
+ * `UiButton`/`UiIconButton` are handled above, at collection time, because
+ * they collapse to exactly one element (`button`) no matter what they replace.
+ * These do not: `UiCard` may stand in for a `div`, a `section` or an `li`, so
+ * there is no single tag to record. They are therefore resolved *at comparison
+ * time* against the tag the golden actually holds, which keeps the goldens
+ * untouched and keeps the substitution one-way:
+ *
+ *   golden `div`   -> current `UiCard`  equal (a wrapper swap)
+ *   golden `div`   -> current `span`    still a change (neither side is a Ui*)
+ *   golden `input` -> current `UiField` still a change (input is behavioural)
+ *
+ * Bindings are never relaxed: the alias only ever forgives the tag, and the
+ * binding list must still match exactly, in order.
+ */
+const PRESENTATIONAL_UI = new Set([
+  'UiCard', 'UiStatTile', 'UiBadge', 'UiSectionHeader', 'UiEmptyState',
+  'UiSkeleton', 'UiSaveStatus', 'UiTabs', 'UiStepper', 'UiField', 'UiModalPanel',
+]);
+
+/**
+ * Tags a presentational primitive may replace. Deliberately excludes every
+ * native or behavioural tag — `input select textarea a form button img video
+ * iframe canvas RouterLink Teleport VueDraggable` — so swapping a control for
+ * a component is always a reportable change.
+ */
+const PRESENTATIONAL_TAGS = new Set([
+  'div', 'section', 'article', 'span', 'p',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'li', 'ul', 'ol', 'dl', 'dt', 'dd', 'label', 'small', 'strong',
+]);
+
 const TRANSITION_TAGS = new Set(['UiTransition', 'UiTransitionGroup', 'Transition', 'TransitionGroup']);
 const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name', 'mode', 'css']);
 
@@ -259,6 +293,23 @@ export function canonical(entry) {
   return JSON.stringify({ tag: entry.tag, bindings: entry.bindings });
 }
 
+/** True when `currentTag` is a presentational primitive standing in for `goldenTag`. */
+function tagsMatch(goldenTag, currentTag) {
+  if (goldenTag === currentTag) return true;
+  return PRESENTATIONAL_UI.has(currentTag) && PRESENTATIONAL_TAGS.has(goldenTag);
+}
+
+/**
+ * The comparator the diff runs on. Same equality as `canonical`, except that
+ * the tag is resolved against the pair rather than in isolation.
+ */
+export function entriesMatch(goldenEntry, currentEntry) {
+  return (
+    tagsMatch(goldenEntry.tag, currentEntry.tag) &&
+    JSON.stringify(goldenEntry.bindings) === JSON.stringify(currentEntry.bindings)
+  );
+}
+
 function isBranchOnlyEntry(entry) {
   return entry.bindings.length > 0 && entry.bindings.every((b) => BRANCH_KINDS.has(b.kind));
 }
@@ -330,7 +381,7 @@ function isAllowedAddition(file, entry, fileAllowlist) {
  * accepted addition can never disguise a removal as a rename.
  */
 export function diffElements(file, goldenElements, currentElements, fileAllowlist) {
-  const parts = diffArrays(goldenElements.map(canonical), currentElements.map(canonical));
+  const parts = diffArrays(goldenElements, currentElements, { comparator: entriesMatch });
   const lines = [];
   let goldenIndex = 0;
   let currentIndex = 0;

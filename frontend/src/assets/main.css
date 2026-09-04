@@ -76,6 +76,81 @@
   }
 }
 
+@layer components {
+  /*
+   * Native form controls.
+   *
+   * PrimeVue owns the inputs the app ships today; these are for the plain
+   * `<input>` / `<select>` / `<textarea>` elements Phase 3 introduces, so that
+   * a native control and a primitive sit on the same border, radius, focus
+   * ring and disabled treatment. Nothing uses them yet.
+   */
+  .ui-input,
+  .ui-select,
+  .ui-textarea {
+    @apply w-full rounded-ctl border border-line bg-surface px-3 py-2 text-fg;
+    @apply placeholder:text-fg-muted;
+    @apply transition-[color,background-color,border-color,box-shadow] duration-fast ease-standard;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+
+    /*
+     * iOS Safari zooms the viewport whenever a control below 16px takes focus,
+     * and the user then has to pinch their way back out. `max()` keeps a larger
+     * inherited size if the context asks for one.
+     */
+    font-size: max(16px, 1em);
+  }
+
+  /*
+   * A 44px row where there is no hover pointer to aim with. Left off the
+   * textarea, which sets its own taller floor below.
+   */
+  .ui-input,
+  .ui-select {
+    @apply touch:min-h-11;
+  }
+
+  /*
+   * `type="date"`, `time` and `datetime-local` are deliberately left alone:
+   * these rules set no `appearance`, so the native picker indicator survives.
+   */
+
+  .ui-textarea {
+    @apply min-h-24 resize-y;
+  }
+
+  .ui-select {
+    @apply appearance-none pr-9;
+
+    /*
+     * The chevron the `appearance-none` above removes. It has to be a data URI
+     * — a `<select>` is a replaced element and renders no pseudo-element — so
+     * the colour is the resolved `--color-fg-muted` rather than the variable,
+     * and the `.dark` override below carries that theme's value.
+     */
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23475569'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 1.25rem 1.25rem;
+
+    /* Keeps the native option list light while only the light theme ships. */
+    color-scheme: light;
+  }
+
+  .dark .ui-select {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23cbd5e1'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
+  }
+
+  /*
+   * Invalid state. Applied *alongside* `.ui-input`, so it only has to restate
+   * the two properties that change; the error message itself is the caller's.
+   */
+  .ui-input-invalid {
+    @apply border-negative focus-visible:ring-negative;
+  }
+}
+
 @layer utilities {
   /* Money and percentage cells: digits must not change width as they change. */
   .tabular {
