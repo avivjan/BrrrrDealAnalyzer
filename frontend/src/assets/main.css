@@ -129,6 +129,22 @@
 }
 
 /*
+ * The 16px floor, enforced. The base rule above is an element selector, so any
+ * control carrying a `text-xs`/`text-sm` utility outranks it — and iOS Safari
+ * zooms the whole viewport when a control below 16px takes focus, which is a
+ * trap the user then has to pinch their way out of. `!important` is the only
+ * thing that beats the utilities layer, and it is scoped to phone widths so
+ * desktop keeps the type scale the templates ask for.
+ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/*
  * Reduce Motion. Deliberately does not touch `scroll-behavior`: the app calls
  * `scrollIntoView({ behavior: 'smooth' })` explicitly, and that is behaviour,
  * not decoration.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /// <reference types="node" />
 // `tsconfig.app.json` scopes `types` to `vite/client` because the app itself is
 // a browser bundle; this is a Node-environment test, so it pulls the Node types

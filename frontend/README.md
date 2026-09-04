@@ -47,12 +47,22 @@ resolved colour string, so those are literals.
 The semantic names are `page`, `surface`, `surface-muted`, `line`, `fg`,
 `fg-muted`, `primary`, `primary-hover`, `primary-fg`, `positive`, `negative`,
 `warning`, `ring` and `chart-1`..`chart-6`, each available as a Tailwind colour.
-`--radius-sm/md/lg`, `--shadow-1/2/3`, `--dur-fast/base/slow` and
-`--ease-standard/emphasized/exit` are wired to `rounded-*`, `shadow-*`,
-`duration-*` and `ease-*` in the same config, which also adds `p-safe-b`-style
-spacing from `env(safe-area-inset-*)`, a `touch:` variant and the `shimmer` /
-`float` animations. The values come from
+`--shadow-1/2/3`, `--dur-fast/base/slow` and `--ease-standard/emphasized/exit`
+are wired to `shadow-*`, `duration-*` and `ease-*` in the same config, which also
+adds `p-safe-b`-style spacing from `env(safe-area-inset-*)`, a `touch:` variant
+and the `shimmer` / `float` animations. The radii are reachable as
+`rounded-ctl` (6 px, controls), `rounded-card` (10 px) and `rounded-panel`
+(16 px) rather than through `rounded-sm/md/lg`: those are Tailwind defaults the
+templates already use in about 150 places, and overriding them would restyle
+every existing corner. The values come from
 `design-system/brrrr-deal-analyzer/MASTER.md` ("Approved overrides").
+
+`future.hoverOnlyWhenSupported` is deliberately **not** enabled yet. It wraps
+every `hover:` utility in `@media (hover: hover)`, which would hide the 14
+controls this app reveals only on hover from every touch device (`DealCard` x4,
+`BoughtDealCard` x2, `MyDeals` x3, `BoughtDeals` x3, `DayDetail` x1,
+`LiquiditySidebar` x1). It is enabled at the end of Phase 3, once every
+`group-hover:opacity-100` reveal has a `touch:opacity-100` counterpart.
 
 A `.dark` block redefines every `--color-*` as a desaturated tonal variant. It
 is complete, but no theme toggle ships.

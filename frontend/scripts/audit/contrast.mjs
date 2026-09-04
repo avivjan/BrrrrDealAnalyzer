@@ -86,14 +86,32 @@ function stripComments(css) {
   return css.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
-/** The declaration body of the first `<selector> { … }` rule, or ''. */
+/**
+ * The declaration body of the first `<selector> { … }` rule, or ''.
+ *
+ * The selector has to match at a boundary — `.darker` and `.theme.dark` are
+ * different rules and must not be mistaken for `.dark` — and the end of the
+ * block is found by counting brace depth, so a nested at-rule (`@supports`,
+ * `@media`) inside the theme does not cut the body short. Comments are
+ * stripped before this runs, so no brace here comes from one.
+ */
 function ruleBody(css, selector) {
-  const start = css.indexOf(selector);
-  if (start === -1) return '';
-  const open = css.indexOf('{', start);
-  const close = css.indexOf('}', open);
-  if (open === -1 || close === -1) return '';
-  return css.slice(open + 1, close);
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const opener = new RegExp(`(?:^|[}\\s;])${escaped}\\s*\\{`);
+  const match = opener.exec(css);
+  if (!match) return '';
+
+  const open = match.index + match[0].length - 1;
+  let depth = 0;
+  for (let index = open; index < css.length; index += 1) {
+    const character = css[index];
+    if (character === '{') depth += 1;
+    else if (character === '}') {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, index);
+    }
+  }
+  return ''; // unbalanced braces: report nothing rather than half a rule
 }
 
 /**

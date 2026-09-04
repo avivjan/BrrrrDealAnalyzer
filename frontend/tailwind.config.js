@@ -15,11 +15,6 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
-  future: {
-    // Wraps every `hover:` utility in `@media (hover: hover)`, so a tap on a
-    // touch device no longer leaves the hover style stuck on.
-    hoverOnlyWhenSupported: true,
-  },
   theme: {
     extend: {
       colors: {
@@ -44,9 +39,13 @@ export default {
         'chart-6': token('chart-6'),
       },
       borderRadius: {
-        sm: 'var(--radius-sm)',
-        md: 'var(--radius-md)',
-        lg: 'var(--radius-lg)',
+        // Deliberately not `sm`/`md`/`lg`: those are Tailwind defaults the
+        // templates already use in ~150 places, and overriding them would
+        // restyle every existing corner. `rounded-ctl` / `rounded-card` /
+        // `rounded-panel` reach the tokens without touching them.
+        ctl: 'var(--radius-sm)',
+        card: 'var(--radius-md)',
+        panel: 'var(--radius-lg)',
       },
       boxShadow: {
         1: 'var(--shadow-1)',
@@ -93,9 +92,16 @@ export default {
       },
     },
   },
+  // `future.hoverOnlyWhenSupported` is deliberately NOT enabled yet. It wraps
+  // every `hover:` utility in `@media (hover: hover)`, which would hide the 14
+  // controls this app reveals only on hover from every touch device (DealCard
+  // x4, BoughtDealCard x2, MyDeals x3, BoughtDeals x3, DayDetail x1,
+  // LiquiditySidebar x1). It is enabled at the end of Phase 3, once every
+  // `group-hover:opacity-100` reveal has a `touch:opacity-100` counterpart.
   plugins: [
     plugin(({ addVariant }) => {
-      // `touch:` — the complement of `hover:` once hoverOnlyWhenSupported is on.
+      // `touch:` — the complement of `hover:`, and the counterpart each of
+      // those 14 reveals needs before the flag can be turned on.
       addVariant('touch', '@media (hover: none)')
     }),
   ],

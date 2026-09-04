@@ -77,6 +77,45 @@ describe('token parsing', () => {
     expect(themes.light['radius-sm']).toBeUndefined();
     expect(themes.light['chart-bg']).toBeUndefined();
   });
+
+  it('reads past a nested at-rule instead of stopping at its closing brace', () => {
+    const nested = `
+:root {
+  --color-page: 255 255 255;
+  @supports (color: rgb(0 0 0 / 1)) {
+    --color-surface: 240 240 240;
+  }
+  --color-fg: 0 0 0;
+}
+`;
+    const themes = parseTokens(nested);
+    expect(themes.light['color-page']).toEqual([255, 255, 255]);
+    expect(themes.light['color-surface']).toEqual([240, 240, 240]);
+    // Declared *after* the nested block — a naive "first }" scan loses this one.
+    expect(themes.light['color-fg']).toEqual([0, 0, 0]);
+  });
+
+  it('does not mistake a longer selector such as .darker for .dark', () => {
+    const decoy = `
+:root { --color-fg: 0 0 0; }
+.darker { --color-fg: 1 1 1; }
+.dark { --color-fg: 255 255 255; }
+`;
+    expect(parseTokens(decoy).dark['color-fg']).toEqual([255, 255, 255]);
+  });
+
+  it('does not mistake a compound selector such as .theme.dark for .dark', () => {
+    const compound = `
+:root { --color-fg: 0 0 0; }
+.theme.dark { --color-fg: 2 2 2; }
+.dark { --color-fg: 255 255 255; }
+`;
+    expect(parseTokens(compound).dark['color-fg']).toEqual([255, 255, 255]);
+  });
+
+  it('returns nothing for a theme whose rule is absent', () => {
+    expect(parseTokens(':root { --color-fg: 0 0 0; }').dark).toEqual({});
+  });
 });
 
 describe('the audited pair set', () => {
