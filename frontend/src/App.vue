@@ -45,17 +45,38 @@ onMounted(() => {
 </script>
 
 <template>
+  <!--
+    The app shell: a one-screen column where the stats bar takes the height it
+    needs and the routed view takes the rest. `dvh` excludes the iOS toolbars,
+    so the column is one screen rather than one screen plus browser chrome.
+    `h-dvh`, not `min-h-dvh`: a `min-height` leaves the column's height
+    *indefinite*, and then `height: 100%` inside a routed view — which is how
+    the landing page fills what the bar leaves — resolves to `auto` and the page
+    collapses to its content. A view taller than the screen still overflows and
+    still scrolls the document (measured on every route), and each view paints
+    its own background over its own box, so nothing is left unpainted.
+    The `vh` fallback is in the style block below rather than a second utility:
+    Tailwind emits `.h-screen` *after* `.h-dvh`, so the pair would resolve the
+    wrong way round.
+  -->
   <div
-    class="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-500 selection:text-white relative"
+    class="app-shell relative flex h-dvh flex-col bg-page font-sans text-fg selection:bg-primary selection:text-primary-fg"
   >
-    <!-- Server Status Indicator -->
+    <!--
+      Server Status Indicator. A live region rather than a bare dot: colour was
+      its only channel, and `aria-label` mirrors the tooltip so the state is
+      readable without a pointer. Inset with `max()` because `index.html` sets
+      `viewport-fit=cover`, so the notch would otherwise sit on top of it.
+    -->
     <div
       data-testid="app.status"
-      class="fixed top-2 right-2 z-50 w-3 h-3 rounded-full shadow-sm transition-colors duration-300"
+      role="status"
+      aria-live="polite"
+      class="fixed right-[max(0.5rem,env(safe-area-inset-right))] top-[max(0.5rem,env(safe-area-inset-top))] z-50 h-3 w-3 rounded-full shadow-1 transition-colors duration-base ease-standard"
       :class="
         connectionStore.isChecking || !connectionStore.isConnected
-          ? 'bg-red-500 animate-pulse'
-          : 'bg-green-500'
+          ? 'bg-negative animate-pulse'
+          : 'bg-positive'
       "
       :title="
         connectionStore.isChecking
@@ -64,9 +85,42 @@ onMounted(() => {
             ? 'Server Connected'
             : 'Disconnected'
       "
+      :aria-label="
+        connectionStore.isChecking
+          ? 'Connecting to server...'
+          : connectionStore.isConnected
+            ? 'Server Connected'
+            : 'Disconnected'
+      "
     ></div>
 
-    <PortfolioStatsBar />
-    <RouterView />
+    <div class="flex-none">
+      <PortfolioStatsBar />
+    </div>
+
+    <!--
+      `min-h-0` so a view that scrolls inside itself can, rather than being
+      floored at its content height. This column is what replaced the landing
+      page's `calc(100dvh - 60px)` guess at the stats bar's height.
+    -->
+    <div class="min-h-0 flex-1">
+      <RouterView />
+    </div>
   </div>
 </template>
+
+<style scoped>
+/*
+ * The `dvh` fallback, and only where it is needed. `h-dvh` on the root leaves
+ * engines that do not know the unit (iOS 15.0–15.3, inside this project's
+ * browserslist) with no height at all, and then the `flex-1` column has nothing
+ * for a view like the landing page to fill. Mirrors the `@supports` pair
+ * `main.css` already applies to `body`, inverted so it never competes with the
+ * utility it is standing in for.
+ */
+@supports not (height: 100dvh) {
+  .app-shell {
+    height: 100vh;
+  }
+}
+</style>
