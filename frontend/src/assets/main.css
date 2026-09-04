@@ -1,31 +1,144 @@
+@import "./tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: rgb(var(--color-page));
+    color: rgb(var(--color-fg));
+    font-family: theme('fontFamily.sans');
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* `dvh` excludes the iOS toolbars, so the page is exactly one screen tall. */
+  @supports (min-height: 100dvh) {
+    body {
+      min-height: 100dvh;
+    }
+  }
+
+  /*
+   * A keyboard-visible focus ring. `:focus-visible` only matches when the
+   * browser decides the focus came from the keyboard, so mouse and touch
+   * interaction is unaffected.
+   */
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-ring));
+    outline-offset: 2px;
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+    /* Drops the 300 ms tap delay without disabling pinch-zoom on the page. */
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari zooms the viewport when a control smaller than 16px is focused. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+   * Page scrollbar. Same 8px geometry as before; the greys are now token
+   * alphas (~slate-300 over the page, ~slate-400 on hover).
+   */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: rgb(var(--color-surface-muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-fg-muted) / 0.22);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--color-fg-muted) / 0.4);
+  }
 }
 
-body {
-  @apply bg-gray-50 text-gray-900 min-h-screen antialiased;
+@layer utilities {
+  /* Money and percentage cells: digits must not change width as they change. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Notch and home-indicator padding. Zero on every device without insets. */
+  .safe-t {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-l {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-r {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /*
+   * Opt-in scrollbar for scroll containers inside a surface (modals, panels).
+   * `scrollbar-width`/`scrollbar-color` are the standard properties; the
+   * `::-webkit-` rules cover the engines that do not support them yet.
+   */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) rgb(var(--color-surface-muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: rgb(var(--color-surface-muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-fg-muted) / 0.22);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--color-fg-muted) / 0.4);
+  }
 }
 
-/* Custom Scrollbar for "Bright" feel */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/*
+ * Reduce Motion. Deliberately does not touch `scroll-behavior`: the app calls
+ * `scrollIntoView({ behavior: 'smooth' })` explicitly, and that is behaviour,
+ * not decoration.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
-}
-
-

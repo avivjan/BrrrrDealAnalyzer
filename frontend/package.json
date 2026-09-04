@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "audit:baseline": "node scripts/audit/script-blocks.mjs --write && node scripts/audit/bindings.mjs --write && node scripts/audit/text.mjs --write",
     "audit": "node scripts/audit/script-blocks.mjs && node scripts/audit/bindings.mjs && node scripts/audit/text.mjs",
+    "audit:contrast": "node scripts/audit/contrast.mjs",
     "verify:ui": "node scripts/audit/verify-ui.mjs"
   },
   "dependencies": {

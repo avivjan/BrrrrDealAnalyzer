@@ -1,0 +1,155 @@
+/**
+ * Design tokens — the single source of truth for colour, space, radius, shadow
+ * and motion. See `design-system/brrrr-deal-analyzer/MASTER.md` ("Approved
+ * overrides") for where the values come from.
+ *
+ * Colour tokens are space-separated RGB triplets, not colour strings, so the
+ * Tailwind theme can slot an alpha channel in: `rgb(var(--color-fg) / 0.5)`.
+ * The `--chart-*` tokens are the exception: a `<canvas>` needs a resolved
+ * colour string, so those are literals.
+ *
+ * Contrast is enforced by `npm run audit:contrast` (WCAG 2.x, 4.5:1 for text
+ * and 3:1 for the focus ring, in both themes).
+ */
+
+:root {
+  /* Surfaces and text — slate */
+  --color-page: 248 250 252; /* slate-50 */
+  --color-surface: 255 255 255;
+  --color-surface-muted: 241 245 249; /* slate-100 */
+  --color-line: 226 232 240; /* slate-200 */
+  --color-fg: 15 23 42; /* slate-900 */
+  --color-fg-muted: 71 85 105; /* slate-600 */
+
+  /* Accent — indigo */
+  --color-primary: 79 70 229; /* indigo-600 */
+  --color-primary-hover: 67 56 202; /* indigo-700 */
+  --color-primary-fg: 255 255 255;
+
+  /* Financial semantics — always paired with a sign or an icon, never colour alone */
+  --color-positive: 4 120 87; /* emerald-700 */
+  --color-negative: 220 38 38; /* red-600 */
+  --color-warning: 180 83 9; /* amber-700 */
+
+  /* Focus ring */
+  --color-ring: 99 102 241; /* indigo-500 */
+
+  /* Categorical series for charts and legends */
+  --color-chart-1: 99 102 241; /* indigo-500 */
+  --color-chart-2: 16 185 129; /* emerald-500 */
+  --color-chart-3: 245 158 11; /* amber-500 */
+  --color-chart-4: 14 165 233; /* sky-500 */
+  --color-chart-5: 244 63 94; /* rose-500 */
+  --color-chart-6: 139 92 246; /* violet-500 */
+
+  /* Space — 4 pt scale, mirroring Tailwind's 1–12 */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Elevation — slate-tinted, subtle to elevated */
+  --shadow-1: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --shadow-2: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-3: 0 12px 20px -6px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.08);
+
+  /* Motion — mirrored in `src/motion/tokens.ts` for GSAP */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --ease-standard: cubic-bezier(0.215, 0.61, 0.355, 1); /* ≈ power2.out */
+  --ease-emphasized: cubic-bezier(0.77, 0, 0.175, 1); /* ≈ power3.inOut */
+  --ease-exit: cubic-bezier(0.55, 0.085, 0.68, 0.53); /* ≈ power1.in */
+
+  /* Layout */
+  --stats-bar-h: 60px;
+
+  /*
+   * Liquidity timeline canvas. These are resolved colour strings because
+   * `TimelineChart.vue` assigns them straight to `ctx.fillStyle` /
+   * `ctx.strokeStyle`, and a canvas silently ignores an invalid value.
+   * In Phase 1 they are the chart's existing literals, unchanged.
+   */
+  --chart-bg: #0f1117;
+  --chart-grid: #1e2030;
+  --chart-axis-text: #5c6078;
+  --chart-reserve-band: rgba(239, 68, 68, 0.04);
+  --chart-weekend-band: rgba(255, 255, 255, 0.015);
+  --chart-today-band: rgba(99, 102, 241, 0.08);
+  --chart-month-line: #2a2f45;
+  --chart-day-line: #16192a;
+  --chart-month-label: #7c82a0;
+  --chart-day-today: #818cf8;
+  --chart-day-hover: #c7d2fe;
+  --chart-day-active: #94a3b8;
+  --chart-day-idle: #3e4460;
+  --chart-marker-today: #6366f1;
+  --chart-marker-idle: #2e3350;
+  --chart-today-line: #6366f1;
+  --chart-net-positive: #22c55e;
+  --chart-net-negative: #ef4444;
+  --chart-inflow-fill-hover: rgba(129, 140, 248, 0.55);
+  --chart-inflow-fill: rgba(99, 102, 241, 0.35);
+  --chart-inflow-stroke-hover: #a5b4fc;
+  --chart-inflow-stroke: #818cf8;
+  --chart-outflow-fill-hover: rgba(239, 68, 68, 0.55);
+  --chart-outflow-fill: rgba(239, 68, 68, 0.35);
+  --chart-outflow-stroke-hover: #fca5a5;
+  --chart-outflow-stroke: #ef4444;
+  --chart-reserve-line: #ef4444;
+  --chart-baseline: rgba(148, 163, 184, 0.2);
+  --chart-balance-dot: #818cf8;
+  --chart-balance-dot-core: #fff;
+  --chart-min-negative: #ef4444;
+  --chart-min-warning: #f59e0b;
+}
+
+/**
+ * Dark theme — desaturated tonal variants, not inversions. Defined so the
+ * system is complete; no toggle ships in this phase.
+ *
+ * Four values differ from the first draft because `audit:contrast` rejected
+ * them; each moved one step within its own family:
+ *   --color-fg-muted   slate-400 → slate-300  (4.04:1 on the muted surface)
+ *   --color-primary    indigo-500 → indigo-400
+ *   --color-primary-hover indigo-400 → indigo-300
+ *   --color-primary-fg white → slate-900 (dark ink on a bright accent)
+ */
+.dark {
+  --color-page: 15 23 42; /* slate-900 */
+  --color-surface: 30 41 59; /* slate-800 */
+  --color-surface-muted: 51 65 85; /* slate-700 */
+  --color-line: 51 65 85; /* slate-700 */
+  --color-fg: 241 245 249; /* slate-100 */
+  --color-fg-muted: 203 213 225; /* slate-300 */
+
+  --color-primary: 129 140 248; /* indigo-400 */
+  --color-primary-hover: 165 180 252; /* indigo-300 */
+  --color-primary-fg: 15 23 42; /* slate-900 */
+
+  --color-positive: 52 211 153; /* emerald-400 */
+  --color-negative: 248 113 113; /* red-400 */
+  --color-warning: 251 191 36; /* amber-400 */
+
+  --color-ring: 129 140 248; /* indigo-400 */
+
+  --color-chart-1: 129 140 248; /* indigo-400 */
+  --color-chart-2: 52 211 153; /* emerald-400 */
+  --color-chart-3: 251 191 36; /* amber-400 */
+  --color-chart-4: 56 189 248; /* sky-400 */
+  --color-chart-5: 251 113 133; /* rose-400 */
+  --color-chart-6: 167 139 250; /* violet-400 */
+}

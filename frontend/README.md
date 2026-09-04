@@ -34,6 +34,42 @@ The frontend talks to the backend over `VITE_API_URL`, which defaults to `http:/
 
 The build targets iOS/Safari >= 15.4 and Chrome >= 100 (see the `browserslist` field in `package.json` and `build.target` in `vite.config.ts`).
 
+## Design tokens
+
+`src/assets/tokens.css` is the single source of truth for colour, space, radius,
+shadow and motion; `src/assets/main.css` imports it first and then sets the base
+layer. Colour tokens are space-separated RGB triplets (`--color-fg: 15 23 42`)
+rather than colour strings, so `tailwind.config.js` can wrap each one as
+`rgb(var(--color-fg) / <alpha-value>)` and Tailwind's alpha modifiers keep
+working (`bg-surface/70`). The exception is `--chart-*`: a `<canvas>` needs a
+resolved colour string, so those are literals.
+
+The semantic names are `page`, `surface`, `surface-muted`, `line`, `fg`,
+`fg-muted`, `primary`, `primary-hover`, `primary-fg`, `positive`, `negative`,
+`warning`, `ring` and `chart-1`..`chart-6`, each available as a Tailwind colour.
+`--radius-sm/md/lg`, `--shadow-1/2/3`, `--dur-fast/base/slow` and
+`--ease-standard/emphasized/exit` are wired to `rounded-*`, `shadow-*`,
+`duration-*` and `ease-*` in the same config, which also adds `p-safe-b`-style
+spacing from `env(safe-area-inset-*)`, a `touch:` variant and the `shimmer` /
+`float` animations. The values come from
+`design-system/brrrr-deal-analyzer/MASTER.md` ("Approved overrides").
+
+A `.dark` block redefines every `--color-*` as a desaturated tonal variant. It
+is complete, but no theme toggle ships.
+
+`src/motion/tokens.ts` mirrors the duration and ease tokens for GSAP (seconds
+and ease names instead of milliseconds and cubic-béziers); its test fails if the
+two ever drift.
+
+```
+npm run audit:contrast
+```
+
+Measures WCAG 2.x contrast for every foreground/background pair the UI renders,
+in both themes, and exits non-zero below 4.5:1 for text or 3:1 for the focus
+ring. When a pair fails, move the token one step within its own colour family —
+never lower the threshold.
+
 ## End-to-end suite
 
 `e2e/` holds the Phase 0 **functional characterization suite**: a Playwright
@@ -122,6 +158,8 @@ The audits on their own:
 - `npm run audit` — checks the working tree against the committed baseline manifests in
   `scripts/audit/golden/`: script blocks frozen (G3), template bindings frozen (G4), on-screen
   copy frozen (G4b). Accepted, reasoned deviations are declared in `scripts/audit/allowlist.json`.
+- `npm run audit:contrast` — re-measures the token contrast pairs described under **Design
+  tokens** above.
 - `npm run audit:baseline` — regenerates those manifests. Only run it when a change to behaviour
   has been agreed, and commit the result on its own with a `Golden update:` subject.
 
