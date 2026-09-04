@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { h, type VNode } from "vue";
+import { h, nextTick, ref, type VNode } from "vue";
 import { mount } from "@vue/test-utils";
 
 import UiField from "./UiField.vue";
@@ -136,6 +136,37 @@ describe("UiField", () => {
   });
 
   describe("what the scoped slot carries", () => {
+    /**
+     * The regression this guards: slots are a plain object that Vue mutates in
+     * place, so nothing reading `useSlots()` is reactive. Behind a `computed`,
+     * `describedBy` froze at whatever the first render saw — an error that
+     * appeared later never reached `aria-describedby`, and a field mounted with
+     * an error already showing kept pointing at it after it cleared.
+     */
+    it("follows an error slot that appears and disappears after mount", async () => {
+      const showError = ref(false);
+      const page = mount({
+        render: () =>
+          h(UiField, null, {
+            label: () => "Price",
+            default: control,
+            ...(showError.value ? { error: () => "Required" } : {}),
+          }),
+      });
+
+      expect(page.get("input").attributes("aria-describedby")).toBeUndefined();
+
+      showError.value = true;
+      await nextTick();
+      const error = page.get('p[role="alert"]');
+      expect(page.get("input").attributes("aria-describedby")).toBe(error.attributes("id"));
+
+      showError.value = false;
+      await nextTick();
+      expect(page.find('p[role="alert"]').exists()).toBe(false);
+      expect(page.get("input").attributes("aria-describedby")).toBeUndefined();
+    });
+
     it("hands the control its invalid state", () => {
       expect(mountField({ invalid: true }).get("input").attributes("aria-invalid")).toBe("true");
       expect(mountField().get("input").attributes("aria-invalid")).toBeUndefined();
@@ -155,6 +186,13 @@ describe("UiField", () => {
     it("uses tokens for every colour it sets", () => {
       const wrapper = mountField({}, { helper: "Hint", error: "Bad" });
       expect(wrapper.html()).not.toMatch(/\b(bg|text|border)-(gray|slate|blue|indigo|red|amber)-\d/);
+    });
+
+    it("leaves the class attribute off entirely when it has nothing to say", () => {
+      // A block field composes to no classes at all; `:class=""` would still
+      // render a bare `class=""` into every snapshot and devtools tree.
+      expect(mountField().attributes("class")).toBeUndefined();
+      expect(mountField().html()).not.toContain('class=""');
     });
 
     it("passes attrs through to the root and merges class through cn()", () => {

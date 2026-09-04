@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
+import { h, nextTick, ref } from "vue";
 import { mount } from "@vue/test-utils";
 
 import UiStatTile from "./UiStatTile.vue";
@@ -61,6 +62,28 @@ describe("UiStatTile", () => {
 
     it("renders no label region when neither is given", () => {
       expect(mountTile().find('[data-part="label"]').exists()).toBe(false);
+    });
+
+    /**
+     * Slots are a plain object mutated in place, so a `computed` over
+     * `slots.label` cached its first answer: a tile that gained its caption on
+     * a later render never grew one.
+     */
+    it("renders a label slot that arrives after mount", async () => {
+      const showLabel = ref(false);
+      const page = mount({
+        render: () =>
+          h(UiStatTile, null, {
+            default: () => "$1,240",
+            ...(showLabel.value ? { label: () => "Monthly cash flow" } : {}),
+          }),
+      });
+
+      expect(page.find('[data-part="label"]').exists()).toBe(false);
+
+      showLabel.value = true;
+      await nextTick();
+      expect(page.get('[data-part="label"]').text()).toBe("Monthly cash flow");
     });
 
     it("renders the hint slot, and nothing when it is absent", () => {

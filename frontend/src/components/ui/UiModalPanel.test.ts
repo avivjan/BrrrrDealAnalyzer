@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { h, nextTick, ref } from "vue";
 import { mount } from "@vue/test-utils";
 
 import UiModalPanel from "./UiModalPanel.vue";
@@ -48,6 +49,49 @@ describe("UiModalPanel", () => {
       const wrapper = mount(UiModalPanel, { slots: { default: "Body" } });
       expect(wrapper.attributes("aria-labelledby")).toBeUndefined();
       expect(wrapper.find('[data-part="header"]').exists()).toBe(false);
+    });
+
+    /**
+     * Same regression as `UiField`'s: slots are not reactive, so a `computed`
+     * over `slots.header` froze the dialog's name at its first render. A panel
+     * whose header arrives with its data would have stayed anonymous.
+     */
+    it("names itself once a header slot arrives after mount", async () => {
+      const showHeader = ref(false);
+      const page = mount({
+        render: () =>
+          h(UiModalPanel, null, {
+            default: () => "Body",
+            ...(showHeader.value ? { header: () => "Edit deal" } : {}),
+          }),
+      });
+      const panel = page.get('[data-ui="modal-panel"]');
+
+      expect(panel.attributes("aria-labelledby")).toBeUndefined();
+
+      showHeader.value = true;
+      await nextTick();
+      expect(panel.attributes("aria-labelledby")).toBe(page.get("h2").attributes("id"));
+
+      showHeader.value = false;
+      await nextTick();
+      expect(panel.attributes("aria-labelledby")).toBeUndefined();
+    });
+
+    it("still lets an explicit labelledBy win over a late header", async () => {
+      const showHeader = ref(false);
+      const page = mount({
+        render: () =>
+          h(UiModalPanel, { labelledBy: "deal-title" }, {
+            default: () => "Body",
+            ...(showHeader.value ? { header: () => "Edit deal" } : {}),
+          }),
+      });
+
+      showHeader.value = true;
+      await nextTick();
+      expect(page.get('[data-ui="modal-panel"]').attributes("aria-labelledby")).toBe("deal-title");
+      expect(page.find("h2").exists()).toBe(false);
     });
   });
 

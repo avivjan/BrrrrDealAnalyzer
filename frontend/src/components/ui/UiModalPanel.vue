@@ -67,9 +67,21 @@ const SIZES: Record<Size, string> = {
   full: "max-w-none rounded-none h-[100svh] md:h-auto md:max-h-[90svh] md:rounded-panel",
 };
 
-/** The panel's own heading is rendered only when the caller has not named one. */
-const ownsHeading = computed(() => !props.labelledBy && Boolean(slots.header));
-const labelledBy = computed(() => props.labelledBy ?? (slots.header ? headingId : undefined));
+/**
+ * The panel's own heading is rendered only when the caller has not named one.
+ *
+ * Both of these are functions rather than `computed`s because they read slots,
+ * and slots are a plain object Vue mutates in place — nothing about them is
+ * reactive. Cached, the dialog's name would have frozen at its first render,
+ * so a panel whose header arrives with its data would have stayed anonymous.
+ */
+function ownsHeading(): boolean {
+  return !props.labelledBy && Boolean(slots.header);
+}
+
+function ariaLabelledBy(): string | undefined {
+  return props.labelledBy ?? (slots.header ? headingId : undefined);
+}
 
 /**
  * Everything except `class`, which `rootClass` folds through `cn()` instead.
@@ -91,7 +103,7 @@ const rootClass = computed(() =>
     data-ui="modal-panel"
     role="dialog"
     aria-modal="true"
-    :aria-labelledby="labelledBy"
+    :aria-labelledby="ariaLabelledBy()"
     :class="rootClass"
     v-bind="passthrough()"
   >
@@ -100,7 +112,7 @@ const rootClass = computed(() =>
       data-part="header"
       class="sticky top-0 z-10 shrink-0 border-b border-line bg-surface px-4 py-3 md:px-6"
     >
-      <h2 v-if="ownsHeading" :id="headingId" class="text-base font-semibold text-fg">
+      <h2 v-if="ownsHeading()" :id="headingId" class="text-base font-semibold text-fg">
         <slot name="header" />
       </h2>
       <slot v-else name="header" />

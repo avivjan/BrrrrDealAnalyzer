@@ -16,7 +16,7 @@
  * The prop is there for the many call sites whose caption is a plain string,
  * and both are the caller's copy either way.
  */
-import { computed, useAttrs, useSlots } from "vue";
+import { computed, useAttrs } from "vue";
 
 import { cn } from "../../design/cn";
 
@@ -56,7 +56,6 @@ const VALUE_SIZES: Record<Size, string> = {
   md: "text-xl",
 };
 
-const slots = useSlots();
 const attrs = useAttrs();
 
 /**
@@ -75,7 +74,6 @@ function passthrough() {
 }
 
 const tone = computed(() => TONES[props.tone]);
-const hasLabel = computed(() => Boolean(slots.label || props.label));
 const rootClass = computed(() => cn(BASE, attrs.class as string));
 const valueClass = computed(() =>
   cn("tabular font-semibold leading-tight", VALUE_SIZES[props.size], tone.value.text),
@@ -84,7 +82,11 @@ const valueClass = computed(() =>
 
 <template>
   <div data-ui="stat-tile" :class="rootClass" v-bind="passthrough()">
-    <span v-if="hasLabel" data-part="label" class="block text-xs font-medium text-fg-muted">
+    <span
+      v-if="$slots.label || label"
+      data-part="label"
+      class="block text-xs font-medium text-fg-muted"
+    >
       <slot name="label">{{ label }}</slot>
     </span>
     <span class="mt-1 flex items-baseline gap-1.5">

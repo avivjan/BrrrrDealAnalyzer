@@ -53,18 +53,22 @@ const errorId = computed(() => `${id.value}-error`);
  * Only the messages that are really rendered, in reading order. `undefined`
  * rather than `""` so the parent's `:aria-describedby` binding drops the
  * attribute entirely.
+ *
+ * A function, not a `computed`, for the same class of reason as `passthrough`
+ * below: slots are a plain object Vue mutates in place, so nothing that reads
+ * them is reactive. A computed here would freeze at the first render — an
+ * error slot revealed by a `v-if` would never reach `aria-describedby`, and one
+ * that cleared would leave the control pointing at a paragraph that is gone.
  */
-const describedBy = computed(() => {
+function describedBy(): string | undefined {
   const ids = [slots.helper && helperId.value, slots.error && errorId.value].filter(Boolean);
   return ids.length ? ids.join(" ") : undefined;
-});
+}
 
-/** What the parent binds onto its own control. */
-const controlProps = computed(() => ({
-  id: id.value,
-  describedBy: describedBy.value,
-  invalid: props.invalid,
-}));
+/** What the parent binds onto its own control. Evaluated during render. */
+function controlProps() {
+  return { id: id.value, describedBy: describedBy(), invalid: props.invalid };
+}
 
 /**
  * Everything except `class`, which `rootClass` folds through `cn()` instead.
@@ -76,16 +80,26 @@ function passthrough() {
   return rest;
 }
 
-const rootClass = computed(() =>
-  cn(props.inline && "flex flex-wrap items-center gap-x-3", attrs.class as string),
-);
+/**
+ * `|| undefined` on both of these: a block field with no caller class composes
+ * to the empty string, and `:class=""` still renders a bare `class=""` into the
+ * DOM. Harmless, but it is noise in every snapshot and every devtools tree.
+ */
+const rootClass = computed(() => {
+  const composed = cn(props.inline && "flex flex-wrap items-center gap-x-3", attrs.class as string);
+  return composed || undefined;
+});
 
 const labelClass = computed(() =>
   cn("text-sm font-medium text-fg", props.inline ? "shrink-0" : "mb-1.5 block"),
 );
 
-/** Inline pushes the control to the far edge; messages still get their own row. */
-const controlClass = computed(() => (props.inline ? "ml-auto min-w-0" : ""));
+/**
+ * `min-w-0` in both modes so a wide control shrinks instead of overflowing the
+ * row; inline additionally pushes it to the far edge, messages still getting
+ * their own row underneath.
+ */
+const controlClass = computed(() => cn("min-w-0", props.inline && "ml-auto"));
 const messageClass = computed(() => (props.inline ? "mt-1 basis-full text-xs" : "mt-1 text-xs"));
 </script>
 
@@ -100,7 +114,7 @@ const messageClass = computed(() => (props.inline ? "mt-1 basis-full text-xs" : 
     </label>
 
     <div data-part="control" :class="controlClass">
-      <slot v-bind="controlProps" />
+      <slot v-bind="controlProps()" />
     </div>
 
     <p v-if="$slots.helper" :id="helperId" :class="cn(messageClass, 'text-fg-muted')">
