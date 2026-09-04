@@ -404,3 +404,112 @@ describe('G4 primitive-aware collection', () => {
     ]);
   });
 });
+
+/**
+ * Round 1 hardening. `as` turned out to be a behaviour channel — `UiCard`
+ * renders `<component :is="as">`, so it chooses the element — and two holes in
+ * the side-effect test and the slot rule were worth closing.
+ */
+describe('G4 primitive-aware collection, round 1', () => {
+  it('records a static as="button" on a UiCard', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard as="button" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as'))).toBe(true);
+  });
+
+  it('records a bound :as on a UiCard', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard :as="tag" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:as'))).toBe(true);
+  });
+
+  it('reports a new entry when as is the only binding', () => {
+    const result = compare('<section class="x">t</section>', '<UiCard as="section" class="x">t</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  describe('the as allowlist row', () => {
+    const before = '<section class="x">t</section>';
+    const after = '<UiCard as="section" class="x">t</UiCard>';
+    const row = (extra) => ({
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, tag: 'UiCard', bindings: ['attr:as=section'], reason: 'keeps the landmark', ...extra }],
+    });
+
+    it('admits the addition it names', () => {
+      const result = compare(before, after, row());
+      expect(fails(result)).toEqual([]);
+      expect(result.ok).toBe(true);
+    });
+
+    it('admits a bound :as the row names', () => {
+      const result = compare(before, '<UiCard :as="tag" class="x">t</UiCard>', {
+        ...EMPTY_ALLOWLIST,
+        bindings: [{ file: FILE, tag: 'UiCard', bindings: ['bind:as=tag'], reason: 'polymorphic' }],
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('does not admit a different expression', () => {
+      expect(compare(before, '<UiCard as="article" class="x">t</UiCard>', row()).ok).toBe(false);
+    });
+
+    it('does not admit a different tag', () => {
+      expect(compare(before, after, row({ tag: 'UiStatTile' })).ok).toBe(false);
+    });
+
+    it('does not admit an entry that carries more than as', () => {
+      expect(compare(before, '<UiCard as="section" @click="f">t</UiCard>', row()).ok).toBe(false);
+    });
+
+    it('does not admit through a row with no bindings list', () => {
+      expect(compare(before, after, row({ bindings: undefined })).ok).toBe(false);
+    });
+
+    it('does not admit a removal', () => {
+      const result = compare('<div @click="f">x</div>', after, row());
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('removed element') || l.text.includes('changed element'))).toBe(
+        true,
+      );
+    });
+  });
+
+  it('records a presentational prop that increments or decrements', () => {
+    const plus = manifestFromSource(sfc('<UiBadge :count="n++">x</UiBadge>'), FILE);
+    expect(plus.elements[0].bindings[0].kind).toBe('bind:count');
+    const minus = manifestFromSource(sfc('<UiBadge :count="--n">x</UiBadge>'), FILE);
+    expect(minus.elements[0].bindings[0].kind).toBe('bind:count');
+  });
+
+  it('records a presentational prop holding a template literal', () => {
+    const manifest = manifestFromSource(sfc('<UiBadge :label="`n ${count}`">x</UiBadge>'), FILE);
+    expect(manifest.elements[0].bindings[0].kind).toBe('bind:label');
+  });
+
+  it('ignores a template slot only under a primitive parent', () => {
+    const inPanel = manifestFromSource(
+      sfc('<UiModalPanel><template #header><h3 class="t">T</h3></template></UiModalPanel>'),
+      FILE,
+    );
+    expect(inPanel.elements).toEqual([]);
+
+    const inDraggable = manifestFromSource(
+      sfc('<VueDraggable v-model="rows"><template #item="{ element }"><div class="c">x</div></template></VueDraggable>'),
+      FILE,
+    );
+    expect(inDraggable.elements.map((e) => e.tag)).toEqual(['VueDraggable', 'template']);
+    expect(inDraggable.elements[1].bindings).toEqual([
+      { kind: 'slot', arg: 'item', modifiers: [], expression: '{ element }' },
+    ]);
+  });
+
+  it('flags a renamed slot on a template under VueDraggable', () => {
+    const result = compare(
+      '<VueDraggable v-model="rows"><template #item="{ element }"><div /></template></VueDraggable>',
+      '<VueDraggable v-model="rows"><template #row="{ element }"><div /></template></VueDraggable>',
+    );
+    expect(result.ok).toBe(false);
+  });
+});

@@ -183,15 +183,28 @@ The audits on their own:
 G4 knows about the primitives. On an element whose tag is one of them it ignores
 a presentational prop (`variant`, `size`, `tone`, `status`, `loading`, … — the
 full list is `PRESENTATIONAL_PROPS` in `scripts/audit/bindings.mjs`) as long as
-the expression neither calls nor assigns anything, and it ignores the `v-slot` /
-`#name` bindings that carry the copy, on the primitive and on the `<template>`
-that names the slot. So `<button :class="c ? a : b" @click="f">` becoming
-`<UiButton :variant="v" :active="c" @click="f">` is no drift, while
-`:disabled`, `:type`, `:href`, `:value`, `:is`, `:to`, any `@event`, `v-model`,
-`v-for`, `v-show`, a `v-if` chain — and a presentational prop that calls
-something, such as `:tone="toneFor(deal)"` — are recorded on every tag and still
-have to be justified. A slot on a `RouterView`, a `VueDraggable` or any other
-component stays recorded.
+the expression neither calls nor assigns nor mutates: no `(`, no `=>`, no `++`
+or `--`, no backtick, and no `=` beyond `===`, `!==`, `>=`, `<=`. It also
+ignores the `v-slot` / `#name` bindings that carry the copy — on the primitive
+itself, and on a `<template>` **whose parent element is a primitive**. So
+`<button :class="c ? a : b" @click="f">` becoming `<UiButton :variant="v"
+:active="c" @click="f">` is no drift, and neither is moving copy into
+`<UiModalPanel><template #header>`.
+
+Recorded on every tag, primitive or not, and still to be justified: `:disabled`,
+`:type`, `:href`, `:value`, `:is`, `:to`, `as`, any `@event`, `v-model`,
+`v-for`, `v-show`, a `v-if` chain, and a presentational prop that calls
+something, such as `:tone="toneFor(deal)"`. `as` is in that list because
+`<UiCard as="section">` renders `<component :is="as">` — it picks the element,
+which changes the accessibility tree — so an added element whose only binding is
+`as` needs an `allowlist.json` row naming the tag and the exact binding:
+
+```json
+{ "file": "src/views/MyDeals.vue", "tag": "UiCard", "bindings": ["attr:as=section"], "reason": "keeps the landmark the div had" }
+```
+
+A slot on a `RouterView`, on a `VueDraggable`, or on a `<template>` under either
+of them stays recorded.
 
 For UI work, also run the end-to-end suite described above:
 

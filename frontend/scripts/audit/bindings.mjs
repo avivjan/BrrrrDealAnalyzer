@@ -16,13 +16,16 @@
  *      `variant`, `tone`, `status`, `size`, …) whose expression is
  *      side-effect-free, and
  *   2. a **slot** binding (`v-slot` / `#name`, scoped or not), which is where
- *      the copy the primitive renders now lives.
+ *      the copy the primitive renders now lives — on the primitive itself, and
+ *      on a `<template>` whose parent element is a primitive. A `<template>`
+ *      under anything else (`<VueDraggable><template #item>`) keeps its slot.
  *
  * Everything that could change what the app does is recorded on every tag,
- * primitive or not: `bind:disabled|type|href|value|is|to`, every `v-on`,
- * `v-model`, `v-for`, `v-show` and every `v-if` / `v-else-if` / `v-else`. A
- * presentational prop that calls something (`:tone="toneFor(deal)"`) is
- * recorded too, so it surfaces as a diff and has to be justified.
+ * primitive or not: `disabled|type|href|value|is|to|as` bound or static, every
+ * `v-on`, `v-model`, `v-for`, `v-show` and every `v-if` / `v-else-if` /
+ * `v-else`. A presentational prop that calls, mutates or interpolates
+ * (`:tone="toneFor(deal)"`) is recorded too, so it surfaces as a diff and has
+ * to be justified.
  *
  * A primitive left with no recorded binding does not appear in the manifest at
  * all — exactly like a styling `div`. These are collection rules, so the
@@ -69,6 +72,9 @@ const BEHAVIOURAL_ATTRS = new Set([
   'disabled', 'checked', 'selected',
   // A Teleport/RouterLink target is behaviour, not presentation.
   'to',
+  // `UiCard as="section"` renders `<component :is="as">`: it picks the element,
+  // so it is behaviour on every tag. See `ALWAYS_RECORDED_PROPS`.
+  'as',
 ]);
 
 /** Purely decorative motion directives — invisible unless they take a value. */
@@ -122,7 +128,7 @@ const UI_TAGS = new Set([...PRESENTATIONAL_UI, 'UiButton', 'UiIconButton']);
  */
 const PRESENTATIONAL_PROPS = new Set([
   'variant', 'size', 'active', 'tone', 'dealType', 'deal-type', 'loading', 'block',
-  'padding', 'as', 'icon', 'lines', 'rounded', 'status', 'count', 'compact',
+  'padding', 'icon', 'lines', 'rounded', 'status', 'count', 'compact',
   'labelledBy', 'labelled-by', 'invalid', 'required', 'inline', 'label',
   'ariaLabel', 'aria-label', 'interactive', 'hint',
 ]);
@@ -130,8 +136,14 @@ const PRESENTATIONAL_PROPS = new Set([
 /**
  * Bindings recorded on every tag, primitive or not. Listed explicitly so that
  * a name added to `PRESENTATIONAL_PROPS` by mistake can never silence one.
+ *
+ * `as` is here, not above, because it is not styling: `UiCard` renders
+ * `<component :is="as">`, so `as` picks the element the browser gets — a
+ * `<section>` instead of a `<div>` changes the accessibility tree, `as="button"`
+ * changes what a click does. Every use must be justified by an allowlist row
+ * (see `isAllowedAsAddition`).
  */
-const ALWAYS_RECORDED_PROPS = new Set(['disabled', 'type', 'href', 'value', 'is', 'to']);
+const ALWAYS_RECORDED_PROPS = new Set(['disabled', 'type', 'href', 'value', 'is', 'to', 'as']);
 
 const TRANSITION_TAGS = new Set(['UiTransition', 'UiTransitionGroup', 'Transition', 'TransitionGroup']);
 const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name', 'mode', 'css']);
@@ -139,6 +151,9 @@ const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name', 'mo
 const LIFECYCLE_HOOKS = ['onMounted', 'onBeforeMount', 'onUnmounted', 'onBeforeUnmount', 'onUpdated'];
 
 const BRANCH_KINDS = new Set(['if', 'else-if', 'else']);
+
+/** The two ways a template can hand a primitive the element it renders. */
+const AS_KINDS = new Set(['attr:as', 'bind:as']);
 
 function isIgnoredProp(name) {
   return IGNORED_PROPS.has(name) || name.startsWith('aria-') || name.startsWith('data-');
@@ -176,10 +191,14 @@ function binding(kind, { arg = null, modifiers = [], expression = '' } = {}) {
  * True when the expression can neither call nor assign anything, so passing it
  * to a primitive cannot run code the template did not already run: identifiers,
  * member access, literals, `!x`, `&&`/`||`/`??`, ternaries and the comparisons
- * `=== !== >= <=`. A call (`(`), an arrow (`=>`) or any other `=` fails.
+ * `=== !== >= <=`.
+ *
+ * Rejected: a call `(`, an arrow `=>`, an increment or decrement `++` / `--`,
+ * a backtick (a template literal can be tagged, which is a call in disguise,
+ * and interpolates arbitrary expressions), and any other `=`.
  */
 function isSideEffectFree(expression) {
-  if (expression.includes('(') || expression.includes('=>')) return false;
+  if (/[(`]|=>|\+\+|--/.test(expression)) return false;
   return !expression.replace(/===|!==|>=|<=/g, '').includes('=');
 }
 
@@ -192,7 +211,7 @@ function isPresentationalOn(tag, name, expression) {
 }
 
 /** Turn one prop into a manifest binding, or `null` when it is not behavioural. */
-function bindingFor(prop, branch, tag) {
+function bindingFor(prop, branch, tag, parentTag) {
   if (prop.type === NODE_ATTRIBUTE) {
     if (isIgnoredProp(prop.name) || !BEHAVIOURAL_ATTRS.has(prop.name)) return null;
     // Rule 1 for a static attribute. No name is in both `PRESENTATIONAL_PROPS`
@@ -219,10 +238,14 @@ function bindingFor(prop, branch, tag) {
     case 'model':
       return binding('model', { arg, modifiers, expression });
     case 'slot':
-      // Copy handed to a primitive through a slot, and the `<template>` that
-      // names one, are presentation. A slot on anything else — `RouterView`,
-      // `VueDraggable`, `Teleport`, a real component — is behaviour.
-      if (tag === 'template' || UI_TAGS.has(tag)) return null;
+      // Copy handed to a primitive through a slot is presentation, whether it
+      // is named on the primitive itself (`<UiField #default>`) or on a
+      // `<template>` the primitive holds (`<UiModalPanel><template #header>`).
+      // A slot anywhere else is behaviour, and that includes a `<template>`
+      // under a non-primitive parent: `<VueDraggable><template #item>` names
+      // the row renderer, and `<RouterView v-slot>` the routed component.
+      if (UI_TAGS.has(tag)) return null;
+      if (tag === 'template' && UI_TAGS.has(parentTag)) return null;
       return binding('slot', { arg, modifiers, expression });
     case 'show':
     case 'for':
@@ -274,16 +297,16 @@ function branchesOf(children) {
 /** Ordered behaviour entries for one parsed template. */
 export function collectElements(descriptor) {
   const elements = [];
-  walk(descriptor.template?.ast?.children ?? []);
+  walk(descriptor.template?.ast?.children ?? [], null);
   return elements;
 
-  function walk(children) {
+  function walk(children, parentTag) {
     const branches = branchesOf(children);
     for (const node of children) {
       if (node.type !== NODE_ELEMENT) continue;
       if (!isTransitionWrapper(node)) {
         const bindings = node.props
-          .map((prop) => bindingFor(prop, branches.get(node), node.tag))
+          .map((prop) => bindingFor(prop, branches.get(node), node.tag, parentTag))
           .filter(Boolean);
         if (bindings.length > 0) {
           elements.push({
@@ -293,7 +316,7 @@ export function collectElements(descriptor) {
           });
         }
       }
-      walk(node.children ?? []);
+      walk(node.children ?? [], node.tag);
     }
   }
 }
@@ -433,6 +456,30 @@ function isAllowedBranchAddition(entry, fileAllowlist) {
   );
 }
 
+/**
+ * A new element whose only binding is the `as` a primitive renders through
+ * `<component :is>`, admitted by a row that names the tag and that exact
+ * binding, in the compact `kind=expression` form:
+ *
+ *   { file, tag: 'UiCard', bindings: ['attr:as=section'], reason: '…' }
+ *
+ * Same shape as the branch-only rule above: a row without a `bindings` list
+ * never matches, so a reason alone cannot open the gate, and the tag is the one
+ * the manifest records (a `UiButton` is recorded as `button`).
+ */
+function isAllowedAsAddition(entry, fileAllowlist) {
+  if (entry.bindings.length === 0) return false;
+  if (!entry.bindings.every((b) => AS_KINDS.has(b.kind))) return false;
+  const keys = entry.bindings.map((b) => `${b.kind}=${collapse(b.expression ?? '')}`);
+  return fileAllowlist.some(
+    (allowed) =>
+      allowed.tag === entry.tag &&
+      Array.isArray(allowed.bindings) &&
+      allowed.bindings.length === keys.length &&
+      allowed.bindings.every((name, index) => collapse(name) === keys[index]),
+  );
+}
+
 function isRouterViewSlotAddition(file, entry, fileAllowlist) {
   if (file !== ROUTERVIEW_SLOT_FILE) return false;
   if (!fileAllowlist.some((allowed) => allowed.reason === ROUTERVIEW_SLOT_REASON)) return false;
@@ -442,6 +489,7 @@ function isRouterViewSlotAddition(file, entry, fileAllowlist) {
 function isAllowedAddition(file, entry, fileAllowlist) {
   return (
     isAllowedBranchAddition(entry, fileAllowlist) ||
+    isAllowedAsAddition(entry, fileAllowlist) ||
     isRouterViewSlotAddition(file, entry, fileAllowlist)
   );
 }
