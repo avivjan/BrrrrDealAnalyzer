@@ -136,6 +136,8 @@ export function isChartTokenSubstitution(added, removed) {
 
 function isAllowedAddedLine(line, isE1) {
   const trimmed = line.trim();
+  // A blank line is a separator before an allowed appended line, never behaviour.
+  if (trimmed === '') return true;
   if (ALLOWED_ADDED_LINES.some((pattern) => pattern.test(trimmed))) return true;
   return isE1 && E1_IMPORT.test(trimmed);
 }

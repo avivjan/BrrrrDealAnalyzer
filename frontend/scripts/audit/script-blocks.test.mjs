@@ -78,6 +78,18 @@ describe('G3 script freeze', () => {
     expect(result.lines.some((l) => l.text.includes('removed line'))).toBe(true);
   });
 
+  it('allows a blank separator line before an allowed appended line', () => {
+    const after = sfc(
+      `import { computed } from "vue";\n\nconst total = computed(() => 1 + 1);\n\nconst panelRef = ref<HTMLElement | null>(null);`,
+    );
+    const result = verify({ 'src/A.vue': BASE }, { 'src/A.vue': after }, {
+      ...EMPTY_ALLOWLIST,
+      scripts: [{ file: 'src/A.vue', reason: 'template ref for the panel' }],
+    });
+    expect(result.lines.filter((l) => l.level === 'FAIL')).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
   it('fails an added line that matches no allowed pattern', () => {
     const after = sfc(
       `import { computed } from "vue";\n\nconst total = computed(() => 1 + 1);\nconst x = 1;`,

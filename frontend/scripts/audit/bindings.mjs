@@ -46,6 +46,8 @@ const BEHAVIOURAL_ATTRS = new Set([
   'autocomplete', 'placeholder', 'title', 'tabindex', 'handle', 'group', 'animation',
   'ref', 'value', 'name', 'min', 'max', 'step', 'rows', 'maxlength', 'readonly',
   'disabled', 'checked', 'selected',
+  // A Teleport/RouterLink target is behaviour, not presentation.
+  'to',
 ]);
 
 /** Purely decorative motion directives — invisible unless they take a value. */
@@ -265,43 +267,67 @@ function branchExpression(entry) {
   return collapse(entry.bindings.map((b) => b.expression ?? '').join(' '));
 }
 
-/** Entries the `routerview-transition-slot` reason covers on both sides of the diff. */
-function isRouterViewSlotEntry(entry) {
-  return (
-    TRANSITION_TAGS.has(entry.tag) ||
-    entry.tag === 'RouterView' ||
-    entry.tag === 'component' ||
-    entry.bindings.some((b) => b.kind === 'slot')
-  );
-}
+/**
+ * The one-time `App.vue` rewrite the plan approves:
+ *
+ *   <RouterView v-slot="{ Component }">
+ *     <UiTransition preset="page" appear><component :is="Component" /></UiTransition>
+ *   </RouterView>
+ *
+ * It is an exact-match whitelist of the two entries that rewrite adds (the
+ * transition itself is a wrapper and is never recorded), not a tag-based class:
+ * anything else under the same reason must fail.
+ */
+const ROUTERVIEW_SLOT_REASON = 'routerview-transition-slot';
+const ROUTERVIEW_SLOT_FILE = 'src/App.vue';
+const ROUTERVIEW_SLOT_ADDITIONS = new Set([
+  JSON.stringify({
+    tag: 'RouterView',
+    bindings: [{ kind: 'slot', arg: null, modifiers: [], expression: '{ Component }' }],
+  }),
+  JSON.stringify({
+    tag: 'component',
+    bindings: [{ kind: 'bind:is', arg: 'is', modifiers: [], expression: 'Component' }],
+  }),
+]);
 
 function allowlistFor(allowlist, file) {
   return (allowlist.bindings ?? []).filter((entry) => entry.file === file);
 }
 
-function isAllowedAddition(entry, fileAllowlist) {
-  if (
-    isBranchOnlyEntry(entry) &&
-    fileAllowlist.some((allowed) => collapse(allowed.expression ?? '') === branchExpression(entry))
-  ) {
-    return true;
-  }
-  return (
-    isRouterViewSlotEntry(entry) &&
-    fileAllowlist.some((allowed) => allowed.reason === 'routerview-transition-slot')
+/**
+ * A new presentational `v-if` chain, admitted only by a row that names the
+ * exact expression. A row without an `expression`, or an entry with none of its
+ * own (a bare `v-else`), never matches: a reason alone must not open the gate.
+ */
+function isAllowedBranchAddition(entry, fileAllowlist) {
+  if (!isBranchOnlyEntry(entry)) return false;
+  const expression = branchExpression(entry);
+  if (expression === '') return false;
+  return fileAllowlist.some(
+    (allowed) =>
+      typeof allowed.expression === 'string' && collapse(allowed.expression) === expression,
   );
 }
 
-function isAllowedRemoval(entry, fileAllowlist) {
+function isRouterViewSlotAddition(file, entry, fileAllowlist) {
+  if (file !== ROUTERVIEW_SLOT_FILE) return false;
+  if (!fileAllowlist.some((allowed) => allowed.reason === ROUTERVIEW_SLOT_REASON)) return false;
+  return ROUTERVIEW_SLOT_ADDITIONS.has(canonical(entry));
+}
+
+function isAllowedAddition(file, entry, fileAllowlist) {
   return (
-    isRouterViewSlotEntry(entry) &&
-    fileAllowlist.some((allowed) => allowed.reason === 'routerview-transition-slot')
+    isAllowedBranchAddition(entry, fileAllowlist) ||
+    isRouterViewSlotAddition(file, entry, fileAllowlist)
   );
 }
 
 /**
- * Diff two ordered entry lists, pairing an adjacent removal + addition into a
- * single "changed" report so the output names the golden and current lines.
+ * Diff two ordered entry lists, pairing an adjacent removal + reportable
+ * addition into a single "changed" report so the output names the golden and
+ * current lines. Allowlisted additions are set aside *before* pairing, so an
+ * accepted addition can never disguise a removal as a rename.
  */
 export function diffElements(file, goldenElements, currentElements, fileAllowlist) {
   const parts = diffArrays(goldenElements.map(canonical), currentElements.map(canonical));
@@ -310,60 +336,63 @@ export function diffElements(file, goldenElements, currentElements, fileAllowlis
   let currentIndex = 0;
 
   for (let part = 0; part < parts.length; part += 1) {
-    const current = parts[part];
-    if (!current.added && !current.removed) {
-      goldenIndex += current.value.length;
-      currentIndex += current.value.length;
+    const chunk = parts[part];
+    if (!chunk.added && !chunk.removed) {
+      goldenIndex += chunk.value.length;
+      currentIndex += chunk.value.length;
       continue;
     }
-    if (current.removed) {
+
+    let removed = [];
+    let added = [];
+    if (chunk.removed) {
+      removed = goldenElements.slice(goldenIndex, goldenIndex + chunk.value.length);
+      goldenIndex += chunk.value.length;
       const next = parts[part + 1];
-      const removed = goldenElements.slice(goldenIndex, goldenIndex + current.value.length);
-      goldenIndex += current.value.length;
       if (next?.added) {
-        const added = currentElements.slice(currentIndex, currentIndex + next.value.length);
+        added = currentElements.slice(currentIndex, currentIndex + next.value.length);
         currentIndex += next.value.length;
         part += 1;
-        const pairs = Math.min(removed.length, added.length);
-        for (let i = 0; i < pairs; i += 1) {
-          lines.push({
-            level: 'FAIL',
-            text:
-              `${file} changed element (golden L${removed[i].line} -> current L${added[i].line}) ` +
-              `${canonical(removed[i])} => ${canonical(added[i])}`,
-          });
-        }
-        lines.push(...reportExtraRemovals(file, removed.slice(pairs), fileAllowlist));
-        lines.push(...reportExtraAdditions(file, added.slice(pairs), fileAllowlist));
-        continue;
       }
-      lines.push(...reportExtraRemovals(file, removed, fileAllowlist));
-      continue;
+    } else {
+      added = currentElements.slice(currentIndex, currentIndex + chunk.value.length);
+      currentIndex += chunk.value.length;
     }
-    const added = currentElements.slice(currentIndex, currentIndex + current.value.length);
-    currentIndex += current.value.length;
-    lines.push(...reportExtraAdditions(file, added, fileAllowlist));
+
+    const reportable = added.filter((entry) => !isAllowedAddition(file, entry, fileAllowlist));
+    const pairs = Math.min(removed.length, reportable.length);
+    for (let index = 0; index < pairs; index += 1) {
+      lines.push(changedElementLine(file, removed[index], reportable[index]));
+    }
+    lines.push(...removed.slice(pairs).map((entry) => removedElementLine(file, entry)));
+    lines.push(...reportable.slice(pairs).map((entry) => addedElementLine(file, entry)));
   }
 
   return lines;
 }
 
-function reportExtraRemovals(file, removed, fileAllowlist) {
-  return removed
-    .filter((entry) => !isAllowedRemoval(entry, fileAllowlist))
-    .map((entry) => ({
-      level: 'FAIL',
-      text: `${file} removed element (golden L${entry.line}) ${canonical(entry)}`,
-    }));
+function changedElementLine(file, before, after) {
+  return {
+    level: 'FAIL',
+    text:
+      `${file} changed element (golden L${before.line} -> current L${after.line}) ` +
+      `${canonical(before)} => ${canonical(after)}`,
+  };
 }
 
-function reportExtraAdditions(file, added, fileAllowlist) {
-  return added
-    .filter((entry) => !isAllowedAddition(entry, fileAllowlist))
-    .map((entry) => ({
-      level: 'FAIL',
-      text: `${file} added element (current L${entry.line}) ${canonical(entry)}`,
-    }));
+/** A removed behavioural element is always a failure; no allowlist row admits one. */
+function removedElementLine(file, entry) {
+  return {
+    level: 'FAIL',
+    text: `${file} removed element (golden L${entry.line}) ${canonical(entry)}`,
+  };
+}
+
+function addedElementLine(file, entry) {
+  return {
+    level: 'FAIL',
+    text: `${file} added element (current L${entry.line}) ${canonical(entry)}`,
+  };
 }
 
 export function verifyBindings({ golden, current, allowlist }) {

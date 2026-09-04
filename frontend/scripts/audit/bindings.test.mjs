@@ -165,23 +165,86 @@ describe('G4 behaviour manifest', () => {
     expect(result.lines.some((l) => l.level === 'INFO' && l.text.includes('src/components/New.vue'))).toBe(true);
   });
 
-  it('accepts the App.vue RouterView slot rewrite when allowlisted', () => {
-    const app = 'src/App.vue';
-    const golden = { [app]: manifestFromSource(sfc('<RouterView />'), app) };
-    const current = {
-      [app]: manifestFromSource(
-        sfc('<RouterView v-slot="{ Component }"><component :is="Component" /></RouterView>'),
-        app,
-      ),
-    };
-    const denied = verifyBindings({ golden, current, allowlist: EMPTY_ALLOWLIST });
-    expect(denied.ok).toBe(false);
-    const allowed = verifyBindings({
-      golden,
-      current,
-      allowlist: { ...EMPTY_ALLOWLIST, bindings: [{ file: app, reason: 'routerview-transition-slot' }] },
+  it('records a Teleport target as a behavioural attribute', () => {
+    const manifest = manifestFromSource(sfc('<Teleport to="body"><div class="x">m</div></Teleport>'), FILE);
+    expect(manifest.elements).toEqual([
+      {
+        tag: 'Teleport',
+        line: 7,
+        bindings: [{ kind: 'attr:to', arg: null, modifiers: [], expression: 'body' }],
+      },
+    ]);
+  });
+
+  it('flags a re-targeted Teleport', () => {
+    const result = compare('<Teleport to="body"><div /></Teleport>', '<Teleport to="#app"><div /></Teleport>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:to'))).toBe(true);
+  });
+});
+
+describe('G4 allowlist paths', () => {
+  it('does not admit a branch-only addition through a row with no expression', () => {
+    const result = compare('<button @click="a">x</button>', '<button @click="a">x</button><div v-else />', {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, reason: 'decorative' }],
     });
+    expect(result.ok).toBe(false);
+  });
+
+  it('does not admit a branch-only addition through a row with an empty expression', () => {
+    const result = compare('<button @click="a">x</button>', '<div v-if="halo" /><button @click="a">x</button>', {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, expression: '', reason: 'decorative' }],
+    });
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe('G4 routerview-transition-slot exemption', () => {
+  const app = 'src/App.vue';
+  const REWRITE =
+    '<RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>';
+  const row = (file) => ({
+    ...EMPTY_ALLOWLIST,
+    bindings: [{ file, reason: 'routerview-transition-slot' }],
+  });
+
+  function verifyApp(beforeTemplate, afterTemplate, allowlist, file = app) {
+    return verifyBindings({
+      golden: { [file]: manifestFromSource(sfc(beforeTemplate), file) },
+      current: { [file]: manifestFromSource(sfc(afterTemplate), file) },
+      allowlist,
+    });
+  }
+
+  it('accepts exactly the approved App.vue rewrite when the row is present', () => {
+    expect(verifyApp('<RouterView />', REWRITE, EMPTY_ALLOWLIST).ok).toBe(false);
+    const allowed = verifyApp('<RouterView />', REWRITE, row(app));
+    expect(fails(allowed)).toEqual([]);
     expect(allowed.ok).toBe(true);
+  });
+
+  it('rejects the rewrite when it smuggles in another element', () => {
+    const result = verifyApp('<RouterView />', `${REWRITE}<div v-if="x" />`, row(app));
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('never accepts a removal, even with the row present', () => {
+    const result = verifyApp(
+      `<div :title="t" /><RouterView />`,
+      REWRITE,
+      row(app),
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('removed element'))).toBe(true);
+  });
+
+  it('does not apply the exemption to any other file', () => {
+    const other = 'src/views/MyDeals.vue';
+    const result = verifyApp('<RouterView />', REWRITE, row(other), other);
+    expect(result.ok).toBe(false);
   });
 
   it('does not compare line numbers', () => {
