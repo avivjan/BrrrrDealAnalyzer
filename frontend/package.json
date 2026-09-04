@@ -36,5 +36,11 @@
     "vite": "^7.2.4",
     "vitest": "^4.1.4",
     "vue-tsc": "^3.1.4"
-  }
+  },
+  "browserslist": [
+    "defaults",
+    "iOS >= 15",
+    "Safari >= 15",
+    "Chrome >= 100"
+  ]
 }

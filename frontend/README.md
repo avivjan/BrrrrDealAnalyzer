@@ -1,5 +1,46 @@
-# Vue 3 + TypeScript + Vite
+# BrrrrDealAnalyzer Frontend
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite + TypeScript frontend, styled with Tailwind CSS and unstyled PrimeVue components.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Getting started
+
+```
+npm run dev
+```
+
+Starts the Vite dev server.
+
+## Testing
+
+```
+npm test
+```
+
+Runs the Vitest suite once (see also `npm run test:watch` for watch mode).
+
+## Building
+
+```
+npm run build
+```
+
+Type-checks with `vue-tsc` and produces a production build via Vite.
+
+## Backend API URL
+
+The frontend talks to the backend over `VITE_API_URL`, which defaults to `http://localhost:8000` when unset. See `src/api/index.ts` for how the API client is configured.
+
+## Supported platforms
+
+The build targets iOS/Safari >= 15.4 and Chrome >= 100 (see the `browserslist` field in `package.json` and `build.target` in `vite.config.ts`).
+
+## How to verify a change
+
+Before committing, run:
+
+```
+npm test
+npm run build
+```
+
+Both must complete successfully.
