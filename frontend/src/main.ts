@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
 import App from './App.vue'
 import router from './router'
+import '@fontsource-variable/inter'
 import './assets/main.css'
 import 'primeicons/primeicons.css'
 
