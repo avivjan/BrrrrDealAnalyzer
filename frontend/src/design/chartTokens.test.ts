@@ -34,9 +34,6 @@ const cssTokens = (() => {
   return found;
 })();
 
-/** CSS is free with whitespace inside `rgba(…)`; a canvas literal is not. */
-const squeeze = (value: string) => value.replace(/\s+/g, "");
-
 afterEach(() => {
   resetChartTokenCache();
   Reflect.deleteProperty(globalThis, "document");
@@ -72,20 +69,8 @@ describe("chartTokens", () => {
     it("every fallback has a matching --chart-* declaration in tokens.css", () => {
       expect([...cssTokens.keys()].sort()).toEqual([...NAMES].sort());
       for (const name of NAMES) {
-        expect(squeeze(cssTokens.get(name)!)).toBe(squeeze(CHART_FALLBACKS[name]));
+        expect(cssTokens.get(name)).toBe(CHART_FALLBACKS[name]);
       }
-    });
-
-    it("only --chart-weekend-band differs from its literal, and only in spacing", () => {
-      // `tokens.css` writes `rgba(255, 255, 255, 0.015)` the way CSS is
-      // normally written; the canvas literal in `TimelineChart.vue` has no
-      // spaces. Identical to a renderer, so the check above squeezes
-      // whitespace -- this test pins down that spacing is the *only* thing
-      // that is ever allowed to differ.
-      const spaced = NAMES.filter(
-        (name) => cssTokens.get(name) !== CHART_FALLBACKS[name],
-      );
-      expect(spaced).toEqual(["weekend-band"]);
     });
   });
 

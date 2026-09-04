@@ -131,6 +131,13 @@ export function chartToken(name: ChartTokenName): string {
   // of the page if a DOM appeared later.
   if (typeof document === "undefined") return fallback;
 
+  // With a document, whatever comes back is cached for the page -- including
+  // the fallback, when the property resolves empty. That is deliberate: the
+  // stylesheet either has the token or it never will, and re-asking on every
+  // frame would force a style recalculation to learn the same nothing. It is
+  // also harmless in Phase 1, where each fallback *is* the token's value.
+  // A future theme switch changes that, and must call resetChartTokenCache()
+  // before it redraws.
   const value = readCustomProperty(name) || fallback;
   resolved.set(name, value);
   return value;

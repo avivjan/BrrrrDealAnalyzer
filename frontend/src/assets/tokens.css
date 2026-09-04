@@ -87,7 +87,7 @@
   --chart-grid: #1e2030;
   --chart-axis-text: #5c6078;
   --chart-reserve-band: rgba(239, 68, 68, 0.04);
-  --chart-weekend-band: rgba(255, 255, 255, 0.015);
+  --chart-weekend-band: rgba(255,255,255,0.015);
   --chart-today-band: rgba(99, 102, 241, 0.08);
   --chart-month-line: #2a2f45;
   --chart-day-line: #16192a;

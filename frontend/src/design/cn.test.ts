@@ -53,19 +53,67 @@ describe("cn", () => {
       expect(cn("text-fg-muted", "text-fg")).toBe("text-fg");
     });
 
-    it("does not merge the custom radius scale — a known, harmless gap", () => {
-      // tailwind-merge's stock config enumerates `rounded-{none,sm,md,lg,…}`
-      // and has no way to learn that `ctl`/`card`/`panel` belong to the same
-      // group, so both survive and stylesheet order decides. Nothing stacks
-      // two radii today; if that changes, the fix is `extendTailwindMerge`
-      // with the project's radius keys, not a change at the call site.
-      expect(cn("rounded-ctl", "rounded-panel")).toBe("rounded-ctl rounded-panel");
+    it("lets a semantic colour beat a stock Tailwind one, and the reverse", () => {
+      expect(cn("bg-gray-50", "bg-page")).toBe("bg-page");
+      expect(cn("bg-page", "bg-gray-50")).toBe("bg-gray-50");
+    });
+
+    /**
+     * The four scales `tailwind.config.js` adds keys to. tailwind-merge can
+     * infer a colour group from any scale key, but not these: a bare
+     * `rounded-card` is indistinguishable from a class it has never heard of.
+     * So `cn` teaches it the project's keys through `extendTailwindMerge`.
+     * Without that the loser of each pair survives and stylesheet order,
+     * rather than the caller, picks the winner.
+     */
+    describe("the project's custom scales", () => {
+      const pairs: [scale: string, stock: string, token: string][] = [
+        ["radius", "rounded-lg", "rounded-card"],
+        ["elevation", "shadow-md", "shadow-2"],
+        ["duration", "duration-300", "duration-fast"],
+        ["easing", "ease-in", "ease-standard"],
+      ];
+
+      it.each(pairs)("merges the %s scale", (_scale, stock, token) => {
+        expect(cn(stock, token)).toBe(token);
+        // Position is the only thing that decides, in both directions.
+        expect(cn(token, stock)).toBe(stock);
+      });
+
+      it("merges two token values of the same scale against each other", () => {
+        expect(cn("rounded-ctl", "rounded-panel")).toBe("rounded-panel");
+        expect(cn("shadow-1", "shadow-3")).toBe("shadow-3");
+        expect(cn("duration-slow", "duration-fast")).toBe("duration-fast");
+        expect(cn("ease-exit", "ease-emphasized")).toBe("ease-emphasized");
+      });
+
+      it("still merges the stock keys the scales were extended from", () => {
+        // Extending a group must not replace it. Every class here is one the
+        // app already ships, so the assertion costs no extra generated CSS --
+        // Tailwind's content glob scans this file too.
+        expect(cn("rounded-lg", "rounded-full")).toBe("rounded-full");
+        expect(cn("shadow-sm", "shadow-lg")).toBe("shadow-lg");
+        expect(cn("duration-300", "duration-200")).toBe("duration-200");
+        expect(cn("ease-in", "ease-out")).toBe("ease-out");
+      });
+
+      it("keeps the four scales independent of one another", () => {
+        expect(cn("rounded-card shadow-2 duration-fast ease-standard")).toBe(
+          "rounded-card shadow-2 duration-fast ease-standard",
+        );
+      });
     });
 
     it("leaves non-conflicting utilities from both sides alone", () => {
       expect(cn("text-fg shadow-1", "bg-surface")).toBe(
         "text-fg shadow-1 bg-surface",
       );
+    });
+
+    it("does not mistake a shadow colour for a shadow size", () => {
+      // `shadow-2` is an elevation; `shadow-primary` tints the shadow. They
+      // are separate groups, and extending one must not swallow the other.
+      expect(cn("shadow-2", "shadow-primary")).toBe("shadow-2 shadow-primary");
     });
 
     it("treats a variant as its own scope", () => {
