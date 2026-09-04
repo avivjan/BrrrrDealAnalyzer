@@ -5,3 +5,4 @@
  * props and slots and render tokens. Batch B extends the list.
  */
 export { default as UiButton } from "./UiButton.vue";
+export { default as UiIconButton } from "./UiIconButton.vue";
