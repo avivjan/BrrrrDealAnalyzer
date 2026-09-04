@@ -32,11 +32,16 @@ does not read primitive templates and that text is not the view's copy.
 primitive calls `stopPropagation` or `preventDefault`, so a `@click` that moved
 from a `div` to a `<UiCard>` still fires on the same DOM node.
 
-The pass-through is a plain function evaluated during render, never a
-`computed`. `useAttrs()` returns a proxy that tracks a *read of a key*, so
-spreading it while it holds no keys registers no dependency at all — a computed
-caches that first empty object for the life of the component and silently drops
-every attribute the parent binds later. `UiCard.test.ts` has the regression.
+Nothing that reads `$attrs` or `$slots` may be cached in a `computed`. Both are
+evaluated during render — in a plain function or in the template itself — and
+for two different reasons. `useAttrs()` returns a proxy that tracks a *read of a
+key*, so spreading it while it holds no keys registers no dependency at all: a
+computed caches that first empty object for the life of the component and
+silently drops every attribute the parent binds later. Slots are not tracked at
+all: `useSlots()` is a plain object Vue mutates in place, so a computed over
+`$slots.error` freezes at whatever the first render saw and never notices the
+parent starting or stopping to pass it. `UiCard.test.ts`, `UiField.test.ts` and
+`UiModalPanel.test.ts` have the regressions.
 
 **3. Tokens only.** `bg-surface`, `text-fg-muted`, `border-line`,
 `rounded-ctl/card/panel`, `shadow-1/2/3`, `duration-fast`, `ease-standard`.

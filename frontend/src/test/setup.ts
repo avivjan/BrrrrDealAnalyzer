@@ -8,7 +8,9 @@
  * Only APIs jsdom genuinely lacks are installed, and (apart from the canvas
  * context, see below) only when missing, so a future jsdom that implements one
  * of them wins over the stub. Nothing here stubs a component or a directive;
- * that belongs to the test that needs it.
+ * that belongs to the test that needs it. The one non-polyfill is the global
+ * registration of the Ui* primitives at the end, which mirrors what `main.ts`
+ * does to the real app — a registration, not a stub: the real ones render.
  */
 
 /** Assign `value` at `key` only when the host has no implementation of its own. */
@@ -84,6 +86,20 @@ if (typeof window !== "undefined") {
     writable: true,
     configurable: true,
   });
+
+  // `main.ts` registers the Ui* primitives globally, so a view template writes
+  // `<UiButton>` without importing it (the Phase 3 script freeze forbids the
+  // import). A test that mounts such a view needs the same registration, so the
+  // one map in `components/ui/register.ts` also goes on Test Utils' global
+  // config. This is registration, not stubbing: the real primitives render.
+  //
+  // Both imports are dynamic and inside the guard on purpose. The
+  // `scripts/audit/*.test.mjs` suites run under the `node` environment and
+  // share this setup file; they must not pay for — or be broken by — Test
+  // Utils and thirteen SFCs being loaded for them.
+  const { config } = await import("@vue/test-utils");
+  const { UI_COMPONENTS } = await import("../components/ui/register");
+  config.global.components = { ...config.global.components, ...UI_COMPONENTS };
 }
 
 export {};

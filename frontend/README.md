@@ -71,6 +71,13 @@ is complete, but no theme toggle ships.
 and ease names instead of milliseconds and cubic-béziers); its test fails if the
 two ever drift.
 
+The presentational primitives in `src/components/ui/` (`UiButton`, `UiCard`,
+`UiField`, …) are registered globally — by `main.ts` for the app and by
+`src/test/setup.ts` for the Vitest suite, both from the one map in
+`src/components/ui/register.ts` — so a template writes `<UiButton>` with no
+import line, and `src/components.d.ts` mirrors the names into Vue's
+`GlobalComponents` so `vue-tsc` still checks the props they are passed.
+
 ```
 npm run audit:contrast
 ```

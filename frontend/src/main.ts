@@ -4,6 +4,7 @@ import PrimeVue from 'primevue/config';
 import App from './App.vue'
 import router from './router'
 import { primevuePt } from './design/primevue-pt'
+import { registerUiPrimitives } from './components/ui/register'
 import '@fontsource-variable/inter'
 import './assets/main.css'
 import 'primeicons/primeicons.css'
@@ -19,6 +20,7 @@ app.use(PrimeVue, {
     pt: primevuePt,
     ptOptions: { mergeSections: true, mergeProps: true }
 });
+registerUiPrimitives(app)
 
 app.mount('#app')
 console.log('Main: App mounted');
