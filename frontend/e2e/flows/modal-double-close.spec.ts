@@ -32,6 +32,7 @@ test('two Close clicks in the same tick still write once', async ({
   // calls are two round-trips apart, which is long enough for `closeModal` to
   // finish and hide the modal — so the second one never races the first and
   // the test proves nothing. This is the real double-tap.
+  await expect(page.getByTestId('mydeals.modal.footer-close')).toBeVisible();
   await page.evaluate(() => {
     const close = document.querySelector<HTMLElement>(
       '[data-testid="mydeals.modal.footer-close"]',
