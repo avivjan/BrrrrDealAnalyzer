@@ -1,237 +1,207 @@
 {
-  "analyze": [
-    {
-      "id": "aria-input-field-name",
+  "analyze": {
+    "aria-input-field-name": {
       "impact": "serious",
-      "targets": [
+      "count": 2,
+      "examples": [
         "div[pc11=\"\"] > .border-2.border-blue-500.w-5",
         "span[aria-valuemin=\"3\"]"
       ]
     },
-    {
-      "id": "button-name",
+    "button-name": {
       "impact": "critical",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".hover\\:text-blue-600"
       ]
     },
-    {
-      "id": "label",
+    "label": {
       "impact": "critical",
-      "targets": [
+      "count": 24,
+      "examples": [
         "#pv_id_1",
         "#pv_id_10",
         "#pv_id_13",
         "#pv_id_15",
-        "#pv_id_17",
-        "#pv_id_20",
-        "#pv_id_22",
-        "#pv_id_24",
-        "#pv_id_26",
-        "#pv_id_28",
-        "#pv_id_3",
-        "#pv_id_5",
-        "#pv_id_7",
-        ".gap-1\\.5.flex-col.flex:nth-child(2) > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.annual_insurance\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.arv_in_thousands\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.cashReserve\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.montly_hoa\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.purchasePrice\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.rehabCost\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "div[data-testid=\"form.field.rent\"] > .disabled\\:bg-gray-100.disabled\\:text-gray-400[value=\"$0\"]",
-        "input[type=\"checkbox\"]",
-        "input[value=\"$10,000\"]",
-        "input[value=\"$5,000\"]"
+        "#pv_id_17"
       ]
     },
-    {
-      "id": "landmark-one-main",
+    "landmark-one-main": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "html"
       ]
     },
-    {
-      "id": "region",
+    "region": {
       "impact": "moderate",
-      "targets": [
+      "count": 13,
+      "examples": [
         ".gap-1\\.5.flex-col[data-part=\"input\"]",
         ".shadow-xl",
         "div[data-testid=\"form.field.arv_in_thousands\"]",
         "div[data-testid=\"form.field.cashReserve\"]",
-        "div[data-testid=\"form.field.closingCostsRefi\"]",
-        "div[data-testid=\"form.field.daysUntilRefi\"] > .items-center.justify-between.flex > .after\\:content-\\[\\'\\*\\'\\].after\\:ml-0\\.5.after\\:text-red-500",
-        "div[data-testid=\"form.field.interestRate\"]",
-        "div[data-testid=\"form.field.loanTermYears\"]",
-        "div[data-testid=\"form.field.ltv_as_precent\"]",
-        "div[data-testid=\"form.field.refiPoints\"]",
-        "section:nth-child(1)",
-        "section:nth-child(2) > h2",
-        "section:nth-child(3)"
+        "div[data-testid=\"form.field.closingCostsRefi\"]"
       ]
     }
-  ],
-  "bought-deals": [
-    {
-      "id": "button-name",
+  },
+  "bought-deals": {
+    "button-name": {
       "impact": "critical",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".hover\\:text-blue-600"
       ]
     },
-    {
-      "id": "color-contrast",
+    "color-contrast": {
       "impact": "serious",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".hover\\:text-gray-700"
       ]
     },
-    {
-      "id": "heading-order",
+    "heading-order": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "div[data-testid=\"boughtdeals.stage.purchase\"] > .border-l-blue-500.border-gray-100.bg-gray-50\\/50 > .gap-3.items-center.flex > h3"
       ]
     },
-    {
-      "id": "landmark-one-main",
+    "landmark-one-main": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "html"
       ]
     },
-    {
-      "id": "region",
+    "region": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".flex-1"
       ]
     },
-    {
-      "id": "scrollable-region-focusable",
+    "scrollable-region-focusable": {
       "impact": "serious",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".flex-1"
       ]
     }
-  ],
-  "landing": [
-    {
-      "id": "landmark-one-main",
+  },
+  "landing": {
+    "landmark-one-main": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "html"
       ]
     },
-    {
-      "id": "region",
+    "region": {
       "impact": "moderate",
-      "targets": [
+      "count": 8,
+      "examples": [
         ".idx-0 > .card-inner > .card-body",
         ".idx-1 > .card-inner > .card-body",
         ".idx-2 > .card-inner > .card-body",
         ".idx-3 > .card-inner > .card-body",
-        ".idx-4 > .card-inner > .card-body",
-        ".idx-5 > .card-inner > .card-body",
-        ".idx-6 > .card-inner > .card-body",
-        ".resources"
+        ".idx-4 > .card-inner > .card-body"
       ]
     }
-  ],
-  "liquidity": [
-    {
-      "id": "color-contrast",
+  },
+  "liquidity": {
+    "color-contrast": {
       "impact": "serious",
-      "targets": [
+      "count": 1,
+      "examples": [
         "p"
       ]
     },
-    {
-      "id": "landmark-one-main",
+    "landmark-one-main": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "html"
       ]
     },
-    {
-      "id": "region",
+    "region": {
       "impact": "moderate",
-      "targets": [
+      "count": 3,
+      "examples": [
         ".bottom-6",
         "h2",
         "p"
       ]
     }
-  ],
-  "my-deals": [
-    {
-      "id": "button-name",
+  },
+  "my-deals": {
+    "button-name": {
       "impact": "critical",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".hover\\:text-blue-600"
       ]
     },
-    {
-      "id": "color-contrast",
+    "color-contrast": {
       "impact": "serious",
-      "targets": [
+      "count": 2,
+      "examples": [
         "button[data-testid=\"mydeals.tab.2\"]",
         "button[data-testid=\"mydeals.tab.3\"]"
       ]
     },
-    {
-      "id": "heading-order",
+    "heading-order": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "div[data-testid=\"mydeals.stage.1\"] > .border-gray-100.bg-gray-50\\/50.rounded-t-xl > .gap-3.items-center.flex > h3"
       ]
     },
-    {
-      "id": "landmark-one-main",
+    "landmark-one-main": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         "html"
       ]
     },
-    {
-      "id": "region",
+    "region": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".flex-1"
       ]
     },
-    {
-      "id": "scrollable-region-focusable",
+    "scrollable-region-focusable": {
       "impact": "serious",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".flex-1"
       ]
     }
-  ],
-  "reps": [
-    {
-      "id": "color-contrast",
+  },
+  "reps": {
+    "color-contrast": {
       "impact": "serious",
-      "targets": [
+      "count": 3,
+      "examples": [
         ".bg-emerald-600",
         ".mb-5:nth-child(4) > .mb-1.justify-between.text-xs > .text-emerald-600",
         "div:nth-child(5) > .mb-1.justify-between.text-xs > .text-emerald-600"
       ]
     },
-    {
-      "id": "heading-order",
+    "heading-order": {
       "impact": "moderate",
-      "targets": [
+      "count": 1,
+      "examples": [
         ".mb-6.justify-between.items-center > h3"
       ]
     },
-    {
-      "id": "select-name",
+    "select-name": {
       "impact": "critical",
-      "targets": [
+      "count": 1,
+      "examples": [
         "select"
       ]
     }
-  ]
+  }
 }
