@@ -1,0 +1,12 @@
+{
+  "requests": [
+    {
+      "method": "DELETE",
+      "path": "/liquidity/recurring/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/recurring"
+    }
+  ]
+}
