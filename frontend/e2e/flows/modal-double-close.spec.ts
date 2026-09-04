@@ -10,7 +10,7 @@ import { expect, test } from '../fixtures';
  * that adds a transition to the close button is exactly what re-opens the gap.
  */
 
-test('two Close clicks 50 ms apart still write once', async ({
+test('two Close clicks in the same tick still write once', async ({
   page,
   api,
   seed,
@@ -28,10 +28,16 @@ test('two Close clicks 50 ms apart still write once', async ({
   await page.getByTestId('mydeals.modal.task').fill('Chase the title company');
   await settle(100);
 
-  const close = page.getByTestId('mydeals.modal.footer-close');
-  await close.click();
-  await close.click({ force: true, timeout: 2000 }).catch(() => {
-    // The modal may already be gone; that is itself the desired outcome.
+  // Both clicks in one tick, from inside the page: two Playwright `click()`
+  // calls are two round-trips apart, which is long enough for `closeModal` to
+  // finish and hide the modal — so the second one never races the first and
+  // the test proves nothing. This is the real double-tap.
+  await page.evaluate(() => {
+    const close = document.querySelector<HTMLElement>(
+      '[data-testid="mydeals.modal.footer-close"]',
+    );
+    close?.click();
+    close?.click();
   });
 
   await expect(page.getByTestId('mydeals.modal')).toHaveCount(0);

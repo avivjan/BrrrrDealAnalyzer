@@ -20,7 +20,9 @@ import { API_ORIGIN, APP_ORIGIN, APP_PORT } from './e2e/fixtures/env';
 const REDUCED = { reducedMotion: 'reduce' } as const;
 
 export default defineConfig({
-  testDir: './e2e/flows',
+  // `e2e/flows` holds the user journeys; `e2e/fixtures` holds one spec that
+  // checks the axe baseline's comparison rule without a page.
+  testDir: './e2e',
   outputDir: './test-results',
 
   // One shared backend database, so tests must not overlap.
@@ -34,6 +36,7 @@ export default defineConfig({
 
   reporter: [
     ['list'],
+    ['html', { open: 'never' }],
     ['json', { outputFile: 'e2e/reports/last-run.json' }],
   ],
 

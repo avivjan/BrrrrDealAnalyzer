@@ -334,13 +334,18 @@ export class NetworkRecorder {
     }
     const golden = JSON.parse(readFileSync(file, 'utf8')) as Contract;
 
-    // Give late requests a chance to land before declaring a mismatch.
+    // Wait for the same quiet the recording waited for. Polling only until the
+    // count *reaches* the golden's would pass the instant it matched and never
+    // see a spurious trailing request — the contract has to be able to fail
+    // upwards, not just downwards.
+    await this.waitForQuiet();
+    await this.settled();
+
     await expect
       .poll(() => this.requests.length, {
         message: `request count for contract "${name}"`,
       })
       .toBe(golden.requests.length);
-    await this.settled();
 
     expect(this.requests, `network contract "${name}"`).toEqual(golden.requests);
     if (golden.rendered) {

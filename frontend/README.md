@@ -80,9 +80,15 @@ backend database.
 
 - `e2e/golden/*.json` — one network contract per flow: the ordered list of
   requests, with volatile values (ids, timestamps) redacted by key.
-- `e2e/golden/axe-baseline.json` — today's accessibility violations per route.
-  Nothing here is fixed in Phase 0; the file exists so a later phase can be
-  held to "no new ones".
+- `e2e/golden/axe-baseline.json` — today's accessibility violations per route,
+  keyed by **rule id**, each with its impact and the number of elements
+  currently failing it. A run fails when a route reports a rule it has never
+  reported, or when a known rule's count goes up. It deliberately does *not*
+  compare axe's element selectors: those are Tailwind class chains and
+  generated PrimeVue ids, so a restyle would re-report every pre-existing
+  violation as new. Sample selectors are kept under `examples` for a human to
+  start from, and are never compared. Nothing here is fixed in Phase 0; the
+  file exists so a later phase can be held to "no new ones".
 - `e2e/reports/phase0-baseline.json` — the JSON reporter output from the run
   that recorded the above.
 

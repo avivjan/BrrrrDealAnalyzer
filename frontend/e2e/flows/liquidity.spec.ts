@@ -87,6 +87,41 @@ async function pageIsZoomedOut(page: Page): Promise<boolean> {
   return layoutWidth > (page.viewportSize()?.width ?? layoutWidth);
 }
 
+/**
+ * Record — as an annotation, not an assertion — how much width the header row
+ * is actually asking for on this device.
+ *
+ * The liquidity header lays five controls out in one unwrapped row that needs
+ * about 494 CSS px, so an iPhone lets it run off the right edge and a Pixel
+ * zooms the whole page out to cope. That is a *visual* defect, and pinning it
+ * with an assertion would make the suite fail the day someone fixes it, which
+ * is backwards. It belongs in `docs/ui-overhaul/device-checklist.md`; this puts
+ * the measured number in the run report so the checklist has something to cite.
+ */
+async function annotateHeaderWidth(page: Page): Promise<void> {
+  const needed = await page.evaluate(() => {
+    const ids = [
+      'liquidity.back',
+      'liquidity.today',
+      'liquidity.mercury-sync',
+      'liquidity.settings-open',
+      'liquidity.add-flow',
+    ];
+    return Math.max(
+      ...ids.map((id) => {
+        const element = document.querySelector(`[data-testid="${id}"]`);
+        return element ? element.getBoundingClientRect().right : 0;
+      }),
+    );
+  });
+  test.info().annotations.push({
+    type: 'baseline-defect',
+    description:
+      `liquidity header needs ${Math.ceil(needed)} CSS px on a ` +
+      `${page.viewportSize()!.width} px device`,
+  });
+}
+
 async function openSettingsAndSave(page: Page, settle: Settle): Promise<void> {
   await page.getByTestId('liquidity.empty.settings').click();
   await expect(page.getByTestId('settings.root')).toBeVisible();
@@ -110,6 +145,8 @@ test('the timeline loads, fails its Mercury sync, and offers the empty state', a
   );
 
   await api.expectContract('liquidity-load');
+
+  if (isNarrow(page)) await annotateHeaderWidth(page);
 });
 
 test('settings, a one-off flow and a recurring series all persist', async ({
@@ -231,6 +268,8 @@ test('the chart walks days with the arrow keys', async ({ page, settle }) => {
 test('a successful Mercury sync renders the per-workspace breakdown', async ({
   page,
 }) => {
+  test.skip(isNarrow(page), 'sidebar is lg-only at baseline (checklist)');
+
   await page.route('**/liquidity/mercury-balance', async (route) =>
     route.fulfill({
       status: 200,
@@ -243,58 +282,11 @@ test('a successful Mercury sync renders the per-workspace breakdown', async ({
 
   await expect(page.getByTestId('chart.container')).toBeVisible();
 
-  const workspace = page.getByTestId('sidebar.workspace.BigWhales');
-  if (isNarrow(page)) {
-    // The whole sidebar is `hidden lg:block`, so on a phone the balance
-    // breakdown is rendered but never shown. Baseline behaviour, recorded.
-    await expect(workspace).toBeHidden();
-    return;
-  }
-
-  await expect(workspace).toBeVisible();
+  await expect(page.getByTestId('sidebar.workspace.BigWhales')).toBeVisible();
   await expect(page.getByTestId('sidebar.account.acct-checking')).toContainText(
     'Operating',
   );
   await expect(page.getByTestId('sidebar.account.acct-reserve')).toContainText(
     '12.3k',
   );
-});
-
-/**
- * A Phase 0 baseline defect, recorded rather than fixed.
- *
- * The liquidity header lays five controls out in one unwrapped row that needs
- * more width than any phone has. The two engines cope differently — an iPhone
- * lets the row run off the right edge, a Pixel zooms the whole page out to
- * ~494 CSS px, which is what makes that header undrivable in the flow above —
- * but the underlying fact is the same on both, so that is what is asserted.
- * A later phase that makes the header fit will fail this test, which is the
- * point: the fix has to come with an updated characterization.
- */
-test('the liquidity header needs more width than a phone has', async ({ page }) => {
-  test.skip(!isNarrow(page), 'a desktop viewport has room to spare');
-
-  await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.empty')).toBeVisible();
-
-  const needed = await page.evaluate(() => {
-    const ids = [
-      'liquidity.back',
-      'liquidity.today',
-      'liquidity.mercury-sync',
-      'liquidity.settings-open',
-      'liquidity.add-flow',
-    ];
-    return Math.max(
-      ...ids.map((id) => {
-        const element = document.querySelector(`[data-testid="${id}"]`);
-        return element ? element.getBoundingClientRect().right : 0;
-      }),
-    );
-  });
-
-  expect(
-    needed,
-    'the header row is wider than the device it is being shown on',
-  ).toBeGreaterThan(page.viewportSize()!.width);
 });

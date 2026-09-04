@@ -94,15 +94,24 @@ hardware; note the phase that fixes it beside the box.
 - [ ] **Liquidity header wider than any phone.** `/liquidity` lays Back, Today,
       Mercury, Settings and Add Flow out in one unwrapped row. On iPhone the row
       runs off the right edge; on a Pixel the browser zooms the whole page out
-      to about 494 CSS px to fit it, shrinking every label. Fixed in phase: ____
+      to about 494 CSS px to fit it, shrinking every label. **This also costs
+      automated coverage:** because the page is zoomed out, no synthetic tap
+      lands on a header control, so the e2e suite's liquidity
+      settings → one-off flow → recurring-series journey is skipped on the
+      `Mobile Chrome` (Pixel 7) project and runs on the other three only. Both
+      the layout and that skip come back together — `Fixed in phase: ____`
+      applies to the skip as much as to the header.
 - [ ] **Liquidity sidebar missing on phones.** The balance breakdown and the
       recurring-series list live in an `lg:`-only sidebar, so on a phone there
       is no way to see per-account balances or to edit or delete a recurring
       series at all. Fixed in phase: ______
 
-The last two are also asserted by the e2e suite: `e2e/flows/liquidity.spec.ts`
-records the header's width requirement and skips the sidebar-driven flows on
-narrow viewports, and both will fail — deliberately — once the layout is fixed.
+Neither of the last two is *asserted* by the e2e suite — pinning a visual defect
+with a passing assertion means the suite fails the day someone fixes it, which
+is backwards. Instead `e2e/flows/liquidity.spec.ts` skips the flows they make
+undrivable, with the reason in the skip message, and annotates each run with the
+header width it measured on that device. This checklist is where they are
+tracked; the suite just says why it stepped around them.
 
 Anything new found during a pass gets appended here with the date, so the next
 phase inherits the list rather than rediscovering it.
