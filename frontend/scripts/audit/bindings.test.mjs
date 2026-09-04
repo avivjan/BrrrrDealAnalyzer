@@ -424,17 +424,20 @@ describe('G4 primitive-aware collection, round 1', () => {
   });
 
   it('reports a new entry when as is the only binding', () => {
-    const result = compare('<section class="x">t</section>', '<UiCard as="section" class="x">t</UiCard>');
+    const result = compare('<section class="x">t</section>', '<UiCard as="button" class="x">t</UiCard>');
     expect(result.ok).toBe(false);
     expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
   });
 
   describe('the as allowlist row', () => {
+    // `button` (not `section`) throughout: round 2 (below) exempts a static
+    // `as` naming a presentational tag, so these rows exercise a value that
+    // still needs, and gets, an allowlist row.
     const before = '<section class="x">t</section>';
-    const after = '<UiCard as="section" class="x">t</UiCard>';
+    const after = '<UiCard as="button" class="x">t</UiCard>';
     const row = (extra) => ({
       ...EMPTY_ALLOWLIST,
-      bindings: [{ file: FILE, tag: 'UiCard', bindings: ['attr:as=section'], reason: 'keeps the landmark', ...extra }],
+      bindings: [{ file: FILE, tag: 'UiCard', bindings: ['attr:as=button'], reason: 'renders a real button', ...extra }],
     });
 
     it('admits the addition it names', () => {
@@ -452,7 +455,7 @@ describe('G4 primitive-aware collection, round 1', () => {
     });
 
     it('does not admit a different expression', () => {
-      expect(compare(before, '<UiCard as="article" class="x">t</UiCard>', row()).ok).toBe(false);
+      expect(compare(before, '<UiCard as="a" class="x">t</UiCard>', row()).ok).toBe(false);
     });
 
     it('does not admit a different tag', () => {
@@ -460,7 +463,7 @@ describe('G4 primitive-aware collection, round 1', () => {
     });
 
     it('does not admit an entry that carries more than as', () => {
-      expect(compare(before, '<UiCard as="section" @click="f">t</UiCard>', row()).ok).toBe(false);
+      expect(compare(before, '<UiCard as="button" @click="f">t</UiCard>', row()).ok).toBe(false);
     });
 
     it('does not admit through a row with no bindings list', () => {
@@ -511,5 +514,47 @@ describe('G4 primitive-aware collection, round 1', () => {
       '<VueDraggable v-model="rows"><template #row="{ element }"><div /></template></VueDraggable>',
     );
     expect(result.ok).toBe(false);
+  });
+});
+
+/**
+ * Round 2. `UiSectionHeader as="h1"` (a heading level) and `UiCard
+ * as="section"` (a landmark) cannot change what a click, a form submit or
+ * assistive tech does — only what the element *is* — so a static `as` naming
+ * a tag in `PRESENTATIONAL_TAGS` costs neither a recorded binding nor an
+ * allowlist row. `label` is excluded even though it is presentational: it
+ * carries `for` semantics a heading or a div does not. A static `as="button"`
+ * (or any other non-presentational value) and a *bound* `:as` — whose runtime
+ * target the collector cannot see — are unaffected and stay recorded.
+ */
+describe('G4 primitive-aware collection, round 2', () => {
+  it('does not record a static as="h1" on a UiSectionHeader replacing an h2', () => {
+    const result = compare('<h2 class="x">T</h2>', '<UiSectionHeader as="h1" class="x">T</UiSectionHeader>');
+    expect(result.ok).toBe(true);
+    expect(fails(result)).toEqual([]);
+  });
+
+  it('does not record a static as="section" on a UiCard replacing a section', () => {
+    const result = compare('<section class="x">t</section>', '<UiCard as="section" class="x">t</UiCard>');
+    expect(result.ok).toBe(true);
+    expect(fails(result)).toEqual([]);
+  });
+
+  it('still records a static as="button" on a UiCard (not presentational)', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard as="button" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as') && l.text.includes('button'))).toBe(true);
+  });
+
+  it('still records a bound :as on a UiCard, whatever it resolves to', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard :as="tag" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:as'))).toBe(true);
+  });
+
+  it('still records a static as="label" (excluded from the exemption)', () => {
+    const result = compare('<div class="x">t</div>', '<UiCard as="label" class="x">t</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as') && l.text.includes('label'))).toBe(true);
   });
 });

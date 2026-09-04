@@ -19,13 +19,19 @@
  *      the copy the primitive renders now lives — on the primitive itself, and
  *      on a `<template>` whose parent element is a primitive. A `<template>`
  *      under anything else (`<VueDraggable><template #item>`) keeps its slot.
+ *   3. a **static `as`** naming a tag in `PRESENTATIONAL_TAGS` (minus `label`,
+ *      which has `for` semantics) — `UiSectionHeader as="h1"`, `UiCard
+ *      as="section"` — because it picks the element without changing what a
+ *      click, a form submit or assistive tech does. A static `as="button"`
+ *      and every *bound* `:as` (its runtime target is invisible to the
+ *      collector) are unaffected and stay recorded.
  *
  * Everything that could change what the app does is recorded on every tag,
- * primitive or not: `disabled|type|href|value|is|to|as` bound or static, every
- * `v-on`, `v-model`, `v-for`, `v-show` and every `v-if` / `v-else-if` /
- * `v-else`. A presentational prop that calls, mutates or interpolates
- * (`:tone="toneFor(deal)"`) is recorded too, so it surfaces as a diff and has
- * to be justified.
+ * primitive or not: `disabled|type|href|value|is|to|as` bound or static
+ * (rule 3 above aside), every `v-on`, `v-model`, `v-for`, `v-show` and every
+ * `v-if` / `v-else-if` / `v-else`. A presentational prop that calls, mutates
+ * or interpolates (`:tone="toneFor(deal)"`) is recorded too, so it surfaces
+ * as a diff and has to be justified.
  *
  * A primitive left with no recorded binding does not appear in the manifest at
  * all — exactly like a styling `div`. These are collection rules, so the
@@ -72,8 +78,10 @@ const BEHAVIOURAL_ATTRS = new Set([
   'disabled', 'checked', 'selected',
   // A Teleport/RouterLink target is behaviour, not presentation.
   'to',
-  // `UiCard as="section"` renders `<component :is="as">`: it picks the element,
-  // so it is behaviour on every tag. See `ALWAYS_RECORDED_PROPS`.
+  // `UiCard as="button"` renders `<component :is="as">`: it picks the element,
+  // so it is behaviour on every tag — except a *static* value naming a
+  // presentational tag, which `bindingFor` exempts. See
+  // `ALWAYS_RECORDED_PROPS` and `PRESENTATIONAL_AS_VALUES`.
   'as',
 ]);
 
@@ -138,10 +146,12 @@ const PRESENTATIONAL_PROPS = new Set([
  * a name added to `PRESENTATIONAL_PROPS` by mistake can never silence one.
  *
  * `as` is here, not above, because it is not styling: `UiCard` renders
- * `<component :is="as">`, so `as` picks the element the browser gets — a
- * `<section>` instead of a `<div>` changes the accessibility tree, `as="button"`
- * changes what a click does. Every use must be justified by an allowlist row
- * (see `isAllowedAsAddition`).
+ * `<component :is="as">`, so `as` picks the element the browser gets, and
+ * `as="button"` changes what a click does. A use whose value could change
+ * behaviour must be justified by an allowlist row (see `isAllowedAsAddition`)
+ * — except a *static* value naming a presentational tag (`as="section"`,
+ * `as="h1"`), which `bindingFor` does not record at all: see
+ * `PRESENTATIONAL_AS_VALUES`.
  */
 const ALWAYS_RECORDED_PROPS = new Set(['disabled', 'type', 'href', 'value', 'is', 'to', 'as']);
 
@@ -154,6 +164,18 @@ const BRANCH_KINDS = new Set(['if', 'else-if', 'else']);
 
 /** The two ways a template can hand a primitive the element it renders. */
 const AS_KINDS = new Set(['attr:as', 'bind:as']);
+
+/**
+ * Static `as` values presentational enough to leave unrecorded: every tag in
+ * `PRESENTATIONAL_TAGS` except `label`, which carries `for` semantics a
+ * heading or a div does not. `UiSectionHeader as="h1"` and `UiCard
+ * as="section"` pick an element, but not one that changes what a click, a
+ * form submit or a screen reader's landmark list does — unlike `as="button"`
+ * or `as="a"`, which stay recorded, and unlike a *bound* `:as`, whose runtime
+ * value the collector cannot see and which therefore always stays recorded
+ * (see the `bind` case in `bindingFor`).
+ */
+const PRESENTATIONAL_AS_VALUES = new Set([...PRESENTATIONAL_TAGS].filter((tag) => tag !== 'label'));
 
 function isIgnoredProp(name) {
   return IGNORED_PROPS.has(name) || name.startsWith('aria-') || name.startsWith('data-');
@@ -219,6 +241,14 @@ function bindingFor(prop, branch, tag, parentTag) {
     // true if either list grows, rather than a live path. A static value can
     // neither call nor assign, so the name alone decides.
     if (isPresentationalOn(tag, prop.name, '')) return null;
+    // Rule 2 for a static attribute, `as` only (round 2): a value naming a
+    // presentational tag cannot change behaviour, only what the element is,
+    // so it is not recorded on a primitive. A static value outside
+    // `PRESENTATIONAL_AS_VALUES` (`as="button"`) and every bound `:as`
+    // (the `bind` case below) are untouched by this rule.
+    if (prop.name === 'as' && UI_TAGS.has(tag) && PRESENTATIONAL_AS_VALUES.has(collapse(prop.value?.content ?? ''))) {
+      return null;
+    }
     return binding(`attr:${prop.name}`, { expression: collapse(prop.value?.content ?? '') });
   }
   if (prop.type !== NODE_DIRECTIVE) return null;

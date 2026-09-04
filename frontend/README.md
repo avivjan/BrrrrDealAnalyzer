@@ -195,13 +195,22 @@ Recorded on every tag, primitive or not, and still to be justified: `:disabled`,
 `:type`, `:href`, `:value`, `:is`, `:to`, `as`, any `@event`, `v-model`,
 `v-for`, `v-show`, a `v-if` chain, and a presentational prop that calls
 something, such as `:tone="toneFor(deal)"`. `as` is in that list because
-`<UiCard as="section">` renders `<component :is="as">` — it picks the element,
-which changes the accessibility tree — so an added element whose only binding is
-`as` needs an `allowlist.json` row naming the tag and the exact binding:
+`<UiCard as="button">` renders `<component :is="as">` — it picks the element,
+which can change what the browser does with a click or a form submit — so an
+added element whose only binding is `as` needs an `allowlist.json` row naming
+the tag and the exact binding:
 
 ```json
-{ "file": "src/views/MyDeals.vue", "tag": "UiCard", "bindings": ["attr:as=section"], "reason": "keeps the landmark the div had" }
+{ "file": "src/views/MyDeals.vue", "tag": "UiCard", "bindings": ["attr:as=button"], "reason": "renders a real button" }
 ```
+
+The one exception: a **static** `as` naming a tag in `PRESENTATIONAL_TAGS` —
+`div`, `section`, `article`, `span`, `p`, `h1`–`h6`, `li`, `ul`, `ol`, `dl`,
+`dt`, `dd`, `small`, `strong` (every entry except `label`, which carries `for`
+semantics) — is not recorded and needs no allowlist row: `<UiSectionHeader
+as="h1">` replacing an `<h2>`, or `<UiCard as="section">` replacing a
+`<section>`, is no drift. A **bound** `:as` always stays recorded, whatever it
+resolves to, because the collector cannot see its runtime value.
 
 A slot on a `RouterView`, on a `VueDraggable`, or on a `<template>` under either
 of them stays recorded.
