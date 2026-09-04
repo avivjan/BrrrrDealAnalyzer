@@ -102,11 +102,14 @@ describe("DealCard", () => {
       expect(parentClick).not.toHaveBeenCalled();
     });
 
-    it("still lets a click on the card body reach the parent", async () => {
+    it("still lets a click on the card itself reach the parent", async () => {
+      // DealCard has no root/address `data-testid` today, so this anchors on
+      // the component's own root element rather than a tag name: a click that
+      // misses the four `@click.stop` buttons must open the deal.
       const parentClick = vi.fn();
       const board = mountInBoard(brrrDeal({ stage: 3 }), parentClick);
 
-      await board.find("h3").trigger("click");
+      await board.findComponent(DealCard).trigger("click");
 
       expect(parentClick).toHaveBeenCalledTimes(1);
     });

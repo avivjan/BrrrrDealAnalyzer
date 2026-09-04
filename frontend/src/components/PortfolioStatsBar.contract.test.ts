@@ -32,6 +32,13 @@ function deal(over: Partial<ActiveDealRes> = {}): ActiveDealRes {
  * `onMounted` assigns the current stats straight onto the animated values, so
  * the first painted figure is the real one rather than a tween from zero.
  */
+/**
+ * The doors figure, read out of the tile that labels it — the bar's text is
+ * full of other digits, so a substring match would not pin anything.
+ */
+const doorsShown = (wrapper: { text(): string }) =>
+  wrapper.text().match(/Doors\s*(\d+)/)?.[1];
+
 async function mountBar(deals: ActiveDealRes[]) {
   const store = useDealStore();
   store.deals = deals;
@@ -91,7 +98,7 @@ describe("PortfolioStatsBar", () => {
     it("shows the door count without tweening from zero", async () => {
       const { wrapper } = await mountBar([deal(), deal({ id: "d2" })]);
       expect(wrapper.text()).toContain("Doors");
-      expect(wrapper.text()).toContain("2");
+      expect(doorsShown(wrapper)).toBe("2");
     });
 
     it("shows value, debt and equity straight away", async () => {
@@ -115,13 +122,18 @@ describe("PortfolioStatsBar", () => {
 
     it("does tween once the numbers change under it", async () => {
       const { wrapper, store } = await mountBar([deal()]);
-      const raf = vi.spyOn(globalThis, "requestAnimationFrame");
+      // Swallow the frame so the tween cannot chain on into later tests; the
+      // spy still records that one was requested, which is the whole point.
+      const raf = vi
+        .spyOn(globalThis, "requestAnimationFrame")
+        .mockImplementation(() => 0);
 
       store.deals = [deal(), deal({ id: "d2" })];
       await wrapper.vm.$nextTick();
 
       expect(raf).toHaveBeenCalled();
       raf.mockRestore();
+      wrapper.unmount();
     });
 
     it("sums across every Brought BRRRR deal", async () => {

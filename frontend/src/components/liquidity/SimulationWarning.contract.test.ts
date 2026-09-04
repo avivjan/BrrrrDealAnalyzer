@@ -40,6 +40,9 @@ function at(testid: string): DOMWrapper<HTMLElement> {
 }
 
 const body = () => document.body.textContent ?? "";
+
+/** The number rendered after the soft branch's "Dates below reserve:" label. */
+const breachCount = () => body().match(/Dates below reserve:\s*(\d+)/)?.[1];
 const shown = () => document.querySelector('[data-testid="simwarn.root"]') !== null;
 
 describe("SimulationWarning", () => {
@@ -118,8 +121,10 @@ describe("SimulationWarning", () => {
         result: result({ reserveBreachDates: ["2026-04-18", "2026-04-19"] }),
       });
 
+      // Read the number where it is rendered: the body text is full of other
+      // 2s (-12.50k, May 1, 2026), so a bare `toContain("2")` proves nothing.
       expect(body()).toContain("Dates below reserve:");
-      expect(body()).toContain("2");
+      expect(breachCount()).toBe("2");
       expect(document.querySelector('[data-testid^="simwarn.negative-date."]'))
         .toBeNull();
     });
