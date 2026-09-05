@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from ReqRes.common.liquidity_schemas import LiquiditySettingsUpdate
 from DAL.crud.liquidity import get_settings as _get_settings
 from BL.liquidity.common.mappers import settings_to_res
-from BL.liquidity.updateSettings.updateSettings import update_settings
+from BL.liquidity.updateSettings import update_settings
 
 
 def get_settings(db: Session):
