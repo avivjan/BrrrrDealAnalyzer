@@ -82,6 +82,9 @@ const BEHAVIOURAL_ATTRS = new Set([
   'disabled', 'checked', 'selected',
   // A Teleport/RouterLink target is behaviour, not presentation.
   'to',
+  // A `<Transition mode="out-in">` sequences its children: the DOM holds no
+  // child at all while the old one leaves. See `TRANSITION_WRAPPER_ATTRS`.
+  'mode',
   // `UiCard as="button"` renders `<component :is="as">`: it picks the element,
   // so it is behaviour on every tag — except a *static* value naming a
   // presentational tag, which `bindingFor` exempts. See
@@ -160,7 +163,21 @@ const PRESENTATIONAL_PROPS = new Set([
 const ALWAYS_RECORDED_PROPS = new Set(['disabled', 'type', 'href', 'value', 'is', 'to', 'as']);
 
 const TRANSITION_TAGS = new Set(['UiTransition', 'UiTransitionGroup', 'Transition', 'TransitionGroup']);
-const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name', 'mode', 'css']);
+
+/**
+ * The attributes that keep a transition a *wrapper* — an element the manifest
+ * looks straight through, because it only says how its child appears.
+ *
+ * `mode` and `css` are deliberately absent. `mode="out-in"` holds the entering
+ * element back until the leaving one is gone, so for one animation's length the
+ * template renders *neither* child: that is DOM sequencing, and a diff that
+ * added or dropped it would otherwise be invisible to G4. `:css="false"` hands
+ * the whole enter/leave over to the JS hooks, so whether the CSS classes run at
+ * all stops being a stylesheet question. Both stay recorded; `mode` is in
+ * `BEHAVIOURAL_ATTRS` so its static form lands in the manifest, and a bound
+ * `:css` is recorded by the `bind` case like any other bound prop.
+ */
+const TRANSITION_WRAPPER_ATTRS = new Set(['preset', 'appear', 'tag', 'name']);
 
 const LIFECYCLE_HOOKS = ['onMounted', 'onBeforeMount', 'onUnmounted', 'onBeforeUnmount', 'onUpdated'];
 

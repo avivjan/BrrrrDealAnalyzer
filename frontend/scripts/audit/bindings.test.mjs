@@ -85,6 +85,48 @@ describe('G4 behaviour manifest', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('records a transition that sequences its children with mode', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" mode="out-in"><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('records a bare Transition that sequences its children with mode', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<Transition mode="out-in"><button @click="a">x</button></Transition>',
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it('names mode in the manifest so a changed sequencing shows up as a diff', () => {
+    const manifest = manifestFromSource(
+      sfc('<UiTransition preset="modal" mode="out-in"><button @click="a">x</button></UiTransition>'),
+      FILE,
+    );
+    expect(manifest.elements[0]).toMatchObject({
+      tag: 'UiTransition',
+      bindings: [{ kind: 'attr:mode', expression: 'out-in' }],
+    });
+  });
+
+  it('records a transition that turns the CSS classes off', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" :css="false"><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(false);
+    expect(
+      manifestFromSource(
+        sfc('<UiTransition preset="modal" :css="false"><button @click="a">x</button></UiTransition>'),
+        FILE,
+      ).elements[0].bindings,
+    ).toEqual([{ kind: 'bind:css', arg: 'css', modifiers: [], expression: 'false' }]);
+  });
+
   it('flags re-ordered v-else-if branches', () => {
     const before = '<div><p v-if="a">1</p><p v-else-if="b">2</p><p v-else-if="c">3</p><p v-else>4</p></div>';
     const after = '<div><p v-if="a">1</p><p v-else-if="c">3</p><p v-else-if="b">2</p><p v-else>4</p></div>';
