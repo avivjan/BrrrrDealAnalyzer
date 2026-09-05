@@ -754,7 +754,24 @@ console.groupEnd();
             </div>
           </template>
 
-          <div ref="modalScrollContainer" class="custom-scrollbar overflow-y-auto overscroll-contain">
+          <!--
+            Content wrapper, deliberately *not* a scroll container.
+
+            `UiModalPanel`'s `[data-part="body"]` is the modal's only scroller.
+            This div used to carry `overflow-y-auto overscroll-contain` too,
+            which made it a second scroll port with nothing to scroll — it has
+            no height cap, so it always grows to its content. A wheel over the
+            modal therefore targeted *this* element, found it already at its
+            only scroll position, and `overscroll-contain` stopped the scroll
+            from chaining up to the body that could have moved. The modal was
+            unscrollable with a mouse while touch, which picks the nearest
+            ancestor that can actually scroll, still worked.
+
+            `flow-root` keeps the block formatting context the old `overflow`
+            value established, so child margins stay inside the wrapper exactly
+            as before. The `ref` stays: the script declares it.
+          -->
+          <div ref="modalScrollContainer" class="flow-root">
             <!-- Top Section: Task & Basic Details -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <!-- Central Task Box -->

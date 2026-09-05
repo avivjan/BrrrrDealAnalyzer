@@ -635,7 +635,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             </div>
           </template>
 
-          <div ref="modalScrollContainer" class="custom-scrollbar overflow-y-auto overscroll-contain">
+          <!--
+            Content wrapper, deliberately *not* a scroll container — see the
+            twin comment in `MyDeals.vue`. `UiModalPanel`'s `[data-part="body"]`
+            is the only scroller; a second `overflow-y-auto overscroll-contain`
+            here trapped the wheel in an element that had nothing to scroll and
+            blocked it from chaining to the one that did, so the modal did not
+            scroll on desktop. `flow-root` preserves the block formatting
+            context without making this a scroll port.
+          -->
+          <div ref="modalScrollContainer" class="flow-root">
             <!-- Pipeline Progress Stepper -->
             <UiCard tone="muted" class="mb-6">
               <UiSectionHeader as="h4" class="mb-3">

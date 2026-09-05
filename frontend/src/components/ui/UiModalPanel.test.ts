@@ -124,6 +124,51 @@ describe("UiModalPanel", () => {
     it("hard-codes no copy of its own", () => {
       expect(mountPanel({}, { footer: "Save" }).text()).toBe("Edit dealBodySave");
     });
+
+    /**
+     * The four classes that turn "the content is too tall" into "the body
+     * scrolls". They are a set: a capped `flex-col` panel, a body that may both
+     * grow and shrink, and header and footer that refuse to. Drop `min-h-0` and
+     * the body inherits a flex item's `min-height: auto`, so it declines to
+     * shrink below its content, the panel's cap is exceeded instead, and the
+     * scrollbar never appears. Drop `shrink-0` and the header and footer
+     * collapse instead of the body scrolling.
+     *
+     * jsdom does no layout, so this is asserted as the contract rather than by
+     * measuring; `e2e/checks/modal-scroll.spec.ts` measures the real thing in
+     * four browsers.
+     */
+    it("gives the body the flex rules that let it shrink and scroll", () => {
+      const wrapper = mountPanel({}, { footer: "Save" });
+
+      expect(wrapper.classes()).toContain("flex");
+      expect(wrapper.classes()).toContain("flex-col");
+      expect(wrapper.classes()).toContain("max-h-[90svh]");
+
+      const body = wrapper.get('[data-part="body"]');
+      expect(body.classes()).toContain("flex-1");
+      expect(body.classes()).toContain("min-h-0");
+
+      expect(wrapper.get('[data-part="header"]').classes()).toContain("shrink-0");
+      expect(wrapper.get('[data-part="footer"]').classes()).toContain("shrink-0");
+    });
+
+    /**
+     * A modal has exactly one scroller. A second `overflow-y-auto` region
+     * nested inside the body is the bug this contract exists to prevent: with
+     * no height cap it can never scroll, and with `overscroll-contain` it stops
+     * the gesture from reaching the body that can. Callers put content in the
+     * default slot; the panel must not wrap it in another scroll port.
+     */
+    it("creates exactly one scroll container", () => {
+      const wrapper = mountPanel({}, { footer: "Save" });
+      const scrollPorts = wrapper
+        .findAll("*")
+        .filter((el) => el.classes().some((c) => c.startsWith("overflow-y-")));
+
+      expect(scrollPorts).toHaveLength(1);
+      expect(scrollPorts[0]!.attributes("data-part")).toBe("body");
+    });
   });
 
   describe("its shape", () => {
