@@ -2,15 +2,15 @@
   "config": {
     "argv": [
       "/usr/local/bin/node",
-      "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/node_modules/.bin/playwright",
+      "frontend/node_modules/.bin/playwright",
       "test",
       "--project=chromium",
       "--project=webkit",
       "--project=Mobile Safari",
       "--project=Mobile Chrome"
     ],
-    "configFile": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/playwright.config.ts",
-    "rootDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+    "configFile": "frontend/playwright.config.ts",
+    "rootDir": "frontend/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -26,7 +26,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/test-results",
+        "outputDir": "frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -34,7 +34,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+        "testDir": "frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -42,7 +42,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/test-results",
+        "outputDir": "frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -50,7 +50,7 @@
         },
         "id": "webkit",
         "name": "webkit",
-        "testDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+        "testDir": "frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -58,7 +58,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/test-results",
+        "outputDir": "frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -66,7 +66,7 @@
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
-        "testDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+        "testDir": "frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -74,7 +74,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/test-results",
+        "outputDir": "frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -82,7 +82,7 @@
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
-        "testDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+        "testDir": "frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -90,7 +90,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/test-results",
+        "outputDir": "frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -98,7 +98,7 @@
         },
         "id": "chromium-motion",
         "name": "chromium-motion",
-        "testDir": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e",
+        "testDir": "frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -190,7 +190,7 @@
                   "type": "skip",
                   "description": "custom-property resolution is engine-independent; checked on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                    "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                     "line": 74,
                     "column": 8
                   }
@@ -215,7 +215,7 @@
                       "type": "skip",
                       "description": "custom-property resolution is engine-independent; checked on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                        "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                         "line": 74,
                         "column": 8
                       }
@@ -244,7 +244,7 @@
                   "type": "skip",
                   "description": "custom-property resolution is engine-independent; checked on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                    "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                     "line": 74,
                     "column": 8
                   }
@@ -269,7 +269,7 @@
                       "type": "skip",
                       "description": "custom-property resolution is engine-independent; checked on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                        "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                         "line": 74,
                         "column": 8
                       }
@@ -298,7 +298,7 @@
                   "type": "skip",
                   "description": "custom-property resolution is engine-independent; checked on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                    "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                     "line": 74,
                     "column": 8
                   }
@@ -323,7 +323,7 @@
                       "type": "skip",
                       "description": "custom-property resolution is engine-independent; checked on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/chart-tokens.spec.ts",
+                        "file": "frontend/e2e/checks/chart-tokens.spec.ts",
                         "line": 74,
                         "column": 8
                       }
@@ -362,7 +362,7 @@
                   "type": "skip",
                   "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                    "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                     "line": 72,
                     "column": 8
                   }
@@ -387,7 +387,7 @@
                       "type": "skip",
                       "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                        "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                         "line": 72,
                         "column": 8
                       }
@@ -418,7 +418,7 @@
                   "type": "skip",
                   "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                    "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                     "line": 72,
                     "column": 8
                   }
@@ -443,7 +443,7 @@
                       "type": "skip",
                       "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                        "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                         "line": 72,
                         "column": 8
                       }
@@ -474,7 +474,7 @@
                   "type": "skip",
                   "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                    "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                     "line": 72,
                     "column": 8
                   }
@@ -499,7 +499,7 @@
                       "type": "skip",
                       "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                        "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                         "line": 72,
                         "column": 8
                       }
@@ -530,7 +530,7 @@
                   "type": "skip",
                   "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                    "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                     "line": 72,
                     "column": 8
                   }
@@ -555,7 +555,7 @@
                       "type": "skip",
                       "description": "the motion-on guard; the other projects run with reducedMotion: reduce",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/checks/no-live-tweens.spec.ts",
+                        "file": "frontend/e2e/checks/no-live-tweens.spec.ts",
                         "line": 72,
                         "column": 8
                       }
@@ -728,7 +728,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -753,7 +753,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -782,7 +782,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -807,7 +807,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -836,7 +836,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -861,7 +861,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -890,7 +890,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -915,7 +915,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -944,7 +944,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -969,7 +969,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -998,7 +998,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1023,7 +1023,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1052,7 +1052,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1077,7 +1077,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1106,7 +1106,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1131,7 +1131,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1160,7 +1160,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1185,7 +1185,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1214,7 +1214,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1239,7 +1239,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1268,7 +1268,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1293,7 +1293,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1322,7 +1322,7 @@
                   "type": "skip",
                   "description": "a pure comparison needs checking once, not once per engine",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                    "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                     "line": 15,
                     "column": 8
                   }
@@ -1347,7 +1347,7 @@
                       "type": "skip",
                       "description": "a pure comparison needs checking once, not once per engine",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/fixtures/axe.compare.spec.ts",
+                        "file": "frontend/e2e/fixtures/axe.compare.spec.ts",
                         "line": 15,
                         "column": 8
                       }
@@ -1588,7 +1588,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1613,7 +1613,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1642,7 +1642,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1667,7 +1667,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1696,7 +1696,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1721,7 +1721,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1750,7 +1750,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1775,7 +1775,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1804,7 +1804,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1829,7 +1829,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1858,7 +1858,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1883,7 +1883,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1912,7 +1912,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1937,7 +1937,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -1966,7 +1966,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -1991,7 +1991,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2020,7 +2020,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2045,7 +2045,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2074,7 +2074,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2099,7 +2099,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2128,7 +2128,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2153,7 +2153,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2182,7 +2182,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2207,7 +2207,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2236,7 +2236,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2261,7 +2261,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2290,7 +2290,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2315,7 +2315,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2344,7 +2344,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2369,7 +2369,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2398,7 +2398,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2423,7 +2423,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2452,7 +2452,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2477,7 +2477,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -2506,7 +2506,7 @@
                   "type": "skip",
                   "description": "the axe baseline is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                    "file": "frontend/e2e/flows/a11y.spec.ts",
                     "line": 23,
                     "column": 8
                   }
@@ -2531,7 +2531,7 @@
                       "type": "skip",
                       "description": "the axe baseline is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/a11y.spec.ts",
+                        "file": "frontend/e2e/flows/a11y.spec.ts",
                         "line": 23,
                         "column": 8
                       }
@@ -3688,7 +3688,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3713,7 +3713,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -3742,7 +3742,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3767,7 +3767,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -3796,7 +3796,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3821,7 +3821,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -3850,7 +3850,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3875,7 +3875,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -3904,7 +3904,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3929,7 +3929,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -3958,7 +3958,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -3983,7 +3983,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4012,7 +4012,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4037,7 +4037,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4066,7 +4066,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4091,7 +4091,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4120,7 +4120,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4145,7 +4145,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4174,7 +4174,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4199,7 +4199,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4228,7 +4228,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4253,7 +4253,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -4282,7 +4282,7 @@
                   "type": "skip",
                   "description": "drag characterization is recorded and replayed on chromium only",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                    "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                     "line": 27,
                     "column": 8
                   }
@@ -4307,7 +4307,7 @@
                       "type": "skip",
                       "description": "drag characterization is recorded and replayed on chromium only",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/bought-deals-drag.spec.ts",
+                        "file": "frontend/e2e/flows/bought-deals-drag.spec.ts",
                         "line": 27,
                         "column": 8
                       }
@@ -5058,7 +5058,7 @@
                   "type": "skip",
                   "description": "the recurring list lives in the `lg:`-only sidebar, so there is nothing to delete from on a phone",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                    "file": "frontend/e2e/flows/liquidity.spec.ts",
                     "line": 208,
                     "column": 8
                   }
@@ -5083,7 +5083,7 @@
                       "type": "skip",
                       "description": "the recurring list lives in the `lg:`-only sidebar, so there is nothing to delete from on a phone",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                        "file": "frontend/e2e/flows/liquidity.spec.ts",
                         "line": 208,
                         "column": 8
                       }
@@ -5146,7 +5146,7 @@
                   "type": "skip",
                   "description": "sidebar is lg-only at baseline (checklist)",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                    "file": "frontend/e2e/flows/liquidity.spec.ts",
                     "line": 271,
                     "column": 8
                   }
@@ -5171,7 +5171,7 @@
                       "type": "skip",
                       "description": "sidebar is lg-only at baseline (checklist)",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                        "file": "frontend/e2e/flows/liquidity.spec.ts",
                         "line": 271,
                         "column": 8
                       }
@@ -5278,7 +5278,7 @@
                   "type": "skip",
                   "description": "the recurring list lives in the `lg:`-only sidebar, so there is nothing to delete from on a phone",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                    "file": "frontend/e2e/flows/liquidity.spec.ts",
                     "line": 208,
                     "column": 8
                   }
@@ -5303,7 +5303,7 @@
                       "type": "skip",
                       "description": "the recurring list lives in the `lg:`-only sidebar, so there is nothing to delete from on a phone",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                        "file": "frontend/e2e/flows/liquidity.spec.ts",
                         "line": 208,
                         "column": 8
                       }
@@ -5366,7 +5366,7 @@
                   "type": "skip",
                   "description": "sidebar is lg-only at baseline (checklist)",
                   "location": {
-                    "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                    "file": "frontend/e2e/flows/liquidity.spec.ts",
                     "line": 271,
                     "column": 8
                   }
@@ -5391,7 +5391,7 @@
                       "type": "skip",
                       "description": "sidebar is lg-only at baseline (checklist)",
                       "location": {
-                        "file": "/Users/avivjan/git/BrrrrDealAnalyzer/frontend/e2e/flows/liquidity.spec.ts",
+                        "file": "frontend/e2e/flows/liquidity.spec.ts",
                         "line": 271,
                         "column": 8
                       }
