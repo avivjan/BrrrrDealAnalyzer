@@ -161,7 +161,8 @@ project's `testDir` / `outputDir`, `argv`, and every spec `file` are absolute
 paths on the machine that ran it — so an archive goes through
 `npm run e2e:archive -- <name>`, which rewrites everything under the repository
 root to a repo-relative POSIX path (`e2e/scripts/normalize-report.mjs`) before
-writing `e2e/reports/<name>.json`.
+writing `e2e/reports/<name>.json`. Gate G8 fails the build if a raw report is
+ever committed.
 
 Goldens change only with an agreed behaviour change, in their own commit with a
 `Golden update:` subject — the same rule as the audit manifests below. The
@@ -198,6 +199,17 @@ The audits on their own:
   element whose `class`/`:class` reveals it with `hover:opacity-100` (or `group-hover:opacity-100`)
   must also carry `touch:opacity-100`. With `hoverOnlyWhenSupported` on, an unpaired reveal is
   invisible but still clickable on touch, which no Playwright actionability check can see.
+- `node scripts/audit/paths.mjs` — gate `G8`, also run inside `verify:ui`: no tracked file may
+  contain an absolute filesystem path. Those are facts about one laptop; a CI runner, a deploy
+  image and a second checkout have different ones, so every path that is committed is
+  repo-relative. The rules are `ABSOLUTE_PATH_RULES` in `scripts/audit/paths.mjs` — home
+  directories, a Windows drive letter, the temp roots — and each match is a FAIL. Anything that
+  genuinely has to name such a path (a test fixture, a credentials example) builds it from
+  fragments or uses a `<path-to>/…` placeholder; there is no suppression comment, so a plain
+  `git grep` over the tree keeps answering the same question the gate does. The gate also prints
+  a WARN, never a FAIL, for a file under `e2e/` or `scripts/` that reads through
+  `process.cwd()`: that is portable across machines but not across working directories, and the
+  fix is to resolve against `import.meta.url`.
 - `npm run audit:contrast` — re-measures the token contrast pairs described under **Design
   tokens** above.
 - `npm run audit:baseline` — regenerates those manifests. Only run it when a change to behaviour

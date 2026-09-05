@@ -17,6 +17,7 @@ import { run as runScriptBlocks } from './script-blocks.mjs';
 import { run as runBindings } from './bindings.mjs';
 import { run as runText } from './text.mjs';
 import { run as runHoverPairs } from './hover-pairs.mjs';
+import { run as runPaths, summarize as summarizePaths } from './paths.mjs';
 
 /** The baseline every non-frontend file is frozen against. */
 export const BASELINE_TAG = 'ui-baseline';
@@ -55,11 +56,22 @@ export const GOLDEN_POLICY_PATHS = [
 ];
 
 const PLAYWRIGHT_CONFIG = join(FRONTEND_ROOT, 'playwright.config.ts');
-const PHASE_PLAYWRIGHT_PROJECTS = [
+/**
+ * The `--phase` device matrix: every project in `playwright.config.ts`, named
+ * explicitly so a project added to the config without a decision here shows up
+ * as a difference rather than silently joining the phase run.
+ *
+ * `chromium-motion` is in the list because the phase run is the one that has to
+ * be complete: it is the only project with animations on, so leaving it out ran
+ * the whole matrix with `prefers-reduced-motion: reduce` and never exercised the
+ * `@motion` specs the way a real user meets them.
+ */
+export const PHASE_PLAYWRIGHT_PROJECTS = [
   '--project=chromium',
   '--project=webkit',
   '--project=Mobile Safari',
   '--project=Mobile Chrome',
+  '--project=chromium-motion',
 ];
 
 export function gateLine(status, gate, detail) {
@@ -195,6 +207,12 @@ function main(argv) {
   // (but still clickable) on touch, which no Playwright or axe run can catch.
   const hover = runHoverPairs();
   printAuditGate('G-HOVER', hover, failures, 'every hover reveal pairs with its touch: counterpart');
+
+  // G8 — no absolute filesystem path in a tracked file, so a second checkout, a
+  // CI runner and a deploy image all read the same repo-relative strings this
+  // machine does.
+  const paths = runPaths();
+  printAuditGate('G8', paths, failures, summarizePaths(paths));
 
   // G6 — the suite and the production build.
   const testsPass = runCommand('npm', ['test'], FRONTEND_ROOT);

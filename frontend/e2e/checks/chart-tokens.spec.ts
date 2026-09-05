@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 import { CHART_FALLBACKS, type ChartTokenName } from '../../src/design/chartTokens';
 import { expect, test } from '../fixtures';
@@ -60,7 +59,13 @@ const canonical = (value: string): string => {
  * otherwise hide.
  */
 const declaredOnRoot = (() => {
-  const css = readFileSync(resolve(process.cwd(), 'src/assets/tokens.css'), 'utf8');
+  // Resolved against this file, not against the working directory: a check that
+  // only finds the stylesheet when Playwright happens to be launched from
+  // `frontend/` is a check that silently reads the wrong file — or throws —
+  // anywhere else. Gate G8 warns on `process.cwd()` reads under `e2e/` for
+  // exactly this reason.
+  const tokensCss = new URL('../../src/assets/tokens.css', import.meta.url);
+  const css = readFileSync(tokensCss, 'utf8');
   const start = css.indexOf(':root {');
   const block = css.slice(start, css.indexOf('\n}', start));
   const found: Record<string, string> = {};

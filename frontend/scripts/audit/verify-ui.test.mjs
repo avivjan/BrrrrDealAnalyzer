@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   E2E_FROZEN_PATHS,
   G1_PATHSPEC,
   G2_FROZEN_PATHS,
   GOLDEN_POLICY_PATHS,
+  PHASE_PLAYWRIGHT_PROJECTS,
   e2eFreezeChecks,
   findGoldenPolicyViolations,
   gateLine,
@@ -102,5 +104,28 @@ describe('gate lines', () => {
       'PASS G1 backend + root files unchanged since ui-baseline',
     );
     expect(gateLine('SKIP', 'G5', 'no e2e harness yet')).toBe('SKIP G5 no e2e harness yet');
+  });
+});
+
+describe('the --phase device matrix', () => {
+  /** Every `name:` in the Playwright config's `projects` array, in order. */
+  const configuredProjects = () => {
+    const config = readFileSync(new URL('../../playwright.config.ts', import.meta.url), 'utf8');
+    const projects = config.slice(config.indexOf('  projects: ['), config.indexOf('  webServer: ['));
+    return [...projects.matchAll(/^\s+name: '([^']+)'/gm)].map((match) => match[1]);
+  };
+
+  it('runs every project the config declares', () => {
+    // A `--phase` run that quietly skipped a project would report a green matrix
+    // for a matrix it never ran. `chromium-motion` is the one this caught: it is
+    // the only project with animations on, so without it the phase run proved
+    // nothing about the @motion specs.
+    expect(PHASE_PLAYWRIGHT_PROJECTS).toEqual(
+      configuredProjects().map((name) => `--project=${name}`),
+    );
+  });
+
+  it('includes the motion project', () => {
+    expect(PHASE_PLAYWRIGHT_PROJECTS).toContain('--project=chromium-motion');
   });
 });

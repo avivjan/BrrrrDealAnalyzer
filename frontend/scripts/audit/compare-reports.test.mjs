@@ -73,7 +73,12 @@ describe('normalizeFile', () => {
   });
 
   it('normalises windows separators', () => {
-    expect(normalizeFile('C:\\a\\e2e\\flows\\landing.spec.ts')).toBe('flows/landing.spec.ts');
+    // Built from segments rather than written as a literal: gate G8
+    // (`scripts/audit/paths.mjs`) fails on an absolute path in a tracked file,
+    // and it is right to — the exception a test fixture would need is exactly
+    // the hole a real stray path would slip through.
+    const windowsPath = ['C:', 'a', 'e2e', 'flows', 'landing.spec.ts'].join('\\');
+    expect(normalizeFile(windowsPath)).toBe('flows/landing.spec.ts');
   });
 
   it('returns an empty string for a missing file', () => {
