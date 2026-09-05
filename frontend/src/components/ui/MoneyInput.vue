@@ -136,7 +136,7 @@ const inputId = useId();
       <span
         v-if="hint"
         data-part="hint"
-        class="tabular text-xs font-medium text-primary"
+        class="numeric text-xs font-medium text-primary"
       >{{ hint }}</span>
     </div>
     <input
@@ -148,7 +148,7 @@ const inputId = useId();
       :value="displayText"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="ui-input tabular"
+      class="ui-input numeric"
       @focus="onFocus"
       @blur="commit"
       @input="draft = ($event.target as HTMLInputElement).value"

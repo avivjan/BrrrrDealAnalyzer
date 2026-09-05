@@ -28,6 +28,7 @@ const ROW = 48;
 <template>
   <aside
     data-testid="shell.sidebar"
+    aria-label="Sidebar"
     :data-collapsed="collapsed || undefined"
     :class="
       cn(

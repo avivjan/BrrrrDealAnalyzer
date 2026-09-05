@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { createEmptyDealForm, validateDealInputs } from "../utils/dealUtils";
@@ -37,6 +37,20 @@ onMounted(() => {
 });
 
 const validationErrors = ref<string[]>([]);
+
+/** Presentational: the live summary rail echoes three inputs (values are in thousands). */
+const fmtK = (value: unknown): string => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n === 0) return "—";
+  return n >= 1000 ? `$${(n / 1000).toFixed(2)}M` : `$${n.toLocaleString(undefined, { maximumFractionDigits: 1 })}K`;
+};
+const summary = computed(() => [
+  { label: "Purchase", value: fmtK(form.value.purchasePrice) },
+  { label: "Rehab", value: fmtK(form.value.rehabCost) },
+  selectedType.value === "BRRRR"
+    ? { label: "ARV", value: fmtK(form.value.arv_in_thousands) }
+    : { label: "Sale price", value: fmtK(form.value.salePrice) },
+]);
 
 const onAnalyzeAndSaveClick = () => {
   const errors = validateDealInputs(form.value, selectedType.value);
@@ -94,190 +108,130 @@ const saveDeal = async () => {
 
 <template>
   <!--
-    The page ground. `pb-safe-b` sits on this box and the real padding on the
-    one inside it, so the home-indicator inset is *added* below the page's own
-    bottom padding instead of replacing it (the inset is 0 without a notch).
-    `min-h-dvh` rather than `min-h-screen`: `dvh` excludes the iOS toolbars.
+    UI v2. The shell owns the viewport, the sticky header and the page title
+    ("Analyze a deal", the topbar's h1), so this is a two-column workspace:
+    the form on the left, a sticky rail on the right with the strategy switch,
+    a live echo of the three numbers that matter most, the validation list and
+    the one call to action. Every hook and handler is the v1 one.
   -->
-  <div class="min-h-dvh bg-page pb-safe-b text-fg">
-    <div class="p-4 pb-24 md:p-8">
-      <div class="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-3">
-        <!-- Left Column: Form -->
-        <div class="space-y-8 lg:col-span-2">
-          <!--
-            Still a `<header>`: it is the page's banner landmark, and the axe
-            baseline counts everything it holds as being inside one.
-          -->
-          <header>
-            <UiSectionHeader as="h1" class="flex-wrap md:items-center">
-              Analyze Deal
-
-              <template #actions>
-                <!-- Type Switcher -->
-                <UiTabs aria-label="Deal type">
-                  <UiButton
-                    data-testid="analyze.type-brrrr"
-                    variant="tab"
-                    :active="selectedType === 'BRRRR'"
-                    @click="selectedType = 'BRRRR'"
-                  >
-                    BRRRR
-                  </UiButton>
-                  <UiButton
-                    data-testid="analyze.type-flip"
-                    variant="tab"
-                    :active="selectedType === 'FLIP'"
-                    @click="selectedType = 'FLIP'"
-                  >
-                    FLIP
-                  </UiButton>
-                </UiTabs>
-
-                <UiIconButton
-                  data-testid="analyze.home"
-                  label="Home"
-                  size="md"
-                  @click="$router.push('/')"
-                >
-                  <i class="pi pi-home text-xl" aria-hidden="true"></i>
-                </UiIconButton>
-              </template>
-            </UiSectionHeader>
-          </header>
-
-          <DealInputsForm
-            :deal="form"
-            :deal-type="selectedType"
-            surface="card"
-          />
-
-          <!-- Analyze & Save Button -->
-          <div class="flex flex-col gap-3 pt-2 md:items-end">
-            <!--
-              Static emphasis rather than `animate-pulse`: the muted card, the
-              negative border and the negative icon carry the alarm, and the
-              message keeps `text-fg` so it clears 4.5:1 on the muted ground
-              (`text-negative` there is 4.41:1). Phase 4 adds the enter motion.
-            -->
-            <UiCard
-              v-if="validationErrors.length > 0"
-              data-testid="analyze.errors"
-              tone="muted"
-              padding="sm"
-              class="w-full border-negative/40"
-            >
-              <div class="flex flex-col gap-1.5">
-                <div
-                  v-for="(error, index) in validationErrors"
-                  :key="index"
-                  :data-testid="`analyze.error.${index}`"
-                  class="flex items-start gap-2 text-sm font-medium text-fg"
-                >
-                  <i
-                    class="pi pi-exclamation-circle mt-0.5 flex-none text-negative"
-                    aria-hidden="true"
-                  ></i>
-                  {{ error }}
-                </div>
-              </div>
-            </UiCard>
-            <UiButton
-              data-testid="analyze.analyze-save"
-              :variant="selectedType === 'FLIP' ? 'flip' : 'brrrr'"
-              size="lg"
-              class="w-full shadow-2 md:w-auto"
-              @click="onAnalyzeAndSaveClick"
-            >
-              <i class="pi pi-bolt" aria-hidden="true"></i> Analyze & Save
-            </UiButton>
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <!-- Left: the inputs -->
+      <div class="flex min-w-0 flex-col gap-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="font-display text-2xl font-semibold tracking-display text-fg">New deal</h2>
+            <p class="text-sm text-fg-muted">Enter the numbers; the analysis runs when you save.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <UiTabs aria-label="Deal type">
+              <UiButton
+                data-testid="analyze.type-brrrr"
+                variant="tab"
+                :active="selectedType === 'BRRRR'"
+                @click="selectedType = 'BRRRR'"
+              >
+                <i class="pi pi-home text-xs" aria-hidden="true"></i> BRRRR
+              </UiButton>
+              <UiButton
+                data-testid="analyze.type-flip"
+                variant="tab"
+                :active="selectedType === 'FLIP'"
+                @click="selectedType = 'FLIP'"
+              >
+                <i class="pi pi-dollar text-xs" aria-hidden="true"></i> FLIP
+              </UiButton>
+            </UiTabs>
+            <UiIconButton data-testid="analyze.home" label="Home" size="md" @click="$router.push('/')">
+              <i class="pi pi-home" aria-hidden="true"></i>
+            </UiIconButton>
           </div>
         </div>
 
-        <!-- Right Column: Info & Navigation (Sticky) -->
-        <div class="lg:col-span-1">
-          <div class="sticky top-6 space-y-6">
-            <!-- How It Works Card -->
-            <!--
-              `v-reveal` (no `.stagger`): this card *is* the section, so the
-              directive animates the element itself. Mount-time only — there is
-              no leave, so the sticky column never holds a departing box.
-            -->
-            <UiCard v-reveal tone="elevated" padding="lg" class="relative overflow-hidden">
-              <div
-                class="absolute inset-x-0 top-0 h-1"
-                :class="selectedType === 'BRRRR' ? 'bg-primary' : 'bg-warning'"
-              ></div>
-
-              <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-fg">
-                <i
-                  class="pi pi-info-circle"
-                  aria-hidden="true"
-                  :class="selectedType === 'BRRRR' ? 'text-primary' : 'text-warning'"
-                ></i>
-                How It Works
-              </h2>
-
-              <div class="space-y-4">
-                <div class="flex items-start gap-3">
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">1</div>
-                  <div>
-                    <p class="text-sm font-medium text-fg">Fill in deal numbers</p>
-                    <p class="mt-0.5 text-xs text-fg-muted">Enter purchase price, rehab, financing details, and expenses.</p>
-                  </div>
-                </div>
-                <div class="flex items-start gap-3">
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">2</div>
-                  <div>
-                    <p class="text-sm font-medium text-fg">Analyze & Save</p>
-                    <p class="mt-0.5 text-xs text-fg-muted">Click the button, enter the property address, and save it to your board.</p>
-                  </div>
-                </div>
-                <div class="flex items-start gap-3">
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-positive/10 text-sm font-bold text-positive">3</div>
-                  <div>
-                    <p class="text-sm font-medium text-fg">See results & refine</p>
-                    <p class="mt-0.5 text-xs text-fg-muted">View full analysis on your deal board. Changes auto-save as you tweak numbers.</p>
-                  </div>
-                </div>
-              </div>
-
-              <!--
-                `bg-warning/5`, not `/10`: `text-warning` on the 10% wash is
-                4.38:1 at 12px, and on the 5% wash 4.70:1.
-              -->
-              <div class="mt-6 rounded-ctl border border-warning/30 bg-warning/5 p-3">
-                <p class="flex items-start gap-2 text-xs text-warning">
-                  <i class="pi pi-shield mt-0.5 flex-none" aria-hidden="true"></i>
-                  Every deal is automatically saved &mdash; no more lost data during busy days.
-                </p>
-              </div>
-            </UiCard>
-
-            <!-- My Deals Button -->
-            <UiButton
-              data-testid="analyze.my-deals"
-              variant="secondary"
-              block
-              @click="$router.push('/my-deals')"
-            >
-              <i class="pi pi-list" aria-hidden="true"></i> My Deals
-            </UiButton>
-          </div>
-        </div>
+        <DealInputsForm :deal="form" :deal-type="selectedType" surface="card" />
       </div>
+
+      <!-- Right: the sticky rail -->
+      <aside aria-label="Deal summary" class="flex flex-col gap-4 lg:sticky lg:top-4">
+        <UiSurface :level="1" padding="lg" class="flex flex-col gap-5">
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-fg-muted">Summary</span>
+            <UiBadge :deal-type="selectedType" size="md">{{ selectedType }}</UiBadge>
+          </div>
+
+          <dl class="grid grid-cols-3 gap-3">
+            <div v-for="row in summary" :key="row.label" class="min-w-0">
+              <dt class="truncate text-[11px] uppercase tracking-[0.1em] text-fg-muted">{{ row.label }}</dt>
+              <dd class="numeric mt-1 truncate text-lg font-semibold text-fg">{{ row.value }}</dd>
+            </div>
+          </dl>
+
+          <!--
+            Static emphasis rather than `animate-pulse`: the negative border and
+            the icon carry the alarm; the copy keeps `text-fg` for contrast.
+          -->
+          <UiSurface
+            v-if="validationErrors.length > 0"
+            data-testid="analyze.errors"
+            :level="2"
+            padding="sm"
+            role="alert"
+            class="border-negative/40"
+          >
+            <div class="flex flex-col gap-1.5">
+              <div
+                v-for="(error, index) in validationErrors"
+                :key="index"
+                :data-testid="`analyze.error.${index}`"
+                class="flex items-start gap-2 text-sm font-medium text-fg"
+              >
+                <i class="pi pi-exclamation-circle mt-0.5 flex-none text-negative" aria-hidden="true"></i>
+                {{ error }}
+              </div>
+            </div>
+          </UiSurface>
+
+          <UiButton
+            data-testid="analyze.analyze-save"
+            :variant="selectedType === 'FLIP' ? 'flip' : 'brrrr'"
+            size="lg"
+            block
+            class="shadow-glow-primary"
+            @click="onAnalyzeAndSaveClick"
+          >
+            <i class="pi pi-bolt" aria-hidden="true"></i> Analyze & Save
+          </UiButton>
+
+          <UiButton data-testid="analyze.my-deals" variant="secondary" block @click="$router.push('/my-deals')">
+            <i class="pi pi-objects-column" aria-hidden="true"></i> My Deals
+          </UiButton>
+        </UiSurface>
+
+        <UiSurface :level="1" padding="lg" class="hidden lg:block">
+          <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-fg">
+            <i class="pi pi-info-circle text-primary" aria-hidden="true"></i> How it works
+          </h3>
+          <ol class="flex flex-col gap-3 text-sm">
+            <li class="flex items-start gap-3">
+              <span class="numeric grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">1</span>
+              <span><span class="font-medium text-fg">Fill in deal numbers.</span> <span class="text-fg-muted">Purchase, rehab, financing, expenses.</span></span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="numeric grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">2</span>
+              <span><span class="font-medium text-fg">Analyze &amp; Save.</span> <span class="text-fg-muted">Name the property and it lands on your board.</span></span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="numeric grid h-6 w-6 flex-none place-items-center rounded-full bg-positive/12 text-xs font-bold text-positive">3</span>
+              <span><span class="font-medium text-fg">Refine on the board.</span> <span class="text-fg-muted">Changes auto-save as you tweak numbers.</span></span>
+            </li>
+          </ol>
+        </UiSurface>
+      </aside>
     </div>
 
     <!--
-      Save Modal Overlay. The overlay stays a raw `div`: it owns the
-      `@click.self` that closes the modal, and `backdrop-blur` is `md:`-only
-      over a solid-enough scrim so a phone gets the scrim and no blur cost.
-
-      `UiTransition` wraps the overlay rather than the panel, and the `modal`
-      preset fades the overlay while scaling `[data-ui="modal-panel"]` inside
-      it — the fixed box is never transformed. It replaces the scoped
-      `fade-in-up` keyframe this file used to carry, which is why there is no
-      `<style>` block left: one shared preset, one 150 ms leave that sets
-      `pointer-events: none` first, and reduced motion handled centrally.
+      Save modal. The overlay stays a raw `div` with the `@click.self` close;
+      the `modal` preset fades it and scales the panel inside.
     -->
     <UiTransition preset="modal" appear>
       <div
@@ -310,7 +264,6 @@ const saveDeal = async () => {
               </template>
             </UiField>
 
-            <!-- One column on a phone: "New - need to analyze" does not fit two. -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <UiField>
                 <template #label>Section</template>
@@ -352,7 +305,8 @@ const saveDeal = async () => {
           <div
             v-if="saveError"
             data-testid="analyze.modal.error"
-            class="mt-4 rounded-ctl border border-negative/40 bg-negative/5 p-3"
+            role="alert"
+            class="mt-4 rounded-ctl border-ui border-negative/40 bg-negative/5 p-3"
           >
             <p class="flex items-center gap-2 text-sm text-fg">
               <i class="pi pi-exclamation-circle flex-none text-negative" aria-hidden="true"></i>
@@ -362,12 +316,7 @@ const saveDeal = async () => {
 
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UiButton
-                data-testid="analyze.modal.cancel"
-                variant="secondary"
-                @click="showSaveModal = false"
-                :disabled="isSaving"
-              >
+              <UiButton data-testid="analyze.modal.cancel" variant="secondary" @click="showSaveModal = false" :disabled="isSaving">
                 Cancel
               </UiButton>
               <UiButton

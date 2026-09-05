@@ -76,7 +76,7 @@ const inputId = useId();
       :allowEmpty="true"
       :minFractionDigits="0"
       :maxFractionDigits="3"
-      inputClass="ui-input tabular"
+      inputClass="ui-input numeric"
       class="w-full"
       @keydown="handleKeydown"
       @input="(e: any) => emit('update:modelValue', e.value)"
