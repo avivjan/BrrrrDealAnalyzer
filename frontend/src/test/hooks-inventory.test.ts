@@ -43,13 +43,19 @@ export interface HookReference {
   file: string;
 }
 
+/**
+ * Dotted literals that are not hooks. `bw.*` are the appearance storage keys
+ * (`src/design/theme.ts`), which the theme spec reads from `localStorage`.
+ */
+const NOT_HOOKS = /^bw\./;
+
 export function referencesIn(source: string, file: string): HookReference[] {
   const refs: HookReference[] = [];
   const add = (raw: string) => {
     const cut = raw.indexOf('${');
     const dynamic = cut >= 0;
     const id = dynamic ? raw.slice(0, cut) : raw;
-    if (id.length > 0) refs.push({ id, dynamic, file });
+    if (id.length > 0 && !NOT_HOOKS.test(id)) refs.push({ id, dynamic, file });
   };
   for (const match of source.matchAll(/getByTestId\(\s*(['"`])([^'"`]*)\1/g)) add(match[2]!);
   for (const match of source.matchAll(/data-testid=\\?["']([^"'\\\]]*)/g)) add(match[1]!);
@@ -123,6 +129,7 @@ describe('hook inventory — the extractors', () => {
       'page.locator(`[data-testid="${id}"]`)',
       "['my-deals', '/my-deals', 'mydeals.add-deal']",
       "expect(text).toContain('e.g')",
+      "localStorage.getItem('bw.look')",
     ].join('\n');
     expect(referencesIn(source, 'spec').map((r) => [r.id, r.dynamic])).toEqual([
       ['mydeals.modal', false],
