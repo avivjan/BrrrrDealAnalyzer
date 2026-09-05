@@ -21,6 +21,19 @@
       "reason": "Task 3.4: `import { useId } from \"vue\";` plus `const inputId = useId();` — same label-to-InputNumber association as NumberInput."
     }
   ],
-  "bindings": [],
-  "text": []
+  "bindings": [
+    {
+      "file": "src/views/MyDeals.vue",
+      "expression": "!columns[stage.id]?.length",
+      "reason": "Task 3.6: a new, purely presentational `<UiEmptyState v-if>` beside (never inside) each stage's draggable list, so an empty column says so instead of showing a blank 100px well. Reads existing state only — the same `columns[stage.id]` the row's counter already reads — and adds no handler."
+    }
+  ],
+  "text": [
+    {
+      "file": "src/views/MyDeals.vue",
+      "from": "",
+      "to": "No deals in this stage",
+      "reason": "Task 3.6: the empty-column state's only line. New copy for a new element (see the matching `bindings` row); nothing existing was reworded."
+    }
+  ]
 }
