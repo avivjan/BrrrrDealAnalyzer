@@ -134,10 +134,15 @@ backend; the same checklist is repeated in the header comment of
    existing rows lack the column. The migration `DEFAULT` must match the
    model `default=` and the Pydantic default, because `update_*_deal` dumps
    every field (no `exclude_unset`) on each PUT.
-9. **`BackEnd/BL/common/deal_analysis.py`** / **`deal_validation.py`** — use
-   the field in `calculate_brrr_results` / `calculate_flip_results` and
-   `validate_brrr_inputs` / `validate_flip_inputs`; register a `CalcStep`
-   (see `BL/common/calc_breakdown.py`) if it feeds a headline metric.
+9. **`BackEnd/BL/analyze/analyzeBRRR.py`** / **`analyzeFlip.py`** — use the
+   field in `calculate_brrr_results` / `calculate_flip_results`. In practice
+   the edit lands in the one step file that owns that subject, under
+   `BL/analyze/brrrSteps/` or `flipSteps/` (`cash_flow.py`, `dscr.py`,
+   `total_cash_needed.py`, ...); register the `CalcStep` right there next to
+   the value it explains (see `BL/analyze/common/calc_breakdown.py`) if it
+   feeds a headline metric. Add the range/sign check to
+   **`BL/analyze/common/validation.py`** (`validate_brrr_inputs` /
+   `validate_flip_inputs`).
 10. **`BackEnd/DAL/crud/active_deal.py`** / **`bought_deal.py`** — no change
     expected; they iterate `__table__.columns` dynamically. Confirm only.
 11. **`BackEnd/BL/reports/common/deal_pdf.py`** — only if it's a headline
