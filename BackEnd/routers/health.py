@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from BL.health.helloworld.helloworld import helloworld as helloworld_bl
+from BL.health.helloworld import helloworld as helloworld_bl
 
 router = APIRouter()
 

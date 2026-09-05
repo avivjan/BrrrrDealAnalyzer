@@ -5,8 +5,8 @@ from fastapi.responses import Response
 
 from ReqRes.analyze.analyzeBRRR.analyzeBRRRReq import analyzeBRRRReq
 from ReqRes.analyze.analyzeFlip.analyzeFlipReq import analyzeFlipReq
-from BL.reports.reportBrrrPdf.reportBrrrPdf import report_brrr_pdf as report_brrr_pdf_bl
-from BL.reports.reportFlipPdf.reportFlipPdf import report_flip_pdf as report_flip_pdf_bl
+from BL.reports.reportBrrrPdf import report_brrr_pdf as report_brrr_pdf_bl
+from BL.reports.reportFlipPdf import report_flip_pdf as report_flip_pdf_bl
 
 router = APIRouter()
 
