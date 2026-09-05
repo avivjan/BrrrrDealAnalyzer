@@ -12,6 +12,7 @@
     "e2e:record": "PW_RECORD=1 playwright test --project=chromium",
     "e2e:report": "playwright show-report",
     "e2e:compare": "node e2e/scripts/compare-reports.mjs e2e/reports/phase0-baseline.json e2e/reports/phase5-final.json",
+    "e2e:archive": "node e2e/scripts/normalize-report.mjs --archive",
     "test:watch": "vitest",
     "audit:baseline": "node scripts/audit/script-blocks.mjs --write && node scripts/audit/bindings.mjs --write && node scripts/audit/text.mjs --write",
     "audit": "node scripts/audit/script-blocks.mjs && node scripts/audit/bindings.mjs && node scripts/audit/text.mjs",

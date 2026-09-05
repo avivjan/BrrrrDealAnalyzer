@@ -103,6 +103,8 @@ not to have changed any of it.
 npm run e2e            # run the suite against the committed goldens
 npm run e2e:record     # re-record the goldens (chromium only)
 npm run e2e:report     # open the last HTML report
+npm run e2e:archive -- <name>   # keep the last run as e2e/reports/<name>.json
+npm run e2e:compare    # phase0-baseline vs phase5-final, test by test
 ```
 
 Both servers start themselves. `playwright.config.ts` boots
@@ -149,9 +151,21 @@ backend database.
   file exists so a later phase can be held to "no new ones".
 - `e2e/reports/phase0-baseline.json` — the JSON reporter output from the run
   that recorded the above.
+- `e2e/reports/phase5-final.json` — the same suite at the end of the overhaul.
+  `npm run e2e:compare` matches the two test by test and fails if the overhaul
+  lost behaviour.
+
+An archive is never copied out of `e2e/reports/last-run.json` by hand. The JSON
+reporter records where the run happened — `configFile`, `rootDir`, each
+project's `testDir` / `outputDir`, `argv`, and every spec `file` are absolute
+paths on the machine that ran it — so an archive goes through
+`npm run e2e:archive -- <name>`, which rewrites everything under the repository
+root to a repo-relative POSIX path (`e2e/scripts/normalize-report.mjs`) before
+writing `e2e/reports/<name>.json`.
 
 Goldens change only with an agreed behaviour change, in their own commit with a
-`Golden update:` subject — the same rule as the audit manifests below.
+`Golden update:` subject — the same rule as the audit manifests below. The
+archived reports live under `e2e/reports/`, so they follow that rule too.
 
 Real devices are not simulated. `docs/ui-overhaul/device-checklist.md` is the
 manual pass that covers what emulation cannot: input zoom, safe areas, the iOS
