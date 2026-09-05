@@ -343,6 +343,14 @@ const formatMoney = (val?: number) =>
  * as one string and `cn()` drops `border-l-blue-500` the moment the same string
  * also sets `border` and `border-gray-100`. Keying the colour off `data-stage`
  * keeps the five stages apart, on tokens, whatever the class list merges to.
+ *
+ * The same merge is what puts the *card* border on a token. G3 freezes
+ * `stageColors`, so the baseline's `border-gray-100` stays in the script; the
+ * root's static `class` carries `border-line`, Vue normalises `:class` ahead of
+ * `class`, and tailwind-merge keeps the later of two border colours. Swapping
+ * the order of those two attributes would quietly restore the grey, so
+ * `DealCard.contract.test.ts` asserts the resolved class list on all five
+ * stages.
  */
 /* The frozen `cardClass` falls back to the stage-1 entry for an unknown stage; so does this. */
 [data-stage] {

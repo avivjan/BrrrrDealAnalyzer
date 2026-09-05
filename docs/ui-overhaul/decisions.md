@@ -65,6 +65,28 @@ is almost always the cheapest way to keep a mechanical proof honest.
   (`rgba(255,255,255,0.015)`), whitespace included, so the token/literal equality
   tests can stay strict.
 
+### Support floor
+
+**iOS/Safari 15.4+ and Chrome 108+.** Those are the versions that have the two
+platform features the layout leans on: the `dvh`/`svh` viewport units (the app
+shell is `h-dvh`, `UiModalPanel` caps at `90svh` and goes `100svh` full-screen
+on a phone) and smooth `scrollIntoView` (`MyDeals` scrolls the results panel
+into view after an analysis). Below the floor nothing breaks: `App.vue` carries
+an `@supports not (height: 100dvh)` fallback for the shell, an unsupported
+`svh` declaration is dropped and the panel sizes to its content, and an ignored
+`behavior: "smooth"` jumps instead of gliding.
+
+`browserslist` in `package.json` (`iOS >= 15`, `Safari >= 15`, `Chrome >= 100`)
+and `build.target` in `vite.config.ts` (`es2020`, `safari15`, `ios15`,
+`chrome100`, `firefox100`) sit *below* that floor deliberately. They decide
+which syntax Vite downlevels and which prefixes Autoprefixer emits — questions
+about the JavaScript and CSS this app ships, not about which browsers get the
+full layout. Raising them to match the feature floor would change the build
+output for no gain; lowering the feature floor would mean giving up `dvh`.
+
+`frontend/README.md` states the same floor in the same words; it is the only
+other place that states it.
+
 ---
 
 ## 3. Gate rulings a maintainer will meet

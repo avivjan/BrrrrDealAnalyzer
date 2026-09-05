@@ -27,9 +27,17 @@ npm run build    # vue-tsc type-check + production build
 ```
 
 The app talks to the backend over `VITE_API_URL`, which defaults to
-`http://localhost:8000` when unset (`src/api/index.ts`). The build targets
-iOS/Safari >= 15.4 and Chrome >= 100 (`browserslist` in `package.json`,
-`build.target` in `vite.config.ts`).
+`http://localhost:8000` when unset (`src/api/index.ts`).
+
+**Support floor: iOS/Safari 15.4+ and Chrome 108+** — the versions with the
+`dvh`/`svh` viewport units and smooth `scrollIntoView` the shell and the modals
+use. Older browsers still work: `App.vue` has an `@supports not (height: 100dvh)`
+fallback, an unsupported `svh` declaration is dropped, and an ignored
+`behavior: "smooth"` jumps. `browserslist` in `package.json` (`iOS >= 15`,
+`Safari >= 15`, `Chrome >= 100`) and `build.target` in `vite.config.ts` sit below
+that floor on purpose: they drive syntax downlevelling and prefix generation, not
+feature support. `docs/ui-overhaul/decisions.md` §2 has the reasoning; these two
+are the only places the floor is stated.
 
 ---
 

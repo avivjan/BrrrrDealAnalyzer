@@ -193,4 +193,31 @@ describe("DealCard", () => {
       expect(text).toContain("$50,000");
     });
   });
+
+  /**
+   * The frozen `<script setup>` still hands `UiCard` the baseline's
+   * `border-gray-100` inside `stageColors`, and G3 forbids editing it. The
+   * template settles the question instead: Vue normalises `:class` before the
+   * static `class`, so `border-line` reaches `cn()` *after* the legacy class
+   * and tailwind-merge drops the loser. These assertions are what makes that
+   * ordering a contract rather than an accident — reorder the two attributes on
+   * the root and the card silently goes back to a hard-coded grey.
+   */
+  describe("the card border is on the token, not the baseline grey", () => {
+    it.each([1, 2, 3, 4, 5])("resolves to border-line on stage %i", (stage) => {
+      const root = mountCard(brrrDeal({ stage })).element as HTMLElement;
+      const classes = (root.getAttribute("class") ?? "").split(/\s+/);
+      expect(classes).toContain("border-line");
+      expect(classes).not.toContain("border-gray-100");
+    });
+
+    it("keeps the stage accent off the class list, where the scoped CSS owns it", () => {
+      const root = mountCard(brrrDeal({ stage: 1 })).element as HTMLElement;
+      const classes = (root.getAttribute("class") ?? "").split(/\s+/);
+      // `cn()` drops `border-l-blue-500` against `border-line`; `[data-stage]`
+      // in the scoped block is what actually colours the left edge.
+      expect(classes).not.toContain("border-l-blue-500");
+      expect(root.getAttribute("data-stage")).toBe("1");
+    });
+  });
 });
