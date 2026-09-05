@@ -60,10 +60,14 @@ export const CLEAR_PROPS = 'transform,opacity,filter,willChange';
  *    Playwright functional projects run with `reducedMotion: 'reduce'`, so this
  *    is also what keeps the characterization suite deterministic.
  *  - When `window.__BW_MOTION_OFF__` is set, the manual override.
+ *  - When the in-app Motion setting is "Reduced" (`src/design/theme.ts` writes
+ *    `data-motion="reduced"` on `<html>`; read from the DOM rather than
+ *    imported, so the motion layer never depends on the design layer).
  */
 export function motionEnabled(): boolean {
   if (import.meta.env.VITEST) return false;
   if (typeof window === 'undefined') return false;
   if (window.__BW_MOTION_OFF__) return false;
+  if (typeof document !== 'undefined' && document.documentElement.dataset.motion === 'reduced') return false;
   return !prefersReducedMotion();
 }

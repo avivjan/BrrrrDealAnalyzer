@@ -10,8 +10,14 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * `color-scheme` is owned by `src/design/theme.ts` (and, before the first
+   * frame, by the inline script in `index.html`), which sets it on `<html>`
+   * to match the resolved mode. The CSS fallback here is for no-JS: dark, the
+   * app's default mode.
+   */
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   body {
@@ -21,6 +27,18 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /*
+   * A look or mode switch cross-fades the ground and ink rather than snapping.
+   * CSS, never GSAP: a tween here would still be alive when the e2e
+   * no-live-tweens check looks. Reduce Motion (below) neutralises it.
+   */
+  body,
+  .app-shell {
+    transition:
+      background-color var(--dur-base) var(--ease-standard),
+      color var(--dur-base) var(--ease-standard);
   }
 
   /* `dvh` excludes the iOS toolbars, so the page is exactly one screen tall. */
@@ -149,8 +167,8 @@
     background-position: right 0.625rem center;
     background-size: 1.25rem 1.25rem;
 
-    /* Keeps the native option list light while only the light theme ships. */
-    color-scheme: light;
+    /* The native option list follows the page's mode (set on `<html>`). */
+    color-scheme: inherit;
   }
 
   .dark .ui-select {
@@ -170,6 +188,32 @@
   /* Money and percentage cells: digits must not change width as they change. */
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Numerals in the look's mono face, tabular. KPI values, money and percent cells. */
+  .numeric {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * A glass panel: translucent surface, blur, hairline. Reads the look's
+   * `--blur-glass`; a look that sets it to 0px gets an opaque surface-2 panel
+   * from the same class, so callers never branch on the look. Body text never
+   * sits directly on glass — it goes on an inner `bg-surface*` card
+   * (MASTER.md, "Glass rule").
+   */
+  .glass {
+    background-color: rgb(var(--color-glass) / 0.6);
+    border: var(--border-w) solid rgb(var(--color-glass-line) / 0.12);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass {
+      background-color: rgb(var(--color-surface-2));
+    }
   }
 
   /* Notch and home-indicator padding. Zero on every device without insets. */
@@ -247,6 +291,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* The same neutraliser for the in-app Motion setting (Settings → Appearance → Motion: Reduced). */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
 
 /*
