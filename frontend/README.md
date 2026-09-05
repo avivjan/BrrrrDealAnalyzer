@@ -160,28 +160,37 @@ look:
 ## Verifying a change
 
 ```
-npm run verify:ui            # every gate below, one PASS/FAIL line each
+npm run verify:ui            # every gate below, one PASS/FAIL/ADVISORY line each
+npm run verify:ui -- --fast  # the same without the browser suite — after every task
 npm run verify:ui -- --phase # the same, plus the backend proofs — at a phase end
 ```
 
-Eleven gates, in order. `--phase` adds a twelfth, `BACKEND`
-(`verify_regression.py verify` + `pytest -q`, restoring the `__pycache__` churn
-those leave behind), and names the five Playwright projects explicitly, so a
-project added to the config without a decision shows up as a difference rather
-than silently joining the run.
+Eight gates and three advisories, in order. `--phase` adds a ninth gate,
+`BACKEND` (`verify_regression.py verify` + `pytest -q`, restoring the
+`__pycache__` churn those leave behind), and names the five Playwright projects
+explicitly, so a project added to the config without a decision shows up as a
+difference rather than silently joining the run. `--fast` skips `G5`/`G7` and
+`BACKEND` (both print `SKIP`); it is the per-task check inside a phase, and the
+full run happens once at the phase end.
+
+Since UI v2 (`docs/plans/2026-09-05-ui-v2-plan.md` §2) `G3`, `G4` and `G4b`
+are **advisory**: a redesign restructures templates and copy on purpose, so
+their findings are printed for the reviewer as `ADVISORY <gate> N finding(s)`
+and never fail the run. The behaviour proof rests on `G5` (network goldens),
+the component contract tests and the hook inventory (`src/test/hooks-inventory.test.ts`).
 
 | Gate | What it proves |
 | --- | --- |
 | `G1` | nothing outside `frontend/` has moved since `ui-baseline` (`docs/`, `design-system/`, `.superpowers/` and the two root READMEs are documentation and are excluded; `BackEnd/`, `runtime.txt` and `.gitignore` are not) |
-| `G2` | `src/{stores,api,utils,router,types,config}` are byte-identical to `ui-baseline`, and `e2e/{flows,fixtures}` to `ui-p0` |
-| `G3` | every `.vue` `<script>` block is unchanged but for the whitelisted additive shapes |
-| `G4` | every behavioural template binding is unchanged, in document order |
-| `G4b` | every on-screen copy string is unchanged |
+| `G2` | `src/{stores,api,utils,router,types,config}` are byte-identical to `ui-baseline` |
+| `G3` (advisory) | which `.vue` `<script>` blocks changed since the v1 manifest, line by line |
+| `G4` (advisory) | which behavioural template bindings moved, in document order |
+| `G4b` (advisory) | which on-screen copy strings changed |
 | `G-HOVER` | every `hover:`/`group-hover:opacity-100` reveal has a `touch:opacity-100` counterpart |
 | `G8` | no tracked file contains an absolute filesystem path |
 | `G6` | `npm test` and `npm run build` both succeed |
 | `G5` / `G7` | the Playwright suite: network contracts, axe baseline, no live tweens |
-| `GOLDEN-POLICY` | since `ui-p0`, `scripts/audit/golden`, `e2e/golden`, `scripts/audit/allowlist.json` and `e2e/reports` changed only in `Golden update:` commits — and, across the whole branch, every `Golden update:` commit changed nothing else |
+| `GOLDEN-POLICY` | since `ui-p0`, `scripts/audit/golden`, `e2e/golden`, `scripts/audit/allowlist.json`, `e2e/reports`, `e2e/flows` and `e2e/fixtures` changed only in `Golden update:` commits — and, across the whole branch, every `Golden update:` commit changed nothing else. `e2e/checks` is ordinary code |
 
 The static audits also run on their own: `npm run audit` (G3, G4, G4b),
 `node scripts/audit/hover-pairs.mjs`, `node scripts/audit/paths.mjs`,
