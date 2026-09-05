@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import type { DayBucket } from '../../types/liquidity'
 import { todayISO } from '../../utils/liquidityEngine'
+import { chartToken } from '../../design/chartTokens'
 
 const props = defineProps<{
   days: DayBucket[]
@@ -103,7 +104,7 @@ function draw() {
   const ctx = canvas.getContext('2d')!
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-  ctx.fillStyle = '#0f1117'
+  ctx.fillStyle = chartToken('bg')
   ctx.fillRect(0, 0, w, h)
 
   const days = props.days
@@ -114,7 +115,7 @@ function draw() {
 
   // Horizontal grid lines + Y labels
   const gridSteps = niceGridSteps(min, max, 6)
-  ctx.strokeStyle = '#1e2030'
+  ctx.strokeStyle = chartToken('grid')
   ctx.lineWidth = 1
   ctx.font = '11px "JetBrains Mono", "SF Mono", "Fira Code", monospace'
   ctx.textAlign = 'right'
@@ -127,7 +128,7 @@ function draw() {
     ctx.moveTo(CHART_PADDING_LEFT, y)
     ctx.lineTo(w, y)
     ctx.stroke()
-    ctx.fillStyle = '#5c6078'
+    ctx.fillStyle = chartToken('axis-text')
     ctx.fillText(formatK(val), CHART_PADDING_LEFT - 8, y)
   }
 
@@ -139,7 +140,7 @@ function draw() {
   if (min < 0 && zeroVisible) {
     const negBottom = Math.min(yForBalance(min, h), h - CHART_PADDING_BOTTOM)
     const negTop = Math.max(zeroY, CHART_PADDING_TOP)
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.04)'
+    ctx.fillStyle = chartToken('reserve-band')
     ctx.fillRect(CHART_PADDING_LEFT, negTop, w - CHART_PADDING_LEFT, negBottom - negTop)
   }
 
@@ -169,18 +170,18 @@ function draw() {
 
     // Weekend shading
     if (isWeekend) {
-      ctx.fillStyle = 'rgba(255,255,255,0.015)'
+      ctx.fillStyle = chartToken('weekend-band')
       ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
     }
 
     // Hovered column highlight
     if (isHovered) {
-      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)'
+      ctx.fillStyle = chartToken('today-band')
       ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
     }
 
     // Vertical grid line per day
-    ctx.strokeStyle = isFirstOfMonth ? '#2a2f45' : '#16192a'
+    ctx.strokeStyle = isFirstOfMonth ? chartToken('month-line') : chartToken('day-line')
     ctx.lineWidth = isFirstOfMonth ? 1 : 0.5
     ctx.beginPath()
     ctx.moveTo(x - DAY_WIDTH / 2, CHART_PADDING_TOP)
@@ -190,25 +191,25 @@ function draw() {
     // Month label row (drawn once per new month)
     if (monthKey !== prevMonth) {
       const mIdx = parseInt(mo) - 1
-      ctx.fillStyle = '#7c82a0'
+      ctx.fillStyle = chartToken('month-label')
       ctx.font = 'bold 10px "JetBrains Mono", monospace'
       ctx.fillText((MONTH_NAMES[mIdx] ?? '') + ' \'' + yr.slice(2), x + 30, h - CHART_PADDING_BOTTOM + 28)
       prevMonth = monthKey
     }
 
     // Day number label for every day
-    ctx.fillStyle = isToday ? '#818cf8' : isHovered ? '#c7d2fe' : hasTxns ? '#94a3b8' : '#3e4460'
+    ctx.fillStyle = isToday ? chartToken('day-today') : isHovered ? chartToken('day-hover') : hasTxns ? chartToken('day-active') : chartToken('day-idle')
     ctx.font = (isToday || isHovered ? 'bold ' : '') + '10px "JetBrains Mono", monospace'
     ctx.fillText(String(dayNum), x, h - CHART_PADDING_BOTTOM + 6)
 
     // Weekday abbreviation under the number
-    ctx.fillStyle = isToday ? '#6366f1' : '#2e3350'
+    ctx.fillStyle = isToday ? chartToken('marker-today') : chartToken('marker-idle')
     ctx.font = '8px "JetBrains Mono", monospace'
     ctx.fillText(WEEKDAY_NAMES[wd] ?? '', x, h - CHART_PADDING_BOTTOM + 18)
 
     // Today marker
     if (isToday) {
-      ctx.strokeStyle = '#6366f1'
+      ctx.strokeStyle = chartToken('today-line')
       ctx.lineWidth = 1.5
       ctx.setLineDash([3, 3])
       ctx.beginPath()
@@ -222,7 +223,7 @@ function draw() {
     if (hasTxns) {
       ctx.beginPath()
       ctx.arc(x, h - CHART_PADDING_BOTTOM + 2, 1.5, 0, Math.PI * 2)
-      ctx.fillStyle = d.net_k > 0 ? '#22c55e' : '#ef4444'
+      ctx.fillStyle = d.net_k > 0 ? chartToken('net-positive') : chartToken('net-negative')
       ctx.fill()
     }
   }
@@ -241,17 +242,17 @@ function draw() {
     if (bucket.balance_k >= 0) {
       const top = Math.min(balY, baseY)
       const barH = Math.abs(baseY - balY)
-      ctx.fillStyle = isHov ? 'rgba(129, 140, 248, 0.55)' : 'rgba(99, 102, 241, 0.35)'
+      ctx.fillStyle = isHov ? chartToken('inflow-fill-hover') : chartToken('inflow-fill')
       ctx.fillRect(x - barW / 2, top, barW, barH)
-      ctx.strokeStyle = isHov ? '#a5b4fc' : '#818cf8'
+      ctx.strokeStyle = isHov ? chartToken('inflow-stroke-hover') : chartToken('inflow-stroke')
       ctx.lineWidth = isHov ? 1.5 : 0.5
       ctx.strokeRect(x - barW / 2, top, barW, barH)
     } else {
       const top = baseY
       const barH = Math.abs(balY - baseY)
-      ctx.fillStyle = isHov ? 'rgba(239, 68, 68, 0.55)' : 'rgba(239, 68, 68, 0.35)'
+      ctx.fillStyle = isHov ? chartToken('outflow-fill-hover') : chartToken('outflow-fill')
       ctx.fillRect(x - barW / 2, top, barW, barH)
-      ctx.strokeStyle = isHov ? '#fca5a5' : '#ef4444'
+      ctx.strokeStyle = isHov ? chartToken('outflow-stroke-hover') : chartToken('outflow-stroke')
       ctx.lineWidth = isHov ? 1.5 : 0.5
       ctx.strokeRect(x - barW / 2, top, barW, barH)
     }
@@ -259,7 +260,7 @@ function draw() {
 
   // --- Zero line — solid red, drawn on top of bars ---
   if (zeroVisible) {
-    ctx.strokeStyle = '#ef4444'
+    ctx.strokeStyle = chartToken('reserve-line')
     ctx.lineWidth = 2
     ctx.setLineDash([])
     ctx.beginPath()
@@ -274,7 +275,7 @@ function draw() {
     const hy = yForBalance(hBucket.balance_k, h)
 
     // Horizontal crosshair
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)'
+    ctx.strokeStyle = chartToken('baseline')
     ctx.lineWidth = 1
     ctx.setLineDash([2, 2])
     ctx.beginPath()
@@ -284,9 +285,9 @@ function draw() {
     ctx.setLineDash([])
 
     // Y-axis label badge
-    ctx.fillStyle = '#818cf8'
+    ctx.fillStyle = chartToken('balance-dot')
     ctx.fillRect(0, hy - 10, CHART_PADDING_LEFT - 4, 20)
-    ctx.fillStyle = '#fff'
+    ctx.fillStyle = chartToken('balance-dot-core')
     ctx.font = 'bold 10px "JetBrains Mono", monospace'
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -305,7 +306,7 @@ function draw() {
     ctx.lineTo(mx - 5, my - 14)
     ctx.lineTo(mx + 5, my - 14)
     ctx.closePath()
-    ctx.fillStyle = mBucket.balance_k < 0 ? '#ef4444' : '#f59e0b'
+    ctx.fillStyle = mBucket.balance_k < 0 ? chartToken('min-negative') : chartToken('min-warning')
     ctx.fill()
   }
 }

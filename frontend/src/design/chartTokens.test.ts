@@ -13,6 +13,52 @@ const NAMES = Object.keys(CHART_FALLBACKS) as ChartTokenName[];
 const read = (relative: string) =>
   readFileSync(new URL(relative, import.meta.url), "utf8");
 
+/**
+ * The colours `TimelineChart.vue` used to assign directly, character for
+ * character.
+ *
+ * They lived in the component until Task 3.9 replaced each one with a
+ * `chartToken('<name>')` call (gate G3's E1 exemption), so the component can
+ * no longer be the second copy this file holds `CHART_FALLBACKS` against. The
+ * table moves here instead: it is the dark theme's palette, and the two
+ * assertions below tie it to both `CHART_FALLBACKS` and `tokens.css`'s
+ * `.dark` block. Change a dark colour and all three have to move together.
+ */
+const DARK_LITERALS: Record<ChartTokenName, string> = {
+  bg: "#0f1117",
+  grid: "#1e2030",
+  "axis-text": "#5c6078",
+  "reserve-band": "rgba(239, 68, 68, 0.04)",
+  "weekend-band": "rgba(255,255,255,0.015)",
+  "today-band": "rgba(99, 102, 241, 0.08)",
+  "month-line": "#2a2f45",
+  "day-line": "#16192a",
+  "month-label": "#7c82a0",
+  "day-today": "#818cf8",
+  "day-hover": "#c7d2fe",
+  "day-active": "#94a3b8",
+  "day-idle": "#3e4460",
+  "marker-today": "#6366f1",
+  "marker-idle": "#2e3350",
+  "today-line": "#6366f1",
+  "net-positive": "#22c55e",
+  "net-negative": "#ef4444",
+  "inflow-fill-hover": "rgba(129, 140, 248, 0.55)",
+  "inflow-fill": "rgba(99, 102, 241, 0.35)",
+  "inflow-stroke-hover": "#a5b4fc",
+  "inflow-stroke": "#818cf8",
+  "outflow-fill-hover": "rgba(239, 68, 68, 0.55)",
+  "outflow-fill": "rgba(239, 68, 68, 0.35)",
+  "outflow-stroke-hover": "#fca5a5",
+  "outflow-stroke": "#ef4444",
+  "reserve-line": "#ef4444",
+  baseline: "rgba(148, 163, 184, 0.2)",
+  "balance-dot": "#818cf8",
+  "balance-dot-core": "#fff",
+  "min-negative": "#ef4444",
+  "min-warning": "#f59e0b",
+};
+
 /** The `<script>` half of the chart SFC — where every `ctx.fillStyle` lives. */
 const timelineScript = (() => {
   const sfc = read("../components/liquidity/TimelineChart.vue");
@@ -23,16 +69,31 @@ const timelineScript = (() => {
   return sfc.slice(start, end);
 })();
 
-/** `--chart-*` declarations as `tokens.css` writes them. */
-const cssTokens = (() => {
+/** A resolved colour a `<canvas>` will accept: `#rgb`…`#rrggbbaa`, `rgb()`, `rgba()`. */
+const COLOUR = /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))$/;
+
+/**
+ * `--chart-*` declarations, per theme block.
+ *
+ * `tokens.css` now carries two full sets — the light palette on `:root` and
+ * the dark one on `.dark` — so a single flat scan would silently keep only
+ * whichever came last.
+ */
+const chartTokensIn = (selector: ":root" | ".dark") => {
   const css = read("../assets/tokens.css");
+  const start = css.indexOf(`${selector} {`);
+  expect(start, `no ${selector} block in tokens.css`).toBeGreaterThanOrEqual(0);
+  const block = css.slice(start, css.indexOf("\n}", start));
   const found = new Map<string, string>();
   // Both groups are guaranteed by the pattern, so the assertions are safe.
-  for (const match of css.matchAll(/--chart-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+  for (const match of block.matchAll(/--chart-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
     found.set(match[1]!, match[2]!.trim());
   }
   return found;
-})();
+};
+
+const lightTokens = chartTokensIn(":root");
+const darkTokens = chartTokensIn(".dark");
 
 afterEach(() => {
   resetChartTokenCache();
@@ -58,19 +119,57 @@ describe("chartTokens", () => {
     });
   });
 
-  describe("the fallbacks are today's literals", () => {
-    it("every fallback appears verbatim in TimelineChart's script block", () => {
-      const missing = NAMES.filter(
-        (name) => !timelineScript.includes(CHART_FALLBACKS[name]),
-      );
-      expect(missing).toEqual([]);
+  describe("the fallbacks are the dark theme's literals", () => {
+    it("matches the table this file keeps", () => {
+      expect(CHART_FALLBACKS).toEqual(DARK_LITERALS);
     });
 
-    it("every fallback has a matching --chart-* declaration in tokens.css", () => {
-      expect([...cssTokens.keys()].sort()).toEqual([...NAMES].sort());
+    it("is what tokens.css declares under .dark", () => {
+      expect([...darkTokens.keys()].sort()).toEqual([...NAMES].sort());
       for (const name of NAMES) {
-        expect(cssTokens.get(name)).toBe(CHART_FALLBACKS[name]);
+        expect(darkTokens.get(name), name).toBe(CHART_FALLBACKS[name]);
       }
+    });
+  });
+
+  describe("tokens.css carries a colour for both themes", () => {
+    it.each([
+      [":root", lightTokens],
+      [".dark", darkTokens],
+    ])("declares all 32 --chart-* names in %s", (_selector, declared) => {
+      expect([...declared.keys()].sort()).toEqual([...NAMES].sort());
+    });
+
+    it.each([
+      [":root", lightTokens],
+      [".dark", darkTokens],
+    ])("declares a resolved colour string in %s", (_selector, declared) => {
+      for (const name of NAMES) {
+        const value = declared.get(name) ?? "";
+        expect(value, name).not.toBe("");
+        expect(value, `${name} = ${value}`).toMatch(COLOUR);
+      }
+    });
+
+    it("gives the light theme its own palette, not the dark one", () => {
+      const shared = NAMES.filter((name) => lightTokens.get(name) === darkTokens.get(name));
+      expect(shared).toEqual([]);
+    });
+  });
+
+  describe("TimelineChart reads the tokens rather than literals (E1)", () => {
+    it("calls chartToken() once for every name", () => {
+      const called = [...timelineScript.matchAll(/chartToken\('([\w-]+)'\)/g)].map(
+        (match) => match[1]!,
+      );
+      expect([...called].sort()).toEqual([...NAMES].sort());
+    });
+
+    it("assigns no colour literal to the canvas any more", () => {
+      const literals = timelineScript.match(
+        /ctx\.(?:fill|stroke)Style = [^\n]*'(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))'/g,
+      );
+      expect(literals).toBeNull();
     });
   });
 

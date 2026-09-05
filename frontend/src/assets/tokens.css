@@ -6,7 +6,8 @@
  * Colour tokens are space-separated RGB triplets, not colour strings, so the
  * Tailwind theme can slot an alpha channel in: `rgb(var(--color-fg) / 0.5)`.
  * The `--chart-*` tokens are the exception: a `<canvas>` needs a resolved
- * colour string, so those are literals.
+ * colour string, so those are literals -- one full set per theme, read by
+ * `src/design/chartTokens.ts` and never by Tailwind.
  *
  * Contrast is enforced by `npm run audit:contrast` (WCAG 2.x, 4.5:1 for text
  * and 3:1 for the focus ring, in both themes).
@@ -80,41 +81,52 @@
   /*
    * Liquidity timeline canvas. These are resolved colour strings because
    * `TimelineChart.vue` assigns them straight to `ctx.fillStyle` /
-   * `ctx.strokeStyle`, and a canvas silently ignores an invalid value.
-   * In Phase 1 they are the chart's existing literals, unchanged.
+   * `ctx.strokeStyle`, and a canvas silently ignores an invalid value --
+   * `rgb(var(--color-primary))` would be dropped without an error.
+   *
+   * Task 3.9 turned these into the *light* palette, resolved by hand from the
+   * `--color-*` triplets above. Ink and semantic lines clear 3:1 against
+   * `--chart-bg`; the grid, the day rules and the three wash bands are
+   * deliberately below it, exactly as they were in the dark original -- they
+   * are scaffolding behind the data, not information.
+   *
+   * Two values moved off their first mapping because they did not clear 3:1:
+   *   --chart-day-idle     fg-muted 0.60 -> 0.70  (2.88:1 -> 3.59:1)
+   *   --chart-marker-idle  `line` -> fg-muted 0.65 (1.23:1 -> 3.19:1); the
+   *                        weekday row is text, and `line` erased it.
    */
-  --chart-bg: #0f1117;
-  --chart-grid: #1e2030;
-  --chart-axis-text: #5c6078;
-  --chart-reserve-band: rgba(239, 68, 68, 0.04);
-  --chart-weekend-band: rgba(255,255,255,0.015);
-  --chart-today-band: rgba(99, 102, 241, 0.08);
-  --chart-month-line: #2a2f45;
-  --chart-day-line: #16192a;
-  --chart-month-label: #7c82a0;
-  --chart-day-today: #818cf8;
-  --chart-day-hover: #c7d2fe;
-  --chart-day-active: #94a3b8;
-  --chart-day-idle: #3e4460;
-  --chart-marker-today: #6366f1;
-  --chart-marker-idle: #2e3350;
-  --chart-today-line: #6366f1;
-  --chart-net-positive: #22c55e;
-  --chart-net-negative: #ef4444;
-  --chart-inflow-fill-hover: rgba(129, 140, 248, 0.55);
-  --chart-inflow-fill: rgba(99, 102, 241, 0.35);
-  --chart-inflow-stroke-hover: #a5b4fc;
-  --chart-inflow-stroke: #818cf8;
-  --chart-outflow-fill-hover: rgba(239, 68, 68, 0.55);
-  --chart-outflow-fill: rgba(239, 68, 68, 0.35);
-  --chart-outflow-stroke-hover: #fca5a5;
-  --chart-outflow-stroke: #ef4444;
-  --chart-reserve-line: #ef4444;
-  --chart-baseline: rgba(148, 163, 184, 0.2);
-  --chart-balance-dot: #818cf8;
-  --chart-balance-dot-core: #fff;
-  --chart-min-negative: #ef4444;
-  --chart-min-warning: #f59e0b;
+  --chart-bg: #ffffff; /* surface */
+  --chart-grid: #e2e8f0; /* line */
+  --chart-axis-text: #475569; /* fg-muted */
+  --chart-reserve-band: rgba(220, 38, 38, 0.06); /* negative 6% */
+  --chart-weekend-band: rgba(15, 23, 42, 0.03); /* fg 3% */
+  --chart-today-band: rgba(79, 70, 229, 0.08); /* primary 8% */
+  --chart-month-line: #cbd5e1; /* slate-300 -- one step darker than line */
+  --chart-day-line: #e2e8f0; /* line */
+  --chart-month-label: #475569; /* fg-muted */
+  --chart-day-today: #4f46e5; /* primary */
+  --chart-day-hover: #4338ca; /* primary-hover */
+  --chart-day-active: #0f172a; /* fg */
+  --chart-day-idle: rgba(71, 85, 105, 0.7); /* fg-muted 70% */
+  --chart-marker-today: #4f46e5; /* primary */
+  --chart-marker-idle: rgba(71, 85, 105, 0.65); /* fg-muted 65% */
+  --chart-today-line: #4f46e5; /* primary */
+  --chart-net-positive: #047857; /* positive */
+  --chart-net-negative: #dc2626; /* negative */
+  --chart-inflow-fill-hover: rgba(79, 70, 229, 0.55); /* primary 55% */
+  --chart-inflow-fill: rgba(79, 70, 229, 0.35); /* primary 35% */
+  --chart-inflow-stroke-hover: #4338ca; /* primary-hover */
+  --chart-inflow-stroke: #4f46e5; /* primary */
+  --chart-outflow-fill-hover: rgba(220, 38, 38, 0.55); /* negative 55% */
+  --chart-outflow-fill: rgba(220, 38, 38, 0.35); /* negative 35% */
+  --chart-outflow-stroke-hover: #b91c1c; /* red-700 -- negative, one step down */
+  --chart-outflow-stroke: #dc2626; /* negative */
+  --chart-reserve-line: #dc2626; /* negative */
+  --chart-baseline: rgba(71, 85, 105, 0.2); /* fg-muted 20% */
+  --chart-balance-dot: #4f46e5; /* primary */
+  --chart-balance-dot-core: #ffffff; /* surface -- ink on the balance badge */
+  --chart-min-negative: #dc2626; /* negative */
+  --chart-min-warning: #b45309; /* warning */
 }
 
 /**
@@ -152,4 +164,42 @@
   --color-chart-4: 56 189 248; /* sky-400 */
   --color-chart-5: 251 113 133; /* rose-400 */
   --color-chart-6: 167 139 250; /* violet-400 */
+
+  /*
+   * The chart's dark palette: the literals `TimelineChart.vue` shipped with,
+   * character for character, and the table `CHART_FALLBACKS` mirrors. The
+   * component now reads every one of them through `chartToken()`.
+   */
+  --chart-bg: #0f1117;
+  --chart-grid: #1e2030;
+  --chart-axis-text: #5c6078;
+  --chart-reserve-band: rgba(239, 68, 68, 0.04);
+  --chart-weekend-band: rgba(255,255,255,0.015);
+  --chart-today-band: rgba(99, 102, 241, 0.08);
+  --chart-month-line: #2a2f45;
+  --chart-day-line: #16192a;
+  --chart-month-label: #7c82a0;
+  --chart-day-today: #818cf8;
+  --chart-day-hover: #c7d2fe;
+  --chart-day-active: #94a3b8;
+  --chart-day-idle: #3e4460;
+  --chart-marker-today: #6366f1;
+  --chart-marker-idle: #2e3350;
+  --chart-today-line: #6366f1;
+  --chart-net-positive: #22c55e;
+  --chart-net-negative: #ef4444;
+  --chart-inflow-fill-hover: rgba(129, 140, 248, 0.55);
+  --chart-inflow-fill: rgba(99, 102, 241, 0.35);
+  --chart-inflow-stroke-hover: #a5b4fc;
+  --chart-inflow-stroke: #818cf8;
+  --chart-outflow-fill-hover: rgba(239, 68, 68, 0.55);
+  --chart-outflow-fill: rgba(239, 68, 68, 0.35);
+  --chart-outflow-stroke-hover: #fca5a5;
+  --chart-outflow-stroke: #ef4444;
+  --chart-reserve-line: #ef4444;
+  --chart-baseline: rgba(148, 163, 184, 0.2);
+  --chart-balance-dot: #818cf8;
+  --chart-balance-dot-core: #fff;
+  --chart-min-negative: #ef4444;
+  --chart-min-warning: #f59e0b;
 }
