@@ -574,14 +574,16 @@ console.groupEnd();
     <!-- Kanban Board (Refactored to Rows) -->
     <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
       <!--
-        Bare `v-reveal`, not `v-reveal.stagger`, and this is the one place in
-        the overhaul where the two differ. `/my-deals` is the route the frozen
-        `deep-link-open` spec measures, and it asserts *zero live tweens* 500 ms
-        (of its own paused clock) after the overlay appears. A stagger over the
-        five stage rows runs 0.4 s + 4 x 0.06 s = 0.64 s and is still live at
-        that mark; one reveal of the container is 0.4 s and is not. The twin
-        board in `BoughtDeals.vue`, which no motion spec visits, keeps the
-        staggered form. Either way nothing inside `<VueDraggable>` is touched:
+        Bare `v-reveal`, not `v-reveal.stagger` -- the two boards and their two
+        modals are the only reveals in the overhaul that do not stagger.
+        `/my-deals` is the route the frozen `deep-link-open` spec measures, and
+        it asserts *zero live tweens* 500 ms (of its own paused clock) after the
+        overlay appears. A stagger over the five stage rows runs
+        0.4 s + 4 x 0.06 s = 0.64 s and is still live at that mark; one reveal
+        of the container is 0.4 s and is not. The twin board in
+        `BoughtDeals.vue` is kept identical to this one -- no motion spec visits
+        that route, but the two boards are one pattern and should not drift.
+        Either way nothing inside `<VueDraggable>` is touched:
         SortableJS owns that DOM.
       -->
       <div
@@ -951,8 +953,8 @@ console.groupEnd();
                     Bare, not `.stagger`, for the same reason as the board above:
                     `deep-link-open` opens this modal and then asserts zero live
                     tweens 500 ms later, and a stagger over the ten BRRRR tiles
-                    runs 0.4 s + 9 x 0.06 s = 0.94 s. The BoughtDeals modal keeps
-                    the staggered form.
+                    runs 0.4 s + 9 x 0.06 s = 0.94 s. The BoughtDeals modal is
+                    kept identical.
                   -->
                   <div v-reveal class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
