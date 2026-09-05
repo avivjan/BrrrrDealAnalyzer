@@ -23,6 +23,9 @@ const abs = (...segments) => `/${segments.join('/')}`;
 /** A Windows path, same reasoning. */
 const win = (...segments) => segments.join('\\');
 
+/** One backslash, kept out of the samples' source text for the same reason. */
+const BACKSLASH = String.fromCharCode(92);
+
 const HOME_MAC = abs('Users', 'alice', 'secrets', 'reps-writer.json');
 const HOME_LINUX = abs('home', 'alice', 'repo', 'frontend');
 const DRIVE = win('C:', 'work', 'repo', 'frontend');
@@ -97,6 +100,10 @@ describe('scanText — the paths that pass', () => {
     ['a CSS property before an escape', 'expect(source).toMatch(/-webkit-line-clamp:\\s*2/);'],
     ['a sentence before a newline escape', 'throw new Error(`sub-stages first:\\n- ${missing}`);'],
     ['a log label before a quote escape', 'console.error("save failed:\\", e);'],
+    // A one-letter word before a newline escape: the shape that made the
+    // archived chromium-motion run's stdout read as a Windows path. Assembled,
+    // like the paths above, so this file does not fail on its own sample.
+    ['a unit before a newline escape', `"text": "tweens left after 1 s:${BACKSLASH}n   2 / 0  / (landing)"`],
   ])('leaves %s alone', (_what, line) => {
     expect(failures(scanText('src/x.ts', line))).toEqual([]);
   });

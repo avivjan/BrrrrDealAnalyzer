@@ -50,10 +50,16 @@ import { REPO_ROOT, isCliEntry } from './sfc.mjs';
 export const ABSOLUTE_PATH_RULES = [
   { name: 'macOS home', pattern: /\/Users\// },
   { name: 'Linux home', pattern: /\/home\/[A-Za-z0-9._-]/ },
-  // A drive letter needs a word boundary in front of it and a path character
-  // behind the separator, or every `clamp:\s*2` and `failed:\n` in the tree —
+  // A drive letter needs a word boundary in front of it and *two* path
+  // characters behind the separator, or half the escape sequences in the tree —
   // including ones inside frozen goldens — would read as a Windows path.
-  { name: 'Windows drive', pattern: /(?:^|[^A-Za-z0-9])[A-Za-z]:[\\][\\A-Za-z0-9_.$-]/ },
+  // The word boundary alone handles `clamp:\s*2` and `failed:\n`, where a
+  // letter precedes the would-be drive letter. It does not handle a one-letter
+  // word: the archived Playwright run's stdout says `left after 1 s:` and then
+  // a newline, which is `s:` + separator + `n` on disk. A real drive path
+  // continues into a segment (`C:` + separator + `work` + …), so requiring a
+  // second path character tells the two apart without a file-type special case.
+  { name: 'Windows drive', pattern: /(?:^|[^A-Za-z0-9])[A-Za-z]:[\\][\\A-Za-z0-9_.$-]{2,}/ },
   // `\b` rather than a closing separator, so that this line does not itself
   // contain a temp-directory path and fail the rule it declares.
   { name: 'macOS temp', pattern: /\/private\/tmp\b/ },
