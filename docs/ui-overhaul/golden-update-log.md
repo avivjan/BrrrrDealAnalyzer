@@ -36,6 +36,7 @@ phrase there — filter on the subject.)
 | 12 | `eac946e` | **`App.vue` `RouterView` transition slot.** The one allowlist row Phase 4 needs, and the only approved structural delta in the plan: an exact-match whitelist of the two manifest entries the rewrite adds (`RouterView` with `v-slot="{ Component }"`, and `component` with `:is="Component"`), turned on for `src/App.vue` and nothing else. |
 | 13 | `0bbbaa4` | **`phase5-final.json` archived.** The Phase 5 characterization run — the same four functional projects Phase 0 ran, 147 passed / 53 skipped / 0 failed / 0 flaky — as the "after" half of the behaviour-freeze proof. `npm run e2e:compare` against Phase 0: 145 passed → passed, 1 skipped → passed, 46 skipped → skipped, 8 additions, 0 failures. |
 | 14 | `094bbdf` | **Both archives re-archived through `normalize-report.mjs`.** Neither suite was re-run; 107 paths in `phase0-baseline.json` and 119 in `phase5-final.json` became repo-relative and nothing else changed (226 lines, all of them a path). Required by gate G8. `e2e:compare` prints exactly what it printed before — it keys on `(project, normalised file, title path)`. |
+| 15 | `0715506` | **`phase5-final.json` re-archived from the five-project run.** The Phase 5 gate run at `70bce90` had already run the full matrix — Task 5.6 added `chromium-motion` to `PHASE_PLAYWRIGHT_PROJECTS` — but row 13's archive predated that, so `e2e:compare` had one row it could not compare (`[chromium-motion] deep-link-open`, "out of matrix: 1"). Same run, no re-run: 149 expected / 53 skipped / 0 unexpected / 0 flaky. The comparison now reports **zero** out-of-matrix rows: 146 passed → passed, 1 skipped → passed, 46 skipped → skipped, 9 additions, 0 failures. |
 
 ## Reading the list
 
@@ -45,5 +46,5 @@ approved script substitution, one router slot rewrite, five id-generator lines,
 and one heading level that was later withdrawn. Nothing else in the 28 baseline
 SFCs needed a golden to move.
 
-Rows 1–4, 13 and 14 are baseline capture and archival rather than permission to
+Rows 1–4 and 13–15 are baseline capture and archival rather than permission to
 change something.
