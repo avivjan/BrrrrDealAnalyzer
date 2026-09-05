@@ -17,8 +17,10 @@
  *     the same node for the next open, and `pointer-events` is the one thing
  *     `clearProps` is not allowed to remove — see `reviveEnter`.
  *
- * Timings come from `tokens.ts`, which mirrors `tokens.css`. Nothing here reads
- * a duration from CSS at runtime: `:css="false"` means Vue is waiting on us.
+ * Timings come from `tokens.ts`, which reads the active look's `--dur-*` and
+ * `--gsap-ease-*` off `<html>` — so they are read *when a tween starts*, never
+ * captured at module load, and a look switch changes the tempo of the next
+ * open. `:css="false"` means Vue is waiting on us for `done`.
  */
 import { CLEAR_PROPS, gsap, motionEnabled } from './gsap';
 import { DUR, EASE } from './tokens';
@@ -48,9 +50,10 @@ export interface MotionPreset {
 /** Every preset name a template may write. */
 export type PresetName = 'page' | 'modal' | 'modalEnterOnly' | 'fade' | 'slideUp' | 'listItem';
 
-const ENTER: GSAPTweenVars = { duration: DUR.base, ease: EASE.standard };
-const ENTER_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.standard };
-const LEAVE_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.exit };
+/** Read at call time: `DUR`/`EASE` are getters over the active look. */
+const ENTER = (): GSAPTweenVars => ({ duration: DUR.base, ease: EASE.standard });
+const ENTER_FAST = (): GSAPTweenVars => ({ duration: DUR.fast, ease: EASE.standard });
+const LEAVE_FAST = (): GSAPTweenVars => ({ duration: DUR.fast, ease: EASE.exit });
 
 /**
  * Stop whatever is running on `el` and hand it back to the stylesheet.
@@ -96,8 +99,8 @@ function reviveEnter(el: HTMLElement): void {
   el.style.pointerEvents = '';
 }
 
-/** Build an `enter` that tweens `el` itself from `from` to `to`. */
-function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
+/** Build an `enter` that tweens `el` itself from `from` to `to()` (read per call). */
+function enterWith(from: GSAPTweenVars, to: () => GSAPTweenVars) {
   return function enter(el: HTMLElement, done: () => void): void {
     reviveEnter(el);
     gsap.killTweensOf(el);
@@ -106,12 +109,12 @@ function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
       done();
       return;
     }
-    gsap.fromTo(el, from, { ...to, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
+    gsap.fromTo(el, from, { ...to(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
   };
 }
 
-/** Build a `leave` that makes `el` inert, then tweens it to `to`. */
-function leaveWith(to: GSAPTweenVars) {
+/** Build a `leave` that makes `el` inert, then tweens it to `to()`. */
+function leaveWith(to: () => GSAPTweenVars) {
   return function leave(el: HTMLElement, done: () => void): void {
     el.style.pointerEvents = 'none';
     if (!motionEnabled()) {
@@ -119,7 +122,7 @@ function leaveWith(to: GSAPTweenVars) {
       return;
     }
     gsap.killTweensOf(el);
-    gsap.to(el, { ...to, overwrite: 'auto', onComplete: done });
+    gsap.to(el, { ...to(), overwrite: 'auto', onComplete: done });
   };
 }
 
@@ -143,7 +146,7 @@ function modalEnter(el: HTMLElement, done: () => void): void {
     gsap.fromTo(
       el,
       { opacity: 0, scale: 0.96 },
-      { opacity: 1, scale: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+      { opacity: 1, scale: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
     );
     return;
   }
@@ -151,14 +154,14 @@ function modalEnter(el: HTMLElement, done: () => void): void {
   gsap.fromTo(
     el,
     { opacity: 0 },
-    { opacity: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+    { opacity: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
   );
   if (panel) {
     gsap.killTweensOf(panel);
     gsap.fromTo(
       panel,
       { scale: 0.96 },
-      { scale: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS },
+      { scale: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS },
     );
   }
 }
@@ -172,13 +175,13 @@ function modalLeave(el: HTMLElement, done: () => void): void {
   gsap.killTweensOf(el);
   const panel = modalPanel(el);
   if (panel === el) {
-    gsap.to(el, { opacity: 0, scale: 0.98, ...LEAVE_FAST, overwrite: 'auto', onComplete: done });
+    gsap.to(el, { opacity: 0, scale: 0.98, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
     return;
   }
-  gsap.to(el, { opacity: 0, ...LEAVE_FAST, overwrite: 'auto', onComplete: done });
+  gsap.to(el, { opacity: 0, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
   if (panel) {
     gsap.killTweensOf(panel);
-    gsap.to(panel, { scale: 0.98, ...LEAVE_FAST, overwrite: 'auto' });
+    gsap.to(panel, { scale: 0.98, ...LEAVE_FAST(), overwrite: 'auto' });
   }
 }
 
@@ -193,11 +196,11 @@ function modalLeave(el: HTMLElement, done: () => void): void {
 export const presets: Record<PresetName, MotionPreset> = {
   /** Route changes. Opacity only — a moving page fights the scroll position. */
   page: {
-    enter: enterWith({ opacity: 0 }, { opacity: 1, ...ENTER }),
+    enter: enterWith({ opacity: 0 }, () => ({ opacity: 1, ...ENTER() })),
     enterCancelled: cancel,
   },
 
-  /** Overlay fades, panel scales. Opens in 250 ms, closes in 150 ms. */
+  /** Overlay fades, panel scales. Opens in `--dur-base`, closes in `--dur-fast`. */
   modal: {
     enter: modalEnter,
     leave: modalLeave,
@@ -213,20 +216,20 @@ export const presets: Record<PresetName, MotionPreset> = {
 
   /** The plainest arrival there is. */
   fade: {
-    enter: enterWith({ opacity: 0 }, { opacity: 1, ...ENTER }),
+    enter: enterWith({ opacity: 0 }, () => ({ opacity: 1, ...ENTER() })),
     enterCancelled: cancel,
   },
 
   /** A panel that arrives from just below where it belongs. */
   slideUp: {
-    enter: enterWith({ opacity: 0, y: 8 }, { opacity: 1, y: 0, ...ENTER }),
+    enter: enterWith({ opacity: 0, y: 8 }, () => ({ opacity: 1, y: 0, ...ENTER() })),
     enterCancelled: cancel,
   },
 
   /** One row of a list, short enough that a whole list still feels instant. */
   listItem: {
-    enter: enterWith({ opacity: 0, y: 6 }, { opacity: 1, y: 0, ...ENTER_FAST }),
-    leave: leaveWith({ opacity: 0, ...LEAVE_FAST }),
+    enter: enterWith({ opacity: 0, y: 6 }, () => ({ opacity: 1, y: 0, ...ENTER_FAST() })),
+    leave: leaveWith(() => ({ opacity: 0, ...LEAVE_FAST() })),
     enterCancelled: cancel,
     leaveCancelled: cancelLeave,
   },

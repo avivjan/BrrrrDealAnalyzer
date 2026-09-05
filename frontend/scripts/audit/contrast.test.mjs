@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CONTRAST_PAIRS,
   checkThemes,
+  composite,
   contrastRatio,
   lookThemes,
   parseLook,
@@ -20,7 +21,7 @@ const FIXTURE = `
   --color-surface: 255 255 255;
   --color-surface-muted: 255 255 255;
   --color-fg: 0 0 0;
-  --color-fg-muted: 118 118 118;
+  --color-fg-muted: 0 0 0;
   --color-primary: 0 0 0;
   --color-primary-hover: 0 0 0;
   --color-primary-fg: 255 255 255;
@@ -77,7 +78,7 @@ describe('token parsing', () => {
   it('reads the --color-* triplets of :root and .dark', () => {
     const themes = parseTokens(FIXTURE);
     expect(themes.light['color-fg']).toEqual([0, 0, 0]);
-    expect(themes.light['color-fg-muted']).toEqual([118, 118, 118]);
+    expect(themes.light['color-fg-muted']).toEqual([0, 0, 0]);
     expect(themes.dark['color-fg']).toEqual([255, 255, 255]);
   });
 
@@ -128,12 +129,35 @@ describe('token parsing', () => {
 });
 
 describe('the audited pair set', () => {
-  it('holds the twenty-seven pairs, with 3:1 for the non-text ring and primary boundary and 4.5:1 for text', () => {
-    expect(CONTRAST_PAIRS).toHaveLength(27);
+  it('holds thirty-four pairs: 3:1 for the non-text ring and primary boundary, 4.5:1 for text and for text on washes', () => {
+    expect(CONTRAST_PAIRS).toHaveLength(34);
     for (const pair of CONTRAST_PAIRS) {
       const nonText = pair.foreground === 'ring' || (pair.foreground === 'primary' && pair.background === 'surface');
       expect(pair.min, `${pair.foreground} on ${pair.background}`).toBe(nonText ? 3 : 4.5);
     }
+    expect(CONTRAST_PAIRS.filter((pair) => pair.wash)).toHaveLength(7);
+  });
+
+  it('composites a wash the way a browser does', () => {
+    // 20% of black over white is #cccccc.
+    expect(composite([0, 0, 0], [255, 255, 255], 0.2)).toEqual([204, 204, 204]);
+    // Pure alpha ends: the tone itself, or the surface itself.
+    expect(composite([10, 20, 30], [200, 200, 200], 1)).toEqual([10, 20, 30]);
+    expect(composite([10, 20, 30], [200, 200, 200], 0)).toEqual([200, 200, 200]);
+  });
+
+  it('measures text on a wash against the composited colour, not the raw tone', () => {
+    // Muted grey #767676 passes on white (4.54) but not on a 20% wash of a dark warning.
+    const themes = parseTokens(FIXTURE);
+    const washed = {
+      light: { ...themes.light, 'color-warning': [120, 80, 20], 'color-fg-muted': [118, 118, 118] },
+      dark: themes.dark,
+    };
+    const result = checkThemes(washed, ['light']);
+    const line = result.lines.find((l) => l.foreground === 'fg-muted' && l.background.startsWith('warning/33'));
+    expect(line).toBeDefined();
+    expect(line.ratio).toBeLessThan(4.54);
+    expect(line.status).toBe('FAIL');
   });
 });
 
@@ -232,6 +256,7 @@ describe('checkThemes', () => {
       'fg-muted/surface-muted',
       'fg-muted/surface-2',
       'fg-muted/surface-3',
+      'fg-muted/warning/33 on surface',
     ]);
   });
 

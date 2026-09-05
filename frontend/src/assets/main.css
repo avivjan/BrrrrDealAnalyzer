@@ -13,11 +13,11 @@
   /*
    * `color-scheme` is owned by `src/design/theme.ts` (and, before the first
    * frame, by the inline script in `index.html`), which sets it on `<html>`
-   * to match the resolved mode. The CSS fallback here is for no-JS: dark, the
-   * app's default mode.
+   * to match the resolved mode. The CSS fallback here is for no-JS and must
+   * equal `DEFAULT_CHOICE` in `theme.ts` (light until the UI v2 Phase 3 exit).
    */
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
@@ -147,32 +147,22 @@
     @apply appearance-none pr-9;
 
     /*
-     * The chevron the `appearance-none` above removes. It has to be a data URI
-     * — a `<select>` is a replaced element and renders no pseudo-element — so
-     * the colour is the resolved `--color-fg-muted` rather than the variable,
-     * and the `.dark` override below carries that theme's value.
-     *
-     * The two hex literals are the only ones in this file, and each one
-     * mirrors a single declaration in `tokens.css`; when either moves, both
-     * move together:
-     *
-     *   #475569  ←  `:root  { --color-fg-muted: 71 85 105 }`   (slate-600)
-     *   #cbd5e1  ←  `.dark  { --color-fg-muted: 203 213 225 }` (slate-300)
-     *
-     * The control's border needs no literal of its own: `@apply border-line`
-     * above reaches `--color-line` through Tailwind and re-resolves per theme.
+     * The chevron the `appearance-none` above removes. A `<select>` is a
+     * replaced element and renders no pseudo-element, so the arrow is drawn
+     * with two tiny gradients — which, unlike an SVG data URI, can read the
+     * live `--color-fg-muted` token and therefore follow every look and mode.
      */
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23475569'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
+    background-image:
+      linear-gradient(45deg, transparent 50%, rgb(var(--color-fg-muted)) 50%),
+      linear-gradient(135deg, rgb(var(--color-fg-muted)) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.05rem) 50%,
+      calc(100% - 0.7rem) 50%;
+    background-size: 0.35rem 0.35rem;
     background-repeat: no-repeat;
-    background-position: right 0.625rem center;
-    background-size: 1.25rem 1.25rem;
 
     /* The native option list follows the page's mode (set on `<html>`). */
     color-scheme: inherit;
-  }
-
-  .dark .ui-select {
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23cbd5e1'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
   }
 
   /*

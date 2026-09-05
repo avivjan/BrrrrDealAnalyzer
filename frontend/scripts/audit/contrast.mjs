@@ -63,11 +63,42 @@ const NON_TEXT_PAIRS = [
   ['primary', 'surface'],
 ];
 
+/**
+ * Text on a translucent *wash* of a tone over the base surface — the badge,
+ * chip and banner pattern (`bg-warning/10 text-warning`, `bg-warning/20` with
+ * muted ink). The wash is composited here exactly as the browser does it,
+ * `alpha × tone + (1 − alpha) × surface`, so the audit sees the colour the
+ * reader sees. `[foreground, tone, alpha]`, always over `surface`.
+ */
+const WASH_PAIRS = [
+  ['primary', 'primary', 0.1],
+  ['accent', 'accent', 0.1],
+  ['positive', 'positive', 0.1],
+  ['negative', 'negative', 0.1],
+  ['warning', 'warning', 0.1],
+  // Muted ink on a `warning/20` label that itself sits inside a `warning/10`
+  // banner over the page (the REPS config notice): the washes compound to
+  // ≈33% of the tone — the value axe measured on that element.
+  ['fg-muted', 'warning', 0.33],
+  ['fg', 'primary', 0.12],
+];
+
 /** Every audited pair, with the threshold it is held to. */
 export const CONTRAST_PAIRS = [
   ...TEXT_PAIRS.map(([foreground, background]) => ({ foreground, background, min: TEXT_MIN })),
   ...NON_TEXT_PAIRS.map(([foreground, background]) => ({ foreground, background, min: NON_TEXT_MIN })),
+  ...WASH_PAIRS.map(([foreground, tone, alpha]) => ({
+    foreground,
+    background: `${tone}/${Math.round(alpha * 100)} on surface`,
+    wash: { tone, alpha },
+    min: TEXT_MIN,
+  })),
 ];
+
+/** `alpha × over + (1 − alpha) × under`, per channel, rounded like a rasteriser. */
+export function composite(over, under, alpha) {
+  return over.map((channel, i) => Math.round(alpha * channel + (1 - alpha) * under[i]));
+}
 
 /** The base set in `tokens.css`. */
 export const THEMES = [
@@ -200,7 +231,7 @@ export function readLookSheets(dirUrl = LOOKS_DIR_URL) {
 
 function formatLine(theme, foreground, background, ratio, min, status) {
   const pair = `${foreground} on ${background}`;
-  return `${status} ${theme.padEnd(14)} ${pair.padEnd(28)} ${ratio.toFixed(2)}:1 (min ${min}:1)`;
+  return `${status} ${theme.padEnd(14)} ${pair.padEnd(36)} ${ratio.toFixed(2)}:1 (min ${min}:1)`;
 }
 
 /**
@@ -216,11 +247,15 @@ export function checkThemes(themes, names = THEMES.map((theme) => theme.name)) {
 
   for (const name of names) {
     const resolved = { ...themes.light, ...(themes[name] ?? {}) };
-    for (const { foreground, background, min } of CONTRAST_PAIRS) {
+    for (const { foreground, background, min, wash } of CONTRAST_PAIRS) {
       const fg = resolved[`color-${foreground}`];
-      const bg = resolved[`color-${background}`];
+      const bg = wash
+        ? resolved[`color-${wash.tone}`] && resolved['color-surface']
+          ? composite(resolved[`color-${wash.tone}`], resolved['color-surface'], wash.alpha)
+          : undefined
+        : resolved[`color-${background}`];
       if (!fg || !bg) {
-        const missing = [!fg && foreground, !bg && background].filter(Boolean).join(', ');
+        const missing = [!fg && foreground, !bg && (wash ? `${wash.tone}, surface` : background)].filter(Boolean).join(', ');
         lines.push({
           theme: name,
           foreground,
@@ -228,7 +263,7 @@ export function checkThemes(themes, names = THEMES.map((theme) => theme.name)) {
           ratio: 0,
           min,
           status: 'FAIL',
-          text: `FAIL  ${name.padEnd(14)} ${`${foreground} on ${background}`.padEnd(28)} missing token(s): ${missing}`,
+          text: `FAIL  ${name.padEnd(14)} ${`${foreground} on ${background}`.padEnd(36)} missing token(s): ${missing}`,
         });
         continue;
       }

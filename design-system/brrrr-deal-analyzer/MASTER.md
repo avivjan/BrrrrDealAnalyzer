@@ -92,8 +92,11 @@ glass as an opaque surface-2 panel from the same class.
   sparkline draw-on; sidebar active-indicator slide; command palette spring
   (`back.out`) + item stagger; liquidity balance draw-on once per mount;
   kanban column-header stagger on tab change; theme cross-fade (CSS).
-- Tempo per look: obsidian 120/180/280 ms, aurora 200/320/480 ms (spring),
-  brutal 120/200/300 ms, luxury 220/400/600 ms.
+- Tempo per look: obsidian 120/180/280 ms, aurora 180/300/420 ms (spring),
+  brutal 120/200/300 ms, luxury 200/340/440 ms. **Budget:** every entrance,
+  stagger included, completes within 500 ms in every look (the frozen e2e
+  motion guard measures at +500 ms); slowness is expressed through eases and
+  ratios, never a longer wall-clock.
 
 ## Looks
 
@@ -115,7 +118,7 @@ as decoration, springy easing, large type.
 Deep navy-to-indigo gradients, aurora blobs drifting behind frosted panels,
 violet primary with cyan and magenta accents. Display face **Space Grotesk**.
 Radii 12/16/20, blur 14 px, glows on CTA / active nav / focused KPI, deep soft
-shadows. Tempo 200/320/480 ms, `back.out(1.4)` for emphasis. Ambient
+shadows. Tempo 180/300/420 ms, `back.out(1.4)` for emphasis. Ambient
 `gradient-drift` (CSS). Light mode: lavender page, white panels, indigo
 primary. Never: body text directly on glass (Glass rule), more than one glow
 per viewport region, blur on scrolling containers.
@@ -132,7 +135,7 @@ soft shadows, translucency, thin type, more than three colours on one panel.
 
 Warm charcoal and graphite, champagne-gold accent, **Fraunces** serif
 headlines beside Inter, generous whitespace, soft two-tier depth. Radii
-10/12/16, borders 1 px, no glow, no blur. Tempo 220/400/600 ms, gentle
+10/12/16, borders 1 px, no glow, no blur. Tempo 200/340/440 ms, gentle
 eases. Ambient `shimmer` on the hero rule only. Light mode: warm paper page,
 bronze primary. Never: neon, hard shadows, dense layouts, bright semantic
 colours (positive/negative stay muted but ≥ 4.5:1).

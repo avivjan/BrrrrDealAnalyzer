@@ -34,7 +34,7 @@
   --color-surface-3: 226 232 240; /* slate-200 */
   --color-line: 226 232 240; /* slate-200 */
   --color-fg: 15 23 42; /* slate-900 */
-  --color-fg-muted: 71 85 105; /* slate-600 */
+  --color-fg-muted: 51 65 85; /* slate-700 — slate-600 fell to 4.3:1 on the compounded warning wash */
 
   /* Accent — indigo */
   --color-primary: 79 70 229; /* indigo-600 */
@@ -206,10 +206,10 @@
   --color-surface-3: 71 85 105; /* slate-600 */
   --color-line: 51 65 85; /* slate-700 */
   --color-fg: 241 245 249; /* slate-100 */
-  --color-fg-muted: 203 213 225; /* slate-300 */
+  --color-fg-muted: 226 232 240; /* slate-200 — slate-300 fell to 4.4:1 on the compounded warning wash */
 
-  --color-primary: 129 140 248; /* indigo-400 */
-  --color-primary-hover: 165 180 252; /* indigo-300 */
+  --color-primary: 165 180 252; /* indigo-300 — indigo-400 fell to 4.21:1 on its own 10% wash */
+  --color-primary-hover: 199 210 254; /* indigo-200 */
   --color-primary-fg: 15 23 42; /* slate-900 */
   --color-accent: 165 180 252; /* indigo-300 */
   --color-accent-2: 103 232 249; /* cyan-300 */

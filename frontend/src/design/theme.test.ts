@@ -63,23 +63,25 @@ afterEach(() => {
 });
 
 describe("defaults and storage", () => {
-  it("defaults to the Quiet Luxury look in dark mode, with full motion", () => {
+  it("defaults to the Quiet Luxury look in light mode (dark from the Phase 3 exit), with full motion", () => {
     expect(DEFAULT_LOOK).toBe("luxury");
-    expect(DEFAULT_CHOICE).toBe("dark");
+    expect(DEFAULT_CHOICE).toBe("light");
     initTheme();
     expect(html().dataset.look).toBe("luxury");
-    expect(html().classList.contains("dark")).toBe(true);
-    expect(html().style.colorScheme).toBe("dark");
+    expect(html().classList.contains("dark")).toBe(false);
+    expect(html().style.colorScheme).toBe("light");
     expect(html().dataset.motion).toBeUndefined();
   });
 
   it("prefers a stored choice over the system, and the system over the default", () => {
-    // Nothing stored, OS light, choice defaults to 'dark' → dark (the default is not 'system').
+    // Nothing stored, OS dark, choice defaults to 'light' → light (the default is not 'system').
+    fakeSystem("dark");
     initTheme();
-    expect(resolvedTheme.value).toBe("dark");
+    expect(resolvedTheme.value).toBe("light");
 
     resetThemeForTests();
     localStorage.setItem(THEME_STORAGE_KEY, "system");
+    fakeSystem("light");
     initTheme();
     expect(resolvedTheme.value).toBe("light");
 
@@ -215,15 +217,15 @@ describe("the pre-paint script and the stylesheet agree with this module", () =>
     expect(indexHtml.split(`'${DEFAULT_LOOK}'`).length - 1).toBeGreaterThanOrEqual(2);
   });
 
-  it("defaults to dark when nothing is stored, like DEFAULT_CHOICE", () => {
-    expect(DEFAULT_CHOICE).toBe("dark");
-    // `…:true` is the fall-through when no choice is stored.
-    expect(indexHtml).toMatch(/matches:true;/);
+  it("defaults to the same mode as DEFAULT_CHOICE when nothing is stored", () => {
+    // `…:<bool>` is the fall-through when no choice is stored.
+    expect(indexHtml).toMatch(DEFAULT_CHOICE === "dark" ? /matches:true;/ : /matches:false;/);
   });
 
-  it("no longer pins color-scheme to light anywhere in main.css", () => {
+  it("main.css keeps only the no-JS fallback matching DEFAULT_CHOICE, and selects inherit the mode", () => {
     const css = read("../assets/main.css");
-    expect(css).not.toMatch(/color-scheme:\s*light/);
-    expect(css).toMatch(/color-scheme:\s*inherit/);
+    const pins = [...css.matchAll(/color-scheme:\s*(light|dark)/g)].map((m) => m[1]);
+    expect(pins).toEqual([DEFAULT_CHOICE]);
+    expect(css).toMatch(/\.ui-select[\s\S]*?color-scheme:\s*inherit/);
   });
 });

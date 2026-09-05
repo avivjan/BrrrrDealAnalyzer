@@ -9,6 +9,13 @@
  * v1 light palette used — so a look never has to hand-tune the chart and the
  * light and dark charts always differ.
  *
+ * Tempo budget: every entrance — a modal's open, a route fade, a staggered
+ * reveal from first to last child — must finish within 500 ms in every look,
+ * because the frozen e2e motion guard (`e2e/fixtures/motion.ts`) measures an
+ * overlay at +500 ms and then requires that no GSAP tween is still alive. So
+ * `--dur-slow` stays at or below 440 ms; a look's "slowness" is its eases and
+ * the ratio between fast/base/slow, not a longer wall-clock.
+ *
  * Values come from the board the user reviewed on 2026-09-05
  * (https://claude.ai/code/artifact/4554ee25-5912-42b8-9694-19957ac0ae9c),
  * adjusted only where `npm run audit:contrast` demanded a step within the
@@ -42,7 +49,7 @@ export const LOOKS = [
     },
     light: {
       page: '#f4f6f8', surface: '#ffffff', surfaceMuted: '#eef1f5', surface2: '#eef1f5', surface3: '#e3e8ee',
-      line: '#d3d9e1', fg: '#0b0d10', fgMuted: '#4b5563',
+      line: '#d3d9e1', fg: '#0b0d10', fgMuted: '#434b57',
       primary: '#0e7490', primaryHover: '#155e75', primaryFg: '#ffffff', accent: '#0e7490', accent2: '#6d28d9',
       positive: '#047857', negative: '#b91c1c', warning: '#92400e', ring: '#0e7490',
       glass: '#ffffff', glassLine: '#0b0d10',
@@ -50,7 +57,7 @@ export const LOOKS = [
     },
     dark: {
       page: '#0b0d10', surface: '#12151a', surfaceMuted: '#171b21', surface2: '#171b21', surface3: '#1d222a',
-      line: '#222831', fg: '#e6e9ef', fgMuted: '#9aa3b2',
+      line: '#222831', fg: '#e6e9ef', fgMuted: '#bac2cd',
       primary: '#22d3ee', primaryHover: '#67e8f9', primaryFg: '#06181c', accent: '#22d3ee', accent2: '#a78bfa',
       positive: '#34d399', negative: '#f87171', warning: '#fbbf24', ring: '#22d3ee',
       glass: '#12151a', glassLine: '#e6e9ef',
@@ -68,7 +75,7 @@ export const LOOKS = [
       trackDisplay: '-0.02em',
       fontDisplay: "'Space Grotesk Variable', 'Inter Variable', Inter, system-ui, sans-serif",
       fontMono: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace",
-      dur: ['200ms', '320ms', '480ms'],
+      dur: ['180ms', '300ms', '420ms'],
       ease: {
         standard: 'cubic-bezier(0.22, 1, 0.36, 1)',
         emphasized: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -81,7 +88,7 @@ export const LOOKS = [
     },
     light: {
       page: '#f3f4ff', surface: '#ffffff', surfaceMuted: '#eef0fc', surface2: '#eef0fc', surface3: '#e2e6fa',
-      line: '#d6daf3', fg: '#14163a', fgMuted: '#545a86',
+      line: '#d6daf3', fg: '#14163a', fgMuted: '#474c74',
       primary: '#5b4ee6', primaryHover: '#4a3fd0', primaryFg: '#ffffff', accent: '#4a3fd0', accent2: '#0e7490',
       positive: '#047857', negative: '#be123c', warning: '#92400e', ring: '#5b4ee6',
       glass: '#ffffff', glassLine: '#14163a',
@@ -89,7 +96,7 @@ export const LOOKS = [
     },
     dark: {
       page: '#070b1a', surface: '#111a3a', surfaceMuted: '#172246', surface2: '#172246', surface3: '#1e2c56',
-      line: '#2a3566', fg: '#eef0ff', fgMuted: '#aab0d0',
+      line: '#2a3566', fg: '#eef0ff', fgMuted: '#c5c9e2',
       primary: '#8b7cff', primaryHover: '#a99dff', primaryFg: '#0c0a24', accent: '#a99dff', accent2: '#22d3ee',
       positive: '#3ddc97', negative: '#ff7f9c', warning: '#ffc857', ring: '#8b7cff',
       glass: '#ffffff', glassLine: '#ffffff',
@@ -128,7 +135,7 @@ export const LOOKS = [
     },
     dark: {
       page: '#0f0f0f', surface: '#181818', surfaceMuted: '#222222', surface2: '#222222', surface3: '#2a2a2a',
-      line: '#f2efe6', fg: '#f4f1ea', fgMuted: '#b6b2a6',
+      line: '#f2efe6', fg: '#f4f1ea', fgMuted: '#c6c2b6',
       primary: '#c6ff3d', primaryHover: '#d9ff70', primaryFg: '#0f0f0f', accent: '#c6ff3d', accent2: '#ff7a7e',
       positive: '#4ade80', negative: '#ff7a7e', warning: '#ffb020', ring: '#c6ff3d',
       glass: '#181818', glassLine: '#f2efe6',
@@ -146,7 +153,7 @@ export const LOOKS = [
       trackDisplay: '-0.015em',
       fontDisplay: "'Fraunces Variable', Fraunces, Georgia, 'Times New Roman', serif",
       fontMono: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace",
-      dur: ['220ms', '400ms', '600ms'],
+      dur: ['200ms', '340ms', '440ms'],
       ease: {
         standard: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
         emphasized: 'cubic-bezier(0.45, 0, 0.15, 1)',
@@ -159,7 +166,7 @@ export const LOOKS = [
     },
     light: {
       page: '#f7f4ee', surface: '#ffffff', surfaceMuted: '#f1ede4', surface2: '#f1ede4', surface3: '#e8e2d6',
-      line: '#dcd6ca', fg: '#1d1c1a', fgMuted: '#5f5b53',
+      line: '#dcd6ca', fg: '#1d1c1a', fgMuted: '#524e46',
       primary: '#7d5f27', primaryHover: '#644b1f', primaryFg: '#ffffff', accent: '#7d5f27', accent2: '#3f5a7a',
       positive: '#2f6f3a', negative: '#a33a3a', warning: '#7f5311', ring: '#7d5f27',
       glass: '#ffffff', glassLine: '#1d1c1a',
@@ -167,7 +174,7 @@ export const LOOKS = [
     },
     dark: {
       page: '#14151a', surface: '#1b1d24', surfaceMuted: '#21242c', surface2: '#21242c', surface3: '#282b34',
-      line: '#2f323d', fg: '#ece7dd', fgMuted: '#a8a49b',
+      line: '#2f323d', fg: '#ece7dd', fgMuted: '#c9c5bb',
       primary: '#d4b483', primaryHover: '#e2c99c', primaryFg: '#1a1508', accent: '#d4b483', accent2: '#8fa3bf',
       positive: '#8fbf8a', negative: '#e09595', warning: '#e0b96a', ring: '#d4b483',
       glass: '#1b1d24', glassLine: '#ece7dd',
