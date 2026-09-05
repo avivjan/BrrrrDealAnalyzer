@@ -100,7 +100,7 @@ const formatMoney = (val?: number) =>
     <UiBadge
       :tone="isBrrr ? 'primary' : 'warning'"
       size="sm"
-      class="absolute top-2 left-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+      class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
     >
       {{ isBrrr ? "🏠 BRRRR" : "💰 FLIP" }}
     </UiBadge>
@@ -113,7 +113,7 @@ const formatMoney = (val?: number) =>
     -->
     <div
       data-part="card-actions"
-      class="absolute top-2 right-2 z-10 flex flex-row-reverse items-center gap-1 opacity-0 transition-opacity duration-fast ease-standard group-hover:opacity-100 focus-within:opacity-100 touch:opacity-100"
+      class="absolute top-2 right-2 z-10 flex flex-row-reverse items-center gap-2 opacity-0 transition-opacity duration-fast ease-standard group-hover:opacity-100 focus-within:opacity-100 touch:opacity-100"
     >
       <!-- Delete Button -->
       <UiIconButton
@@ -180,7 +180,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Header: Address -->
     <div class="text-center mb-3 mt-6">
-      <h3 class="truncate text-sm md:text-base font-medium leading-tight text-fg">
+      <h3 class="line-clamp-2 break-words text-sm md:text-base font-medium leading-tight text-fg">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
@@ -344,7 +344,8 @@ const formatMoney = (val?: number) =>
  * also sets `border` and `border-gray-100`. Keying the colour off `data-stage`
  * keeps the five stages apart, on tokens, whatever the class list merges to.
  */
-[data-stage="1"] {
+/* The frozen `cardClass` falls back to the stage-1 entry for an unknown stage; so does this. */
+[data-stage] {
   border-left-color: rgb(var(--color-chart-1));
 }
 [data-stage="2"] {
