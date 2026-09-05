@@ -1,52 +1,11 @@
-> Superseded where it conflicts by MASTER.md §Approved overrides; see the task report for what was applied.
+# Deal inputs form — v2 page rules
 
-# Deal Inputs Form Page Overrides
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 02:30:26
-> **Page Type:** General
+## Layout
+- Fields in a responsive `grid-cols-1 md:grid-cols-2` with `UiField` wrappers; money inputs use `.numeric`; helper text in `text-fg-muted`; invalid state via `.ui-input-invalid` + `aria-describedby`.
+- Section headers `UiSectionHeader as="h2"`; "Quick defaults" stays the **first** button (test contract).
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
-
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 1400px or full-width
-- **Grid:** 12-column grid for data flexibility
-
-### Spacing Overrides
-
-- **Content Density:** High — optimize for information display
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- No overrides — use Master colors
-
-### Component Overrides
-
-- Avoid: Placeholder-only inputs
-- Avoid: No feedback after submit
-- Avoid: Inputs that look like plain text
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Effects: Smooth scroll, reveal on scroll, parallax images, text animations, page-flip transitions
-- Accessibility: Use label with for attribute or wrap input
-- Forms: Show loading then success/error state
-- Forms: Use distinct input styling
+## Accessibility musts
+- Every control labelled (`for`/`id` via `useId`); slider handle ≥ 24 px, 44 px hit area; 16 px inputs on phones.

@@ -1,47 +1,7 @@
-> Superseded where it conflicts by MASTER.md §Approved overrides; see the task report for what was applied.
-# Reps Tracker Page Overrides
+# REPS tracker (mount-only) — v2 page rules
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 09:23:34
-> **Page Type:** General
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
-
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 1200px
-- **Layout:** Responsive grid
-
-### Spacing Overrides
-
-- No overrides — use Master spacing
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- No overrides — use Master colors
-
-### Component Overrides
-
-- No overrides — use Master component specs
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Refer to MASTER.md for all design rules
-- Add specific overrides as needed for this page
+## Rules
+- **Not redesigned in v2.** The only edits: root `min-h-dvh` → `min-h-full`, the view's own header loses `sticky top-0` (the shell topbar is sticky now), `reps.refresh` gets `min-h-11 min-w-11`. Everything under `components/reps/**` is untouched. `reps.*` hooks unchanged.

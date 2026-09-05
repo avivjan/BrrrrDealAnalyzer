@@ -1,48 +1,9 @@
-> Superseded where it conflicts by MASTER.md §Approved overrides; see the task report for what was applied.
-# Deal Card Page Overrides
+# Deal card — v2 page rules
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 03:44:37
-> **Page Type:** Dashboard / Data View
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
-
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 1200px (standard)
-- **Layout:** Full-width sections, centered content
-- **Sections:** Hero (value prop) > Feature grid/cards (4-6) > Use cases or benefits > Social proof or logos > CTA
-
-### Spacing Overrides
-
-- No overrides — use Master spacing
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- **Strategy:** Brand primary + card bg #FAFAFA. Feature icons accent. CTA contrasting.
-
-### Component Overrides
-
-- No overrides — use Master component specs
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Effects: z-index stacking, box-shadow elevation (4 levels), transform: translateZ(), backdrop-filter, parallax
-- CTA Placement: Hero (sticky) + After features + Bottom
+## Rules
+- `UiSurface interactive padding="sm"`; title `font-display text-base`; address `text-fg-muted text-sm`; figures `.numeric`; `UiBadge dealType`; progress as `UiProgressRing size=32` with `label`.
+- Actions row top-right: `UiIconButton`s, `group-hover:opacity-100 touch:opacity-100`; `@click.stop` handlers unchanged; the card root stays a plain element (SortableJS drags it).
+- Never a tone class as the only signal: positive/negative figures carry a sign.

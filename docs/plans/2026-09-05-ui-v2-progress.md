@@ -14,3 +14,4 @@ Plan: `docs/plans/2026-09-05-ui-v2-plan.md` (inline execution). One line per fin
 | 1.2 fonts + base CSS (color-scheme handoff, .numeric, .glass, cross-fade, in-app reduced motion) | (next commit) | fast gate PASS; 1128 unit tests | fonts lazy per look via `looks.ts` |
 | 1.3 theme engine: look + mode + motion, pre-paint script, look-aware GSAP tokens | (next commit) | theme.test 15, tokens.test 10; fast gate PASS | keys `bw.look`/`bw.theme`/`bw.motion`; default luxury dark |
 | 1.4 twelve new primitives (Surface, GlassPanel, Chip, Tooltip, KpiCard, Sparkline, ProgressRing, TimelineRail, DataTable, Drawer, CommandItem, Segmented) | (next commit) | ui suite 30 files / 301 tests; vue-tsc clean; registry = 25 | documented in docs/ui-overhaul/primitives.md |
+| 1.5 MASTER.md v2 (overrides, Glass rule, motion tiers, Looks, generator record) + 12 page files | (next commit) | docs only | generator's Scroll-Storytelling/Flip output rejected and recorded |

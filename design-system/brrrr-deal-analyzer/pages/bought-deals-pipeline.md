@@ -1,47 +1,12 @@
-> Superseded where it conflicts by MASTER.md §Approved overrides; see the task report for what was applied.
-# Bought Deals Pipeline Page Overrides
+# Bought Deals pipeline — v2 page rules
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 05:56:07
-> **Page Type:** General
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
+## Layout
+- Same board rules as My Deals. Pipeline shown with `UiTimelineRail` (stages as steps; active stage `aria-current`), horizontal on desktop, compact below `md`.
+- Cards (`BoughtDealCard`): stage accent via `border-l-chart-1..4` (from `getStageAccentColor`), substage checklist with **labelled** checkboxes (`<label for>`; fixes the `label` critical), `UiProgressRing` = substages done.
+- Detail modal as My Deals plus the stepper (`UiStepper`/`UiTimelineRail`) and the substage list; "Advance" as `UiButton variant="primary"`.
 
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 1200px
-- **Layout:** Responsive grid
-
-### Spacing Overrides
-
-- No overrides — use Master spacing
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- No overrides — use Master colors
-
-### Component Overrides
-
-- No overrides — use Master component specs
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Refer to MASTER.md for all design rules
-- Add specific overrides as needed for this page
+## Accessibility musts
+- Every substage checkbox has a visible label; `boughtdeals.*`, `boughtcard.*` hooks unchanged; drag flow (`bought-deals-drag.spec`) green on chromium.

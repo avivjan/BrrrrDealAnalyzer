@@ -1,47 +1,15 @@
-# Landing Page Overrides
+# Dashboard (route /) — v2 page rules
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 00:34:44
-> **Page Type:** Landing / Marketing
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
+## Layout
+- `max-w-7xl` grid. Row 1: greeting + date (`h1 font-display`) and the `landing.offer` primary CTA (`shadow-glow-primary`). Row 2: `PortfolioStatsBar` inside `<div class="min-h-stats-bar">` (reserved height → CLS 0). Row 3: quick-action grid of the **seven** feature tiles (`grid-cols-2 md:grid-cols-3 xl:grid-cols-4`), each `UiKpiCard`-styled on a `UiSurface interactive`, keeping `:data-testid="`landing.card.${card.title}`"`, the same `component :is` (RouterLink / `a`) and hrefs. My Deals / Bought Deals / Liquidity tiles show a figure from `dealStore.portfolioStats` (already fetched). Row 4: the four resources as `UiChip href` (`landing.resource.<title>`).
+- Ambient background: the look's `--ambient` via CSS keyframes only; paused under reduced motion and `(hover: none)`.
 
----
+## Copy / hooks that must not change
+- Card titles: REPS Tracker, Daily Tasks, Stessa, Analyze Deal, My Deals, Bought Deals, Liquidity. Hooks `landing.offer`, `landing.card.*`, `landing.resource.*`, `statsbar.root`, `app.status`.
+- Network: load issues exactly `GET /helloworld` and `GET /active-deals` (App.vue), nothing else.
 
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 800px (narrow, focused)
-- **Layout:** Single column, centered
-- **Sections:** Dynamic hero (personalized) > Relevant features > Tailored testimonials > Smart CTA
-
-### Spacing Overrides
-
-- **Content Density:** Low — focus on clarity
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- **Strategy:** Adaptive based on user data. A/B test color variations per segment.
-
-### Component Overrides
-
-- No overrides — use Master component specs
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Effects: font-size: clamp(3rem 10vw 12rem), font-weight: 900, letter-spacing: -0.05em, massive whitespace
-- CTA Placement: Context-aware placement based on user segment
+## Accessibility musts
+- `h1` then `h2` per row; tiles are links with visible focus; external links say so (icon + `rel="noopener"`).

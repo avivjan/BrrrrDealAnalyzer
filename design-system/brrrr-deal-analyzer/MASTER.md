@@ -9,11 +9,176 @@
 **Project:** BRRRR Deal Analyzer
 **Generated:** 2026-09-04 20:03:48
 **Category:** Real Estate/Property
-**Design Dials:** Variance 4/10 (Balanced / Modern) | Motion 5/10 (Standard) | Density 7/10 (Standard)
+**Design Dials (v1):** Variance 4/10 | Motion 5/10 | Density 7/10 — **v2:** Variance 8/10 (Bold) | Motion 8/10 (Complex) | Density 6/10 (Standard)
 
 ---
 
-## Approved overrides (plan §2, binding)
+## Approved overrides v2 (supersedes v1 in full; binding)
+
+**This section supersedes the v1 "Approved overrides" in full.** v1's rejection
+of glassmorphism and hero-centric patterns, and its "light theme app-wide, no
+toggle" pin, are withdrawn. Source: `docs/plans/2026-09-05-ui-v2-plan.md` §1,
+approved 2026-09-05. Wherever anything below conflicts with the generator
+output further down this file (v1 or v2), the overrides win.
+
+1. **Four looks × two modes, user-switchable.** `obsidian` (Obsidian Terminal),
+   `aurora` (Aurora Glass), `brutal` (Neo-Brutal Fintech), `luxury` (Quiet
+   Luxury); modes light / dark / system. **Default: `luxury` + dark.**
+   Persistence is per browser (`localStorage`: `bw.look`, `bw.theme`,
+   `bw.motion`); the app has no accounts. Applied as `<html data-look="…"
+   class="dark">` by `index.html` (pre-paint) and `src/design/theme.ts`.
+   **Components never name a look** — they use tokens; a look is one generated
+   CSS file (`src/assets/looks/<id>.css`, from `scripts/design/looks.data.mjs`).
+2. **Token vocabulary.** Colours `page, surface, surface-muted, surface-2,
+   surface-3, line, fg, fg-muted, primary, primary-hover, primary-fg, accent,
+   accent-2, positive, negative, warning, ring, glass, glass-line, chart-1..8`
+   (RGB triplets); the 32 `--chart-*` literals (derived per palette); shape
+   `--radius-sm/md/lg`, `--border-w`, `--shadow-1..4`, `--glow-primary/accent/negative`,
+   `--blur-glass`, `--gradient-brand/surface`; type `--font-display`,
+   `--font-mono`, `--track-display`; motion `--dur-fast/base/slow`,
+   `--ease-*`, `--gsap-ease-*`; `--ambient`. Every look sets every token in
+   both modes (`src/design/looks.test.ts`).
+3. **Type.** Body is always Inter Variable. `font-display` and `font-mono`
+   resolve to the look's faces; numerals use `.numeric` (mono, tabular).
+   Fonts are self-hosted (`@fontsource*`) and loaded lazily per look.
+4. **Depth.** Surface tiers 1–3, elevation shadow-1..4, glass panels only as
+   containers (see Glass rule), glow reserved for the primary CTA, the active
+   nav item and a focused KPI. Gradients from tokens only.
+5. **Data-viz.** `chart-1..8` per look and mode; the liquidity chart's 32
+   literals are derived from the palette (`chartLiterals()` in the generator).
+6. **Iconography.** primeicons, 20 px in nav, 16 px inline; icon-only controls
+   are `UiIconButton` with a `label`.
+7. **App shell.** Desktop grid `[var(--sidebar-w)_1fr] / [auto_1fr]`, collapsible
+   sidebar (15 rem ↔ 4.5 rem, **no width transition**), topbar (title, ⌘K,
+   mode toggle, settings, connection status), `<main id="main">` as the one
+   scroller. Mobile: sticky topbar + fixed bottom nav (`pb-safe-b`). Command
+   palette `Cmd/Ctrl+K`, client-side only.
+8. **Settings → Appearance** (a `UiDrawer`): Look picker with live previews
+   (`role="radiogroup"`), Mode (Light / Dark / System), Motion (Full /
+   Reduced). Saved automatically, per browser; footer copy says so.
+9. **Dashboard** replaces the landing page: greeting, `PortfolioStatsBar` in a
+   height-reserved slot, seven quick-action tiles (same hooks and hrefs), the
+   four resource links as chips. No new fetches.
+10. **PortfolioStatsBar** renders only on the dashboard; **`app.status`** lives
+    in the topbar on every route (same testid, role, aria-live and strings).
+11. **Liquidity** is a grid dashboard with an SVG `TimelineChart` (contract
+    intact; 32 `chartToken()` calls in one theme-reactive `computed`).
+12. **Script-emitted palette classes** in MyDeals / BoughtDeals map to token
+    classes (`text-positive`, `border-l-chart-1..4`, `bg-surface border-line`).
+13. **Motion tiers per look.** Standard (presets + directives) and Complex (six
+    one-shot choreographies). GSAP reads `--dur-*` / `--gsap-ease-*` from the
+    active look at tween time. Ambient loops are CSS `@keyframes`, never GSAP
+    `repeat: -1`, never `quickTo`. Look/mode cross-fade is CSS.
+14. **Accessibility floor.** WCAG 2.2 AA: 4.5:1 text in all 8 look × mode
+    sets (`npm run audit:contrast`, 27 pairs per set), 44 px primary touch
+    targets, visible focus, `prefers-reduced-motion` **and** the in-app
+    Motion setting honoured, no new axe violations in any set.
+
+### Glass rule
+
+Body text never sits directly on glass. A `UiGlassPanel` is a *container*;
+its children are `UiSurface`s, `UiKpiCard`s or a nav list. Text over a
+blurred, moving background cannot be held to a contrast ratio, so the ratio is
+measured on the inner surface instead. Looks with `--blur-glass: 0px` render
+glass as an opaque surface-2 panel from the same class.
+
+### Motion tiers
+
+- **Standard:** `v-reveal` / `v-reveal.stagger` on grids, `UiTransition
+  preset="modal"` on modals and drawers, `preset="page"` (opacity-only,
+  enter-only) on routes, `v-press` on primary buttons, `v-hover-lift` on KPI
+  cards, `v-flash` on autosave values, `v-count-up` on dashboard numerals.
+- **Complex (one-shot, `clearProps` on complete):** dashboard KPI count-up +
+  sparkline draw-on; sidebar active-indicator slide; command palette spring
+  (`back.out`) + item stagger; liquidity balance draw-on once per mount;
+  kanban column-header stagger on tab change; theme cross-fade (CSS).
+- Tempo per look: obsidian 120/180/280 ms, aurora 200/320/480 ms (spring),
+  brutal 120/200/300 ms, luxury 220/400/600 ms.
+
+## Looks
+
+Values are in `scripts/design/looks.data.mjs`; this is the intent behind them.
+Each look must never: name itself in a component, drop a token, or fall below
+the contrast floor in either mode.
+
+### Obsidian Terminal (`obsidian`)
+
+Near-black surfaces, one electric-cyan accent, hairline borders, mono
+numerals everywhere. Bloomberg meets Linear. Display face **JetBrains Mono**
+(the numerals *are* the headline). Radii 4/6/8, borders 1 px, no drop shadow
+(depth is a hairline ring), no glow, no blur. Tempo 120/180/280 ms with
+near-linear eases. Light mode: cool greys, cyan-700 accent. Never: gradients
+as decoration, springy easing, large type.
+
+### Aurora Glass (`aurora`)
+
+Deep navy-to-indigo gradients, aurora blobs drifting behind frosted panels,
+violet primary with cyan and magenta accents. Display face **Space Grotesk**.
+Radii 12/16/20, blur 14 px, glows on CTA / active nav / focused KPI, deep soft
+shadows. Tempo 200/320/480 ms, `back.out(1.4)` for emphasis. Ambient
+`gradient-drift` (CSS). Light mode: lavender page, white panels, indigo
+primary. Never: body text directly on glass (Glass rule), more than one glow
+per viewport region, blur on scrolling containers.
+
+### Neo-Brutal Fintech (`brutal`)
+
+Flat saturated blocks, 2 px borders in the ink colour, hard offset shadows
+(`6px 6px 0`), lime on black in dark mode, black on off-white in light mode
+(lime becomes the on-primary ink and `accent-2`). Display face **Unbounded**
+900. Radii 2 px, no blur, no glow. Tempo 120/200/300 ms, `expo.out`. Never:
+soft shadows, translucency, thin type, more than three colours on one panel.
+
+### Quiet Luxury (`luxury`) — default
+
+Warm charcoal and graphite, champagne-gold accent, **Fraunces** serif
+headlines beside Inter, generous whitespace, soft two-tier depth. Radii
+10/12/16, borders 1 px, no glow, no blur. Tempo 220/400/600 ms, gentle
+eases. Ambient `shimmer` on the hero rule only. Light mode: warm paper page,
+bronze primary. Never: neon, hard shadows, dense layouts, bright semantic
+colours (positive/negative stay muted but ≥ 4.5:1).
+
+### v2 generator run (recorded, mostly rejected)
+
+`search.py "enterprise fintech analytics platform, futuristic, premium"
+--design-system --density 6 --motion 8 --variance 8` returned pattern
+**Scroll-Triggered Storytelling** (a marketing narrative; this is a tool with
+no scroll story — rejected), style **Brutalism** (adopted only as one of the
+four looks, not as *the* style), an indigo/orange OLED palette (not used; each
+look has its own), typography Inter/Inter (kept as the body face only) and a
+**Flip-plugin page transition** (rejected: GSAP core only, and the `page`
+preset must stay opacity-only because a fixed modal can open mid-transition).
+
+Domain queries (`--max-results 2`): typography "geometric display paired with
+Inter" → *SaaS Mobile Boutique* (Calistoga + Inter + JetBrains Mono) —
+confirms the tri-stack shape (display + Inter + mono) used by every look;
+Calistoga itself not adopted. "serif display fintech premium" → *Classic
+Elegant* (Playfair + Inter) — confirms serif-display-over-Inter for Quiet
+Luxury; Fraunces chosen for its variable optical size. "monospace-led
+interface terminal" → *Terminal CLI Monospace* (JetBrains Mono single family)
+— adopted for Obsidian's display face; its "400 weight only" note is kept.
+Colour "dark fintech dashboard glow accents" → *Financial Dashboard* (dark bg
++ green positive indicators) — confirms positive/negative as the only semantic
+hues; "warm charcoal gold luxury" → *E-commerce Luxury* (stone neutrals +
+`#A16207` gold) — confirms the bronze light-mode primary for Quiet Luxury;
+"neo-brutalist high contrast" → no brutalist row (a navy government palette)
+— recorded as a miss. UX "command palette accessibility", "sidebar navigation
+collapsed", "dashboard KPI hierarchy" → generic rows (keyboard navigation
+with visible focus; sticky nav must not obscure content; sequential heading
+levels) — all carried into the shell rules; "theme picker settings" → **no
+database match**; the Settings drawer follows the radiogroup pattern instead.
+Chart "running balance timeline dark" → *Trend Over Time* (line/area, SVG
+below 1000 points, keyboard focus reveals values, never hue alone) — adopted
+for the SVG `TimelineChart`.
+
+---
+
+## v1 record (historical)
+
+The sections below are the v1 design system as generated on 2026-09-04 and its
+approved overrides. They are kept for the record; **the v2 overrides above
+replace them.**
+
+### v1 approved overrides (plan §2)
 
 These come from the master plan's §2 (verified, domain-targeted searches) and are **binding**: wherever they conflict with the generic `--design-system` output further down this file, the overrides win.
 
@@ -28,11 +193,11 @@ These come from the master plan's §2 (verified, domain-targeted searches) and a
 - Motion 150 / 250 / 400 ms with eases power2.out (standard), power3.inOut (emphasized), power1.in (exit).
 - Light theme app-wide, dark tokens defined under `.dark` but no toggle shipped.
 
-### Rejected tool output
+#### Rejected tool output (v1)
 
 The generic `--design-system` run above (query `"financial dashboard calculator real estate"`, density 7 / motion 5 / variance 4) picked its style and typography from the "Real Estate/Property" category rather than a numeric-tool category, and the raw pick does not fit this app. Concretely, this run returned: page pattern **Hero-Centric Design** (a marketing/landing funnel — full-bleed hero, single value-prop strip, key-benefit proof, one primary CTA — built for conversion, not for a form-heavy calculator with no funnel to convert through); style **Glassmorphism** (frosted-glass panels, backdrop blur, "vibrant background/light source" effects aimed at high-end corporate and SaaS marketing surfaces); and typography **Cinzel / Josefin Sans**, a luxury real-estate serif pairing (mood keywords: "luxury, elegant, sophisticated, premium") that is wrong for tabular financial data. The color palette it generated (teal/blue on a light `#F0FDFA` background) is also not dark/OLED, in case a different run of this generator is compared later — it is simply an unrelated real-estate brand palette, not a financial one. All three (pattern, style, typography) are rejected as a mis-fit for a numeric deal-analysis tool; the plan's §2 domain-targeted queries (color/typography/style/product, run below) are the source of truth instead, per plan §2.1: *"The generic `--design-system` run returned a marketing 'Enterprise Gateway' pattern with a luxury serif (Cinzel), which is a mis-fit for a numeric tool and is rejected; the targeted domain queries below are the source of truth."*
 
-## Verified queries
+### v1 verified queries
 
 Each query below was run with `--max-results 3` against the same script. "Applied as" states how it feeds the tokens above; a row is kept only if it plausibly fits a numeric financial tool, otherwise the mismatch is noted and the plan §2 default is cited instead.
 
