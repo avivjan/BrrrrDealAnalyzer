@@ -39,6 +39,12 @@ export const G1_PATHSPEC = [
   // gate G8 now requires and which G1 would otherwise forbid. Nothing
   // executable lives here; `BackEnd/` itself stays frozen.
   ':!REPS_README.md',
+  // Same class again: the root README's "Run the frontend" section still
+  // described the deleted static `FrontEnd/` directory and said Node was not
+  // required. Task 5.5 rewrites it to describe the Vue app that replaced it.
+  // Nothing executable lives here either; `BackEnd/`, `runtime.txt` and
+  // `.gitignore` stay frozen.
+  ':!README.md',
 ];
 
 /** G2: frontend directories that hold behaviour rather than presentation. */
