@@ -364,10 +364,10 @@ function showToast(msg: string) {
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col bg-page text-fg">
+  <div class="flex min-h-dvh flex-col bg-page pb-safe-b text-fg">
     <!-- Header -->
     <header
-      class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2 sm:px-4 sm:py-3 md:bg-surface/90 md:backdrop-blur-sm"
+      class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4 sm:pb-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))] md:bg-surface/90 md:backdrop-blur-sm"
     >
       <div class="flex min-w-0 items-center gap-2">
         <UiIconButton

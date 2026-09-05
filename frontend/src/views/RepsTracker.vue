@@ -67,7 +67,7 @@ function onSaved() {
 <template>
   <div class="min-h-dvh bg-page pb-safe-b">
     <!-- Header -->
-    <header class="sticky top-0 z-30 border-b border-line bg-surface">
+    <header class="sticky top-0 z-30 border-b border-line bg-surface pt-safe-t">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div class="flex min-w-0 items-center gap-3">
           <UiIconButton

@@ -497,7 +497,7 @@ console.groupEnd();
   <div class="h-dvh flex flex-col bg-page text-fg overflow-hidden">
     <!-- Header -->
     <header
-      class="flex-none p-4 md:px-8 flex flex-wrap justify-between items-center gap-3 border-b border-line bg-surface/95 md:backdrop-blur z-20 shadow-1"
+      class="flex-none px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-8 flex flex-wrap justify-between items-center gap-3 border-b border-line bg-surface/95 md:backdrop-blur z-20 shadow-1"
     >
       <div class="flex items-center gap-3">
         <UiIconButton
