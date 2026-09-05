@@ -4,7 +4,11 @@ Goldens — the G3/G4/G4b baseline manifests, the e2e network contracts and axe
 baseline, `scripts/audit/allowlist.json`, and the archived Playwright runs —
 change only in a commit whose subject starts `Golden update:`, containing
 nothing else, reviewed line by line. The `GOLDEN-POLICY` gate in
-`npm run verify:ui` fails the build otherwise.
+`npm run verify:ui` fails the build otherwise — on both halves of that rule
+since Step 5.7, so a `Golden update:` commit that also carried a source file
+now fails too. That is why each row below is written in the *next* commit: this
+log is documentation, not a golden, and may not travel inside the commit it
+describes.
 
 This is every such commit on `refactor/ui-overhaul`, oldest first. Regenerate the
 list with:

@@ -195,6 +195,26 @@ The policy watched `scripts/audit/golden`, `e2e/golden` and `allowlist.json`.
 so re-archiving either one inside an ordinary commit would move the proof's own
 baseline with nobody reviewing the move.
 
+### GOLDEN-POLICY has two halves
+
+Until Step 5.7 the gate asked one question — "did anything touch a golden
+outside a `Golden update:` commit?" — from a log filtered to the golden paths.
+That log cannot see the rest of a commit, so the converse went unchecked: a
+commit could *say* `Golden update:`, change a golden, and carry a source edit
+along with it, and no gate would notice. The second half reads an unfiltered
+log and `git show --name-only` for each `Golden update:` commit, and fails if
+one carried a file no golden path covers.
+
+Half two runs over `ui-baseline..HEAD` rather than `ui-p0..HEAD`: the rule is
+about how a golden commit is *written*, and it applies just as much to the four
+Phase 0 commits that recorded the goldens in the first place. All fifteen
+`Golden update:` commits on the branch pass it.
+
+The rule has a consequence worth knowing: `docs/ui-overhaul/golden-update-log.md`
+is documentation, not a golden, so the row describing a golden update can no
+longer ride inside the commit it describes. It lands in the next ordinary
+commit instead.
+
 ---
 
 ## 4. Motion decisions

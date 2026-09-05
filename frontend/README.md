@@ -173,7 +173,7 @@ than silently joining the run.
 | `G8` | no tracked file contains an absolute filesystem path |
 | `G6` | `npm test` and `npm run build` both succeed |
 | `G5` / `G7` | the Playwright suite: network contracts, axe baseline, no live tweens |
-| `GOLDEN-POLICY` | since `ui-p0`, `scripts/audit/golden`, `e2e/golden`, `scripts/audit/allowlist.json` and `e2e/reports` changed only in `Golden update:` commits |
+| `GOLDEN-POLICY` | since `ui-p0`, `scripts/audit/golden`, `e2e/golden`, `scripts/audit/allowlist.json` and `e2e/reports` changed only in `Golden update:` commits — and, across the whole branch, every `Golden update:` commit changed nothing else |
 
 The static audits also run on their own: `npm run audit` (G3, G4, G4b),
 `node scripts/audit/hover-pairs.mjs`, `node scripts/audit/paths.mjs`,

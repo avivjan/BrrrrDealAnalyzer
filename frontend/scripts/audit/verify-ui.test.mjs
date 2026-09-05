@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  BASELINE_TAG,
   E2E_FROZEN_PATHS,
   G1_PATHSPEC,
   G2_FROZEN_PATHS,
@@ -8,8 +9,10 @@ import {
   PHASE_PLAYWRIGHT_PROJECTS,
   e2eFreezeChecks,
   findGoldenPolicyViolations,
+  findGoldenScopeViolations,
   gateLine,
   goldenPolicyGate,
+  isGoldenPath,
 } from './verify-ui.mjs';
 
 describe('verify:ui pathspecs', () => {
@@ -86,17 +89,22 @@ describe('golden policy', () => {
     const gate = goldenPolicyGate({
       tagExists: () => true,
       gitLog: () => 'aaa1111\tGolden update: x',
+      gitFiles: () => ['frontend/e2e/golden/network-contract.json'],
     });
     expect(gate.status).toBe('PASS');
   });
 
   it('fails and names the offending commit', () => {
-    const gate = goldenPolicyGate({ tagExists: () => true, gitLog: () => log });
+    const gate = goldenPolicyGate({
+      tagExists: () => true,
+      gitLog: () => log,
+      gitFiles: () => [],
+    });
     expect(gate.status).toBe('FAIL');
     expect(gate.detail).toContain('bbb2222');
   });
 
-  it('queries only the golden and allowlist paths of the ui-p0..HEAD range', () => {
+  it('queries the golden paths of ui-p0..HEAD and then the whole branch', () => {
     const calls = [];
     goldenPolicyGate({
       tagExists: () => true,
@@ -104,8 +112,102 @@ describe('golden policy', () => {
         calls.push({ range, paths });
         return '';
       },
+      gitFiles: () => [],
     });
-    expect(calls).toEqual([{ range: 'ui-p0..HEAD', paths: GOLDEN_POLICY_PATHS }]);
+    expect(calls).toEqual([
+      { range: 'ui-p0..HEAD', paths: GOLDEN_POLICY_PATHS },
+      { range: `${BASELINE_TAG}..HEAD`, paths: [] },
+    ]);
+  });
+});
+
+/**
+ * The other half of the policy. The first half asks "did anything touch a
+ * golden outside a `Golden update:` commit?"; without this one, a commit could
+ * simply *say* `Golden update:` and smuggle a source change past every gate,
+ * because the path-filtered log the first half reads never looks at the rest of
+ * the commit.
+ */
+describe('golden policy — "Golden update:" commits carry nothing else', () => {
+  it('recognises a golden path by exact name or directory prefix', () => {
+    expect(isGoldenPath('frontend/scripts/audit/allowlist.json')).toBe(true);
+    expect(isGoldenPath('frontend/e2e/reports/phase5-final.json')).toBe(true);
+    expect(isGoldenPath('frontend/scripts/audit/golden/bindings.json')).toBe(true);
+    // A lookalike sibling is not a golden.
+    expect(isGoldenPath('frontend/scripts/audit/allowlist.json.bak')).toBe(false);
+    expect(isGoldenPath('frontend/e2e/reports-old/phase5.json')).toBe(false);
+    expect(isGoldenPath('frontend/src/views/MyDeals.vue')).toBe(false);
+  });
+
+  it('names every non-golden file a golden commit carried', () => {
+    const violations = findGoldenScopeViolations([
+      {
+        sha: 'aaa1111',
+        subject: 'Golden update: re-archive phase5-final.json',
+        files: ['frontend/e2e/reports/phase5-final.json', 'frontend/src/views/MyDeals.vue'],
+      },
+      {
+        sha: 'ccc3333',
+        subject: 'Golden update: allowlist row',
+        files: ['frontend/scripts/audit/allowlist.json'],
+      },
+    ]);
+    expect(violations).toEqual([
+      expect.objectContaining({ sha: 'aaa1111', extra: ['frontend/src/views/MyDeals.vue'] }),
+    ]);
+  });
+
+  it('fails the gate and names the smuggled file', () => {
+    const gate = goldenPolicyGate({
+      tagExists: () => true,
+      gitLog: (_range, paths) =>
+        paths.length > 0 ? '' : 'aaa1111\tGolden update: re-archive phase5-final.json',
+      gitFiles: () => ['frontend/e2e/reports/phase5-final.json', 'frontend/src/api/index.ts'],
+    });
+    expect(gate.status).toBe('FAIL');
+    expect(gate.detail).toContain('aaa1111');
+    expect(gate.detail).toContain('frontend/src/api/index.ts');
+  });
+
+  it('passes and counts the golden commits it checked', () => {
+    const gate = goldenPolicyGate({
+      tagExists: () => true,
+      gitLog: (_range, paths) =>
+        paths.length > 0
+          ? ''
+          : ['aaa1111\tGolden update: one', 'bbb2222\tStep 1.3: restyle', 'ccc3333\tGolden update: two'].join(
+              '\n',
+            ),
+      gitFiles: () => ['frontend/e2e/golden/axe-baseline.json'],
+    });
+    expect(gate.status).toBe('PASS');
+    expect(gate.detail).toContain('2 "Golden update:" commits');
+  });
+
+  it('never asks git for the files of an ordinary commit', () => {
+    const asked = [];
+    goldenPolicyGate({
+      tagExists: () => true,
+      gitLog: (_range, paths) => (paths.length > 0 ? '' : 'bbb2222\tStep 1.3: restyle the deal card'),
+      gitFiles: (sha) => {
+        asked.push(sha);
+        return [];
+      },
+    });
+    expect(asked).toEqual([]);
+  });
+
+  it('falls back to the ui-p0 range when the baseline tag is gone', () => {
+    const calls = [];
+    goldenPolicyGate({
+      tagExists: (tag) => tag === 'ui-p0',
+      gitLog: (range, paths) => {
+        calls.push({ range, paths });
+        return '';
+      },
+      gitFiles: () => [],
+    });
+    expect(calls.map((call) => call.range)).toEqual(['ui-p0..HEAD', 'ui-p0..HEAD']);
   });
 });
 

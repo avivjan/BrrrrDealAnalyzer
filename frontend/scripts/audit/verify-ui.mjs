@@ -112,6 +112,16 @@ export function gitLogSubjects(range, paths) {
   return result.status === 0 ? result.stdout : '';
 }
 
+/** Every path one commit touched — `git show --name-only`, one file per line. */
+export function gitCommitFiles(sha) {
+  const result = git(['show', '--name-only', '--format=', sha]);
+  if (result.status !== 0) return [];
+  return result.stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 /** `git diff --quiet <ref> -- <paths>` — true when the tree still matches `ref`. */
 export function isCleanAgainst(ref, paths) {
   return git(['diff', '--quiet', ref, '--', ...paths]).status === 0;
@@ -126,8 +136,8 @@ export function e2eFreezeChecks({ tagExists = gitTagExists, tag = PHASE_0_TAG } 
   return tagExists(tag) ? [{ ref: tag, paths: E2E_FROZEN_PATHS }] : [];
 }
 
-/** Commits in the log that touched a golden path without a `Golden update:` subject. */
-export function findGoldenPolicyViolations(logOutput) {
+/** `%h\t%s` log output as `{ sha, subject }` records. */
+export function parseCommitLog(logOutput) {
   return logOutput
     .split('\n')
     .map((line) => line.trim())
@@ -135,25 +145,91 @@ export function findGoldenPolicyViolations(logOutput) {
     .map((line) => {
       const tab = line.indexOf('\t');
       return { sha: line.slice(0, tab), subject: line.slice(tab + 1) };
-    })
-    .filter((commit) => !commit.subject.startsWith('Golden update:'));
+    });
 }
 
+/** The subject prefix that marks a commit as a deliberate golden re-record. */
+const GOLDEN_SUBJECT = 'Golden update:';
+
+/** Commits in the log that touched a golden path without a `Golden update:` subject. */
+export function findGoldenPolicyViolations(logOutput) {
+  return parseCommitLog(logOutput).filter((commit) => !commit.subject.startsWith(GOLDEN_SUBJECT));
+}
+
+/**
+ * True when `file` is one of the golden paths, or lives under one of them.
+ *
+ * The prefix test appends the separator on purpose: `e2e/reports-old/x.json`
+ * is not `e2e/reports`, and a bare `startsWith` would have said it was.
+ */
+export function isGoldenPath(file) {
+  return GOLDEN_POLICY_PATHS.some((path) => file === path || file.startsWith(`${path}/`));
+}
+
+/**
+ * `Golden update:` commits that carried a file no golden path covers.
+ *
+ * `commits` is `{ sha, subject, files }`; each violation gains an `extra` list
+ * naming exactly what it smuggled in.
+ */
+export function findGoldenScopeViolations(commits) {
+  return commits
+    .map((commit) => ({ ...commit, extra: commit.files.filter((file) => !isGoldenPath(file)) }))
+    .filter((commit) => commit.extra.length > 0);
+}
+
+/**
+ * GOLDEN-POLICY, both halves.
+ *
+ * 1. Nothing but a `Golden update:` commit may touch a golden. Read from a
+ *    path-filtered log of `ui-p0..HEAD` — the range in which the goldens have
+ *    existed and the policy has applied.
+ * 2. A `Golden update:` commit may touch *nothing but* goldens. Half 1 cannot
+ *    see this: its log is filtered to the golden paths, so the rest of such a
+ *    commit is invisible to it and a source change could ride along under a
+ *    `Golden update:` subject with every gate silent. This half therefore reads
+ *    an unfiltered log and asks `git show --name-only` for each golden commit.
+ *
+ * Half 2 runs over `ui-baseline..HEAD`, the whole branch: the rule is about how
+ * a golden commit is written, and it applies just as much to the Phase 0
+ * commits that recorded the goldens in the first place. It falls back to half
+ * 1's range if the baseline tag is missing.
+ */
 export function goldenPolicyGate({
   tagExists = gitTagExists,
   gitLog = gitLogSubjects,
+  gitFiles = gitCommitFiles,
   tag = PHASE_0_TAG,
+  scopeTag = BASELINE_TAG,
 } = {}) {
   if (!tagExists(tag)) {
     return { status: 'SKIP', detail: `no ${tag} tag yet` };
   }
   const range = `${tag}..HEAD`;
   const violations = findGoldenPolicyViolations(gitLog(range, GOLDEN_POLICY_PATHS));
-  if (violations.length === 0) {
-    return { status: 'PASS', detail: `every golden change in ${range} is a "Golden update:" commit` };
+  if (violations.length > 0) {
+    const named = violations.map((commit) => `${commit.sha} ${commit.subject}`).join('; ');
+    return { status: 'FAIL', detail: `golden files changed outside a "Golden update:" commit: ${named}` };
   }
-  const named = violations.map((commit) => `${commit.sha} ${commit.subject}`).join('; ');
-  return { status: 'FAIL', detail: `golden files changed outside a "Golden update:" commit: ${named}` };
+
+  const scopeRange = tagExists(scopeTag) ? `${scopeTag}..HEAD` : range;
+  const goldenCommits = parseCommitLog(gitLog(scopeRange, []))
+    .filter((commit) => commit.subject.startsWith(GOLDEN_SUBJECT))
+    .map((commit) => ({ ...commit, files: gitFiles(commit.sha) }));
+  const scopeViolations = findGoldenScopeViolations(goldenCommits);
+  if (scopeViolations.length > 0) {
+    const named = scopeViolations
+      .map((commit) => `${commit.sha} ${commit.subject} [${commit.extra.join(', ')}]`)
+      .join('; ');
+    return { status: 'FAIL', detail: `"Golden update:" commits carried non-golden files: ${named}` };
+  }
+
+  return {
+    status: 'PASS',
+    detail:
+      `every golden change in ${range} is a "Golden update:" commit; ` +
+      `all ${goldenCommits.length} "Golden update:" commits in ${scopeRange} touch golden paths only`,
+  };
 }
 
 // ---------------------------------------------------------------------------
