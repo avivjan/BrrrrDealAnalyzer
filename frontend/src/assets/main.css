@@ -1,4 +1,9 @@
 @import "./tokens.css";
+/* The four switchable looks; each reassigns every token under [data-look="<id>"]. Generated — see scripts/design/build-looks.mjs. */
+@import "./looks/obsidian.css";
+@import "./looks/aurora.css";
+@import "./looks/brutal.css";
+@import "./looks/luxury.css";
 
 @tailwind base;
 @tailwind components;

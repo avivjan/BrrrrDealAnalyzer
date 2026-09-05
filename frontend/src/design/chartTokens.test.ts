@@ -7,57 +7,12 @@ import {
   resetChartTokenCache,
   type ChartTokenName,
 } from "./chartTokens";
+import { DEFAULT_LOOK } from "./looks";
 
 const NAMES = Object.keys(CHART_FALLBACKS) as ChartTokenName[];
 
 const read = (relative: string) =>
   readFileSync(new URL(relative, import.meta.url), "utf8");
-
-/**
- * The colours `TimelineChart.vue` used to assign directly, character for
- * character.
- *
- * They lived in the component until Task 3.9 replaced each one with a
- * `chartToken('<name>')` call (gate G3's E1 exemption), so the component can
- * no longer be the second copy this file holds `CHART_FALLBACKS` against. The
- * table moves here instead: it is the dark theme's palette, and the two
- * assertions below tie it to both `CHART_FALLBACKS` and `tokens.css`'s
- * `.dark` block. Change a dark colour and all three have to move together.
- */
-const DARK_LITERALS: Record<ChartTokenName, string> = {
-  bg: "#0f1117",
-  grid: "#1e2030",
-  "axis-text": "#5c6078",
-  "reserve-band": "rgba(239, 68, 68, 0.04)",
-  "weekend-band": "rgba(255,255,255,0.015)",
-  "today-band": "rgba(99, 102, 241, 0.08)",
-  "month-line": "#2a2f45",
-  "day-line": "#16192a",
-  "month-label": "#7c82a0",
-  "day-today": "#818cf8",
-  "day-hover": "#c7d2fe",
-  "day-active": "#94a3b8",
-  "day-idle": "#3e4460",
-  "marker-today": "#6366f1",
-  "marker-idle": "#2e3350",
-  "today-line": "#6366f1",
-  "net-positive": "#22c55e",
-  "net-negative": "#ef4444",
-  "inflow-fill-hover": "rgba(129, 140, 248, 0.55)",
-  "inflow-fill": "rgba(99, 102, 241, 0.35)",
-  "inflow-stroke-hover": "#a5b4fc",
-  "inflow-stroke": "#818cf8",
-  "outflow-fill-hover": "rgba(239, 68, 68, 0.55)",
-  "outflow-fill": "rgba(239, 68, 68, 0.35)",
-  "outflow-stroke-hover": "#fca5a5",
-  "outflow-stroke": "#ef4444",
-  "reserve-line": "#ef4444",
-  baseline: "rgba(148, 163, 184, 0.2)",
-  "balance-dot": "#818cf8",
-  "balance-dot-core": "#fff",
-  "min-negative": "#ef4444",
-  "min-warning": "#f59e0b",
-};
 
 /** The `<script>` half of the chart SFC — where every `ctx.fillStyle` lives. */
 const timelineScript = (() => {
@@ -119,15 +74,24 @@ describe("chartTokens", () => {
     });
   });
 
-  describe("the fallbacks are the dark theme's literals", () => {
-    it("matches the table this file keeps", () => {
-      expect(CHART_FALLBACKS).toEqual(DARK_LITERALS);
-    });
+  describe("the fallbacks are the default look's dark literals", () => {
+    /** `--chart-*` of the dark rule in the default look's generated sheet. */
+    const defaultDark = (() => {
+      const css = read(`../assets/looks/${DEFAULT_LOOK}.css`);
+      const start = css.indexOf(`[data-look="${DEFAULT_LOOK}"].dark,`);
+      expect(start, `no dark rule in ${DEFAULT_LOOK}.css`).toBeGreaterThanOrEqual(0);
+      const block = css.slice(css.indexOf("{", start), css.indexOf("\n}", start));
+      const found = new Map<string, string>();
+      for (const match of block.matchAll(/--chart-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+        found.set(match[1]!, match[2]!.trim());
+      }
+      return found;
+    })();
 
-    it("is what tokens.css declares under .dark", () => {
-      expect([...darkTokens.keys()].sort()).toEqual([...NAMES].sort());
+    it(`is what looks/${DEFAULT_LOOK}.css declares under its dark rule`, () => {
+      expect([...defaultDark.keys()].sort()).toEqual([...NAMES].sort());
       for (const name of NAMES) {
-        expect(darkTokens.get(name), name).toBe(CHART_FALLBACKS[name]);
+        expect(defaultDark.get(name), name).toBe(CHART_FALLBACKS[name]);
       }
     });
   });
