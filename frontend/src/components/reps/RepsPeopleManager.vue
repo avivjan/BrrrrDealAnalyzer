@@ -63,123 +63,133 @@ async function remove(id: string) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-bold text-slate-800">People (Audit Trail)</h3>
-      <span class="text-xs font-mono text-slate-500">{{ store.people.length }} contacts</span>
-    </div>
+  <UiCard padding="lg">
+    <UiSectionHeader as="h3" class="mb-4">
+      People (Audit Trail)
+      <template #actions>
+        <span class="text-xs tabular text-fg-muted">{{ store.people.length }} contacts</span>
+      </template>
+    </UiSectionHeader>
 
-    <div v-if="error" data-testid="repspeople.error" class="p-2 mb-3 bg-rose-100 text-rose-700 text-xs rounded">{{ error }}</div>
+    <div
+      v-if="error"
+      data-testid="repspeople.error"
+      class="mb-3 rounded-ctl bg-negative/10 p-2 text-xs font-medium text-negative"
+    >{{ error }}</div>
 
     <!-- Add new -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-slate-50 border border-slate-100">
+    <div class="mb-4 grid grid-cols-1 gap-2 rounded-ctl border border-line bg-surface-muted p-3 md:grid-cols-4">
       <input
         data-testid="repspeople.new-name"
         v-model="newName"
         type="text"
         placeholder="Name *"
-        class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        class="ui-input text-sm"
+        aria-label="Name"
       />
       <input
         data-testid="repspeople.new-role"
         v-model="newRole"
         type="text"
         placeholder="Role (e.g. Plumber)"
-        class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        class="ui-input text-sm"
+        aria-label="Role"
       />
       <input
         data-testid="repspeople.new-notes"
         v-model="newNotes"
         type="text"
         placeholder="Notes"
-        class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        class="ui-input text-sm"
+        aria-label="Notes"
       />
-      <button
-        data-testid="repspeople.add"
-        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
-        @click="add"
-      >
-        <i class="pi pi-plus"></i> Add
-      </button>
+      <UiButton data-testid="repspeople.add" size="sm" class="min-h-9" @click="add">
+        <i class="pi pi-plus" aria-hidden="true"></i> Add
+      </UiButton>
     </div>
 
-    <div v-if="store.people.length === 0" data-testid="repspeople.empty" class="text-center text-sm text-slate-500 py-6">
+    <UiEmptyState v-if="store.people.length === 0" data-testid="repspeople.empty">
       No people yet. Add contractors, agents, lenders, etc. to tag on log entries.
-    </div>
+    </UiEmptyState>
 
-    <ul v-else class="divide-y divide-slate-100">
+    <ul v-else class="divide-y divide-line">
       <li
         v-for="p in store.people"
         :key="p.id"
         :data-testid="`repspeople.person.${p.id}`"
-        class="py-3 flex items-start gap-3"
+        class="flex items-start gap-3 py-3"
       >
         <template v-if="editingId === p.id">
-          <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div class="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
             <input
               :data-testid="`repspeople.person.${p.id}.edit-name`"
               v-model="editName"
               type="text"
-              class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg"
+              class="ui-input text-sm"
+              aria-label="Name"
             />
             <input
               :data-testid="`repspeople.person.${p.id}.edit-role`"
               v-model="editRole"
               type="text"
               placeholder="Role"
-              class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg"
+              class="ui-input text-sm"
+              aria-label="Role"
             />
             <input
               :data-testid="`repspeople.person.${p.id}.edit-notes`"
               v-model="editNotes"
               type="text"
               placeholder="Notes"
-              class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg"
+              class="ui-input text-sm"
+              aria-label="Notes"
             />
           </div>
-          <div class="flex gap-1 shrink-0">
-            <button
+          <div class="flex shrink-0 gap-2">
+            <UiIconButton
               :data-testid="`repspeople.person.${p.id}.save`"
-              class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
+              label="Save person"
+              variant="secondary"
               @click="saveEdit"
             >
-              <i class="pi pi-check"></i>
-            </button>
-            <button
+              <i class="pi pi-check" aria-hidden="true"></i>
+            </UiIconButton>
+            <UiIconButton
               :data-testid="`repspeople.person.${p.id}.cancel`"
-              class="px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
+              label="Cancel edit"
               @click="editingId = null"
             >
-              <i class="pi pi-times"></i>
-            </button>
+              <i class="pi pi-times" aria-hidden="true"></i>
+            </UiIconButton>
           </div>
         </template>
         <template v-else>
-          <div class="flex-1">
-            <div class="text-sm font-semibold text-slate-800">
+          <div class="min-w-0 flex-1">
+            <div class="break-words text-sm font-semibold text-fg">
               {{ p.name }}
-              <span v-if="p.role" class="text-xs font-normal text-slate-500 ml-1">· {{ p.role }}</span>
+              <span v-if="p.role" class="ml-1 text-xs font-normal text-fg-muted">· {{ p.role }}</span>
             </div>
-            <div v-if="p.notes" class="text-xs text-slate-500 mt-0.5">{{ p.notes }}</div>
+            <div v-if="p.notes" class="mt-0.5 break-words text-xs text-fg-muted">{{ p.notes }}</div>
           </div>
-          <div class="flex gap-1 shrink-0">
-            <button
+          <div class="flex shrink-0 gap-2">
+            <UiIconButton
               :data-testid="`repspeople.person.${p.id}.edit`"
-              class="px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
+              label="Edit person"
               @click="startEdit(p)"
             >
-              <i class="pi pi-pencil"></i>
-            </button>
-            <button
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </UiIconButton>
+            <UiIconButton
               :data-testid="`repspeople.person.${p.id}.delete`"
-              class="px-2 py-1 text-xs bg-rose-100 text-rose-700 rounded hover:bg-rose-200"
+              label="Delete person"
+              variant="danger"
               @click="remove(p.id)"
             >
-              <i class="pi pi-trash"></i>
-            </button>
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </UiIconButton>
           </div>
         </template>
       </li>
     </ul>
-  </div>
+  </UiCard>
 </template>

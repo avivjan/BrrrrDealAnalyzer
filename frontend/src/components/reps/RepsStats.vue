@@ -23,70 +23,76 @@ function fmt(n: number | undefined | null) {
 </script>
 
 <template>
-  <div data-testid="repsstats.root" class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-lg font-bold text-slate-800">REPS Progress</h3>
-      <div v-if="loading" data-testid="repsstats.loading" class="text-xs font-mono text-slate-500 flex items-center gap-2">
-        <i class="pi pi-spin pi-spinner"></i> Loading from sheet...
-      </div>
-      <div v-else-if="stats" class="text-xs font-mono text-slate-500">
-        {{ stats.entry_count }} entries · day {{ stats.days_elapsed }} of {{ stats.days_in_year }}
-      </div>
-    </div>
+  <UiCard data-testid="repsstats.root" padding="lg" class="h-full">
+    <UiSectionHeader as="h3" class="mb-6">
+      REPS Progress
+      <template #actions>
+        <div
+          v-if="loading"
+          data-testid="repsstats.loading"
+          class="flex items-center gap-2 text-xs text-fg-muted"
+        >
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading from sheet...
+        </div>
+        <div v-else-if="stats" class="text-xs tabular text-fg-muted">
+          {{ stats.entry_count }} entries · day {{ stats.days_elapsed }} of {{ stats.days_in_year }}
+        </div>
+      </template>
+    </UiSectionHeader>
 
     <!-- Top numbers -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-        <div class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Total Hours</div>
-        <div class="text-2xl font-bold text-slate-800 tabular-nums">{{ fmt(stats?.total_hours) }}</div>
-      </div>
-      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-        <div class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Material (Rentals)</div>
-        <div class="text-2xl font-bold text-slate-800 tabular-nums">{{ fmt(stats?.material_hours) }}</div>
-      </div>
-      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-        <div class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Avg/Day Total</div>
-        <div class="text-2xl font-bold text-slate-800 tabular-nums">{{ fmt(stats?.avg_daily_hours_total) }}</div>
-      </div>
-      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-        <div class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Avg/Day Material</div>
-        <div class="text-2xl font-bold text-slate-800 tabular-nums">{{ fmt(stats?.avg_daily_hours_material) }}</div>
-      </div>
+    <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <UiStatTile tone="neutral" size="md">
+        <template #label>Total Hours</template>
+        {{ fmt(stats?.total_hours) }}
+      </UiStatTile>
+      <UiStatTile tone="neutral" size="md">
+        <template #label>Material (Rentals)</template>
+        {{ fmt(stats?.material_hours) }}
+      </UiStatTile>
+      <UiStatTile tone="neutral" size="md">
+        <template #label>Avg/Day Total</template>
+        {{ fmt(stats?.avg_daily_hours_total) }}
+      </UiStatTile>
+      <UiStatTile tone="neutral" size="md">
+        <template #label>Avg/Day Material</template>
+        {{ fmt(stats?.avg_daily_hours_material) }}
+      </UiStatTile>
     </div>
 
     <!-- Year progress bar -->
     <div class="mb-5">
-      <div class="flex justify-between text-xs font-mono mb-1">
-        <span class="text-slate-600">Year Progress</span>
-        <span class="text-slate-500">{{ yearPct.toFixed(1) }}%</span>
+      <div class="mb-1 flex justify-between gap-3 text-xs">
+        <span class="text-fg-muted">Year Progress</span>
+        <span class="shrink-0 tabular text-fg-muted">{{ yearPct.toFixed(1) }}%</span>
       </div>
-      <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-        <div class="h-full bg-slate-400 transition-all" :style="{ width: yearPct + '%' }"></div>
+      <div class="h-2 overflow-hidden rounded-full bg-surface-muted">
+        <div class="h-full bg-fg-muted/60 transition-all" :style="{ width: yearPct + '%' }"></div>
       </div>
     </div>
 
     <!-- 750h REPS bar -->
     <div class="mb-5">
-      <div class="flex justify-between text-xs font-mono mb-1">
-        <span class="text-slate-700 font-semibold">
+      <div class="mb-1 flex justify-between gap-3 text-xs">
+        <span class="font-semibold text-fg">
           750h Real Property Trades / Businesses
-          <span v-if="stats" class="text-slate-500 font-normal">
+          <span v-if="stats" class="font-normal tabular text-fg-muted">
             · {{ fmt(stats.total_hours) }} / 750
           </span>
         </span>
-        <span :class="repsAhead ? 'text-emerald-600' : 'text-rose-600'">
+        <span class="shrink-0 tabular" :class="repsAhead ? 'text-positive' : 'text-negative'">
           {{ repsPct.toFixed(1) }}% (vs year {{ yearPct.toFixed(1) }}%)
         </span>
       </div>
-      <div class="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div class="relative h-3 overflow-hidden rounded-full bg-surface-muted">
         <div
-          class="absolute top-0 left-0 h-full transition-all"
-          :class="repsAhead ? 'bg-emerald-500' : 'bg-rose-500'"
+          class="absolute left-0 top-0 h-full transition-all"
+          :class="repsAhead ? 'bg-positive' : 'bg-negative'"
           :style="{ width: repsPct + '%' }"
         ></div>
         <!-- pace marker -->
         <div
-          class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-slate-700"
+          class="absolute bottom-[-2px] top-[-2px] w-[2px] bg-fg"
           :style="{ left: yearPct + '%' }"
           :title="`Year pace: ${yearPct.toFixed(1)}%`"
         ></div>
@@ -95,29 +101,29 @@ function fmt(n: number | undefined | null) {
 
     <!-- 500h Material bar -->
     <div>
-      <div class="flex justify-between text-xs font-mono mb-1">
-        <span class="text-slate-700 font-semibold">
+      <div class="mb-1 flex justify-between gap-3 text-xs">
+        <span class="font-semibold text-fg">
           500h Material Participation in Rentals
-          <span v-if="stats" class="text-slate-500 font-normal">
+          <span v-if="stats" class="font-normal tabular text-fg-muted">
             · {{ fmt(stats.material_hours) }} / 500
           </span>
         </span>
-        <span :class="matAhead ? 'text-emerald-600' : 'text-rose-600'">
+        <span class="shrink-0 tabular" :class="matAhead ? 'text-positive' : 'text-negative'">
           {{ matPct.toFixed(1) }}% (vs year {{ yearPct.toFixed(1) }}%)
         </span>
       </div>
-      <div class="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div class="relative h-3 overflow-hidden rounded-full bg-surface-muted">
         <div
-          class="absolute top-0 left-0 h-full transition-all"
-          :class="matAhead ? 'bg-emerald-500' : 'bg-rose-500'"
+          class="absolute left-0 top-0 h-full transition-all"
+          :class="matAhead ? 'bg-positive' : 'bg-negative'"
           :style="{ width: matPct + '%' }"
         ></div>
         <div
-          class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-slate-700"
+          class="absolute bottom-[-2px] top-[-2px] w-[2px] bg-fg"
           :style="{ left: yearPct + '%' }"
           :title="`Year pace: ${yearPct.toFixed(1)}%`"
         ></div>
       </div>
     </div>
-  </div>
+  </UiCard>
 </template>
