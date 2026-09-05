@@ -70,60 +70,132 @@ const sendOffer = async () => {
 </script>
 
 <template>
-  <div v-if="isOpen" data-testid="offer.root" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="closeModal">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+  <div
+    v-if="isOpen"
+    data-testid="offer.root"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
+    @click.self="closeModal"
+  >
+    <UiModalPanel size="sm" labelled-by="offer-modal-title">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-        <h3 class="text-xl font-bold text-gray-800">Send Market Offer</h3>
-        <button data-testid="offer.close" @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="pi pi-times text-lg"></i>
-        </button>
-      </div>
-      
+      <template #header>
+        <div class="flex items-center justify-between gap-3">
+          <h3
+            id="offer-modal-title"
+            class="min-w-0 text-base font-semibold text-fg md:text-lg"
+          >
+            Send Market Offer
+          </h3>
+          <UiIconButton
+            data-testid="offer.close"
+            @click="closeModal"
+            label="Close"
+            size="md"
+          >
+            <i class="pi pi-times text-lg" aria-hidden="true"></i>
+          </UiIconButton>
+        </div>
+      </template>
+
       <!-- Body -->
-      <div class="p-6 space-y-4">
-        <div v-if="message" data-testid="offer.message" :class="`p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
+      <div class="space-y-4">
+        <div
+          v-if="message"
+          data-testid="offer.message"
+          :class="`p-3 rounded-ctl text-sm font-medium ${message.type === 'success' ? 'text-positive bg-positive/10' : 'text-negative bg-negative/10'}`"
+        >
           {{ message.text }}
         </div>
-        
-        <div>
-           <label class="block text-sm font-medium text-gray-700 mb-1">Agent Name *</label>
-           <input data-testid="offer.agent-name" v-model="form.agent_name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. John Doe" />
-        </div>
-        
-        <div>
-           <label class="block text-sm font-medium text-gray-700 mb-1">Agent Email *</label>
-           <input data-testid="offer.agent-email" v-model="form.agent_email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="agent@example.com" />
-        </div>
-        
-        <div>
-           <label class="block text-sm font-medium text-gray-700 mb-1">Property Address *</label>
-           <input data-testid="offer.property-address" v-model="form.property_address" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="123 Main St" />
-        </div>
-        
-        <MoneyInput data-testid="offer.purchase-price" label="Purchase Price" v-model="form.purchase_price" :required="true" />
-        
-        <div>
-           <label class="block text-sm font-medium text-gray-700 mb-1">Inspection Period (Days)</label>
-           <input data-testid="offer.inspection-days" v-model.number="form.inspection_period_days" type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. 7" />
-        </div>
 
+        <UiField>
+          <template #label>Agent Name *</template>
+          <template #default="{ id, describedBy }">
+            <input
+              data-testid="offer.agent-name"
+              v-model="form.agent_name"
+              :id="id"
+              :aria-describedby="describedBy"
+              type="text"
+              class="ui-input"
+              placeholder="e.g. John Doe"
+            />
+          </template>
+        </UiField>
+
+        <UiField>
+          <template #label>Agent Email *</template>
+          <template #default="{ id, describedBy }">
+            <input
+              data-testid="offer.agent-email"
+              v-model="form.agent_email"
+              :id="id"
+              :aria-describedby="describedBy"
+              type="email"
+              class="ui-input"
+              placeholder="agent@example.com"
+            />
+          </template>
+        </UiField>
+
+        <UiField>
+          <template #label>Property Address *</template>
+          <template #default="{ id, describedBy }">
+            <input
+              data-testid="offer.property-address"
+              v-model="form.property_address"
+              :id="id"
+              :aria-describedby="describedBy"
+              type="text"
+              class="ui-input"
+              placeholder="123 Main St"
+            />
+          </template>
+        </UiField>
+
+        <!--
+          `MoneyInput` is already a field of its own — it renders the label the
+          `for`/`id` pair points at, and its own required marker — so wrapping
+          it in `UiField` would give it a second label.
+        -->
+        <MoneyInput
+          data-testid="offer.purchase-price"
+          label="Purchase Price"
+          v-model="form.purchase_price"
+          :required="true"
+        />
+
+        <UiField>
+          <template #label>Inspection Period (Days)</template>
+          <template #default="{ id, describedBy }">
+            <input
+              data-testid="offer.inspection-days"
+              v-model.number="form.inspection_period_days"
+              :id="id"
+              :aria-describedby="describedBy"
+              type="number"
+              class="ui-input"
+              placeholder="e.g. 7"
+            />
+          </template>
+        </UiField>
       </div>
-      
+
       <!-- Footer -->
-      <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3">
-        <button data-testid="offer.cancel" @click="closeModal" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
-        <button 
-          data-testid="offer.send"
-          @click="sendOffer" 
-          :disabled="loading"
-          class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          <i v-if="loading" class="pi pi-spin pi-spinner"></i>
-          {{ loading ? 'Sending...' : 'Send Offer' }}
-        </button>
-      </div>
-    </div>
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <UiButton
+            data-testid="offer.cancel"
+            @click="closeModal"
+            variant="ghost"
+          >
+            Cancel
+          </UiButton>
+          <UiButton data-testid="offer.send" @click="sendOffer" :disabled="loading">
+            <i class="pi pi-spin pi-spinner" v-if="loading" aria-hidden="true"></i>
+            {{ loading ? 'Sending...' : 'Send Offer' }}
+          </UiButton>
+        </div>
+      </template>
+    </UiModalPanel>
   </div>
 </template>
-
