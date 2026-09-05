@@ -116,8 +116,8 @@ append, so you don't need to set up columns manually:
 Add these to `BackEnd/.env` (or your deploy environment):
 
 ```env
-# Where the JSON key file lives (absolute path on the server)
-GOOGLE_APPLICATION_CREDENTIALS=/Users/avivjan/secrets/reps-writer.json
+# Where the JSON key file lives (absolute path on the server, wherever you put it)
+GOOGLE_APPLICATION_CREDENTIALS=<path-to>/reps-writer.json
 
 # Spreadsheet IDs (from step 1d)
 REPS_SHEET_ID_AVIV=1AbCDe…AvivSheetId

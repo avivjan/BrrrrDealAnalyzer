@@ -13,7 +13,7 @@ import {
 } from './verify-ui.mjs';
 
 describe('verify:ui pathspecs', () => {
-  it('excludes the frontend, docs and scratch trees from G1', () => {
+  it('excludes the frontend, docs, scratch trees and setup docs from G1', () => {
     expect(G1_PATHSPEC).toEqual([
       '.',
       ':!frontend',
@@ -21,6 +21,7 @@ describe('verify:ui pathspecs', () => {
       ':!design-system',
       ':!.superpowers',
       ':!**/__pycache__/**',
+      ':!REPS_README.md',
     ]);
   });
 

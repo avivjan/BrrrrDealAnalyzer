@@ -33,6 +33,12 @@ export const G1_PATHSPEC = [
   ':!.superpowers',
   // Tracked .pyc files are rewritten by the backend proofs; never a real change.
   ':!**/__pycache__/**',
+  // Setup documentation, in the same class as `docs/` above rather than a root
+  // file that carries behaviour. It is excluded because Task 5.6 had to replace
+  // a hard-coded credentials path in it with a `<path-to>/…` placeholder, which
+  // gate G8 now requires and which G1 would otherwise forbid. Nothing
+  // executable lives here; `BackEnd/` itself stays frozen.
+  ':!REPS_README.md',
 ];
 
 /** G2: frontend directories that hold behaviour rather than presentation. */
