@@ -302,6 +302,26 @@ What that skipped, and why:
 | **Task 4.7 reduced** to a performance / no-live-tweens check | The full DevTools-recording pass buys little against templates that are about to change. |
 | **Tasks 5.2–5.4 folded** into one measure-only quality snapshot | Nothing was fixed; everything measured became a v2 follow-up. `docs/ui-overhaul/quality-snapshot.md` |
 | **Per-task reviews dropped** in favour of reviews at the Phase 4 and Phase 5 gates | Per-task review was the single largest cost of v1. |
+| **The real-device checklist** (`docs/ui-overhaul/device-checklist.md`) was never run | It is a manual pass on hardware, and every phase's rows stayed the user's to tick. It is deferred to the user, before merge. |
+
+### The real-device pass is deferred, not done
+
+`docs/ui-overhaul/device-checklist.md` was written in Phase 0 and **not run
+during v1 execution** — no phase's rows were ticked. It is deferred to the user
+to run before merging.
+
+Three things the automated suite cannot see are therefore unverified on
+hardware, and all three are listed in the checklist:
+
+- **Safe-area insets.** `env(safe-area-inset-*)` reads `0` under Playwright, so
+  every `pt-safe-t` / `pb-safe-b` in the tree is untested — sticky headers under
+  the notch and the PDF preview panel in the home-indicator band especially.
+- **Zoom on focus.** The mobile-only `!important` 16 px input floor is the fix
+  for iOS Safari zooming into a focused field; an emulated Mobile Safari never
+  zooms, so the rule has only ever been checked by reading it.
+- **`dvh` under a moving toolbar.** `h-dvh` on the app shell is the whole point
+  of the Phase 0 "board bottom clipped under the iOS toolbar" defect. Emulation
+  has no toolbar that grows and shrinks, so the fix is unproven.
 
 Consequence, stated plainly: **the motion layer is about a third attached.** Six
 presets exist and three are used; five directives exist and one is used. That is
