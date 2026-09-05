@@ -16,7 +16,7 @@ import { FRONTEND_ROOT, REPO_ROOT, isCliEntry } from './sfc.mjs';
 import { run as runScriptBlocks } from './script-blocks.mjs';
 import { run as runBindings } from './bindings.mjs';
 import { run as runText } from './text.mjs';
-import { run as runHoverPairs, TOUCH_REVEAL } from './hover-pairs.mjs';
+import { run as runHoverPairs } from './hover-pairs.mjs';
 
 /** The baseline every non-frontend file is frozen against. */
 export const BASELINE_TAG = 'ui-baseline';
@@ -194,7 +194,7 @@ function main(argv) {
   // G-HOVER — with `hoverOnlyWhenSupported` on, a hover-only reveal is invisible
   // (but still clickable) on touch, which no Playwright or axe run can catch.
   const hover = runHoverPairs();
-  printAuditGate('G-HOVER', hover, failures, `every hover reveal pairs with ${TOUCH_REVEAL}`);
+  printAuditGate('G-HOVER', hover, failures, 'every hover reveal pairs with its touch: counterpart');
 
   // G6 — the suite and the production build.
   const testsPass = runCommand('npm', ['test'], FRONTEND_ROOT);
