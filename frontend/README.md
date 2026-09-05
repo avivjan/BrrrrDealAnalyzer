@@ -103,6 +103,41 @@ PrimeVue component was introduced.
 
 ---
 
+## UI v2: looks, shell and settings
+
+UI v2 (`docs/plans/2026-09-05-ui-v2-plan.md`) ships **four switchable looks** —
+Obsidian Terminal, Aurora Glass, Neo-Brutal Fintech and Quiet Luxury — each in
+light and dark, chosen from **Settings → Appearance** (the gear in the topbar,
+the sidebar footer, or the ⌘K palette). The default on a first visit is Quiet
+Luxury, dark.
+
+**How a look works.** Components are written once against the token
+vocabulary in `src/assets/tokens.css`. A look is a generated sheet in
+`src/assets/looks/<id>.css` that reassigns *every* token (colours, the 32 chart
+literals, radii, border weight, shadows, glow, blur, gradients, display/mono
+fonts, motion tempo and GSAP eases) under `[data-look="<id>"]` (light) and
+`[data-look="<id>"].dark`. The sheets come from `scripts/design/looks.data.mjs`
+via `npm run build:looks`; `npm run check:looks` fails if they drift.
+`src/design/looks.ts` mirrors ids, names, taglines and a lazy font loader per
+look. **Adding a look** is one data entry, one generated sheet, one `looks.ts`
+entry and its `@fontsource` packages — nothing else in the app names a look.
+
+**Persistence** is per browser, not per user (there are no accounts):
+`localStorage` keys `bw.look`, `bw.theme` (`light | dark | system`) and
+`bw.motion` (`full | reduced`), read by an inline script in `index.html` before
+the first frame (no flash) and owned at runtime by `src/design/theme.ts`, which
+also resets the chart and motion token caches on every switch.
+
+**Shell.** `src/components/shell/`: `AppShell` (grid, one `<main>` scroller,
+⌘K), `AppSidebar` (collapsible, remembered per browser), `AppTopbar` (title,
+search, mode toggle, settings, `app.status`), `AppMobileNav` (six routes, safe
+area), `CommandPalette` (client-side commands only) and `AppSettings` with the
+`LookPicker`, whose cards preview their own look.
+
+**Contrast** is audited in every look × mode set: `npm run audit:contrast`
+measures 34 pairs per set (text, non-text, and text on tone washes) across the
+base set and the four sheets.
+
 ## Motion
 
 `src/motion/` holds the whole layer: `gsap.ts` (core only, pinned 3.15.0, no

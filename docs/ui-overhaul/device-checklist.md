@@ -162,6 +162,26 @@ result. Fill the last three columns during the pass.
 Anything new found during a pass gets appended here with the date, so the next
 phase inherits the list rather than rediscovering it.
 
+## UI v2 additions (2026-09-06)
+
+Run in **each of the four looks** at least once, in both modes, on the phone and on desktop.
+
+### iPhone — Safari and Chrome
+- [ ] First visit paints Quiet Luxury dark with no flash; reload keeps the look and mode chosen in Settings.
+- [ ] Bottom nav: six routes reachable, bar clear of the home indicator, last line of every page not hidden behind it.
+- [ ] Topbar gear → Appearance drawer: pick each look card, each mode, Reduced motion; the drawer closes on the scrim and the X; focus returns.
+- [ ] Search icon opens the palette; typing filters; a command navigates.
+- [ ] My Deals / Bought Deals: rows of stages scroll with the page; a card opens its modal; the modal body is the only scroller; Add Deal is labelled.
+- [ ] Liquidity: KPIs, chart, day detail, then "Show overview" expands the sidebar; the chart pans by drag and selects by tap; Today recentres.
+- [ ] Analyze: form left, summary rail below; the CTA is in the rail.
+- [ ] Reduce Motion (OS) and Motion: Reduced (app) both stop reveals, count-ups and the ambient background.
+
+### Desktop — Chrome
+- [ ] Sidebar collapse/expand is instant (no width animation) and remembered; the active indicator slides.
+- [ ] ⌘K / Ctrl+K palette: arrows, Enter, Escape; looks and modes switch from it.
+- [ ] Keyboard-only: skip link → sidebar → topbar → page; every modal closes on Escape.
+- [ ] Liquidity chart: arrow keys walk days; the balance line draws in once on load; hover shows the tooltip.
+
 ## Log
 
 | Date | Phase | Device | OS | Browser | Result | Notes |
