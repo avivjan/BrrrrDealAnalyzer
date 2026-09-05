@@ -268,6 +268,7 @@
       ]
     }
   },
+  "command@modal": {},
   "landing": {
     "landmark-one-main": {
       "impact": "moderate",
@@ -308,6 +309,26 @@
       ]
     }
   },
+  "landing@aurora-dark": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 8,
+      "examples": [
+        ".gap-2\\.5 > .font-bold.font-display.tracking-display",
+        "aside > nav > ul > li:nth-child(1) > a[href=\"/\"][data-testid=\"shell.nav.home\"][aria-current=\"page\"] > .truncate",
+        "aside > nav > ul > li:nth-child(2) > .hover\\:bg-fg\\/6[href$=\"analyze\"][data-testid=\"shell.nav.analyze\"] > .truncate",
+        "aside > nav > ul > li:nth-child(3) > .hover\\:bg-fg\\/6[href$=\"my-deals\"][data-testid=\"shell.nav.my-deals\"] > .truncate",
+        "aside > nav > ul > li:nth-child(4) > .hover\\:bg-fg\\/6[href$=\"bought-deals\"][data-testid=\"shell.nav.bought-deals\"] > .truncate"
+      ]
+    }
+  },
+  "landing@aurora-light": {},
+  "landing@brutal-dark": {},
+  "landing@brutal-light": {},
+  "landing@luxury-dark": {},
+  "landing@luxury-light": {},
+  "landing@obsidian-dark": {},
+  "landing@obsidian-light": {},
   "liquidity": {
     "color-contrast": {
       "impact": "serious",
@@ -351,6 +372,26 @@
       ]
     }
   },
+  "liquidity@aurora-dark": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 8,
+      "examples": [
+        ".font-bold",
+        ".gap-3[href$=\"analyze\"][data-testid=\"shell.nav.analyze\"] > .truncate",
+        ".gap-3[href$=\"bought-deals\"][data-testid=\"shell.nav.bought-deals\"] > .truncate",
+        ".gap-3[href$=\"my-deals\"][data-testid=\"shell.nav.my-deals\"] > .truncate",
+        ".gap-3[href$=\"reps\"][data-testid=\"shell.nav.reps\"] > .truncate"
+      ]
+    }
+  },
+  "liquidity@aurora-light": {},
+  "liquidity@brutal-dark": {},
+  "liquidity@brutal-light": {},
+  "liquidity@luxury-dark": {},
+  "liquidity@luxury-light": {},
+  "liquidity@obsidian-dark": {},
+  "liquidity@obsidian-light": {},
   "liquidity@settings": {
     "landmark-no-duplicate-banner": {
       "impact": "moderate",
@@ -591,6 +632,16 @@
       "count": 1,
       "examples": [
         ".min-w-0 > h3"
+      ]
+    }
+  },
+  "settings@modal": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "span[data-look=\"brutal\"] > .gap-1\\.5.min-w-0.flex-col > .h-4.w-\\[55\\%\\].self-end",
+        "span[data-look=\"obsidian\"] > .gap-1\\.5.min-w-0.flex-col > .h-4.w-\\[55\\%\\].self-end"
       ]
     }
   }
