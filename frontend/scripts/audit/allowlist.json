@@ -5,6 +5,10 @@
       "reason": "Task 3.4: `import { useId } from \"vue\";` plus `const hmToggleId = useId();` — the id the \"Use HM for Rehab\" <label for> and the ToggleSwitch's inputId share. Template-only otherwise."
     },
     {
+      "file": "src/components/liquidity/TimelineChart.vue",
+      "reason": "Task 3.9 (E1): `import { chartToken } from \"../../design/chartTokens\";` plus, inside draw(), each colour literal replaced in place by `chartToken('<name>')`. Nothing else on those lines moves -- G3's E1 comparator pairs every removed line with its added line and accepts only that substitution. The chart is a <canvas>, so it cannot read a Tailwind class; this is the only way its palette follows the theme."
+    },
+    {
       "file": "src/components/ui/DaysUntilRefiField.vue",
       "reason": "Task 3.4: `import { useId } from \"vue\";` plus `daysInputId`, `purchaseDateId` and `refiDateId` — one per control, so each of the field's three labels can point at the input it names."
     },
