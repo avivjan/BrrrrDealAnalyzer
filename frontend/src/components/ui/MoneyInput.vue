@@ -15,6 +15,7 @@
  * the card modals' debounced autosave and re-analyze behave exactly as before.
  */
 import { computed, ref, watch } from "vue";
+import { useId } from "vue";
 import { formatMoney, parseMoney, toEditableText } from "../../utils/money";
 
 const props = defineProps<{
@@ -107,49 +108,51 @@ const onKeydown = (e: KeyboardEvent) => {
     (e.target as HTMLInputElement).blur();
   }
 };
+
+const inputId = useId();
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col gap-1.5">
     <!--
-      The `<input>` sits *inside* its `<label>`: the association needs no
-      generated id, and the whole block — caption included — becomes one hit
-      target. The wrapper stays a `<div>` because it is what the call site's
-      `data-testid` lands on, and every spec reads the input as a descendant of
-      it. The hint shares the label's row rather than taking one of its own, so
-      a money field is exactly as tall as every other input beside it and
-      nothing shifts when the hint appears mid-typing.
+      The hint shares the label's row rather than taking one of its own, so a
+      money field is exactly as tall as every other input beside it and nothing
+      shifts when the hint appears mid-typing. It stays *outside* the `<label>`,
+      and the label reaches the input through `for`/`id` rather than by wrapping
+      it: a reading that changes on every keystroke must not become part of the
+      field's accessible name.
     -->
-    <label data-part="label" class="flex flex-col gap-1.5">
-      <span class="flex items-baseline justify-between gap-2">
-        <span
-          class="text-sm font-medium text-fg"
-          :class="{
-            'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
-          }"
-        >
-          {{ label }}
-        </span>
-        <span
-          v-if="hint"
-          data-part="hint"
-          class="tabular text-xs font-medium text-primary"
-        >{{ hint }}</span>
-      </span>
-      <input
-        data-part="input"
-        type="text"
-        inputmode="decimal"
-        autocomplete="off"
-        :value="displayText"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        class="ui-input tabular"
-        @focus="onFocus"
-        @blur="commit"
-        @input="draft = ($event.target as HTMLInputElement).value"
-        @keydown="onKeydown"
-      />
-    </label>
+    <div class="flex items-baseline justify-between gap-2">
+      <label
+        :for="inputId"
+        data-part="label"
+        class="text-sm font-medium text-fg"
+        :class="{
+          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
+        }"
+      >
+        {{ label }}
+      </label>
+      <span
+        v-if="hint"
+        data-part="hint"
+        class="tabular text-xs font-medium text-primary"
+      >{{ hint }}</span>
+    </div>
+    <input
+      :id="inputId"
+      data-part="input"
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      :value="displayText"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      class="ui-input tabular"
+      @focus="onFocus"
+      @blur="commit"
+      @input="draft = ($event.target as HTMLInputElement).value"
+      @keydown="onKeydown"
+    />
   </div>
 </template>

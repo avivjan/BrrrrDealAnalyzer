@@ -580,12 +580,21 @@ const hmToggleId = useId();
     The six surface-keyed class computeds are frozen `<script>` lines (Phase 3
     G3) that no element wears any more — the sections style themselves from
     `data-surface` / `data-layout` above — while `noUnusedLocals` rejects a
-    binding nothing reads. Parking them on a `hidden` element keeps both rules
-    true without a legacy class string reaching a rendered box; they and this
-    element go together when the freeze lifts.
+    binding nothing reads. Parking them here keeps both rules true without a
+    legacy class string reaching a rendered box; they and this element go
+    together when the freeze lifts.
+
+    The inline `display: none` is load-bearing, not belt-and-braces: under
+    `surface="panel"` `rehabPairClass` contributes `grid`, and Preflight's
+    `[hidden]` rule is emitted *before* `.grid` at equal specificity, so the
+    attribute alone loses and an empty card renders at the foot of both deal
+    modals. An inline style outranks every utility, and `style` — like `class`
+    — is invisible to G4.
   -->
   <span
     hidden
+    aria-hidden="true"
+    style="display: none"
     :class="[
       sectionClass,
       innerBoxClass,

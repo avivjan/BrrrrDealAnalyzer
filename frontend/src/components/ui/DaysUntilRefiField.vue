@@ -161,10 +161,14 @@ const refiDateId = useId();
     <!--
       `dateInputClass` is a frozen `<script>` line (Phase 3 G3) that the two
       date boxes no longer wear — they are `.ui-input` now — and `noUnusedLocals`
-      rejects a binding nothing reads. Parking it on a `hidden` element keeps
-      both rules true without a class string reaching a rendered box; the line
-      and this element go together when the freeze lifts.
+      rejects a binding nothing reads. Parking it here keeps both rules true
+      without a class string reaching a rendered box; the line and this element
+      go together when the freeze lifts.
+
+      Same inline `display: none` as the parking element in `DealInputsForm`:
+      `hidden` alone is only as strong as the class list it is asked to beat,
+      and both elements should fail the same way — which is to say, never.
     -->
-    <span hidden :class="dateInputClass" />
+    <span hidden aria-hidden="true" style="display: none" :class="dateInputClass" />
   </div>
 </template>
