@@ -26,6 +26,11 @@
       "file": "src/views/MyDeals.vue",
       "expression": "!columns[stage.id]?.length",
       "reason": "Task 3.6: a new, purely presentational `<UiEmptyState v-if>` beside (never inside) each stage's draggable list, so an empty column says so instead of showing a blank 100px well. Reads existing state only — the same `columns[stage.id]` the row's counter already reads — and adds no handler."
+    },
+    {
+      "file": "src/views/BoughtDeals.vue",
+      "expression": "!columns[stage.id]?.length",
+      "reason": "Task 3.7: the same new, purely presentational `<UiEmptyState v-if>` MyDeals grew in Task 3.6, beside (never inside) each stage's draggable list, so an empty pipeline stage says so instead of showing a blank 100px well. Reads existing state only — the same `columns[stage.id]` the row's counter already reads — and adds no handler."
     }
   ],
   "text": [
@@ -34,6 +39,12 @@
       "from": "",
       "to": "No deals in this stage",
       "reason": "Task 3.6: the empty-column state's only line. New copy for a new element (see the matching `bindings` row); nothing existing was reworded."
+    },
+    {
+      "file": "src/views/BoughtDeals.vue",
+      "from": "",
+      "to": "No deals in this stage",
+      "reason": "Task 3.7: the empty-column state's only line, word for word the one MyDeals uses (see the matching `bindings` row). `from: \"\"` because `text.mjs` reports an addition with no adjacent removal as `\"\" => \"…\"`; nothing existing was reworded."
     }
   ]
 }
