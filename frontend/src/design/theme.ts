@@ -39,15 +39,12 @@ export const LOOK_STORAGE_KEY = "bw.look";
 export const MOTION_STORAGE_KEY = "bw.motion";
 
 /**
- * The mode a browser that has never chosen one gets.
- *
- * Light until the Phase 3 exit of UI v2: the v1 templates still carry raw
- * palette classes (`text-gray-*`, `bg-white`) that fail contrast on a dark
- * page, and the axe baseline would grow. Task 3.0 flips this to "dark" once
- * every view is on tokens. The pre-paint script in `index.html` and
- * `main.css`'s no-JS fallback must move with it (`theme.test.ts` checks).
+ * The mode a browser that has never chosen one gets: dark, since the UI v2
+ * Phase 3 exit put every view on tokens. The pre-paint script in `index.html`
+ * and `main.css`'s no-JS fallback carry the same default (`theme.test.ts`
+ * holds the three together).
  */
-export const DEFAULT_CHOICE: ThemeChoice = "light";
+export const DEFAULT_CHOICE: ThemeChoice = "dark";
 
 export const themeChoice: Ref<ThemeChoice> = shallowRef<ThemeChoice>(DEFAULT_CHOICE);
 export const resolvedTheme: Ref<ResolvedTheme> = shallowRef<ResolvedTheme>("dark");

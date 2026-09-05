@@ -63,21 +63,21 @@ afterEach(() => {
 });
 
 describe("defaults and storage", () => {
-  it("defaults to the Quiet Luxury look in light mode (dark from the Phase 3 exit), with full motion", () => {
+  it("defaults to the Quiet Luxury look in dark mode, with full motion", () => {
     expect(DEFAULT_LOOK).toBe("luxury");
-    expect(DEFAULT_CHOICE).toBe("light");
+    expect(DEFAULT_CHOICE).toBe("dark");
     initTheme();
     expect(html().dataset.look).toBe("luxury");
-    expect(html().classList.contains("dark")).toBe(false);
-    expect(html().style.colorScheme).toBe("light");
+    expect(html().classList.contains("dark")).toBe(true);
+    expect(html().style.colorScheme).toBe("dark");
     expect(html().dataset.motion).toBeUndefined();
   });
 
   it("prefers a stored choice over the system, and the system over the default", () => {
-    // Nothing stored, OS dark, choice defaults to 'light' → light (the default is not 'system').
-    fakeSystem("dark");
+    // Nothing stored, OS light, choice defaults to 'dark' → dark (the default is not 'system').
+    fakeSystem("light");
     initTheme();
-    expect(resolvedTheme.value).toBe("light");
+    expect(resolvedTheme.value).toBe("dark");
 
     resetThemeForTests();
     localStorage.setItem(THEME_STORAGE_KEY, "system");

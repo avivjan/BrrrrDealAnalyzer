@@ -14,7 +14,7 @@ import { checkA11y, expect, test } from '../fixtures';
 
 const LOOKS = ['obsidian', 'aurora', 'brutal', 'luxury'] as const;
 const DEFAULT_LOOK = 'luxury';
-const DEFAULT_DARK = false;
+const DEFAULT_DARK = true;
 
 /** The display face each look declares, as it appears in the computed font-family. */
 const DISPLAY_FACE: Record<(typeof LOOKS)[number], string> = {

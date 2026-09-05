@@ -14,10 +14,10 @@
    * `color-scheme` is owned by `src/design/theme.ts` (and, before the first
    * frame, by the inline script in `index.html`), which sets it on `<html>`
    * to match the resolved mode. The CSS fallback here is for no-JS and must
-   * equal `DEFAULT_CHOICE` in `theme.ts` (light until the UI v2 Phase 3 exit).
+   * equal `DEFAULT_CHOICE` in `theme.ts`.
    */
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   body {

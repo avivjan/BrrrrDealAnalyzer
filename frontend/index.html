@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f7f4ee" />
+    <meta name="theme-color" content="#14151a" />
     <title>Big Whales Deal Analyzer</title>
     <!--
       Pre-paint appearance. Applies the stored look and mode to <html> before
@@ -13,7 +13,7 @@
       from src/design/theme.ts and src/design/looks.ts on purpose; theme.test.ts
       holds the three in step. Wrapped in try/catch: storage may be locked.
     -->
-    <script>try{var L=['obsidian','aurora','brutal','luxury'];var k=localStorage.getItem('bw.look');var c=localStorage.getItem('bw.theme');var d=c==='light'?false:c==='dark'?true:c==='system'?matchMedia('(prefers-color-scheme: dark)').matches:false;var e=document.documentElement;e.dataset.look=L.indexOf(k)>=0?k:'luxury';e.classList.toggle('dark',d);e.style.colorScheme=d?'dark':'light';if(localStorage.getItem('bw.motion')==='reduced'){e.dataset.motion='reduced';}}catch(_){var r=document.documentElement;r.dataset.look='luxury';r.style.colorScheme='light';}</script>
+    <script>try{var L=['obsidian','aurora','brutal','luxury'];var k=localStorage.getItem('bw.look');var c=localStorage.getItem('bw.theme');var d=c==='light'?false:c==='dark'?true:c==='system'?matchMedia('(prefers-color-scheme: dark)').matches:true;var e=document.documentElement;e.dataset.look=L.indexOf(k)>=0?k:'luxury';e.classList.toggle('dark',d);e.style.colorScheme=d?'dark':'light';if(localStorage.getItem('bw.motion')==='reduced'){e.dataset.motion='reduced';}}catch(_){var r=document.documentElement;r.dataset.look='luxury';r.classList.add('dark');r.style.colorScheme='dark';}</script>
   </head>
   <body>
     <div id="app"></div>
