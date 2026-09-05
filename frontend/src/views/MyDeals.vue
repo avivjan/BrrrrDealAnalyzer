@@ -573,7 +573,19 @@ console.groupEnd();
 
     <!-- Kanban Board (Refactored to Rows) -->
     <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
+      <!--
+        Bare `v-reveal`, not `v-reveal.stagger`, and this is the one place in
+        the overhaul where the two differ. `/my-deals` is the route the frozen
+        `deep-link-open` spec measures, and it asserts *zero live tweens* 500 ms
+        (of its own paused clock) after the overlay appears. A stagger over the
+        five stage rows runs 0.4 s + 4 x 0.06 s = 0.64 s and is still live at
+        that mark; one reveal of the container is 0.4 s and is not. The twin
+        board in `BoughtDeals.vue`, which no motion spec visits, keeps the
+        staggered form. Either way nothing inside `<VueDraggable>` is touched:
+        SortableJS owns that DOM.
+      -->
       <div
+        v-reveal
         class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
       >
         <UiCard
@@ -920,7 +932,20 @@ console.groupEnd();
             <!-- Results Preview -->
             <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-surface-muted p-4 rounded-card border border-line mb-6">
                 <UiSectionHeader as="h4" class="mb-3">Analysis Results</UiSectionHeader>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <!--
+                  The reveal goes on the tile grid, never on the panel above
+                  it: that panel carries `ref="analysisResultsEl"`, and the
+                  frozen script scrolls it into view 500 ms after the last
+                  keystroke. Transforming the element being scrolled to would
+                  move the target mid-scroll; a box inside it may move freely.
+
+                  Bare, not `.stagger`, for the same reason as the board above:
+                  `deep-link-open` opens this modal and then asserts zero live
+                  tweens 500 ms later, and a stagger over the ten BRRRR tiles
+                  runs 0.4 s + 9 x 0.06 s = 0.94 s. The BoughtDeals modal keeps
+                  the staggered form.
+                -->
+                <div v-reveal class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                         <UiStatTile tone="neutral" class="bg-surface">
                             <template #label>Cash Flow</template>

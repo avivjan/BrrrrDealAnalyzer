@@ -197,7 +197,12 @@ const saveDeal = async () => {
         <div class="lg:col-span-1">
           <div class="sticky top-6 space-y-6">
             <!-- How It Works Card -->
-            <UiCard tone="elevated" padding="lg" class="relative overflow-hidden">
+            <!--
+              `v-reveal` (no `.stagger`): this card *is* the section, so the
+              directive animates the element itself. Mount-time only — there is
+              no leave, so the sticky column never holds a departing box.
+            -->
+            <UiCard v-reveal tone="elevated" padding="lg" class="relative overflow-hidden">
               <div
                 class="absolute inset-x-0 top-0 h-1"
                 :class="selectedType === 'BRRRR' ? 'bg-primary' : 'bg-warning'"

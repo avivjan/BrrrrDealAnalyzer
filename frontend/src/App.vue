@@ -103,8 +103,16 @@ onMounted(() => {
       floored at its content height. This column is what replaced the landing
       page's `calc(100dvh - 60px)` guess at the stats bar's height.
     -->
+    <!--
+      The one `RouterView` rewrite Phase 4 is allowed (allowlist row
+      `routerview-transition-slot`): the slot form is the only way to put a
+      transition around the routed component without touching this file's
+      script. `page` is opacity-only and has no `leave` hook at all, so a route
+      change is never held back by an animation and the column's height — which
+      the landing page fills — is never transformed.
+    -->
     <div class="min-h-0 flex-1">
-      <RouterView />
+      <RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>
     </div>
   </div>
 </template>

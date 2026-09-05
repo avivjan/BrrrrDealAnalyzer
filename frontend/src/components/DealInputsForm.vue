@@ -202,7 +202,15 @@ const hmToggleId = useId();
     class="group data-[surface=card]:space-y-8 data-[surface=panel]:space-y-6"
   >
   <!-- Group 1: Buy & Rehab (shared by BRRRR + FLIP) -->
+  <!--
+    `v-reveal` (no `.stagger`) on each section: the four groups are the form's
+    own boxes, so the directive animates the element itself. Mount-time only,
+    with no leave hook anywhere in the set, so switching BRRRR <-> FLIP swaps
+    groups 2a/2b instantly and the new one fades up. The form also renders
+    inside both deal modals, where the same reveal runs once on open.
+  -->
   <section
+    v-reveal
     :data-surface="surface"
     class="rounded-card border border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
@@ -305,6 +313,7 @@ const hmToggleId = useId();
   <!-- Group 2a: Refinance (BRRRR only) -->
   <section
     v-if="isBrrr"
+    v-reveal
     :data-surface="surface"
     class="rounded-card border border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
@@ -394,6 +403,7 @@ const hmToggleId = useId();
   <!-- Group 2b: Flip Strategy (FLIP only) -->
   <section
     v-else
+    v-reveal
     :data-surface="surface"
     class="rounded-card border border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
@@ -484,6 +494,7 @@ const hmToggleId = useId();
 
   <!-- Group 3: Expenses (shared, with per-type extras) -->
   <section
+    v-reveal
     :data-surface="surface"
     class="rounded-card border border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"

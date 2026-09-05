@@ -41,20 +41,20 @@ function fmt(n: number | undefined | null) {
     </UiSectionHeader>
 
     <!-- Top numbers -->
-    <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-      <UiStatTile tone="neutral" size="md">
+    <div v-reveal.stagger class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Total Hours</template>
         {{ fmt(stats?.total_hours) }}
       </UiStatTile>
-      <UiStatTile tone="neutral" size="md">
+      <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Material (Rentals)</template>
         {{ fmt(stats?.material_hours) }}
       </UiStatTile>
-      <UiStatTile tone="neutral" size="md">
+      <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Avg/Day Total</template>
         {{ fmt(stats?.avg_daily_hours_total) }}
       </UiStatTile>
-      <UiStatTile tone="neutral" size="md">
+      <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Avg/Day Material</template>
         {{ fmt(stats?.avg_daily_hours_material) }}
       </UiStatTile>

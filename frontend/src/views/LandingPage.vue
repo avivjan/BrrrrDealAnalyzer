@@ -170,11 +170,19 @@ const logExternal = (card: FeatureCard) => {
       </header>
 
       <!-- Main feature grid (7 cards: 4 + 3) -->
-      <div class="feature-grid">
+      <!--
+        `v-reveal.stagger` on the grid, `data-reveal` on the cards: the grid
+        keeps its own box and the seven tiles arrive in order. `.feature-card`
+        already transitions `transform` for its hover lift, so the tween's
+        inline transform is what the browser eases toward while the reveal
+        runs; `clearProps` hands the hover back at the end.
+      -->
+      <div v-reveal.stagger class="feature-grid">
         <component
           v-for="(card, idx) in cards"
           :key="card.title"
           :data-testid="`landing.card.${card.title}`"
+          data-reveal
           :is="card.action === 'internal' ? 'RouterLink' : 'a'"
           :to="card.action === 'internal' ? card.route : undefined"
           :href="card.action === 'external' ? card.url : undefined"

@@ -495,13 +495,21 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
 
     <!-- Board -->
     <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
+      <!--
+        `v-reveal.stagger` on the row *container*, `data-reveal` on the rows —
+        the same shape as MyDeals. The directive animates the marked children
+        and never the box, and nothing inside `<VueDraggable>` is marked:
+        SortableJS owns that DOM.
+      -->
       <div
+        v-reveal.stagger
         class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
       >
         <UiCard
           v-for="stage in currentStages"
           :key="stage.id"
           :data-testid="`boughtdeals.stage.${stage.id}`"
+          data-reveal
           tone="muted"
           padding="sm"
           :class="'w-full border-l-4 ' + getStageAccentColor(stage.id)"
@@ -920,11 +928,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <UiSectionHeader as="h4" class="mb-3">
                 Analysis Results
               </UiSectionHeader>
+              <!--
+                The stagger goes on the tile grid, never on the panel above it:
+                that panel carries `ref="analysisResultsEl"`, which the frozen
+                script scrolls into view after the re-analyze debounce.
+                Transforming the scroll target would move it mid-scroll; its
+                children may move freely.
+              -->
               <div
+                v-reveal.stagger
                 class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
               >
                 <template v-if="editingDealType === 'BRRRR'">
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Cash Flow</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_flow"
@@ -934,7 +950,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any).cash_flow ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Cash Out</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_out"
@@ -944,7 +960,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any).cash_out ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Cash Out Routi</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_out_routi"
@@ -954,7 +970,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any).cash_out_routi ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>CoC</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_on_cash"
@@ -964,7 +980,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatPercent( (currentAnalysis as any).cash_on_cash ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>DSCR</template>
                     <div
                       data-testid="boughtdeals.modal.result.dscr"
@@ -974,13 +990,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ (currentAnalysis as any).dscr?.toFixed(2) || "-" }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Equity</template>
                     <div data-testid="boughtdeals.modal.result.equity" class="font-bold text-positive">
                       {{ formatCurrency( (currentAnalysis as any).equity ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.roi"
@@ -990,7 +1006,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatPercent( (currentAnalysis as any).roi ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Net Profit</template>
                     <div
                       data-testid="boughtdeals.modal.result.net_profit"
@@ -1000,7 +1016,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>
                       Total Cash Needed
                     </template>
@@ -1008,7 +1024,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>
                       Cash Needed (Buffered)
                     </template>
@@ -1018,7 +1034,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </UiStatTile>
                 </template>
                 <template v-else>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Net Profit</template>
                     <div
                       data-testid="boughtdeals.modal.result.net_profit"
@@ -1028,7 +1044,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.roi"
@@ -1038,7 +1054,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatPercent( (currentAnalysis as any).roi ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Annualized ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.annualized_roi"
@@ -1048,25 +1064,25 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       {{ formatPercent( (currentAnalysis as any).annualized_roi ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Cash Needed</template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
                       {{ formatCurrency( (currentAnalysis as any).total_cash_needed ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Cash Needed (Buffered)</template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
                       {{ formatCurrency( (currentAnalysis as any).total_cash_needed_with_buffer ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>Holding Costs</template>
                     <div data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
                       {{ formatCurrency( (currentAnalysis as any).total_holding_costs ) }}
                     </div>
                   </UiStatTile>
-                  <UiStatTile tone="neutral" class="bg-surface">
+                  <UiStatTile tone="neutral" data-reveal class="bg-surface">
                     <template #label>HML Interest</template>
                     <div data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
                       {{ formatCurrency( (currentAnalysis as any).total_hml_interest ) }}

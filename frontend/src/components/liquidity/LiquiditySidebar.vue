@@ -97,9 +97,14 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     variant here sizes and tones every `UiSectionHeader` title below,
     instead of repeating a class on all seven.
   -->
-  <div class="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-1 [&_[data-part=title]]:text-[11px] [&_[data-part=title]]:text-fg-muted">
+  <!--
+    `v-reveal.stagger` on the container: the cards below carry `data-reveal`
+    and arrive in order. Only the cards are transformed, so the chart beside
+    them — which redraws from a ResizeObserver — never sees a box change.
+  -->
+  <div v-reveal.stagger class="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-1 [&_[data-part=title]]:text-[11px] [&_[data-part=title]]:text-fg-muted">
     <!-- Today's balance -->
-    <UiCard padding="sm">
+    <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">
         Today's Balance
         <template #actions>
@@ -169,7 +174,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     </UiCard>
 
     <!-- Window min -->
-    <UiCard padding="sm">
+    <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Window Min</UiSectionHeader>
       <div class="font-bold tabular" :class="series.globalMin < 0 ? 'text-negative' : series.globalMin < settings.reserve_k ? 'text-warning' : 'text-fg'">
         {{ series.globalMin.toFixed(1) }}k
@@ -181,7 +186,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     </UiCard>
 
     <!-- 90d low -->
-    <UiCard v-if="next90dMin" padding="sm">
+    <UiCard v-if="next90dMin" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
       <div class="font-bold tabular" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
         {{ next90dMin.value.toFixed(1) }}k
@@ -190,7 +195,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     </UiCard>
 
     <!-- Next outflow -->
-    <UiCard v-if="nextOutflow" padding="sm">
+    <UiCard v-if="nextOutflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
       <div class="font-bold tabular text-negative">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextOutflow.description }}</div>
@@ -198,7 +203,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     </UiCard>
 
     <!-- Next inflow -->
-    <UiCard v-if="nextInflow" padding="sm">
+    <UiCard v-if="nextInflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Inflow</UiSectionHeader>
       <div class="font-bold tabular text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
@@ -206,7 +211,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     </UiCard>
 
     <!-- Reserve -->
-    <UiCard padding="sm">
+    <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
       <div class="font-bold tabular text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
     </UiCard>
@@ -214,6 +219,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Recurring series -->
     <UiCard
       v-if="activeRecurringRules.length > 0"
+      data-reveal
       padding="sm"
       class="sm:col-span-2 lg:col-span-1"
     >
