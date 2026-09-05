@@ -943,10 +943,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </UiSectionHeader>
                 <!--
                   The reveal goes on the tile grid, never on the panel above it:
-                  that panel carries `ref="analysisResultsEl"`, which the frozen
-                  script scrolls into view after the re-analyze debounce.
-                  Transforming the scroll target would move it mid-scroll; its
-                  children may move freely.
+                  that panel carries `ref="analysisResultsEl"`, which Phase 4's
+                  rules put out of bounds for any transition. Unlike the MyDeals
+                  twin, this view's frozen script only *declares* that ref and
+                  never scrolls it, so there is no scroll here to fight — the
+                  rule still holds, because the two modals are deliberately
+                  identical and this is the half that would diverge silently.
+                  Its children may move freely.
 
                   Bare, not `.stagger`, for the same reason as the board above,
                   and identical to the MyDeals modal: a stagger over the ten

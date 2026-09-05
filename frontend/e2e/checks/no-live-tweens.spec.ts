@@ -163,8 +163,19 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await expect(page.getByTestId('boughtdeals.modal')).toBeHidden();
 
   // --- /liquidity -----------------------------------------------------------
+  // `liquidity.add-flow` lives in the header, which renders while the store is
+  // still loading, so it is not enough to wait on here: `LiquiditySidebar`
+  // mounts in the `v-else` branch and its `v-reveal.stagger` starts only once
+  // the store resolves. Waiting on the spinner to go instead means the stagger
+  // is already on the timeline before the clock moves, rather than starting
+  // during the settle's trailing real wait and being read as a straggler.
   await page.goto('/liquidity');
   await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+  await expect(page.getByTestId('liquidity.loading')).toBeHidden();
+  // One simulated second clears that stagger with room to spare: the longest
+  // one it can produce is `DUR.slow + 0.06 × (n − 1)` — 0.76 s for the sidebar's
+  // seven `data-reveal` cards. Grow the sidebar past elevenish cards and this
+  // step, not the app, is what breaks first.
   await quietAfter('/liquidity (route)');
 
   await page.getByTestId('liquidity.settings-open').click();

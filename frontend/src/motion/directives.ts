@@ -97,6 +97,16 @@ function unlisten(el: HTMLElement): void {
  * `[data-reveal]` descendants are a second target: `v-reveal.stagger` tweens
  * them rather than the element, so killing only the element would leave a
  * stagger running against nodes that are on their way out of the document.
+ *
+ * That descendant sweep is deliberately unqualified, which is safe only while
+ * `v-reveal.stagger` containers never nest. `querySelectorAll` does not stop at
+ * an inner container, so an outer one unmounting would kill the inner one's
+ * children mid-stagger and clear their inline styles — leaving them at whatever
+ * opacity the tween had reached, with no `onComplete` left to finish the job,
+ * and the inner container's own `revealTweens` handle still on the global
+ * timeline. No such nesting exists today (every `.stagger` container is a leaf
+ * grid of `[data-reveal]` cards); if one is ever added, scope this to the
+ * descendants no closer container owns.
  */
 function release(el: HTMLElement): void {
   unlisten(el);
