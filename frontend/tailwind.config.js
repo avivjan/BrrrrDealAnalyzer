@@ -11,6 +11,12 @@ const token = (name) => `rgb(var(--color-${name}) / <alpha-value>)`
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class', // Enable dark mode by class
+  // Wraps every `hover:` utility in `@media (hover: hover)`, so a phone no
+  // longer fires hover styles on the first tap and then keeps them until the
+  // next one. Turned on at the end of Phase 3, after the `G-HOVER` gate
+  // (`scripts/audit/hover-pairs.mjs`, run by `npm run verify:ui`) proved that
+  // every hover-only reveal in `src/**/*.vue` has a `touch:` counterpart.
+  future: { hoverOnlyWhenSupported: true },
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
@@ -96,16 +102,15 @@ export default {
       },
     },
   },
-  // `future.hoverOnlyWhenSupported` is deliberately NOT enabled yet. It wraps
-  // every `hover:` utility in `@media (hover: hover)`, which would hide the 14
-  // controls this app reveals only on hover from every touch device (DealCard
-  // x4, BoughtDealCard x2, MyDeals x3, BoughtDeals x3, DayDetail x1,
-  // LiquiditySidebar x1). It is enabled at the end of Phase 3, once every
-  // `group-hover:opacity-100` reveal has a `touch:opacity-100` counterpart.
   plugins: [
     plugin(({ addVariant }) => {
-      // `touch:` — the complement of `hover:`, and the counterpart each of
-      // those 14 reveals needs before the flag can be turned on.
+      // `touch:` — the complement of `hover:`. With `hoverOnlyWhenSupported`
+      // on, this is the only way a hover-only style reaches a touch device, so
+      // it carries the 10 `group-hover:opacity-100` reveals (DealCard,
+      // BoughtDealCard, DayDetail, LiquiditySidebar, MyDeals x3,
+      // BoughtDeals x3) and the 44 px `touch:min-h-11` floor on the small
+      // buttons that are a primary action. `G-HOVER` fails the build if a new
+      // reveal ever lands without its `touch:opacity-100` counterpart.
       addVariant('touch', '@media (hover: none)')
     }),
   ],

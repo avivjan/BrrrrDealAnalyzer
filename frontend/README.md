@@ -57,12 +57,17 @@ templates already use in about 150 places, and overriding them would restyle
 every existing corner. The values come from
 `design-system/brrrr-deal-analyzer/MASTER.md` ("Approved overrides").
 
-`future.hoverOnlyWhenSupported` is deliberately **not** enabled yet. It wraps
-every `hover:` utility in `@media (hover: hover)`, which would hide the 14
-controls this app reveals only on hover from every touch device (`DealCard` x4,
-`BoughtDealCard` x2, `MyDeals` x3, `BoughtDeals` x3, `DayDetail` x1,
-`LiquiditySidebar` x1). It is enabled at the end of Phase 3, once every
-`group-hover:opacity-100` reveal has a `touch:opacity-100` counterpart.
+`future.hoverOnlyWhenSupported` is **enabled** (Task 3.11). It wraps every
+`hover:` utility in `@media (hover: hover)`, so a phone no longer fires a hover
+style on the first tap and then keeps it until the next one. The cost is that a
+control revealed only on hover would be invisible — though still clickable — on
+every touch device, so the `touch:` variant (`@media (hover: none)`) is the
+counterpart each such reveal needs: the 10 `group-hover:opacity-100` sites
+(`DealCard`, `BoughtDealCard`, `DayDetail`, `LiquiditySidebar`, `MyDeals` x3,
+`BoughtDeals` x3) each pair it with `touch:opacity-100`. The `G-HOVER` gate
+below fails the build if a new reveal ever lands without one. The same variant
+carries the 44 px touch floor (`touch:min-h-11`) on the `size="sm"` buttons that
+are a primary action of their surface.
 
 A `.dark` block redefines every `--color-*` as a desaturated tonal variant. It
 is complete, but no theme toggle ships.
