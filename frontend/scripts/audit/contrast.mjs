@@ -2,10 +2,12 @@
 /**
  * `npm run audit:contrast` — WCAG 2.x contrast audit of the design tokens.
  *
- * Reads `src/assets/tokens.css`, parses the `--color-*` triplets of both
- * `:root` and `.dark`, and measures every foreground/background pair the UI
- * actually renders. Text pairs must clear 4.5:1 (WCAG AA, normal text); the
- * focus ring is a non-text indicator, so it must clear 3:1.
+ * Reads `src/assets/tokens.css` (the base `:root` / `.dark` set) and every
+ * look sheet in `src/assets/looks/*.css` (`[data-look="<id>"]` light and
+ * `[data-look="<id>"].dark`), and measures every foreground/background pair
+ * the UI actually renders in each set. Text pairs must clear 4.5:1 (WCAG AA,
+ * normal text); the focus ring and the primary accent used as a boundary are
+ * non-text indicators, so they must clear 3:1.
  *
  * Prints one line per pair per theme and exits 1 if any pair fails. The fix is
  * always to move a token one step within its own colour family — never to
@@ -13,11 +15,13 @@
  *
  * Self-contained on purpose: Node built-ins only, so it runs anywhere.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /** `src/assets/tokens.css`, resolved relative to this file (never absolute). */
 export const TOKENS_URL = new URL('../../src/assets/tokens.css', import.meta.url);
+/** The generated look sheets. Absent until Task 1.1b lands; the base set is audited alone then. */
+export const LOOKS_DIR_URL = new URL('../../src/assets/looks/', import.meta.url);
 
 /** WCAG AA: 4.5:1 for normal text, 3:1 for a non-text indicator. */
 export const TEXT_MIN = 4.5;
@@ -38,11 +42,25 @@ const TEXT_PAIRS = [
   ['positive', 'page'],
   ['negative', 'page'],
   ['warning', 'page'],
+  // v2: the elevation tiers carry body text and semantic figures too, and the
+  // accent is used as text (eyebrow labels, active nav labels).
+  ['fg', 'surface-2'],
+  ['fg', 'surface-3'],
+  ['fg-muted', 'surface-2'],
+  ['fg-muted', 'surface-3'],
+  ['positive', 'surface-2'],
+  ['negative', 'surface-2'],
+  ['warning', 'surface-2'],
+  ['accent', 'surface'],
+  ['accent', 'page'],
 ];
 
 const NON_TEXT_PAIRS = [
   ['ring', 'page'],
   ['ring', 'surface'],
+  ['ring', 'surface-2'],
+  // The primary colour as a boundary or icon on the base surface.
+  ['primary', 'surface'],
 ];
 
 /** Every audited pair, with the threshold it is held to. */
@@ -51,10 +69,24 @@ export const CONTRAST_PAIRS = [
   ...NON_TEXT_PAIRS.map(([foreground, background]) => ({ foreground, background, min: NON_TEXT_MIN })),
 ];
 
+/** The base set in `tokens.css`. */
 export const THEMES = [
   { name: 'light', selector: ':root' },
   { name: 'dark', selector: '.dark' },
 ];
+
+/**
+ * The two rule blocks of one look sheet. The generator writes each block's
+ * canonical selector first in its selector list, and `ruleBody` requires the
+ * selector at the start of a rule, so `.dark [data-look="x"]` later in the
+ * dark list can never be mistaken for the light block.
+ */
+export function lookThemes(id) {
+  return [
+    { name: `${id}-light`, selector: `[data-look="${id}"]` },
+    { name: `${id}-dark`, selector: `[data-look="${id}"].dark` },
+  ];
+}
 
 // ---------------------------------------------------------------------------
 // maths
@@ -87,17 +119,22 @@ function stripComments(css) {
 }
 
 /**
- * The declaration body of the first `<selector> { … }` rule, or ''.
+ * The declaration body of the first rule whose selector list *starts with*
+ * `selector`, or ''.
  *
  * The selector has to match at a boundary — `.darker` and `.theme.dark` are
- * different rules and must not be mistaken for `.dark` — and the end of the
- * block is found by counting brace depth, so a nested at-rule (`@supports`,
- * `@media`) inside the theme does not cut the body short. Comments are
- * stripped before this runs, so no brace here comes from one.
+ * different rules and must not be mistaken for `.dark` — and may be followed
+ * by more selectors in the same list (`[data-look="x"], .foo {`). The end of
+ * the block is found by counting brace depth, so a nested at-rule
+ * (`@supports`, `@media`) inside the theme does not cut the body short.
+ * Comments are stripped before this runs, so no brace here comes from one.
  */
-function ruleBody(css, selector) {
+export function ruleBody(rawCss, selector) {
+  // Idempotent: callers may or may not have stripped comments already, and a
+  // header comment before the first rule must not hide that rule.
+  const css = stripComments(rawCss);
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const opener = new RegExp(`(?:^|[}\\s;])${escaped}\\s*\\{`);
+  const opener = new RegExp(`(?:^|[};])\\s*${escaped}\\s*(?:,[^{]*)?\\{`);
   const match = opener.exec(css);
   if (!match) return '';
 
@@ -139,25 +176,45 @@ export function parseTokens(css) {
   return themes;
 }
 
+/** `{ '<id>-light', '<id>-dark' }` colour tokens of one look sheet. */
+export function parseLook(css, id) {
+  const bare = stripComments(css);
+  const themes = {};
+  for (const { name, selector } of lookThemes(id)) themes[name] = parseTriplets(ruleBody(bare, selector));
+  return themes;
+}
+
+/** Every `<id>.css` under the looks dir, as `[id, css]`, or none when the dir is absent. */
+export function readLookSheets(dirUrl = LOOKS_DIR_URL) {
+  const dir = fileURLToPath(dirUrl);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((file) => file.endsWith('.css'))
+    .sort()
+    .map((file) => [file.replace(/\.css$/, ''), readFileSync(new URL(file, dirUrl), 'utf8')]);
+}
+
 // ---------------------------------------------------------------------------
 // audit
 // ---------------------------------------------------------------------------
 
 function formatLine(theme, foreground, background, ratio, min, status) {
   const pair = `${foreground} on ${background}`;
-  return `${status} ${theme.padEnd(5)} ${pair.padEnd(34)} ${ratio.toFixed(2)}:1 (min ${min}:1)`;
+  return `${status} ${theme.padEnd(14)} ${pair.padEnd(28)} ${ratio.toFixed(2)}:1 (min ${min}:1)`;
 }
 
 /**
  * Measure every pair in every theme.
  *
- * The dark theme inherits `:root` at runtime, so a token `.dark` does not
- * redefine still resolves to its light value — resolve the same way here.
+ * `themes.light` is the base every other set inherits from at runtime (a look
+ * sheet, or `.dark`, only overrides what it declares), so each set is
+ * resolved over it before measuring. `names` defaults to the base pair, and
+ * callers pass the look sets to audit those on top.
  */
-export function checkThemes(themes) {
+export function checkThemes(themes, names = THEMES.map((theme) => theme.name)) {
   const lines = [];
 
-  for (const { name } of THEMES) {
+  for (const name of names) {
     const resolved = { ...themes.light, ...(themes[name] ?? {}) };
     for (const { foreground, background, min } of CONTRAST_PAIRS) {
       const fg = resolved[`color-${foreground}`];
@@ -171,7 +228,7 @@ export function checkThemes(themes) {
           ratio: 0,
           min,
           status: 'FAIL',
-          text: `FAIL  ${name.padEnd(5)} ${`${foreground} on ${background}`.padEnd(34)} missing token(s): ${missing}`,
+          text: `FAIL  ${name.padEnd(14)} ${`${foreground} on ${background}`.padEnd(28)} missing token(s): ${missing}`,
         });
         continue;
       }
@@ -192,8 +249,22 @@ export function checkThemes(themes) {
   return { ok: !lines.some((line) => line.status === 'FAIL'), lines };
 }
 
-export function run({ url = TOKENS_URL } = {}) {
-  return checkThemes(parseTokens(readFileSync(url, 'utf8')));
+/**
+ * The base set plus every look sheet, one result. A look's light block is
+ * resolved over the base light set (what the browser does when a look omits a
+ * token) and its dark block over the same base — the generator writes every
+ * token into both blocks, and `looks.test.ts` proves it, so in practice each
+ * look set stands on its own.
+ */
+export function run({ url = TOKENS_URL, looksDir = LOOKS_DIR_URL } = {}) {
+  const base = parseTokens(readFileSync(url, 'utf8'));
+  const themes = { ...base };
+  const names = THEMES.map((theme) => theme.name);
+  for (const [id, css] of readLookSheets(looksDir)) {
+    Object.assign(themes, parseLook(css, id));
+    names.push(...lookThemes(id).map((theme) => theme.name));
+  }
+  return checkThemes(themes, names);
 }
 
 function isCliEntry(moduleUrl) {
@@ -208,7 +279,7 @@ if (isCliEntry(import.meta.url)) {
   console.log('');
   console.log(
     result.ok
-      ? `CONTRAST PASS ${result.lines.length} pairs, WCAG AA (${TEXT_MIN}:1 text, ${NON_TEXT_MIN}:1 ring)`
+      ? `CONTRAST PASS ${result.lines.length} pairs across ${new Set(result.lines.map((line) => line.theme)).size} sets, WCAG AA (${TEXT_MIN}:1 text, ${NON_TEXT_MIN}:1 non-text)`
       : `CONTRAST FAIL ${failed} of ${result.lines.length} pairs below threshold`,
   );
   if (!result.ok) process.exitCode = 1;

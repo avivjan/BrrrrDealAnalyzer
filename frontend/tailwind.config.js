@@ -47,6 +47,15 @@ export default {
         'chart-4': token('chart-4'),
         'chart-5': token('chart-5'),
         'chart-6': token('chart-6'),
+        'chart-7': token('chart-7'),
+        'chart-8': token('chart-8'),
+        // v2 vocabulary: elevation tiers, secondary accents, glass
+        'surface-2': token('surface-2'),
+        'surface-3': token('surface-3'),
+        accent: token('accent'),
+        'accent-2': token('accent-2'),
+        glass: token('glass'),
+        'glass-line': token('glass-line'),
       },
       borderRadius: {
         // Deliberately not `sm`/`md`/`lg`: those are Tailwind defaults the
@@ -61,17 +70,45 @@ export default {
         1: 'var(--shadow-1)',
         2: 'var(--shadow-2)',
         3: 'var(--shadow-3)',
+        4: 'var(--shadow-4)',
+        // Glow is a shadow the look may zero out; reserved for the primary
+        // CTA, the active nav item and a focused KPI.
+        'glow-primary': 'var(--glow-primary)',
+        'glow-accent': 'var(--glow-accent)',
+        'glow-negative': 'var(--glow-negative)',
+      },
+      // `border-ui`: the look's border weight (1px hairline, 2px brutalist).
+      borderWidth: {
+        ui: 'var(--border-w)',
+      },
+      backdropBlur: {
+        glass: 'var(--blur-glass)',
+      },
+      backgroundImage: {
+        brand: 'var(--gradient-brand)',
+        surface: 'var(--gradient-surface)',
       },
       fontFamily: {
-        // `Inter Variable` is the self-hosted @fontsource face (Task 1.3);
-        // until it is installed the system stack renders, as today.
+        // Body copy is always Inter, whatever the look.
         sans: ['Inter Variable', 'Inter', 'system-ui', 'sans-serif'],
+        // Headings, KPI numerals and the wordmark take the look's display face;
+        // money and percent cells its mono face. Both resolve through tokens
+        // so a look can swap them without a component change.
+        display: ['var(--font-display)'],
+        mono: ['var(--font-mono)'],
+      },
+      letterSpacing: {
+        display: 'var(--track-display)',
       },
       spacing: {
         'safe-t': 'env(safe-area-inset-top)',
         'safe-b': 'env(safe-area-inset-bottom)',
         'safe-l': 'env(safe-area-inset-left)',
         'safe-r': 'env(safe-area-inset-right)',
+        sidebar: 'var(--sidebar-w)',
+        'sidebar-collapsed': 'var(--sidebar-w-collapsed)',
+        topbar: 'var(--topbar-h)',
+        'stats-bar': 'var(--stats-bar-h)',
       },
       transitionDuration: {
         fast: 'var(--dur-fast)',

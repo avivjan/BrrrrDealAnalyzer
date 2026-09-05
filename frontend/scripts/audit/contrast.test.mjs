@@ -3,8 +3,11 @@ import {
   CONTRAST_PAIRS,
   checkThemes,
   contrastRatio,
+  lookThemes,
+  parseLook,
   parseTokens,
   relativeLuminance,
+  ruleBody,
   run,
 } from './contrast.mjs';
 
@@ -25,6 +28,9 @@ const FIXTURE = `
   --color-negative: 0 0 0;
   --color-warning: 0 0 0;
   --color-ring: 0 0 0;
+  --color-surface-2: 255 255 255;
+  --color-surface-3: 255 255 255;
+  --color-accent: 0 0 0;
   --radius-sm: 6px;
   --chart-bg: #0f1117;
 }
@@ -41,6 +47,9 @@ const FIXTURE = `
   --color-negative: 255 255 255;
   --color-warning: 255 255 255;
   --color-ring: 255 255 255;
+  --color-surface-2: 0 0 0;
+  --color-surface-3: 0 0 0;
+  --color-accent: 255 255 255;
 }
 `;
 
@@ -119,11 +128,72 @@ describe('token parsing', () => {
 });
 
 describe('the audited pair set', () => {
-  it('holds the sixteen pairs, with 3:1 for the ring and 4.5:1 for text', () => {
-    expect(CONTRAST_PAIRS).toHaveLength(16);
+  it('holds the twenty-seven pairs, with 3:1 for the non-text ring and primary boundary and 4.5:1 for text', () => {
+    expect(CONTRAST_PAIRS).toHaveLength(27);
     for (const pair of CONTRAST_PAIRS) {
-      expect(pair.min).toBe(pair.foreground === 'ring' ? 3 : 4.5);
+      const nonText = pair.foreground === 'ring' || (pair.foreground === 'primary' && pair.background === 'surface');
+      expect(pair.min, `${pair.foreground} on ${pair.background}`).toBe(nonText ? 3 : 4.5);
     }
+  });
+});
+
+describe('look sheets', () => {
+  const sheet = `
+/* generated */
+[data-look="mono"],
+[data-look="mono"][data-mode="light"],
+.dark [data-look="mono"][data-mode="light"] {
+  --color-fg: 1 1 1;
+  --color-page: 255 255 255;
+}
+[data-look="mono"].dark,
+.dark [data-look="mono"],
+[data-look="mono"][data-mode="dark"] {
+  --color-fg: 254 254 254;
+  --color-page: 5 5 5;
+}
+`;
+
+  it('names a light and a dark set per look', () => {
+    expect(lookThemes('mono')).toEqual([
+      { name: 'mono-light', selector: '[data-look="mono"]' },
+      { name: 'mono-dark', selector: '[data-look="mono"].dark' },
+    ]);
+  });
+
+  it('reads the block whose selector list starts with the selector, even with more selectors after it', () => {
+    expect(ruleBody(sheet, '[data-look="mono"]')).toContain('--color-fg: 1 1 1');
+    expect(ruleBody(sheet, '[data-look="mono"].dark')).toContain('--color-fg: 254 254 254');
+  });
+
+  it('does not mistake the dark list, which mentions the bare selector later, for the light block', () => {
+    const darkFirst = sheet.slice(sheet.indexOf('[data-look="mono"].dark'));
+    // Only the dark rule is present: the bare selector appears inside its list, not at its start.
+    expect(ruleBody(darkFirst, '[data-look="mono"]')).toBe('');
+  });
+
+  it('parses both sets of a look', () => {
+    const themes = parseLook(sheet, 'mono');
+    expect(themes['mono-light']['color-fg']).toEqual([1, 1, 1]);
+    expect(themes['mono-light']['color-page']).toEqual([255, 255, 255]);
+    expect(themes['mono-dark']['color-page']).toEqual([5, 5, 5]);
+  });
+
+  it('audits the named sets on top of the base light set', () => {
+    const base = parseTokens(FIXTURE);
+    const themes = { ...base, ...parseLook(sheet, 'mono') };
+    const result = checkThemes(themes, ['mono-light', 'mono-dark']);
+    expect(new Set(result.lines.map((line) => line.theme))).toEqual(new Set(['mono-light', 'mono-dark']));
+    // The light set only re-declares fg and page; everything else inherits the
+    // black-on-white base and passes.
+    expect(result.lines.filter((line) => line.theme === 'mono-light').every((line) => line.status === 'PASS')).toBe(true);
+    // The dark set inherits the *light* base too — that is what the browser
+    // does when a look omits a token — so its near-white fg lands on the base's
+    // white surface and fails. This is why the generator writes every token
+    // into both blocks.
+    const darkFailures = result.lines.filter((line) => line.theme === 'mono-dark' && line.status === 'FAIL');
+    expect(darkFailures.map((line) => `${line.foreground}/${line.background}`)).toContain('fg/surface');
+    expect(result.ok).toBe(false);
   });
 });
 
@@ -160,6 +230,8 @@ describe('checkThemes', () => {
       'fg-muted/page',
       'fg-muted/surface',
       'fg-muted/surface-muted',
+      'fg-muted/surface-2',
+      'fg-muted/surface-3',
     ]);
   });
 
@@ -181,8 +253,8 @@ describe('checkThemes', () => {
   });
 });
 
-describe('the committed tokens.css', () => {
-  it('passes every audited pair in both themes', () => {
+describe('the committed tokens.css and look sheets', () => {
+  it('passes every audited pair in every set', () => {
     const result = run();
     expect(result.lines.filter((line) => line.status === 'FAIL')).toEqual([]);
     expect(result.ok).toBe(true);
