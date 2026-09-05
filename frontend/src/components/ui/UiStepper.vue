@@ -13,10 +13,14 @@
  * The columns come from `--steps` rather than a fixed class because the count
  * is a runtime value; equal `minmax(0, 1fr)` columns keep the rail the same
  * width whatever the labels say, and `minmax(0, …)` — not `1fr` alone — is
- * what lets a long label truncate instead of stretching its column.
+ * what lets a long label truncate instead of stretching its column. That
+ * fixed single row is a `md:` and up affordance only: below `md` the track
+ * wraps onto as many rows as the width needs, and a label clamps to two
+ * lines instead of being ellipsised to a handful of characters.
  *
- * Long labels are ellipsised here; the view supplies the `title` attribute
- * that reveals the full text, since only the view has the string.
+ * Long labels are ellipsised at `md:` and up; below that they wrap and
+ * clamp. Either way the view supplies the `title` attribute that reveals
+ * the full text, since only the view has the string.
  */
 import { computed, useAttrs } from "vue";
 
@@ -29,7 +33,7 @@ const props = withDefaults(defineProps<{ count: number; compact?: boolean }>(), 
 defineOptions({ inheritAttrs: false });
 
 const BASE =
-  "ui-stepper grid list-none grid-cols-[repeat(var(--steps),minmax(0,1fr))] items-center gap-x-2";
+  "ui-stepper grid list-none grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] md:grid-cols-[repeat(var(--steps),minmax(0,1fr))] items-center gap-x-2 gap-y-2";
 
 const attrs = useAttrs();
 
@@ -67,35 +71,67 @@ const rootClass = computed(() =>
  * renders. Everything here keys off `data-step`, so a list item without it is
  * left entirely alone.
  *
- * The step is a block, not a flex row, on purpose: `text-overflow: ellipsis`
- * only applies to inline content in a block container, and truncating a long
- * step name is the whole reason the columns are `minmax(0, 1fr)`.
+ * Below `md`, the step wraps and clamps to two lines instead of truncating to
+ * one: `overflow-wrap: anywhere` lets a long word break, and the `-webkit-box`
+ * line-clamp is the only cross-browser way to cap a wrapped block at N lines
+ * with a trailing ellipsis. There is no connector at this width — a dash
+ * drawn against one row makes no sense once steps wrap onto several.
+ *
+ * At `md:` and up the track is back to one row (see `BASE`), so the step
+ * reverts to today's block + `nowrap` + `text-overflow: ellipsis` — that
+ * combination only truncates inline content in a block container, which is
+ * the whole reason the columns are `minmax(0, 1fr)` — and the connector
+ * returns.
  */
 .ui-stepper :slotted([data-step]) {
   position: relative;
   min-width: 0;
-  padding-left: 1.25rem;
+  padding-left: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   color: rgb(var(--color-fg-muted));
 }
 
-/*
- * The connector, drawn inside the step's own box rather than in the grid gap:
- * a rule positioned outside would be clipped by the `overflow: hidden` that
- * the ellipsis needs. The first step has neither line nor indent.
- */
 .ui-stepper :slotted([data-step])::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1rem;
-  height: 2px;
-  background-color: rgb(var(--color-line));
+  content: none;
 }
 
+@media (min-width: 768px) {
+  .ui-stepper :slotted([data-step]) {
+    display: block;
+    padding-left: 1.25rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /*
+   * The connector, drawn inside the step's own box rather than in the grid
+   * gap: a rule positioned outside would be clipped by the `overflow: hidden`
+   * that the ellipsis needs.
+   */
+  .ui-stepper :slotted([data-step])::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1rem;
+    height: 2px;
+    background-color: rgb(var(--color-line));
+  }
+
+  .ui-stepper[data-compact="true"] :slotted([data-step]) {
+    padding-left: 0.875rem;
+  }
+
+  .ui-stepper[data-compact="true"] :slotted([data-step])::before {
+    width: 0.625rem;
+  }
+}
+
+/* The first step has neither line nor indent, at any width. */
 .ui-stepper :slotted([data-step]:first-child) {
   padding-left: 0;
 }
@@ -117,13 +153,5 @@ const rootClass = computed(() =>
 .ui-stepper :slotted([data-step="done"])::before,
 .ui-stepper :slotted([data-step="active"])::before {
   background-color: rgb(var(--color-primary));
-}
-
-.ui-stepper[data-compact="true"] :slotted([data-step]) {
-  padding-left: 0.875rem;
-}
-
-.ui-stepper[data-compact="true"] :slotted([data-step])::before {
-  width: 0.625rem;
 }
 </style>

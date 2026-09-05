@@ -507,7 +507,10 @@ The progress rail across a multi-step flow. A container, like `UiTabs`.
 
 `count` is published as `--steps` and the columns are
 `repeat(var(--steps), minmax(0, 1fr))`. `minmax(0, …)` — not `1fr` alone — is
-what lets a long label ellipsise instead of stretching its column.
+what lets a long label ellipsise instead of stretching its column. That fixed
+single row, its ellipsis, and its connector apply only at `md:` and up —
+below `md` the track wraps onto an auto-fit grid and each label clamps to two
+lines instead.
 
 **The child contract:** each step is the view's own element (usually the `<li>`
 it already had) carrying `data-step="done" | "active" | "todo"`. The component's
