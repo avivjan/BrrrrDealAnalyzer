@@ -487,10 +487,15 @@ defineExpose({ centerOnToday })
 </script>
 
 <template>
+  <!--
+    The focus ring is drawn *inside* the box: the canvas is edge to edge, so an
+    outline with an offset would fall outside the chart's own bounds. No size,
+    padding or transform transition here — every resize redraws the canvas.
+  -->
   <div
     ref="containerRef"
     data-testid="chart.container"
-    class="relative w-full h-full select-none outline-none"
+    class="relative h-full w-full select-none bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     tabindex="0"
     @keydown="onKeyDown"
   >
@@ -510,26 +515,26 @@ defineExpose({ centerOnToday })
       <div
         v-if="activeDay"
         data-testid="chart.tooltip"
-        class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-4 py-3 shadow-xl pointer-events-none z-10 min-w-[200px] max-w-[280px]"
+        class="pointer-events-none absolute right-2 top-2 z-10 min-w-[200px] max-w-[280px] rounded-card border border-line bg-surface/95 px-4 py-3 shadow-2"
       >
-        <div class="text-xs text-slate-400 font-mono mb-1.5 tracking-wide">
+        <div class="mb-1.5 text-xs tracking-wide text-fg-muted">
           {{ formatDateForTooltip(activeDay.date) }}
         </div>
-        <div class="text-xl font-mono font-bold mb-1" :class="activeDay.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
+        <div class="mb-1 text-xl font-bold tabular" :class="activeDay.balance_k < 0 ? 'text-negative' : 'text-primary'">
           {{ formatK(activeDay.balance_k) }}
-          <span class="text-[10px] font-normal text-slate-500 ml-1">EOD balance</span>
+          <span class="ml-1 text-[10px] font-normal text-fg-muted">EOD balance</span>
         </div>
 
-        <div v-if="activeDay.net_k !== 0" class="text-xs font-mono mb-2 flex items-center gap-1.5">
-          <span class="text-slate-500">Day net:</span>
-          <span class="font-bold" :class="activeDay.net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+        <div v-if="activeDay.net_k !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
+          <span class="text-fg-muted">Day net:</span>
+          <span class="font-bold tabular" :class="activeDay.net_k > 0 ? 'text-positive' : 'text-negative'">
             {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
           </span>
         </div>
 
         <!-- Transaction list for this day -->
-        <div v-if="activeDay.transactions.length" class="border-t border-[#2a2f45] pt-2 mt-1">
-          <div class="text-[10px] text-slate-500 font-mono mb-1.5 uppercase tracking-wider">
+        <div v-if="activeDay.transactions.length" class="mt-1 border-t border-line pt-2">
+          <div class="mb-1.5 text-[10px] uppercase tracking-wider text-fg-muted">
             Transactions ({{ activeDay.transactions.length }})
           </div>
           <div class="space-y-1">
@@ -537,26 +542,26 @@ defineExpose({ centerOnToday })
               v-for="txn in activeDay.transactions.slice(0, 6)"
               :key="txn.id"
               :data-testid="`chart.txn.${txn.id}`"
-              class="flex justify-between gap-3 items-baseline"
+              class="flex items-baseline justify-between gap-3"
             >
-              <span class="text-[11px] font-mono text-slate-300 truncate flex items-center gap-1">
+              <span class="flex min-w-0 items-center gap-1 text-[11px] text-fg">
                 <i
                   v-if="txn.recurring_rule_id"
-                  class="pi pi-refresh text-[8px] text-indigo-400 shrink-0"
+                  class="pi pi-refresh shrink-0 text-[8px] text-primary"
                   title="From a recurring rule"
                 ></i>
                 <span class="truncate">{{ txn.description }}</span>
               </span>
-              <span class="text-[11px] font-mono font-bold shrink-0" :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+              <span class="shrink-0 text-[11px] font-bold tabular" :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'">
                 {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
               </span>
             </div>
           </div>
-          <div v-if="activeDay.transactions.length > 6" class="text-[10px] text-slate-500 font-mono mt-1">
+          <div v-if="activeDay.transactions.length > 6" class="mt-1 text-[10px] text-fg-muted">
             +{{ activeDay.transactions.length - 6 }} more
           </div>
         </div>
-        <div v-else class="text-[10px] text-slate-600 font-mono mt-1 italic">
+        <div v-else class="mt-1 text-[10px] italic text-fg-muted">
           No transactions
         </div>
       </div>
@@ -566,7 +571,7 @@ defineExpose({ centerOnToday })
 
 <style scoped>
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
