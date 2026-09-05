@@ -9,6 +9,10 @@
       "reason": "Task 3.4: `import { useId } from \"vue\";` plus `daysInputId`, `purchaseDateId` and `refiDateId` — one per control, so each of the field's three labels can point at the input it names."
     },
     {
+      "file": "src/components/ui/MoneyInput.vue",
+      "reason": "useId for label association (Task 3.4 round 1)"
+    },
+    {
       "file": "src/components/ui/NumberInput.vue",
       "reason": "Task 3.4: `import { useId } from \"vue\";` plus `const inputId = useId();` — the id shared by the <label for> and InputNumber's inputId, which is the only way to reach the <input> PrimeVue renders."
     },
