@@ -16,6 +16,7 @@ import { FRONTEND_ROOT, REPO_ROOT, isCliEntry } from './sfc.mjs';
 import { run as runScriptBlocks } from './script-blocks.mjs';
 import { run as runBindings } from './bindings.mjs';
 import { run as runText } from './text.mjs';
+import { run as runHoverPairs, TOUCH_REVEAL } from './hover-pairs.mjs';
 
 /** The baseline every non-frontend file is frozen against. */
 export const BASELINE_TAG = 'ui-baseline';
@@ -136,9 +137,9 @@ function printGateResult(status, gate, detail, failures) {
 }
 
 /** Print an audit gate's own problem lines, then its verdict. */
-function printAuditGate(gate, result, failures) {
+function printAuditGate(gate, result, failures, okDetail = 'no behaviour drift') {
   for (const line of result.lines) console.log(`  ${line.level} ${line.text}`);
-  printGateResult(result.ok ? 'PASS' : 'FAIL', gate, result.ok ? 'no behaviour drift' : 'see the lines above', failures);
+  printGateResult(result.ok ? 'PASS' : 'FAIL', gate, result.ok ? okDetail : 'see the lines above', failures);
 }
 
 function runCommand(command, args, cwd) {
@@ -189,6 +190,11 @@ function main(argv) {
   printAuditGate('G3', runScriptBlocks(), failures);
   printAuditGate('G4', runBindings(), failures);
   printAuditGate('G4b', runText(), failures);
+
+  // G-HOVER — with `hoverOnlyWhenSupported` on, a hover-only reveal is invisible
+  // (but still clickable) on touch, which no Playwright or axe run can catch.
+  const hover = runHoverPairs();
+  printAuditGate('G-HOVER', hover, failures, `every hover reveal pairs with ${TOUCH_REVEAL}`);
 
   // G6 — the suite and the production build.
   const testsPass = runCommand('npm', ['test'], FRONTEND_ROOT);

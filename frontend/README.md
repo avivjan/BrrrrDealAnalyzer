@@ -175,6 +175,10 @@ The audits on their own:
 - `npm run audit` — checks the working tree against the committed baseline manifests in
   `scripts/audit/golden/`: script blocks frozen (G3), template bindings frozen (G4), on-screen
   copy frozen (G4b). Accepted, reasoned deviations are declared in `scripts/audit/allowlist.json`.
+- `node scripts/audit/hover-pairs.mjs` — gate `G-HOVER`, also run inside `verify:ui`: every
+  element whose `class`/`:class` reveals it with `hover:opacity-100` (or `group-hover:opacity-100`)
+  must also carry `touch:opacity-100`. With `hoverOnlyWhenSupported` on, an unpaired reveal is
+  invisible but still clickable on touch, which no Playwright actionability check can see.
 - `npm run audit:contrast` — re-measures the token contrast pairs described under **Design
   tokens** above.
 - `npm run audit:baseline` — regenerates those manifests. Only run it when a change to behaviour
