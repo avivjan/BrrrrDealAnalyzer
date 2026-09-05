@@ -287,6 +287,55 @@ describe('the pointer directives', () => {
 
     expect(to).not.toHaveBeenCalled();
   });
+
+  /**
+   * Two pointer directives on one element — `v-press v-hover-lift` on a card is
+   * the obvious pairing — used to share a single WeakMap slot, so whichever
+   * mounted second silently replaced the first one's handler list. The first
+   * directive's listeners then survived every unmount: a detached node kept
+   * four live `pointer*` handlers, and `gsap.to` still ran against it.
+   */
+  it('keeps two directives on one element from overwriting each other', () => {
+    state.motionOn = true;
+    const { to } = stubTweens();
+    const el = document.createElement('button');
+    document.body.append(el);
+    const addEventListener = vi.spyOn(el, 'addEventListener');
+    const removeEventListener = vi.spyOn(el, 'removeEventListener');
+
+    hook(vPress, 'mounted', el);
+    hook(vHoverLift, 'mounted', el);
+    // v-press: pointerdown/up/cancel/leave. v-hover-lift: pointerenter/leave.
+    expect(addEventListener).toHaveBeenCalledTimes(6);
+
+    hook(vPress, 'unmounted', el);
+    hook(vHoverLift, 'unmounted', el);
+
+    expect(removeEventListener).toHaveBeenCalledTimes(6);
+    to.mockClear();
+    for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'pointerenter', 'pointerleave']) {
+      el.dispatchEvent(new Event(type, { bubbles: true }));
+    }
+    expect(to).not.toHaveBeenCalled();
+  });
+
+  it('takes only its own listeners off when one directive unmounts', () => {
+    state.motionOn = true;
+    const { to } = stubTweens();
+    const el = document.createElement('button');
+    document.body.append(el);
+
+    hook(vPress, 'mounted', el);
+    hook(vHoverLift, 'mounted', el);
+    hook(vHoverLift, 'unmounted', el);
+
+    to.mockClear();
+    el.dispatchEvent(new Event('pointerenter', { bubbles: true }));
+    expect(to).not.toHaveBeenCalled();
+
+    el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect((to.mock.calls[0]?.[1] as Vars).scale).toBe(0.97);
+  });
 });
 
 describe('v-press', () => {
@@ -509,5 +558,57 @@ describe('v-count-up', () => {
     hook(vCountUp, 'updated', el);
 
     expect(to).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The tween writes `el.textContent`, which replaces every child the element
+   * had with one text node. That is only safe on an element that already *is*
+   * one text node — the moment a template wraps the number in a `<span>`, or
+   * puts an icon beside it, counting would delete that markup and never put it
+   * back. Nothing in v1 attaches `v-count-up`; v2 will, so the guard lands now.
+   */
+  it('leaves an element that holds more than one node alone', () => {
+    state.motionOn = true;
+    const { to } = stubTweens();
+    const el = document.createElement('span');
+    el.innerHTML = '<i class="pi"></i>$1,000';
+    document.body.append(el);
+    hook(vCountUp, 'mounted', el);
+
+    el.innerHTML = '<i class="pi"></i>$2,000';
+    hook(vCountUp, 'updated', el);
+
+    expect(to).not.toHaveBeenCalled();
+    expect(el.innerHTML).toBe('<i class="pi"></i>$2,000');
+    expect(el.childNodes).toHaveLength(2);
+  });
+
+  it('leaves an element whose only child is an element alone', () => {
+    state.motionOn = true;
+    const { to } = stubTweens();
+    const el = document.createElement('span');
+    el.innerHTML = '<b>$1,000</b>';
+    document.body.append(el);
+    hook(vCountUp, 'mounted', el);
+
+    el.innerHTML = '<b>$2,000</b>';
+    hook(vCountUp, 'updated', el);
+
+    expect(to).not.toHaveBeenCalled();
+    expect(el.innerHTML).toBe('<b>$2,000</b>');
+  });
+
+  it('still counts an element that is exactly one text node', () => {
+    state.motionOn = true;
+    const { to } = stubTweens();
+    const el = document.createElement('span');
+    el.textContent = '$1,000';
+    document.body.append(el);
+    hook(vCountUp, 'mounted', el);
+
+    el.textContent = '$2,000';
+    hook(vCountUp, 'updated', el);
+
+    expect(to).toHaveBeenCalledTimes(1);
   });
 });

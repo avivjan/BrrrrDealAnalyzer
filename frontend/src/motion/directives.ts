@@ -44,8 +44,27 @@ const FLASH_FALLBACK_RGB = '79, 70, 229';
 
 type Listener = [type: string, handler: EventListener];
 
-/** Listeners a directive attached, so `unmounted` can take them off again. */
-const listeners = new WeakMap<HTMLElement, Listener[]>();
+/**
+ * The directive names used as listener keys.
+ *
+ * Two of these decorate the same element all the time — `v-press v-hover-lift`
+ * on a card is the obvious pairing — and both want `pointerleave`, so the
+ * bookkeeping has to stay per directive rather than per element.
+ */
+const PRESS = 'press';
+const HOVER_LIFT = 'hover-lift';
+const REVEAL = 'reveal';
+const FLASH = 'flash';
+const COUNT_UP = 'count-up';
+
+/**
+ * Listeners a directive attached, keyed by element *and* directive.
+ *
+ * A single list per element was wrong: whichever directive mounted second
+ * replaced the first one's list, so the first one's handlers survived every
+ * unmount and a detached node kept firing tweens.
+ */
+const listeners = new WeakMap<HTMLElement, Map<string, Listener[]>>();
 
 /** Children a `v-reveal.stagger` has already animated. */
 const revealed = new WeakSet<Element>();
@@ -75,24 +94,34 @@ const countText = new WeakMap<HTMLElement, string>();
 /** The number object `v-count-up` tweens (the element's text is not a tween target). */
 const counters = new WeakMap<HTMLElement, { value: number }>();
 
-/** Attach `entries` passively and remember them. */
-function listen(el: HTMLElement, entries: Listener[]): void {
+/** Attach `entries` passively and remember them under `name`. */
+function listen(el: HTMLElement, name: string, entries: Listener[]): void {
+  // A second `mounted` without an `unmounted` in between would otherwise leave
+  // the first batch attached with nothing left holding a handle to it.
+  unlisten(el, name);
   for (const [type, handler] of entries) {
     el.addEventListener(type, handler, { passive: true });
   }
-  listeners.set(el, entries);
+  const own = listeners.get(el) ?? new Map<string, Listener[]>();
+  own.set(name, entries);
+  listeners.set(el, own);
 }
 
-/** Undo `listen`. */
-function unlisten(el: HTMLElement): void {
-  const entries = listeners.get(el);
-  if (!entries) return;
+/** Undo `listen` for one directive, leaving any other directive's listeners on. */
+function unlisten(el: HTMLElement, name: string): void {
+  const own = listeners.get(el);
+  const entries = own?.get(name);
+  if (!own || !entries) return;
   for (const [type, handler] of entries) el.removeEventListener(type, handler);
-  listeners.delete(el);
+  own.delete(name);
+  if (own.size === 0) listeners.delete(el);
 }
 
 /**
  * The shared `unmounted`: stop everything and hand the element back.
+ *
+ * `name` says whose listeners to take off, so a directive never removes the
+ * ones a sibling directive on the same element put there.
  *
  * `[data-reveal]` descendants are a second target: `v-reveal.stagger` tweens
  * them rather than the element, so killing only the element would leave a
@@ -108,8 +137,8 @@ function unlisten(el: HTMLElement): void {
  * grid of `[data-reveal]` cards); if one is ever added, scope this to the
  * descendants no closer container owns.
  */
-function release(el: HTMLElement): void {
-  unlisten(el);
+function release(el: HTMLElement, name: string): void {
+  unlisten(el, name);
   for (const tween of revealTweens.get(el) ?? []) tween.kill();
   revealTweens.delete(el);
   gsap.killTweensOf(el);
@@ -210,7 +239,7 @@ export const vReveal: ObjectDirective<HTMLElement> = {
     if (!binding.modifiers.stagger) return;
     revealChildren(el);
   },
-  unmounted: release,
+  unmounted: (el) => release(el, REVEAL),
 };
 
 /**
@@ -234,14 +263,14 @@ export const vPress: ObjectDirective<HTMLElement> = {
         clearProps: 'transform',
       });
     };
-    listen(el, [
+    listen(el, PRESS, [
       ['pointerdown', down],
       ['pointerup', up],
       ['pointercancel', up],
       ['pointerleave', up],
     ]);
   },
-  unmounted: release,
+  unmounted: (el) => release(el, PRESS),
 };
 
 /**
@@ -266,12 +295,12 @@ export const vHoverLift: ObjectDirective<HTMLElement> = {
         clearProps: 'transform',
       });
     };
-    listen(el, [
+    listen(el, HOVER_LIFT, [
       ['pointerenter', enter],
       ['pointerleave', leave],
     ]);
   },
-  unmounted: release,
+  unmounted: (el) => release(el, HOVER_LIFT),
 };
 
 /**
@@ -307,11 +336,28 @@ export const vFlash: ObjectDirective<HTMLElement> = {
       },
     );
   },
-  unmounted: release,
+  unmounted: (el) => release(el, FLASH),
 };
 
 /** The first number in a string: optional sign, thousands separators, decimals. */
 const NUMBER_PATTERN = /-?\d[\d,]*(?:\.\d+)?/;
+
+/** `Node.TEXT_NODE`, spelled out so the module needs no DOM global at import time. */
+const TEXT_NODE = 3;
+
+/**
+ * True when writing `el.textContent` would replace a single text node with
+ * another — the only shape `v-count-up` may touch.
+ *
+ * Assigning `textContent` deletes every child. On `<span>$1,000</span>` that is
+ * a no-op worth having; on `<span><i class="pi" />$1,000</span>` it deletes the
+ * icon, and the tween's `onComplete` writes the plain string back, so the
+ * markup never returns. An empty element (no child at all) is excluded too:
+ * there is no number in it to count from.
+ */
+function isSingleTextNode(el: HTMLElement): boolean {
+  return el.childNodes.length === 1 && el.firstChild?.nodeType === TEXT_NODE;
+}
 
 /** The number inside `text`, or null when there is not exactly one to read. */
 function parseNumber(text: string): number | null {
@@ -351,7 +397,9 @@ function formatLike(template: string, value: number): string {
  * ours ever survives the tween.
  *
  * The tween target is a plain `{ value }` object; the element's text is written
- * from `onUpdate`.
+ * from `onUpdate` — and only onto an element that is exactly one text node, so
+ * a number wrapped in markup (an icon, a nested `<span>`) is left alone rather
+ * than flattened. See `isSingleTextNode`.
  */
 export const vCountUp: ObjectDirective<HTMLElement> = {
   mounted(el) {
@@ -362,6 +410,10 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
     const previous = countText.get(el) ?? '';
     countText.set(el, target);
     if (!motionEnabled()) return;
+
+    // The tween writes `textContent`, so anything richer than one text node
+    // would lose its markup the first time a number changed.
+    if (!isSingleTextNode(el)) return;
 
     const to = parseNumber(target);
     const from = parseNumber(previous);
@@ -390,6 +442,6 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       gsap.killTweensOf(counter);
       counters.delete(el);
     }
-    release(el);
+    release(el, COUNT_UP);
   },
 };
