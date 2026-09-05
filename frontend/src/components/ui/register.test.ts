@@ -26,6 +26,19 @@ const EXPECTED_NAMES = [
   "UiSaveStatus",
   "UiTabs",
   "UiStepper",
+  // UI v2
+  "UiSurface",
+  "UiGlassPanel",
+  "UiChip",
+  "UiTooltip",
+  "UiKpiCard",
+  "UiSparkline",
+  "UiProgressRing",
+  "UiTimelineRail",
+  "UiDataTable",
+  "UiDrawer",
+  "UiCommandItem",
+  "UiSegmented",
 ];
 
 /** A view-shaped component: it names two primitives and imports neither. */
@@ -43,7 +56,7 @@ afterEach(() => {
 });
 
 describe("UI_COMPONENTS", () => {
-  it("holds exactly the thirteen presentational primitives", () => {
+  it("holds exactly the twenty-five presentational primitives", () => {
     expect(Object.keys(UI_COMPONENTS)).toEqual(EXPECTED_NAMES);
   });
 });

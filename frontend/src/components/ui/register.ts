@@ -1,11 +1,12 @@
 /**
  * Global registration of the presentational primitives.
  *
- * Phase 3 restyles the views in place under a script freeze: a view template
- * may write `<UiButton>` but its `<script setup>` may not gain an import line.
- * The primitives are therefore registered on the app itself — here, once — and
+ * v1 restyled the views under a script freeze: a view template may write
+ * `<UiButton>` but its `<script setup>` may not gain an import line. The
+ * primitives are therefore registered on the app itself — here, once — and
  * the same map is installed on `config.global.components` by the Vitest setup
- * file, so a mounted view resolves them without any local registration.
+ * file, so a mounted view resolves them without any local registration. v2
+ * keeps the convention: every primitive, old and new, is global.
  *
  * Only the presentational primitives belong here. Anything that owns state or
  * talks to a store stays a normal, explicitly imported component.
@@ -16,16 +17,28 @@ import {
   UiBadge,
   UiButton,
   UiCard,
+  UiChip,
+  UiCommandItem,
+  UiDataTable,
+  UiDrawer,
   UiEmptyState,
   UiField,
+  UiGlassPanel,
   UiIconButton,
+  UiKpiCard,
   UiModalPanel,
+  UiProgressRing,
   UiSaveStatus,
   UiSectionHeader,
+  UiSegmented,
   UiSkeleton,
+  UiSparkline,
   UiStatTile,
   UiStepper,
+  UiSurface,
   UiTabs,
+  UiTimelineRail,
+  UiTooltip,
 } from "./index";
 
 /**
@@ -48,6 +61,19 @@ export const UI_COMPONENTS = {
   UiSaveStatus,
   UiTabs,
   UiStepper,
+  // UI v2
+  UiSurface,
+  UiGlassPanel,
+  UiChip,
+  UiTooltip,
+  UiKpiCard,
+  UiSparkline,
+  UiProgressRing,
+  UiTimelineRail,
+  UiDataTable,
+  UiDrawer,
+  UiCommandItem,
+  UiSegmented,
 } as const;
 
 /** Register every primitive on `app`, so templates need no import. */

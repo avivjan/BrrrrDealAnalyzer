@@ -18,3 +18,17 @@ export { default as UiSkeleton } from "./UiSkeleton.vue";
 export { default as UiSaveStatus } from "./UiSaveStatus.vue";
 export { default as UiTabs } from "./UiTabs.vue";
 export { default as UiStepper } from "./UiStepper.vue";
+
+// UI v2 primitives (docs/plans/2026-09-05-ui-v2-plan.md, Task 1.4).
+export { default as UiSurface } from "./UiSurface.vue";
+export { default as UiGlassPanel } from "./UiGlassPanel.vue";
+export { default as UiChip } from "./UiChip.vue";
+export { default as UiTooltip } from "./UiTooltip.vue";
+export { default as UiKpiCard } from "./UiKpiCard.vue";
+export { default as UiSparkline } from "./UiSparkline.vue";
+export { default as UiProgressRing } from "./UiProgressRing.vue";
+export { default as UiTimelineRail } from "./UiTimelineRail.vue";
+export { default as UiDataTable } from "./UiDataTable.vue";
+export { default as UiDrawer } from "./UiDrawer.vue";
+export { default as UiCommandItem } from "./UiCommandItem.vue";
+export { default as UiSegmented } from "./UiSegmented.vue";
