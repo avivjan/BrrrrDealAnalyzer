@@ -129,7 +129,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
           </div>
         </template>
       </UiSectionHeader>
-      <div class="text-xl font-bold tabular" :class="todayBalance !== null && todayBalance < 0 ? 'text-negative' : 'text-primary'">
+      <div class="text-xl font-bold numeric" :class="todayBalance !== null && todayBalance < 0 ? 'text-negative' : 'text-primary'">
         {{ todayBalance !== null ? todayBalance.toFixed(1) + 'k' : '—' }}
       </div>
 
@@ -141,7 +141,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
         <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
           <div class="flex items-center justify-between gap-2 text-[10px]">
             <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
-            <span class="whitespace-nowrap tabular text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
+            <span class="whitespace-nowrap numeric text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
           </div>
           <div
             v-for="a in ws.accounts"
@@ -150,7 +150,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
             class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
           >
             <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-            <span class="whitespace-nowrap tabular text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
+            <span class="whitespace-nowrap numeric text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
           </div>
         </div>
       </div>
@@ -176,7 +176,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Window min -->
     <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Window Min</UiSectionHeader>
-      <div class="font-bold tabular" :class="series.globalMin < 0 ? 'text-negative' : series.globalMin < settings.reserve_k ? 'text-warning' : 'text-fg'">
+      <div class="font-bold numeric" :class="series.globalMin < 0 ? 'text-negative' : series.globalMin < settings.reserve_k ? 'text-warning' : 'text-fg'">
         {{ series.globalMin.toFixed(1) }}k
       </div>
       <div class="mt-0.5 text-fg-muted">
@@ -188,7 +188,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- 90d low -->
     <UiCard v-if="next90dMin" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
-      <div class="font-bold tabular" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
+      <div class="font-bold numeric" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
         {{ next90dMin.value.toFixed(1) }}k
       </div>
       <div class="mt-0.5 text-fg-muted">{{ formatDate(next90dMin.date) }}</div>
@@ -197,7 +197,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Next outflow -->
     <UiCard v-if="nextOutflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
-      <div class="font-bold tabular text-negative">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-negative">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextOutflow.description }}</div>
       <div class="text-fg-muted">{{ formatDate(nextOutflow.effective_date) }}</div>
     </UiCard>
@@ -205,7 +205,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Next inflow -->
     <UiCard v-if="nextInflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Inflow</UiSectionHeader>
-      <div class="font-bold tabular text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
       <div class="text-fg-muted">{{ formatDate(nextInflow.effective_date) }}</div>
     </UiCard>
@@ -213,7 +213,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Reserve -->
     <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
-      <div class="font-bold tabular text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
     </UiCard>
 
     <!-- Recurring series -->
@@ -227,7 +227,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
         <i class="pi pi-refresh mr-1.5 text-[10px] text-primary" aria-hidden="true"></i>
         Recurring
         <template #actions>
-          <div class="text-[10px] tabular text-fg-muted">{{ activeRecurringRules.length }}</div>
+          <div class="text-[10px] numeric text-fg-muted">{{ activeRecurringRules.length }}</div>
         </template>
       </UiSectionHeader>
       <div class="space-y-1.5">
@@ -235,14 +235,14 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
           v-for="rule in activeRecurringRules"
           :key="rule.id"
           :data-testid="`sidebar.recurring.${rule.id}`"
-          class="group rounded-ctl border border-line bg-surface-muted px-2 py-1.5"
+          class="group rounded-ctl border-ui border-line bg-surface-2 px-2 py-1.5"
         >
           <div class="flex items-center justify-between gap-2">
             <div class="min-w-0 break-words text-[11px] text-fg line-clamp-2" :title="rule.description">
               {{ rule.description }}
             </div>
             <div
-              class="shrink-0 text-[11px] font-bold tabular"
+              class="shrink-0 text-[11px] font-bold numeric"
               :class="rule.amount_k > 0 ? 'text-positive' : 'text-negative'"
             >
               {{ rule.amount_k > 0 ? '+' : '' }}{{ rule.amount_k.toFixed(1) }}k

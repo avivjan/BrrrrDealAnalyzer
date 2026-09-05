@@ -31,8 +31,8 @@ function formatDate(iso: string): string {
         <UiModalPanel
           size="md"
           labelled-by="simwarn-modal-title"
-          class="modal-panel relative border"
-          :class="severity === 'hard' ? 'border-negative/50' : 'border-warning/50'"
+          class="modal-panel relative border-ui"
+          :class="severity === 'hard' ? 'border-negative/50 shadow-glow-negative' : 'border-warning/50'"
         >
           <!-- Hard negative -->
           <template v-if="severity === 'hard'">
@@ -41,12 +41,12 @@ function formatDate(iso: string): string {
                 <i class="pi pi-exclamation-triangle text-xl text-negative" aria-hidden="true"></i>
               </div>
               <div class="min-w-0">
-                <h3 id="simwarn-modal-title" class="text-lg font-bold text-negative">Balance Goes Negative</h3>
+                <h3 id="simwarn-modal-title" class="font-display text-lg font-bold tracking-display text-negative">Balance Goes Negative</h3>
                 <p class="text-xs text-fg-muted">This transaction would cause a negative balance on future dates.</p>
               </div>
             </div>
 
-            <div class="mb-4 max-h-40 overflow-y-auto overscroll-contain rounded-card border border-negative/20 bg-negative/5 p-3">
+            <div class="mb-4 max-h-40 overflow-y-auto overscroll-contain rounded-card border-ui border-negative/20 bg-negative/5 p-3">
               <p class="mb-2 text-xs font-semibold text-negative">
                 Negative on {{ result.negativeDates.length }} date{{ result.negativeDates.length > 1 ? 's' : '' }}:
               </p>
@@ -55,7 +55,7 @@ function formatDate(iso: string): string {
                   v-for="date in result.negativeDates.slice(0, 10)"
                   :key="date"
                   :data-testid="`simwarn.negative-date.${date}`"
-                  class="text-[11px] tabular text-negative"
+                  class="text-[11px] numeric text-negative"
                 >
                   {{ formatDate(date) }}
                 </div>
@@ -65,8 +65,8 @@ function formatDate(iso: string): string {
               </div>
             </div>
 
-            <div class="mb-5 space-y-1 rounded-card bg-surface-muted p-3 text-xs text-fg">
-              <div>Window minimum: <span class="font-bold tabular text-negative">{{ result.min.toFixed(2) }}k</span></div>
+            <div class="mb-5 space-y-1 rounded-card bg-surface-2 p-3 text-xs text-fg">
+              <div>Window minimum: <span class="font-bold numeric text-negative">{{ result.min.toFixed(2) }}k</span></div>
               <div>First negative: <span class="tabular text-negative">{{ result.firstNegativeDate ? formatDate(result.firstNegativeDate) : '—' }}</span></div>
               <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}{{ result.minDates.length > 3 ? ' +more' : '' }}</span></div>
             </div>
@@ -96,13 +96,13 @@ function formatDate(iso: string): string {
                 <i class="pi pi-info-circle text-xl text-warning" aria-hidden="true"></i>
               </div>
               <div class="min-w-0">
-                <h3 id="simwarn-modal-title" class="text-lg font-bold text-warning">Below Reserve Threshold</h3>
+                <h3 id="simwarn-modal-title" class="font-display text-lg font-bold tracking-display text-warning">Below Reserve Threshold</h3>
                 <p class="text-xs text-fg-muted">Balance will drop below your configured reserve on some dates.</p>
               </div>
             </div>
 
-            <div class="mb-5 space-y-1 rounded-card bg-surface-muted p-3 text-xs text-fg">
-              <div>Window minimum: <span class="font-bold tabular text-warning">{{ result.min.toFixed(2) }}k</span></div>
+            <div class="mb-5 space-y-1 rounded-card bg-surface-2 p-3 text-xs text-fg">
+              <div>Window minimum: <span class="font-bold numeric text-warning">{{ result.min.toFixed(2) }}k</span></div>
               <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}</span></div>
               <div>Dates below reserve: <span class="tabular text-warning">{{ result.reserveBreachDates.length }}</span></div>
             </div>
