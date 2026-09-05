@@ -19,6 +19,36 @@ regressed while you were looking at it.
 Record the date, the phase, the iOS version and the device in the log at the
 bottom.
 
+Prefer the **production bundle** over the dev server: `npm run dev -- --host` ships
+unminified modules over a socket the phone has to hold open, and the two things
+this list is most sensitive to — first paint and the `100vh` arithmetic as the
+toolbar moves — behave differently there. From `frontend/`, build once against a
+backend the phone can reach and serve that:
+
+```sh
+VITE_API_URL=http://<your-lan-ip>:8000 npm run build
+npx vite preview --host --port 5173
+```
+
+Then open `http://<your-lan-ip>:5173` on the device. The backend must be started
+with `--host 0.0.0.0` and `BackEnd/main.py`'s CORS list must contain the origin
+you typed, or every request fails and the whole list is unwalkable.
+
+Before starting, read `docs/ui-overhaul/quality-snapshot.md`. It records what
+emulation has **already** settled at v1, so this pass does not spend real-device
+time re-confirming it: zero horizontal overflow on all six routes at 390 / 768 /
+1024 / 1440, the axe count down from 73 elements to 38 with every `critical` gone,
+and a screenshot of every route at every width under
+`docs/ui-overhaul/screenshots/` to compare against what the phone actually shows.
+Its §7 also lists the defects already known — a box that trips over one of those
+is a confirmation, not a discovery, and belongs in the table below rather than in
+the "anything new" list.
+
+The one thing emulation cannot speak to at all is **safe areas**:
+`env(safe-area-inset-*)` resolves to `0` under Playwright, so every `safe-t` /
+`pb-safe-b` in the tree is currently unproven. The rotation and toolbar boxes
+below are the only evidence that will ever exist for them.
+
 ## iPhone — Safari
 
 - [ ] All six routes open and render: `/`, `/analyze`, `/my-deals`,
@@ -112,6 +142,22 @@ is backwards. Instead `e2e/flows/liquidity.spec.ts` skips the flows they make
 undrivable, with the reason in the skip message, and annotates each run with the
 header width it measured on that device. This checklist is where they are
 tracked; the suite just says why it stepped around them.
+
+### Ready to tick — where each baseline defect stands at v1
+
+One row per defect above, pre-filled with what **emulation** says after Phases
+1-4 (measured in `docs/ui-overhaul/quality-snapshot.md`). Emulation is not a
+device: an "appears fixed" here is a claim to go and disprove on hardware, not a
+result. Fill the last three columns during the pass.
+
+| # | Phase 0 defect | Emulated status at v1 | Confirmed on device? | Fixed in phase | Notes |
+| --: | --- | --- | --- | --- | --- |
+| 1 | Input zoom on focus | `main.css:224-231` forces `font-size: 16px !important` on every `input`/`select`/`textarea` under `max-width: 767px`; no emulator can prove the zoom is gone | | | |
+| 2 | Board bottom clipped under the iOS toolbar | Shell is on `h-dvh`; insets read `0` under Playwright, so unproven | | | |
+| 3 | Card actions unreachable on touch | Appears fixed — every hover reveal now has a `touch:` counterpart, enforced by gate G-HOVER | | | |
+| 4 | Liquidity header wider than any phone | Appears fixed — `scrollWidth − clientWidth` is **0 px** on all six routes at 390 / 768 / 1024 / 1440 | | | |
+| 4b | …and the `Mobile Chrome` liquidity flow it forced the suite to skip | Un-skipped and passing — see the Task 5.1 Phase 0 ↔ Phase 5 comparison | | | |
+| 5 | Liquidity sidebar missing on phones | Appears fixed — the breakdown and recurring list stack into the main column at 390 px (`docs/ui-overhaul/screenshots/iphone14-liquidity-390.png`) | | | |
 
 Anything new found during a pass gets appended here with the date, so the next
 phase inherits the list rather than rediscovering it.
