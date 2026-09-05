@@ -11,7 +11,8 @@
  * motion is entrances, presses and fades; a plugin would cost bundle size for
  * behaviour nothing in the plan asks for.
  *
- * The only side effect of importing this module is `gsap.defaults`.
+ * Importing this module has two side effects and no others: `gsap.defaults`,
+ * and publishing the instance on `window` for the e2e guard.
  */
 import { gsap } from 'gsap';
 
@@ -20,7 +21,30 @@ import { DUR, EASE } from './tokens';
 
 gsap.defaults({ duration: DUR.base, ease: EASE.standard });
 
+/**
+ * Publish the instance for the e2e motion guard.
+ *
+ * `e2e/fixtures/motion.ts` (frozen since Phase 0) asserts that nothing is still
+ * tweening once an interaction settles, by reading
+ * `window.gsap.globalTimeline.getChildren()`. The ESM build sets no global, so
+ * without this the guard would pass on any page whatever was animating.
+ */
+if (typeof window !== 'undefined') window.gsap = gsap;
+
 export { gsap };
+
+/**
+ * The properties this layer owns, and the only ones it ever removes.
+ *
+ * Every enter hands these back to the stylesheet through `clearProps` when it
+ * completes, and every cancel and unmount removes exactly these. Deliberately
+ * *not* `clearProps: 'all'`, which wipes the element's entire inline `style`
+ * attribute — including whatever the app itself put there (`:style="…"`, a
+ * width a script measured, a CSS custom property a template set). Under reduced
+ * motion the disabled path runs on every single enter, so a broad wipe would be
+ * destructive for most users rather than for none.
+ */
+export const CLEAR_PROPS = 'transform,opacity,filter,willChange';
 
 /**
  * Whether the app may animate at all.

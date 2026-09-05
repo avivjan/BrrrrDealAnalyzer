@@ -106,6 +106,12 @@ describe('prefersReducedMotion', () => {
 });
 
 describe('the shared gsap instance', () => {
+  it('publishes itself on window, which is what makes the e2e guard real', () => {
+    // `e2e/fixtures/motion.ts` (frozen) reads `window.gsap.globalTimeline`. The
+    // ESM build sets no global, so without this the guard passes on any page.
+    expect(window.gsap).toBe(gsap);
+  });
+
   it('carries the token duration and ease as its defaults', () => {
     const defaults = gsap.defaults();
     expect(defaults.duration).toBe(DUR.base);

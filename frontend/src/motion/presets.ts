@@ -17,7 +17,7 @@
  * Timings come from `tokens.ts`, which mirrors `tokens.css`. Nothing here reads
  * a duration from CSS at runtime: `:css="false"` means Vue is waiting on us.
  */
-import { gsap, motionEnabled } from './gsap';
+import { CLEAR_PROPS, gsap, motionEnabled } from './gsap';
 import { DUR, EASE } from './tokens';
 
 /**
@@ -29,9 +29,6 @@ import { DUR, EASE } from './tokens';
  * marks itself with this attribute), and an overlay with no panel simply fades.
  */
 export const MODAL_PANEL_SELECTOR = '[data-ui="modal-panel"]';
-
-/** What every enter hands back to the stylesheet when it finishes. */
-const CLEAR_PROPS = 'transform,opacity,filter';
 
 /** The Vue `<Transition>` hooks one preset provides. */
 export interface MotionPreset {
@@ -52,10 +49,34 @@ const ENTER: GSAPTweenVars = { duration: DUR.base, ease: EASE.standard };
 const ENTER_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.standard };
 const LEAVE_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.exit };
 
-/** Stop whatever is running on `el` and hand it back to the stylesheet. */
+/**
+ * Stop whatever is running on `el` and hand it back to the stylesheet.
+ *
+ * The modal panel is a second target: `modal` tweens it separately, so killing
+ * only the root would leave a cancelled open with `scale(0.96)` frozen on the
+ * panel — the tween that would have cleared it never reaches its `onComplete`.
+ */
 function cancel(el: HTMLElement): void {
   gsap.killTweensOf(el);
-  gsap.set(el, { clearProps: 'all' });
+  gsap.set(el, { clearProps: CLEAR_PROPS });
+  const panels = el.querySelectorAll(MODAL_PANEL_SELECTOR);
+  if (panels.length > 0) {
+    gsap.killTweensOf(panels);
+    gsap.set(panels, { clearProps: CLEAR_PROPS });
+  }
+}
+
+/**
+ * `cancel`, plus the one thing `leave` did that `clearProps` no longer undoes.
+ *
+ * `leave` sets `pointer-events: none` as its very first act; an interrupted
+ * leave means the element is staying, so it has to become clickable again.
+ * `pointerEvents` is not in `CLEAR_PROPS` — nothing else should ever remove it
+ * — so it is reset here explicitly.
+ */
+function cancelLeave(el: HTMLElement): void {
+  el.style.pointerEvents = '';
+  cancel(el);
 }
 
 /** Build an `enter` that tweens `el` itself from `from` to `to`. */
@@ -63,7 +84,7 @@ function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
   return function enter(el: HTMLElement, done: () => void): void {
     gsap.killTweensOf(el);
     if (!motionEnabled()) {
-      gsap.set(el, { clearProps: 'all' });
+      gsap.set(el, { clearProps: CLEAR_PROPS });
       done();
       return;
     }
@@ -93,7 +114,7 @@ function modalPanel(el: HTMLElement): HTMLElement | null {
 function modalEnter(el: HTMLElement, done: () => void): void {
   gsap.killTweensOf(el);
   if (!motionEnabled()) {
-    gsap.set(el, { clearProps: 'all' });
+    gsap.set(el, { clearProps: CLEAR_PROPS });
     done();
     return;
   }
@@ -162,7 +183,7 @@ export const presets: Record<PresetName, MotionPreset> = {
     enter: modalEnter,
     leave: modalLeave,
     enterCancelled: cancel,
-    leaveCancelled: cancel,
+    leaveCancelled: cancelLeave,
   },
 
   /** The same opening, for overlays that must vanish the instant they close. */
@@ -188,7 +209,7 @@ export const presets: Record<PresetName, MotionPreset> = {
     enter: enterWith({ opacity: 0, y: 6 }, { opacity: 1, y: 0, ...ENTER_FAST }),
     leave: leaveWith({ opacity: 0, ...LEAVE_FAST }),
     enterCancelled: cancel,
-    leaveCancelled: cancel,
+    leaveCancelled: cancelLeave,
   },
 };
 
@@ -220,9 +241,17 @@ export function transitionHooks(preset: MotionPreset): TransitionHooks {
     onEnter: (el, done) => preset.enter(el as HTMLElement, done),
     onEnterCancelled: (el) => preset.enterCancelled(el as HTMLElement),
   };
-  if (leave && leaveCancelled) {
-    hooks.onLeave = (el, done) => leave(el as HTMLElement, done);
-    hooks.onLeaveCancelled = (el) => leaveCancelled(el as HTMLElement);
+  if (!leave) return hooks;
+  if (!leaveCancelled) {
+    // Loudly, not silently: dropping the leave to keep going would turn a
+    // half-written preset into a transition that quietly never animates out.
+    throw new Error(
+      'motion preset: a preset that defines `leave` must also define ' +
+        '`leaveCancelled`, or an interrupted close leaves the element ' +
+        'mid-tween and `pointer-events: none`.',
+    );
   }
+  hooks.onLeave = (el, done) => leave(el as HTMLElement, done);
+  hooks.onLeaveCancelled = (el) => leaveCancelled(el as HTMLElement);
   return hooks;
 }

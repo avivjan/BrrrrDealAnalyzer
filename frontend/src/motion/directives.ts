@@ -20,7 +20,7 @@
  */
 import type { ObjectDirective } from 'vue';
 
-import { gsap, motionEnabled } from './gsap';
+import { CLEAR_PROPS, gsap, motionEnabled } from './gsap';
 import { DUR, EASE } from './tokens';
 
 /** The attribute a child must carry to be part of a `v-reveal.stagger`. */
@@ -50,6 +50,22 @@ const listeners = new WeakMap<HTMLElement, Listener[]>();
 /** Children a `v-reveal.stagger` has already animated. */
 const revealed = new WeakSet<Element>();
 
+/**
+ * The staggered tweens each `v-reveal.stagger` element still has running.
+ *
+ * A staggered `fromTo` is not a plain tween: GSAP wraps the per-child tweens in
+ * an internal timeline, and `killTweensOf(children)` kills the inner ones while
+ * that wrapper stays on the global timeline. Keeping the handles is the only
+ * way to remove it, and the global timeline being empty after an unmount is
+ * exactly what the e2e motion guard checks.
+ *
+ * A *set*, not a single handle: a list that appends twice in quick succession
+ * has two batches in flight, and killing the first to make room for the second
+ * would freeze that batch's children half-faded with no `onComplete` left to
+ * clear them. Each tween drops itself from the set when it finishes.
+ */
+const revealTweens = new WeakMap<HTMLElement, Set<GSAPTween>>();
+
 /** The text `v-flash` last saw on an element. */
 const flashText = new WeakMap<HTMLElement, string>();
 
@@ -75,11 +91,24 @@ function unlisten(el: HTMLElement): void {
   listeners.delete(el);
 }
 
-/** The shared `unmounted`: stop everything and hand the element back. */
+/**
+ * The shared `unmounted`: stop everything and hand the element back.
+ *
+ * `[data-reveal]` descendants are a second target: `v-reveal.stagger` tweens
+ * them rather than the element, so killing only the element would leave a
+ * stagger running against nodes that are on their way out of the document.
+ */
 function release(el: HTMLElement): void {
   unlisten(el);
+  for (const tween of revealTweens.get(el) ?? []) tween.kill();
+  revealTweens.delete(el);
   gsap.killTweensOf(el);
-  gsap.set(el, { clearProps: 'all' });
+  gsap.set(el, { clearProps: CLEAR_PROPS });
+  const children = el.querySelectorAll(REVEAL_CHILD_SELECTOR);
+  if (children.length > 0) {
+    gsap.killTweensOf(children);
+    gsap.set(children, { clearProps: CLEAR_PROPS });
+  }
 }
 
 /** True when the device has a real pointer that can hover. */
@@ -112,7 +141,12 @@ function revealChildren(el: HTMLElement): void {
   ).filter((child) => !revealed.has(child));
   if (pending.length === 0) return;
   for (const child of pending) revealed.add(child);
-  gsap.fromTo(
+  const live = revealTweens.get(el) ?? new Set<GSAPTween>();
+  revealTweens.set(el, live);
+  // Declared before the call so `onComplete` can close over the handle; the
+  // tween runs for `DUR.slow`, so the callback never fires before assignment.
+  let tween: GSAPTween | undefined;
+  tween = gsap.fromTo(
     pending,
     { opacity: 0, y: 8 },
     {
@@ -123,8 +157,12 @@ function revealChildren(el: HTMLElement): void {
       stagger: { each: REVEAL_STAGGER_EACH },
       overwrite: 'auto',
       clearProps: 'transform,opacity',
+      onComplete: () => {
+        if (tween) live.delete(tween);
+      },
     },
   );
+  live.add(tween);
 }
 
 /**

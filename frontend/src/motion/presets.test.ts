@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MODAL_PANEL_SELECTOR, presets, transitionHooks } from './presets';
-import { gsap } from './gsap';
-import { DUR } from './tokens';
+import { MODAL_PANEL_SELECTOR, presets, transitionHooks, type MotionPreset } from './presets';
+import { CLEAR_PROPS, gsap } from './gsap';
 
 /**
  * The `<Transition>` hook implementations.
@@ -89,7 +88,15 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  // The real-timeline suites below leave live tweens behind on purpose.
+  gsap.globalTimeline.clear();
+  document.body.innerHTML = '';
 });
+
+/** Jump every live tween to its end, firing `onComplete` (and so `clearProps`). */
+function finishEveryTween(): void {
+  for (const child of gsap.globalTimeline.getChildren()) child.progress(1);
+}
 
 describe('every preset, with motion off', () => {
   it.each(allPresets)('%s enter calls done synchronously and leaves no inline style', (_name, preset) => {
@@ -209,7 +216,7 @@ describe('the cancelled hooks', () => {
     preset.enterCancelled(el);
 
     expect(killSpy).toHaveBeenCalledWith(el);
-    expect(setSpy).toHaveBeenCalledWith(el, { clearProps: 'all' });
+    expect(setSpy).toHaveBeenCalledWith(el, { clearProps: CLEAR_PROPS });
     expect(order).toEqual(['killTweensOf', 'set']);
   });
 
@@ -221,7 +228,7 @@ describe('the cancelled hooks', () => {
     preset.leaveCancelled!(el);
 
     expect(killSpy).toHaveBeenCalledWith(el);
-    expect(setSpy).toHaveBeenCalledWith(el, { clearProps: 'all' });
+    expect(setSpy).toHaveBeenCalledWith(el, { clearProps: CLEAR_PROPS });
   });
 });
 
@@ -291,8 +298,10 @@ describe('the modal preset', () => {
     state.motionOn = true;
     const { to } = spyOnGsap([]);
     presets.modal.leave!(document.createElement('div'), vi.fn());
+    // The literal, not `DUR.fast`: the Phase 4 constraint is 150 ms, so a token
+    // that drifted upwards has to fail here rather than move the bound with it.
     for (const call of to.mock.calls) {
-      expect((call[1] as Vars).duration as number).toBeLessThanOrEqual(DUR.fast);
+      expect((call[1] as Vars).duration as number).toBeLessThanOrEqual(0.15);
     }
   });
 
@@ -323,5 +332,107 @@ describe('transitionHooks', () => {
     for (const preset of Object.values(presets)) {
       expect(transitionHooks(preset)).not.toHaveProperty('mode');
     }
+  });
+
+  it('refuses a preset that can leave but cannot be interrupted', () => {
+    const halfWritten: MotionPreset = {
+      enter: presets.fade.enter,
+      enterCancelled: presets.fade.enterCancelled,
+      leave: (_el, done) => done(),
+    };
+    // Loud, not lenient: silently dropping the leave would ship a modal that
+    // never animates out and give no clue why.
+    expect(() => transitionHooks(halfWritten)).toThrow(/leaveCancelled/);
+  });
+});
+
+describe('the inline styles the app itself owns', () => {
+  /** A CSS custom property and a width, of the kind a template or script sets. */
+  const APP_STYLE = '--steps: 7; width: 42px';
+
+  function styled(): HTMLElement {
+    const el = document.createElement('div');
+    el.setAttribute('style', APP_STYLE);
+    document.body.append(el);
+    return el;
+  }
+
+  function survives(el: HTMLElement): void {
+    expect(el.style.getPropertyValue('--steps').trim()).toBe('7');
+    expect(el.style.width).toBe('42px');
+  }
+
+  it.each(allPresets)('%s enter keeps them on the reduced-motion path', (_name, preset) => {
+    const el = styled();
+    preset.enter(el, vi.fn());
+    survives(el);
+  });
+
+  it.each(allPresets)('%s enter keeps them once the tween completes', (_name, preset) => {
+    state.motionOn = true;
+    const el = styled();
+    preset.enter(el, vi.fn());
+    finishEveryTween();
+    survives(el);
+    expect(el.style.opacity).toBe('');
+  });
+
+  it.each(allPresets)('%s enterCancelled keeps them', (_name, preset) => {
+    state.motionOn = true;
+    const el = styled();
+    preset.enter(el, vi.fn());
+    preset.enterCancelled(el);
+    survives(el);
+    expect(el.style.opacity).toBe('');
+  });
+
+  it.each(leavingPresets)('%s leaveCancelled keeps them and lets the element be clicked again', (_name, preset) => {
+    state.motionOn = true;
+    const el = styled();
+    preset.leave!(el, vi.fn());
+    expect(el.style.pointerEvents).toBe('none');
+
+    preset.leaveCancelled!(el);
+
+    expect(el.style.pointerEvents).toBe('');
+    survives(el);
+  });
+});
+
+describe('cancelling, against the real timeline', () => {
+  it('modal leaves nothing tweening — the panel included', () => {
+    state.motionOn = true;
+    const overlay = document.createElement('div');
+    const panel = document.createElement('div');
+    panel.setAttribute('data-ui', 'modal-panel');
+    overlay.append(panel);
+    document.body.append(overlay);
+
+    presets.modal.enter(overlay, vi.fn());
+    expect(gsap.globalTimeline.getChildren().length).toBeGreaterThanOrEqual(2);
+
+    presets.modal.enterCancelled(overlay);
+
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+    expect(overlay.getAttribute('style') ?? '').toBe('');
+    expect(panel.getAttribute('style') ?? '').toBe('');
+  });
+
+  it('leaves nothing tweening when a close is interrupted', () => {
+    state.motionOn = true;
+    const overlay = document.createElement('div');
+    const panel = document.createElement('div');
+    panel.setAttribute('data-ui', 'modal-panel');
+    overlay.append(panel);
+    document.body.append(overlay);
+
+    presets.modal.leave!(overlay, vi.fn());
+    expect(gsap.globalTimeline.getChildren().length).toBeGreaterThanOrEqual(2);
+
+    presets.modal.leaveCancelled!(overlay);
+
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+    expect(overlay.style.pointerEvents).toBe('');
+    expect(panel.getAttribute('style') ?? '').toBe('');
   });
 });

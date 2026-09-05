@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DirectiveBinding, ObjectDirective } from 'vue';
 
-import { gsap } from './gsap';
+import { CLEAR_PROPS, gsap } from './gsap';
 import { DUR } from './tokens';
 import {
   FLASH_DURATION,
@@ -83,13 +83,15 @@ function setHoverSupport(matches: boolean): void {
 function stubTweens(): { fromTo: ReturnType<typeof vi.fn>; to: ReturnType<typeof vi.fn> } {
   const fromTo = vi.fn();
   const to = vi.fn();
+  // The stub returns something killable, because `v-reveal.stagger` keeps the
+  // handle its `fromTo` returns and kills it on unmount.
   vi.spyOn(gsap, 'fromTo').mockImplementation(((...args: unknown[]) => {
     fromTo(...args);
-    return args as never;
+    return { kill() {} } as never;
   }) as never);
   vi.spyOn(gsap, 'to').mockImplementation(((...args: unknown[]) => {
     to(...args);
-    return args as never;
+    return { kill() {} } as never;
   }) as never);
   return { fromTo, to };
 }
@@ -120,6 +122,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  // The real-timeline suite below leaves live tweens behind on purpose.
+  gsap.globalTimeline.clear();
   Object.defineProperty(window, 'matchMedia', {
     value: originalMatchMedia,
     writable: true,
@@ -173,7 +177,61 @@ describe('every directive', () => {
     hook(directive, 'unmounted', el);
 
     expect(kill).toHaveBeenCalledWith(el);
-    expect(set).toHaveBeenCalledWith(el, { clearProps: 'all' });
+    expect(set).toHaveBeenCalledWith(el, { clearProps: CLEAR_PROPS });
+  });
+
+  it.each(allDirectives)('%s keeps the inline styles the app itself set', (_name, directive) => {
+    state.motionOn = true;
+    const el = withRevealChildren(2);
+    el.setAttribute('style', '--steps: 7; width: 42px');
+    document.body.append(el);
+
+    hook(directive, 'mounted', el, { stagger: true });
+    hook(directive, 'unmounted', el, { stagger: true });
+
+    expect(el.style.getPropertyValue('--steps').trim()).toBe('7');
+    expect(el.style.width).toBe('42px');
+  });
+});
+
+describe('unmounting, against the real timeline', () => {
+  it('v-reveal.stagger leaves nothing tweening on the children it animated', () => {
+    state.motionOn = true;
+    const el = withRevealChildren(3);
+    document.body.append(el);
+
+    hook(vReveal, 'mounted', el, { stagger: true });
+    expect(gsap.globalTimeline.getChildren().length).toBeGreaterThanOrEqual(1);
+
+    hook(vReveal, 'unmounted', el, { stagger: true });
+
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+    for (const child of Array.from(el.children)) {
+      expect(child.getAttribute('style') ?? '').toBe('');
+    }
+  });
+
+  it('lets a batch already in flight finish when a second one arrives', () => {
+    state.motionOn = true;
+    const el = withRevealChildren(2);
+    document.body.append(el);
+    hook(vReveal, 'mounted', el, { stagger: true });
+
+    const late = document.createElement('p');
+    late.setAttribute('data-reveal', '');
+    el.append(late);
+    hook(vReveal, 'updated', el, { stagger: true });
+
+    // Two live batches, not one: killing the first to make room for the second
+    // would strand its children half-faded, with no onComplete left to clear.
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(2);
+
+    hook(vReveal, 'unmounted', el, { stagger: true });
+
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+    for (const child of Array.from(el.children)) {
+      expect(child.getAttribute('style') ?? '').toBe('');
+    }
   });
 });
 
