@@ -140,6 +140,24 @@ const rootClass = computed(() =>
   content: none;
 }
 
+@media (min-width: 768px) {
+  /*
+   * A compact first step still gets the compact indent (0.875rem, same as
+   * every other compact item) at `md:` and up — it just has no connector to
+   * indent *for*, unlike its siblings. That has to be true regardless of
+   * where this rule sits in the file: `:first-child` here makes this
+   * selector strictly more specific than both the plain `:first-child` rule
+   * above and the `[data-compact="true"] :slotted([data-step])` rule in the
+   * first media block, so the invariant holds by specificity, not by
+   * accident of source order (round 1 fix: moving the compact rule into a
+   * media block ahead of the plain `:first-child` rule flipped a same-
+   * specificity tie and zeroed this out on desktop).
+   */
+  .ui-stepper[data-compact="true"] :slotted([data-step]:first-child) {
+    padding-left: 0.875rem;
+  }
+}
+
 .ui-stepper :slotted([data-step="done"]),
 .ui-stepper :slotted([data-step="active"]) {
   color: rgb(var(--color-fg));

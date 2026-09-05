@@ -96,6 +96,38 @@ describe("UiStepper", () => {
     });
   });
 
+  describe("compact first-step indent (round 1 fix)", () => {
+    /**
+     * Regression: moving the compact indent rule into the `md:` media block
+     * put it *before* the generic `:first-child` rule in source order; at
+     * equal specificity the later rule wins, so the generic rule started
+     * winning and a compact first step lost its indent on desktop. The fix
+     * is a dedicated `[data-compact="true"] :slotted([data-step]:first-child)`
+     * rule, which is strictly more specific than either competing rule
+     * (it has everything the generic `:first-child` rule has, plus the
+     * `[data-compact="true"]` qualifier) — so the invariant holds regardless
+     * of where the rule sits in the file. This test still pins it after the
+     * generic rule, matching how it's actually written.
+     */
+    it("gives a compact first step the same indent as its siblings, at md: and up", () => {
+      const compactFirstChildRule =
+        /\.ui-stepper\[data-compact="true"\]\s*:slotted\(\[data-step\]:first-child\)\s*\{\s*padding-left:\s*0\.875rem;/;
+      expect(source).toMatch(compactFirstChildRule);
+
+      const mdBlock = source.slice(source.indexOf("@media (min-width: 768px)"));
+      expect(mdBlock).toMatch(compactFirstChildRule);
+    });
+
+    it("declares the compact first-child rule after the generic first-child rule", () => {
+      const genericIndex = source.indexOf(":slotted([data-step]:first-child)");
+      const compactIndex = source.indexOf(
+        '[data-compact="true"] :slotted([data-step]:first-child)',
+      );
+      expect(genericIndex).toBeGreaterThan(-1);
+      expect(compactIndex).toBeGreaterThan(genericIndex);
+    });
+  });
+
   describe("what it holds", () => {
     it("renders the steps the caller passes, untouched", () => {
       const steps = mountStepper().findAll("li");
