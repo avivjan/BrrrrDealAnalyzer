@@ -179,12 +179,15 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173/>. From the landing page, click the new
-**REPS Tracker** card (rose / amber gradient, clock icon).
+Open <http://localhost:5173/>. On the landing page the cards fade in as a
+staggered group; **REPS Tracker** is the first tile — a rose-to-amber gradient
+wash behind a clock icon, subtitled "Log hours", with a corner arrow that slides
+in on hover. Click it to reach `/reps`.
 
-If `/reps/config-status` reports `configured=false` you'll see a yellow
-banner with the missing env vars; otherwise the dashboard, timer, modal,
-and stats are live.
+If `/reps/config-status` reports `configured=false`, an amber panel appears above
+the dashboard — "REPS feature is not connected yet", the missing env vars, and a
+pointer back at this file. Everything below it (timer, stat tiles, entry modal,
+people manager) renders either way.
 
 ---
 
