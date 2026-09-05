@@ -271,7 +271,7 @@ function close() {
             variant="tab"
             size="sm"
             :active="activeTab === tab"
-            class="min-h-9 px-3"
+            class="min-h-9 touch:min-h-11 px-3"
           >
             {{ tab === "BRRRR" ? "BRRRR" : "Flip" }}
           </UiButton>
@@ -478,7 +478,7 @@ function close() {
                 @click="addSubstage(stageIdx)"
                 variant="ghost"
                 size="sm"
-                class="mt-1 min-h-9 text-primary hover:text-primary-hover"
+                class="mt-1 min-h-9 touch:min-h-11 text-primary hover:text-primary-hover"
               >
                 <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add
                 substage

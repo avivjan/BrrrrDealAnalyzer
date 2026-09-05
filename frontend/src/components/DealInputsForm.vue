@@ -434,6 +434,7 @@ const hmToggleId = useId();
               data-testid="form.quick-defaults"
               variant="secondary"
               size="sm"
+              class="touch:min-h-11"
               @click="quickCalcSellingCosts"
             >
               Quick Defaults (3%/3%/$5k)

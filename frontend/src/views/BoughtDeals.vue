@@ -449,7 +449,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           variant="tab"
           size="sm"
           :active="activeTab === tab.id"
-          class="min-h-9 shrink-0 px-3"
+          class="min-h-9 touch:min-h-11 shrink-0 px-3"
         >
           {{ tab.label }}
           <span
@@ -466,7 +466,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           @click="openPipelineEditor"
           variant="secondary"
           size="sm"
-          class="min-h-9 gap-2"
+          class="min-h-9 touch:min-h-11 gap-2"
           :title="`Edit ${activeTab} pipeline stages & substages`"
         >
           <i class="pi pi-sliders-v" aria-hidden="true"></i>
@@ -484,7 +484,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           @click="$router.push('/my-deals')"
           variant="secondary"
           size="sm"
-          class="min-h-9 gap-2"
+          class="min-h-9 touch:min-h-11 gap-2"
           title="Back to active deal pipeline"
         >
           <i class="pi pi-th-large" aria-hidden="true"></i>
@@ -1106,7 +1106,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     @click="editingDeal.sold_comps ? editingDeal.sold_comps.push({ url: '', arv: 0, how_long_ago: '' }) : (editingDeal.sold_comps = [{ url: '', arv: 0, how_long_ago: '' }])"
                     variant="secondary"
                     size="sm"
-                    class="min-h-8"
+                    class="min-h-8 touch:min-h-11"
                   >
                     <i class="pi pi-plus" aria-hidden="true"></i> Add
                   </UiButton>
@@ -1138,7 +1138,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     @click="editingDealType === 'FLIP' ? ((editingDeal as any).sale_comps ? (editingDeal as any).sale_comps.push({ url: '', arv: 0, how_long_ago: '' }) : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])) : (editingDeal.rent_comps ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' }) : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }]))"
                     variant="secondary"
                     size="sm"
-                    class="min-h-8"
+                    class="min-h-8 touch:min-h-11"
                   >
                     <i class="pi pi-plus" aria-hidden="true"></i> Add
                   </UiButton>
@@ -1217,7 +1217,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 @click="deleteEditingDeal"
                 variant="ghost"
                 size="sm"
-                class="min-h-9 text-negative hover:bg-negative/10"
+                class="min-h-9 touch:min-h-11 text-negative hover:bg-negative/10"
               >
                 <i class="pi pi-trash" aria-hidden="true"></i> Delete
               </UiButton>
@@ -1226,7 +1226,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 @click="closeModal"
                 variant="ghost"
                 size="sm"
-                class="min-h-9"
+                class="min-h-9 touch:min-h-11"
               >
                 <i class="pi pi-times" aria-hidden="true"></i> Close
               </UiButton>

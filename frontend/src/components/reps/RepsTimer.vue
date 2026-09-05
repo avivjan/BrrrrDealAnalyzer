@@ -195,7 +195,7 @@ function onCameraFiles(e: Event) {
           data-testid="repstimer.pin-gps"
           variant="secondary"
           size="sm"
-          class="min-h-9"
+          class="min-h-9 touch:min-h-11"
           :disabled="capturing"
           :title="isRunning ? 'Capture GPS while clocked in' : 'Capture GPS at pause / before finish'"
           @click="pinGps(isRunning ? 'bookmark' : 'timer_pause')"
@@ -208,7 +208,7 @@ function onCameraFiles(e: Event) {
           data-testid="repstimer.take-photo"
           variant="secondary"
           size="sm"
-          class="min-h-9"
+          class="min-h-9 touch:min-h-11"
           @click="openCamera"
         >
           <i class="pi pi-camera" aria-hidden="true"></i> Take Photo / Video
@@ -218,7 +218,7 @@ function onCameraFiles(e: Event) {
           data-testid="repstimer.attach-file"
           variant="secondary"
           size="sm"
-          class="min-h-9"
+          class="min-h-9 touch:min-h-11"
           @click="openGallery"
         >
           <i class="pi pi-paperclip" aria-hidden="true"></i> Attach File

@@ -519,7 +519,7 @@ function close() {
               data-testid="repsmodal.category-toggle"
               variant="ghost"
               size="sm"
-              class="min-h-9 text-[11px] text-primary"
+              class="min-h-9 touch:min-h-11 text-[11px] text-primary"
               @click="showAddCategory = !showAddCategory"
             >
               <i class="pi pi-plus mr-1" aria-hidden="true"></i>{{ showAddCategory ? 'Cancel' : 'Add new' }}
@@ -548,7 +548,7 @@ function close() {
               type="button"
               data-testid="repsmodal.category-add"
               size="sm"
-              class="min-h-9 shrink-0"
+              class="min-h-9 touch:min-h-11 shrink-0"
               :disabled="addingCategory || !newCategoryName.trim()"
               @click="addCategoryInline"
             >
@@ -651,7 +651,7 @@ function close() {
                 data-testid="repsmodal.capture-gps"
                 variant="secondary"
                 size="sm"
-                class="min-h-9"
+                class="min-h-9 touch:min-h-11"
                 :disabled="capturingSnapshot"
                 @click="captureSnapshotNow('manual_save')"
               >
@@ -663,7 +663,7 @@ function close() {
                 data-testid="repsmodal.mark-remote"
                 variant="ghost"
                 size="sm"
-                class="min-h-9"
+                class="min-h-9 touch:min-h-11"
                 @click="markRemote"
               >
                 Mark as Remote
@@ -739,13 +739,13 @@ function close() {
                 data-testid="repsmodal.evidence-camera"
                 variant="secondary"
                 size="sm"
-                class="min-h-9"
+                class="min-h-9 touch:min-h-11"
                 @click="openCameraDirect"
               >
                 <i class="pi pi-camera text-[10px]" aria-hidden="true"></i> Camera
               </UiButton>
               <label
-                class="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-ctl border border-line bg-surface px-2.5 py-1 text-xs font-medium text-fg transition-colors hover:bg-surface-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                class="inline-flex min-h-9 touch:min-h-11 cursor-pointer items-center gap-1 rounded-ctl border border-line bg-surface px-2.5 py-1 text-xs font-medium text-fg transition-colors hover:bg-surface-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
               >
                 <i class="pi pi-paperclip text-[10px]" aria-hidden="true"></i> Attach
                 <input
@@ -862,7 +862,7 @@ function close() {
               type="button"
               variant="secondary"
               size="sm"
-              class="min-h-9 rounded-full"
+              class="min-h-9 touch:min-h-11 rounded-full"
               :class="peopleSelected.has(p.name) ? 'border-primary bg-primary text-primary-fg hover:bg-primary-hover' : ''"
               :aria-pressed="peopleSelected.has(p.name)"
               @click="togglePerson(p.name)"

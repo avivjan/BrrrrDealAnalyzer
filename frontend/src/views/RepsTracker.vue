@@ -88,7 +88,7 @@ function onSaved() {
           data-testid="reps.people-toggle"
           :variant="showPeoplePanel ? 'primary' : 'secondary'"
           size="sm"
-          class="min-h-9 shrink-0"
+          class="min-h-9 touch:min-h-11 shrink-0"
           @click="showPeoplePanel = !showPeoplePanel"
         >
           <i class="pi pi-users" aria-hidden="true"></i> People
@@ -105,7 +105,7 @@ function onSaved() {
             variant="tab"
             size="sm"
             :active="store.activeUser === u"
-            class="min-h-9 shrink-0"
+            class="min-h-9 touch:min-h-11 shrink-0"
             @click="setUser(u)"
           >
             <i class="pi pi-user text-xs" aria-hidden="true"></i>

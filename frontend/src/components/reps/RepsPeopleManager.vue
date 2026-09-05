@@ -103,7 +103,7 @@ async function remove(id: string) {
         class="ui-input text-sm"
         aria-label="Notes"
       />
-      <UiButton data-testid="repspeople.add" size="sm" class="min-h-9" @click="add">
+      <UiButton data-testid="repspeople.add" size="sm" class="min-h-9 touch:min-h-11" @click="add">
         <i class="pi pi-plus" aria-hidden="true"></i> Add
       </UiButton>
     </div>

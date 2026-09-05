@@ -26,7 +26,7 @@ function formatDate(iso: string): string {
         data-testid="daydetail.add"
         variant="ghost"
         size="sm"
-        class="min-h-9 shrink-0 text-primary hover:text-primary-hover"
+        class="min-h-9 touch:min-h-11 shrink-0 text-primary hover:text-primary-hover"
         @click="$emit('addOnDate', bucket.date)"
       >
         + Add flow

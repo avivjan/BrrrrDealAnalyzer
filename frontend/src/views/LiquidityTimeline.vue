@@ -389,7 +389,7 @@ function showToast(msg: string) {
           data-testid="liquidity.today"
           variant="ghost"
           size="sm"
-          class="min-h-9 gap-1.5"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="chartRef?.centerOnToday()"
         >
           <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
@@ -398,7 +398,7 @@ function showToast(msg: string) {
           data-testid="liquidity.mercury-sync"
           variant="ghost"
           size="sm"
-          class="min-h-9 gap-1.5"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           :disabled="store.mercurySyncing"
           :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
           @click="refreshFromMercury"
@@ -410,7 +410,7 @@ function showToast(msg: string) {
           data-testid="liquidity.settings-open"
           variant="ghost"
           size="sm"
-          class="min-h-9 gap-1.5"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="settingsOpen = true"
         >
           <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
@@ -419,7 +419,7 @@ function showToast(msg: string) {
           data-testid="liquidity.add-flow"
           variant="primary"
           size="sm"
-          class="min-h-9 gap-1.5"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="openAddForm()"
         >
           <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
@@ -445,7 +445,7 @@ function showToast(msg: string) {
           data-testid="liquidity.retry"
           variant="secondary"
           size="sm"
-          class="min-h-9"
+          class="min-h-9 touch:min-h-11"
           @click="store.fetchAll()"
         >
           Retry

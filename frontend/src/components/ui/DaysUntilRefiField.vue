@@ -91,7 +91,7 @@ const refiDateId = useId();
         data-part="toggle"
         variant="ghost"
         size="sm"
-        class="text-primary hover:text-primary-hover"
+        class="text-primary hover:text-primary-hover touch:min-h-11"
         @click="picking ? (picking = false) : openPicker()"
       >
         <i class="pi pi-calendar text-[11px]" aria-hidden="true"></i>
@@ -150,6 +150,7 @@ const refiDateId = useId();
           type="button"
           data-part="done"
           size="sm"
+          class="touch:min-h-11"
           :disabled="pickedDays == null"
           @click="applyPickedDates"
         >

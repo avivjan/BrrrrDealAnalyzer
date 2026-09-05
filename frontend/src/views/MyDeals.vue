@@ -517,7 +517,7 @@ console.groupEnd();
           @click="$router.push('/bought-deals')"
           variant="secondary"
           size="sm"
-          class="min-h-9 gap-2"
+          class="min-h-9 touch:min-h-11 gap-2"
           title="Open bought deals pipeline"
         >
           <i class="pi pi-arrow-circle-right" aria-hidden="true"></i>
@@ -551,7 +551,7 @@ console.groupEnd();
           variant="tab"
           size="sm"
           :active="activeTab === tab.id"
-          class="min-h-9 shrink-0 px-3"
+          class="min-h-9 touch:min-h-11 shrink-0 px-3"
         >
           {{ tab.label }}
           <span
@@ -695,7 +695,7 @@ console.groupEnd();
               :disabled="isPreparingPdf"
               variant="secondary"
               size="sm"
-              class="min-h-9"
+              class="min-h-9 touch:min-h-11"
               :title="isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
             >
               <i
@@ -1036,7 +1036,7 @@ console.groupEnd();
                   "
                   variant="secondary"
                   size="sm"
-                  class="min-h-8"
+                  class="min-h-8 touch:min-h-11"
                 >
                   <i class="pi pi-plus" aria-hidden="true"></i> Add
                 </UiButton>
@@ -1122,7 +1122,7 @@ console.groupEnd();
                   "
                   variant="secondary"
                   size="sm"
-                  class="min-h-8"
+                  class="min-h-8 touch:min-h-11"
                 >
                   <i class="pi pi-plus" aria-hidden="true"></i> Add
                 </UiButton>
@@ -1251,7 +1251,7 @@ console.groupEnd();
               @click="moveToBoughtFromModal"
               variant="ghost"
               size="sm"
-              class="min-h-9 text-positive hover:bg-positive/10"
+              class="min-h-9 touch:min-h-11 text-positive hover:bg-positive/10"
             >
               <i class="pi pi-arrow-right" aria-hidden="true"></i> Move to Bought
             </UiButton>
@@ -1260,7 +1260,7 @@ console.groupEnd();
               @click="deleteEditingDeal"
               variant="ghost"
               size="sm"
-              class="min-h-9 text-negative hover:bg-negative/10"
+              class="min-h-9 touch:min-h-11 text-negative hover:bg-negative/10"
             >
               <i class="pi pi-trash" aria-hidden="true"></i> Delete
             </UiButton>
@@ -1269,7 +1269,7 @@ console.groupEnd();
               @click="duplicateEditingDeal"
               variant="ghost"
               size="sm"
-              class="min-h-9 text-primary hover:bg-primary/10"
+              class="min-h-9 touch:min-h-11 text-primary hover:bg-primary/10"
             >
               <i class="pi pi-copy" aria-hidden="true"></i> Duplicate
             </UiButton>
@@ -1278,7 +1278,7 @@ console.groupEnd();
               @click="closeModal"
               variant="ghost"
               size="sm"
-              class="min-h-9"
+              class="min-h-9 touch:min-h-11"
             >
               <i class="pi pi-times" aria-hidden="true"></i> Close
             </UiButton>
@@ -1315,7 +1315,7 @@ console.groupEnd();
               @click="downloadFromPreview"
               variant="secondary"
               size="sm"
-              class="min-h-9 border-positive/30 bg-positive/10 text-positive hover:bg-positive/20"
+              class="min-h-9 touch:min-h-11 border-positive/30 bg-positive/10 text-positive hover:bg-positive/20"
               title="Download this PDF"
             >
               <i class="pi pi-download text-base" aria-hidden="true"></i>
