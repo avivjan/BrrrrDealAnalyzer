@@ -1,0 +1,207 @@
+{
+  "analyze": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc11=\"\"] > .border-2.border-blue-500.w-5",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "label": {
+      "impact": "critical",
+      "count": 24,
+      "examples": [
+        "#pv_id_1",
+        "#pv_id_10",
+        "#pv_id_13",
+        "#pv_id_15",
+        "#pv_id_17"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 13,
+      "examples": [
+        ".gap-1\\.5.flex-col[data-part=\"input\"]",
+        ".shadow-xl",
+        "div[data-testid=\"form.field.arv_in_thousands\"]",
+        "div[data-testid=\"form.field.cashReserve\"]",
+        "div[data-testid=\"form.field.closingCostsRefi\"]"
+      ]
+    }
+  },
+  "bought-deals": {
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "color-contrast": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-gray-700"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"boughtdeals.stage.purchase\"] > .border-l-blue-500.border-gray-100.bg-gray-50\\/50 > .gap-3.items-center.flex > h3"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    }
+  },
+  "landing": {
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 8,
+      "examples": [
+        ".idx-0 > .card-inner > .card-body",
+        ".idx-1 > .card-inner > .card-body",
+        ".idx-2 > .card-inner > .card-body",
+        ".idx-3 > .card-inner > .card-body",
+        ".idx-4 > .card-inner > .card-body"
+      ]
+    }
+  },
+  "liquidity": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        "p"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 3,
+      "examples": [
+        ".bottom-6",
+        "h2",
+        "p"
+      ]
+    }
+  },
+  "my-deals": {
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "color-contrast": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "button[data-testid=\"mydeals.tab.2\"]",
+        "button[data-testid=\"mydeals.tab.3\"]"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"mydeals.stage.1\"] > .border-gray-100.bg-gray-50\\/50.rounded-t-xl > .gap-3.items-center.flex > h3"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    }
+  },
+  "reps": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 3,
+      "examples": [
+        ".bg-emerald-600",
+        ".mb-5:nth-child(4) > .mb-1.justify-between.text-xs > .text-emerald-600",
+        "div:nth-child(5) > .mb-1.justify-between.text-xs > .text-emerald-600"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".mb-6.justify-between.items-center > h3"
+      ]
+    },
+    "select-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        "select"
+      ]
+    }
+  }
+}

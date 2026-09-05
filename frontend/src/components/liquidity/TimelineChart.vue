@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import type { DayBucket } from '../../types/liquidity'
 import { todayISO } from '../../utils/liquidityEngine'
+import { chartToken } from '../../design/chartTokens'
 
 const props = defineProps<{
   days: DayBucket[]
@@ -103,7 +104,7 @@ function draw() {
   const ctx = canvas.getContext('2d')!
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-  ctx.fillStyle = '#0f1117'
+  ctx.fillStyle = chartToken('bg')
   ctx.fillRect(0, 0, w, h)
 
   const days = props.days
@@ -114,7 +115,7 @@ function draw() {
 
   // Horizontal grid lines + Y labels
   const gridSteps = niceGridSteps(min, max, 6)
-  ctx.strokeStyle = '#1e2030'
+  ctx.strokeStyle = chartToken('grid')
   ctx.lineWidth = 1
   ctx.font = '11px "JetBrains Mono", "SF Mono", "Fira Code", monospace'
   ctx.textAlign = 'right'
@@ -127,7 +128,7 @@ function draw() {
     ctx.moveTo(CHART_PADDING_LEFT, y)
     ctx.lineTo(w, y)
     ctx.stroke()
-    ctx.fillStyle = '#5c6078'
+    ctx.fillStyle = chartToken('axis-text')
     ctx.fillText(formatK(val), CHART_PADDING_LEFT - 8, y)
   }
 
@@ -139,7 +140,7 @@ function draw() {
   if (min < 0 && zeroVisible) {
     const negBottom = Math.min(yForBalance(min, h), h - CHART_PADDING_BOTTOM)
     const negTop = Math.max(zeroY, CHART_PADDING_TOP)
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.04)'
+    ctx.fillStyle = chartToken('reserve-band')
     ctx.fillRect(CHART_PADDING_LEFT, negTop, w - CHART_PADDING_LEFT, negBottom - negTop)
   }
 
@@ -169,18 +170,18 @@ function draw() {
 
     // Weekend shading
     if (isWeekend) {
-      ctx.fillStyle = 'rgba(255,255,255,0.015)'
+      ctx.fillStyle = chartToken('weekend-band')
       ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
     }
 
     // Hovered column highlight
     if (isHovered) {
-      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)'
+      ctx.fillStyle = chartToken('today-band')
       ctx.fillRect(x - DAY_WIDTH / 2, CHART_PADDING_TOP, DAY_WIDTH, plotH)
     }
 
     // Vertical grid line per day
-    ctx.strokeStyle = isFirstOfMonth ? '#2a2f45' : '#16192a'
+    ctx.strokeStyle = isFirstOfMonth ? chartToken('month-line') : chartToken('day-line')
     ctx.lineWidth = isFirstOfMonth ? 1 : 0.5
     ctx.beginPath()
     ctx.moveTo(x - DAY_WIDTH / 2, CHART_PADDING_TOP)
@@ -190,25 +191,25 @@ function draw() {
     // Month label row (drawn once per new month)
     if (monthKey !== prevMonth) {
       const mIdx = parseInt(mo) - 1
-      ctx.fillStyle = '#7c82a0'
+      ctx.fillStyle = chartToken('month-label')
       ctx.font = 'bold 10px "JetBrains Mono", monospace'
       ctx.fillText((MONTH_NAMES[mIdx] ?? '') + ' \'' + yr.slice(2), x + 30, h - CHART_PADDING_BOTTOM + 28)
       prevMonth = monthKey
     }
 
     // Day number label for every day
-    ctx.fillStyle = isToday ? '#818cf8' : isHovered ? '#c7d2fe' : hasTxns ? '#94a3b8' : '#3e4460'
+    ctx.fillStyle = isToday ? chartToken('day-today') : isHovered ? chartToken('day-hover') : hasTxns ? chartToken('day-active') : chartToken('day-idle')
     ctx.font = (isToday || isHovered ? 'bold ' : '') + '10px "JetBrains Mono", monospace'
     ctx.fillText(String(dayNum), x, h - CHART_PADDING_BOTTOM + 6)
 
     // Weekday abbreviation under the number
-    ctx.fillStyle = isToday ? '#6366f1' : '#2e3350'
+    ctx.fillStyle = isToday ? chartToken('marker-today') : chartToken('marker-idle')
     ctx.font = '8px "JetBrains Mono", monospace'
     ctx.fillText(WEEKDAY_NAMES[wd] ?? '', x, h - CHART_PADDING_BOTTOM + 18)
 
     // Today marker
     if (isToday) {
-      ctx.strokeStyle = '#6366f1'
+      ctx.strokeStyle = chartToken('today-line')
       ctx.lineWidth = 1.5
       ctx.setLineDash([3, 3])
       ctx.beginPath()
@@ -222,7 +223,7 @@ function draw() {
     if (hasTxns) {
       ctx.beginPath()
       ctx.arc(x, h - CHART_PADDING_BOTTOM + 2, 1.5, 0, Math.PI * 2)
-      ctx.fillStyle = d.net_k > 0 ? '#22c55e' : '#ef4444'
+      ctx.fillStyle = d.net_k > 0 ? chartToken('net-positive') : chartToken('net-negative')
       ctx.fill()
     }
   }
@@ -241,17 +242,17 @@ function draw() {
     if (bucket.balance_k >= 0) {
       const top = Math.min(balY, baseY)
       const barH = Math.abs(baseY - balY)
-      ctx.fillStyle = isHov ? 'rgba(129, 140, 248, 0.55)' : 'rgba(99, 102, 241, 0.35)'
+      ctx.fillStyle = isHov ? chartToken('inflow-fill-hover') : chartToken('inflow-fill')
       ctx.fillRect(x - barW / 2, top, barW, barH)
-      ctx.strokeStyle = isHov ? '#a5b4fc' : '#818cf8'
+      ctx.strokeStyle = isHov ? chartToken('inflow-stroke-hover') : chartToken('inflow-stroke')
       ctx.lineWidth = isHov ? 1.5 : 0.5
       ctx.strokeRect(x - barW / 2, top, barW, barH)
     } else {
       const top = baseY
       const barH = Math.abs(balY - baseY)
-      ctx.fillStyle = isHov ? 'rgba(239, 68, 68, 0.55)' : 'rgba(239, 68, 68, 0.35)'
+      ctx.fillStyle = isHov ? chartToken('outflow-fill-hover') : chartToken('outflow-fill')
       ctx.fillRect(x - barW / 2, top, barW, barH)
-      ctx.strokeStyle = isHov ? '#fca5a5' : '#ef4444'
+      ctx.strokeStyle = isHov ? chartToken('outflow-stroke-hover') : chartToken('outflow-stroke')
       ctx.lineWidth = isHov ? 1.5 : 0.5
       ctx.strokeRect(x - barW / 2, top, barW, barH)
     }
@@ -259,7 +260,7 @@ function draw() {
 
   // --- Zero line — solid red, drawn on top of bars ---
   if (zeroVisible) {
-    ctx.strokeStyle = '#ef4444'
+    ctx.strokeStyle = chartToken('reserve-line')
     ctx.lineWidth = 2
     ctx.setLineDash([])
     ctx.beginPath()
@@ -274,7 +275,7 @@ function draw() {
     const hy = yForBalance(hBucket.balance_k, h)
 
     // Horizontal crosshair
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)'
+    ctx.strokeStyle = chartToken('baseline')
     ctx.lineWidth = 1
     ctx.setLineDash([2, 2])
     ctx.beginPath()
@@ -284,9 +285,9 @@ function draw() {
     ctx.setLineDash([])
 
     // Y-axis label badge
-    ctx.fillStyle = '#818cf8'
+    ctx.fillStyle = chartToken('balance-dot')
     ctx.fillRect(0, hy - 10, CHART_PADDING_LEFT - 4, 20)
-    ctx.fillStyle = '#fff'
+    ctx.fillStyle = chartToken('balance-dot-core')
     ctx.font = 'bold 10px "JetBrains Mono", monospace'
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -305,7 +306,7 @@ function draw() {
     ctx.lineTo(mx - 5, my - 14)
     ctx.lineTo(mx + 5, my - 14)
     ctx.closePath()
-    ctx.fillStyle = mBucket.balance_k < 0 ? '#ef4444' : '#f59e0b'
+    ctx.fillStyle = mBucket.balance_k < 0 ? chartToken('min-negative') : chartToken('min-warning')
     ctx.fill()
   }
 }
@@ -487,14 +488,21 @@ defineExpose({ centerOnToday })
 </script>
 
 <template>
+  <!--
+    The focus ring is drawn *inside* the box: the canvas is edge to edge, so an
+    outline with an offset would fall outside the chart's own bounds. No size,
+    padding or transform transition here — every resize redraws the canvas.
+  -->
   <div
     ref="containerRef"
-    class="relative w-full h-full select-none outline-none"
+    data-testid="chart.container"
+    class="relative h-full w-full select-none bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     tabindex="0"
     @keydown="onKeyDown"
   >
     <canvas
       ref="canvasRef"
+      data-testid="chart.canvas"
       class="absolute inset-0 cursor-crosshair"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
@@ -507,52 +515,54 @@ defineExpose({ centerOnToday })
     <Transition name="fade">
       <div
         v-if="activeDay"
-        class="absolute top-2 right-2 bg-[#181b28]/95 border border-[#2a2f45] rounded-lg px-4 py-3 shadow-xl pointer-events-none z-10 min-w-[200px] max-w-[280px]"
+        data-testid="chart.tooltip"
+        class="pointer-events-none absolute right-2 top-2 z-10 min-w-[200px] max-w-[280px] rounded-card border border-line bg-surface/95 px-4 py-3 shadow-2"
       >
-        <div class="text-xs text-slate-400 font-mono mb-1.5 tracking-wide">
+        <div class="mb-1.5 text-xs tracking-wide text-fg-muted">
           {{ formatDateForTooltip(activeDay.date) }}
         </div>
-        <div class="text-xl font-mono font-bold mb-1" :class="activeDay.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'">
+        <div class="mb-1 text-xl font-bold tabular" :class="activeDay.balance_k < 0 ? 'text-negative' : 'text-primary'">
           {{ formatK(activeDay.balance_k) }}
-          <span class="text-[10px] font-normal text-slate-500 ml-1">EOD balance</span>
+          <span class="ml-1 text-[10px] font-normal text-fg-muted">EOD balance</span>
         </div>
 
-        <div v-if="activeDay.net_k !== 0" class="text-xs font-mono mb-2 flex items-center gap-1.5">
-          <span class="text-slate-500">Day net:</span>
-          <span class="font-bold" :class="activeDay.net_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+        <div v-if="activeDay.net_k !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
+          <span class="text-fg-muted">Day net:</span>
+          <span class="font-bold tabular" :class="activeDay.net_k > 0 ? 'text-positive' : 'text-negative'">
             {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
           </span>
         </div>
 
         <!-- Transaction list for this day -->
-        <div v-if="activeDay.transactions.length" class="border-t border-[#2a2f45] pt-2 mt-1">
-          <div class="text-[10px] text-slate-500 font-mono mb-1.5 uppercase tracking-wider">
+        <div v-if="activeDay.transactions.length" class="mt-1 border-t border-line pt-2">
+          <div class="mb-1.5 text-[10px] uppercase tracking-wider text-fg-muted">
             Transactions ({{ activeDay.transactions.length }})
           </div>
           <div class="space-y-1">
             <div
               v-for="txn in activeDay.transactions.slice(0, 6)"
               :key="txn.id"
-              class="flex justify-between gap-3 items-baseline"
+              :data-testid="`chart.txn.${txn.id}`"
+              class="flex items-baseline justify-between gap-3"
             >
-              <span class="text-[11px] font-mono text-slate-300 truncate flex items-center gap-1">
+              <span class="flex min-w-0 items-center gap-1 text-[11px] text-fg">
                 <i
                   v-if="txn.recurring_rule_id"
-                  class="pi pi-refresh text-[8px] text-indigo-400 shrink-0"
+                  class="pi pi-refresh shrink-0 text-[8px] text-primary"
                   title="From a recurring rule"
                 ></i>
                 <span class="truncate">{{ txn.description }}</span>
               </span>
-              <span class="text-[11px] font-mono font-bold shrink-0" :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+              <span class="shrink-0 text-[11px] font-bold tabular" :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'">
                 {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
               </span>
             </div>
           </div>
-          <div v-if="activeDay.transactions.length > 6" class="text-[10px] text-slate-500 font-mono mt-1">
+          <div v-if="activeDay.transactions.length > 6" class="mt-1 text-[10px] text-fg-muted">
             +{{ activeDay.transactions.length - 6 }} more
           </div>
         </div>
-        <div v-else class="text-[10px] text-slate-600 font-mono mt-1 italic">
+        <div v-else class="mt-1 text-[10px] italic text-fg-muted">
           No transactions
         </div>
       </div>
@@ -562,7 +572,7 @@ defineExpose({ centerOnToday })
 
 <style scoped>
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;

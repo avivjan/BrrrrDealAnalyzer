@@ -63,18 +63,24 @@ function formatMoney(val: number): string {
   <Transition name="stats-bar">
     <div
       v-if="hasDeals"
+      data-testid="statsbar.root"
       class="stats-bar relative overflow-hidden"
     >
       <div class="stats-bg absolute inset-0"></div>
-      <div class="stats-shimmer absolute inset-0"></div>
+      <!--
+        `animate-shimmer` is the Tailwind keyframe the config already mirrors
+        from this file, so the sweep no longer needs a local `@keyframes`. The
+        global reduced-motion rule in `main.css` neutralises it.
+      -->
+      <div class="stats-shimmer absolute inset-0 animate-shimmer"></div>
 
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-3">
-        <div class="flex items-center justify-center gap-3 sm:gap-6 md:gap-10 flex-wrap">
+      <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-2 sm:px-6">
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 md:gap-10">
           <!-- Label -->
-          <div class="hidden lg:flex items-center gap-2 mr-2">
-            <span class="text-amber-300 text-lg">🏆</span>
+          <div class="mr-2 hidden items-center gap-2 lg:flex">
+            <span class="text-lg text-chart-3">🏆</span>
             <span
-              class="text-xs font-bold uppercase tracking-[0.2em] text-white/60"
+              class="text-xs font-bold uppercase tracking-[0.2em] text-surface/70"
             >
               Portfolio
             </span>
@@ -87,7 +93,7 @@ function formatMoney(val: number): string {
             </div>
             <div class="flex flex-col items-start leading-none">
               <span class="stat-label">Doors</span>
-              <span class="stat-value text-white">
+              <span class="stat-value tabular text-surface">
                 {{ Math.round(animated.numDoors) }}
               </span>
             </div>
@@ -102,7 +108,7 @@ function formatMoney(val: number): string {
             </div>
             <div class="flex flex-col items-start leading-none">
               <span class="stat-label">Total Value</span>
-              <span class="stat-value text-emerald-300">
+              <span class="stat-value tabular text-chart-2">
                 {{ formatMoney(animated.totalValue) }}
               </span>
             </div>
@@ -117,7 +123,7 @@ function formatMoney(val: number): string {
             </div>
             <div class="flex flex-col items-start leading-none">
               <span class="stat-label">Total Debt</span>
-              <span class="stat-value text-blue-300">
+              <span class="stat-value tabular text-chart-4">
                 {{ formatMoney(animated.totalDebt) }}
               </span>
             </div>
@@ -132,7 +138,7 @@ function formatMoney(val: number): string {
             </div>
             <div class="flex flex-col items-start leading-none">
               <span class="stat-label">Equity</span>
-              <span class="stat-value equity-value">
+              <span class="stat-value tabular equity-value">
                 {{ formatMoney(animated.equity) }}
               </span>
             </div>
@@ -144,47 +150,61 @@ function formatMoney(val: number): string {
 </template>
 
 <style scoped>
+/*
+ * The bar is a deliberately inverted surface. The token system has no "dark
+ * chrome" pair, but `--color-fg` / `--color-surface` is one by construction —
+ * they are the ink and the ground of every other surface — so the bar reads
+ * ground-as-`fg`, ink-as-`surface` and keeps its contrast in either theme.
+ *
+ * `--stats-bar-h` is the 60 px the landing page used to subtract by hand. It is
+ * a floor, not a fixed height: below 640 px the four figures wrap onto a second
+ * row, and a hard height would clip them behind the bar's `overflow: hidden`.
+ */
 .stats-bar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  min-height: var(--stats-bar-h);
+  border-bottom: 1px solid rgb(var(--color-surface) / 0.08);
 }
 
+/*
+ * Two layers instead of four colour stops: an opaque `fg` ground with an indigo
+ * and a sky wash over it. The washes are the two accent tokens, so the bar
+ * follows the palette instead of restating three hand-picked navies.
+ */
 .stats-bg {
-  background: linear-gradient(
-    135deg,
-    #0f172a 0%,
-    #1e1b4b 40%,
-    #172554 70%,
-    #0f172a 100%
-  );
+  background:
+    linear-gradient(
+      135deg,
+      rgb(var(--color-primary) / 0) 0%,
+      rgb(var(--color-primary) / 0.28) 40%,
+      rgb(var(--color-chart-4) / 0.22) 70%,
+      rgb(var(--color-primary) / 0) 100%
+    ),
+    linear-gradient(rgb(var(--color-fg)), rgb(var(--color-fg)));
 }
 
+/*
+ * The sweep. `rgb(… / 0)` rather than `transparent`, which interpolates through
+ * transparent *black* in sRGB and greys the middle of the gradient. The
+ * animation itself is the Tailwind `animate-shimmer` utility on the element.
+ */
 .stats-shimmer {
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.02) 20%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(255, 255, 255, 0.02) 80%,
-    transparent 100%
+    rgb(var(--color-surface) / 0) 0%,
+    rgb(var(--color-surface) / 0.02) 20%,
+    rgb(var(--color-surface) / 0.06) 50%,
+    rgb(var(--color-surface) / 0.02) 80%,
+    rgb(var(--color-surface) / 0) 100%
   );
-  animation: shimmer 8s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%,
-  100% {
-    transform: translateX(-100%);
-  }
-  50% {
-    transform: translateX(100%);
-  }
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
 }
 
 .equity-card {
@@ -194,7 +214,7 @@ function formatMoney(val: number): string {
 .stat-icon-ring {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,42 +222,51 @@ function formatMoney(val: number): string {
 }
 
 .stat-icon-doors {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgb(var(--color-surface) / 0.12);
+  color: rgb(var(--color-surface) / 0.85);
 }
 .stat-icon-value {
-  background: rgba(52, 211, 153, 0.15);
-  color: #6ee7b7;
+  background: rgb(var(--color-chart-2) / 0.18);
+  color: rgb(var(--color-chart-2));
 }
 .stat-icon-debt {
-  background: rgba(96, 165, 250, 0.15);
-  color: #93c5fd;
+  background: rgb(var(--color-chart-4) / 0.18);
+  color: rgb(var(--color-chart-4));
 }
 .stat-icon-equity {
-  background: rgba(251, 191, 36, 0.2);
-  color: #fcd34d;
+  background: rgb(var(--color-chart-3) / 0.2);
+  color: rgb(var(--color-chart-3));
 }
 
+/*
+ * 12 px is the bottom of the approved type scale; the old 9.6 px label sat
+ * below it, and at 40 % white it was under 3:1 on this ground as well.
+ */
 .stat-label {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgb(var(--color-surface) / 0.7);
   line-height: 1;
   margin-bottom: 2px;
 }
 
+/* Tabular figures come from the `.tabular` utility on the element itself. */
 .stat-value {
-  font-size: 1.05rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .equity-value {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-chart-3)) 0%,
+    rgb(var(--color-chart-3)) 45%,
+    rgb(var(--color-warning)) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -248,18 +277,25 @@ function formatMoney(val: number): string {
   height: 28px;
   background: linear-gradient(
     180deg,
-    transparent,
-    rgba(255, 255, 255, 0.12),
-    transparent
+    rgb(var(--color-surface) / 0) 0%,
+    rgb(var(--color-surface) / 0.16) 50%,
+    rgb(var(--color-surface) / 0) 100%
   );
 }
 
-/* Entry animation */
+/*
+ * Entry animation. Named properties rather than `all`, so the bar's height and
+ * colours are not dragged through the transition alongside the slide.
+ */
 .stats-bar-enter-active {
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity var(--dur-slow) var(--ease-emphasized),
+    transform var(--dur-slow) var(--ease-emphasized);
 }
 .stats-bar-leave-active {
-  transition: all 0.3s ease-in;
+  transition:
+    opacity var(--dur-base) var(--ease-exit),
+    transform var(--dur-base) var(--ease-exit);
 }
 .stats-bar-enter-from {
   opacity: 0;
@@ -272,7 +308,7 @@ function formatMoney(val: number): string {
 
 @media (max-width: 640px) {
   .stat-value {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
   .stat-icon-ring {
     width: 24px;

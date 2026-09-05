@@ -19,33 +19,36 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-  <div v-if="bucket" class="bg-[#141722] border border-[#2a2f45] rounded-xl p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-mono font-bold text-slate-200">{{ formatDate(bucket.date) }}</h3>
-      <button
-        class="text-xs font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
+  <div v-if="bucket" data-testid="daydetail.root" class="rounded-card border border-line bg-surface p-4 shadow-1">
+    <div class="mb-3 flex items-center justify-between gap-2">
+      <h3 class="min-w-0 truncate text-sm font-semibold text-fg">{{ formatDate(bucket.date) }}</h3>
+      <UiButton
+        data-testid="daydetail.add"
+        variant="ghost"
+        size="sm"
+        class="min-h-9 touch:min-h-11 shrink-0 text-primary hover:text-primary-hover"
         @click="$emit('addOnDate', bucket.date)"
       >
         + Add flow
-      </button>
+      </UiButton>
     </div>
 
-    <div class="flex gap-4 mb-3 text-xs font-mono">
+    <div class="mb-3 flex gap-4 text-xs">
       <div>
-        <span class="text-slate-500">Net: </span>
-        <span :class="bucket.net_k > 0 ? 'text-emerald-400' : bucket.net_k < 0 ? 'text-red-400' : 'text-slate-400'">
+        <span class="text-fg-muted">Net: </span>
+        <span class="tabular font-semibold" :class="bucket.net_k > 0 ? 'text-positive' : bucket.net_k < 0 ? 'text-negative' : 'text-fg-muted'">
           {{ bucket.net_k > 0 ? '+' : '' }}{{ bucket.net_k.toFixed(2) }}k
         </span>
       </div>
       <div>
-        <span class="text-slate-500">EOD: </span>
-        <span :class="bucket.balance_k < 0 ? 'text-red-400' : 'text-indigo-300'" class="font-bold">
+        <span class="text-fg-muted">EOD: </span>
+        <span :class="bucket.balance_k < 0 ? 'text-negative' : 'text-primary'" class="tabular font-bold">
           {{ bucket.balance_k.toFixed(2) }}k
         </span>
       </div>
     </div>
 
-    <div v-if="bucket.transactions.length === 0" class="text-xs text-slate-500 font-mono py-2">
+    <div v-if="bucket.transactions.length === 0" data-testid="daydetail.empty" class="py-2 text-xs text-fg-muted">
       No transactions on this date.
     </div>
 
@@ -53,45 +56,50 @@ function formatDate(iso: string): string {
       <div
         v-for="txn in bucket.transactions"
         :key="txn.id"
-        class="flex items-center gap-2 bg-[#1a1d2e] rounded-lg px-3 py-2 group"
-        :class="txn.recurring_rule_id ? 'border border-indigo-500/20' : ''"
+        :data-testid="`daydetail.txn.${txn.id}`"
+        class="group flex items-center gap-2 rounded-ctl bg-surface-muted px-3 py-2"
+        :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
       >
-        <div class="w-1.5 h-1.5 rounded-full shrink-0"
-          :class="txn.amount_k > 0 ? 'bg-emerald-400' : 'bg-red-400'"
+        <div class="h-1.5 w-1.5 shrink-0 rounded-full"
+          :class="txn.amount_k > 0 ? 'bg-positive' : 'bg-negative'"
         />
-        <div class="flex-1 min-w-0">
+        <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
-            <div class="text-xs font-mono text-slate-300 truncate">{{ txn.description }}</div>
-            <span
+            <div class="min-w-0 break-words text-xs text-fg line-clamp-2">{{ txn.description }}</div>
+            <UiBadge
               v-if="txn.recurring_rule_id"
-              class="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 rounded px-1 py-0.5 flex items-center gap-0.5 shrink-0"
+              tone="primary"
+              class="shrink-0 gap-0.5 px-1 py-0.5 text-[9px]"
               title="Projected from a recurring rule. Edit/delete affects the whole series."
             >
-              <i class="pi pi-refresh text-[8px]"></i>
+              <i class="pi pi-refresh text-[8px]" aria-hidden="true"></i>
               recurring
-            </span>
+            </UiBadge>
           </div>
         </div>
-        <div class="text-xs font-mono font-bold shrink-0"
-          :class="txn.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'"
+        <div class="shrink-0 text-xs font-bold tabular"
+          :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'"
         >
           {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(2) }}k
         </div>
-        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <button
-            class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
+        <div class="flex shrink-0 gap-2 opacity-0 transition-opacity duration-fast ease-standard focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
+          <UiIconButton
+            :data-testid="`daydetail.txn.${txn.id}.edit`"
             :title="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
+            :label="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
             @click="$emit('editTxn', txn.id)"
           >
-            <i class="pi pi-pencil text-[10px]"></i>
-          </button>
-          <button
-            class="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            <i class="pi pi-pencil text-[10px]" aria-hidden="true"></i>
+          </UiIconButton>
+          <UiIconButton
+            :data-testid="`daydetail.txn.${txn.id}.delete`"
+            variant="danger"
             :title="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
+            :label="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
             @click="$emit('deleteTxn', txn.id)"
           >
-            <i class="pi pi-trash text-[10px]"></i>
-          </button>
+            <i class="pi pi-trash text-[10px]" aria-hidden="true"></i>
+          </UiIconButton>
         </div>
       </div>
     </div>

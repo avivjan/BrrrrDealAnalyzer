@@ -1,0 +1,15 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/send-offer",
+      "body": {
+        "agent_email": "dana@example.com",
+        "agent_name": "Dana Broker",
+        "inspection_period_days": 7,
+        "property_address": "9 Offer Way",
+        "purchase_price": 250000
+      }
+    }
+  ]
+}

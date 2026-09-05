@@ -17,6 +17,7 @@
  */
 import InputNumber from "primevue/inputnumber";
 import Slider from "primevue/slider";
+import { useId } from "vue";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -47,21 +48,27 @@ const sliderValue = computed({
   get: () => props.modelValue ?? thumbMin.value,
   set: (val: number) => emit("update:modelValue", val),
 });
+
+const inputId = useId();
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
-    <div class="flex justify-between items-center">
+    <div class="flex items-center justify-between gap-2">
       <label
-        class="text-sm font-medium text-gray-700"
+        :for="inputId"
+        data-part="label"
+        class="text-sm font-medium text-fg"
         :class="{
-          'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
+          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
         }"
       >
         {{ label }}
       </label>
       <div class="w-24">
         <InputNumber
+          data-part="input"
+          :input-id="inputId"
           :model-value="modelValue"
           :min="min"
           :max="max"
@@ -70,27 +77,19 @@ const sliderValue = computed({
           :allowEmpty="true"
           :minFractionDigits="0"
           :maxFractionDigits="3"
-          inputClass="w-full text-right bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          inputClass="ui-input tabular px-2 py-1 text-right text-sm"
           @input="(e: any) => emit('update:modelValue', e.value)"
         />
       </div>
     </div>
     <div class="px-1">
       <Slider
+        data-part="slider"
         v-model="sliderValue"
         :min="thumbMin"
         :max="thumbMax"
         :step="step"
-        class="w-full h-2 bg-gray-200 rounded-full cursor-pointer relative"
-        :pt="{
-          range: {
-            class: 'bg-blue-500 h-full rounded-full absolute top-0 left-0',
-          },
-          handle: {
-            class:
-              'bg-white border-2 border-blue-500 w-5 h-5 rounded-full absolute top-1/2 -mt-2.5 -ml-2.5 shadow-md hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-300',
-          },
-        }"
+        class="relative h-2 w-full cursor-pointer rounded-full bg-line"
       />
     </div>
   </div>

@@ -15,6 +15,7 @@
  * the card modals' debounced autosave and re-analyze behave exactly as before.
  */
 import { computed, ref, watch } from "vue";
+import { useId } from "vue";
 import { formatMoney, parseMoney, toEditableText } from "../../utils/money";
 
 const props = defineProps<{
@@ -107,32 +108,47 @@ const onKeydown = (e: KeyboardEvent) => {
     (e.target as HTMLInputElement).blur();
   }
 };
+
+const inputId = useId();
 </script>
 
 <template>
   <div class="flex flex-col gap-1.5">
-    <!-- The hint shares the label's row rather than taking one of its own, so
-         a money field is exactly as tall as every other input beside it and
-         nothing shifts when the hint appears mid-typing. -->
-    <div class="flex justify-between items-baseline gap-2">
+    <!--
+      The hint shares the label's row rather than taking one of its own, so a
+      money field is exactly as tall as every other input beside it and nothing
+      shifts when the hint appears mid-typing. It stays *outside* the `<label>`,
+      and the label reaches the input through `for`/`id` rather than by wrapping
+      it: a reading that changes on every keystroke must not become part of the
+      field's accessible name.
+    -->
+    <div class="flex items-baseline justify-between gap-2">
       <label
-        class="text-sm font-medium text-gray-700"
+        :for="inputId"
+        data-part="label"
+        class="text-sm font-medium text-fg"
         :class="{
-          'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
+          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
         }"
       >
         {{ label }}
       </label>
-      <span v-if="hint" class="text-xs font-medium text-blue-600">{{ hint }}</span>
+      <span
+        v-if="hint"
+        data-part="hint"
+        class="tabular text-xs font-medium text-primary"
+      >{{ hint }}</span>
     </div>
     <input
+      :id="inputId"
+      data-part="input"
       type="text"
       inputmode="decimal"
       autocomplete="off"
       :value="displayText"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+      class="ui-input tabular"
       @focus="onFocus"
       @blur="commit"
       @input="draft = ($event.target as HTMLInputElement).value"

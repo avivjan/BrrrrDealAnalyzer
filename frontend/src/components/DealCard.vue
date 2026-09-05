@@ -89,70 +89,98 @@ const formatMoney = (val?: number) =>
 </script>
 
 <template>
-  <div
-    class="p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden"
+  <UiCard
+    tone="surface"
+    padding="md"
+    :data-stage="deal.stage"
     :class="cardClass"
+    class="group relative overflow-hidden border-line border-l-4 cursor-grab active:cursor-grabbing hover:shadow-2"
   >
     <!-- Badge -->
-    <div
-      class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-      :class="
-        isBrrr
-          ? 'bg-blue-100 text-blue-700 border-blue-200'
-          : 'bg-orange-100 text-orange-700 border-orange-200'
-      "
+    <UiBadge
+      :tone="isBrrr ? 'primary' : 'warning'"
+      size="sm"
+      class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
     >
       {{ isBrrr ? "🏠 BRRRR" : "💰 FLIP" }}
+    </UiBadge>
+
+    <!--
+      One action row instead of four hand-placed `right-*` offsets. The children
+      keep their document order (delete, duplicate, move, copy) so the behaviour
+      manifest is unchanged, and `flex-row-reverse` puts them on screen in the
+      order the absolute offsets used to: copy, move, duplicate, delete.
+    -->
+    <div
+      data-part="card-actions"
+      class="absolute top-2 right-2 z-10 flex flex-row-reverse items-center gap-2 opacity-0 transition-opacity duration-fast ease-standard group-hover:opacity-100 focus-within:opacity-100 touch:opacity-100"
+    >
+      <!-- Delete Button -->
+      <UiIconButton
+        data-testid="dealcard.delete"
+        @click.stop="onDelete(deal.id)"
+        label="Delete Deal"
+        variant="danger"
+        size="sm"
+        title="Delete Deal"
+      >
+        <i class="pi pi-times text-xs" aria-hidden="true"></i>
+      </UiIconButton>
+
+      <!-- Duplicate Button -->
+      <UiIconButton
+        data-testid="dealcard.duplicate"
+        @click.stop="onDuplicate(deal.id)"
+        label="Duplicate Deal"
+        variant="ghost"
+        size="sm"
+        title="Duplicate Deal"
+      >
+        <i class="pi pi-copy text-xs" aria-hidden="true"></i>
+      </UiIconButton>
+      <!-- Move to Bought Button (only for Brought stage) -->
+      <UiIconButton
+        v-if="deal.stage === 3"
+        data-testid="dealcard.move-to-bought"
+        @click.stop="onMoveToBought(deal.id)"
+        label="Move to Bought Deals"
+        variant="ghost"
+        size="sm"
+        title="Move to Bought Deals"
+      >
+        <i class="pi pi-arrow-right text-xs" aria-hidden="true"></i>
+      </UiIconButton>
+
+      <!-- Copy to AI Button -->
+      <UiIconButton
+        data-testid="dealcard.copy"
+        @click.stop="copyToClipboard(deal)"
+        :label="isCopied ? 'Copied!' : 'Copy Summary for AI'"
+        :class="isCopied ? 'text-positive' : ''"
+        variant="ghost"
+        size="sm"
+        :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
+      >
+        <!-- Both glyphs are always rendered and crossfade, so the button does
+             not reflow the row the instant the clipboard write resolves. -->
+        <span class="grid h-4 w-4 place-items-center">
+          <i
+            class="pi pi-file col-start-1 row-start-1 text-xs transition-opacity duration-fast ease-standard"
+            :class="isCopied ? 'opacity-0' : 'opacity-100'"
+            aria-hidden="true"
+          ></i>
+          <i
+            class="pi pi-check col-start-1 row-start-1 text-xs transition-opacity duration-fast ease-standard"
+            :class="isCopied ? 'opacity-100' : 'opacity-0'"
+            aria-hidden="true"
+          ></i>
+        </span>
+      </UiIconButton>
     </div>
 
-    <!-- Delete Button -->
-    <button
-      @click.stop="onDelete(deal.id)"
-      class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
-      title="Delete Deal"
-    >
-      <i class="pi pi-times text-[10px] font-bold"></i>
-    </button>
-
-    <!-- Duplicate Button -->
-    <button
-      @click.stop="onDuplicate(deal.id)"
-      class="absolute top-2 right-9 p-1.5 rounded-full bg-blue-100 text-blue-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-200 hover:scale-110 z-10"
-      title="Duplicate Deal"
-    >
-      <i class="pi pi-copy text-[10px] font-bold"></i>
-    </button>
-    <!-- Move to Bought Button (only for Brought stage) -->
-    <button
-      v-if="deal.stage === 3"
-      @click.stop="onMoveToBought(deal.id)"
-      class="absolute top-2 right-[5.75rem] p-1.5 rounded-full bg-emerald-100 text-emerald-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-200 hover:scale-110 z-10"
-      title="Move to Bought Deals"
-    >
-      <i class="pi pi-arrow-right text-[10px] font-bold"></i>
-    </button>
-
-    <!-- Copy to AI Button -->
-    <button
-      @click.stop="copyToClipboard(deal)"
-      class="absolute top-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
-      :class="[
-        deal.stage === 3 ? 'right-[8.25rem]' : 'right-16',
-        isCopied
-          ? 'bg-green-100 text-green-600'
-          : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-      ]"
-      :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
-    >
-      <i
-        class="pi text-[10px] font-bold"
-        :class="isCopied ? 'pi-check' : 'pi-file'"
-      ></i>
-    </button>
-
     <!-- Header: Address -->
-    <div class="text-center mb-3 mt-4">
-      <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight">
+    <div class="text-center mb-3 mt-6">
+      <h3 class="line-clamp-2 break-words text-sm md:text-base font-medium leading-tight text-fg">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
@@ -160,44 +188,44 @@ const formatMoney = (val?: number) =>
     <!-- Task Box -->
     <div
       v-if="deal.task"
-      class="bg-gray-50 rounded-lg p-2 mb-3 text-center border border-gray-200"
+      class="bg-surface-muted rounded-ctl p-2 mb-3 text-center border border-line"
     >
-      <span class="text-xs text-blue-600 uppercase tracking-wider font-semibold"
+      <span class="text-xs text-primary uppercase tracking-wider font-semibold"
         >Current Task</span
       >
-      <p class="text-sm text-gray-800 font-medium mt-1 line-clamp-2">
+      <p class="text-sm text-fg font-medium mt-1 line-clamp-2">
         {{ deal.task }}
       </p>
     </div>
 
     <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-xs text-gray-600">
+    <div class="grid grid-cols-2 gap-y-2 gap-x-2 text-xs text-fg-muted">
       <!-- Row 1: Purchase & Rehab -->
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">Purchase</span>
-        <span class="font-mono text-gray-900">{{
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
+        <span class="tabular text-fg font-medium">{{
           formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0)
         }}</span>
       </div>
-      <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-400 uppercase">Rehab</span>
-        <span class="font-mono text-gray-900">{{
+      <div class="flex flex-col min-w-0 text-right">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
+        <span class="tabular text-fg font-medium">{{
           formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0)
         }}</span>
       </div>
 
       <!-- Row 2: Cash Needed (with and without buffer) -->
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
-        <span class="font-mono text-orange-600">{{
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Needed</span>
+        <span class="tabular text-warning font-medium">{{
           formatMoney(
             isBrrr
               ? brrrDeal?.total_cash_needed_for_deal
               : flipDeal?.total_cash_needed,
           )
         }}</span>
-        <span class="text-[9px] text-gray-400 uppercase mt-1">w/ Buffer</span>
-        <span class="font-mono text-orange-700 text-[11px]">{{
+        <span class="text-[9px] text-fg-muted uppercase tracking-wide mt-1">w/ Buffer</span>
+        <span class="tabular text-warning text-[11px]">{{
           formatMoney(
             isBrrr
               ? brrrDeal?.total_cash_needed_for_deal_with_buffer
@@ -208,58 +236,58 @@ const formatMoney = (val?: number) =>
 
       <!-- Type Specific Rows -->
       <template v-if="isBrrr">
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Cash Out</span>
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Out</span>
           <span
-            class="font-mono font-semibold"
+            class="tabular font-semibold"
             :class="
               (brrrDeal?.cash_out || 0) >= 0
-                ? 'text-emerald-600'
-                : 'text-red-500'
+                ? 'text-positive'
+                : 'text-negative'
             "
           >
             {{ formatMoney(brrrDeal?.cash_out) }}
           </span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase"
+        <div class="flex flex-col min-w-0">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide"
             >Cash Out Routi</span
           >
           <span
-            class="font-mono"
+            class="tabular font-medium"
             :class="
               (brrrDeal?.cash_out_routi || 0) >= 0
-                ? 'text-emerald-600'
-                : 'text-red-500'
+                ? 'text-positive'
+                : 'text-negative'
             "
           >
             {{ formatMoney(brrrDeal?.cash_out_routi) }}
           </span>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
           <span
-            class="font-mono"
+            class="tabular font-medium"
             :class="
               (brrrDeal?.cash_flow || 0) > 0
-                ? 'text-emerald-600'
-                : 'text-red-600'
+                ? 'text-positive'
+                : 'text-negative'
             "
           >
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">CoC</span>
-          <span class="font-mono text-blue-600">{{
+        <div class="flex flex-col min-w-0">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">CoC</span>
+          <span class="tabular text-primary font-medium">{{
             brrrDeal?.cash_on_cash
               ? brrrDeal.cash_on_cash.toFixed(1) + "%"
               : "-"
           }}</span>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Equity</span>
-          <span class="font-mono text-emerald-600">{{
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
+          <span class="tabular text-positive font-medium">{{
             formatMoney(brrrDeal?.equity)
           }}</span>
         </div>
@@ -267,28 +295,28 @@ const formatMoney = (val?: number) =>
 
       <template v-else>
         <!-- Flip Metrics -->
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Net Profit</span>
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Net Profit</span>
           <span
-            class="font-mono font-bold"
+            class="tabular font-bold"
             :class="
               (flipDeal?.net_profit || 0) > 0
-                ? 'text-emerald-600'
-                : 'text-red-600'
+                ? 'text-positive'
+                : 'text-negative'
             "
           >
             {{ formatMoney(flipDeal?.net_profit) }}
           </span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">ROI</span>
-          <span class="font-mono font-semibold text-blue-600">
+        <div class="flex flex-col min-w-0">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">ROI</span>
+          <span class="tabular font-semibold text-primary">
             {{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}
           </span>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Ann. ROI</span>
-          <span class="font-mono text-purple-600">
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Ann. ROI</span>
+          <span class="tabular text-fg font-medium">
             {{
               flipDeal?.annualized_roi
                 ? flipDeal.annualized_roi.toFixed(1) + "%"
@@ -301,10 +329,43 @@ const formatMoney = (val?: number) =>
 
     <!-- Footer Stats -->
     <div
-      class="mt-3 pt-2 border-t border-gray-200 flex justify-between text-xs font-medium text-gray-500"
+      class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted tabular"
     >
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
     </div>
-  </div>
+  </UiCard>
 </template>
+
+<style scoped>
+/*
+ * The stage accent. It cannot be a utility class: `cardClass` reaches `UiCard`
+ * as one string and `cn()` drops `border-l-blue-500` the moment the same string
+ * also sets `border` and `border-gray-100`. Keying the colour off `data-stage`
+ * keeps the five stages apart, on tokens, whatever the class list merges to.
+ *
+ * The same merge is what puts the *card* border on a token. G3 freezes
+ * `stageColors`, so the baseline's `border-gray-100` stays in the script; the
+ * root's static `class` carries `border-line`, Vue normalises `:class` ahead of
+ * `class`, and tailwind-merge keeps the later of two border colours. Swapping
+ * the order of those two attributes would quietly restore the grey, so
+ * `DealCard.contract.test.ts` asserts the resolved class list on all five
+ * stages.
+ */
+/* The frozen `cardClass` falls back to the stage-1 entry for an unknown stage; so does this. */
+[data-stage] {
+  border-left-color: rgb(var(--color-chart-1));
+}
+[data-stage="2"] {
+  border-left-color: rgb(var(--color-chart-3));
+}
+[data-stage="3"] {
+  border-left-color: rgb(var(--color-chart-2));
+}
+[data-stage="4"] {
+  border-left-color: rgb(var(--color-chart-6));
+}
+[data-stage="5"] {
+  border-left-color: rgb(var(--color-fg-muted) / 0.4);
+}
+</style>

@@ -116,8 +116,8 @@ append, so you don't need to set up columns manually:
 Add these to `BackEnd/.env` (or your deploy environment):
 
 ```env
-# Where the JSON key file lives (absolute path on the server)
-GOOGLE_APPLICATION_CREDENTIALS=/Users/avivjan/secrets/reps-writer.json
+# Where the JSON key file lives (absolute path on the server, wherever you put it)
+GOOGLE_APPLICATION_CREDENTIALS=<path-to>/reps-writer.json
 
 # Spreadsheet IDs (from step 1d)
 REPS_SHEET_ID_AVIV=1AbCDe…AvivSheetId
@@ -179,12 +179,15 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173/>. From the landing page, click the new
-**REPS Tracker** card (rose / amber gradient, clock icon).
+Open <http://localhost:5173/>. On the landing page the cards fade in as a
+staggered group; **REPS Tracker** is the first tile — a rose-to-amber gradient
+wash behind a clock icon, subtitled "Log hours", with a corner arrow that slides
+in on hover. Click it to reach `/reps`.
 
-If `/reps/config-status` reports `configured=false` you'll see a yellow
-banner with the missing env vars; otherwise the dashboard, timer, modal,
-and stats are live.
+If `/reps/config-status` reports `configured=false`, an amber panel appears above
+the dashboard — "REPS feature is not connected yet", the missing env vars, and a
+pointer back at this file. Everything below it (timer, stat tiles, entry modal,
+people manager) renders either way.
 
 ---
 

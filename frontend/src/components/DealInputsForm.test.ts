@@ -367,7 +367,7 @@ describe("DealInputsForm", () => {
       const deal = reactive(createEmptyDealForm("FLIP"));
       const wrapper = mountForm(deal, "FLIP");
 
-      await wrapper.find("button").trigger("click");
+      await wrapper.find('[data-testid="form.quick-defaults"]').trigger("click");
 
       expect(deal.buyerAgentSellingFee).toBe(3);
       expect(deal.sellerAgentSellingFee).toBe(3);
@@ -386,7 +386,7 @@ describe("DealInputsForm", () => {
     });
   });
 
-  describe("surface variant — each host keeps its exact prior look", () => {
+  describe("surface variant — each host's contract is exposed as data attributes", () => {
     const card = () =>
       mount(DealInputsForm, {
         props: { deal: createEmptyDealForm("FLIP"), dealType: "FLIP" as const },
@@ -403,14 +403,17 @@ describe("DealInputsForm", () => {
       });
 
     it("uses white card sections on the page, grey panel sections in modals", () => {
-      expect(card().find("section").classes()).toContain("bg-white");
-      expect(panel().find("section").classes()).toContain("bg-gray-50");
+      expect(card().find("section").attributes("data-surface")).toBe("card");
+      expect(panel().find("section").attributes("data-surface")).toBe("panel");
     });
 
-    it("reproduces the section spacing the parent containers used to supply", () => {
-      // Analyze page container was `space-y-8`; the modal container `space-y-6`.
-      expect(card().find(":first-child").classes()).toContain("space-y-8");
-      expect(panel().find(":first-child").classes()).toContain("space-y-6");
+    it("exposes the surface on the root so hosts can style spacing", () => {
+      expect(
+        card().find('[data-testid="form.root"]').attributes("data-surface"),
+      ).toBe("card");
+      expect(
+        panel().find('[data-testid="form.root"]').attributes("data-surface"),
+      ).toBe("panel");
     });
 
     it("keeps the page's flat Rehab/Contingency layout and the modal's paired grid", () => {
@@ -428,8 +431,12 @@ describe("DealInputsForm", () => {
       });
       // The wrapper around Rehab Cost + Contingency: dissolved on the page
       // (`contents`), a real 2-col grid in the modal.
-      expect(brrrCard.html()).toContain('class="contents"');
-      expect(brrrPanel.html()).toContain("grid grid-cols-2 gap-2");
+      expect(brrrCard.find("[data-layout]").attributes("data-layout")).toBe(
+        "flat",
+      );
+      expect(brrrPanel.find("[data-layout]").attributes("data-layout")).toBe(
+        "paired",
+      );
     });
 
     it("keeps each host's selling-costs heading and box style", () => {

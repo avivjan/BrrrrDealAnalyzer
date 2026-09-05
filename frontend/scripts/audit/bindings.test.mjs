@@ -1,0 +1,609 @@
+import { describe, expect, it } from 'vitest';
+import { manifestFromSource, verifyBindings } from './bindings.mjs';
+
+const EMPTY_ALLOWLIST = { scripts: [], bindings: [], text: [] };
+const FILE = 'src/components/Fixture.vue';
+
+function sfc(template, script = 'const a = 1;\nconst b = 2;') {
+  return `<script setup lang="ts">\n${script}\n</script>\n\n<template>\n${template}\n</template>\n`;
+}
+
+function compare(beforeTemplate, afterTemplate, allowlist = EMPTY_ALLOWLIST, script) {
+  return verifyBindings({
+    golden: { [FILE]: manifestFromSource(sfc(beforeTemplate, script?.[0]), FILE) },
+    current: { [FILE]: manifestFromSource(sfc(afterTemplate, script?.[1]), FILE) },
+    allowlist,
+  });
+}
+
+const fails = (result) => result.lines.filter((l) => l.level === 'FAIL');
+
+describe('G4 behaviour manifest', () => {
+  it('flags a renamed event handler as a changed entry', () => {
+    const result = compare('<button @click="a">x</button>', '<button @click="b">x</button>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+  });
+
+  it('ignores a new purely presentational wrapper element', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<div class="x"><button @click="a">x</button></div>',
+    );
+    expect(result.ok).toBe(true);
+    expect(fails(result)).toEqual([]);
+  });
+
+  it('treats UiButton and UiIconButton as button', () => {
+    expect(compare('<button @click="a">x</button>', '<UiButton @click="a">x</UiButton>').ok).toBe(true);
+    expect(compare('<button @click="a">x</button>', '<UiIconButton @click="a">x</UiIconButton>').ok).toBe(true);
+  });
+
+  describe('presentational Ui* aliases', () => {
+    it('accepts a div swapped for a presentational UiCard', () => {
+      expect(compare('<div @click="a">x</div>', '<UiCard @click="a">x</UiCard>').ok).toBe(true);
+    });
+
+    it('accepts a section swapped for a presentational UiCard', () => {
+      expect(compare('<section v-for="r in rows">x</section>', '<UiCard v-for="r in rows">x</UiCard>').ok).toBe(
+        true,
+      );
+    });
+
+    it('never aliases a native control: input -> UiField fails', () => {
+      const result = compare('<input v-model="a" />', '<UiField v-model="a" />');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+
+    it('still compares bindings exactly under the alias', () => {
+      const result = compare('<div @click="a">x</div>', '<UiCard @click="b">x</UiCard>');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+
+    it('never aliases an anchor: a[href] -> UiCard fails', () => {
+      const result = compare('<a href="/x" @click="a">x</a>', '<UiCard href="/x" @click="a">x</UiCard>');
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('changed element'))).toBe(true);
+    });
+  });
+
+  it('treats a preset-only transition as a wrapper', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" appear><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('does not treat a transition carrying behaviour as a wrapper', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" @after-leave="a"><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it('records a transition that sequences its children with mode', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" mode="out-in"><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('records a bare Transition that sequences its children with mode', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<Transition mode="out-in"><button @click="a">x</button></Transition>',
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it('names mode in the manifest so a changed sequencing shows up as a diff', () => {
+    const manifest = manifestFromSource(
+      sfc('<UiTransition preset="modal" mode="out-in"><button @click="a">x</button></UiTransition>'),
+      FILE,
+    );
+    expect(manifest.elements[0]).toMatchObject({
+      tag: 'UiTransition',
+      bindings: [{ kind: 'attr:mode', expression: 'out-in' }],
+    });
+  });
+
+  it('records a transition that turns the CSS classes off', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<UiTransition preset="modal" :css="false"><button @click="a">x</button></UiTransition>',
+    );
+    expect(result.ok).toBe(false);
+    expect(
+      manifestFromSource(
+        sfc('<UiTransition preset="modal" :css="false"><button @click="a">x</button></UiTransition>'),
+        FILE,
+      ).elements[0].bindings,
+    ).toEqual([{ kind: 'bind:css', arg: 'css', modifiers: [], expression: 'false' }]);
+  });
+
+  it('flags re-ordered v-else-if branches', () => {
+    const before = '<div><p v-if="a">1</p><p v-else-if="b">2</p><p v-else-if="c">3</p><p v-else>4</p></div>';
+    const after = '<div><p v-if="a">1</p><p v-else-if="c">3</p><p v-else-if="b">2</p><p v-else>4</p></div>';
+    const result = compare(before, after);
+    expect(result.ok).toBe(false);
+  });
+
+  it('records the chain identity and ordinal of every branch', () => {
+    const manifest = manifestFromSource(
+      sfc('<div><p v-if="a">1</p><p v-else-if="b">2</p><p v-else>3</p></div>'),
+      FILE,
+    );
+    expect(manifest.elements.map((e) => e.bindings[0])).toEqual([
+      { kind: 'if', arg: null, modifiers: [], expression: 'a', chain: 'a', chainIndex: 0 },
+      { kind: 'else-if', arg: null, modifiers: [], expression: 'b', chain: 'a', chainIndex: 1 },
+      { kind: 'else', arg: null, modifiers: [], expression: '', chain: 'a', chainIndex: 2 },
+    ]);
+  });
+
+  it('fails an added v-if unless it is allowlisted', () => {
+    const before = '<button @click="a">x</button>';
+    const after = '<div v-if="showHalo" /><button @click="a">x</button>';
+    expect(compare(before, after).ok).toBe(false);
+    const allowed = compare(before, after, {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, expression: 'showHalo', reason: 'decorative halo' }],
+    });
+    expect(fails(allowed)).toEqual([]);
+    expect(allowed.ok).toBe(true);
+  });
+
+  it('does not allow an added element that carries more than a v-if chain', () => {
+    const result = compare('<button @click="a">x</button>', '<div v-if="showHalo" @click="a" /><button @click="a">x</button>', {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, expression: 'showHalo', reason: 'decorative halo' }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('ignores class, data-* and library class attributes', () => {
+    const before = '<div class="a" data-testid="t.one" ghost-class="g" :key="k" id="x" role="row" aria-label="l"><button @click="a">x</button></div>';
+    const after = '<div class="b c" data-testid="t.two" ghost-class="h" :key="k" id="y" role="grid" aria-label="m"><button @click="a">x</button></div>';
+    expect(compare(before, after).ok).toBe(true);
+  });
+
+  it('ignores inputId, the id PrimeVue puts on the input inside its wrapper', () => {
+    const before = '<div><InputNumber :model-value="v" @input="a" /></div>';
+    const after =
+      '<div><InputNumber :inputId="ltvId" :input-id="ltvId" :model-value="v" @input="a" /></div>';
+    expect(compare(before, after).ok).toBe(true);
+  });
+
+  it('flags an added behavioural attribute such as type="button"', () => {
+    const result = compare('<button @click="a">x</button>', '<button type="button" @click="a">x</button>');
+    expect(result.ok).toBe(false);
+  });
+
+  it('records v-model, v-for, v-show and modifiers', () => {
+    const manifest = manifestFromSource(
+      sfc('<input v-model.number.trim="row.qty" v-show="open" @keyup.enter.stop="a" />'),
+      FILE,
+    );
+    expect(manifest.elements[0].bindings).toEqual([
+      { kind: 'model', arg: null, modifiers: ['number', 'trim'], expression: 'row.qty' },
+      { kind: 'show', arg: null, modifiers: [], expression: 'open' },
+      { kind: 'on', arg: 'keyup', modifiers: ['enter', 'stop'], expression: 'a' },
+    ]);
+  });
+
+  it('skips valueless motion directives but records valued ones', () => {
+    const bare = manifestFromSource(sfc('<div v-reveal class="x">t</div>'), FILE);
+    expect(bare.elements).toEqual([]);
+    const valued = manifestFromSource(sfc('<div v-reveal="opts" class="x">t</div>'), FILE);
+    expect(valued.elements[0].bindings).toEqual([
+      { kind: 'directive:reveal', arg: null, modifiers: [], expression: 'opts' },
+    ]);
+  });
+
+  it('fails when a watch source or a lifecycle hook changes', () => {
+    const watchBefore = 'watch(() => props.open, (v) => v);\nonMounted(() => 1);';
+    const watchAfter = 'watch(() => props.closed, (v) => v);\nonMounted(() => 1);';
+    const result = compare('<button @click="a">x</button>', '<button @click="a">x</button>', EMPTY_ALLOWLIST, [
+      watchBefore,
+      watchAfter,
+    ]);
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('watches'))).toBe(true);
+
+    const hooks = compare('<button @click="a">x</button>', '<button @click="a">x</button>', EMPTY_ALLOWLIST, [
+      watchBefore,
+      'watch(() => props.open, (v) => v);\nonMounted(() => 1);\nonUnmounted(() => 2);',
+    ]);
+    expect(hooks.ok).toBe(false);
+    expect(fails(hooks).some((l) => l.text.includes('hooks'))).toBe(true);
+  });
+
+  it('captures watch sources and hooks from the script text', () => {
+    const manifest = manifestFromSource(
+      sfc('<div>x</div>', 'watch(\n  () => props.a,\n  (v) => v,\n);\nwatchEffect(() => 1);\nonMounted(() => 2);\nonBeforeUnmount(() => 3);'),
+      FILE,
+    );
+    expect(manifest.watches).toEqual(['() => props.a', '() => 1']);
+    expect(manifest.hooks).toEqual(['onMounted', 'onBeforeUnmount']);
+  });
+
+  it('fails a deleted frozen file and reports a new file as INFO', () => {
+    const manifest = manifestFromSource(sfc('<button @click="a">x</button>'), FILE);
+    const result = verifyBindings({
+      golden: { [FILE]: manifest },
+      current: { 'src/components/New.vue': manifest },
+      allowlist: EMPTY_ALLOWLIST,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.lines.some((l) => l.text.includes('deleted frozen file'))).toBe(true);
+    expect(result.lines.some((l) => l.level === 'INFO' && l.text.includes('src/components/New.vue'))).toBe(true);
+  });
+
+  it('records a Teleport target as a behavioural attribute', () => {
+    const manifest = manifestFromSource(sfc('<Teleport to="body"><div class="x">m</div></Teleport>'), FILE);
+    expect(manifest.elements).toEqual([
+      {
+        tag: 'Teleport',
+        line: 7,
+        bindings: [{ kind: 'attr:to', arg: null, modifiers: [], expression: 'body' }],
+      },
+    ]);
+  });
+
+  it('flags a re-targeted Teleport', () => {
+    const result = compare('<Teleport to="body"><div /></Teleport>', '<Teleport to="#app"><div /></Teleport>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:to'))).toBe(true);
+  });
+});
+
+describe('G4 allowlist paths', () => {
+  it('does not admit a branch-only addition through a row with no expression', () => {
+    const result = compare('<button @click="a">x</button>', '<button @click="a">x</button><div v-else />', {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, reason: 'decorative' }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('does not admit a branch-only addition through a row with an empty expression', () => {
+    const result = compare('<button @click="a">x</button>', '<div v-if="halo" /><button @click="a">x</button>', {
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, expression: '', reason: 'decorative' }],
+    });
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe('G4 routerview-transition-slot exemption', () => {
+  const app = 'src/App.vue';
+  const REWRITE =
+    '<RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>';
+  const row = (file) => ({
+    ...EMPTY_ALLOWLIST,
+    bindings: [{ file, reason: 'routerview-transition-slot' }],
+  });
+
+  function verifyApp(beforeTemplate, afterTemplate, allowlist, file = app) {
+    return verifyBindings({
+      golden: { [file]: manifestFromSource(sfc(beforeTemplate), file) },
+      current: { [file]: manifestFromSource(sfc(afterTemplate), file) },
+      allowlist,
+    });
+  }
+
+  it('accepts exactly the approved App.vue rewrite when the row is present', () => {
+    expect(verifyApp('<RouterView />', REWRITE, EMPTY_ALLOWLIST).ok).toBe(false);
+    const allowed = verifyApp('<RouterView />', REWRITE, row(app));
+    expect(fails(allowed)).toEqual([]);
+    expect(allowed.ok).toBe(true);
+  });
+
+  it('rejects the rewrite when it smuggles in another element', () => {
+    const result = verifyApp('<RouterView />', `${REWRITE}<div v-if="x" />`, row(app));
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('never accepts a removal, even with the row present', () => {
+    const result = verifyApp(
+      `<div :title="t" /><RouterView />`,
+      REWRITE,
+      row(app),
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('removed element'))).toBe(true);
+  });
+
+  it('does not apply the exemption to any other file', () => {
+    const other = 'src/views/MyDeals.vue';
+    const result = verifyApp('<RouterView />', REWRITE, row(other), other);
+    expect(result.ok).toBe(false);
+  });
+
+  it('does not compare line numbers', () => {
+    const result = compare(
+      '<button @click="a">x</button>',
+      '<div class="pad">\n  <div class="pad">\n    <button @click="a">x</button>\n  </div>\n</div>',
+    );
+    expect(result.ok).toBe(true);
+  });
+});
+
+/**
+ * Phase 3 replaces styled markup with the Ui* primitives. The swap moves
+ * styling only, so the props that carry that styling — and the slots that carry
+ * the copy — must be invisible to the gate, while anything that could change
+ * what the app *does* must not be.
+ */
+describe('G4 primitive-aware collection', () => {
+  it('(i) ignores presentational props when a button becomes a UiButton', () => {
+    const result = compare(
+      '<button class="btn primary" @click="save">x</button>',
+      '<UiButton variant="primary" :active="isOpen" @click="save">x</UiButton>',
+    );
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('(ii) records a :disabled added to a UiButton', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiButton :disabled="busy" @click="save">x</UiButton>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:disabled'))).toBe(true);
+  });
+
+  it('(iii) ignores a new UiSaveStatus that only takes a presentational prop', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiSaveStatus :status="saveStatus" /><button @click="save">x</button>',
+    );
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('(iv) records a new UiCard that takes a handler', () => {
+    const result = compare(
+      '<button @click="save">x</button>',
+      '<UiCard @click="open" /><button @click="save">x</button>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  it('(v) ignores a UiField scoped slot wrapped around an unchanged input', () => {
+    const before = '<input v-model="a" />';
+    const after = '<UiField #default="{ id }"><input v-model="a" :id="id" /></UiField>';
+    const result = compare(before, after);
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+    const manifest = manifestFromSource(sfc(after), FILE);
+    expect(manifest.elements.map((e) => e.tag)).toEqual(['input']);
+  });
+
+  it('(vi) ignores a <template #header> moved into a UiModalPanel', () => {
+    const before = '<div class="modal"><h3 class="t">Title</h3></div>';
+    const after = '<UiModalPanel><template #header><h3 class="t">Title</h3></template></UiModalPanel>';
+    const result = compare(before, after);
+    expect(fails(result)).toEqual([]);
+    expect(result.ok).toBe(true);
+    expect(manifestFromSource(sfc(after), FILE).elements).toEqual([]);
+  });
+
+  it('(vii) records a presentational prop whose expression calls something', () => {
+    const result = compare(
+      '<div class="tile">x</div>',
+      '<UiStatTile :tone="toneFor(deal)">x</UiStatTile>',
+    );
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:tone'))).toBe(true);
+  });
+
+  it('(vii) records a presentational prop holding an arrow function', () => {
+    const result = compare('<div class="tile">x</div>', '<UiStatTile :tone="v => v">x</UiStatTile>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:tone'))).toBe(true);
+  });
+
+  it('accepts identifiers, member access, comparisons and ternaries as side-effect-free', () => {
+    const manifest = manifestFromSource(
+      sfc(
+        '<UiBadge :tone="deal.type === \'BRRRR\' ? \'positive\' : \'negative\'" :count="rows.length" ' +
+          ':compact="!wide && dense" size="sm">x</UiBadge>',
+      ),
+      FILE,
+    );
+    expect(manifest.elements).toEqual([]);
+  });
+
+  it('records an assignment hidden in a presentational prop', () => {
+    const manifest = manifestFromSource(sfc('<UiBadge :tone="t = 1">x</UiBadge>'), FILE);
+    expect(manifest.elements[0].bindings).toEqual([
+      { kind: 'bind:tone', arg: 'tone', modifiers: [], expression: 't = 1' },
+    ]);
+  });
+
+  it('keeps presentational names behavioural on a native element', () => {
+    const result = compare('<input :required="r" />', '<input :required="s" />');
+    expect(result.ok).toBe(false);
+  });
+
+  it('(viii) still records a slot on RouterView and on other components', () => {
+    const routerView = manifestFromSource(
+      sfc('<RouterView v-slot="{ Component }"><div class="x" /></RouterView>'),
+      FILE,
+    );
+    expect(routerView.elements).toEqual([
+      {
+        tag: 'RouterView',
+        line: 7,
+        bindings: [{ kind: 'slot', arg: null, modifiers: [], expression: '{ Component }' }],
+      },
+    ]);
+    const draggable = manifestFromSource(sfc('<VueDraggable #item="{ element }"><div /></VueDraggable>'), FILE);
+    expect(draggable.elements[0].bindings).toEqual([
+      { kind: 'slot', arg: 'item', modifiers: [], expression: '{ element }' },
+    ]);
+  });
+});
+
+/**
+ * Round 1 hardening. `as` turned out to be a behaviour channel — `UiCard`
+ * renders `<component :is="as">`, so it chooses the element — and two holes in
+ * the side-effect test and the slot rule were worth closing.
+ */
+describe('G4 primitive-aware collection, round 1', () => {
+  it('records a static as="button" on a UiCard', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard as="button" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as'))).toBe(true);
+  });
+
+  it('records a bound :as on a UiCard', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard :as="tag" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:as'))).toBe(true);
+  });
+
+  it('reports a new entry when as is the only binding', () => {
+    const result = compare('<section class="x">t</section>', '<UiCard as="button" class="x">t</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('added element'))).toBe(true);
+  });
+
+  describe('the as allowlist row', () => {
+    // `button` (not `section`) throughout: round 2 (below) exempts a static
+    // `as` naming a presentational tag, so these rows exercise a value that
+    // still needs, and gets, an allowlist row.
+    const before = '<section class="x">t</section>';
+    const after = '<UiCard as="button" class="x">t</UiCard>';
+    const row = (extra) => ({
+      ...EMPTY_ALLOWLIST,
+      bindings: [{ file: FILE, tag: 'UiCard', bindings: ['attr:as=button'], reason: 'renders a real button', ...extra }],
+    });
+
+    it('admits the addition it names', () => {
+      const result = compare(before, after, row());
+      expect(fails(result)).toEqual([]);
+      expect(result.ok).toBe(true);
+    });
+
+    it('admits a bound :as the row names', () => {
+      const result = compare(before, '<UiCard :as="tag" class="x">t</UiCard>', {
+        ...EMPTY_ALLOWLIST,
+        bindings: [{ file: FILE, tag: 'UiCard', bindings: ['bind:as=tag'], reason: 'polymorphic' }],
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('does not admit a different expression', () => {
+      expect(compare(before, '<UiCard as="a" class="x">t</UiCard>', row()).ok).toBe(false);
+    });
+
+    it('does not admit a different tag', () => {
+      expect(compare(before, after, row({ tag: 'UiStatTile' })).ok).toBe(false);
+    });
+
+    it('does not admit an entry that carries more than as', () => {
+      expect(compare(before, '<UiCard as="button" @click="f">t</UiCard>', row()).ok).toBe(false);
+    });
+
+    it('does not admit through a row with no bindings list', () => {
+      expect(compare(before, after, row({ bindings: undefined })).ok).toBe(false);
+    });
+
+    it('does not admit a removal', () => {
+      const result = compare('<div @click="f">x</div>', after, row());
+      expect(result.ok).toBe(false);
+      expect(fails(result).some((l) => l.text.includes('removed element') || l.text.includes('changed element'))).toBe(
+        true,
+      );
+    });
+  });
+
+  it('records a presentational prop that increments or decrements', () => {
+    const plus = manifestFromSource(sfc('<UiBadge :count="n++">x</UiBadge>'), FILE);
+    expect(plus.elements[0].bindings[0].kind).toBe('bind:count');
+    const minus = manifestFromSource(sfc('<UiBadge :count="--n">x</UiBadge>'), FILE);
+    expect(minus.elements[0].bindings[0].kind).toBe('bind:count');
+  });
+
+  it('records a presentational prop holding a template literal', () => {
+    const manifest = manifestFromSource(sfc('<UiBadge :label="`n ${count}`">x</UiBadge>'), FILE);
+    expect(manifest.elements[0].bindings[0].kind).toBe('bind:label');
+  });
+
+  it('ignores a template slot only under a primitive parent', () => {
+    const inPanel = manifestFromSource(
+      sfc('<UiModalPanel><template #header><h3 class="t">T</h3></template></UiModalPanel>'),
+      FILE,
+    );
+    expect(inPanel.elements).toEqual([]);
+
+    const inDraggable = manifestFromSource(
+      sfc('<VueDraggable v-model="rows"><template #item="{ element }"><div class="c">x</div></template></VueDraggable>'),
+      FILE,
+    );
+    expect(inDraggable.elements.map((e) => e.tag)).toEqual(['VueDraggable', 'template']);
+    expect(inDraggable.elements[1].bindings).toEqual([
+      { kind: 'slot', arg: 'item', modifiers: [], expression: '{ element }' },
+    ]);
+  });
+
+  it('flags a renamed slot on a template under VueDraggable', () => {
+    const result = compare(
+      '<VueDraggable v-model="rows"><template #item="{ element }"><div /></template></VueDraggable>',
+      '<VueDraggable v-model="rows"><template #row="{ element }"><div /></template></VueDraggable>',
+    );
+    expect(result.ok).toBe(false);
+  });
+});
+
+/**
+ * Round 2. `UiSectionHeader as="h1"` (a heading level) and `UiCard
+ * as="section"` (a landmark) cannot change what a click, a form submit or
+ * assistive tech does — only what the element *is* — so a static `as` naming
+ * a tag in `PRESENTATIONAL_TAGS` costs neither a recorded binding nor an
+ * allowlist row. `label` is excluded even though it is presentational: it
+ * carries `for` semantics a heading or a div does not. A static `as="button"`
+ * (or any other non-presentational value) and a *bound* `:as` — whose runtime
+ * target the collector cannot see — are unaffected and stay recorded.
+ */
+describe('G4 primitive-aware collection, round 2', () => {
+  it('does not record a static as="h1" on a UiSectionHeader replacing an h2', () => {
+    const result = compare('<h2 class="x">T</h2>', '<UiSectionHeader as="h1" class="x">T</UiSectionHeader>');
+    expect(result.ok).toBe(true);
+    expect(fails(result)).toEqual([]);
+  });
+
+  it('does not record a static as="section" on a UiCard replacing a section', () => {
+    const result = compare('<section class="x">t</section>', '<UiCard as="section" class="x">t</UiCard>');
+    expect(result.ok).toBe(true);
+    expect(fails(result)).toEqual([]);
+  });
+
+  it('still records a static as="button" on a UiCard (not presentational)', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard as="button" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as') && l.text.includes('button'))).toBe(true);
+  });
+
+  it('still records a bound :as on a UiCard, whatever it resolves to', () => {
+    const result = compare('<div @click="f">x</div>', '<UiCard :as="tag" @click="f">x</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('bind:as'))).toBe(true);
+  });
+
+  it('still records a static as="label" (excluded from the exemption)', () => {
+    const result = compare('<div class="x">t</div>', '<UiCard as="label" class="x">t</UiCard>');
+    expect(result.ok).toBe(false);
+    expect(fails(result).some((l) => l.text.includes('attr:as') && l.text.includes('label'))).toBe(true);
+  });
+});

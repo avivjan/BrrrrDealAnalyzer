@@ -364,108 +364,137 @@ function showToast(msg: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0f1117] text-slate-200 flex flex-col">
+  <div class="flex min-h-dvh flex-col bg-page pb-safe-b text-fg">
     <!-- Header -->
-    <header class="flex items-center justify-between px-4 py-3 border-b border-[#1e2030] bg-[#0f1117]/90 backdrop-blur-sm sticky top-0 z-30">
-      <div class="flex items-center gap-3">
-        <button
-          class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] transition-all"
+    <header
+      class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4 sm:pb-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))] md:bg-surface/90 md:backdrop-blur-sm"
+    >
+      <div class="flex min-w-0 items-center gap-2">
+        <UiIconButton
+          data-testid="liquidity.back"
+          class="-ml-1"
           title="Back"
+          label="Back"
           @click="router.push('/')"
         >
-          <i class="pi pi-arrow-left text-sm"></i>
-        </button>
-        <h1 class="text-base font-mono font-bold text-slate-100 tracking-tight">
-          <i class="pi pi-chart-line text-indigo-400 mr-2"></i>
+          <i class="pi pi-arrow-left text-sm" aria-hidden="true"></i>
+        </UiIconButton>
+        <h1 class="truncate text-base font-semibold tracking-tight text-fg">
+          <i class="pi pi-chart-line mr-2 text-primary" aria-hidden="true"></i>
           Liquidity Timeline
         </h1>
       </div>
-      <div class="flex items-center gap-2">
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
+      <div class="flex flex-wrap items-center gap-2">
+        <UiButton
+          data-testid="liquidity.today"
+          variant="ghost"
+          size="sm"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="chartRef?.centerOnToday()"
         >
-          <i class="pi pi-crosshair text-[10px]"></i> Today
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
+          <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
+        </UiButton>
+        <UiButton
+          data-testid="liquidity.mercury-sync"
+          variant="ghost"
+          size="sm"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           :disabled="store.mercurySyncing"
           :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
           @click="refreshFromMercury"
         >
-          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]"></i>
+          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]" aria-hidden="true"></i>
           {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
+        </UiButton>
+        <UiButton
+          data-testid="liquidity.settings-open"
+          variant="ghost"
+          size="sm"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="settingsOpen = true"
         >
-          <i class="pi pi-cog text-[10px]"></i> Settings
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all flex items-center gap-1.5"
+          <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
+        </UiButton>
+        <UiButton
+          data-testid="liquidity.add-flow"
+          variant="primary"
+          size="sm"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           @click="openAddForm()"
         >
-          <i class="pi pi-plus text-[10px]"></i> Add Flow
-        </button>
+          <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
+        </UiButton>
       </div>
     </header>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="flex-1 flex items-center justify-center">
+    <div v-if="store.loading" data-testid="liquidity.loading" class="flex flex-1 items-center justify-center p-6">
       <div class="text-center">
-        <i class="pi pi-spin pi-spinner text-2xl text-indigo-400 mb-3"></i>
-        <p class="text-sm font-mono text-slate-500">Loading liquidity data...</p>
+        <i class="pi pi-spin pi-spinner mb-3 text-2xl text-primary" aria-hidden="true"></i>
+        <p class="text-sm text-fg-muted">Loading liquidity data...</p>
       </div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="store.error" class="flex-1 flex items-center justify-center">
-      <div class="text-center max-w-sm">
-        <i class="pi pi-exclamation-circle text-3xl text-red-400 mb-3"></i>
-        <p class="text-sm font-mono text-red-300 mb-2">Failed to load</p>
-        <p class="text-xs font-mono text-slate-500 mb-4">{{ store.error }}</p>
-        <button
-          class="px-4 py-2 text-xs font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
+    <div v-else-if="store.error" data-testid="liquidity.error" class="flex flex-1 items-center justify-center p-6">
+      <div class="max-w-sm text-center">
+        <i class="pi pi-exclamation-circle mb-3 text-3xl text-negative" aria-hidden="true"></i>
+        <p class="mb-2 text-sm font-semibold text-negative">Failed to load</p>
+        <p class="mb-4 break-words text-xs text-fg-muted">{{ store.error }}</p>
+        <UiButton
+          data-testid="liquidity.retry"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 touch:min-h-11"
           @click="store.fetchAll()"
         >
           Retry
-        </button>
+        </UiButton>
       </div>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!hasData && !store.loading" class="flex-1 flex items-center justify-center">
-      <div class="text-center max-w-md">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-          <i class="pi pi-chart-line text-3xl text-indigo-400"></i>
-        </div>
-        <h2 class="text-lg font-mono font-bold text-slate-200 mb-2">No liquidity data yet</h2>
-        <p class="text-sm font-mono text-slate-500 mb-6">
+    <div v-else-if="!hasData && !store.loading" data-testid="liquidity.empty" class="flex flex-1 items-center justify-center p-6">
+      <UiEmptyState icon="pi pi-chart-line" class="max-w-md">
+        No liquidity data yet
+        <template #description>
           Set your opening balance and add your first cash flow to get started.
-        </p>
-        <div class="flex gap-3 justify-center">
-          <button
-            class="px-4 py-2 text-sm font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
-            @click="settingsOpen = true"
-          >
-            Set Opening Balance
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all"
-            @click="openAddForm()"
-          >
-            Add First Flow
-          </button>
-        </div>
-      </div>
+        </template>
+        <template #actions>
+          <div class="flex flex-wrap justify-center gap-3">
+            <UiButton
+              data-testid="liquidity.empty.settings"
+              variant="secondary"
+              @click="settingsOpen = true"
+            >
+              Set Opening Balance
+            </UiButton>
+            <UiButton
+              data-testid="liquidity.empty.add"
+              variant="primary"
+              @click="openAddForm()"
+            >
+              Add First Flow
+            </UiButton>
+          </div>
+        </template>
+      </UiEmptyState>
     </div>
 
     <!-- Main content -->
-    <div v-else class="flex-1 flex min-h-0">
+    <div v-else class="flex min-h-0 flex-1 flex-col lg:flex-row">
       <!-- Chart area -->
-      <div class="flex-1 flex flex-col min-w-0">
-        <div class="flex-1 min-h-[300px]">
+      <div class="flex min-w-0 flex-1 flex-col">
+        <!--
+          `grid`, not a plain block: below `lg` the sidebar takes the column's
+          leftover space, so this box is sized by its `min-h` alone and a
+          `height: 100%` child would collapse to nothing against an indefinite
+          parent. A single stretched grid row gives the chart its box either
+          way. No size, padding or transform transition here or on any
+          ancestor: the chart redraws from a ResizeObserver, so an animated box
+          would repaint the canvas on every frame of it.
+        -->
+        <div class="grid min-h-[320px] flex-1 lg:min-h-[300px]">
           <TimelineChart
             ref="chartRef"
             :days="store.series.days"
@@ -477,7 +506,7 @@ function showToast(msg: string) {
         </div>
 
         <!-- Bottom detail panel -->
-        <div class="border-t border-[#1e2030] p-3 bg-[#0f1117] max-h-[260px] overflow-y-auto">
+        <div class="max-h-[260px] overflow-y-auto overscroll-contain border-t border-line bg-page p-3">
           <DayDetail
             v-if="selectedBucket"
             :bucket="selectedBucket"
@@ -485,14 +514,19 @@ function showToast(msg: string) {
             @delete-txn="onDeleteTxn"
             @add-on-date="openAddForm"
           />
-          <div v-else class="text-xs font-mono text-slate-500 py-4 text-center">
+          <div v-else class="py-4 text-center text-xs text-fg-muted">
             Click or arrow-key to a day to see details
           </div>
         </div>
       </div>
 
-      <!-- Right sidebar -->
-      <aside class="w-56 border-l border-[#1e2030] p-3 overflow-y-auto hidden lg:block bg-[#0f1117]">
+      <!--
+        Below `lg` the sidebar stacks under the chart instead of disappearing:
+        the column direction of the parent is the only thing that moves it.
+      -->
+      <aside
+        class="w-full shrink-0 border-t border-line bg-page p-3 lg:w-56 lg:overflow-y-auto lg:border-l lg:border-t-0"
+      >
         <LiquiditySidebar
           :series="store.series"
           :settings="store.settings"
@@ -537,7 +571,8 @@ function showToast(msg: string) {
     <Transition name="toast">
       <div
         v-if="toastVisible"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1e2030] border border-[#2a2f45] rounded-lg px-4 py-2.5 shadow-xl text-xs font-mono text-slate-300 max-w-md"
+        data-testid="liquidity.toast"
+        class="fixed inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-50 mx-auto w-fit max-w-[min(28rem,calc(100%-2rem))] rounded-card border border-line bg-surface px-4 py-2.5 text-xs text-fg shadow-2"
       >
         {{ toastMessage }}
       </div>
@@ -546,15 +581,21 @@ function showToast(msg: string) {
 </template>
 
 <style scoped>
+/*
+ * The toast is `position: fixed`, so it is centred with auto margins rather
+ * than a permanent `translateX(-50%)`; only the entry and exit move it.
+ */
 .toast-enter-active, .toast-leave-active {
-  transition: all 0.3s ease;
+  transition:
+    opacity var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
 }
 .toast-enter-from {
   opacity: 0;
-  transform: translate(-50%, 12px);
+  transform: translateY(12px);
 }
 .toast-leave-to {
   opacity: 0;
-  transform: translate(-50%, 12px);
+  transform: translateY(12px);
 }
 </style>

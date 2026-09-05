@@ -58,110 +58,136 @@ function fmtTimeRange(start: string | null, end: string | null) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div class="p-4 border-b border-slate-100 flex flex-wrap items-center gap-3 justify-between">
-      <h3 class="text-lg font-bold text-slate-800">Logged Entries</h3>
-      <div class="flex flex-wrap items-center gap-2">
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search descriptions..."
-          class="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
-        <select
-          v-model="filterMaterial"
-          class="px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
-        >
-          <option value="all">All entries</option>
-          <option value="material">Material (500h)</option>
-          <option value="non-material">Non-material</option>
-        </select>
-        <select
-          v-if="allPeople.length > 0"
-          v-model="filterPerson"
-          class="px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
-        >
-          <option value="">Filter person...</option>
-          <option v-for="p in allPeople" :key="p" :value="p">{{ p }}</option>
-        </select>
+  <UiCard padding="none">
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+        <h3 class="text-base font-semibold text-fg">Logged Entries</h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            data-testid="repsentries.search"
+            v-model="search"
+            type="text"
+            placeholder="Search descriptions..."
+            class="ui-input w-full text-sm sm:w-56"
+            aria-label="Search entries"
+          />
+          <select
+            data-testid="repsentries.filter-material"
+            v-model="filterMaterial"
+            class="ui-select w-full text-sm sm:w-auto"
+            aria-label="Filter by participation test"
+          >
+            <option value="all">All entries</option>
+            <option value="material">Material (500h)</option>
+            <option value="non-material">Non-material</option>
+          </select>
+          <select
+            v-if="allPeople.length > 0"
+            data-testid="repsentries.filter-person"
+            v-model="filterPerson"
+            class="ui-select w-full text-sm sm:w-auto"
+            aria-label="Filter by person"
+          >
+            <option value="">Filter person...</option>
+            <option v-for="p in allPeople" :key="p" :data-testid="`repsentries.person-option.${p}`" :value="p">{{ p }}</option>
+          </select>
+        </div>
       </div>
-    </div>
+    </template>
 
-    <div v-if="loading" class="p-6 text-center text-sm text-slate-500">
-      <i class="pi pi-spin pi-spinner mr-1"></i> Loading entries from sheet...
+    <div v-if="loading" data-testid="repsentries.loading" class="p-4" aria-busy="true">
+      <p class="text-center text-sm text-fg-muted">
+        <i class="pi pi-spin pi-spinner mr-1" aria-hidden="true"></i> Loading entries from sheet...
+      </p>
+      <UiSkeleton :lines="3" class="mt-4" />
     </div>
-    <div v-else-if="error" class="p-6 text-center text-sm text-rose-600">
+    <UiEmptyState
+      v-else-if="error"
+      data-testid="repsentries.error"
+      class="m-4 border-negative/40 bg-negative/5"
+    >
       {{ error }}
-    </div>
-    <div v-else-if="filtered.length === 0" class="p-6 text-center text-sm text-slate-500">
+    </UiEmptyState>
+    <UiEmptyState v-else-if="filtered.length === 0" data-testid="repsentries.empty" class="m-4">
       No entries match your filters.
-    </div>
-    <ul v-else class="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
-      <li
+    </UiEmptyState>
+    <ul
+      v-else
+      class="custom-scrollbar max-h-[480px] space-y-2 overflow-y-auto overscroll-contain p-3"
+    >
+      <UiCard
+        as="li"
         v-for="(e, idx) in filtered"
         :key="(e.created_at || '') + idx"
-        class="p-4 flex flex-col gap-1 hover:bg-slate-50 transition-colors"
+        :data-testid="`repsentries.entry.${idx}`"
+        tone="surface"
+        padding="sm"
+        class="hover:bg-surface-muted"
       >
         <div class="flex items-start justify-between gap-3">
-          <div class="text-sm text-slate-800 flex-1">
-            <span class="font-mono text-[11px] text-slate-500">
+          <div class="min-w-0 flex-1 text-sm text-fg">
+            <span class="text-[11px] tabular text-fg-muted">
               {{ fmtDate(e.start_time) }} · {{ fmtTimeRange(e.start_time, e.end_time) }}
             </span>
-            <span class="ml-2 inline-block text-[10px] font-mono uppercase rounded px-1.5 py-0.5"
-              :class="e.material_participation_rentals ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'">
+            <UiBadge
+              class="ml-2 align-middle uppercase"
+              :tone="e.material_participation_rentals ? 'positive' : 'neutral'"
+            >
               {{ e.material_participation_rentals ? '500h' : '750h' }}
-            </span>
-            <div class="mt-1 text-sm text-slate-700">
+            </UiBadge>
+            <div class="mt-1 break-words text-sm text-fg">
               {{ e.description }}
             </div>
-            <div class="mt-1 text-[11px] font-mono text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5">
-              <span v-if="e.property_name">
-                <i class="pi pi-home text-[10px] mr-1"></i>{{ e.property_name }}
+            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-fg-muted">
+              <span v-if="e.property_name" class="break-words">
+                <i class="pi pi-home mr-1 text-[10px]" aria-hidden="true"></i>{{ e.property_name }}
               </span>
-              <span v-if="e.activity_category">
-                <i class="pi pi-tag text-[10px] mr-1"></i>{{ e.activity_category }}
+              <span v-if="e.activity_category" class="break-words">
+                <i class="pi pi-tag mr-1 text-[10px]" aria-hidden="true"></i>{{ e.activity_category }}
               </span>
-              <span v-if="e.location">
-                <i class="pi pi-map-marker text-[10px] mr-1"></i>{{ e.location }}
+              <span v-if="e.location" class="break-words">
+                <i class="pi pi-map-marker mr-1 text-[10px]" aria-hidden="true"></i>{{ e.location }}
               </span>
-              <span v-if="e.people_involved.length > 0">
-                <i class="pi pi-users text-[10px] mr-1"></i>{{ e.people_involved.join(', ') }}
+              <span v-if="e.people_involved.length > 0" class="break-words">
+                <i class="pi pi-users mr-1 text-[10px]" aria-hidden="true"></i>{{ e.people_involved.join(', ') }}
               </span>
               <!-- Per-file labelled links (preferred) — one chip per file. -->
               <span v-if="(e.evidence_items || []).length > 0" class="flex flex-wrap gap-x-2 gap-y-0.5">
                 <a
                   v-for="(it, i) in e.evidence_items"
                   :key="i + (it.url || '')"
+                  :data-testid="`repsentries.entry.${idx}.evidence.${i}`"
                   :href="it.url"
                   target="_blank"
-                  class="text-blue-600 hover:underline"
+                  class="rounded-ctl font-medium text-primary underline-offset-2 hover:underline"
                 >
-                  <i class="pi pi-paperclip text-[10px] mr-1"></i>{{ it.label || `Evidence ${i + 1}` }}
+                  <i class="pi pi-paperclip mr-1 text-[10px]" aria-hidden="true"></i>{{ it.label || `Evidence ${i + 1}` }}
                 </a>
               </span>
               <!-- Legacy fallback: one bare URL per cell. -->
               <a
                 v-else-if="e.evidence_link && /^https?:\/\//.test(e.evidence_link)"
+                :data-testid="`repsentries.entry.${idx}.evidence-legacy`"
                 :href="e.evidence_link"
                 target="_blank"
-                class="text-blue-600 hover:underline"
+                class="rounded-ctl font-medium text-primary underline-offset-2 hover:underline"
               >
-                <i class="pi pi-paperclip text-[10px] mr-1"></i>Evidence
+                <i class="pi pi-paperclip mr-1 text-[10px]" aria-hidden="true"></i>Evidence
               </a>
               <span
                 v-else-if="e.evidence_link"
-                class="text-slate-500"
+                class="break-words text-fg-muted"
                 :title="e.evidence_link"
               >
-                <i class="pi pi-paperclip text-[10px] mr-1"></i>{{ e.evidence_link.split('\n')[0] }}
+                <i class="pi pi-paperclip mr-1 text-[10px]" aria-hidden="true"></i>{{ e.evidence_link.split('\n')[0] }}
               </span>
             </div>
           </div>
-          <div class="text-right shrink-0">
-            <div class="text-lg font-bold tabular-nums text-slate-800">{{ e.total_hours.toFixed(2) }}h</div>
+          <div class="shrink-0 text-right">
+            <div class="text-lg font-bold tabular text-fg">{{ e.total_hours.toFixed(2) }}h</div>
           </div>
         </div>
-      </li>
+      </UiCard>
     </ul>
-  </div>
+  </UiCard>
 </template>

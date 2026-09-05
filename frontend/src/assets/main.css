@@ -1,31 +1,256 @@
+@import "./tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: rgb(var(--color-page));
+    color: rgb(var(--color-fg));
+    font-family: theme('fontFamily.sans');
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* `dvh` excludes the iOS toolbars, so the page is exactly one screen tall. */
+  @supports (min-height: 100dvh) {
+    body {
+      min-height: 100dvh;
+    }
+  }
+
+  /*
+   * A keyboard-visible focus ring. `:focus-visible` only matches when the
+   * browser decides the focus came from the keyboard, so mouse and touch
+   * interaction is unaffected.
+   */
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-ring));
+    outline-offset: 2px;
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+    /* Drops the 300 ms tap delay without disabling pinch-zoom on the page. */
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari zooms the viewport when a control smaller than 16px is focused. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+   * Page scrollbar. Same 8px geometry as before; the greys are now token
+   * alphas (~slate-300 over the page, ~slate-400 on hover).
+   */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: rgb(var(--color-surface-muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-fg-muted) / 0.22);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--color-fg-muted) / 0.4);
+  }
 }
 
-body {
-  @apply bg-gray-50 text-gray-900 min-h-screen antialiased;
+@layer components {
+  /*
+   * Native form controls.
+   *
+   * PrimeVue owns the inputs the app ships today; these are for the plain
+   * `<input>` / `<select>` / `<textarea>` elements Phase 3 introduces, so that
+   * a native control and a primitive sit on the same border, radius, focus
+   * ring and disabled treatment. Nothing uses them yet.
+   */
+  .ui-input,
+  .ui-select,
+  .ui-textarea {
+    @apply w-full rounded-ctl border border-line bg-surface px-3 py-2 text-fg;
+    @apply placeholder:text-fg-muted;
+    @apply transition-[color,background-color,border-color,box-shadow] duration-fast ease-standard;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+
+    /*
+     * iOS Safari zooms the viewport whenever a control below 16px takes focus,
+     * and the user then has to pinch their way back out. `max()` keeps a larger
+     * inherited size if the context asks for one.
+     */
+    font-size: max(16px, 1em);
+  }
+
+  /*
+   * A 44px row where there is no hover pointer to aim with. Left off the
+   * textarea, which sets its own taller floor below.
+   */
+  .ui-input,
+  .ui-select {
+    @apply touch:min-h-11;
+  }
+
+  /*
+   * `type="date"`, `time` and `datetime-local` are deliberately left alone:
+   * these rules set no `appearance`, so the native picker indicator survives.
+   */
+
+  .ui-textarea {
+    @apply min-h-24 resize-y;
+  }
+
+  .ui-select {
+    @apply appearance-none pr-9;
+
+    /*
+     * The chevron the `appearance-none` above removes. It has to be a data URI
+     * — a `<select>` is a replaced element and renders no pseudo-element — so
+     * the colour is the resolved `--color-fg-muted` rather than the variable,
+     * and the `.dark` override below carries that theme's value.
+     *
+     * The two hex literals are the only ones in this file, and each one
+     * mirrors a single declaration in `tokens.css`; when either moves, both
+     * move together:
+     *
+     *   #475569  ←  `:root  { --color-fg-muted: 71 85 105 }`   (slate-600)
+     *   #cbd5e1  ←  `.dark  { --color-fg-muted: 203 213 225 }` (slate-300)
+     *
+     * The control's border needs no literal of its own: `@apply border-line`
+     * above reaches `--color-line` through Tailwind and re-resolves per theme.
+     */
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23475569'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 1.25rem 1.25rem;
+
+    /* Keeps the native option list light while only the light theme ships. */
+    color-scheme: light;
+  }
+
+  .dark .ui-select {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2020%2020'%20fill='none'%20stroke='%23cbd5e1'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%208%204%204%204-4'/%3E%3C/svg%3E");
+  }
+
+  /*
+   * Invalid state. Applied *alongside* `.ui-input`, so it only has to restate
+   * the two properties that change; the error message itself is the caller's.
+   */
+  .ui-input-invalid {
+    @apply border-negative focus-visible:ring-negative;
+  }
 }
 
-/* Custom Scrollbar for "Bright" feel */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+@layer utilities {
+  /* Money and percentage cells: digits must not change width as they change. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Notch and home-indicator padding. Zero on every device without insets. */
+  .safe-t {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-l {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-r {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /*
+   * Opt-in scrollbar for scroll containers inside a surface (modals, panels).
+   * `scrollbar-width`/`scrollbar-color` are the standard properties; the
+   * `::-webkit-` rules cover the engines that do not support them yet.
+   */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) rgb(var(--color-surface-muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: rgb(var(--color-surface-muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-fg-muted) / 0.22);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--color-fg-muted) / 0.4);
+  }
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+/*
+ * The 16px floor, enforced. The base rule above is an element selector, so any
+ * control carrying a `text-xs`/`text-sm` utility outranks it — and iOS Safari
+ * zooms the whole viewport when a control below 16px takes focus, which is a
+ * trap the user then has to pinch their way out of. `!important` is the only
+ * thing that beats the utilities layer, and it is scoped to phone widths so
+ * desktop keeps the type scale the templates ask for.
+ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+/*
+ * Reduce Motion. Deliberately does not touch `scroll-behavior`: the app calls
+ * `scrollIntoView({ behavior: 'smooth' })` explicitly, and that is behaviour,
+ * not decoration.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+/*
+ * `<UiTransitionGroup>`'s move class — the one piece of the motion layer that
+ * has to be CSS. Vue measures the FLIP offsets itself and then waits for a real
+ * transition on the items that shifted, so GSAP never sees this one. The
+ * neutraliser above still governs it: `transition-duration` there is
+ * `!important`, so a reduced-motion reorder snaps into place.
+ */
+.ui-move {
+  transition: transform var(--dur-base) var(--ease-standard);
 }
-
-

@@ -75,141 +75,174 @@ const onToggleSubstage = (substageId: string) => {
 </script>
 
 <template>
-  <div
-    class="p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden"
-    :class="cardClass"
+  <UiCard
+    tone="surface"
+    padding="md"
+    :class="[cardClass, 'border-line', stageColorClass, 'ring-positive/40']"
+    class="group relative overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-2"
   >
     <!-- Badge -->
-    <div
-      class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-      :class="isBrrr ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-orange-100 text-orange-700 border-orange-200'"
+    <UiBadge
+      :tone="isBrrr ? 'primary' : 'warning'"
+      size="sm"
+      class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
     >
       {{ isBrrr ? "🏠 BRRRR" : "💰 FLIP" }}
+    </UiBadge>
+
+    <!--
+      One action row instead of two hand-placed `right-*` offsets; the children
+      keep their document order (delete, copy) and `flex-row-reverse` puts them
+      on screen in the order the absolute offsets used to: copy, delete.
+    -->
+    <div
+      data-part="card-actions"
+      class="absolute top-2 right-2 z-10 flex flex-row-reverse items-center gap-2 opacity-0 transition-opacity duration-fast ease-standard group-hover:opacity-100 focus-within:opacity-100 touch:opacity-100"
+    >
+      <!-- Delete Button -->
+      <UiIconButton
+        data-testid="boughtcard.delete"
+        @click.stop="onDelete(deal.id)"
+        label="Delete Deal"
+        variant="danger"
+        size="sm"
+        title="Delete Deal"
+      >
+        <i class="pi pi-times text-xs" aria-hidden="true"></i>
+      </UiIconButton>
+
+      <!-- Copy to AI Button -->
+      <UiIconButton
+        data-testid="boughtcard.copy"
+        @click.stop="copyToClipboard(deal)"
+        :label="isCopied ? 'Copied!' : 'Copy Summary for AI'"
+        :class="isCopied ? 'text-positive' : ''"
+        variant="ghost"
+        size="sm"
+        :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
+      >
+        <!-- Both glyphs are always rendered and crossfade, so the button does
+             not reflow the row the instant the clipboard write resolves. -->
+        <span class="grid h-4 w-4 place-items-center">
+          <i
+            class="pi pi-file col-start-1 row-start-1 text-xs transition-opacity duration-fast ease-standard"
+            :class="isCopied ? 'opacity-0' : 'opacity-100'"
+            aria-hidden="true"
+          ></i>
+          <i
+            class="pi pi-check col-start-1 row-start-1 text-xs transition-opacity duration-fast ease-standard"
+            :class="isCopied ? 'opacity-100' : 'opacity-0'"
+            aria-hidden="true"
+          ></i>
+        </span>
+      </UiIconButton>
     </div>
 
-    <!-- Delete Button -->
-    <button
-      @click.stop="onDelete(deal.id)"
-      class="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-200 hover:scale-110 z-10"
-      title="Delete Deal"
-    >
-      <i class="pi pi-times text-[10px] font-bold"></i>
-    </button>
-
-    <!-- Copy to AI Button -->
-    <button
-      @click.stop="copyToClipboard(deal)"
-      class="absolute top-2 right-9 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
-      :class="isCopied ? 'bg-green-100 text-green-600' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'"
-      :title="isCopied ? 'Copied!' : 'Copy Summary for AI'"
-    >
-      <i class="pi text-[10px] font-bold" :class="isCopied ? 'pi-check' : 'pi-file'"></i>
-    </button>
-
     <!-- Header: Address -->
-    <div class="text-center mb-2 mt-4">
-      <h3 class="font-bold text-gray-900 text-sm md:text-base leading-tight">
+    <div class="text-center mb-2 mt-6">
+      <h3 class="line-clamp-2 break-words text-sm md:text-base font-medium leading-tight text-fg">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
 
     <!-- Stage Badge -->
     <div class="flex justify-center mb-3">
-      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-        Stage: {{ stageConfig.name }}
-      </span>
+      <UiBadge tone="info" size="sm" class="max-w-full">
+        <span class="truncate">Stage: {{ stageConfig.name }}</span>
+      </UiBadge>
     </div>
 
     <!-- Task Box -->
-    <div v-if="deal.task" class="bg-gray-50 rounded-lg p-2 mb-3 text-center border border-gray-200">
-      <span class="text-xs text-blue-600 uppercase tracking-wider font-semibold">Current Task</span>
-      <p class="text-sm text-gray-800 font-medium mt-1 line-clamp-2">{{ deal.task }}</p>
+    <div v-if="deal.task" class="bg-surface-muted rounded-ctl p-2 mb-3 text-center border border-line">
+      <span class="text-xs text-primary uppercase tracking-wider font-semibold">Current Task</span>
+      <p class="text-sm text-fg font-medium mt-1 line-clamp-2">{{ deal.task }}</p>
     </div>
 
     <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-xs text-gray-600">
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">Purchase</span>
-        <span class="font-mono text-gray-900">{{ formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
+    <div class="grid grid-cols-2 gap-y-2 gap-x-2 text-xs text-fg-muted">
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
+        <span class="tabular text-fg font-medium">{{ formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
       </div>
-      <div class="flex flex-col text-right">
-        <span class="text-[10px] text-gray-400 uppercase">Rehab</span>
-        <span class="font-mono text-gray-900">{{ formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
+      <div class="flex flex-col min-w-0 text-right">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
+        <span class="tabular text-fg font-medium">{{ formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
       </div>
 
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-400 uppercase">Cash Needed</span>
-        <span class="font-mono text-orange-600">{{
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Needed</span>
+        <span class="tabular text-warning font-medium">{{
           formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
         }}</span>
-        <span class="text-[9px] text-gray-400 uppercase mt-1">w/ Buffer</span>
-        <span class="font-mono text-orange-700 text-[11px]">{{
+        <span class="text-[9px] text-fg-muted uppercase tracking-wide mt-1">w/ Buffer</span>
+        <span class="tabular text-warning text-[11px]">{{
           formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal_with_buffer : flipDeal?.total_cash_needed_with_buffer)
         }}</span>
       </div>
 
       <template v-if="isBrrr">
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Cash Flow</span>
-          <span class="font-mono" :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-emerald-600' : 'text-red-600'">
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
+          <span class="tabular font-medium" :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-positive' : 'text-negative'">
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">CoC</span>
-          <span class="font-mono text-blue-600">{{ brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-" }}</span>
+        <div class="flex flex-col min-w-0">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">CoC</span>
+          <span class="tabular text-primary font-medium">{{ brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-" }}</span>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Equity</span>
-          <span class="font-mono text-emerald-600">{{ formatMoney(brrrDeal?.equity) }}</span>
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
+          <span class="tabular text-positive font-medium">{{ formatMoney(brrrDeal?.equity) }}</span>
         </div>
       </template>
 
       <template v-else>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Net Profit</span>
-          <span class="font-mono font-bold" :class="(flipDeal?.net_profit || 0) > 0 ? 'text-emerald-600' : 'text-red-600'">
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Net Profit</span>
+          <span class="tabular font-bold" :class="(flipDeal?.net_profit || 0) > 0 ? 'text-positive' : 'text-negative'">
             {{ formatMoney(flipDeal?.net_profit) }}
           </span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-[10px] text-gray-400 uppercase">ROI</span>
-          <span class="font-mono font-semibold text-blue-600">{{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}</span>
+        <div class="flex flex-col min-w-0">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">ROI</span>
+          <span class="tabular font-semibold text-primary">{{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}</span>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-[10px] text-gray-400 uppercase">Ann. ROI</span>
-          <span class="font-mono text-purple-600">{{ flipDeal?.annualized_roi ? flipDeal.annualized_roi.toFixed(1) + "%" : "-" }}</span>
+        <div class="flex flex-col min-w-0 text-right">
+          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Ann. ROI</span>
+          <span class="tabular text-fg font-medium">{{ flipDeal?.annualized_roi ? flipDeal.annualized_roi.toFixed(1) + "%" : "-" }}</span>
         </div>
       </template>
     </div>
 
     <!-- Sub-stage Checklist -->
-    <div v-if="subStages.length > 0" class="mt-3 pt-2 border-t border-gray-200">
-      <div v-for="sub in subStages" :key="sub.id" class="flex items-center gap-2 py-0.5">
+    <div v-if="subStages.length > 0" class="mt-3 pt-2 border-t border-line">
+      <div v-for="sub in subStages" :key="sub.id" :data-testid="`boughtcard.substage.${sub.id}`" class="flex items-center gap-2 py-0.5">
         <input
           type="checkbox"
+          :data-testid="`boughtcard.substage.${sub.id}.input`"
           :checked="deal.completedSubstages[sub.id] === true"
           @click.stop="onToggleSubstage(sub.id)"
-          class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="h-4 w-4 shrink-0 rounded accent-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-        <span class="text-xs text-gray-600" :class="{ 'line-through text-gray-400': deal.completedSubstages[sub.id] }">
+        <span class="text-xs text-fg-muted" :class="{ 'line-through': deal.completedSubstages[sub.id] }">
           {{ sub.label }}
         </span>
       </div>
     </div>
 
     <!-- Footer Stats -->
-    <div class="mt-3 pt-2 border-t border-gray-200 flex justify-between text-xs font-medium text-gray-500">
+    <div class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted tabular">
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
     </div>
 
     <!-- Progress Bar -->
-    <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+    <div class="mt-2 h-1.5 bg-line rounded-full overflow-hidden">
       <div
-        class="h-full rounded-full transition-all duration-500"
-        :style="{ width: progressPercent + '%', background: 'linear-gradient(to right, #3b82f6, #10b981)' }"
+        class="h-full rounded-full bg-primary transition-[width] duration-slow ease-standard"
+        :style="{ width: progressPercent + '%' }"
       ></div>
     </div>
-  </div>
+  </UiCard>
 </template>

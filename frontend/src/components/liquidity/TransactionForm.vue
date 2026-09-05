@@ -232,163 +232,217 @@ function formatPreviewDate(iso: string): string {
     <Transition name="modal">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center"
+        data-testid="txnform.root"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @keydown="onKeyDown"
       >
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')" />
-        <div class="relative bg-[#141722] border border-[#2a2f45] rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-lg font-bold text-slate-100 mb-5 font-mono flex items-center gap-2">
-            <i v-if="isRecurring" class="pi pi-refresh text-indigo-400 text-sm"></i>
-            {{ title }}
-          </h2>
+        <div data-testid="txnform.backdrop" class="absolute inset-0 bg-fg/50 md:backdrop-blur-sm" @click="$emit('close')" />
+        <UiModalPanel size="sm" labelled-by="txnform-modal-title" class="modal-panel relative">
+          <template #header>
+            <h2 id="txnform-modal-title" class="flex items-center gap-2 text-base font-semibold text-fg">
+              <i v-if="isRecurring" class="pi pi-refresh text-sm text-primary" aria-hidden="true"></i>
+              {{ title }}
+            </h2>
+          </template>
 
           <!-- Recurring toggle (only for new entries; editing locks the type) -->
-          <div v-if="canToggleRecurring" class="flex gap-2 mb-4">
-            <button
-              class="flex-1 py-2 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
-              :class="!isRecurring ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+          <div v-if="canToggleRecurring" class="mb-4 flex gap-2">
+            <UiButton
+              data-testid="txnform.mode-onetime"
+              variant="ghost"
+              class="flex-1 gap-1.5 text-xs font-semibold"
+              :aria-pressed="!isRecurring"
+              :class="!isRecurring ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
               @click="isRecurring = false"
             >
-              <i class="pi pi-circle-fill text-[8px]"></i> One-time
-            </button>
-            <button
-              class="flex-1 py-2 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
-              :class="isRecurring ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+              <i class="pi pi-circle-fill text-[8px]" aria-hidden="true"></i> One-time
+            </UiButton>
+            <UiButton
+              data-testid="txnform.mode-recurring"
+              variant="ghost"
+              class="flex-1 gap-1.5 text-xs font-semibold"
+              :aria-pressed="isRecurring"
+              :class="isRecurring ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
               @click="isRecurring = true"
             >
-              <i class="pi pi-refresh text-[10px]"></i> Recurring
-            </button>
+              <i class="pi pi-refresh text-[10px]" aria-hidden="true"></i> Recurring
+            </UiButton>
           </div>
 
           <!-- Direction toggle -->
-          <div class="flex gap-2 mb-4">
-            <button
-              class="flex-1 py-2 rounded-lg text-sm font-mono font-semibold transition-all"
-              :class="!isOutflow ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+          <div class="mb-4 flex gap-2">
+            <UiButton
+              data-testid="txnform.inflow"
+              variant="ghost"
+              class="flex-1 text-sm font-semibold"
+              :aria-pressed="!isOutflow"
+              :class="!isOutflow ? 'bg-positive/10 text-positive ring-1 ring-inset ring-positive/40' : 'bg-surface-muted text-fg-muted'"
               @click="isOutflow = false"
             >
               + Inflow
-            </button>
-            <button
-              class="flex-1 py-2 rounded-lg text-sm font-mono font-semibold transition-all"
-              :class="isOutflow ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+            </UiButton>
+            <UiButton
+              data-testid="txnform.outflow"
+              variant="ghost"
+              class="flex-1 text-sm font-semibold"
+              :aria-pressed="isOutflow"
+              :class="isOutflow ? 'bg-negative/10 text-negative ring-1 ring-inset ring-negative/40' : 'bg-surface-muted text-fg-muted'"
               @click="isOutflow = true"
             >
               − Outflow
-            </button>
+            </UiButton>
           </div>
 
           <!-- Amount -->
-          <div class="mb-4">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">
+          <UiField class="mb-4">
+            <template #label>
               {{ isRecurring ? 'Amount per occurrence ($k)' : 'Amount ($k)' }}
-            </label>
-            <div class="relative">
-              <input
-                v-model="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="49.2"
-                class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono text-lg placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
-              />
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-mono">k</span>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-1 font-mono">All amounts in $k. e.g. 49.2 = $49,200</p>
-          </div>
+            </template>
+            <template #default="{ id, describedBy }">
+              <div class="relative">
+                <input
+                  data-testid="txnform.amount"
+                  v-model="amount"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="49.2"
+                  class="ui-input pr-8 text-lg tabular"
+                />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+              </div>
+            </template>
+            <template #helper>All amounts in $k. e.g. 49.2 = $49,200</template>
+          </UiField>
 
           <!-- One-off date -->
-          <div v-if="!isRecurring" class="mb-4">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">Date</label>
-            <input
-              v-model="effectiveDate"
-              type="date"
-              class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
-            />
-          </div>
+          <UiField v-if="!isRecurring" class="mb-4">
+            <template #label>Date</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="txnform.date"
+                v-model="effectiveDate"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="date"
+                class="ui-input"
+              />
+            </template>
+          </UiField>
 
           <!-- Recurring schedule -->
           <div v-else class="mb-4 space-y-3">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1 font-mono">First occurrence</label>
-              <input
-                v-model="startDate"
-                type="date"
-                class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
-              />
-            </div>
+            <UiField>
+              <template #label>First occurrence</template>
+              <template #default="{ id, describedBy }">
+                <input
+                  data-testid="txnform.start-date"
+                  v-model="startDate"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  type="date"
+                  class="ui-input"
+                />
+              </template>
+            </UiField>
 
             <div class="grid grid-cols-3 gap-2">
-              <div class="col-span-2">
-                <label class="block text-xs text-slate-400 mb-1 font-mono">Frequency</label>
-                <select
-                  v-model="frequency"
-                  class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
-                >
-                  <option v-for="f in FREQUENCIES" :key="f.value" :value="f.value">{{ f.label }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs text-slate-400 mb-1 font-mono" title="Multiplier on the base frequency, e.g. interval=2 with Weekly = every 2 weeks">
+              <UiField class="col-span-2">
+                <template #label>Frequency</template>
+                <template #default="{ id, describedBy }">
+                  <select
+                    data-testid="txnform.frequency"
+                    v-model="frequency"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    class="ui-select"
+                  >
+                    <option v-for="f in FREQUENCIES" :key="f.value" :value="f.value">{{ f.label }}</option>
+                  </select>
+                </template>
+              </UiField>
+              <UiField title="Multiplier on the base frequency, e.g. interval=2 with Weekly = every 2 weeks">
+                <template #label>
                   Every
-                </label>
-                <input
-                  v-model="interval"
-                  type="number"
-                  min="1"
-                  max="365"
-                  class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
-                />
-              </div>
+                </template>
+                <template #default="{ id, describedBy }">
+                  <input
+                    data-testid="txnform.interval"
+                    v-model="interval"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    type="number"
+                    min="1"
+                    max="365"
+                    class="ui-input tabular"
+                  />
+                </template>
+              </UiField>
             </div>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-1 font-mono">Ends</label>
-              <div class="flex gap-1.5 mb-2">
-                <button
+              <label class="mb-1 block text-sm font-medium text-fg">Ends</label>
+              <div class="mb-2 flex gap-1.5">
+                <UiButton
                   type="button"
-                  class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
-                  :class="endMode === 'never' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+                  data-testid="txnform.end-never"
+                  variant="ghost"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
+                  :aria-pressed="endMode === 'never'"
+                  :class="endMode === 'never' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
                   @click="endMode = 'never'"
                 >
                   Never
-                </button>
-                <button
+                </UiButton>
+                <UiButton
                   type="button"
-                  class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
-                  :class="endMode === 'on' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+                  data-testid="txnform.end-on"
+                  variant="ghost"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
+                  :aria-pressed="endMode === 'on'"
+                  :class="endMode === 'on' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
                   @click="endMode = 'on'"
                 >
                   On date
-                </button>
-                <button
+                </UiButton>
+                <UiButton
                   type="button"
-                  class="flex-1 py-1.5 rounded-lg text-[11px] font-mono transition-all"
-                  :class="endMode === 'after' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#1e2030] text-slate-500 border border-transparent hover:border-slate-600'"
+                  data-testid="txnform.end-after"
+                  variant="ghost"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
+                  :aria-pressed="endMode === 'after'"
+                  :class="endMode === 'after' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
                   @click="endMode = 'after'"
                 >
                   After N
-                </button>
+                </UiButton>
               </div>
 
               <input
                 v-if="endMode === 'on'"
+                data-testid="txnform.end-date"
                 v-model="endDate"
                 type="date"
                 :min="startDate"
-                class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
+                class="ui-input"
               />
               <div v-else-if="endMode === 'after'" class="relative">
                 <input
+                  data-testid="txnform.occurrences"
                   v-model="occurrences"
                   type="number"
                   min="1"
                   max="2000"
-                  class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 pr-24 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
+                  class="ui-input pr-24 tabular"
                 />
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-mono">occurrence(s)</span>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-fg-muted">occurrence(s)</span>
               </div>
-              <p v-else class="text-[10px] text-slate-500 font-mono">
+              <p v-else class="text-[10px] text-fg-muted">
                 Series runs indefinitely on the timeline horizon.
               </p>
             </div>
@@ -396,29 +450,30 @@ function formatPreviewDate(iso: string): string {
             <!-- Preview -->
             <div
               v-if="recurrencePreview"
-              class="bg-[#1a1d2e] border border-[#2a2f45] rounded-lg p-3"
+              class="rounded-card border border-line bg-surface-muted p-3"
             >
-              <div class="flex items-center justify-between mb-1.5">
-                <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">
+              <div class="mb-1.5 flex items-center justify-between gap-2">
+                <div class="text-[10px] uppercase tracking-wider text-fg-muted">
                   Next {{ recurrencePreview.upcoming.length }} of {{ recurrencePreview.totalShown }}
                 </div>
-                <div class="text-[10px] font-mono text-indigo-400">
+                <div class="shrink-0 text-[10px] text-primary">
                   {{ recurrencePreview.cadence }}
                 </div>
               </div>
               <div
                 v-for="(p, idx) in recurrencePreview.upcoming"
                 :key="idx"
-                class="flex items-baseline justify-between text-[11px] font-mono"
+                :data-testid="`txnform.preview.${idx}`"
+                class="flex items-baseline justify-between text-[11px] tabular"
               >
-                <span class="text-slate-400">{{ formatPreviewDate(p.effective_date) }}</span>
-                <span :class="p.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'">
+                <span class="text-fg-muted">{{ formatPreviewDate(p.effective_date) }}</span>
+                <span :class="p.amount_k > 0 ? 'text-positive' : 'text-negative'">
                   {{ p.amount_k > 0 ? '+' : '' }}{{ p.amount_k.toFixed(2) }}k
                 </span>
               </div>
               <div
                 v-if="recurrencePreview.totalShown > recurrencePreview.upcoming.length"
-                class="text-[10px] text-slate-500 font-mono mt-1"
+                class="mt-1 text-[10px] text-fg-muted"
               >
                 +{{ recurrencePreview.totalShown - recurrencePreview.upcoming.length }} more inside the timeline
               </div>
@@ -426,37 +481,43 @@ function formatPreviewDate(iso: string): string {
           </div>
 
           <!-- Description -->
-          <div class="mb-6">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">Description</label>
-            <input
-              v-model="description"
-              type="text"
-              :placeholder="isRecurring ? 'HM interest, 123 Main' : 'Rehab draw #2, 123 Main St'"
-              maxlength="500"
-              class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
-            />
-          </div>
+          <UiField class="mb-2">
+            <template #label>Description</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="txnform.description"
+                v-model="description"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="text"
+                :placeholder="isRecurring ? 'HM interest, 123 Main' : 'Rehab draw #2, 123 Main St'"
+                maxlength="500"
+                class="ui-input"
+              />
+            </template>
+          </UiField>
 
           <!-- Actions -->
-          <div class="flex gap-3 justify-end">
-            <button
-              class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
-              @click="$emit('close')"
-            >
-              Cancel
-            </button>
-            <button
-              :disabled="!isValid"
-              class="px-5 py-2 rounded-lg text-sm font-mono font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              :class="isOutflow
-                ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
-                : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30'"
-              @click="onSave"
-            >
-              {{ isEditing ? 'Update' : (isRecurring ? 'Create Series' : 'Add') }}
-            </button>
-          </div>
-        </div>
+          <template #footer>
+            <div class="flex flex-wrap justify-end gap-3">
+              <UiButton
+                data-testid="txnform.cancel"
+                variant="ghost"
+                @click="$emit('close')"
+              >
+                Cancel
+              </UiButton>
+              <UiButton
+                data-testid="txnform.save"
+                :disabled="!isValid"
+                :variant="isOutflow ? 'danger' : 'primary'"
+                @click="onSave"
+              >
+                {{ isEditing ? 'Update' : (isRecurring ? 'Create Series' : 'Add') }}
+              </UiButton>
+            </div>
+          </template>
+        </UiModalPanel>
       </div>
     </Transition>
   </Teleport>
@@ -464,12 +525,19 @@ function formatPreviewDate(iso: string): string {
 
 <style scoped>
 .modal-enter-active, .modal-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .modal-enter-from, .modal-leave-to {
   opacity: 0;
 }
-.modal-enter-from .relative, .modal-leave-to .relative {
+/*
+ * The panel's own scale, keyed off a class this file owns rather than the
+ * `.relative` utility the panel happened to carry.
+ */
+.modal-enter-active .modal-panel, .modal-leave-active .modal-panel {
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.modal-enter-from .modal-panel, .modal-leave-to .modal-panel {
   transform: scale(0.95);
 }
 </style>

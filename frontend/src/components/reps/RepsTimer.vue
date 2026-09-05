@@ -117,124 +117,149 @@ function onCameraFiles(e: Event) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 flex flex-col items-center gap-4">
-    <div class="text-xs font-mono uppercase tracking-widest text-slate-500">
-      {{ user }} stopwatch
-    </div>
-    <div class="font-mono font-bold text-5xl tabular-nums tracking-tight text-slate-800">
-      {{ display }}
-    </div>
-    <div class="text-xs font-mono text-slate-500">
-      = {{ decimalHours.toFixed(2) }} h
-      <span v-if="isRunning" class="ml-2 inline-flex items-center gap-1 text-emerald-600">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> running
-      </span>
-      <span v-else-if="hasSession" class="ml-2 text-amber-600">paused</span>
-    </div>
+  <UiCard padding="none" class="h-full">
+    <div class="flex h-full flex-col items-center gap-4 p-6">
+      <div class="text-xs uppercase tracking-widest text-fg-muted">
+        {{ user }} stopwatch
+      </div>
+      <div class="font-mono text-5xl font-bold tabular tracking-tight text-fg">
+        {{ display }}
+      </div>
+      <div class="text-xs text-fg-muted">
+        = {{ decimalHours.toFixed(2) }} h
+        <span v-if="isRunning" class="ml-2 inline-flex items-center gap-1 text-positive">
+          <span class="h-2 w-2 rounded-full bg-positive animate-pulse"></span> running
+        </span>
+        <span v-else-if="hasSession" class="ml-2 text-warning">paused</span>
+      </div>
 
-    <!-- Primary controls -->
-    <div class="flex flex-wrap gap-2 justify-center">
-      <button
-        v-if="!hasSession"
-        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
-        @click="start"
-      >
-        <i class="pi pi-play"></i> Start
-      </button>
-      <button
-        v-else-if="isRunning"
-        class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
-        @click="stop"
-      >
-        <i class="pi pi-pause"></i> Stop
-      </button>
-      <template v-else>
-        <button
-          class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
-          @click="resume"
+      <!-- Primary controls -->
+      <div class="flex flex-wrap justify-center gap-2">
+        <UiButton
+          v-if="!hasSession"
+          data-testid="repstimer.start"
+          size="sm"
+          class="min-h-11 px-3 shadow-1"
+          @click="start"
         >
-          <i class="pi pi-play"></i> Resume
-        </button>
-        <button
-          class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
-          @click="finish"
+          <i class="pi pi-play" aria-hidden="true"></i> Start
+        </UiButton>
+        <UiButton
+          v-else-if="isRunning"
+          data-testid="repstimer.stop"
+          variant="secondary"
+          size="sm"
+          class="min-h-11 border-warning/40 px-3 text-warning shadow-1 hover:bg-warning/10"
+          @click="stop"
         >
-          <i class="pi pi-check"></i> Finish &amp; Log
-        </button>
-        <button
-          class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors flex items-center gap-2"
-          @click="discard"
+          <i class="pi pi-pause" aria-hidden="true"></i> Stop
+        </UiButton>
+        <template v-else>
+          <UiButton
+            data-testid="repstimer.resume"
+            size="sm"
+            class="min-h-11 px-3 shadow-1"
+            @click="resume"
+          >
+            <i class="pi pi-play" aria-hidden="true"></i> Resume
+          </UiButton>
+          <UiButton
+            data-testid="repstimer.finish"
+            variant="secondary"
+            size="sm"
+            class="min-h-11 border-positive/40 px-3 text-positive shadow-1 hover:bg-positive/10"
+            @click="finish"
+          >
+            <i class="pi pi-check" aria-hidden="true"></i> Finish &amp; Log
+          </UiButton>
+          <UiIconButton
+            data-testid="repstimer.discard"
+            label="Discard session"
+            variant="danger"
+            size="md"
+            class="self-center"
+            @click="discard"
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+          </UiIconButton>
+        </template>
+      </div>
+
+      <!-- Live-session toolbar: explicit GPS capture + real-time camera/gallery.
+           The "Pin GPS now" button is always visible while a session exists so
+           the user can manually capture a snapshot at start, during, on pause,
+           and right before finishing. We never auto-capture. -->
+      <div v-if="hasSession" class="flex flex-wrap items-center justify-center gap-2 pt-1">
+        <UiButton
+          type="button"
+          data-testid="repstimer.pin-gps"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 touch:min-h-11"
+          :disabled="capturing"
+          :title="isRunning ? 'Capture GPS while clocked in' : 'Capture GPS at pause / before finish'"
+          @click="pinGps(isRunning ? 'bookmark' : 'timer_pause')"
         >
-          <i class="pi pi-trash"></i>
-        </button>
-      </template>
-    </div>
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+          {{ capturing ? 'Capturing...' : 'Pin GPS now' }}
+        </UiButton>
+        <UiButton
+          type="button"
+          data-testid="repstimer.take-photo"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 touch:min-h-11"
+          @click="openCamera"
+        >
+          <i class="pi pi-camera" aria-hidden="true"></i> Take Photo / Video
+        </UiButton>
+        <UiButton
+          type="button"
+          data-testid="repstimer.attach-file"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 touch:min-h-11"
+          @click="openGallery"
+        >
+          <i class="pi pi-paperclip" aria-hidden="true"></i> Attach File
+        </UiButton>
+        <UiBadge v-if="inFlightFiles.length > 0" tone="primary" class="tabular">
+          {{ inFlightFiles.length }} {{ inFlightFiles.length === 1 ? 'file' : 'files' }} queued
+        </UiBadge>
+        <UiBadge
+          v-if="snapshots.length > 0"
+          tone="positive"
+          class="tabular"
+          :title="lastSnapshot?.kind || ''"
+        >
+          {{ snapshots.length }} GPS pin{{ snapshots.length === 1 ? '' : 's' }}
+        </UiBadge>
+      </div>
 
-    <!-- Live-session toolbar: explicit GPS capture + real-time camera/gallery.
-         The "Pin GPS now" button is always visible while a session exists so
-         the user can manually capture a snapshot at start, during, on pause,
-         and right before finishing. We never auto-capture. -->
-    <div v-if="hasSession" class="flex flex-wrap items-center gap-2 justify-center pt-1">
-      <button
-        type="button"
-        class="px-3 py-1.5 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
-        :disabled="capturing"
-        :title="isRunning ? 'Capture GPS while clocked in' : 'Capture GPS at pause / before finish'"
-        @click="pinGps(isRunning ? 'bookmark' : 'timer_pause')"
-      >
-        <i class="pi pi-map-marker"></i>
-        {{ capturing ? 'Capturing...' : 'Pin GPS now' }}
-      </button>
-      <button
-        type="button"
-        class="px-3 py-1.5 text-xs bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1.5"
-        @click="openCamera"
-      >
-        <i class="pi pi-camera"></i> Take Photo / Video
-      </button>
-      <button
-        type="button"
-        class="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center gap-1.5"
-        @click="openGallery"
-      >
-        <i class="pi pi-paperclip"></i> Attach File
-      </button>
-      <span
-        v-if="inFlightFiles.length > 0"
-        class="text-[11px] font-mono text-slate-600 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
-      >
-        {{ inFlightFiles.length }} {{ inFlightFiles.length === 1 ? 'file' : 'files' }} queued
-      </span>
-      <span
-        v-if="snapshots.length > 0"
-        class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"
-        :title="lastSnapshot?.kind || ''"
-      >
-        {{ snapshots.length }} GPS pin{{ snapshots.length === 1 ? '' : 's' }}
-      </span>
-    </div>
+      <input
+        ref="cameraInput"
+        data-testid="repstimer.camera-input"
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        class="hidden"
+        multiple
+        @change="onCameraFiles"
+      />
+      <input
+        ref="galleryInput"
+        data-testid="repstimer.gallery-input"
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.mov,.mp4"
+        class="hidden"
+        multiple
+        @change="onCameraFiles"
+      />
 
-    <input
-      ref="cameraInput"
-      type="file"
-      accept="image/*,video/*"
-      capture="environment"
-      class="hidden"
-      multiple
-      @change="onCameraFiles"
-    />
-    <input
-      ref="galleryInput"
-      type="file"
-      accept=".pdf,.jpg,.jpeg,.png,.mov,.mp4"
-      class="hidden"
-      multiple
-      @change="onCameraFiles"
-    />
-
-    <div v-if="hasSession" class="text-[11px] font-mono text-slate-400 text-center">
-      Session started:
-      {{ timer.sessionStartedAt ? new Date(timer.sessionStartedAt).toLocaleString() : '—' }}
+      <div v-if="hasSession" class="mt-auto text-center text-[11px] text-fg-muted">
+        Session started:
+        {{ timer.sessionStartedAt ? new Date(timer.sessionStartedAt).toLocaleString() : '—' }}
+      </div>
     </div>
-  </div>
+  </UiCard>
 </template>

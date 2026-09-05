@@ -24,98 +24,108 @@ function formatDate(iso: string): string {
     <Transition name="modal">
       <div
         v-if="open && result"
-        class="fixed inset-0 z-[60] flex items-center justify-center"
+        data-testid="simwarn.root"
+        class="fixed inset-0 z-[60] flex items-center justify-center p-4"
       >
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="$emit('cancel')" />
-        <div class="relative bg-[#141722] border rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6"
-          :class="severity === 'hard' ? 'border-red-500/50' : 'border-amber-500/40'"
+        <div data-testid="simwarn.backdrop" class="absolute inset-0 bg-fg/60 md:backdrop-blur-sm" @click="$emit('cancel')" />
+        <UiModalPanel
+          size="md"
+          labelled-by="simwarn-modal-title"
+          class="modal-panel relative border"
+          :class="severity === 'hard' ? 'border-negative/50' : 'border-warning/50'"
         >
           <!-- Hard negative -->
           <template v-if="severity === 'hard'">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                <i class="pi pi-exclamation-triangle text-red-400 text-xl"></i>
+            <div class="mb-4 flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-negative/10">
+                <i class="pi pi-exclamation-triangle text-xl text-negative" aria-hidden="true"></i>
               </div>
-              <div>
-                <h3 class="text-lg font-bold text-red-300 font-mono">Balance Goes Negative</h3>
-                <p class="text-xs text-slate-400 font-mono">This transaction would cause a negative balance on future dates.</p>
+              <div class="min-w-0">
+                <h3 id="simwarn-modal-title" class="text-lg font-bold text-negative">Balance Goes Negative</h3>
+                <p class="text-xs text-fg-muted">This transaction would cause a negative balance on future dates.</p>
               </div>
             </div>
 
-            <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 max-h-40 overflow-y-auto">
-              <p class="text-xs text-red-300 font-mono font-semibold mb-2">
+            <div class="mb-4 max-h-40 overflow-y-auto overscroll-contain rounded-card border border-negative/20 bg-negative/5 p-3">
+              <p class="mb-2 text-xs font-semibold text-negative">
                 Negative on {{ result.negativeDates.length }} date{{ result.negativeDates.length > 1 ? 's' : '' }}:
               </p>
               <div class="space-y-0.5">
                 <div
                   v-for="date in result.negativeDates.slice(0, 10)"
                   :key="date"
-                  class="text-[11px] text-red-400/80 font-mono"
+                  :data-testid="`simwarn.negative-date.${date}`"
+                  class="text-[11px] tabular text-negative"
                 >
                   {{ formatDate(date) }}
                 </div>
-                <div v-if="result.negativeDates.length > 10" class="text-[11px] text-red-400/60 font-mono">
+                <div v-if="result.negativeDates.length > 10" class="text-[11px] text-fg-muted">
                   + {{ result.negativeDates.length - 10 }} more dates
                 </div>
               </div>
             </div>
 
-            <div class="bg-[#1e2030] rounded-lg p-3 mb-5 font-mono text-xs text-slate-300 space-y-1">
-              <div>Window minimum: <span class="text-red-400 font-bold">{{ result.min.toFixed(2) }}k</span></div>
-              <div>First negative: <span class="text-red-400">{{ result.firstNegativeDate ? formatDate(result.firstNegativeDate) : '—' }}</span></div>
-              <div>Min reached on: <span class="text-slate-200">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}{{ result.minDates.length > 3 ? ' +more' : '' }}</span></div>
+            <div class="mb-5 space-y-1 rounded-card bg-surface-muted p-3 text-xs text-fg">
+              <div>Window minimum: <span class="font-bold tabular text-negative">{{ result.min.toFixed(2) }}k</span></div>
+              <div>First negative: <span class="tabular text-negative">{{ result.firstNegativeDate ? formatDate(result.firstNegativeDate) : '—' }}</span></div>
+              <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}{{ result.minDates.length > 3 ? ' +more' : '' }}</span></div>
             </div>
 
-            <div class="flex gap-3 justify-end">
-              <button
-                class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
+            <div class="flex flex-wrap justify-end gap-3">
+              <UiButton
+                data-testid="simwarn.cancel"
+                variant="ghost"
                 @click="$emit('cancel')"
               >
                 Cancel
-              </button>
-              <button
-                class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 transition-all"
+              </UiButton>
+              <UiButton
+                data-testid="simwarn.confirm"
+                variant="danger"
                 @click="$emit('confirm')"
               >
                 Add Anyway
-              </button>
+              </UiButton>
             </div>
           </template>
 
           <!-- Soft warning (reserve breach) -->
           <template v-else-if="severity === 'soft'">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                <i class="pi pi-info-circle text-amber-400 text-xl"></i>
+            <div class="mb-4 flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/10">
+                <i class="pi pi-info-circle text-xl text-warning" aria-hidden="true"></i>
               </div>
-              <div>
-                <h3 class="text-lg font-bold text-amber-300 font-mono">Below Reserve Threshold</h3>
-                <p class="text-xs text-slate-400 font-mono">Balance will drop below your configured reserve on some dates.</p>
+              <div class="min-w-0">
+                <h3 id="simwarn-modal-title" class="text-lg font-bold text-warning">Below Reserve Threshold</h3>
+                <p class="text-xs text-fg-muted">Balance will drop below your configured reserve on some dates.</p>
               </div>
             </div>
 
-            <div class="bg-[#1e2030] rounded-lg p-3 mb-5 font-mono text-xs text-slate-300 space-y-1">
-              <div>Window minimum: <span class="text-amber-400 font-bold">{{ result.min.toFixed(2) }}k</span></div>
-              <div>Min reached on: <span class="text-slate-200">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}</span></div>
-              <div>Dates below reserve: <span class="text-amber-400">{{ result.reserveBreachDates.length }}</span></div>
+            <div class="mb-5 space-y-1 rounded-card bg-surface-muted p-3 text-xs text-fg">
+              <div>Window minimum: <span class="font-bold tabular text-warning">{{ result.min.toFixed(2) }}k</span></div>
+              <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}</span></div>
+              <div>Dates below reserve: <span class="tabular text-warning">{{ result.reserveBreachDates.length }}</span></div>
             </div>
 
-            <div class="flex gap-3 justify-end">
-              <button
-                class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
+            <div class="flex flex-wrap justify-end gap-3">
+              <UiButton
+                data-testid="simwarn.cancel"
+                variant="ghost"
                 @click="$emit('cancel')"
               >
                 Cancel
-              </button>
-              <button
-                class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 transition-all"
+              </UiButton>
+              <UiButton
+                data-testid="simwarn.confirm"
+                variant="primary"
+                class="bg-warning hover:bg-warning/90"
                 @click="$emit('confirm')"
               >
                 Save Anyway
-              </button>
+              </UiButton>
             </div>
           </template>
-        </div>
+        </UiModalPanel>
       </div>
     </Transition>
   </Teleport>
@@ -123,9 +133,13 @@ function formatDate(iso: string): string {
 
 <style scoped>
 .modal-enter-active, .modal-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .modal-enter-from, .modal-leave-to {
   opacity: 0;
 }
+.modal-enter-active .modal-panel, .modal-leave-active .modal-panel {
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.modal-enter-from .modal-panel, .modal-leave-to .modal-panel { transform: scale(0.97); }
 </style>

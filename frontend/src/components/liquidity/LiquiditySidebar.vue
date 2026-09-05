@@ -92,52 +92,65 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 text-xs font-mono">
+  <!--
+    The section titles are card labels, not page headings: one arbitrary
+    variant here sizes and tones every `UiSectionHeader` title below,
+    instead of repeating a class on all seven.
+  -->
+  <!--
+    `v-reveal.stagger` on the container: the cards below carry `data-reveal`
+    and arrive in order. Only the cards are transformed, so the chart beside
+    them — which redraws from a ResizeObserver — never sees a box change.
+  -->
+  <div v-reveal.stagger class="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-1 [&_[data-part=title]]:text-[11px] [&_[data-part=title]]:text-fg-muted">
     <!-- Today's balance -->
-    <div class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="flex items-center justify-between mb-1">
-        <div class="text-slate-500">Today's Balance</div>
-        <div v-if="mercurySyncing" class="flex items-center gap-1 text-[10px] text-slate-500">
-          <i class="pi pi-spin pi-spinner text-[9px]"></i> syncing
-        </div>
-        <div
-          v-else-if="mercuryError"
-          class="flex items-center gap-1 text-[10px] text-red-400"
-          :title="mercuryError"
-        >
-          <i class="pi pi-exclamation-triangle text-[9px]"></i>
-          {{ mercuryBalance && mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
-        </div>
-        <div
-          v-else-if="mercuryBalance"
-          class="flex items-center gap-1 text-[10px] text-emerald-400"
-          :title="`Synced ${mercuryBalance.account_count} account(s) across ${mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
-        >
-          <i class="pi pi-check-circle text-[9px]"></i>
-          mercury · {{ mercuryBalance.workspace_count }}
-        </div>
-      </div>
-      <div class="text-xl font-bold" :class="todayBalance !== null && todayBalance < 0 ? 'text-red-400' : 'text-indigo-300'">
+    <UiCard data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">
+        Today's Balance
+        <template #actions>
+          <div v-if="mercurySyncing" class="flex items-center gap-1 text-[10px] text-fg-muted">
+            <i class="pi pi-spin pi-spinner text-[9px]" aria-hidden="true"></i> syncing
+          </div>
+          <div
+            v-else-if="mercuryError"
+            class="flex items-center gap-1 text-[10px] text-negative"
+            :title="mercuryError"
+          >
+            <i class="pi pi-exclamation-triangle text-[9px]" aria-hidden="true"></i>
+            {{ mercuryBalance && mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
+          </div>
+          <div
+            v-else-if="mercuryBalance"
+            class="flex items-center gap-1 text-[10px] text-positive"
+            :title="`Synced ${mercuryBalance.account_count} account(s) across ${mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
+          >
+            <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
+            mercury · {{ mercuryBalance.workspace_count }}
+          </div>
+        </template>
+      </UiSectionHeader>
+      <div class="text-xl font-bold tabular" :class="todayBalance !== null && todayBalance < 0 ? 'text-negative' : 'text-primary'">
         {{ todayBalance !== null ? todayBalance.toFixed(1) + 'k' : '—' }}
       </div>
 
       <!-- Per-workspace breakdown -->
       <div
         v-if="mercuryBalance && mercuryBalance.workspaces.length > 0"
-        class="mt-2 pt-2 border-t border-[#2a2f45] space-y-2"
+        class="mt-2 space-y-2 border-t border-line pt-2"
       >
-        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" class="space-y-0.5">
-          <div class="flex items-center justify-between text-[10px]">
-            <span class="text-slate-300 font-semibold uppercase tracking-wide">{{ ws.workspace }}</span>
-            <span class="text-slate-300 whitespace-nowrap">{{ ws.total_balance_k.toFixed(1) }}k</span>
+        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
+          <div class="flex items-center justify-between gap-2 text-[10px]">
+            <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
+            <span class="whitespace-nowrap tabular text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
           </div>
           <div
             v-for="a in ws.accounts"
             :key="a.id"
-            class="flex items-center justify-between text-[10px] text-slate-500 pl-2"
+            :data-testid="`sidebar.account.${a.id}`"
+            class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
           >
-            <span class="truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-            <span class="text-slate-400 whitespace-nowrap">{{ a.current_balance_k.toFixed(1) }}k</span>
+            <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
+            <span class="whitespace-nowrap tabular text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
           </div>
         </div>
       </div>
@@ -145,115 +158,122 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
       <!-- Per-workspace errors -->
       <div
         v-if="mercuryBalance && mercuryBalance.workspace_errors.length > 0"
-        class="mt-2 pt-2 border-t border-[#2a2f45] space-y-0.5"
+        class="mt-2 space-y-0.5 border-t border-line pt-2"
       >
         <div
           v-for="err in mercuryBalance.workspace_errors"
           :key="err.workspace"
-          class="flex items-center justify-between text-[10px] text-red-400"
+          :data-testid="`sidebar.workspace-error.${err.workspace}`"
+          class="flex items-center justify-between gap-2 text-[10px] text-negative"
           :title="err.error"
         >
           <span class="font-semibold uppercase tracking-wide">{{ err.workspace }}</span>
-          <span class="truncate pl-2">{{ err.error }}</span>
+          <span class="min-w-0 truncate pl-2">{{ err.error }}</span>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Window min -->
-    <div class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Window Min</div>
-      <div class="font-bold" :class="series.globalMin < 0 ? 'text-red-400' : series.globalMin < settings.reserve_k ? 'text-amber-400' : 'text-slate-200'">
+    <UiCard data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Window Min</UiSectionHeader>
+      <div class="font-bold tabular" :class="series.globalMin < 0 ? 'text-negative' : series.globalMin < settings.reserve_k ? 'text-warning' : 'text-fg'">
         {{ series.globalMin.toFixed(1) }}k
       </div>
-      <div class="text-slate-500 mt-0.5">
+      <div class="mt-0.5 text-fg-muted">
         on {{ series.globalMinDates.slice(0, 2).map(formatDate).join(', ') }}
         <span v-if="series.globalMinDates.length > 2"> +{{ series.globalMinDates.length - 2 }}</span>
       </div>
-    </div>
+    </UiCard>
 
     <!-- 90d low -->
-    <div v-if="next90dMin" class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Low (next 90d)</div>
-      <div class="font-bold" :class="next90dMin.value < 0 ? 'text-red-400' : 'text-slate-200'">
+    <UiCard v-if="next90dMin" data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
+      <div class="font-bold tabular" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
         {{ next90dMin.value.toFixed(1) }}k
       </div>
-      <div class="text-slate-500 mt-0.5">{{ formatDate(next90dMin.date) }}</div>
-    </div>
+      <div class="mt-0.5 text-fg-muted">{{ formatDate(next90dMin.date) }}</div>
+    </UiCard>
 
     <!-- Next outflow -->
-    <div v-if="nextOutflow" class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Next Outflow</div>
-      <div class="text-red-400 font-bold">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
-      <div class="text-slate-500 mt-0.5 truncate">{{ nextOutflow.description }}</div>
-      <div class="text-slate-500">{{ formatDate(nextOutflow.effective_date) }}</div>
-    </div>
+    <UiCard v-if="nextOutflow" data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
+      <div class="font-bold tabular text-negative">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
+      <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextOutflow.description }}</div>
+      <div class="text-fg-muted">{{ formatDate(nextOutflow.effective_date) }}</div>
+    </UiCard>
 
     <!-- Next inflow -->
-    <div v-if="nextInflow" class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Next Inflow</div>
-      <div class="text-emerald-400 font-bold">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
-      <div class="text-slate-500 mt-0.5 truncate">{{ nextInflow.description }}</div>
-      <div class="text-slate-500">{{ formatDate(nextInflow.effective_date) }}</div>
-    </div>
+    <UiCard v-if="nextInflow" data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Next Inflow</UiSectionHeader>
+      <div class="font-bold tabular text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
+      <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
+      <div class="text-fg-muted">{{ formatDate(nextInflow.effective_date) }}</div>
+    </UiCard>
 
     <!-- Reserve -->
-    <div class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]">
-      <div class="text-slate-500 mb-1">Reserve Threshold</div>
-      <div class="text-slate-200 font-bold">{{ settings.reserve_k.toFixed(1) }}k</div>
-    </div>
+    <UiCard data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
+      <div class="font-bold tabular text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
+    </UiCard>
 
     <!-- Recurring series -->
-    <div
+    <UiCard
       v-if="activeRecurringRules.length > 0"
-      class="bg-[#1a1d2e] rounded-lg p-3 border border-[#2a2f45]"
+      data-reveal
+      padding="sm"
+      class="sm:col-span-2 lg:col-span-1"
     >
-      <div class="flex items-center justify-between mb-2">
-        <div class="text-slate-500 flex items-center gap-1.5">
-          <i class="pi pi-refresh text-[10px] text-indigo-400"></i>
-          Recurring
-        </div>
-        <div class="text-[10px] text-slate-500">{{ activeRecurringRules.length }}</div>
-      </div>
+      <UiSectionHeader as="h4" class="mb-2">
+        <i class="pi pi-refresh mr-1.5 text-[10px] text-primary" aria-hidden="true"></i>
+        Recurring
+        <template #actions>
+          <div class="text-[10px] tabular text-fg-muted">{{ activeRecurringRules.length }}</div>
+        </template>
+      </UiSectionHeader>
       <div class="space-y-1.5">
         <div
           v-for="rule in activeRecurringRules"
           :key="rule.id"
-          class="rounded-lg bg-[#141722] border border-[#2a2f45] px-2 py-1.5 group"
+          :data-testid="`sidebar.recurring.${rule.id}`"
+          class="group rounded-ctl border border-line bg-surface-muted px-2 py-1.5"
         >
           <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] text-slate-200 truncate" :title="rule.description">
+            <div class="min-w-0 break-words text-[11px] text-fg line-clamp-2" :title="rule.description">
               {{ rule.description }}
             </div>
             <div
-              class="text-[11px] font-bold shrink-0"
-              :class="rule.amount_k > 0 ? 'text-emerald-400' : 'text-red-400'"
+              class="shrink-0 text-[11px] font-bold tabular"
+              :class="rule.amount_k > 0 ? 'text-positive' : 'text-negative'"
             >
               {{ rule.amount_k > 0 ? '+' : '' }}{{ rule.amount_k.toFixed(1) }}k
             </div>
           </div>
-          <div class="flex items-center justify-between mt-0.5">
-            <div class="text-[9px] text-slate-500 truncate">
+          <div class="mt-0.5 flex items-center justify-between gap-2">
+            <div class="min-w-0 truncate text-[9px] text-fg-muted">
               {{ describeRecurrence(rule) }} · {{ endLabel(rule) }}
             </div>
-            <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-              <button
-                class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
+            <div class="flex shrink-0 gap-2 opacity-0 transition-opacity duration-fast ease-standard focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
+              <UiIconButton
+                :data-testid="`sidebar.recurring.${rule.id}.edit`"
                 title="Edit series"
+                label="Edit series"
                 @click="emit('editRecurring', rule.id)"
               >
-                <i class="pi pi-pencil text-[9px]"></i>
-              </button>
-              <button
-                class="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                <i class="pi pi-pencil text-[9px]" aria-hidden="true"></i>
+              </UiIconButton>
+              <UiIconButton
+                :data-testid="`sidebar.recurring.${rule.id}.delete`"
+                variant="danger"
                 title="Delete series"
+                label="Delete series"
                 @click="emit('deleteRecurring', rule.id)"
               >
-                <i class="pi pi-trash text-[9px]"></i>
-              </button>
+                <i class="pi pi-trash text-[9px]" aria-hidden="true"></i>
+              </UiIconButton>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </UiCard>
   </div>
 </template>

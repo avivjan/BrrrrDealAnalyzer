@@ -38,70 +38,91 @@ function onSave() {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')" />
-        <div class="relative bg-[#141722] border border-[#2a2f45] rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-          <h2 class="text-lg font-bold text-slate-100 mb-5 font-mono">Liquidity Settings</h2>
+      <div v-if="open" data-testid="settings.root" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div data-testid="settings.backdrop" class="absolute inset-0 bg-fg/50 md:backdrop-blur-sm" @click="$emit('close')" />
+        <UiModalPanel size="sm" labelled-by="settings-modal-title" class="modal-panel relative">
+          <template #header>
+            <h2 id="settings-modal-title" class="text-base font-semibold text-fg">Liquidity Settings</h2>
+          </template>
 
-          <div class="mb-4">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">Opening Balance ($k)</label>
-            <div class="relative">
-              <input
-                v-model="balanceK"
-                type="number"
-                step="0.01"
-                class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono text-lg placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
-              />
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-mono">k</span>
+          <div class="space-y-4">
+            <UiField>
+              <template #label>Opening Balance ($k)</template>
+              <template #default="{ id, describedBy }">
+                <div class="relative">
+                  <input
+                    data-testid="settings.balance"
+                    v-model="balanceK"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    type="number"
+                    step="0.01"
+                    class="ui-input pr-8 text-lg tabular"
+                  />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+                </div>
+              </template>
+              <template #helper>Balance at start of the anchor date. e.g. 49 = $49,000</template>
+            </UiField>
+
+            <UiField>
+              <template #label>As-of Date</template>
+              <template #default="{ id, describedBy }">
+                <input
+                  data-testid="settings.date"
+                  v-model="balanceDate"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  type="date"
+                  class="ui-input"
+                />
+              </template>
+            </UiField>
+
+            <UiField>
+              <template #label>Reserve Threshold ($k)</template>
+              <template #default="{ id, describedBy }">
+                <div class="relative">
+                  <input
+                    data-testid="settings.reserve"
+                    v-model="reserveK"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    class="ui-input pr-8 tabular"
+                  />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+                </div>
+              </template>
+              <template #helper>Soft warning if balance drops below this. Default: 5k</template>
+            </UiField>
+          </div>
+
+          <template #footer>
+            <div class="flex flex-wrap justify-end gap-3">
+              <UiButton data-testid="settings.cancel" variant="ghost" @click="$emit('close')">
+                Cancel
+              </UiButton>
+              <UiButton data-testid="settings.save" variant="primary" @click="onSave">
+                Save
+              </UiButton>
             </div>
-            <p class="text-[10px] text-slate-500 mt-1 font-mono">Balance at start of the anchor date. e.g. 49 = $49,000</p>
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">As-of Date</label>
-            <input
-              v-model="balanceDate"
-              type="date"
-              class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 [color-scheme:dark]"
-            />
-          </div>
-
-          <div class="mb-6">
-            <label class="block text-xs text-slate-400 mb-1 font-mono">Reserve Threshold ($k)</label>
-            <div class="relative">
-              <input
-                v-model="reserveK"
-                type="number"
-                step="0.1"
-                min="0"
-                class="w-full bg-[#1e2030] border border-[#2a2f45] rounded-lg px-3 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
-              />
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-mono">k</span>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-1 font-mono">Soft warning if balance drops below this. Default: 5k</p>
-          </div>
-
-          <div class="flex gap-3 justify-end">
-            <button
-              class="px-4 py-2 text-sm font-mono text-slate-400 hover:text-slate-200 transition-colors"
-              @click="$emit('close')"
-            >
-              Cancel
-            </button>
-            <button
-              class="px-5 py-2 rounded-lg text-sm font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 transition-all"
-              @click="onSave"
-            >
-              Save
-            </button>
-          </div>
-        </div>
+          </template>
+        </UiModalPanel>
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <style scoped>
-.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
+.modal-enter-active, .modal-leave-active {
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
 .modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-active .modal-panel, .modal-leave-active .modal-panel {
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.modal-enter-from .modal-panel, .modal-leave-to .modal-panel { transform: scale(0.97); }
 </style>
