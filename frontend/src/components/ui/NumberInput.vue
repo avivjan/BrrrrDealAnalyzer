@@ -15,6 +15,7 @@
  *   decimals as you like.
  */
 import InputNumber from "primevue/inputnumber";
+import { useId } from "vue";
 
 defineProps<{
   modelValue: number | null;
@@ -40,22 +41,32 @@ const handleKeydown = (e: KeyboardEvent) => {
     }
   }
 };
+
+const inputId = useId();
 </script>
 
 <template>
   <div class="flex flex-col gap-1.5">
+    <!--
+      The id of the `<input>` PrimeVue renders is `inputId` unless the caller
+      names one through `data-input-id`. `DaysUntilRefiField` does: it draws the
+      visible label itself, and an attribute handed to this component would
+      otherwise settle on the wrapper `<div>` rather than reach the field.
+    -->
     <label
       v-if="label"
+      :for="($attrs['data-input-id'] as string | undefined) ?? inputId"
       data-part="label"
-      class="text-sm font-medium text-gray-700"
+      class="text-sm font-medium text-fg"
       :class="{
-        'after:content-[\'*\'] after:ml-0.5 after:text-red-500': required,
+        'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
       }"
     >
       {{ label }}
     </label>
     <InputNumber
       data-part="input"
+      :input-id="($attrs['data-input-id'] as string | undefined) ?? inputId"
       :model-value="modelValue"
       :suffix="suffix"
       :min="min"
@@ -65,7 +76,7 @@ const handleKeydown = (e: KeyboardEvent) => {
       :allowEmpty="true"
       :minFractionDigits="0"
       :maxFractionDigits="3"
-      inputClass="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-gray-50"
+      inputClass="ui-input tabular"
       class="w-full"
       @keydown="handleKeydown"
       @input="(e: any) => emit('update:modelValue', e.value)"

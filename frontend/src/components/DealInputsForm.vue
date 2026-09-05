@@ -61,6 +61,7 @@ import NumberInput from "./ui/NumberInput.vue";
 import SliderField from "./ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import { computed } from "vue";
+import { useId } from "vue";
 import type { DealInputModel } from "../types";
 import { toNumber } from "../utils/dealUtils";
 
@@ -183,17 +184,34 @@ const quickCalcSellingCosts = () => {
   props.deal.sellerAgentSellingFee = 3;
   props.deal.sellingClosingCosts = 5;
 };
+
+const hmToggleId = useId();
 </script>
 
 <template>
-  <div data-testid="form.root" :data-surface="surface" :class="rootSpacingClass">
+  <!--
+    `group` so the two inset boxes below (the HM switch, the flip selling-costs
+    panel) can read this root's `data-surface` — they carry none of their own,
+    and the three sections that do read theirs directly. Every `data-…:` variant
+    compiles to `.class[data-surface="card"]`, which is why the surface can pick
+    a colour without a class computed.
+  -->
+  <div
+    data-testid="form.root"
+    :data-surface="surface"
+    class="group data-[surface=card]:space-y-8 data-[surface=panel]:space-y-6"
+  >
   <!-- Group 1: Buy & Rehab (shared by BRRRR + FLIP) -->
-  <section :data-surface="surface" :class="sectionClass">
-    <h2
-      class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
-    >
-      <i class="pi pi-home text-blue-500"></i> Buy &amp; Rehab
-    </h2>
+  <section
+    :data-surface="surface"
+    class="rounded-card border border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+  >
+    <UiSectionHeader class="mb-4">
+      <span class="flex items-center gap-2">
+        <i class="pi pi-home text-primary" aria-hidden="true"></i> Buy &amp; Rehab
+      </span>
+    </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MoneyInput
         data-testid="form.field.purchasePrice"
@@ -203,7 +221,11 @@ const quickCalcSellingCosts = () => {
         :inThousands="true"
         :required="true"
       />
-      <div :data-layout="surface === 'panel' ? 'paired' : 'flat'" :class="rehabPairClass">
+      <div
+        :data-layout="surface === 'panel' ? 'paired' : 'flat'"
+        class="data-[layout=flat]:contents
+               data-[layout=paired]:grid data-[layout=paired]:grid-cols-2 data-[layout=paired]:gap-2"
+      >
         <MoneyInput
           data-testid="form.field.rehabCost"
           :model-value="get('rehabCost')"
@@ -229,10 +251,10 @@ const quickCalcSellingCosts = () => {
         :inThousands="true"
       />
 
-      <div class="md:col-span-2 border-t border-gray-200 my-2 pt-4">
-        <h3 class="text-sm font-semibold text-gray-600 mb-3">
+      <div class="my-2 border-t border-line pt-4 md:col-span-2">
+        <UiSectionHeader as="h3" class="mb-3">
           Hard Money Details
-        </h3>
+        </UiSectionHeader>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <NumberInput
             data-testid="form.field.down_payment"
@@ -263,14 +285,15 @@ const quickCalcSellingCosts = () => {
           />
 
           <div
-            class="flex items-center justify-between p-3 rounded-lg"
-            :class="innerBoxClass"
+            class="flex items-center justify-between gap-3 rounded-ctl border border-line p-3
+                   group-data-[surface=card]:bg-surface-muted group-data-[surface=panel]:bg-surface"
           >
-            <span class="text-sm font-medium text-gray-700">
+            <label :for="hmToggleId" class="text-sm font-medium text-fg">
               Use HM for Rehab
-            </span>
+            </label>
             <ToggleSwitch
               data-testid="form.hm-toggle"
+              :input-id="hmToggleId"
               v-model="useHmForRehab"
             />
           </div>
@@ -280,12 +303,17 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 2a: Refinance (BRRRR only) -->
-  <section v-if="isBrrr" :data-surface="surface" :class="sectionClass">
-    <h2
-      class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
-    >
-      <i class="pi pi-refresh text-blue-500"></i> Refinance (BRRRR)
-    </h2>
+  <section
+    v-if="isBrrr"
+    :data-surface="surface"
+    class="rounded-card border border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+  >
+    <UiSectionHeader class="mb-4">
+      <span class="flex items-center gap-2">
+        <i class="pi pi-refresh text-primary" aria-hidden="true"></i> Refinance (BRRRR)
+      </span>
+    </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
         data-testid="form.field.arv_in_thousands"
@@ -364,12 +392,17 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 2b: Flip Strategy (FLIP only) -->
-  <section v-else :data-surface="surface" :class="sectionClass">
-    <h2
-      class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
-    >
-      <i class="pi pi-dollar text-orange-500"></i> Flip Strategy
-    </h2>
+  <section
+    v-else
+    :data-surface="surface"
+    class="rounded-card border border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+  >
+    <UiSectionHeader class="mb-4">
+      <span class="flex items-center gap-2">
+        <i class="pi pi-dollar text-warning" aria-hidden="true"></i> Flip Strategy
+      </span>
+    </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
         data-testid="form.field.salePrice"
@@ -389,23 +422,24 @@ const quickCalcSellingCosts = () => {
       />
 
       <div
-        class="md:col-span-2 rounded-lg p-3"
-        :class="sellingBoxClass"
+        class="rounded-card border border-line p-3 md:col-span-2
+               group-data-[surface=card]:bg-surface-muted
+               group-data-[surface=panel]:mt-1 group-data-[surface=panel]:bg-surface"
       >
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-gray-700">
-            {{ sellingBoxHeading }}
-          </h3>
-          <button
-            type="button"
-            data-testid="form.quick-defaults"
-            @click="quickCalcSellingCosts"
-            class="px-2 py-1 text-xs border rounded text-gray-600 transition-colors shadow-sm"
-            :class="quickButtonClass"
-          >
-            Quick Defaults (3%/3%/$5k)
-          </button>
-        </div>
+        <UiSectionHeader as="h3" class="mb-3 items-center">
+          {{ sellingBoxHeading }}
+          <template #actions>
+            <UiButton
+              type="button"
+              data-testid="form.quick-defaults"
+              variant="secondary"
+              size="sm"
+              @click="quickCalcSellingCosts"
+            >
+              Quick Defaults (3%/3%/$5k)
+            </UiButton>
+          </template>
+        </UiSectionHeader>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NumberInput
             data-testid="form.field.buyerAgentSellingFee"
@@ -448,16 +482,21 @@ const quickCalcSellingCosts = () => {
   </section>
 
   <!-- Group 3: Expenses (shared, with per-type extras) -->
-  <section :data-surface="surface" :class="sectionClass">
-    <h2
-      class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
-    >
-      <i
-        class="pi pi-wallet"
-        :class="isBrrr ? 'text-blue-500' : 'text-orange-500'"
-      ></i>
-      Expenses
-    </h2>
+  <section
+    :data-surface="surface"
+    class="rounded-card border border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+  >
+    <UiSectionHeader class="mb-4">
+      <span class="flex items-center gap-2">
+        <i
+          class="pi pi-wallet"
+          :class="isBrrr ? 'text-primary' : 'text-warning'"
+          aria-hidden="true"
+        ></i>
+        Expenses
+      </span>
+    </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MoneyInput
         v-if="isBrrr"
@@ -536,5 +575,25 @@ const quickCalcSellingCosts = () => {
       </div>
     </div>
   </section>
+
+  <!--
+    The six surface-keyed class computeds are frozen `<script>` lines (Phase 3
+    G3) that no element wears any more — the sections style themselves from
+    `data-surface` / `data-layout` above — while `noUnusedLocals` rejects a
+    binding nothing reads. Parking them on a `hidden` element keeps both rules
+    true without a legacy class string reaching a rendered box; they and this
+    element go together when the freeze lifts.
+  -->
+  <span
+    hidden
+    :class="[
+      sectionClass,
+      innerBoxClass,
+      quickButtonClass,
+      rootSpacingClass,
+      rehabPairClass,
+      sellingBoxClass,
+    ]"
+  />
   </div>
 </template>

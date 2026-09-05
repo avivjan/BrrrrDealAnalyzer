@@ -130,6 +130,13 @@ describe('G4 behaviour manifest', () => {
     expect(compare(before, after).ok).toBe(true);
   });
 
+  it('ignores inputId, the id PrimeVue puts on the input inside its wrapper', () => {
+    const before = '<div><InputNumber :model-value="v" @input="a" /></div>';
+    const after =
+      '<div><InputNumber :inputId="ltvId" :input-id="ltvId" :model-value="v" @input="a" /></div>';
+    expect(compare(before, after).ok).toBe(true);
+  });
+
   it('flags an added behavioural attribute such as type="button"', () => {
     const result = compare('<button @click="a">x</button>', '<button type="button" @click="a">x</button>');
     expect(result.ok).toBe(false);

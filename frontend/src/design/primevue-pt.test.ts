@@ -84,26 +84,62 @@ describe("the global PrimeVue pass-through preset", () => {
       mount(ToggleSwitch, { props: { modelValue }, global: { plugins } });
 
     it("is muted when off", () => {
-      expect(classesOf(mountToggle(false), "slider")).toEqual(["bg-fg-muted/60"]);
+      expect(classesOf(mountToggle(false), "slider")).toContain("bg-fg-muted/60");
     });
 
     it("is primary when on", () => {
-      expect(classesOf(mountToggle(true), "slider")).toEqual(["bg-primary"]);
+      expect(classesOf(mountToggle(true), "slider")).toContain("bg-primary");
     });
 
     it("flips as the bound value changes", async () => {
       const wrapper = mountToggle(false);
-      expect(classesOf(wrapper, "slider")).toEqual(["bg-fg-muted/60"]);
+      expect(classesOf(wrapper, "slider")).toContain("bg-fg-muted/60");
       await wrapper.setProps({ modelValue: true });
-      expect(classesOf(wrapper, "slider")).toEqual(["bg-primary"]);
+      expect(classesOf(wrapper, "slider")).toContain("bg-primary");
       await wrapper.setProps({ modelValue: false });
-      expect(classesOf(wrapper, "slider")).toEqual(["bg-fg-muted/60"]);
+      expect(classesOf(wrapper, "slider")).toContain("bg-fg-muted/60");
     });
 
-    it("adds nothing to the root or handle, which the markup never styled", () => {
-      const wrapper = mountToggle(true);
-      expect(classesOf(wrapper, "handle")).toEqual([]);
-      expect(wrapper.find('[data-pc-section="root"]').classes()).toEqual([]);
+    it("gives the root the 44x24 box the switch is drawn in", () => {
+      // Without this the control was a bare native checkbox: `slider` was the
+      // only themed section and it had no size to fill.
+      const root = classesOf(mountToggle(true), "root");
+      for (const kept of ["relative", "inline-flex", "h-6", "w-11", "rounded-full"]) {
+        expect(root).toContain(kept);
+      }
+    });
+
+    it("keeps the native checkbox over the whole control, invisible", () => {
+      // Transparent rather than removed: the input still owns the click, the
+      // keyboard and the `role=switch` announcement.
+      const input = classesOf(mountToggle(true), "input");
+      for (const kept of ["peer", "absolute", "inset-0", "h-full", "w-full", "opacity-0"]) {
+        expect(input).toContain(kept);
+      }
+    });
+
+    it("rings the track when the input behind it takes keyboard focus", () => {
+      const slider = classesOf(mountToggle(false), "slider");
+      expect(slider).toContain("peer-focus-visible:ring-2");
+      expect(slider).toContain("peer-focus-visible:ring-ring");
+      // A pointer press must not light it up.
+      expect(slider).not.toContain("ring-2");
+    });
+
+    it("slides the handle across as the value flips", async () => {
+      const wrapper = mountToggle(false);
+      expect(classesOf(wrapper, "handle")).toContain("translate-x-0.5");
+      await wrapper.setProps({ modelValue: true });
+      expect(classesOf(wrapper, "handle")).toContain("translate-x-[1.375rem]");
+      // 22px = the 44px track less the 20px knob less its 2px inset.
+      expect(classesOf(wrapper, "handle")).toContain("w-5");
+      expect(classesOf(wrapper, "handle")).toContain("h-5");
+    });
+
+    it("carries no gray or blue literal anywhere", () => {
+      const html = mountToggle(true).html();
+      expect(html).not.toContain("blue-");
+      expect(html).not.toContain("gray-");
     });
   });
 

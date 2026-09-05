@@ -68,6 +68,10 @@ const IGNORED_PROPS = new Set([
   'class', 'style', 'pt', 'ptOptions', 'inputClass', 'input-class',
   'ghost-class', 'ghostClass', 'chosen-class', 'chosenClass',
   'drag-class', 'dragClass', 'id', 'for', 'role', 'key',
+  // `inputId` is `id` one level down: PrimeVue puts it on the `<input>` its
+  // wrapper renders, which is the only way a `<label for>` can reach that
+  // input at all. Identity, not behaviour — ignored exactly as `id`/`for` are.
+  'inputId', 'input-id',
 ]);
 
 /** Static attributes that carry behaviour and are therefore frozen. */
