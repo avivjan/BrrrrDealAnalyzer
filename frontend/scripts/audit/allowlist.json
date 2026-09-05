@@ -27,6 +27,10 @@
   ],
   "bindings": [
     {
+      "file": "src/App.vue",
+      "reason": "routerview-transition-slot"
+    },
+    {
       "file": "src/views/MyDeals.vue",
       "expression": "!columns[stage.id]?.length",
       "reason": "Task 3.6: a new, purely presentational `<UiEmptyState v-if>` beside (never inside) each stage's draggable list, so an empty column says so instead of showing a blank 100px well. Reads existing state only — the same `columns[stage.id]` the row's counter already reads — and adds no handler."
