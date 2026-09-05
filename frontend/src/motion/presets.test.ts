@@ -436,3 +436,70 @@ describe('cancelling, against the real timeline', () => {
     expect(panel.getAttribute('style') ?? '').toBe('');
   });
 });
+
+describe('every enter, on an element a previous leave made inert', () => {
+  /**
+   * A completed leave is the one thing `clearProps` does not undo.
+   *
+   * `pointer-events: none` is written by `leave` and deliberately left out of
+   * `CLEAR_PROPS`, so a leave that ran to completion leaves it behind. Vue then
+   * reuses that very element for the next open — a modal is one `v-if` node, not
+   * a new one per open — and without this reset the reopened dialog would render
+   * perfectly and swallow every click.
+   *
+   * Both paths are checked, because reduced motion is the common one: with
+   * motion off the enter never reaches a tween at all.
+   */
+  it.each(allPresets)('%s enter clears pointer-events (motion off)', (_name, preset) => {
+    const el = document.createElement('div');
+    el.style.pointerEvents = 'none';
+
+    preset.enter(el, vi.fn());
+
+    expect(el.style.pointerEvents).toBe('');
+  });
+
+  it.each(allPresets)('%s enter clears pointer-events (motion on)', (_name, preset) => {
+    state.motionOn = true;
+    const el = document.createElement('div');
+    document.body.append(el);
+    el.style.pointerEvents = 'none';
+
+    preset.enter(el, vi.fn());
+
+    expect(el.style.pointerEvents).toBe('');
+  });
+
+  it.each(allPresets)('%s enter clears pointer-events before it tweens', (_name, preset) => {
+    state.motionOn = true;
+    const order: string[] = [];
+    const el = trackedElement(order);
+    el.style.pointerEvents = 'none';
+    order.length = 0;
+    spyOnGsap(order);
+
+    preset.enter(el, vi.fn());
+
+    expect(order[0]).toBe('pointer-events:');
+  });
+
+  it('a modal that finished leaving is clickable again once it re-enters', () => {
+    state.motionOn = true;
+    const overlay = document.createElement('div');
+    const panel = document.createElement('div');
+    panel.setAttribute('data-ui', 'modal-panel');
+    overlay.append(panel);
+    document.body.append(overlay);
+
+    presets.modal.leave!(overlay, vi.fn());
+    finishEveryTween();
+    expect(overlay.style.pointerEvents).toBe('none');
+
+    // Vue reuses the same node for the next open.
+    presets.modal.enter(overlay, vi.fn());
+    finishEveryTween();
+
+    expect(overlay.style.pointerEvents).toBe('');
+    expect(overlay.getAttribute('style') ?? '').toBe('');
+  });
+});

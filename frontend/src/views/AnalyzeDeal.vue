@@ -271,131 +271,119 @@ const saveDeal = async () => {
       Save Modal Overlay. The overlay stays a raw `div`: it owns the
       `@click.self` that closes the modal, and `backdrop-blur` is `md:`-only
       over a solid-enough scrim so a phone gets the scrim and no blur cost.
+
+      `UiTransition` wraps the overlay rather than the panel, and the `modal`
+      preset fades the overlay while scaling `[data-ui="modal-panel"]` inside
+      it — the fixed box is never transformed. It replaces the scoped
+      `fade-in-up` keyframe this file used to carry, which is why there is no
+      `<style>` block left: one shared preset, one 150 ms leave that sets
+      `pointer-events: none` first, and reduced motion handled centrally.
     -->
-    <div
-      v-if="showSaveModal"
-      data-testid="analyze.modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
-      @click.self="!isSaving && (showSaveModal = false)"
-    >
-      <UiModalPanel size="md" class="animate-fade-in-up">
-        <template #header>Analyze & Save Deal</template>
+    <UiTransition preset="modal" appear>
+      <div
+        v-if="showSaveModal"
+        data-testid="analyze.modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
+        @click.self="!isSaving && (showSaveModal = false)"
+      >
+        <UiModalPanel size="md">
+          <template #header>Analyze & Save Deal</template>
 
-        <p class="text-sm text-fg-muted">
-          Enter additional details to add this deal to your board. You'll see the full analysis results after saving.
-        </p>
-
-        <div class="mt-6 space-y-4">
-          <UiField>
-            <template #label>Property Address *</template>
-            <template #default="{ id, describedBy }">
-              <input
-                data-testid="analyze.modal.address"
-                v-model="saveForm.address"
-                :id="id"
-                :aria-describedby="describedBy"
-                class="ui-input"
-                :class="saveError && !saveForm.address.trim() ? 'ui-input-invalid' : ''"
-                placeholder="123 Main St"
-                @keyup.enter="saveDeal"
-              />
-            </template>
-          </UiField>
-
-          <!-- One column on a phone: "New - need to analyze" does not fit two. -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UiField>
-              <template #label>Section</template>
-              <template #default="{ id, describedBy }">
-                <select
-                  data-testid="analyze.modal.section"
-                  v-model="saveForm.section"
-                  :id="id"
-                  :aria-describedby="describedBy"
-                  class="ui-select"
-                >
-                  <option :value="1">Wholesale</option>
-                  <option :value="2">Market</option>
-                  <option :value="3">Off Market</option>
-                </select>
-              </template>
-            </UiField>
-            <UiField>
-              <template #label>Stage</template>
-              <template #default="{ id, describedBy }">
-                <select
-                  data-testid="analyze.modal.stage"
-                  v-model="saveForm.stage"
-                  :id="id"
-                  :aria-describedby="describedBy"
-                  class="ui-select"
-                >
-                  <option :value="1">New - need to analyze</option>
-                  <option :value="2">Working</option>
-                  <option :value="3">Brought</option>
-                  <option :value="4">Keep in Mind</option>
-                  <option :value="5">Dead</option>
-                </select>
-              </template>
-            </UiField>
-          </div>
-        </div>
-
-        <div
-          v-if="saveError"
-          data-testid="analyze.modal.error"
-          class="mt-4 rounded-ctl border border-negative/40 bg-negative/5 p-3"
-        >
-          <p class="flex items-center gap-2 text-sm text-fg">
-            <i class="pi pi-exclamation-circle flex-none text-negative" aria-hidden="true"></i>
-            {{ saveError }}
+          <p class="text-sm text-fg-muted">
+            Enter additional details to add this deal to your board. You'll see the full analysis results after saving.
           </p>
-        </div>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <UiButton
-              data-testid="analyze.modal.cancel"
-              variant="secondary"
-              @click="showSaveModal = false"
-              :disabled="isSaving"
-            >
-              Cancel
-            </UiButton>
-            <UiButton
-              data-testid="analyze.modal.save"
-              :variant="selectedType === 'FLIP' ? 'flip' : 'brrrr'"
-              @click="saveDeal"
-              :disabled="isSaving"
-            >
-              <i v-if="isSaving" class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-              <i v-else class="pi pi-bolt" aria-hidden="true"></i>
-              {{ isSaving ? 'Saving...' : 'Analyze & Save' }}
-            </UiButton>
+          <div class="mt-6 space-y-4">
+            <UiField>
+              <template #label>Property Address *</template>
+              <template #default="{ id, describedBy }">
+                <input
+                  data-testid="analyze.modal.address"
+                  v-model="saveForm.address"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  class="ui-input"
+                  :class="saveError && !saveForm.address.trim() ? 'ui-input-invalid' : ''"
+                  placeholder="123 Main St"
+                  @keyup.enter="saveDeal"
+                />
+              </template>
+            </UiField>
+
+            <!-- One column on a phone: "New - need to analyze" does not fit two. -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <UiField>
+                <template #label>Section</template>
+                <template #default="{ id, describedBy }">
+                  <select
+                    data-testid="analyze.modal.section"
+                    v-model="saveForm.section"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    class="ui-select"
+                  >
+                    <option :value="1">Wholesale</option>
+                    <option :value="2">Market</option>
+                    <option :value="3">Off Market</option>
+                  </select>
+                </template>
+              </UiField>
+              <UiField>
+                <template #label>Stage</template>
+                <template #default="{ id, describedBy }">
+                  <select
+                    data-testid="analyze.modal.stage"
+                    v-model="saveForm.stage"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    class="ui-select"
+                  >
+                    <option :value="1">New - need to analyze</option>
+                    <option :value="2">Working</option>
+                    <option :value="3">Brought</option>
+                    <option :value="4">Keep in Mind</option>
+                    <option :value="5">Dead</option>
+                  </select>
+                </template>
+              </UiField>
+            </div>
           </div>
-        </template>
-      </UiModalPanel>
-    </div>
+
+          <div
+            v-if="saveError"
+            data-testid="analyze.modal.error"
+            class="mt-4 rounded-ctl border border-negative/40 bg-negative/5 p-3"
+          >
+            <p class="flex items-center gap-2 text-sm text-fg">
+              <i class="pi pi-exclamation-circle flex-none text-negative" aria-hidden="true"></i>
+              {{ saveError }}
+            </p>
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end gap-3">
+              <UiButton
+                data-testid="analyze.modal.cancel"
+                variant="secondary"
+                @click="showSaveModal = false"
+                :disabled="isSaving"
+              >
+                Cancel
+              </UiButton>
+              <UiButton
+                data-testid="analyze.modal.save"
+                :variant="selectedType === 'FLIP' ? 'flip' : 'brrrr'"
+                @click="saveDeal"
+                :disabled="isSaving"
+              >
+                <i v-if="isSaving" class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                <i v-else class="pi pi-bolt" aria-hidden="true"></i>
+                {{ isSaving ? 'Saving...' : 'Analyze & Save' }}
+              </UiButton>
+            </div>
+          </template>
+        </UiModalPanel>
+      </div>
+    </UiTransition>
   </div>
 </template>
-
-<style scoped>
-/*
- * Kept until Phase 4.3 replaces it with the shared motion preset. The panel is
- * not the `position: fixed` element — the overlay is — so transforming it here
- * is safe.
- */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-fade-in-up {
-  animation: fade-in-up 0.3s ease-out forwards;
-}
-</style>

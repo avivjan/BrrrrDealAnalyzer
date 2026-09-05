@@ -70,132 +70,140 @@ const sendOffer = async () => {
 </script>
 
 <template>
-  <div
-    v-if="isOpen"
-    data-testid="offer.root"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
-    @click.self="closeModal"
-  >
-    <UiModalPanel size="sm" labelled-by="offer-modal-title">
-      <!-- Header -->
-      <template #header>
-        <div class="flex items-center justify-between gap-3">
-          <h3
-            id="offer-modal-title"
-            class="min-w-0 text-base font-semibold text-fg md:text-lg"
+  <!--
+    `modalEnterOnly` — no leave hook at all. The offer dialog closes the moment
+    the send resolves and the landing page behind it must be usable immediately,
+    so nothing holds the overlay in the DOM on the way out. The opening is the
+    shared one: the fixed overlay fades, `[data-ui="modal-panel"]` scales.
+  -->
+  <UiTransition preset="modalEnterOnly" appear>
+    <div
+      v-if="isOpen"
+      data-testid="offer.root"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
+      @click.self="closeModal"
+    >
+      <UiModalPanel size="sm" labelled-by="offer-modal-title">
+        <!-- Header -->
+        <template #header>
+          <div class="flex items-center justify-between gap-3">
+            <h3
+              id="offer-modal-title"
+              class="min-w-0 text-base font-semibold text-fg md:text-lg"
+            >
+              Send Market Offer
+            </h3>
+            <UiIconButton
+              data-testid="offer.close"
+              @click="closeModal"
+              label="Close"
+              size="md"
+            >
+              <i class="pi pi-times text-lg" aria-hidden="true"></i>
+            </UiIconButton>
+          </div>
+        </template>
+
+        <!-- Body -->
+        <div class="space-y-4">
+          <div
+            v-if="message"
+            data-testid="offer.message"
+            :class="`p-3 rounded-ctl text-sm font-medium ${message.type === 'success' ? 'text-positive bg-positive/10' : 'text-negative bg-negative/10'}`"
           >
-            Send Market Offer
-          </h3>
-          <UiIconButton
-            data-testid="offer.close"
-            @click="closeModal"
-            label="Close"
-            size="md"
-          >
-            <i class="pi pi-times text-lg" aria-hidden="true"></i>
-          </UiIconButton>
+            {{ message.text }}
+          </div>
+
+          <UiField>
+            <template #label>Agent Name *</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="offer.agent-name"
+                v-model="form.agent_name"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="text"
+                class="ui-input"
+                placeholder="e.g. John Doe"
+              />
+            </template>
+          </UiField>
+
+          <UiField>
+            <template #label>Agent Email *</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="offer.agent-email"
+                v-model="form.agent_email"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="email"
+                class="ui-input"
+                placeholder="agent@example.com"
+              />
+            </template>
+          </UiField>
+
+          <UiField>
+            <template #label>Property Address *</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="offer.property-address"
+                v-model="form.property_address"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="text"
+                class="ui-input"
+                placeholder="123 Main St"
+              />
+            </template>
+          </UiField>
+
+          <!--
+            `MoneyInput` is already a field of its own — it renders the label the
+            `for`/`id` pair points at, and its own required marker — so wrapping
+            it in `UiField` would give it a second label.
+          -->
+          <MoneyInput
+            data-testid="offer.purchase-price"
+            label="Purchase Price"
+            v-model="form.purchase_price"
+            :required="true"
+          />
+
+          <UiField>
+            <template #label>Inspection Period (Days)</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="offer.inspection-days"
+                v-model.number="form.inspection_period_days"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="number"
+                class="ui-input"
+                placeholder="e.g. 7"
+              />
+            </template>
+          </UiField>
         </div>
-      </template>
 
-      <!-- Body -->
-      <div class="space-y-4">
-        <div
-          v-if="message"
-          data-testid="offer.message"
-          :class="`p-3 rounded-ctl text-sm font-medium ${message.type === 'success' ? 'text-positive bg-positive/10' : 'text-negative bg-negative/10'}`"
-        >
-          {{ message.text }}
-        </div>
-
-        <UiField>
-          <template #label>Agent Name *</template>
-          <template #default="{ id, describedBy }">
-            <input
-              data-testid="offer.agent-name"
-              v-model="form.agent_name"
-              :id="id"
-              :aria-describedby="describedBy"
-              type="text"
-              class="ui-input"
-              placeholder="e.g. John Doe"
-            />
-          </template>
-        </UiField>
-
-        <UiField>
-          <template #label>Agent Email *</template>
-          <template #default="{ id, describedBy }">
-            <input
-              data-testid="offer.agent-email"
-              v-model="form.agent_email"
-              :id="id"
-              :aria-describedby="describedBy"
-              type="email"
-              class="ui-input"
-              placeholder="agent@example.com"
-            />
-          </template>
-        </UiField>
-
-        <UiField>
-          <template #label>Property Address *</template>
-          <template #default="{ id, describedBy }">
-            <input
-              data-testid="offer.property-address"
-              v-model="form.property_address"
-              :id="id"
-              :aria-describedby="describedBy"
-              type="text"
-              class="ui-input"
-              placeholder="123 Main St"
-            />
-          </template>
-        </UiField>
-
-        <!--
-          `MoneyInput` is already a field of its own — it renders the label the
-          `for`/`id` pair points at, and its own required marker — so wrapping
-          it in `UiField` would give it a second label.
-        -->
-        <MoneyInput
-          data-testid="offer.purchase-price"
-          label="Purchase Price"
-          v-model="form.purchase_price"
-          :required="true"
-        />
-
-        <UiField>
-          <template #label>Inspection Period (Days)</template>
-          <template #default="{ id, describedBy }">
-            <input
-              data-testid="offer.inspection-days"
-              v-model.number="form.inspection_period_days"
-              :id="id"
-              :aria-describedby="describedBy"
-              type="number"
-              class="ui-input"
-              placeholder="e.g. 7"
-            />
-          </template>
-        </UiField>
-      </div>
-
-      <!-- Footer -->
-      <template #footer>
-        <div class="flex flex-wrap items-center justify-end gap-2">
-          <UiButton
-            data-testid="offer.cancel"
-            @click="closeModal"
-            variant="ghost"
-          >
-            Cancel
-          </UiButton>
-          <UiButton data-testid="offer.send" @click="sendOffer" :disabled="loading">
-            <i class="pi pi-spin pi-spinner" v-if="loading" aria-hidden="true"></i>
-            {{ loading ? 'Sending...' : 'Send Offer' }}
-          </UiButton>
-        </div>
-      </template>
-    </UiModalPanel>
-  </div>
+        <!-- Footer -->
+        <template #footer>
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <UiButton
+              data-testid="offer.cancel"
+              @click="closeModal"
+              variant="ghost"
+            >
+              Cancel
+            </UiButton>
+            <UiButton data-testid="offer.send" @click="sendOffer" :disabled="loading">
+              <i class="pi pi-spin pi-spinner" v-if="loading" aria-hidden="true"></i>
+              {{ loading ? 'Sending...' : 'Send Offer' }}
+            </UiButton>
+          </div>
+        </template>
+      </UiModalPanel>
+    </div>
+  </UiTransition>
 </template>

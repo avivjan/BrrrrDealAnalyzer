@@ -13,6 +13,9 @@
  *  3. Leaves make the element inert *first*. A fading modal is still on top of
  *     the page and still clickable; `pointer-events: none` before anything else
  *     is what stops the user from hitting a button that is on its way out.
+ *  4. Enters undo that first, whether they go on to animate or not. Vue reuses
+ *     the same node for the next open, and `pointer-events` is the one thing
+ *     `clearProps` is not allowed to remove — see `reviveEnter`.
  *
  * Timings come from `tokens.ts`, which mirrors `tokens.css`. Nothing here reads
  * a duration from CSS at runtime: `:css="false"` means Vue is waiting on us.
@@ -79,9 +82,24 @@ function cancelLeave(el: HTMLElement): void {
   cancel(el);
 }
 
+/**
+ * The one thing an arriving element has to undo before anything else.
+ *
+ * `leave` writes `pointer-events: none` and `CLEAR_PROPS` deliberately does not
+ * list it, so an element that finished leaving keeps it. Vue reuses that same
+ * node for the next open — a modal is one `v-if` node, not a fresh one per open
+ * — so without this the reopened dialog would look right and swallow every
+ * click. Cheap enough to do unconditionally, and it runs on the reduced-motion
+ * path too, which is where most users are.
+ */
+function reviveEnter(el: HTMLElement): void {
+  el.style.pointerEvents = '';
+}
+
 /** Build an `enter` that tweens `el` itself from `from` to `to`. */
 function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
   return function enter(el: HTMLElement, done: () => void): void {
+    reviveEnter(el);
     gsap.killTweensOf(el);
     if (!motionEnabled()) {
       gsap.set(el, { clearProps: CLEAR_PROPS });
@@ -112,6 +130,7 @@ function modalPanel(el: HTMLElement): HTMLElement | null {
 }
 
 function modalEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
   gsap.killTweensOf(el);
   if (!motionEnabled()) {
     gsap.set(el, { clearProps: CLEAR_PROPS });
