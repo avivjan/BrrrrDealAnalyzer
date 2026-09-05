@@ -59,6 +59,11 @@ export const GOLDEN_POLICY_PATHS = [
   'frontend/scripts/audit/golden',
   'frontend/e2e/golden',
   'frontend/scripts/audit/allowlist.json',
+  // The archived Playwright runs are goldens too: `npm run e2e:compare` reads
+  // phase0-baseline.json against phase5-final.json as the behaviour-freeze
+  // proof, so re-archiving either one inside an ordinary commit would move the
+  // proof's own baseline without anyone reviewing it.
+  'frontend/e2e/reports',
 ];
 
 const PLAYWRIGHT_CONFIG = join(FRONTEND_ROOT, 'playwright.config.ts');

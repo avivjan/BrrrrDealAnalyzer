@@ -25,6 +25,15 @@ describe('verify:ui pathspecs', () => {
     ]);
   });
 
+  it('puts every golden path — manifests, e2e goldens, allowlist, archives — under the policy', () => {
+    expect(GOLDEN_POLICY_PATHS).toEqual([
+      'frontend/scripts/audit/golden',
+      'frontend/e2e/golden',
+      'frontend/scripts/audit/allowlist.json',
+      'frontend/e2e/reports',
+    ]);
+  });
+
   it('freezes every non-presentational frontend directory in G2', () => {
     expect(G2_FROZEN_PATHS).toEqual([
       'frontend/src/stores',
