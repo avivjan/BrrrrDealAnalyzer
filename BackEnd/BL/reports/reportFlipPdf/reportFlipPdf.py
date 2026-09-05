@@ -1,6 +1,6 @@
 from ReqRes.common.analyze_inputs import analyzeFlipReq
-from BL.common.deal_validation import validate_flip_inputs
-from BL.common.deal_analysis import calculate_flip_results
+from BL.analyze.common.validation import validate_flip_inputs
+from BL.analyze.analyzeFlip import calculate_flip_results
 from BL.reports.common.deal_pdf import build_deal_pdf
 
 

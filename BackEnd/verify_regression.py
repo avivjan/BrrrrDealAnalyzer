@@ -166,8 +166,9 @@ def _resolve(name: str, *module_paths: str) -> Any:
     raise ImportError(f"could not resolve {name!r}; tried: {', '.join(tried)}")
 
 
-_MATH = ("BL.common.deal_math", "main")
-_ANALYSIS = ("BL.common.deal_analysis", "main")
+_MATH = ("BL.analyze.common.deal_math", "BL.common.deal_math", "main")
+_BRRR = ("BL.analyze.analyzeBRRR", "BL.common.deal_analysis", "main")
+_FLIP = ("BL.analyze.analyzeFlip", "BL.common.deal_analysis", "main")
 
 thousands_to_dollars = _resolve("thousands_to_dollars", *_MATH)
 get_HML_amount = _resolve("get_HML_amount", *_MATH)
@@ -185,8 +186,8 @@ DAYS_PER_YEAR = _resolve("DAYS_PER_YEAR", *_MATH)
 DAYS_PER_MONTH = _resolve("DAYS_PER_MONTH", *_MATH)
 MONTHS_PER_YEAR = _resolve("MONTHS_PER_YEAR", *_MATH)
 
-calculate_brrr_results = _resolve("calculate_brrr_results", *_ANALYSIS)
-calculate_flip_results = _resolve("calculate_flip_results", *_ANALYSIS)
+calculate_brrr_results = _resolve("calculate_brrr_results", *_BRRR)
+calculate_flip_results = _resolve("calculate_flip_results", *_FLIP)
 
 analyzeBRRRReq = _resolve(
     "analyzeBRRRReq", "ReqRes.common.analyze_inputs", "ReqRes.analyzeBRRR.analyzeBRRRReq"

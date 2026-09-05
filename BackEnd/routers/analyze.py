@@ -6,8 +6,8 @@ from ReqRes.analyze.analyzeBRRR.analyzeBRRRReq import analyzeBRRRReq
 from ReqRes.analyze.analyzeBRRR.analyzeBRRRRes import analyzeBRRRRes
 from ReqRes.analyze.analyzeFlip.analyzeFlipReq import analyzeFlipReq
 from ReqRes.analyze.analyzeFlip.analyzeFlipRes import analyzeFlipRes
-from BL.analyze.analyzeBRRR.analyzeBRRR import analyze_brrr as analyze_brrr_bl
-from BL.analyze.analyzeFlip.analyzeFlip import analyze_flip as analyze_flip_bl
+from BL.analyze.analyzeBRRR import analyze_brrr as analyze_brrr_bl
+from BL.analyze.analyzeFlip import analyze_flip as analyze_flip_bl
 
 router = APIRouter()
 

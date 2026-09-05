@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import pytest
 
-from BL.common.deal_math import calc_holding_costs
+from BL.analyze.common.deal_math import calc_holding_costs
 
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
