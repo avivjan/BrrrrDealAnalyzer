@@ -85,3 +85,17 @@ describe("UiDrawer", () => {
     expect(document.querySelector('[data-part="footer"]')!.className).toContain("pb-safe-b");
   });
 });
+
+describe("UiDrawer attrs", () => {
+  it("forwards data-* and aria-* to the drawer element and class to the panel", async () => {
+    wrapper = mount(UiDrawer, {
+      attachTo: document.body,
+      props: { open: true },
+      attrs: { "data-testid": "shell.settings", class: "max-w-none" },
+      slots: { header: "H", default: "x" },
+    });
+    await nextTick();
+    expect(document.querySelector('[data-ui="drawer"]')!.getAttribute("data-testid")).toBe("shell.settings");
+    expect(document.querySelector('[role="dialog"]')!.className).toContain("max-w-none");
+  });
+});

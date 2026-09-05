@@ -14,7 +14,7 @@
  * sits in a `<UiTransition preset="modal">`, which fades the scrim and scales
  * the panel (`data-ui="modal-panel"` is what that preset targets).
  */
-import { computed, nextTick, ref, useId, watch } from "vue";
+import { computed, nextTick, ref, useAttrs, useId, watch } from "vue";
 
 import { cn } from "../../design/cn";
 
@@ -42,6 +42,15 @@ const SIZES = { sm: "md:max-w-sm", md: "md:max-w-md", lg: "md:max-w-lg" } as con
 
 const labelledBy = computed(() => props.labelledby ?? headingId);
 
+const attrs = useAttrs();
+
+/** Everything except `class` (which goes on the panel) lands on the scrim root — the drawer's own element. */
+function passthrough() {
+  const rest: Record<string, unknown> = { ...attrs };
+  delete rest.class;
+  return rest;
+}
+
 watch(
   () => props.open,
   async (open) => {
@@ -60,6 +69,8 @@ watch(
       restoreTo = null;
     }
   },
+  // `immediate`: a drawer mounted already open focuses its body too.
+  { immediate: true },
 );
 
 function onKeydown(event: KeyboardEvent) {
@@ -78,6 +89,7 @@ function onKeydown(event: KeyboardEvent) {
         data-ui="drawer"
         class="fixed inset-0 z-50 flex bg-fg/40"
         :class="side === 'right' ? 'justify-end' : 'justify-start'"
+        v-bind="passthrough()"
         @click.self="emit('close')"
         @keydown="onKeydown"
       >
