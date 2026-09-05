@@ -243,3 +243,14 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * `<UiTransitionGroup>`'s move class — the one piece of the motion layer that
+ * has to be CSS. Vue measures the FLIP offsets itself and then waits for a real
+ * transition on the items that shifted, so GSAP never sees this one. The
+ * neutraliser above still governs it: `transition-duration` there is
+ * `!important`, so a reduced-motion reorder snaps into place.
+ */
+.ui-move {
+  transition: transform var(--dur-base) var(--ease-standard);
+}

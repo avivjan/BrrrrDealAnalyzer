@@ -7,10 +7,10 @@
  *
  * Only APIs jsdom genuinely lacks are installed, and (apart from the canvas
  * context, see below) only when missing, so a future jsdom that implements one
- * of them wins over the stub. Nothing here stubs a component or a directive;
- * that belongs to the test that needs it. The one non-polyfill is the global
- * registration of the Ui* primitives at the end, which mirrors what `main.ts`
- * does to the real app — a registration, not a stub: the real ones render.
+ * of them wins over the stub. The one non-polyfill is the global registration
+ * at the end, which mirrors what `main.ts` does to the real app: the Ui*
+ * primitives themselves (a registration, not a stub — the real ones render) and
+ * pass-through stand-ins for the motion layer.
  */
 
 /** Assign `value` at `key` only when the host has no implementation of its own. */
@@ -100,6 +100,39 @@ if (typeof window !== "undefined") {
   const { config } = await import("@vue/test-utils");
   const { UI_COMPONENTS } = await import("../components/ui/register");
   config.global.components = { ...config.global.components, ...UI_COMPONENTS };
+
+  // The motion layer is the other thing `main.ts` registers globally, and a
+  // view template writes `<UiTransition preset="...">` and `v-press` for the
+  // same reason: the Phase 3 script freeze forbids the import. Here, unlike the
+  // primitives, these really are stubs. A component test asserts what a view
+  // renders, not how it arrives, so the wrappers pass their slot straight
+  // through and the directives do nothing at all — which is also what the real
+  // ones do under Vitest, where `motionEnabled()` is false. `src/motion/*` has
+  // its own tests for the animation itself.
+  const { defineComponent, h } = await import("vue");
+  const UiTransition = defineComponent({
+    name: "UiTransition",
+    props: { preset: { type: String, required: true }, appear: Boolean },
+    setup(_props, { slots }) {
+      return () => slots.default?.();
+    },
+  });
+  const UiTransitionGroup = defineComponent({
+    name: "UiTransitionGroup",
+    props: { preset: { type: String, required: true }, tag: { type: String, default: "div" } },
+    setup(props, { slots }) {
+      return () => h(props.tag, {}, slots.default?.());
+    },
+  });
+  config.global.components = { ...config.global.components, UiTransition, UiTransitionGroup };
+  config.global.directives = {
+    ...config.global.directives,
+    reveal: {},
+    press: {},
+    "hover-lift": {},
+    flash: {},
+    "count-up": {},
+  };
 }
 
 export {};
