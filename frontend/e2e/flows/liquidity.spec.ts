@@ -64,11 +64,22 @@ type Settle = (ms: number) => Promise<void>;
  */
 const TRANSITION_MS = 400;
 
-/** Below this the right-hand sidebar is `hidden` (`lg:block`). */
+/**
+ * Below this the overview sidebar is not a right rail but an inline section
+ * behind `liquidity.sidebar-toggle` (UI v2). At the v1 baseline it was hidden
+ * outright below `lg`, which is why two tests here used to skip on phones.
+ */
 const SIDEBAR_BREAKPOINT = 1024;
 
 function isNarrow(page: Page): boolean {
   return (page.viewportSize()?.width ?? 0) < SIDEBAR_BREAKPOINT;
+}
+
+/** On a phone, expand the overview so the sidebar's figures are on screen. */
+async function openOverview(page: Page): Promise<void> {
+  if (!isNarrow(page)) return;
+  const toggle = page.getByTestId('liquidity.sidebar-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
 }
 
 /**
@@ -205,11 +216,6 @@ test('deleting a recurring series names it in the confirm', async ({
   dialogs,
   settle,
 }) => {
-  test.skip(
-    isNarrow(page),
-    'the recurring list lives in the `lg:`-only sidebar, so there is nothing to delete from on a phone',
-  );
-
   await page.goto('/liquidity');
   await expect(page.getByTestId('liquidity.empty')).toBeVisible();
   await openSettingsAndSave(page, settle);
@@ -228,6 +234,7 @@ test('deleting a recurring series names it in the confirm', async ({
   );
   await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
+  await openOverview(page);
   const rule = page.locator('[data-testid^="sidebar.recurring."]').first();
   await expect(rule).toBeVisible();
 
@@ -268,8 +275,6 @@ test('the chart walks days with the arrow keys', async ({ page, settle }) => {
 test('a successful Mercury sync renders the per-workspace breakdown', async ({
   page,
 }) => {
-  test.skip(isNarrow(page), 'sidebar is lg-only at baseline (checklist)');
-
   await page.route('**/liquidity/mercury-balance', async (route) =>
     route.fulfill({
       status: 200,
@@ -282,6 +287,7 @@ test('a successful Mercury sync renders the per-workspace breakdown', async ({
 
   await expect(page.getByTestId('chart.container')).toBeVisible();
 
+  await openOverview(page);
   await expect(page.getByTestId('sidebar.workspace.BigWhales')).toBeVisible();
   await expect(page.getByTestId('sidebar.account.acct-checking')).toContainText(
     'Operating',
