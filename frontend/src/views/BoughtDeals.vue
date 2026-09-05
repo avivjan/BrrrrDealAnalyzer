@@ -76,10 +76,10 @@ const getStageAccentColor = (stageId: string) => {
   const stages = currentStages.value;
   const idx = stages.findIndex((s) => s.id === stageId);
   const ratio = stages.length > 1 ? idx / (stages.length - 1) : 0;
-  if (ratio < 0.25) return "border-l-blue-500";
-  if (ratio < 0.5) return "border-l-cyan-500";
-  if (ratio < 0.75) return "border-l-emerald-500";
-  return "border-l-green-600";
+  if (ratio < 0.25) return "border-l-chart-4";
+  if (ratio < 0.5) return "border-l-chart-8";
+  if (ratio < 0.75) return "border-l-chart-2";
+  return "border-l-positive";
 };
 
 // Drag-and-drop
@@ -378,26 +378,26 @@ const formatPercent = (value: number | undefined) => {
 };
 
 const getCashFlowColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value >= 100) return "text-emerald-600";
-  if (value >= 1) return "text-gray-600";
-  return "text-red-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value >= 100) return "text-positive";
+  if (value >= 1) return "text-fg-muted";
+  return "text-negative";
 };
 
 const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value === -1) return "text-emerald-600";
-  if (value === -2) return "text-red-600";
-  if (value > 0) return "text-emerald-600";
-  if (value < 0) return "text-red-600";
-  return "text-gray-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value === -1) return "text-positive";
+  if (value === -2) return "text-negative";
+  if (value > 0) return "text-positive";
+  if (value < 0) return "text-negative";
+  return "text-fg-muted";
 };
 
 const getDSCRColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value >= 1.2) return "text-emerald-600";
-  if (value >= 1.0) return "text-gray-600";
-  return "text-red-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value >= 1.2) return "text-positive";
+  if (value >= 1.0) return "text-fg-muted";
+  return "text-negative";
 };
 
 const isHeaderCopied = ref(false);
@@ -417,21 +417,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
 </script>
 
 <template>
-  <div class="h-dvh flex flex-col bg-page text-fg overflow-hidden">
-    <!-- Header -->
-    <header
-      class="flex-none px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-8 flex flex-wrap justify-between items-center gap-3 border-b border-line bg-surface/95 md:backdrop-blur z-20 shadow-1"
+  <!-- UI v2: sticky toolbar over rows of pipeline stages; the shell owns the viewport and scroller. -->
+  <div class="flex min-h-full flex-col text-fg">
+    <div
+      class="glass sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-4 py-3 md:px-6"
     >
       <div class="flex items-center gap-3">
-        <UiIconButton
-          data-testid="boughtdeals.home"
-          @click="$router.push('/')"
-          label="Home"
-          size="md"
-        >
-          <i class="pi pi-home text-xl" aria-hidden="true"></i>
-        </UiIconButton>
-        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block">
+        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
           Bought Deals
         </UiSectionHeader>
       </div>
@@ -453,7 +445,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         >
           {{ tab.label }}
           <span
-            class="bg-line text-fg-muted px-1.5 py-0.5 rounded-full text-[10px]"
+            class="numeric rounded-full bg-surface-3 px-1.5 py-0.5 text-[10px] text-fg-muted"
             >{{ tab.count }}</span
           >
         </UiButton>
@@ -491,10 +483,10 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           <span class="hidden sm:inline">My Deals</span>
         </UiButton>
       </div>
-    </header>
+    </div>
 
-    <!-- Board -->
-    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
+    <!-- Board: rows of stages. The shell's <main> scrolls; nothing here does. -->
+    <div class="flex-1 pb-safe-b">
       <!--
         Bare `v-reveal`, not `v-reveal.stagger`, matching the twin board in
         `MyDeals.vue` line for line. `/my-deals` is the route the frozen
@@ -515,19 +507,17 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           v-for="stage in currentStages"
           :key="stage.id"
           :data-testid="`boughtdeals.stage.${stage.id}`"
-          tone="muted"
+          tone="surface"
           padding="sm"
-          :class="'w-full border-l-4 ' + getStageAccentColor(stage.id)"
+          :class="'w-full border-ui border-l-4 ' + getStageAccentColor(stage.id)"
         >
           <!-- Row Header -->
           <template #header>
-            <UiSectionHeader as="h3">
+            <UiSectionHeader as="h3" class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-base [&_[data-part=title]]:tracking-display">
               {{ stage.name }}
-              <UiBadge
-                class="ml-2 align-middle bg-surface px-2.5 font-mono text-sm font-normal text-fg-muted shadow-1 ring-1 ring-inset ring-line"
-              >
-                {{ columns[stage.id]?.length || 0 }}
-              </UiBadge>
+              <UiChip class="ml-2 align-middle" size="sm">
+                <span class="numeric">{{ columns[stage.id]?.length || 0 }}</span>
+              </UiChip>
             </UiSectionHeader>
           </template>
 
@@ -558,12 +548,12 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 />
               </div>
             </VueDraggable>
-            <UiEmptyState
+            <p
               v-if="!columns[stage.id]?.length"
-              class="mt-3 p-4"
+              class="mt-2 rounded-ctl border-ui border-dashed border-line px-3 py-2.5 text-center text-xs text-fg-muted"
             >
               No deals in this stage
-            </UiEmptyState>
+            </p>
           </div>
         </UiCard>
       </div>
@@ -945,7 +935,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 ref="analysisResultsEl"
                 v-if="currentAnalysis"
                 data-testid="boughtdeals.modal.results"
-                class="bg-surface-muted p-4 rounded-card border border-line mb-6"
+                class="bg-surface-2 p-4 rounded-card border border-line mb-6"
               >
                 <UiSectionHeader as="h4" class="mb-3">
                   Analysis Results

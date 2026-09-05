@@ -28,15 +28,15 @@ const useSortableBoard = useMediaQuery("(pointer: fine)");
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
 const stages = [
-  { id: 1, name: "New - need to analyze", color: "bg-white border-gray-200" },
-  { id: 2, name: "Working", color: "bg-white border-gray-200" },
-  { id: 3, name: "Brought", color: "bg-white border-gray-200" },
+  { id: 1, name: "New - need to analyze", color: "bg-surface border-line" },
+  { id: 2, name: "Working", color: "bg-surface border-line" },
+  { id: 3, name: "Brought", color: "bg-surface border-line" },
   {
     id: 4,
     name: "Keep in Mind",
-    color: "bg-white border-gray-200",
+    color: "bg-surface border-line",
   },
-  { id: 5, name: "Dead", color: "bg-white border-gray-200" },
+  { id: 5, name: "Dead", color: "bg-surface border-line" },
 ];
 
 // Local state for each column to support drag-and-drop
@@ -335,26 +335,26 @@ const formatPercent = (value: number | undefined) => {
 };
 
 const getCashFlowColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value >= 100) return "text-emerald-600";
-  if (value >= 1) return "text-gray-600";
-  return "text-red-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value >= 100) return "text-positive";
+  if (value >= 1) return "text-fg-muted";
+  return "text-negative";
 };
 
 const getPerformanceColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value === -1) return "text-emerald-600"; // Infinity
-  if (value === -2) return "text-red-600"; // -Infinity
-  if (value > 0) return "text-emerald-600";
-  if (value < 0) return "text-red-600";
-  return "text-gray-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value === -1) return "text-positive"; // Infinity
+  if (value === -2) return "text-negative"; // -Infinity
+  if (value > 0) return "text-positive";
+  if (value < 0) return "text-negative";
+  return "text-fg-muted";
 };
 
 const getDSCRColor = (value: number | undefined) => {
-  if (value === undefined || value === null) return "text-gray-900";
-  if (value >= 1.2) return "text-emerald-600";
-  if (value >= 1.0) return "text-gray-600";
-  return "text-red-600";
+  if (value === undefined || value === null) return "text-fg";
+  if (value >= 1.2) return "text-positive";
+  if (value >= 1.0) return "text-fg-muted";
+  return "text-negative";
 };
 
 const openDeal = (deal: ActiveDealRes) => {
@@ -494,21 +494,19 @@ console.groupEnd();
 </script>
 
 <template>
-  <div class="h-dvh flex flex-col bg-page text-fg overflow-hidden">
-    <!-- Header -->
-    <header
-      class="flex-none px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-8 flex flex-wrap justify-between items-center gap-3 border-b border-line bg-surface/95 md:backdrop-blur z-20 shadow-1"
+  <!--
+    UI v2. The shell owns the viewport, the page scroller and the h1; this view
+    is a sticky toolbar (tabs, add) over rows of stages. Rows, not columns: a
+    row per stage keeps every stage visible on a phone and lets the cards flow
+    into a responsive grid. `VueDraggable` and its children are untouched.
+  -->
+  <div class="flex min-h-full flex-col text-fg">
+    <!-- Toolbar -->
+    <div
+      class="glass sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-4 py-3 md:px-6"
     >
       <div class="flex items-center gap-3">
-        <UiIconButton
-          data-testid="mydeals.home"
-          @click="$router.push('/')"
-          label="Home"
-          size="md"
-        >
-          <i class="pi pi-home text-xl" aria-hidden="true"></i>
-        </UiIconButton>
-        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block">
+        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
           My Deals
         </UiSectionHeader>
         <UiButton
@@ -555,24 +553,25 @@ console.groupEnd();
         >
           {{ tab.label }}
           <span
-            class="bg-line text-fg-muted px-1.5 py-0.5 rounded-full text-[10px]"
+            class="numeric rounded-full bg-surface-3 px-1.5 py-0.5 text-[10px] text-fg-muted"
             >{{ tab.count }}</span
           >
         </UiButton>
       </UiTabs>
 
+      <!-- Labelled at every width (the v1 icon-only phone variant failed axe button-name). -->
       <UiButton
         data-testid="mydeals.add-deal"
         @click="$router.push('/analyze')"
-        class="ml-auto font-bold shadow-2"
+        class="ml-auto font-bold shadow-glow-primary"
       >
         <i class="pi pi-plus" aria-hidden="true"></i>
-        <span class="hidden md:inline">Add Deal</span>
+        <span>Add Deal</span>
       </UiButton>
-    </header>
+    </div>
 
-    <!-- Kanban Board (Refactored to Rows) -->
-    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
+    <!-- Board: rows of stages. The shell's <main> scrolls; nothing here does. -->
+    <div class="flex-1 pb-safe-b">
       <!--
         Bare `v-reveal`, not `v-reveal.stagger` -- the two boards and their two
         modals are the only reveals in the overhaul that do not stagger.
@@ -594,19 +593,17 @@ console.groupEnd();
           v-for="stage in stages"
           :key="stage.id"
           :data-testid="`mydeals.stage.${stage.id}`"
-          tone="muted"
+          tone="surface"
           padding="sm"
-          class="w-full"
+          class="w-full border-ui"
         >
           <!-- Row Header -->
           <template #header>
-            <UiSectionHeader as="h3">
+            <UiSectionHeader as="h3" class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-base [&_[data-part=title]]:tracking-display">
               {{ stage.name }}
-              <UiBadge
-                class="ml-2 align-middle bg-surface px-2.5 font-mono text-sm font-normal text-fg-muted shadow-1 ring-1 ring-inset ring-line"
-              >
-                {{ columns[stage.id]?.length || 0 }}
-              </UiBadge>
+              <UiChip class="ml-2 align-middle" size="sm">
+                <span class="numeric">{{ columns[stage.id]?.length || 0 }}</span>
+              </UiChip>
             </UiSectionHeader>
           </template>
 
@@ -659,12 +656,13 @@ console.groupEnd();
                 />
               </div>
             </div>
-            <UiEmptyState
+            <!-- Compact: a phone column no longer reserves a 243 px well for nothing. -->
+            <p
               v-if="!columns[stage.id]?.length"
-              class="mt-3 p-4"
+              class="mt-2 rounded-ctl border-ui border-dashed border-line px-3 py-2.5 text-center text-xs text-fg-muted"
             >
               No deals in this stage
-            </UiEmptyState>
+            </p>
           </div>
         </UiCard>
       </div>
@@ -958,7 +956,7 @@ console.groupEnd();
               />
 
               <!-- Results Preview -->
-              <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-surface-muted p-4 rounded-card border border-line mb-6">
+              <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-surface-2 p-4 rounded-card border border-line mb-6">
                   <UiSectionHeader as="h4" class="mb-3">Analysis Results</UiSectionHeader>
                   <!--
                     The reveal goes on the tile grid, never on the panel above
@@ -977,73 +975,73 @@ console.groupEnd();
                       <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Flow</template>
-                              <div data-testid="mydeals.modal.result.cash_flow" class="font-bold" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
+                              <div data-testid="mydeals.modal.result.cash_flow" class="numeric font-display text-lg font-bold tracking-display" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Out</template>
-                              <div data-testid="mydeals.modal.result.cash_out" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
+                              <div data-testid="mydeals.modal.result.cash_out" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Out Routi</template>
-                              <div data-testid="mydeals.modal.result.cash_out_routi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
+                              <div data-testid="mydeals.modal.result.cash_out_routi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>CoC</template>
-                              <div data-testid="mydeals.modal.result.cash_on_cash" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                              <div data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
                           </UiStatTile>
                            <UiStatTile tone="neutral" class="bg-surface">
                                <template #label>DSCR</template>
-                               <div data-testid="mydeals.modal.result.dscr" class="font-bold" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
+                               <div data-testid="mydeals.modal.result.dscr" class="numeric font-display text-lg font-bold tracking-display" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
                            </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Equity</template>
-                              <div data-testid="mydeals.modal.result.equity" class="font-bold text-positive">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
+                              <div data-testid="mydeals.modal.result.equity" class="numeric font-display text-lg font-bold tracking-display text-positive">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div data-testid="mydeals.modal.result.roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
-                              <div data-testid="mydeals.modal.result.net_profit" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                              <div data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Total Cash Needed</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
+                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed (Buffered)</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
+                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
                           </UiStatTile>
                       </template>
                       <template v-else>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
-                              <div data-testid="mydeals.modal.result.net_profit" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                              <div data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div data-testid="mydeals.modal.result.roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Annualized ROI</template>
-                              <div data-testid="mydeals.modal.result.annualized_roi" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                              <div data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
+                              <div data-testid="mydeals.modal.result.total_cash_needed" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed (Buffered)</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_with_buffer" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
+                              <div data-testid="mydeals.modal.result.total_cash_needed_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Holding Costs</template>
-                              <div data-testid="mydeals.modal.result.total_holding_costs" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
+                              <div data-testid="mydeals.modal.result.total_holding_costs" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>HML Interest</template>
-                              <div data-testid="mydeals.modal.result.total_hml_interest" class="font-bold">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
+                              <div data-testid="mydeals.modal.result.total_hml_interest" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
                           </UiStatTile>
                       </template>
                   </div>
@@ -1402,7 +1400,7 @@ console.groupEnd();
           <iframe
             data-testid="mydeals.pdf-modal.iframe"
             :src="pdfPreview.url"
-            class="flex-1 w-full bg-surface-muted"
+            class="flex-1 w-full bg-surface-2"
             title="Deal Report PDF"
           ></iframe>
         </div>
