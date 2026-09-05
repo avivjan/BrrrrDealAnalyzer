@@ -65,9 +65,10 @@ function onSaved() {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-page pb-safe-b">
+  <!-- UI v2 mount-only edits (plan Task 3.5): the shell owns the viewport, the sticky bar and the <main> landmark. -->
+  <div class="min-h-full bg-page pb-safe-b">
     <!-- Header -->
-    <header class="sticky top-0 z-30 border-b border-line bg-surface pt-safe-t">
+    <header class="border-b border-line bg-surface">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div class="flex min-w-0 items-center gap-3">
           <UiIconButton
@@ -125,7 +126,7 @@ function onSaved() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-6xl space-y-6 px-4 py-6">
+    <div class="mx-auto max-w-6xl space-y-6 px-4 py-6">
       <!-- Config banner -->
       <div
         v-if="store.configStatus && !isConfigured"
@@ -157,7 +158,7 @@ function onSaved() {
             data-testid="reps.refresh"
             variant="ghost"
             size="sm"
-            class="ml-2 min-h-9 underline"
+            class="ml-2 min-h-11 min-w-11 underline"
             @click="refreshActive"
             :loading="activeLoading"
             :disabled="activeLoading"
@@ -183,7 +184,7 @@ function onSaved() {
         :loading="activeLoading"
         :error="activeError"
       />
-    </main>
+    </div>
 
     <RepsEntryModal
       :open="showModal"

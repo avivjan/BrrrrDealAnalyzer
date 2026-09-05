@@ -431,7 +431,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         >
           <i class="pi pi-home text-xl" aria-hidden="true"></i>
         </UiIconButton>
-        <UiSectionHeader as="h1" class="hidden md:block">
+        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block">
           Bought Deals
         </UiSectionHeader>
       </div>
