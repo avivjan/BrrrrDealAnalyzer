@@ -451,6 +451,15 @@ is `docs/plans/2026-09-05-ui-v2-progress.md`. Rulings made while executing:
    `sr-only` `h2`s; REPS lost its `<main>`, sticky header and `min-h-dvh` (the
    only edits it received).
 8. **Primeicons 7 has no `pi-trello`**; the My Deals icon is `pi-objects-column`.
-9. **Screenshot review artifacts were dropped** at the user's request; phases 4
+9. **Two naming drifts from the plan, kept.** Radius tokens stay `--radius-sm/md/lg`
+   (the `ctl/card/panel` names live in `tailwind.config.js`, where `cn()` needs
+   them); `UiSegmented` marks its options with `data-value` rather than one
+   `data-testid` per option, so the specs select `shell.mode` + `[data-value]`.
+10. **Final review fixes.** Focus ring offset follows `--color-page`; the drawer
+    and palette make the rest of the page `inert` while open; the dashboard's
+    stats slot reserves the bar's real height; `UiSurface` transitions
+    `transform` only when interactive; the chart treats `pointercancel` as a
+    cancelled gesture; five unused primitives are exported but not registered.
+11. **Screenshot review artifacts were dropped** at the user's request; phases 4
    and 5 ran without review stops and their full-suite runs were merged into one.
 

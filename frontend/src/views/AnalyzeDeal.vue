@@ -42,7 +42,9 @@ const validationErrors = ref<string[]>([]);
 const fmtK = (value: unknown): string => {
   const n = Number(value);
   if (!Number.isFinite(n) || n === 0) return "—";
-  return n >= 1000 ? `$${(n / 1000).toFixed(2)}M` : `$${n.toLocaleString(undefined, { maximumFractionDigits: 1 })}K`;
+  const sign = n < 0 ? "-" : "";
+  const a = Math.abs(n);
+  return a >= 1000 ? `${sign}$${(a / 1000).toFixed(1)}M` : `${sign}$${a.toLocaleString(undefined, { maximumFractionDigits: 1 })}K`;
 };
 const summary = computed(() => [
   { label: "Purchase", value: fmtK(form.value.purchasePrice) },

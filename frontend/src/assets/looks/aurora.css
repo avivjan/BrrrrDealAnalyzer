@@ -90,6 +90,8 @@
   --gsap-ease-emphasized: back.out(1.4);
   --gsap-ease-exit: power1.in;
   --ambient: gradient-drift;
+  --ambient-play: running;
+  --ambient-opacity: 0.35;
 }
 
 [data-look="aurora"].dark,
@@ -181,4 +183,6 @@
   --gsap-ease-emphasized: back.out(1.4);
   --gsap-ease-exit: power1.in;
   --ambient: gradient-drift;
+  --ambient-play: running;
+  --ambient-opacity: 0.35;
 }

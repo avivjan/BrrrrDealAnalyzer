@@ -18,6 +18,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useAttrs, useId, watch } from "vue";
 
 import { cn } from "../../design/cn";
+import { inertOutside } from "./inertOutside";
 
 const props = withDefaults(
   defineProps<{
@@ -38,6 +39,7 @@ defineOptions({ inheritAttrs: false });
 const headingId = useId();
 const panel = ref<HTMLElement | null>(null);
 let restoreTo: HTMLElement | null = null;
+let releaseInert: (() => void) | null = null;
 
 const SIZES = { sm: "md:max-w-sm", md: "md:max-w-md", lg: "md:max-w-lg" } as const;
 
@@ -63,19 +65,22 @@ function passthrough() {
  * paused fake clock. Registered only while open, removed on close and unmount.
  */
 function onDocumentKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") {
-    event.stopPropagation();
-    emit("close");
-  }
+  // Bubble phase and no `stopPropagation`: an overlay above the drawer (the
+  // command palette) sees the key first and claims it with `preventDefault`.
+  if (event.key === "Escape" && !event.defaultPrevented) emit("close");
 }
 
 function listen(open: boolean) {
   if (typeof document === "undefined") return;
-  document.removeEventListener("keydown", onDocumentKeydown, true);
-  if (open) document.addEventListener("keydown", onDocumentKeydown, true);
+  document.removeEventListener("keydown", onDocumentKeydown);
+  if (open) document.addEventListener("keydown", onDocumentKeydown);
 }
 
-onBeforeUnmount(() => listen(false));
+onBeforeUnmount(() => {
+  listen(false);
+  releaseInert?.();
+  releaseInert = null;
+});
 
 watch(
   () => props.open,
@@ -91,7 +96,14 @@ watch(
       const body = panel.value?.querySelector<HTMLElement>('[data-part="body"]');
       const first = body?.querySelector<HTMLElement>(FOCUSABLE) ?? null;
       (first ?? panel.value)?.focus();
-    } else if (restoreTo) {
+      const root = panel.value?.closest<HTMLElement>('[data-ui="drawer"]') ?? null;
+      releaseInert?.();
+      releaseInert = root ? inertOutside(root) : null;
+    } else {
+      releaseInert?.();
+      releaseInert = null;
+    }
+    if (!open && restoreTo) {
       restoreTo.focus();
       restoreTo = null;
     }
@@ -108,6 +120,7 @@ watch(
       <div
         v-if="open"
         data-ui="drawer"
+        data-overlay
         class="fixed inset-0 z-50 flex bg-fg/40"
         :class="side === 'right' ? 'justify-end' : 'justify-start'"
         v-bind="passthrough()"

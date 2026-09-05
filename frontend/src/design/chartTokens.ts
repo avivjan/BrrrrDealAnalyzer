@@ -1,20 +1,19 @@
 /**
- * Colour lookup for the liquidity timeline `<canvas>`.
+ * Colour lookup for the liquidity timeline chart.
  *
  * Every other colour in the app is a Tailwind class backed by a CSS custom
- * property, but a canvas takes a resolved string — `ctx.fillStyle = 'red-500'`
- * is silently ignored, not an error. So the chart's palette lives in
- * `tokens.css` as `--chart-*` literals and is read out through here.
+ * property, but the chart's SVG binds resolved colour strings to `fill` and
+ * `stroke` attributes, so its palette lives in each look sheet as 32
+ * `--chart-*` literals and is read out through here — once, into a
+ * theme-reactive `computed` in `TimelineChart.vue`.
  *
  * Two properties matter to the caller:
  *
- * - **It never throws.** A bad or missing custom property returns the literal
- *   the chart used before the tokens existed, so the worst case is that the
- *   chart looks exactly like it did in Phase 0 rather than disappearing.
- * - **It reads the stylesheet once per name.** `draw()` runs on every hover,
- *   pan and resize and asks for dozens of colours each time; `getComputedStyle`
- *   forces a style recalculation, so calling it in that loop would be a
- *   per-frame cost for values that cannot change between frames.
+ * - **It never throws.** A bad or missing custom property returns the default
+ *   look's dark literal, so the worst case is a wrong colour, never a missing
+ *   plot.
+ * - **It reads the stylesheet once per name.** `getComputedStyle` forces a
+ *   style recalculation, so values are memoised until `resetChartTokenCache()`.
  *
  * `resetChartTokenCache()` is called by `src/design/theme.ts` on every look or
  * mode switch, before the chart's colour `computed` re-evaluates.

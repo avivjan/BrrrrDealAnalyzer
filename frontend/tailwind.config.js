@@ -77,6 +77,11 @@ export default {
         'glow-accent': 'var(--glow-accent)',
         'glow-negative': 'var(--glow-negative)',
       },
+      // Focus rings sit on the page colour, not Tailwind's white default — the
+      // default mode is dark, so a white offset would read as a halo.
+      ringOffsetColor: {
+        DEFAULT: 'rgb(var(--color-page) / <alpha-value>)',
+      },
       // `border-ui`: the look's border weight (1px hairline, 2px brutalist).
       borderWidth: {
         ui: 'var(--border-w)',

@@ -69,7 +69,11 @@ const kpis = computed(() => {
   const daysToNegative = firstNeg
     ? Math.round((new Date(firstNeg + 'T00:00:00').getTime() - new Date(todayIso + 'T00:00:00').getTime()) / 86_400_000)
     : null
-  const fmt = (v: number) => (Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(2)}M` : `$${v.toFixed(1)}k`)
+  const fmt = (v: number) => {
+    const sign = v < 0 ? '-' : ''
+    const a = Math.abs(v)
+    return a >= 1000 ? `${sign}$${(a / 1000).toFixed(1)}M` : `${sign}$${a.toFixed(1)}k`
+  }
   return {
     balance: todayBucket ? fmt(todayBucket.balance_k) : '—',
     balanceTone: todayBucket && todayBucket.balance_k < 0 ? 'negative' : 'neutral',

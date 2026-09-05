@@ -129,6 +129,8 @@
 
   /* Ambient effect a look may run as a CSS animation (never GSAP): none | glow-pulse | gradient-drift | shimmer */
   --ambient: none;
+  --ambient-play: paused;
+  --ambient-opacity: 0.12;
 
   /* Layout */
   --stats-bar-h: 60px;

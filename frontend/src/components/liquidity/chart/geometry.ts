@@ -17,7 +17,7 @@ export interface Range {
   max: number;
 }
 
-/** Vertical range with 12% breathing room, always including zero at the bottom. */
+/** Vertical range with 12% breathing room; the floor is pulled down to zero when the series is positive. */
 export function balanceRange(balances: readonly number[]): Range {
   if (balances.length === 0) return { min: 0, max: 100 };
   let min = Infinity;
@@ -41,6 +41,8 @@ export function xForIndex(i: number, scrollX: number): number {
 
 /** Day under an x position measured from the container's left edge, or null. */
 export function indexForOffsetX(offsetX: number, scrollX: number, count: number): number | null {
+  // The y-axis gutter is not a day.
+  if (offsetX < PAD_LEFT) return null;
   const x = offsetX + scrollX - PAD_LEFT;
   const idx = Math.floor(x / DAY_WIDTH);
   return idx < 0 || idx >= count ? null : idx;
@@ -67,7 +69,7 @@ export function scrollToReveal(idx: number, scrollX: number, viewWidth: number, 
   const x = PAD_LEFT + idx * DAY_WIDTH;
   let next = scrollX;
   if (x - scrollX < PAD_LEFT + 20) next = x - PAD_LEFT - 40;
-  else if (x - scrollX > viewWidth - 40) next = x - viewWidth + 60;
+  else if (x - scrollX > viewWidth - DAY_WIDTH) next = x - viewWidth + DAY_WIDTH + 12;
   return clampScroll(next, count, viewWidth);
 }
 

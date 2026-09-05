@@ -171,7 +171,12 @@ const logExternal = (card: FeatureCard) => {
     </header>
 
     <!-- Reserved height: the bar mounts after fetchDeals and must not push the tiles. -->
-    <div class="min-h-stats-bar" :class="{ 'has-bar': hasPortfolioBar }">
+    <!--
+      Reserved height matches what the bar renders — a glass strip of four KPI
+      cards (2×2 on a phone, one row from lg) — so the layout does not shift
+      when `fetchDeals` resolves. `has-bar` is a state hook only.
+    -->
+    <div class="min-h-[16.75rem] lg:min-h-[9.25rem]" :class="{ 'has-bar': hasPortfolioBar }">
       <PortfolioStatsBar />
     </div>
 
@@ -253,10 +258,10 @@ const logExternal = (card: FeatureCard) => {
   height: 34rem;
   border-radius: 9999px;
   filter: blur(80px);
-  opacity: 0.35;
+  opacity: var(--ambient-opacity);
   background: var(--gradient-brand);
   animation: float 18s ease-in-out infinite;
-  animation-play-state: var(--ambient-play, running);
+  animation-play-state: var(--ambient-play);
 }
 
 .blob-1 {
@@ -270,20 +275,8 @@ const logExternal = (card: FeatureCard) => {
   animation-delay: -9s;
 }
 
-/* Looks without an ambient effect show a still, faint wash. */
-.landing-root {
-  --ambient-play: running;
-}
-
-:global([data-look="obsidian"]) .landing-root,
-:global([data-look="brutal"]) .landing-root {
-  --ambient-play: paused;
-}
-
-:global([data-look="obsidian"]) .blob,
-:global([data-look="brutal"]) .blob {
-  opacity: 0.12;
-}
+/* Looks whose `--ambient` is `none` set `--ambient-play: paused` and a fainter
+   `--ambient-opacity` in their sheet; this view never names a look. */
 
 @media (hover: none), (prefers-reduced-motion: reduce) {
   .blob {

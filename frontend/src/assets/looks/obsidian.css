@@ -90,6 +90,8 @@
   --gsap-ease-emphasized: power2.inOut;
   --gsap-ease-exit: power1.in;
   --ambient: none;
+  --ambient-play: paused;
+  --ambient-opacity: 0.12;
 }
 
 [data-look="obsidian"].dark,
@@ -181,4 +183,6 @@
   --gsap-ease-emphasized: power2.inOut;
   --gsap-ease-exit: power1.in;
   --ambient: none;
+  --ambient-play: paused;
+  --ambient-opacity: 0.12;
 }

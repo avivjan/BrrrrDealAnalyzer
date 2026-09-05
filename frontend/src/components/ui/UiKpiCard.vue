@@ -31,7 +31,7 @@ defineOptions({ inheritAttrs: false });
 
 const BASE =
   "grid min-h-[7.25rem] grid-rows-[auto_auto_1fr] gap-1 rounded-card border-ui border-line bg-surface p-4 shadow-1 " +
-  "transition-[box-shadow,transform,background-color,border-color] duration-fast ease-standard";
+  "transition-[box-shadow,background-color,border-color] duration-fast ease-standard";
 
 const DELTA_TONES: Record<Tone, string> = {
   neutral: "text-fg-muted",

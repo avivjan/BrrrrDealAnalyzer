@@ -19,7 +19,6 @@ import {
   UiCard,
   UiChip,
   UiCommandItem,
-  UiDataTable,
   UiDrawer,
   UiEmptyState,
   UiField,
@@ -27,18 +26,14 @@ import {
   UiIconButton,
   UiKpiCard,
   UiModalPanel,
-  UiProgressRing,
   UiSaveStatus,
   UiSectionHeader,
   UiSegmented,
   UiSkeleton,
-  UiSparkline,
   UiStatTile,
   UiStepper,
   UiSurface,
   UiTabs,
-  UiTimelineRail,
-  UiTooltip,
 } from "./index";
 
 /**
@@ -61,16 +56,15 @@ export const UI_COMPONENTS = {
   UiSaveStatus,
   UiTabs,
   UiStepper,
-  // UI v2
+  // UI v2. Registered = used by a template somewhere. `UiTooltip`,
+  // `UiSparkline`, `UiProgressRing`, `UiTimelineRail` and `UiDataTable` are
+  // built, tested and exported from `./index`, but no view has adopted them
+  // yet; registering by value would put them in the bundle for nothing, so a
+  // view that wants one imports it (and moves it here once it is global).
   UiSurface,
   UiGlassPanel,
   UiChip,
-  UiTooltip,
   UiKpiCard,
-  UiSparkline,
-  UiProgressRing,
-  UiTimelineRail,
-  UiDataTable,
   UiDrawer,
   UiCommandItem,
   UiSegmented,

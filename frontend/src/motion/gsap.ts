@@ -11,15 +11,16 @@
  * motion is entrances, presses and fades; a plugin would cost bundle size for
  * behaviour nothing in the plan asks for.
  *
- * Importing this module has two side effects and no others: `gsap.defaults`,
- * and publishing the instance on `window` for the e2e guard.
+ * Importing this module has one side effect and no other: publishing the
+ * instance on `window` for the e2e guard.
  */
 import { gsap } from 'gsap';
 
 import { prefersReducedMotion } from './reducedMotion';
-import { DUR, EASE } from './tokens';
 
-gsap.defaults({ duration: DUR.base, ease: EASE.standard });
+// No `gsap.defaults()`: durations and eases are read from the active look at
+// tween time by every preset and directive, so a module-load snapshot would only
+// be wrong after a look switch.
 
 /**
  * Publish the instance for the e2e motion guard.

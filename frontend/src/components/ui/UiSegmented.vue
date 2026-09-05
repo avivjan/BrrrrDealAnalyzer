@@ -8,7 +8,7 @@
  * given and emits the value the user lands on; what that value means is the
  * caller's business.
  */
-import { computed, useAttrs } from "vue";
+import { computed, ref, useAttrs } from "vue";
 
 import { cn } from "../../design/cn";
 
@@ -44,12 +44,18 @@ function passthrough() {
 }
 
 const index = computed(() => props.options.findIndex((option) => option.value === props.modelValue));
+const buttons = ref<HTMLButtonElement[]>([]);
+
+/** Radiogroup pattern: focus follows the selection the arrow keys make. */
+function choose(next: number) {
+  emit("update:modelValue", props.options[next]!.value);
+  buttons.value[next]?.focus();
+}
 
 function move(delta: number) {
   if (props.options.length === 0) return;
   const from = index.value < 0 ? 0 : index.value;
-  const next = (from + delta + props.options.length) % props.options.length;
-  emit("update:modelValue", props.options[next]!.value);
+  choose((from + delta + props.options.length) % props.options.length);
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -66,11 +72,11 @@ function onKeydown(event: KeyboardEvent) {
       break;
     case "Home":
       event.preventDefault();
-      emit("update:modelValue", props.options[0]!.value);
+      choose(0);
       break;
     case "End":
       event.preventDefault();
-      emit("update:modelValue", props.options[props.options.length - 1]!.value);
+      choose(props.options.length - 1);
       break;
     default:
   }
@@ -99,6 +105,7 @@ const SIZES = { sm: "min-h-8 px-2.5 text-xs", md: "min-h-9 touch:min-h-11 px-3 t
     <button
       v-for="option in options"
       :key="option.value"
+      ref="buttons"
       type="button"
       role="radio"
       :aria-checked="option.value === modelValue"

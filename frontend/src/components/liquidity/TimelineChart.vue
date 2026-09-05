@@ -262,10 +262,28 @@ function onPointerMove(e: PointerEvent) {
   hoveredIndex.value = idx
 }
 
+function endDrag(e: PointerEvent) {
+  isDragging.value = false
+  const el = e.currentTarget as HTMLElement
+  // After a `pointercancel` the pointer is no longer active and releasing an
+  // unheld capture throws; ask first.
+  if (typeof el.hasPointerCapture !== 'function' || el.hasPointerCapture(e.pointerId)) {
+    try {
+      el.releasePointerCapture(e.pointerId)
+    } catch {
+      // Already released by the browser.
+    }
+  }
+}
+
+/** A cancelled gesture (iOS handing the touch to a scroll) is not a tap. */
+function onPointerCancel(e: PointerEvent) {
+  if (isDragging.value) endDrag(e)
+}
+
 function onPointerUp(e: PointerEvent) {
   if (!isDragging.value) return
-  isDragging.value = false
-  ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+  endDrag(e)
   // A click, not a pan: under 4 px of travel selects the day under the pointer.
   if (dragTravel < 4) {
     const idx = indexAt(e.clientX)
@@ -361,7 +379,7 @@ defineExpose({ centerOnToday })
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
-      @pointercancel="onPointerUp"
+      @pointercancel="onPointerCancel"
       @pointerleave="onPointerLeave"
       @wheel.prevent="onWheel"
     >

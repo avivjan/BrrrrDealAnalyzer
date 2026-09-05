@@ -31,12 +31,7 @@ declare module "vue" {
     UiSurface: typeof import("./components/ui/UiSurface.vue")["default"];
     UiGlassPanel: typeof import("./components/ui/UiGlassPanel.vue")["default"];
     UiChip: typeof import("./components/ui/UiChip.vue")["default"];
-    UiTooltip: typeof import("./components/ui/UiTooltip.vue")["default"];
     UiKpiCard: typeof import("./components/ui/UiKpiCard.vue")["default"];
-    UiSparkline: typeof import("./components/ui/UiSparkline.vue")["default"];
-    UiProgressRing: typeof import("./components/ui/UiProgressRing.vue")["default"];
-    UiTimelineRail: typeof import("./components/ui/UiTimelineRail.vue")["default"];
-    UiDataTable: typeof import("./components/ui/UiDataTable.vue")["default"];
     UiDrawer: typeof import("./components/ui/UiDrawer.vue")["default"];
     UiCommandItem: typeof import("./components/ui/UiCommandItem.vue")["default"];
     UiSegmented: typeof import("./components/ui/UiSegmented.vue")["default"];

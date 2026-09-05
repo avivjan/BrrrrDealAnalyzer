@@ -82,7 +82,7 @@ export const TOKEN_NAMES = [
   '--dur-fast', '--dur-base', '--dur-slow',
   '--ease-standard', '--ease-emphasized', '--ease-exit',
   '--gsap-ease-standard', '--gsap-ease-emphasized', '--gsap-ease-exit',
-  '--ambient',
+  '--ambient', '--ambient-play', '--ambient-opacity',
 ];
 
 // ---------------------------------------------------------------------------
@@ -203,6 +203,9 @@ export function declarations(look, mode) {
   map.set('--gsap-ease-emphasized', s.gsap.emphasized);
   map.set('--gsap-ease-exit', s.gsap.exit);
   map.set('--ambient', s.ambient);
+  // Consumable forms of `--ambient`: whether the dashboard's background moves, and how visible it is.
+  map.set('--ambient-play', s.ambient === 'none' ? 'paused' : 'running');
+  map.set('--ambient-opacity', s.ambient === 'none' ? '0.12' : '0.35');
   return TOKEN_NAMES.map((name) => {
     if (!map.has(name)) throw new Error(`${look.id}/${mode}: no value for ${name}`);
     return [name, map.get(name)];

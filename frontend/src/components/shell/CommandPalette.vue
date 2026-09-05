@@ -5,9 +5,10 @@
  * input on open and back to where it was on close. Running a command closes
  * the palette first, so a navigation never races the leave animation.
  */
-import { computed, nextTick, ref, useId, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 import { useRouter } from "vue-router";
 
+import { inertOutside } from "../ui/inertOutside";
 import { setLook, setTheme, toggleTheme } from "../../design/theme";
 import { buildCommands, filterCommands, type Command } from "./commands";
 
@@ -28,6 +29,7 @@ const activeIndex = ref(0);
 const input = ref<HTMLInputElement | null>(null);
 const listId = useId();
 let restoreTo: HTMLElement | null = null;
+let releaseInert: (() => void) | null = null;
 
 const results = computed(() => filterCommands(commands, query.value));
 const active = computed<Command | undefined>(() => results.value[activeIndex.value]);
@@ -60,14 +62,26 @@ watch(
       activeIndex.value = 0;
       await nextTick();
       input.value?.focus();
-    } else if (restoreTo) {
-      restoreTo.focus();
-      restoreTo = null;
+      const root = input.value?.closest<HTMLElement>('[data-testid="shell.command"]') ?? null;
+      releaseInert?.();
+      releaseInert = root ? inertOutside(root) : null;
+    } else {
+      releaseInert?.();
+      releaseInert = null;
+      if (restoreTo) {
+        restoreTo.focus();
+        restoreTo = null;
+      }
     }
   },
   // `immediate`: a palette mounted already open (a test, a deep link) focuses too.
   { immediate: true },
 );
+
+onBeforeUnmount(() => {
+  releaseInert?.();
+  releaseInert = null;
+});
 
 function run(command: Command) {
   emit("close");
@@ -77,6 +91,9 @@ function run(command: Command) {
 function onKeydown(event: KeyboardEvent) {
   switch (event.key) {
     case "Escape":
+      // Claim the key: a drawer open underneath listens on document and defers
+      // to a prevented Escape.
+      event.preventDefault();
       event.stopPropagation();
       emit("close");
       break;
@@ -103,6 +120,7 @@ function onKeydown(event: KeyboardEvent) {
       <div
         v-if="open"
         data-testid="shell.command"
+        data-overlay
         class="fixed inset-0 z-50 flex items-start justify-center bg-fg/40 px-3 pt-[max(3rem,12vh)]"
         @click.self="emit('close')"
         @keydown="onKeydown"

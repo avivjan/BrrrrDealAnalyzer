@@ -35,7 +35,11 @@ const LEVELS: Record<Level, string> = {
 
 const PADDINGS = { none: "", sm: "p-3", md: "p-4", lg: "p-6" } as const;
 
-const INTERACTIVE = "cursor-pointer hover:shadow-2 hover:-translate-y-px active:scale-[0.99]";
+// `transform` joins the transition list only here: a non-interactive surface
+// may wrap the liquidity chart, whose ResizeObserver must never watch an
+// animated ancestor.
+const INTERACTIVE =
+  "cursor-pointer transition-[box-shadow,transform,background-color,border-color] hover:shadow-2 hover:-translate-y-px active:scale-[0.99]";
 
 const attrs = useAttrs();
 
@@ -47,7 +51,7 @@ function passthrough() {
 
 const rootClass = computed(() =>
   cn(
-    "rounded-card transition-[box-shadow,transform,background-color,border-color] duration-fast ease-standard",
+    "rounded-card transition-[box-shadow,background-color,border-color] duration-fast ease-standard",
     LEVELS[props.level],
     PADDINGS[props.padding],
     props.interactive && INTERACTIVE,

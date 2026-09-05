@@ -5,7 +5,11 @@
  */
 import { computed } from "vue";
 
-const isMac = computed(() => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform));
+const isMac = computed(() => {
+  if (typeof navigator === "undefined") return false;
+  const modern = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform;
+  return /mac|iphone|ipad/i.test(modern ?? navigator.userAgent);
+});
 </script>
 
 <template>

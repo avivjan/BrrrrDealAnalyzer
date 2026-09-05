@@ -90,6 +90,8 @@
   --gsap-ease-emphasized: expo.out;
   --gsap-ease-exit: power2.in;
   --ambient: none;
+  --ambient-play: paused;
+  --ambient-opacity: 0.12;
 }
 
 [data-look="brutal"].dark,
@@ -181,4 +183,6 @@
   --gsap-ease-emphasized: expo.out;
   --gsap-ease-exit: power2.in;
   --ambient: none;
+  --ambient-play: paused;
+  --ambient-opacity: 0.12;
 }
