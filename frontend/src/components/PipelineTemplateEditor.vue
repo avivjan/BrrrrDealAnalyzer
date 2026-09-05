@@ -228,92 +228,102 @@ function close() {
   <div
     v-if="open"
     data-testid="pipeline.root"
-    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
     @click.self="close"
   >
-    <div
-      class="bg-white w-full max-w-4xl max-h-[95vh] rounded-2xl border border-gray-200 shadow-2xl flex flex-col"
-    >
+    <UiModalPanel size="lg" labelled-by="pipeline-editor-title">
       <!-- Header -->
-      <div
-        class="flex justify-between items-center p-5 border-b border-gray-100 shrink-0"
-      >
-        <div>
-          <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <i class="pi pi-sliders-v text-blue-500"></i>
-            Edit Pipeline Template
-          </h2>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Stages and substages for the Bought Deals board. IDs are stable —
-            renames and reorders don't affect existing deals.
-          </p>
+      <template #header>
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h2
+              id="pipeline-editor-title"
+              class="flex items-center gap-2 text-base font-semibold text-fg md:text-lg"
+            >
+              <i class="pi pi-sliders-v text-primary" aria-hidden="true"></i>
+              Edit Pipeline Template
+            </h2>
+            <p class="mt-1 text-xs text-fg-muted">
+              Stages and substages for the Bought Deals board. IDs are stable —
+              renames and reorders don't affect existing deals.
+            </p>
+          </div>
+          <UiIconButton
+            data-testid="pipeline.close"
+            @click="close"
+            title="Close"
+            label="Close"
+            size="md"
+          >
+            <i class="pi pi-times text-xl" aria-hidden="true"></i>
+          </UiIconButton>
         </div>
-        <button
-          data-testid="pipeline.close"
-          @click="close"
-          class="text-gray-400 hover:text-gray-600"
-          title="Close"
-        >
-          <i class="pi pi-times text-xl"></i>
-        </button>
-      </div>
+      </template>
 
       <!-- Tabs -->
-      <div class="flex items-center justify-between px-5 pt-4">
-        <div class="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
-          <button
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <UiTabs aria-label="Pipeline deal type">
+          <UiButton
             v-for="tab in (['BRRRR', 'FLIP'] as const)"
             :key="tab"
             :data-testid="`pipeline.tab.${tab}`"
             @click="activeTab = tab"
-            class="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
-            :class="
-              activeTab === tab
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            "
+            variant="tab"
+            size="sm"
+            :active="activeTab === tab"
+            class="min-h-9 px-3"
           >
             {{ tab === "BRRRR" ? "BRRRR" : "Flip" }}
-          </button>
-        </div>
-        <div class="text-xs text-gray-500">
+          </UiButton>
+        </UiTabs>
+        <div class="flex items-center gap-1.5 text-xs text-fg-muted">
           Editing
-          <span
-            class="px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border ml-1"
-            :class="
-              activeTab === 'BRRRR'
-                ? 'bg-blue-100 text-blue-700 border-blue-200'
-                : 'bg-orange-100 text-orange-700 border-orange-200'
-            "
+          <UiBadge
+            :deal-type="activeTab"
+            class="font-bold uppercase tracking-wide"
           >
             {{ activeTab }}
-          </span>
+          </UiBadge>
           pipeline
         </div>
       </div>
 
       <!-- Validation banner -->
-      <div
+      <UiCard
         v-if="validationIssues.length"
         data-testid="pipeline.validation-banner"
-        class="mx-5 mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+        tone="muted"
+        padding="sm"
+        class="mt-4 border-negative/30 bg-negative/10 text-sm text-negative"
       >
-        <div class="font-semibold mb-1">Please fix before saving:</div>
-        <ul class="list-disc pl-5 space-y-0.5">
-          <li v-for="issue in validationIssues" :key="issue" :data-testid="`pipeline.issue.${issue}`">{{ issue }}</li>
+        <div class="mb-1 flex items-center gap-2 font-semibold">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          Please fix before saving:
+        </div>
+        <ul class="list-disc space-y-0.5 pl-5">
+          <li
+            v-for="issue in validationIssues"
+            :key="issue"
+            :data-testid="`pipeline.issue.${issue}`"
+          >
+            {{ issue }}
+          </li>
         </ul>
-      </div>
+      </UiCard>
 
-      <div
+      <UiCard
         v-if="saveError"
         data-testid="pipeline.save-error"
-        class="mx-5 mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+        tone="muted"
+        padding="sm"
+        class="mt-4 flex items-center gap-2 border-negative/30 bg-negative/10 text-sm text-negative"
       >
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
         {{ saveError }}
-      </div>
+      </UiCard>
 
       <!-- Stage list -->
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
+      <div class="mt-4 space-y-3">
         <VueDraggable
           data-testid="pipeline.stages-draggable"
           v-model="currentStages"
@@ -322,161 +332,177 @@ function close() {
           class="space-y-3"
           ghost-class="opacity-50"
         >
-          <div
+          <UiCard
             v-for="(stage, stageIdx) in currentStages"
             :key="stage.id"
             :data-testid="`pipeline.stage.${stageIdx}`"
-            class="rounded-xl border border-gray-200 bg-white shadow-sm"
+            padding="sm"
           >
             <!-- Stage header row -->
-            <div
-              class="flex items-center gap-3 p-3 border-b border-gray-100 bg-gray-50/60 rounded-t-xl"
-            >
-              <button
-                :data-testid="`pipeline.stage.${stageIdx}.drag`"
-                class="stage-drag-handle text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
-                title="Drag to reorder"
-              >
-                <i class="pi pi-bars"></i>
-              </button>
-              <input
-                :data-testid="`pipeline.stage.${stageIdx}.name`"
-                v-model="stage.name"
-                class="flex-1 bg-transparent text-base font-semibold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
-                placeholder="Stage name"
-              />
-              <span
-                class="text-[10px] font-mono text-gray-400 truncate max-w-[140px]"
-                :title="stage.id"
-              >
-                {{ stage.id }}
-              </span>
-              <span
-                v-if="stageDealCount(stage.id) > 0"
-                class="text-[11px] font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200"
-                :title="`${stageDealCount(stage.id)} deal(s) on this stage`"
-              >
-                {{ stageDealCount(stage.id) }} deal{{
-                  stageDealCount(stage.id) === 1 ? "" : "s"
-                }}
-              </span>
-              <div class="flex items-center gap-1">
-                <button
-                  :data-testid="`pipeline.stage.${stageIdx}.move-up`"
-                  @click="moveStage(stageIdx, -1)"
-                  :disabled="stageIdx === 0"
-                  class="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed px-1"
-                  title="Move up"
+            <template #header>
+              <div class="flex flex-wrap items-center gap-2">
+                <UiIconButton
+                  :data-testid="`pipeline.stage.${stageIdx}.drag`"
+                  class="stage-drag-handle cursor-grab active:cursor-grabbing"
+                  title="Drag to reorder"
+                  label="Drag to reorder"
                 >
-                  <i class="pi pi-arrow-up text-xs"></i>
-                </button>
-                <button
-                  :data-testid="`pipeline.stage.${stageIdx}.move-down`"
-                  @click="moveStage(stageIdx, 1)"
-                  :disabled="stageIdx === currentStages.length - 1"
-                  class="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed px-1"
-                  title="Move down"
+                  <i class="pi pi-bars" aria-hidden="true"></i>
+                </UiIconButton>
+                <input
+                  :data-testid="`pipeline.stage.${stageIdx}.name`"
+                  v-model="stage.name"
+                  class="ui-input min-w-0 flex-1 basis-40 font-semibold"
+                  placeholder="Stage name"
+                />
+                <span
+                  class="max-w-[140px] truncate font-mono text-[10px] text-fg-muted"
+                  :title="stage.id"
                 >
-                  <i class="pi pi-arrow-down text-xs"></i>
-                </button>
-                <button
-                  :data-testid="`pipeline.stage.${stageIdx}.delete`"
-                  @click="removeStage(stageIdx)"
-                  class="text-red-500 hover:text-red-700 px-1"
-                  title="Delete stage"
+                  {{ stage.id }}
+                </span>
+                <UiBadge
+                  v-if="stageDealCount(stage.id) > 0"
+                  tone="warning"
+                  :title="`${stageDealCount(stage.id)} deal(s) on this stage`"
                 >
-                  <i class="pi pi-trash text-xs"></i>
-                </button>
+                  {{ stageDealCount(stage.id) }} deal{{
+                    stageDealCount(stage.id) === 1 ? "" : "s"
+                  }}
+                </UiBadge>
+                <div class="ml-auto flex items-center gap-2">
+                  <UiIconButton
+                    :data-testid="`pipeline.stage.${stageIdx}.move-up`"
+                    @click="moveStage(stageIdx, -1)"
+                    :disabled="stageIdx === 0"
+                    title="Move up"
+                    label="Move stage up"
+                  >
+                    <i class="pi pi-arrow-up text-xs" aria-hidden="true"></i>
+                  </UiIconButton>
+                  <UiIconButton
+                    :data-testid="`pipeline.stage.${stageIdx}.move-down`"
+                    @click="moveStage(stageIdx, 1)"
+                    :disabled="stageIdx === currentStages.length - 1"
+                    title="Move down"
+                    label="Move stage down"
+                  >
+                    <i class="pi pi-arrow-down text-xs" aria-hidden="true"></i>
+                  </UiIconButton>
+                  <UiIconButton
+                    :data-testid="`pipeline.stage.${stageIdx}.delete`"
+                    @click="removeStage(stageIdx)"
+                    title="Delete stage"
+                    label="Delete stage"
+                    variant="danger"
+                  >
+                    <i class="pi pi-trash text-xs" aria-hidden="true"></i>
+                  </UiIconButton>
+                </div>
               </div>
-            </div>
+            </template>
 
             <!-- Substages -->
-            <div class="p-3 space-y-2">
-              <div
+            <div class="space-y-2">
+              <UiEmptyState
                 v-if="stage.subStages.length === 0"
                 :data-testid="`pipeline.stage.${stageIdx}.substages-empty`"
-                class="text-xs italic text-gray-400 px-2 py-1"
+                class="items-start px-3 py-2 text-left"
               >
                 No substages.
-              </div>
+              </UiEmptyState>
               <div
                 v-for="(sub, subIdx) in stage.subStages"
                 :key="sub.id"
                 :data-testid="`pipeline.substage.${sub.id}`"
-                class="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5"
+                class="flex flex-wrap items-center gap-2 rounded-ctl border border-line bg-surface-muted px-2.5 py-1.5"
               >
-                <i class="pi pi-check-square text-xs text-gray-400"></i>
+                <i
+                  class="pi pi-check-square text-xs text-fg-muted"
+                  aria-hidden="true"
+                ></i>
                 <input
                   :data-testid="`pipeline.substage.${sub.id}.name`"
                   v-model="sub.label"
-                  class="flex-1 bg-transparent text-sm text-gray-800 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none"
+                  class="ui-input min-w-0 flex-1 basis-32 text-sm"
                   placeholder="Substage label"
                 />
                 <span
-                  class="text-[10px] font-mono text-gray-400 truncate max-w-[120px]"
+                  class="max-w-[120px] truncate font-mono text-[10px] text-fg-muted"
                   :title="sub.id"
                 >
                   {{ sub.id }}
                 </span>
-                <span
+                <UiBadge
                   v-if="substageCompletions(stage.id, sub.id) > 0"
-                  class="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full border border-blue-200"
+                  tone="info"
                   :title="`${substageCompletions(stage.id, sub.id)} deal(s) have completions`"
                 >
                   {{ substageCompletions(stage.id, sub.id) }}
-                </span>
-                <button
-                  :data-testid="`pipeline.substage.${sub.id}.move-up`"
-                  @click="moveSubstage(stageIdx, subIdx, -1)"
-                  :disabled="subIdx === 0"
-                  class="text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                  title="Move up"
-                >
-                  <i class="pi pi-arrow-up text-[10px]"></i>
-                </button>
-                <button
-                  :data-testid="`pipeline.substage.${sub.id}.move-down`"
-                  @click="moveSubstage(stageIdx, subIdx, 1)"
-                  :disabled="subIdx === stage.subStages.length - 1"
-                  class="text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                  title="Move down"
-                >
-                  <i class="pi pi-arrow-down text-[10px]"></i>
-                </button>
-                <button
-                  :data-testid="`pipeline.substage.${sub.id}.delete`"
-                  @click="removeSubstage(stageIdx, subIdx)"
-                  class="text-red-400 hover:text-red-600"
-                  title="Delete substage"
-                >
-                  <i class="pi pi-times text-[10px]"></i>
-                </button>
+                </UiBadge>
+                <div class="ml-auto flex items-center gap-2">
+                  <UiIconButton
+                    :data-testid="`pipeline.substage.${sub.id}.move-up`"
+                    @click="moveSubstage(stageIdx, subIdx, -1)"
+                    :disabled="subIdx === 0"
+                    title="Move up"
+                    label="Move sub-stage up"
+                  >
+                    <i class="pi pi-arrow-up text-[10px]" aria-hidden="true"></i>
+                  </UiIconButton>
+                  <UiIconButton
+                    :data-testid="`pipeline.substage.${sub.id}.move-down`"
+                    @click="moveSubstage(stageIdx, subIdx, 1)"
+                    :disabled="subIdx === stage.subStages.length - 1"
+                    title="Move down"
+                    label="Move sub-stage down"
+                  >
+                    <i
+                      class="pi pi-arrow-down text-[10px]"
+                      aria-hidden="true"
+                    ></i>
+                  </UiIconButton>
+                  <UiIconButton
+                    :data-testid="`pipeline.substage.${sub.id}.delete`"
+                    @click="removeSubstage(stageIdx, subIdx)"
+                    title="Delete substage"
+                    label="Delete sub-stage"
+                    variant="danger"
+                  >
+                    <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
+                  </UiIconButton>
+                </div>
               </div>
-              <button
+              <UiButton
                 :data-testid="`pipeline.stage.${stageIdx}.add-substage`"
                 @click="addSubstage(stageIdx)"
-                class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1"
+                variant="ghost"
+                size="sm"
+                class="mt-1 min-h-9 text-primary hover:text-primary-hover"
               >
-                <i class="pi pi-plus text-[10px]"></i> Add substage
-              </button>
+                <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add
+                substage
+              </UiButton>
             </div>
-          </div>
+          </UiCard>
         </VueDraggable>
 
-        <button
+        <UiButton
           data-testid="pipeline.add-stage"
           @click="addStage"
-          class="w-full mt-2 py-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:text-blue-600 hover:border-blue-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+          variant="ghost"
+          block
+          class="mt-2 border-2 border-dashed border-line text-fg-muted hover:border-primary hover:bg-transparent hover:text-primary"
         >
-          <i class="pi pi-plus"></i> Add stage
-        </button>
+          <i class="pi pi-plus" aria-hidden="true"></i> Add stage
+        </UiButton>
 
         <p
           v-if="currentStats && currentStats.orphanStageDealCount > 0"
           data-testid="pipeline.orphan-banner"
-          class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mt-2"
+          class="mt-2 rounded-ctl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning"
         >
-          <i class="pi pi-exclamation-triangle"></i>
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
           {{ currentStats.orphanStageDealCount }} deal(s) currently reference a
           stage that doesn't exist in this template. They will be clamped to
           the first stage until moved.
@@ -484,34 +510,41 @@ function close() {
       </div>
 
       <!-- Footer -->
-      <div
-        class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50 rounded-b-2xl"
-      >
-        <div class="text-xs text-gray-500">
-          Changes affect the
-          <strong>{{ activeTab }}</strong>
-          pipeline. Existing deals keep their stage references via stable IDs.
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="text-xs text-fg-muted">
+            Changes affect the
+            <strong>{{ activeTab }}</strong>
+            pipeline. Existing deals keep their stage references via stable IDs.
+          </div>
+          <div class="ml-auto flex items-center gap-2">
+            <UiButton
+              data-testid="pipeline.cancel"
+              @click="close"
+              variant="ghost"
+              size="sm"
+              class="min-h-11"
+            >
+              Cancel
+            </UiButton>
+            <UiButton
+              data-testid="pipeline.save"
+              @click="saveAndClose"
+              :disabled="!canSave"
+              size="sm"
+              class="min-h-11 font-semibold"
+            >
+              <i
+                v-if="pipelineStore.isSaving"
+                class="pi pi-spin pi-spinner"
+                aria-hidden="true"
+              ></i>
+              <i v-else class="pi pi-save" aria-hidden="true"></i>
+              Save
+            </UiButton>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button
-            data-testid="pipeline.cancel"
-            @click="close"
-            class="px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900"
-          >
-            Cancel
-          </button>
-          <button
-            data-testid="pipeline.save"
-            @click="saveAndClose"
-            :disabled="!canSave"
-            class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <i v-if="pipelineStore.isSaving" class="pi pi-spin pi-spinner"></i>
-            <i v-else class="pi pi-save"></i>
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+      </template>
+    </UiModalPanel>
   </div>
 </template>
