@@ -20,7 +20,7 @@ export interface NavItemData {
 export const NAV_ITEMS: readonly NavItemData[] = [
   { name: "home", label: "Dashboard", to: "/", icon: "pi pi-th-large", title: "Dashboard" },
   { name: "analyze", label: "Analyze", to: "/analyze", icon: "pi pi-calculator", title: "Analyze a deal" },
-  { name: "my-deals", label: "My Deals", to: "/my-deals", icon: "pi pi-trello", title: "My Deals" },
+  { name: "my-deals", label: "My Deals", to: "/my-deals", icon: "pi pi-objects-column", title: "My Deals" },
   { name: "bought-deals", label: "Bought", to: "/bought-deals", icon: "pi pi-check-circle", title: "Bought Deals" },
   { name: "liquidity", label: "Liquidity", to: "/liquidity", icon: "pi pi-chart-line", title: "Liquidity" },
   { name: "reps", label: "REPS", to: "/reps", icon: "pi pi-clock", title: "REPS Tracker" },

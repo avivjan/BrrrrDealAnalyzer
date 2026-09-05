@@ -77,7 +77,7 @@ const cards: FeatureCard[] = [
   {
     title: "My Deals",
     subtitle: "Pipeline",
-    icon: "pi pi-trello",
+    icon: "pi pi-objects-column",
     action: "internal",
     route: "/my-deals",
     figure: "active",
