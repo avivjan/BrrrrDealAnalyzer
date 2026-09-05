@@ -417,29 +417,28 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
 </script>
 
 <template>
-  <div
-    class="h-screen flex flex-col bg-gray-50 text-gray-900 overflow-hidden"
-  >
+  <div class="h-dvh flex flex-col bg-page text-fg overflow-hidden">
     <!-- Header -->
     <header
-      class="flex-none p-4 md:px-8 flex justify-between items-center border-b border-gray-200 bg-white/95 backdrop-blur z-20 shadow-sm"
+      class="flex-none p-4 md:px-8 flex flex-wrap justify-between items-center gap-3 border-b border-line bg-surface/95 md:backdrop-blur z-20 shadow-1"
     >
-      <div class="flex items-center gap-4">
-        <button
+      <div class="flex items-center gap-3">
+        <UiIconButton
           data-testid="boughtdeals.home"
           @click="$router.push('/')"
-          class="text-gray-500 hover:text-blue-600 transition-colors"
+          label="Home"
+          size="md"
         >
-          <i class="pi pi-home text-xl"></i>
-        </button>
-        <h1 class="text-2xl font-bold text-gray-900 hidden md:block">
+          <i class="pi pi-home text-xl" aria-hidden="true"></i>
+        </UiIconButton>
+        <UiSectionHeader as="h1" class="hidden md:block">
           Bought Deals
-        </h1>
+        </UiSectionHeader>
       </div>
 
       <!-- Tabs -->
-      <div class="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
-        <button
+      <UiTabs aria-label="Deal type" class="max-w-full">
+        <UiButton
           v-for="tab in [
             { id: 'FLIP' as const, label: 'Flip', count: store.countByType.FLIP },
             { id: 'BRRRR' as const, label: 'BRRRR', count: store.countByType.BRRRR },
@@ -447,85 +446,80 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           :key="tab.id"
           :data-testid="`boughtdeals.tab.${tab.id}`"
           @click="activeTab = tab.id"
-          class="px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2"
-          :class="
-            activeTab === tab.id
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          "
+          variant="tab"
+          size="sm"
+          :active="activeTab === tab.id"
+          class="min-h-9 shrink-0 px-3"
         >
           {{ tab.label }}
           <span
-            class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full text-[10px]"
+            class="bg-line text-fg-muted px-1.5 py-0.5 rounded-full text-[10px]"
             >{{ tab.count }}</span
           >
-        </button>
-      </div>
+        </UiButton>
+      </UiTabs>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <button
+      <div class="flex items-center gap-2 shrink-0 ml-auto">
+        <UiButton
           type="button"
           data-testid="boughtdeals.edit-pipeline"
           @click="openPipelineEditor"
-          class="text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 gap-2"
           :title="`Edit ${activeTab} pipeline stages & substages`"
         >
-          <i class="pi pi-sliders-v"></i>
+          <i class="pi pi-sliders-v" aria-hidden="true"></i>
           <span class="hidden sm:inline">Edit Pipeline</span>
-          <span
-            class="hidden md:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-            :class="
-              activeTab === 'BRRRR'
-                ? 'bg-blue-100 text-blue-700 border-blue-200'
-                : 'bg-orange-100 text-orange-700 border-orange-200'
-            "
+          <UiBadge
+            class="hidden md:inline-flex font-bold uppercase tracking-wide"
+            :tone="activeTab === 'BRRRR' ? 'primary' : 'warning'"
           >
             {{ activeTab }}
-          </span>
-        </button>
-        <button
+          </UiBadge>
+        </UiButton>
+        <UiButton
           type="button"
           data-testid="boughtdeals.my-deals"
           @click="$router.push('/my-deals')"
-          class="text-sm font-medium text-blue-700 hover:text-blue-800 border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 gap-2"
           title="Back to active deal pipeline"
         >
-          <i class="pi pi-th-large"></i>
+          <i class="pi pi-th-large" aria-hidden="true"></i>
           <span class="hidden sm:inline">My Deals</span>
-        </button>
+        </UiButton>
       </div>
     </header>
 
     <!-- Board -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
+    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-page pb-safe-b">
       <div
-        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-8 w-full max-w-[1920px] mx-auto"
+        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
       >
-        <div
+        <UiCard
           v-for="stage in currentStages"
           :key="stage.id"
           :data-testid="`boughtdeals.stage.${stage.id}`"
-          class="flex flex-col w-full rounded-xl border shadow-sm transition-colors bg-white border-gray-200"
+          tone="muted"
+          padding="sm"
+          :class="'w-full border-l-4 ' + getStageAccentColor(stage.id)"
         >
           <!-- Row Header -->
-          <div
-            class="flex-none p-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50 rounded-t-xl"
-            :class="'border-l-4 ' + getStageAccentColor(stage.id)"
-          >
-            <div class="flex items-center gap-3">
-              <h3 class="font-bold text-lg text-gray-800">
-                {{ stage.name }}
-              </h3>
-              <span
-                class="bg-white px-2.5 py-0.5 rounded-full text-sm font-mono text-gray-500 border border-gray-200 shadow-sm"
+          <template #header>
+            <UiSectionHeader as="h3">
+              {{ stage.name }}
+              <UiBadge
+                class="ml-2 align-middle bg-surface px-2.5 font-mono text-sm font-normal text-fg-muted shadow-1 ring-1 ring-inset ring-line"
               >
                 {{ columns[stage.id]?.length || 0 }}
-              </span>
-            </div>
-          </div>
+              </UiBadge>
+            </UiSectionHeader>
+          </template>
 
-          <!-- Draggable Area -->
-          <div class="p-4 bg-white/50">
+          <!-- Draggable Area: SortableJS owns the DOM under VueDraggable -->
+          <div>
             <VueDraggable
               v-if="columns[stage.id]"
               :data-testid="`boughtdeals.draggable.${stage.id}`"
@@ -551,8 +545,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 />
               </div>
             </VueDraggable>
+            <UiEmptyState
+              v-if="!columns[stage.id]?.length"
+              class="mt-3 p-4"
+            >
+              No deals in this stage
+            </UiEmptyState>
           </div>
-        </div>
+        </UiCard>
       </div>
     </div>
 
@@ -560,74 +560,66 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
     <div
       v-if="showDetailModal && editingDeal"
       data-testid="boughtdeals.modal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-fg/40 md:backdrop-blur-sm"
       @click.self="closeModal"
     >
-      <div
-        class="bg-white w-full max-w-6xl max-h-[95vh] rounded-2xl border border-gray-200 shadow-2xl flex flex-col"
-      >
+      <UiModalPanel size="xl" labelled-by="boughtdeals-modal-title">
         <!-- Modal Header -->
-        <div
-          class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0"
-        >
-          <div class="flex-1 mr-4">
-            <div class="flex items-center gap-2 mb-1">
-              <label
-                class="text-xs text-gray-500 uppercase font-bold tracking-wider"
-                >Address</label
-              >
-              <span
-                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-                :class="
-                  editingDealType === 'BRRRR'
-                    ? 'bg-blue-100 text-blue-700 border-blue-200'
-                    : 'bg-orange-100 text-orange-700 border-orange-200'
-                "
-              >
-                {{ editingDealType === "BRRRR" ? "BRRRR" : "FLIP" }}
-              </span>
+        <template #header>
+          <div class="flex justify-between items-center gap-3">
+            <div class="flex-1 min-w-0 mr-4">
+              <div class="flex items-center gap-2 mb-1">
+                <label
+                  id="boughtdeals-modal-title"
+                  for="boughtdeals-modal-address"
+                  class="text-xs text-fg-muted uppercase font-bold tracking-wider"
+                  >Address</label
+                >
+                <UiBadge
+                  class="font-bold uppercase tracking-wide"
+                  :deal-type="editingDealType"
+                >
+                  {{ editingDealType === "BRRRR" ? "BRRRR" : "FLIP" }}
+                </UiBadge>
+              </div>
+              <input
+                id="boughtdeals-modal-address"
+                data-testid="boughtdeals.modal.address"
+                v-model="editingDeal.address"
+                class="w-full bg-transparent text-xl md:text-2xl font-bold text-fg border-b border-transparent hover:border-line focus:border-primary outline-none transition-colors"
+              />
             </div>
-            <input
-              data-testid="boughtdeals.modal.address"
-              v-model="editingDeal.address"
-              class="w-full bg-transparent text-2xl font-bold text-gray-900 border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none transition-colors"
-            />
+            <div class="flex items-center gap-2">
+              <UiIconButton
+                data-testid="boughtdeals.modal.copy"
+                @click="copyToClipboard(editingDeal)"
+                label="Copy summary for AI"
+                :class="isHeaderCopied ? 'text-positive hover:text-positive' : ''"
+                :title="isHeaderCopied ? 'Copied!' : 'Copy Summary for AI'"
+              >
+                <i
+                  class="pi text-xl"
+                  :class="isHeaderCopied ? 'pi-check' : 'pi-file'"
+                  aria-hidden="true"
+                ></i>
+              </UiIconButton>
+              <UiIconButton
+                data-testid="boughtdeals.modal.close"
+                @click="closeModal"
+                label="Close"
+              >
+                <i class="pi pi-times text-xl" aria-hidden="true"></i>
+              </UiIconButton>
+            </div>
           </div>
-          <div class="flex items-center gap-4">
-            <button
-              data-testid="boughtdeals.modal.copy"
-              @click="copyToClipboard(editingDeal)"
-              class="transition-colors"
-              :class="
-                isHeaderCopied
-                  ? 'text-green-600'
-                  : 'text-gray-400 hover:text-purple-600'
-              "
-              :title="isHeaderCopied ? 'Copied!' : 'Copy Summary for AI'"
-            >
-              <i
-                class="pi text-xl"
-                :class="isHeaderCopied ? 'pi-check' : 'pi-file'"
-              ></i>
-            </button>
-            <button
-              data-testid="boughtdeals.modal.close"
-              @click="closeModal"
-              class="text-gray-400 hover:text-gray-600"
-            >
-              <i class="pi pi-times text-xl"></i>
-            </button>
-          </div>
-        </div>
+        </template>
 
-        <div ref="modalScrollContainer" class="p-6 overflow-y-auto custom-scrollbar">
+        <div ref="modalScrollContainer" class="custom-scrollbar overflow-y-auto overscroll-contain">
           <!-- Pipeline Progress Stepper -->
-          <div class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
-            <h4
-              class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-3"
-            >
+          <UiCard tone="muted" class="mb-6">
+            <UiSectionHeader as="h4" class="mb-3">
               Pipeline Progress
-            </h4>
+            </UiSectionHeader>
             <div class="flex items-center gap-1">
               <template
                 v-for="(pStage, idx) in editingPipeline.stages"
@@ -641,79 +633,91 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     v-if="idx > 0"
                     class="h-0.5 flex-1 rounded"
                     :class="
-                      idx <= editingStageIndex
-                        ? 'bg-emerald-400'
-                        : 'bg-gray-200'
+                      idx <= editingStageIndex ? 'bg-positive' : 'bg-line'
                     "
                   ></div>
                   <div
                     :data-testid="`boughtdeals.modal.stage-step.${pStage.id}`"
-                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-fast ease-standard"
                     :class="
                       idx < editingStageIndex
-                        ? 'bg-emerald-500 text-white'
+                        ? 'bg-positive text-primary-fg'
                         : pStage.id === editingDeal.boughtStage
-                          ? 'bg-blue-500 text-white ring-2 ring-blue-200'
-                          : 'bg-gray-200 text-gray-500'
+                          ? 'bg-primary text-primary-fg ring-2 ring-primary/30'
+                          : 'bg-line text-fg-muted'
                     "
                   >
                     <i
                       v-if="idx < editingStageIndex"
                       class="pi pi-check text-[10px]"
+                      aria-hidden="true"
                     ></i>
                     <span v-else>{{ idx + 1 }}</span>
                   </div>
                 </div>
               </template>
             </div>
-            <div class="flex justify-between mt-2">
+            <UiStepper
+              :count="editingPipeline.stages.length"
+              compact
+              class="mt-2"
+            >
               <span
                 v-for="(pStage, idx) in editingPipeline.stages"
                 :key="pStage.id"
+                role="listitem"
                 :data-testid="`boughtdeals.modal.stage-label.${pStage.id}`"
-                class="text-[9px] text-gray-500 text-center"
-                :class="idx === 0 ? 'text-left' : idx === editingPipeline.stages.length - 1 ? 'text-right' : ''"
-                :style="{ width: 100 / editingPipeline.stages.length + '%' }"
+                :data-step="
+                  idx < editingStageIndex
+                    ? 'done'
+                    : pStage.id === editingDeal.boughtStage
+                      ? 'active'
+                      : 'todo'
+                "
+                :data-title="pStage.name"
+                class="text-[9px] md:text-xs"
               >
                 {{ pStage.name }}
               </span>
-            </div>
-          </div>
+            </UiStepper>
+          </UiCard>
 
           <!-- Sub-stage Checklist for Current Stage -->
-          <div
+          <UiCard
             v-if="editingSubStages.length > 0"
-            class="mb-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100"
+            tone="muted"
+            class="mb-6 border-primary/20 bg-primary/5"
           >
-            <div class="flex justify-between items-center mb-3">
-              <h4 class="text-sm font-semibold text-gray-700">
-                {{ editingStageConfig?.name }} — Checklist
-              </h4>
-              <span
-                v-if="editingCanAdvance"
-                class="text-xs text-emerald-600 font-semibold flex items-center gap-1"
-              >
-                <i class="pi pi-check-circle"></i> Ready to advance
-              </span>
-            </div>
-            <div class="space-y-2">
+            <UiSectionHeader as="h4" class="mb-3">
+              {{ editingStageConfig?.name }} — Checklist
+              <template #actions>
+                <UiBadge
+                  v-if="editingCanAdvance"
+                  tone="positive"
+                  class="font-semibold"
+                >
+                  <i class="pi pi-check-circle" aria-hidden="true"></i> Ready to advance
+                </UiBadge>
+              </template>
+            </UiSectionHeader>
+            <div class="space-y-1">
               <label
                 v-for="sub in editingSubStages"
                 :key="sub.id"
                 :data-testid="`boughtdeals.modal.substage.${sub.id}`"
-                class="flex items-center gap-3 cursor-pointer group"
+                class="flex items-center gap-3 cursor-pointer group -mx-2 rounded-ctl px-2 py-1.5 min-h-9 hover:bg-surface transition-colors duration-fast ease-standard"
               >
                 <input
                   type="checkbox"
                   :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
                   :checked="editingDeal.completedSubstages[sub.id] === true"
                   @change="toggleModalSubstage(sub.id)"
-                  class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="h-4 w-4 shrink-0 rounded border-line accent-primary"
                 />
                 <span
-                  class="text-sm text-gray-700 group-hover:text-gray-900"
+                  class="text-sm text-fg"
                   :class="{
-                    'line-through text-gray-400':
+                    'line-through text-fg-muted':
                       editingDeal.completedSubstages[sub.id],
                   }"
                 >
@@ -721,32 +725,33 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </span>
               </label>
             </div>
-            <button
+            <UiButton
               v-if="editingCanAdvance && !editingIsTerminal"
               data-testid="boughtdeals.modal.advance"
               @click="advanceEditingDeal"
-              class="mt-3 w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow flex items-center justify-center gap-2 transition-all"
+              variant="primary"
+              class="mt-3 w-full"
             >
-              <i class="pi pi-arrow-right"></i> Advance to Next Stage
-            </button>
-          </div>
+              <i class="pi pi-arrow-right" aria-hidden="true"></i> Advance to Next Stage
+            </UiButton>
+          </UiCard>
 
           <!-- Top Section: Task & Basic Details -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div
-              class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-start min-h-[200px]"
-            >
+            <UiCard tone="muted" class="md:col-span-2">
               <label
-                class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2"
+                for="boughtdeals-modal-task"
+                class="text-xs text-fg-muted uppercase font-bold tracking-wider mb-2 block"
                 >Current Task / Status</label
               >
               <textarea
+                id="boughtdeals-modal-task"
                 data-testid="boughtdeals.modal.task"
                 v-model="editingDeal.task"
-                class="w-full h-full bg-transparent text-lg text-gray-800 resize-none outline-none placeholder-gray-400"
+                class="ui-textarea min-h-[168px] resize-none text-lg"
                 placeholder="What needs to be done?"
               ></textarea>
-            </div>
+            </UiCard>
 
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
@@ -759,13 +764,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   label="SqFt"
                 />
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs text-gray-600 font-medium"
+                  <label for="boughtdeals-modal-stage" class="text-xs text-fg-muted font-medium"
                     >Pipeline Stage</label
                   >
                   <select
+                    id="boughtdeals-modal-stage"
                     data-testid="boughtdeals.modal.stage-select"
                     v-model="editingDeal.boughtStage"
-                    class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-gray-900 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    class="ui-select text-sm"
                   >
                     <option
                       v-for="s in editingPipeline.stages"
@@ -802,13 +808,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-zillow" class="text-xs text-fg-muted font-medium"
                   >Zillow Link</label
                 >
                 <input
+                  id="boughtdeals-modal-zillow"
                   data-testid="boughtdeals.modal.zillow-link"
                   v-model="editingDeal.zillow_link"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-input text-sm"
                   placeholder="https://..."
                 />
                 <a
@@ -816,18 +823,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   data-testid="boughtdeals.modal.zillow-open"
                   :href="editingDeal.zillow_link"
                   target="_blank"
-                  class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                  ><i class="pi pi-external-link"></i> Open</a
+                  class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
+                  ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                 >
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-pics" class="text-xs text-fg-muted font-medium"
                   >Photos Link</label
                 >
                 <input
+                  id="boughtdeals-modal-pics"
                   data-testid="boughtdeals.modal.pics-link"
                   v-model="editingDeal.pics_link"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-input text-sm"
                   placeholder="Google Drive / Dropbox..."
                 />
                 <a
@@ -835,63 +843,67 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   data-testid="boughtdeals.modal.pics-open"
                   :href="editingDeal.pics_link"
                   target="_blank"
-                  class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                  ><i class="pi pi-external-link"></i> Open</a
+                  class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
+                  ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                 >
               </div>
             </div>
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-design" class="text-xs text-fg-muted font-medium"
                   >Overall Design</label
                 >
                 <input
+                  id="boughtdeals-modal-design"
                   data-testid="boughtdeals.modal.overall-design"
                   v-model="editingDeal.overall_design"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-input text-sm"
                   placeholder="e.g. Modern Farmhouse"
                 />
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-crime" class="text-xs text-fg-muted font-medium"
                   >Crime Rate</label
                 >
                 <input
+                  id="boughtdeals-modal-crime"
                   data-testid="boughtdeals.modal.crime-rate"
                   v-model="editingDeal.crime_rate"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-input text-sm"
                   placeholder="e.g. Low / B-"
                 />
               </div>
             </div>
             <div class="space-y-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-contact" class="text-xs text-fg-muted font-medium"
                   >Contact Info</label
                 >
                 <textarea
+                  id="boughtdeals-modal-contact"
                   data-testid="boughtdeals.modal.contact"
                   v-model="editingDeal.contact"
                   rows="2"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-textarea min-h-0 text-sm"
                   placeholder="Agent / Owner details"
                 ></textarea>
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs text-gray-600 font-medium"
+                <label for="boughtdeals-modal-niche" class="text-xs text-fg-muted font-medium"
                   >Niche</label
                 >
                 <input
+                  id="boughtdeals-modal-niche"
                   data-testid="boughtdeals.modal.niche"
                   v-model="editingDeal.niche"
-                  class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500"
+                  class="ui-input text-sm"
                 />
               </div>
             </div>
           </div>
 
           <!-- Analyze Deal Fields -->
-          <div class="border-t border-gray-200 pt-6 space-y-6">
+          <div class="border-t border-line pt-6 space-y-6">
             <DealInputsForm
               :deal="editingDeal"
               :deal-type="editingDealType"
@@ -903,272 +915,163 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               ref="analysisResultsEl"
               v-if="currentAnalysis"
               data-testid="boughtdeals.modal.results"
-              class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6"
+              class="bg-surface-muted p-4 rounded-card border border-line mb-6"
             >
-              <h4 class="font-semibold text-gray-700 mb-3">
+              <UiSectionHeader as="h4" class="mb-3">
                 Analysis Results
-              </h4>
+              </UiSectionHeader>
               <div
-                class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm"
+                class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
               >
                 <template v-if="editingDealType === 'BRRRR'">
-                  <div>
-                    <div class="text-gray-500">Cash Flow</div>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Cash Flow</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_flow"
                       class="font-bold"
-                      :class="
-                        getCashFlowColor(
-                          (currentAnalysis as any).cash_flow
-                        )
-                      "
+                      :class="getCashFlowColor((currentAnalysis as any).cash_flow)"
                     >
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).cash_flow
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).cash_flow ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Cash Out</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Cash Out</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_out"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).cash_out
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).cash_out)"
                     >
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).cash_out
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).cash_out ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Cash Out Routi</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Cash Out Routi</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_out_routi"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).cash_out_routi
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)"
                     >
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).cash_out_routi
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).cash_out_routi ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">CoC</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>CoC</template>
                     <div
                       data-testid="boughtdeals.modal.result.cash_on_cash"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).cash_on_cash
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)"
                     >
-                      {{
-                        formatPercent(
-                          (currentAnalysis as any).cash_on_cash
-                        )
-                      }}
+                      {{ formatPercent( (currentAnalysis as any).cash_on_cash ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">DSCR</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>DSCR</template>
                     <div
                       data-testid="boughtdeals.modal.result.dscr"
                       class="font-bold"
-                      :class="
-                        getDSCRColor(
-                          (currentAnalysis as any).dscr
-                        )
-                      "
+                      :class="getDSCRColor((currentAnalysis as any).dscr)"
                     >
-                      {{
-                        (currentAnalysis as any).dscr?.toFixed(2) ||
-                        "-"
-                      }}
+                      {{ (currentAnalysis as any).dscr?.toFixed(2) || "-" }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Equity</div>
-                    <div data-testid="boughtdeals.modal.result.equity" class="font-bold text-emerald-600">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).equity
-                        )
-                      }}
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Equity</template>
+                    <div data-testid="boughtdeals.modal.result.equity" class="font-bold text-positive">
+                      {{ formatCurrency( (currentAnalysis as any).equity ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">ROI</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.roi"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).roi
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).roi)"
                     >
-                      {{
-                        formatPercent(
-                          (currentAnalysis as any).roi
-                        )
-                      }}
+                      {{ formatPercent( (currentAnalysis as any).roi ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Net Profit</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Net Profit</template>
                     <div
                       data-testid="boughtdeals.modal.result.net_profit"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).net_profit
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).net_profit)"
                     >
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).net_profit
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>
                       Total Cash Needed
-                    </div>
+                    </template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any)
-                            .total_cash_needed_for_deal
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>
                       Cash Needed (Buffered)
-                    </div>
+                    </template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any)
-                            .total_cash_needed_for_deal_with_buffer
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal_with_buffer ) }}
                     </div>
-                  </div>
+                  </UiStatTile>
                 </template>
                 <template v-else>
-                  <div>
-                    <div class="text-gray-500">Net Profit</div>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Net Profit</template>
                     <div
                       data-testid="boughtdeals.modal.result.net_profit"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).net_profit
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).net_profit)"
                     >
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).net_profit
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">ROI</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.roi"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).roi
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).roi)"
                     >
-                      {{
-                        formatPercent(
-                          (currentAnalysis as any).roi
-                        )
-                      }}
+                      {{ formatPercent( (currentAnalysis as any).roi ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Annualized ROI</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Annualized ROI</template>
                     <div
                       data-testid="boughtdeals.modal.result.annualized_roi"
                       class="font-bold"
-                      :class="
-                        getPerformanceColor(
-                          (currentAnalysis as any).annualized_roi
-                        )
-                      "
+                      :class="getPerformanceColor((currentAnalysis as any).annualized_roi)"
                     >
-                      {{
-                        formatPercent(
-                          (currentAnalysis as any).annualized_roi
-                        )
-                      }}
+                      {{ formatPercent( (currentAnalysis as any).annualized_roi ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Cash Needed</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Cash Needed</template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).total_cash_needed
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).total_cash_needed ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Cash Needed (Buffered)</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Cash Needed (Buffered)</template>
                     <div data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).total_cash_needed_with_buffer
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).total_cash_needed_with_buffer ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">Holding Costs</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>Holding Costs</template>
                     <div data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).total_holding_costs
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).total_holding_costs ) }}
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-gray-500">HML Interest</div>
+                  </UiStatTile>
+                  <UiStatTile tone="neutral" class="bg-surface">
+                    <template #label>HML Interest</template>
                     <div data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
-                      {{
-                        formatCurrency(
-                          (currentAnalysis as any).total_hml_interest
-                        )
-                      }}
+                      {{ formatCurrency( (currentAnalysis as any).total_hml_interest ) }}
                     </div>
-                  </div>
+                  </UiStatTile>
                 </template>
               </div>
             </div>
@@ -1177,14 +1080,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           <!-- Notes -->
           <div class="mt-6">
             <label
-              class="text-xs text-gray-600 font-medium uppercase mb-2 block"
+              for="boughtdeals-modal-notes"
+              class="text-xs text-fg-muted font-medium uppercase mb-2 block"
               >Notes</label
             >
             <textarea
+              id="boughtdeals-modal-notes"
               data-testid="boughtdeals.modal.notes"
               v-model="editingDeal.notes"
               rows="4"
-              class="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-900 text-sm outline-none focus:border-blue-500"
+              class="ui-textarea p-4 text-sm"
               placeholder="Additional notes..."
             ></textarea>
           </div>
@@ -1192,135 +1097,143 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           <!-- Comps Section -->
           <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Sold Comps -->
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div class="flex justify-between items-center mb-4">
-                <h4 class="font-semibold text-gray-700">Sold Comps</h4>
-                <button
-                  data-testid="boughtdeals.sold-comp.add"
-                  @click="editingDeal.sold_comps ? editingDeal.sold_comps.push({ url: '', arv: 0, how_long_ago: '' }) : (editingDeal.sold_comps = [{ url: '', arv: 0, how_long_ago: '' }])"
-                  class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
-                >
-                  <i class="pi pi-plus"></i> Add
-                </button>
-              </div>
+            <UiCard tone="muted">
+              <UiSectionHeader as="h4" class="mb-4">
+                Sold Comps
+                <template #actions>
+                  <UiButton
+                    data-testid="boughtdeals.sold-comp.add"
+                    @click="editingDeal.sold_comps ? editingDeal.sold_comps.push({ url: '', arv: 0, how_long_ago: '' }) : (editingDeal.sold_comps = [{ url: '', arv: 0, how_long_ago: '' }])"
+                    variant="secondary"
+                    size="sm"
+                    class="min-h-8"
+                  >
+                    <i class="pi pi-plus" aria-hidden="true"></i> Add
+                  </UiButton>
+                </template>
+              </UiSectionHeader>
               <div v-if="editingDeal.sold_comps && editingDeal.sold_comps.length > 0" class="space-y-3">
-                <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                  <button :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                  <UiIconButton :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" label="Remove sold comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                   <div class="flex items-center gap-2 mb-1">
-                    <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                    <a v-if="comp.url" :data-testid="`boughtdeals.sold-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                    <a v-if="comp.url" :data-testid="`boughtdeals.sold-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                   </div>
                   <div class="flex gap-2">
-                    <input :data-testid="`boughtdeals.sold-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="ARV" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                    <input :data-testid="`boughtdeals.sold-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="When?" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="ARV" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                    <input :data-testid="`boughtdeals.sold-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="When?" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
                   </div>
                 </div>
               </div>
-              <div v-else class="text-xs text-gray-400 italic text-center py-4">No sold comps added</div>
-            </div>
+              <UiEmptyState v-else class="p-4">No sold comps added</UiEmptyState>
+            </UiCard>
 
             <!-- Rent Comps / Sale Comps -->
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div class="flex justify-between items-center mb-4">
-                <h4 class="font-semibold text-gray-700">
-                  {{ editingDealType === 'FLIP' ? 'For Sale Comps' : 'Rent Comps' }}
-                </h4>
-                <button
-                  data-testid="boughtdeals.comp2.add"
-                  @click="editingDealType === 'FLIP' ? ((editingDeal as any).sale_comps ? (editingDeal as any).sale_comps.push({ url: '', arv: 0, how_long_ago: '' }) : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])) : (editingDeal.rent_comps ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' }) : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }]))"
-                  class="text-xs bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500"
-                >
-                  <i class="pi pi-plus"></i> Add
-                </button>
-              </div>
+            <UiCard tone="muted">
+              <UiSectionHeader as="h4" class="mb-4">
+                {{ editingDealType === 'FLIP' ? 'For Sale Comps' : 'Rent Comps' }}
+                <template #actions>
+                  <UiButton
+                    data-testid="boughtdeals.comp2.add"
+                    @click="editingDealType === 'FLIP' ? ((editingDeal as any).sale_comps ? (editingDeal as any).sale_comps.push({ url: '', arv: 0, how_long_ago: '' }) : ((editingDeal as any).sale_comps = [{ url: '', arv: 0, how_long_ago: '' }])) : (editingDeal.rent_comps ? editingDeal.rent_comps.push({ url: '', rent: 0, time_on_market: '' }) : (editingDeal.rent_comps = [{ url: '', rent: 0, time_on_market: '' }]))"
+                    variant="secondary"
+                    size="sm"
+                    class="min-h-8"
+                  >
+                    <i class="pi pi-plus" aria-hidden="true"></i> Add
+                  </UiButton>
+                </template>
+              </UiSectionHeader>
 
               <!-- Flip Sale Comps -->
               <div v-if="editingDealType === 'FLIP'">
                 <div v-if="(editingDeal as any).sale_comps && (editingDeal as any).sale_comps.length > 0" class="space-y-3">
-                  <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                    <button :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                  <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <UiIconButton :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" label="Remove sale comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                     <div class="flex items-center gap-2 mb-1">
-                      <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <a v-if="comp.url" :data-testid="`boughtdeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                      <a v-if="comp.url" :data-testid="`boughtdeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                     </div>
                     <div class="flex gap-2">
-                      <input :data-testid="`boughtdeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <input :data-testid="`boughtdeals.sale-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                      <input :data-testid="`boughtdeals.sale-comp.${index}.age`" v-model="comp.how_long_ago" placeholder="Days on Mkt" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
                     </div>
                   </div>
                 </div>
-                <div v-else class="text-xs text-gray-400 italic text-center py-4">No active comps added</div>
+                <UiEmptyState v-else class="p-4">No active comps added</UiEmptyState>
               </div>
 
               <!-- BRRRR Rent Comps -->
               <div v-else>
                 <div v-if="editingDeal.rent_comps && editingDeal.rent_comps.length > 0" class="space-y-3">
-                  <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-white p-2 rounded relative group border border-gray-100">
-                    <button :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">x</button>
+                  <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <UiIconButton :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" label="Remove rent comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                     <div class="flex items-center gap-2 mb-1">
-                      <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <a v-if="comp.url" :data-testid="`boughtdeals.rent-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 flex-none"><i class="pi pi-external-link"></i></a>
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                      <a v-if="comp.url" :data-testid="`boughtdeals.rent-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                     </div>
                     <div class="flex gap-2">
-                      <input :data-testid="`boughtdeals.rent-comp.${index}.rent`" v-model="comp.rent" type="number" placeholder="Rent" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
-                      <input :data-testid="`boughtdeals.rent-comp.${index}.age`" v-model="comp.time_on_market" placeholder="Time on Market" class="w-1/2 bg-transparent border-b border-gray-100 text-xs focus:border-blue-500 outline-none text-gray-700" />
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.rent`" v-model="comp.rent" type="number" placeholder="Rent" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
+                      <input :data-testid="`boughtdeals.rent-comp.${index}.age`" v-model="comp.time_on_market" placeholder="Time on Market" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
                     </div>
                   </div>
                 </div>
-                <div v-else class="text-xs text-gray-400 italic text-center py-4">No rent comps added</div>
+                <UiEmptyState v-else class="p-4">No rent comps added</UiEmptyState>
               </div>
-            </div>
+            </UiCard>
           </div>
         </div>
 
         <!-- Footer -->
-        <div
-          class="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-2xl"
-        >
-          <div class="text-xs text-gray-500">
-            Created:
-            {{
-              new Date(editingDeal.created_at).toLocaleDateString()
-            }}
-          </div>
-          <div class="flex items-center gap-4">
-            <div
-              data-testid="boughtdeals.modal.save-status"
-              :data-state="saveStatus"
-              class="flex items-center gap-1.5 text-xs transition-opacity duration-300"
-            >
-              <template v-if="saveStatus === 'saving'">
-                <i class="pi pi-spin pi-spinner text-blue-500"></i>
-                <span class="text-blue-500">Saving...</span>
-              </template>
-              <template v-else-if="saveStatus === 'saved'">
-                <i class="pi pi-check-circle text-emerald-500"></i>
-                <span class="text-emerald-500">Saved</span>
-              </template>
-              <template v-else-if="saveStatus === 'error'">
-                <i
-                  class="pi pi-exclamation-circle text-red-500"
-                ></i>
-                <span class="text-red-500">Save failed</span>
-              </template>
+        <template #footer>
+          <div
+            class="flex flex-wrap gap-x-4 gap-y-2 justify-between items-center"
+          >
+            <div class="text-xs text-fg-muted">
+              Created:
+              {{
+                new Date(editingDeal.created_at).toLocaleDateString()
+              }}
             </div>
-            <button
-              data-testid="boughtdeals.modal.delete"
-              @click="deleteEditingDeal"
-              class="text-red-600 hover:text-red-800 px-4 py-2 flex items-center gap-2"
-            >
-              <i class="pi pi-trash"></i> Delete
-            </button>
-            <button
-              data-testid="boughtdeals.modal.footer-close"
-              @click="closeModal"
-              class="text-gray-500 hover:text-gray-700 px-4 py-2 flex items-center gap-2"
-            >
-              <i class="pi pi-times"></i> Close
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <UiSaveStatus
+                data-testid="boughtdeals.modal.save-status"
+                :data-state="saveStatus"
+                :status="saveStatus"
+                class="mr-1"
+              >
+                <template v-if="saveStatus === 'saving'">
+                  <span>Saving...</span>
+                </template>
+                <template v-else-if="saveStatus === 'saved'">
+                  <span>Saved</span>
+                </template>
+                <template v-else-if="saveStatus === 'error'">
+                  <span>Save failed</span>
+                </template>
+              </UiSaveStatus>
+              <UiButton
+                data-testid="boughtdeals.modal.delete"
+                @click="deleteEditingDeal"
+                variant="ghost"
+                size="sm"
+                class="min-h-9 text-negative hover:bg-negative/10"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i> Delete
+              </UiButton>
+              <UiButton
+                data-testid="boughtdeals.modal.footer-close"
+                @click="closeModal"
+                variant="ghost"
+                size="sm"
+                class="min-h-9"
+              >
+                <i class="pi pi-times" aria-hidden="true"></i> Close
+              </UiButton>
+            </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </UiModalPanel>
     </div>
 
     <!-- Pipeline Template Editor -->
