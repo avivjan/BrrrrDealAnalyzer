@@ -14,7 +14,7 @@
  * sits in a `<UiTransition preset="modal">`, which fades the scrim and scales
  * the panel (`data-ui="modal-panel"` is what that preset targets).
  */
-import { computed, nextTick, ref, useAttrs, useId, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, useAttrs, useId, watch } from "vue";
 
 import { cn } from "../../design/cn";
 
@@ -51,10 +51,36 @@ function passthrough() {
   return rest;
 }
 
+/**
+ * Escape closes the drawer from anywhere on the page while it is open.
+ *
+ * A native `document` listener rather than `@keydown` on the root, for two
+ * reasons: focus may have left the panel (a screen reader's virtual cursor,
+ * a stray click on the scrim), and Vue's per-event timestamp guard skips an
+ * outer template handler when an inner one on the same path ran first under
+ * a frozen clock — exactly the situation the e2e suite creates with its
+ * paused fake clock. Registered only while open, removed on close and unmount.
+ */
+function onDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    event.stopPropagation();
+    emit("close");
+  }
+}
+
+function listen(open: boolean) {
+  if (typeof document === "undefined") return;
+  document.removeEventListener("keydown", onDocumentKeydown, true);
+  if (open) document.addEventListener("keydown", onDocumentKeydown, true);
+}
+
+onBeforeUnmount(() => listen(false));
+
 watch(
   () => props.open,
   async (open) => {
     if (typeof document === "undefined") return;
+    listen(open);
     if (open) {
       restoreTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       await nextTick();
@@ -73,12 +99,6 @@ watch(
   { immediate: true },
 );
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") {
-    event.stopPropagation();
-    emit("close");
-  }
-}
 </script>
 
 <template>
@@ -91,7 +111,6 @@ function onKeydown(event: KeyboardEvent) {
         :class="side === 'right' ? 'justify-end' : 'justify-start'"
         v-bind="passthrough()"
         @click.self="emit('close')"
-        @keydown="onKeydown"
       >
         <div
           ref="panel"
