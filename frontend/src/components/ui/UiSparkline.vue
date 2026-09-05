@@ -83,6 +83,7 @@ const rootClass = computed(() => cn("block h-full w-full", TONES[props.tone], at
     <path v-if="filled && areaPath" data-part="area" :d="areaPath" fill="currentColor" opacity="0.14" />
     <path
       v-if="linePath"
+      v-draw-on
       data-part="line"
       :d="linePath"
       fill="none"

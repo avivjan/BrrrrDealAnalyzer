@@ -99,7 +99,7 @@ function onKeydown(event: KeyboardEvent) {
 
 <template>
   <Teleport to="body">
-    <UiTransition preset="modal">
+    <UiTransition preset="commandPalette">
       <div
         v-if="open"
         data-testid="shell.command"

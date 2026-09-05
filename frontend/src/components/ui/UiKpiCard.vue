@@ -61,6 +61,7 @@ const deltaClass = computed(() => cn("numeric text-xs", DELTA_TONES[props.tone])
       </span>
       <i v-if="icon" :class="cn(icon, 'text-sm text-fg-muted')" aria-hidden="true" />
     </div>
+    <!-- No v-flash here: the portfolio strip drives these values from its own rAF count-up, and a flash per frame would outlive the motion guard window. -->
     <span data-part="value" class="font-display numeric text-2xl leading-tight tracking-display text-fg">
       <slot name="value">{{ value }}</slot>
     </span>

@@ -11,8 +11,9 @@
  *
  * The scrim is a plain `div` with `@click.self` — never transformed, so the
  * fixed positioning of the panel inside it holds on iOS — and the whole thing
- * sits in a `<UiTransition preset="modal">`, which fades the scrim and scales
- * the panel (`data-ui="modal-panel"` is what that preset targets).
+ * sits in a `<UiTransition preset="drawer">`, which fades the scrim and slides
+ * the panel in from its edge (`data-ui="modal-panel"` + `data-side` are what
+ * that preset reads).
  */
 import { computed, nextTick, onBeforeUnmount, ref, useAttrs, useId, watch } from "vue";
 
@@ -103,7 +104,7 @@ watch(
 
 <template>
   <Teleport to="body">
-    <UiTransition preset="modal">
+    <UiTransition preset="drawer">
       <div
         v-if="open"
         data-ui="drawer"
@@ -118,6 +119,7 @@ watch(
           aria-modal="true"
           :aria-labelledby="labelledBy"
           data-ui="modal-panel"
+          :data-side="side"
           tabindex="-1"
           :class="
             cn(

@@ -448,7 +448,7 @@ defineExpose({ centerOnToday })
         <line v-if="zeroVisible" data-part="zero-line" :x1="PAD_LEFT" :x2="width" :y1="zeroY" :y2="zeroY" :stroke="C.reserveLine" stroke-width="2" />
 
         <!-- Running balance line -->
-        <path data-part="balance-line" :d="balancePath" fill="none" :stroke="C.balanceDot" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        <path v-draw-on data-part="balance-line" :d="balancePath" fill="none" :stroke="C.balanceDot" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
 
         <!-- Crosshair + y badge for the active day -->
         <g v-if="crosshair" data-part="crosshair">

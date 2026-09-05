@@ -207,7 +207,7 @@ const logExternal = (card: FeatureCard) => {
               <h4 class="truncate font-display text-base font-semibold tracking-display text-fg">{{ card.title }}</h4>
               <p class="text-xs text-fg-muted">{{ card.subtitle }}</p>
             </div>
-            <span v-if="card.figure" class="numeric text-2xl font-semibold leading-none text-fg">{{ figures[card.figure] }}</span>
+            <span v-if="card.figure" v-count-up class="numeric text-2xl font-semibold leading-none text-fg">{{ figures[card.figure] }}</span>
           </div>
         </component>
       </div>

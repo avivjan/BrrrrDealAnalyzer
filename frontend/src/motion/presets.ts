@@ -48,7 +48,15 @@ export interface MotionPreset {
 }
 
 /** Every preset name a template may write. */
-export type PresetName = 'page' | 'modal' | 'modalEnterOnly' | 'fade' | 'slideUp' | 'listItem';
+export type PresetName =
+  | 'page'
+  | 'modal'
+  | 'modalEnterOnly'
+  | 'fade'
+  | 'slideUp'
+  | 'listItem'
+  | 'commandPalette'
+  | 'drawer';
 
 /** Read at call time: `DUR`/`EASE` are getters over the active look. */
 const ENTER = (): GSAPTweenVars => ({ duration: DUR.base, ease: EASE.standard });
@@ -166,6 +174,82 @@ function modalEnter(el: HTMLElement, done: () => void): void {
   }
 }
 
+/**
+ * Complex tier: the command palette. Overlay fades; the panel drops in from
+ * 8 px above at 98% with the look's *emphasized* ease (a spring in Aurora,
+ * near-linear in Obsidian), then its rows stagger in over 20 ms each. Three
+ * tweens, `clearProps` on everything they touched; the whole thing is over
+ * inside the 500 ms entrance budget in every look.
+ */
+function commandPaletteEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
+  gsap.killTweensOf(el);
+  if (!motionEnabled()) {
+    gsap.set(el, { clearProps: CLEAR_PROPS });
+    done();
+    return;
+  }
+  // `done` rides the overlay tween: it is the one Vue is waiting on.
+  gsap.fromTo(
+    el,
+    { opacity: 0 },
+    { opacity: 1, duration: DUR.fast, ease: EASE.standard, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+  );
+  const panel = modalPanel(el);
+  if (!panel) return;
+  gsap.killTweensOf(panel);
+  gsap.fromTo(
+    panel,
+    { opacity: 0, y: -8, scale: 0.98 },
+    { opacity: 1, y: 0, scale: 1, duration: DUR.base, ease: EASE.emphasized, overwrite: 'auto', clearProps: CLEAR_PROPS },
+  );
+  const rows = Array.from(panel.querySelectorAll<HTMLElement>('[role="option"]')).slice(0, 12);
+  if (rows.length === 0) return;
+  gsap.killTweensOf(rows);
+  gsap.fromTo(
+    rows,
+    { opacity: 0, y: 4 },
+    { opacity: 1, y: 0, duration: DUR.fast, ease: EASE.standard, stagger: 0.02, delay: DUR.fast * 0.5, overwrite: 'auto', clearProps: CLEAR_PROPS },
+  );
+}
+
+/**
+ * Complex tier: a side drawer. Scrim fades; the panel slides in from its own
+ * edge (`data-side` on the panel says which) and fades. Leaves are the same
+ * two motions reversed at `--dur-fast`, inert first like every leave.
+ */
+function drawerEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
+  gsap.killTweensOf(el);
+  if (!motionEnabled()) {
+    gsap.set(el, { clearProps: CLEAR_PROPS });
+    done();
+    return;
+  }
+  const panel = modalPanel(el);
+  const fromX = panel?.dataset.side === 'left' ? -24 : 24;
+  gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: DUR.fast, ease: EASE.standard, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
+  if (panel) {
+    gsap.killTweensOf(panel);
+    gsap.fromTo(panel, { opacity: 0, x: fromX }, { opacity: 1, x: 0, duration: DUR.base, ease: EASE.emphasized, overwrite: 'auto', clearProps: CLEAR_PROPS });
+  }
+}
+
+function drawerLeave(el: HTMLElement, done: () => void): void {
+  el.style.pointerEvents = 'none';
+  if (!motionEnabled()) {
+    done();
+    return;
+  }
+  gsap.killTweensOf(el);
+  const panel = modalPanel(el);
+  gsap.to(el, { opacity: 0, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
+  if (panel) {
+    gsap.killTweensOf(panel);
+    gsap.to(panel, { x: panel.dataset.side === 'left' ? -16 : 16, opacity: 0, ...LEAVE_FAST(), overwrite: 'auto' });
+  }
+}
+
 function modalLeave(el: HTMLElement, done: () => void): void {
   el.style.pointerEvents = 'none';
   if (!motionEnabled()) {
@@ -224,6 +308,22 @@ export const presets: Record<PresetName, MotionPreset> = {
   slideUp: {
     enter: enterWith({ opacity: 0, y: 8 }, () => ({ opacity: 1, y: 0, ...ENTER() })),
     enterCancelled: cancel,
+  },
+
+  /** Complex tier: the ⌘K palette — panel drops in on the emphasized ease, rows stagger. */
+  commandPalette: {
+    enter: commandPaletteEnter,
+    leave: modalLeave,
+    enterCancelled: cancel,
+    leaveCancelled: cancelLeave,
+  },
+
+  /** Complex tier: a side drawer slides in from its edge. */
+  drawer: {
+    enter: drawerEnter,
+    leave: drawerLeave,
+    enterCancelled: cancel,
+    leaveCancelled: cancelLeave,
   },
 
   /** One row of a list, short enough that a whole list still feels instant. */

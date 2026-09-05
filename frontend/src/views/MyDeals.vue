@@ -975,73 +975,73 @@ console.groupEnd();
                       <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Flow</template>
-                              <div data-testid="mydeals.modal.result.cash_flow" class="numeric font-display text-lg font-bold tracking-display" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_flow" class="numeric font-display text-lg font-bold tracking-display" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Out</template>
-                              <div data-testid="mydeals.modal.result.cash_out" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_out" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Out Routi</template>
-                              <div data-testid="mydeals.modal.result.cash_out_routi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_out_routi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>CoC</template>
-                              <div data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
                           </UiStatTile>
                            <UiStatTile tone="neutral" class="bg-surface">
                                <template #label>DSCR</template>
-                               <div data-testid="mydeals.modal.result.dscr" class="numeric font-display text-lg font-bold tracking-display" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
+                               <div v-flash data-testid="mydeals.modal.result.dscr" class="numeric font-display text-lg font-bold tracking-display" :class="getDSCRColor((currentAnalysis as any).dscr)">{{ (currentAnalysis as any).dscr?.toFixed(2) || '-' }}</div>
                            </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Equity</template>
-                              <div data-testid="mydeals.modal.result.equity" class="numeric font-display text-lg font-bold tracking-display text-positive">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.equity" class="numeric font-display text-lg font-bold tracking-display text-positive">{{ formatCurrency((currentAnalysis as any).equity) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
-                              <div data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Total Cash Needed</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed (Buffered)</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
                           </UiStatTile>
                       </template>
                       <template v-else>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
-                              <div data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Annualized ROI</template>
-                              <div data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_cash_needed" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed (Buffered)</template>
-                              <div data-testid="mydeals.modal.result.total_cash_needed_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_cash_needed_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_with_buffer) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Holding Costs</template>
-                              <div data-testid="mydeals.modal.result.total_holding_costs" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_holding_costs" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_holding_costs) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>HML Interest</template>
-                              <div data-testid="mydeals.modal.result.total_hml_interest" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.total_hml_interest" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_hml_interest) }}</div>
                           </UiStatTile>
                       </template>
                   </div>

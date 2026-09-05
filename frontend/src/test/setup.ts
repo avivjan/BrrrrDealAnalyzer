@@ -132,6 +132,7 @@ if (typeof window !== "undefined") {
     "hover-lift": {},
     flash: {},
     "count-up": {},
+    "draw-on": {},
   };
 }
 

@@ -195,6 +195,31 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await expect(page.getByTestId('reps.people-toggle')).toBeVisible();
   await quietAfter('/reps (route)');
 
+  // --- shell: palette, Appearance drawer, look and mode switches (UI v2) -----
+  await page.goto('/');
+  await expect(page.getByTestId('landing.offer')).toBeVisible();
+  await quietAfter('/ (dashboard, count-ups and sparklines)');
+
+  await page.keyboard.press('Control+k');
+  await expect(page.getByTestId('shell.command')).toBeVisible();
+  await quietAfter('command palette open');
+  await page.keyboard.press('Escape');
+  await quietAfter('command palette closed');
+  await expect(page.getByTestId('shell.command')).toBeHidden();
+
+  await page.getByTestId('shell.settings-open').click();
+  await expect(page.getByTestId('shell.settings')).toBeVisible();
+  await quietAfter('appearance drawer open');
+
+  // A look switch and a mode switch are CSS cross-fades: no GSAP may start.
+  await page.getByTestId('shell.look.aurora').click();
+  await quietAfter('look switched to aurora');
+  await page.getByTestId('shell.mode').locator('[data-value="light"]').click();
+  await quietAfter('mode switched to light');
+  await page.keyboard.press('Escape');
+  await quietAfter('appearance drawer closed');
+  await expect(page.getByTestId('shell.settings')).toBeHidden();
+
   // A walk in which nothing ever animated would satisfy every assertion above
   // while proving nothing at all, so the totals are an assertion too.
   const observed = readings.reduce((total, reading) => total + reading.running, 0);

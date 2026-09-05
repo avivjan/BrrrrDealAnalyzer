@@ -1012,7 +1012,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
                       <template #label>Equity</template>
-                      <div data-testid="boughtdeals.modal.result.equity" class="font-bold text-positive">
+                      <div v-flash data-testid="boughtdeals.modal.result.equity" class="font-bold text-positive">
                         {{ formatCurrency( (currentAnalysis as any).equity ) }}
                       </div>
                     </UiStatTile>
@@ -1040,7 +1040,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <template #label>
                         Total Cash Needed
                       </template>
-                      <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal ) }}
                       </div>
                     </UiStatTile>
@@ -1048,7 +1048,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <template #label>
                         Cash Needed (Buffered)
                       </template>
-                      <div data-testid="boughtdeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal_with_buffer ) }}
                       </div>
                     </UiStatTile>
@@ -1086,25 +1086,25 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
                       <template #label>Cash Needed</template>
-                      <div data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_cash_needed ) }}
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
                       <template #label>Cash Needed (Buffered)</template>
-                      <div data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_cash_needed_with_buffer ) }}
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
                       <template #label>Holding Costs</template>
-                      <div data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_holding_costs ) }}
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
                       <template #label>HML Interest</template>
-                      <div data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
+                      <div v-flash data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_hml_interest ) }}
                       </div>
                     </UiStatTile>
