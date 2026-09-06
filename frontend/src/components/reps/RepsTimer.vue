@@ -125,8 +125,9 @@ function onCameraFiles(e: Event) {
       <div class="font-mono text-5xl font-bold tabular tracking-tight text-fg">
         {{ display }}
       </div>
+      <!-- `v-count-up` on the hours figure only, never on the ticking digits above. -->
       <div class="text-xs text-fg-muted">
-        = {{ decimalHours.toFixed(2) }} h
+        <span v-count-up>= {{ decimalHours.toFixed(2) }} h</span>
         <span v-if="isRunning" class="ml-2 inline-flex items-center gap-1 text-positive">
           <span class="h-2 w-2 rounded-full bg-positive animate-pulse"></span> running
         </span>

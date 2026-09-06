@@ -212,12 +212,86 @@ describe("DealCard", () => {
     });
 
     it("keeps the stage accent off the class list, where the scoped CSS owns it", () => {
-      const root = mountCard(brrrDeal({ stage: 1 })).element as HTMLElement;
+      const wrapper = mountCard(brrrDeal({ stage: 1 }));
+      const root = wrapper.element as HTMLElement;
       const classes = (root.getAttribute("class") ?? "").split(/\s+/);
-      // `cn()` drops `border-l-blue-500` against `border-line`; `[data-stage]`
-      // in the scoped block is what actually colours the left edge.
-      expect(classes).not.toContain("border-l-blue-500");
+      // The accent is a top strip coloured by `[data-stage]` in the scoped
+      // block, not a left border on the root's class list.
+      expect(classes).not.toContain("border-l-4");
       expect(root.getAttribute("data-stage")).toBe("1");
+      expect(wrapper.find('[data-part="stage-strip"]').exists()).toBe(true);
+    });
+  });
+
+  describe("the verdict", () => {
+    const ring = (wrapper: ReturnType<typeof mountCard>) =>
+      wrapper.findComponent({ name: "UiProgressRing" });
+
+    it("leads a BRRRR with cash-on-cash", () => {
+      const hero = mountCard(brrrDeal({ cash_on_cash: 8.5 })).find('[data-part="hero"]');
+      expect(hero.text()).toContain("8.5%");
+      expect(hero.text()).toContain("Cash on cash");
+    });
+
+    it("leads a FLIP with net profit", () => {
+      const hero = mountCard({
+        ...brrrDeal(),
+        deal_type: "FLIP",
+        net_profit: 42000,
+        roi: 10,
+      } as ActiveDealRes).find('[data-part="hero"]');
+      expect(hero.text()).toContain("$42,000");
+      expect(hero.text()).toContain("Net profit");
+      expect(hero.text()).not.toContain("Cash on cash");
+    });
+
+    it.each([
+      [25, 1], // over the 10 % target: the ring is full, never past it
+      [5, 0.5],
+      [-3, 0], // a losing deal shows an empty ring, never a negative arc
+      [undefined, 0],
+    ])("fills the ring with CoC %s against a 10 %% target, clamped to 0–1", (coc, value) => {
+      expect(ring(mountCard(brrrDeal({ cash_on_cash: coc }))).props("value")).toBe(value);
+    });
+
+    it("fills a FLIP's ring with ROI against a 20 % target", () => {
+      const wrapper = mountCard({ ...brrrDeal(), deal_type: "FLIP", roi: 10 } as ActiveDealRes);
+      expect(ring(wrapper).props("value")).toBe(0.5);
+    });
+
+    it.each([
+      [12, "positive"],
+      [6, "warning"],
+      [2, "negative"],
+    ])("tones the ring for CoC %s as %s", (coc, tone) => {
+      expect(ring(mountCard(brrrDeal({ cash_on_cash: coc }))).props("tone")).toBe(tone);
+    });
+
+    it("draws the solid cash segment as needed ÷ with-buffer of the track", () => {
+      const wrapper = mountCard(
+        brrrDeal({
+          total_cash_needed_for_deal: 63525,
+          total_cash_needed_for_deal_with_buffer: 76638,
+        }),
+      );
+      const solid = wrapper.find('[data-part="cash-needed"]').element as HTMLElement;
+      expect(solid.style.width).toBe(`${(63525 / 76638) * 100}%`);
+      const bar = wrapper.find('[data-part="cash-bar"]').text();
+      expect(bar).toContain("$63,525 needed");
+      expect(bar).toContain("w/ buffer $76,638");
+    });
+
+    it("shows the next action only when the deal has one", () => {
+      expect(mountCard(brrrDeal({ task: "Call the lender" })).find('[data-part="task"]').text()).toContain(
+        "Call the lender",
+      );
+      expect(mountCard(brrrDeal({ task: "" })).find('[data-part="task"]').exists()).toBe(false);
+    });
+
+    it("keeps the footer's sqft and bd/ba fallbacks", () => {
+      const footer = mountCard(brrrDeal()).find('[data-part="footer"]').text();
+      expect(footer).toContain("- sqft");
+      expect(footer).toContain("-bd / -ba");
     });
   });
 });

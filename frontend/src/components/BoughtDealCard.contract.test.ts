@@ -22,6 +22,10 @@ vi.mock("../api", () => ({
 /** The BRRRR "Purchase" stage, which has two substages in the default template. */
 const PURCHASE_SUBSTAGES = brrrPipeline.stages[0]!.subStages;
 
+/** The stage after Purchase, and one of its substages — a *future* task. */
+const NEXT_STAGE = brrrPipeline.stages[1]!;
+const FUTURE_SUB = NEXT_STAGE.subStages[0]!;
+
 function boughtDeal(overrides: Partial<BoughtDealRes> = {}): BoughtDealRes {
   return {
     deal_type: "BRRRR",
@@ -42,6 +46,9 @@ function boughtDeal(overrides: Partial<BoughtDealRes> = {}): BoughtDealRes {
 function mountCard(deal: BoughtDealRes = boughtDeal()) {
   return mount(BoughtDealCard, { props: { deal } });
 }
+
+const stageHeader = (wrapper: ReturnType<typeof mountCard>, id: string) =>
+  wrapper.find(`[data-testid="boughtcard.stage.${id}"]`);
 
 describe("BoughtDealCard", () => {
   beforeEach(() => {
@@ -66,10 +73,26 @@ describe("BoughtDealCard", () => {
       }
     });
 
-    it("shows no checklist for a stage that has no substages", () => {
+    it("renders a header for every stage of the template, in order", () => {
+      const wrapper = mountCard();
+      const headers = wrapper.findAll('[data-part="stages"] button[data-testid^="boughtcard.stage."]');
+      expect(headers.map((h) => h.attributes("data-testid"))).toEqual(
+        brrrPipeline.stages.map((s) => `boughtcard.stage.${s.id}`),
+      );
+      for (const stage of brrrPipeline.stages) {
+        expect(wrapper.text()).toContain(stage.name);
+      }
+    });
+
+    it("gives a stage with no substages a header, a dash, and no body", () => {
       // "rehab" is a bare stage in the default BRRRR template.
       const wrapper = mountCard(boughtDeal({ boughtStage: "rehab" }));
-      expect(wrapper.find('input[type="checkbox"]').exists()).toBe(false);
+      const header = stageHeader(wrapper, "rehab");
+      expect(header.exists()).toBe(true);
+      expect(header.text()).toContain("—");
+      expect(header.attributes("aria-expanded")).toBeUndefined();
+      // Its row holds nothing to tick.
+      expect(header.element.parentElement!.querySelector('input[type="checkbox"]')).toBeNull();
     });
 
     it("reflects which substages are already complete", () => {
@@ -101,6 +124,21 @@ describe("BoughtDealCard", () => {
       expect(toggle).toHaveBeenCalledWith("bought-7", sub.id);
     });
 
+    it("lets a future stage's task be ticked today, through the same hook and store call", async () => {
+      const store = useBoughtDealStore();
+      const toggle = vi.spyOn(store, "toggleSubstage").mockResolvedValue(undefined);
+      const wrapper = mountCard(boughtDeal({ id: "bought-7" }));
+
+      const box = wrapper.find(`[data-testid="boughtcard.substage.${FUTURE_SUB.id}.input"]`);
+      expect(box.exists(), `no checkbox for future task ${FUTURE_SUB.id}`).toBe(true);
+      expect(box.attributes("aria-label")).toBe(FUTURE_SUB.label);
+
+      await stageHeader(wrapper, NEXT_STAGE.id).trigger("click");
+      await box.trigger("click");
+
+      expect(toggle).toHaveBeenCalledWith("bought-7", FUTURE_SUB.id);
+    });
+
     it("keeps a checkbox click off the parent (which opens the deal)", async () => {
       const store = useBoughtDealStore();
       vi.spyOn(store, "toggleSubstage").mockResolvedValue(undefined);
@@ -119,58 +157,175 @@ describe("BoughtDealCard", () => {
 
       await board.find('[data-testid="boughtcard.delete"]').trigger("click");
       expect(parentClick).not.toHaveBeenCalled();
+
+      await board.find(`[data-testid="boughtcard.stage.${NEXT_STAGE.id}"]`).trigger("click");
+      expect(parentClick).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the stage accordion", () => {
+    it("opens the current stage by default and the others on a click, one at a time", async () => {
+      const wrapper = mountCard();
+      expect(stageHeader(wrapper, "purchase").attributes("aria-expanded")).toBe("true");
+      expect(stageHeader(wrapper, NEXT_STAGE.id).attributes("aria-expanded")).toBe("false");
+
+      await stageHeader(wrapper, NEXT_STAGE.id).trigger("click");
+      expect(stageHeader(wrapper, NEXT_STAGE.id).attributes("aria-expanded")).toBe("true");
+      expect(stageHeader(wrapper, "purchase").attributes("aria-expanded")).toBe("false");
+
+      // A second click on the open row closes it.
+      await stageHeader(wrapper, NEXT_STAGE.id).trigger("click");
+      expect(stageHeader(wrapper, NEXT_STAGE.id).attributes("aria-expanded")).toBe("false");
+    });
+
+    it("follows the deal when its stage changes", async () => {
+      const wrapper = mountCard();
+      await stageHeader(wrapper, NEXT_STAGE.id).trigger("click");
+      await wrapper.setProps({ deal: boughtDeal({ boughtStage: "closed" }) });
+      expect(stageHeader(wrapper, "closed").attributes("aria-expanded")).toBe("true");
+      expect(stageHeader(wrapper, NEXT_STAGE.id).attributes("aria-expanded")).toBe("false");
+    });
+
+    it("shows done/total per stage and tints a future stage that has already started", () => {
+      const wrapper = mountCard(boughtDeal({ completedSubstages: { [FUTURE_SUB.id]: true } }));
+      const pill = (id: string) => stageHeader(wrapper, id).find(".rounded-full");
+
+      expect(pill("purchase").text()).toBe(`0/${PURCHASE_SUBSTAGES.length}`);
+      expect(pill("purchase").classes()).toContain("text-primary");
+
+      expect(pill(NEXT_STAGE.id).text()).toBe(`1/${NEXT_STAGE.subStages.length}`);
+      expect(pill(NEXT_STAGE.id).classes()).toContain("text-primary");
+
+      // An untouched future stage stays muted.
+      expect(pill("rent").classes()).toContain("text-fg-muted");
     });
   });
 
   describe("progress", () => {
-    /**
-     * The bar tracks position in the pipeline, not the substage checklist:
-     * stage index / (stage count - 1).
-     */
-    const bar = (wrapper: ReturnType<typeof mountCard>) => {
-      const filled = wrapper
-        .findAll("div")
-        .filter((el) => (el.attributes("style") ?? "").includes("width:"));
-      expect(filled, "no progress bar fill found").toHaveLength(1);
-      return filled[0]!.attributes("style")!;
-    };
+    const railStates = (wrapper: ReturnType<typeof mountCard>) =>
+      wrapper.findAll('[data-ui="timeline-rail"] li').map((li) => li.attributes("data-state"));
 
-    it("is empty on the first stage and full on the last", () => {
-      expect(bar(mountCard(boughtDeal({ boughtStage: "purchase" })))).toContain(
-        "width: 0%",
-      );
-      expect(bar(mountCard(boughtDeal({ boughtStage: "refinanced" })))).toContain(
-        "width: 100%",
-      );
+    it("draws every stage on the rail, marking past, active and to-come", () => {
+      // "closed" is index 2 of 7 BRRRR stages.
+      expect(railStates(mountCard(boughtDeal({ boughtStage: "closed" })))).toEqual([
+        "done",
+        "done",
+        "active",
+        "todo",
+        "todo",
+        "todo",
+        "todo",
+      ]);
+      expect(railStates(mountCard(boughtDeal({ boughtStage: "purchase" })))[0]).toBe("active");
+      const last = railStates(mountCard(boughtDeal({ boughtStage: "refinanced" })));
+      expect(last[last.length - 1]).toBe("active");
     });
 
-    it("is part-way through in the middle of the pipeline", () => {
-      // "closed" is index 2 of 7 BRRRR stages -> 2/6 -> 33.33…%.
-      expect(bar(mountCard(boughtDeal({ boughtStage: "closed" })))).toContain(
-        "width: 33.333",
-      );
-    });
-
-    it("does not move when substages are ticked", () => {
+    it("does not move the rail when substages are ticked", () => {
       const all = Object.fromEntries(PURCHASE_SUBSTAGES.map((s) => [s.id, true]));
-      expect(bar(mountCard(boughtDeal({ completedSubstages: all })))).toContain(
-        "width: 0%",
-      );
+      expect(railStates(mountCard(boughtDeal({ completedSubstages: all })))[0]).toBe("active");
+    });
+
+    it("rings the current stage's ticks", () => {
+      const [first] = PURCHASE_SUBSTAGES;
+      const ring = (deal: BoughtDealRes) => mountCard(deal).find('[data-ui="progress-ring"]');
+      expect(ring(boughtDeal()).attributes("aria-label")).toBe("0 of 2 tasks done in Purchase");
+      expect(ring(boughtDeal({ completedSubstages: { [first!.id]: true } })).text()).toBe("50%");
+      // A stage with no tasks is simply done.
+      expect(ring(boughtDeal({ boughtStage: "rehab" })).text()).toBe("100%");
+    });
+
+    it("glows when the stage's checklist is complete", () => {
+      const all = Object.fromEntries(PURCHASE_SUBSTAGES.map((s) => [s.id, true]));
+      expect(mountCard(boughtDeal({ completedSubstages: all })).classes()).toContain("ring-positive/50");
+      expect(mountCard().classes()).not.toContain("ring-positive/50");
+    });
+  });
+
+  describe("advance", () => {
+    const advance = (wrapper: ReturnType<typeof mountCard>) =>
+      wrapper.find('[data-testid="boughtcard.advance"]');
+
+    it("is offered only once every task of the current stage is ticked", () => {
+      expect(advance(mountCard()).exists()).toBe(false);
+      const all = Object.fromEntries(PURCHASE_SUBSTAGES.map((s) => [s.id, true]));
+      expect(advance(mountCard(boughtDeal({ completedSubstages: all }))).exists()).toBe(true);
+    });
+
+    it("is never offered on the last stage", () => {
+      const last = brrrPipeline.stages[brrrPipeline.stages.length - 1]!;
+      const all = Object.fromEntries(last.subStages.map((s) => [s.id, true]));
+      expect(
+        advance(mountCard(boughtDeal({ boughtStage: last.id, completedSubstages: all }))).exists(),
+      ).toBe(false);
+    });
+
+    it("emits advance with the deal id and never touches the store", async () => {
+      const store = useBoughtDealStore();
+      const advanceStage = vi.spyOn(store, "advanceStage");
+      const all = Object.fromEntries(PURCHASE_SUBSTAGES.map((s) => [s.id, true]));
+      const wrapper = mountCard(boughtDeal({ id: "bought-3", completedSubstages: all }));
+
+      await advance(wrapper).trigger("click");
+
+      expect(wrapper.emitted("advance")).toEqual([["bought-3"]]);
+      expect(advanceStage).not.toHaveBeenCalled();
     });
   });
 
   describe("what the card shows", () => {
-    it("names the deal's current stage", () => {
-      expect(mountCard().text()).toContain("Stage: Purchase");
-      expect(mountCard(boughtDeal({ boughtStage: "rehab" })).text()).toContain(
-        "Stage: Rehab",
-      );
+    it("names the deal's current step and stage", () => {
+      expect(mountCard().text()).toContain("Step 1 of 7");
+      expect(mountCard().text()).toContain("Purchase");
+      const rehab = mountCard(boughtDeal({ boughtStage: "rehab" })).text();
+      expect(rehab).toContain("Step 4 of 7");
+      expect(rehab).toContain("Rehab");
     });
 
     it("shows purchase and rehab in whole dollars", () => {
       const text = mountCard().text();
       expect(text).toContain("$200,000");
       expect(text).toContain("$50,000");
+    });
+
+    it("shows cash in and the refi target for a BRRRR deal", () => {
+      const text = mountCard(
+        boughtDeal({
+          total_cash_needed_for_deal: 61234.4,
+          arv_in_thousands: 300,
+          ltv_as_precent: 75,
+        } as Partial<BoughtDealRes>),
+      ).text();
+      expect(text).toContain("Cash in");
+      expect(text).toContain("$61,234");
+      expect(text).toContain("Refi target");
+      expect(text).toContain("$225,000");
+    });
+
+    it("shows a dash for the refi target until ARV and LTV are known", () => {
+      const metrics = mountCard().find('[data-part="metrics"]').text();
+      expect(metrics).toContain("Refi target");
+      expect(metrics).toContain("-");
+    });
+
+    it("shows the sale target for a FLIP deal", () => {
+      const text = mountCard(
+        boughtDeal({
+          deal_type: "FLIP",
+          salePrice: 300,
+          total_cash_needed: 40000,
+        } as Partial<BoughtDealRes>),
+      ).text();
+      expect(text).toContain("FLIP");
+      expect(text).toContain("Sale target");
+      expect(text).toContain("$300,000");
+      expect(text).toContain("$40,000");
+    });
+
+    it("keeps the footer's sqft and bed/bath fallbacks", () => {
+      expect(mountCard().text()).toContain("- sqft");
+      expect(mountCard().text()).toContain("-bd / -ba");
+      expect(mountCard(boughtDeal({ sqft: 1450, bedrooms: 3, bathrooms: 2 })).text()).toContain("3bd / 2ba");
     });
   });
 });

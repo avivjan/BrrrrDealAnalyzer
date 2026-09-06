@@ -183,6 +183,18 @@ describe("UiField", () => {
       expect(mountField().classes()).not.toContain("flex");
     });
 
+    it("draws the label as the shared 20px row above the control", () => {
+      // The same row every field primitive draws, so a `UiField` beside a
+      // `MoneyInput` in one grid row starts its box at the same y.
+      const label = mountField().get("label");
+      expect(label.classes()).toContain("h-5");
+      expect(label.classes()).toContain("mb-1.5");
+
+      const inline = mountField({ inline: true }).get("label");
+      expect(inline.classes()).not.toContain("h-5");
+      expect(inline.classes()).toContain("shrink-0");
+    });
+
     it("uses tokens for every colour it sets", () => {
       const wrapper = mountField({}, { helper: "Hint", error: "Bad" });
       expect(wrapper.html()).not.toMatch(/\b(bg|text|border)-(gray|slate|blue|indigo|red|amber)-\d/);

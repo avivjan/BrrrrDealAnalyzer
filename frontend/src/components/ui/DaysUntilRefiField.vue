@@ -73,28 +73,27 @@ const refiDateId = useId();
 
 <template>
   <div class="flex flex-col gap-1.5">
-    <div class="flex items-center justify-between gap-2">
+    <!--
+      The mode toggle is a plain text control, not a `UiButton`: it sits inside
+      the 20px label row and must not grow it, or this field's box would land
+      below its neighbours'. On touch the 44px target comes from a negative
+      vertical margin, so the row keeps its height there too.
+    -->
+    <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
       <label
         :for="daysInputId"
         data-part="label"
-        class="text-sm font-medium text-fg"
-        :class="{
-          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
-        }"
-      >
-        {{ label }}
-      </label>
-      <UiButton
+        class="text-sm font-medium leading-5 text-fg"
+      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+      <button
         type="button"
         data-part="toggle"
-        variant="ghost"
-        size="sm"
-        class="touch:min-h-11 text-primary hover:text-primary-hover"
+        class="inline-flex h-5 items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl touch:min-h-11 touch:-my-3"
         @click="picking ? (picking = false) : openPicker()"
       >
         <i class="pi pi-calendar text-[11px]" aria-hidden="true"></i>
         {{ picking ? "Enter days instead" : "Pick dates" }}
-      </UiButton>
+      </button>
     </div>
 
     <!-- Default: type the number of days straight in. -->

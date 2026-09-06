@@ -247,12 +247,20 @@ function formatPreviewDate(iso: string): string {
             </h2>
           </template>
 
+          <!--
+            The three segmented groups (kind, direction, ends) share one markup
+            and one size. `UiSegmented` takes only value/label/icon per option,
+            so the hooks the specs click (`txnform.mode-recurring`,
+            `txnform.inflow`, `txnform.end-on`, …) cannot ride on it; the
+            hand-rolled group stays, on the primitive's `min-h-9 touch:min-h-11`
+            segment height, and every button below carries the same classes.
+          -->
           <!-- Recurring toggle (only for new entries; editing locks the type) -->
           <div v-if="canToggleRecurring" role="group" aria-label="Kind" class="mb-4 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
             <UiButton
               data-testid="txnform.mode-onetime"
               variant="ghost"
-              class="flex-1 gap-1.5 text-xs font-semibold"
+              class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
               :aria-pressed="!isRecurring"
               :class="!isRecurring ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
               @click="isRecurring = false"
@@ -262,12 +270,12 @@ function formatPreviewDate(iso: string): string {
             <UiButton
               data-testid="txnform.mode-recurring"
               variant="ghost"
-              class="flex-1 gap-1.5 text-xs font-semibold"
+              class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
               :aria-pressed="isRecurring"
               :class="isRecurring ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
               @click="isRecurring = true"
             >
-              <i class="pi pi-refresh text-[10px]" aria-hidden="true"></i> Recurring
+              <i class="pi pi-refresh text-xs" aria-hidden="true"></i> Recurring
             </UiButton>
           </div>
 
@@ -276,7 +284,7 @@ function formatPreviewDate(iso: string): string {
             <UiButton
               data-testid="txnform.inflow"
               variant="ghost"
-              class="flex-1 text-sm font-semibold"
+              class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
               :aria-pressed="!isOutflow"
               :class="!isOutflow ? 'bg-positive/12 text-positive shadow-1 ring-1 ring-inset ring-positive/40' : 'text-fg-muted'"
               @click="isOutflow = false"
@@ -286,7 +294,7 @@ function formatPreviewDate(iso: string): string {
             <UiButton
               data-testid="txnform.outflow"
               variant="ghost"
-              class="flex-1 text-sm font-semibold"
+              class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
               :aria-pressed="isOutflow"
               :class="isOutflow ? 'bg-negative/12 text-negative shadow-1 ring-1 ring-inset ring-negative/40' : 'text-fg-muted'"
               @click="isOutflow = true"
@@ -311,9 +319,9 @@ function formatPreviewDate(iso: string): string {
                   step="0.01"
                   min="0"
                   placeholder="49.2"
-                  class="ui-input numeric pr-8 text-lg"
+                  class="ui-input numeric pr-10"
                 />
-                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+                <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
               </div>
             </template>
             <template #helper>All amounts in $k. e.g. 49.2 = $49,200</template>
@@ -335,7 +343,7 @@ function formatPreviewDate(iso: string): string {
           </UiField>
 
           <!-- Recurring schedule -->
-          <div v-else class="mb-4 space-y-3">
+          <div v-else class="mb-4 space-y-4">
             <UiField>
               <template #label>First occurrence</template>
               <template #default="{ id, describedBy }">
@@ -350,7 +358,7 @@ function formatPreviewDate(iso: string): string {
               </template>
             </UiField>
 
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-3 gap-3">
               <UiField class="col-span-2">
                 <template #label>Frequency</template>
                 <template #default="{ id, describedBy }">
@@ -384,70 +392,78 @@ function formatPreviewDate(iso: string): string {
               </UiField>
             </div>
 
-            <div>
-              <label class="mb-1 block text-sm font-medium text-fg">Ends</label>
-              <div role="group" aria-label="Ends" class="mb-2 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
-                <UiButton
-                  type="button"
-                  data-testid="txnform.end-never"
-                  variant="ghost"
-                  size="sm"
-                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
-                  :aria-pressed="endMode === 'never'"
-                  :class="endMode === 'never' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
-                  @click="endMode = 'never'"
-                >
-                  Never
-                </UiButton>
-                <UiButton
-                  type="button"
-                  data-testid="txnform.end-on"
-                  variant="ghost"
-                  size="sm"
-                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
-                  :aria-pressed="endMode === 'on'"
-                  :class="endMode === 'on' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
-                  @click="endMode = 'on'"
-                >
-                  On date
-                </UiButton>
-                <UiButton
-                  type="button"
-                  data-testid="txnform.end-after"
-                  variant="ghost"
-                  size="sm"
-                  class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
-                  :aria-pressed="endMode === 'after'"
-                  :class="endMode === 'after' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
-                  @click="endMode = 'after'"
-                >
-                  After N
-                </UiButton>
-              </div>
+            <!--
+              One field: the "Ends" label names whichever end control the
+              chosen mode shows (the date or the count), and the segmented
+              group picking that mode sits above it.
+            -->
+            <UiField>
+              <template #label>Ends</template>
+              <template #default="{ id, describedBy }">
+                <div role="group" aria-label="Ends" class="mb-2 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
+                  <UiButton
+                    type="button"
+                    data-testid="txnform.end-never"
+                    variant="ghost"
+                    class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
+                    :aria-pressed="endMode === 'never'"
+                    :class="endMode === 'never' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
+                    @click="endMode = 'never'"
+                  >
+                    Never
+                  </UiButton>
+                  <UiButton
+                    type="button"
+                    data-testid="txnform.end-on"
+                    variant="ghost"
+                    class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
+                    :aria-pressed="endMode === 'on'"
+                    :class="endMode === 'on' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
+                    @click="endMode = 'on'"
+                  >
+                    On date
+                  </UiButton>
+                  <UiButton
+                    type="button"
+                    data-testid="txnform.end-after"
+                    variant="ghost"
+                    class="min-h-9 touch:min-h-11 flex-1 gap-1.5 px-3 text-sm font-medium"
+                    :aria-pressed="endMode === 'after'"
+                    :class="endMode === 'after' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
+                    @click="endMode = 'after'"
+                  >
+                    After N
+                  </UiButton>
+                </div>
 
-              <input
-                v-if="endMode === 'on'"
-                data-testid="txnform.end-date"
-                v-model="endDate"
-                type="date"
-                :min="startDate"
-                class="ui-input"
-              />
-              <div v-else-if="endMode === 'after'" class="relative">
                 <input
-                  data-testid="txnform.occurrences"
-                  v-model="occurrences"
-                  type="number"
-                  min="1"
-                  max="2000"
-                  class="ui-input numeric pr-24"
+                  v-if="endMode === 'on'"
+                  data-testid="txnform.end-date"
+                  v-model="endDate"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  type="date"
+                  :min="startDate"
+                  class="ui-input"
                 />
-                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-fg-muted">occurrence(s)</span>
-              </div>
-              <p v-else class="text-[10px] text-fg-muted">
-                Series runs indefinitely on the timeline horizon.
-              </p>
-            </div>
+                <div v-else-if="endMode === 'after'" class="relative">
+                  <input
+                    data-testid="txnform.occurrences"
+                    v-model="occurrences"
+                    :id="id"
+                    :aria-describedby="describedBy"
+                    type="number"
+                    min="1"
+                    max="2000"
+                    class="ui-input numeric pr-32"
+                  />
+                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">occurrence(s)</span>
+                </div>
+                <p v-else class="text-xs text-fg-muted">
+                  Series runs indefinitely on the timeline horizon.
+                </p>
+              </template>
+            </UiField>
 
             <!-- Preview -->
             <div

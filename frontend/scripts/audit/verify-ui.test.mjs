@@ -16,7 +16,7 @@ import {
 } from './verify-ui.mjs';
 
 describe('verify:ui pathspecs', () => {
-  it('excludes the frontend, docs, scratch trees and the two setup docs from G1', () => {
+  it('excludes the frontend, docs, scratch trees, the two setup docs and the notes dirs from G1', () => {
     expect(G1_PATHSPEC).toEqual([
       '.',
       ':!frontend',
@@ -26,6 +26,8 @@ describe('verify:ui pathspecs', () => {
       ':!**/__pycache__/**',
       ':!REPS_README.md',
       ':!README.md',
+      ':!.claude',
+      ':!tasks',
     ]);
   });
 

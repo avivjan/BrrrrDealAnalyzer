@@ -111,4 +111,33 @@ describe("MoneyInput", () => {
     const wrapper = mountInput({ inThousands: true });
     expect(wrapper.find("label").text()).toBe("Purchase Price");
   });
+
+  describe("the field anatomy", () => {
+    it("draws the label in the shared 20px row, with the hint beside it", async () => {
+      const wrapper = mountInput({ modelValue: 0, inThousands: true });
+      const row = wrapper.get('[data-part="label-row"]');
+      expect(row.classes()).toContain("h-5");
+
+      const input = wrapper.find("input");
+      await input.trigger("focus");
+      await input.setValue("50");
+      // The hint shares the row rather than taking one of its own, so the
+      // box below never moves when it appears.
+      expect(row.find('[data-part="hint"]').exists()).toBe(true);
+    });
+
+    it("marks a required field with an asterisk for the eye and a word for the ear", () => {
+      const wrapper = mountInput({ required: true });
+      const marker = wrapper.get('label [data-part="required"]');
+      expect(marker.text()).toBe("*");
+      expect(marker.attributes("aria-hidden")).toBe("true");
+      expect(wrapper.get("label .sr-only").text()).toBe("required");
+    });
+
+    it("shows no required marker when the field is optional", () => {
+      const wrapper = mountInput();
+      expect(wrapper.find('[data-part="required"]').exists()).toBe(false);
+      expect(wrapper.find("label .sr-only").exists()).toBe(false);
+    });
+  });
 });

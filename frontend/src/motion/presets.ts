@@ -56,7 +56,8 @@ export type PresetName =
   | 'slideUp'
   | 'listItem'
   | 'commandPalette'
-  | 'drawer';
+  | 'drawer'
+  | 'hero';
 
 /** Read at call time: `DUR`/`EASE` are getters over the active look. */
 const ENTER = (): GSAPTweenVars => ({ duration: DUR.base, ease: EASE.standard });
@@ -214,6 +215,193 @@ function commandPaletteEnter(el: HTMLElement, done: () => void): void {
 }
 
 /**
+ * The marks a page header carries for the `hero` preset.
+ *
+ * `<UiTransition preset="hero" appear>` wraps the header block; inside it the
+ * eyebrow, the title and each figure/action say which they are with
+ * `data-hero="…"`. Anything unmarked is left alone.
+ */
+export const HERO_SELECTOR = {
+  eyebrow: '[data-hero="eyebrow"]',
+  title: '[data-hero="title"]',
+  item: '[data-hero="item"]',
+} as const;
+
+/**
+ * The whole header has arrived within this many seconds, whatever the look.
+ *
+ * Quiet Luxury is the slowest look (`--dur-fast: 200ms`, `--dur-base: 340ms`);
+ * three sequential tweens at those tempos would run past 700 ms, so the
+ * schedule below overlaps them and holds the total here.
+ */
+export const HERO_BUDGET = 0.45;
+
+/** The step between one `[data-hero="item"]` and the next, when the budget allows it. */
+export const HERO_STAGGER = 0.05;
+
+/** Marked descendants only clear what the hero tweened on them. */
+const HERO_CLEAR_PROPS = 'transform,opacity';
+
+/** Where each part of a hero starts and how long it runs, in seconds. */
+export interface HeroSchedule {
+  /** Eyebrow and item duration (`DUR.fast`, capped). */
+  fast: number;
+  /** Title duration (`DUR.base`, capped). */
+  base: number;
+  /** When the title starts: part-way through the eyebrow. */
+  titleAt: number;
+  /** When the first item starts: part-way through the title. */
+  itemsAt: number;
+  /** The gap between consecutive items, squeezed when there are many. */
+  stagger: number;
+  /** When the last tween ends — never more than `HERO_BUDGET`. */
+  total: number;
+}
+
+/**
+ * Overlap the eyebrow, title and items so the last one ends inside the budget.
+ *
+ * The preferred shape: the title starts 40% into the eyebrow, the items start
+ * halfway into the title, 50 ms apart. Each of those gives way in turn when the
+ * look's tempo would overrun `HERO_BUDGET`: the title starts earlier, then the
+ * items start earlier (never before the title), then the item stagger shrinks.
+ * Durations themselves are capped so that a look with an absurd `--dur-*`
+ * degrades to a fast header rather than a long one. Pure, so it can be checked
+ * against any tempo without a DOM.
+ */
+export function heroSchedule(fast: number, base: number, items: number): HeroSchedule {
+  const F = Math.min(Math.max(fast, 0), HERO_BUDGET / 2);
+  const B = Math.min(Math.max(base, 0), HERO_BUDGET);
+  const titleAt = Math.max(0, Math.min(F * 0.4, HERO_BUDGET - B));
+  const titleEnd = titleAt + B;
+  if (items <= 0) {
+    return { fast: F, base: B, titleAt, itemsAt: titleEnd, stagger: 0, total: titleEnd };
+  }
+  let stagger = HERO_STAGGER;
+  let itemsAt = titleAt + B * 0.5;
+  const latestStart = HERO_BUDGET - F - (items - 1) * stagger;
+  if (itemsAt > latestStart && latestStart >= titleAt) {
+    itemsAt = latestStart;
+  } else if (itemsAt > latestStart) {
+    // Even alongside the title the run is too long at 50 ms a piece.
+    itemsAt = titleAt;
+    stagger = items > 1 ? Math.max(0, (HERO_BUDGET - F - titleAt) / (items - 1)) : 0;
+  }
+  const itemsEnd = itemsAt + (items - 1) * stagger + F;
+  return { fast: F, base: B, titleAt, itemsAt, stagger, total: Math.max(titleEnd, itemsEnd) };
+}
+
+/**
+ * The running hero timeline per header, so a cancel or a re-enter can kill
+ * the whole thing — `killTweensOf(el)` only reaches tweens *of* `el`, and a
+ * hero's tweens are of its descendants. Weak, so a header Vue discards is
+ * not held here.
+ */
+const heroTimelines = new WeakMap<HTMLElement, gsap.core.Timeline>();
+
+function heroMarks(el: HTMLElement): { eyebrows: HTMLElement[]; titles: HTMLElement[]; items: HTMLElement[] } {
+  return {
+    eyebrows: Array.from(el.querySelectorAll<HTMLElement>(HERO_SELECTOR.eyebrow)),
+    titles: Array.from(el.querySelectorAll<HTMLElement>(HERO_SELECTOR.title)),
+    items: Array.from(el.querySelectorAll<HTMLElement>(HERO_SELECTOR.item)),
+  };
+}
+
+/** Stop a hero mid-flight and hand every mark back to the stylesheet. */
+function heroCancel(el: HTMLElement): void {
+  heroTimelines.get(el)?.kill();
+  heroTimelines.delete(el);
+  cancel(el);
+  const { eyebrows, titles, items } = heroMarks(el);
+  const marks = [...eyebrows, ...titles, ...items];
+  if (marks.length > 0) {
+    gsap.killTweensOf(marks);
+    gsap.set(marks, { clearProps: HERO_CLEAR_PROPS });
+  }
+}
+
+/**
+ * Complex tier: a page header. The eyebrow rises 8 px, the title follows
+ * 12 px on the standard ease, then the figures and actions cascade in — one
+ * timeline whose `-=` offsets come from `heroSchedule`, so the whole header
+ * has settled inside `HERO_BUDGET` in the slowest look. A header with no
+ * marks at all still fades, so the preset is never a no-op.
+ */
+function heroEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
+  // A re-enter mid-flight: stop the previous hero and clear its marks first,
+  // or a look switch to reduced motion would freeze them half-faded.
+  if (heroTimelines.has(el)) heroCancel(el);
+  gsap.killTweensOf(el);
+  if (!motionEnabled()) {
+    gsap.set(el, { clearProps: CLEAR_PROPS });
+    done();
+    return;
+  }
+  const { eyebrows, titles, items } = heroMarks(el);
+  const timeline = gsap.timeline({
+    onComplete: () => {
+      heroTimelines.delete(el);
+      done();
+    },
+  });
+  heroTimelines.set(el, timeline);
+
+  if (eyebrows.length + titles.length + items.length === 0) {
+    timeline.fromTo(
+      el,
+      { opacity: 0 },
+      { opacity: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS },
+    );
+    return;
+  }
+
+  const plan = heroSchedule(DUR.fast, DUR.base, items.length);
+  const ease = EASE.standard;
+  const marks = [...eyebrows, ...titles, ...items];
+  gsap.killTweensOf(marks);
+
+  // Each `-=` is measured from the timeline's end as it stands, which is the
+  // previous part's end — so the offset is that end minus the start the
+  // schedule wants. A part that is absent is skipped and the next one starts
+  // no later than the schedule says, measured from wherever the timeline ends.
+  const at = (start: number): string => `-=${Math.max(0, timeline.duration() - start)}`;
+
+  if (eyebrows.length > 0) {
+    timeline.fromTo(
+      eyebrows,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: plan.fast, ease, overwrite: 'auto', clearProps: HERO_CLEAR_PROPS },
+      0,
+    );
+  }
+  if (titles.length > 0) {
+    timeline.fromTo(
+      titles,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: plan.base, ease, overwrite: 'auto', clearProps: HERO_CLEAR_PROPS },
+      at(plan.titleAt),
+    );
+  }
+  if (items.length > 0) {
+    timeline.fromTo(
+      items,
+      { opacity: 0, y: 8 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: plan.fast,
+        ease,
+        stagger: plan.stagger,
+        overwrite: 'auto',
+        clearProps: HERO_CLEAR_PROPS,
+      },
+      at(plan.itemsAt),
+    );
+  }
+}
+
+/**
  * Complex tier: a side drawer. Scrim fades; the panel slides in from its own
  * edge (`data-side` on the panel says which) and fades. Leaves are the same
  * two motions reversed at `--dur-fast`, inert first like every leave.
@@ -324,6 +512,12 @@ export const presets: Record<PresetName, MotionPreset> = {
     leave: drawerLeave,
     enterCancelled: cancel,
     leaveCancelled: cancelLeave,
+  },
+
+  /** Complex tier: a page header — eyebrow, then title, then figures, inside 450 ms. */
+  hero: {
+    enter: heroEnter,
+    enterCancelled: heroCancel,
   },
 
   /** One row of a list, short enough that a whole list still feels instant. */

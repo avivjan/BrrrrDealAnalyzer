@@ -53,17 +53,13 @@ const inputId = useId();
       visible label itself, and an attribute handed to this component would
       otherwise settle on the wrapper `<div>` rather than reach the field.
     -->
-    <label
-      v-if="label"
-      :for="($attrs['data-input-id'] as string | undefined) ?? inputId"
-      data-part="label"
-      class="text-sm font-medium text-fg"
-      :class="{
-        'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
-      }"
-    >
-      {{ label }}
-    </label>
+    <div v-if="label" data-part="label-row" class="flex h-5 items-center justify-between gap-2">
+      <label
+        :for="($attrs['data-input-id'] as string | undefined) ?? inputId"
+        data-part="label"
+        class="text-sm font-medium leading-5 text-fg"
+      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+    </div>
     <InputNumber
       data-part="input"
       :input-id="($attrs['data-input-id'] as string | undefined) ?? inputId"

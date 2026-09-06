@@ -64,6 +64,32 @@ describe("DaysUntilRefiField", () => {
     expect(lastEmitted(wrapper)).toEqual([195]);
   });
 
+  describe("the field anatomy", () => {
+    it("keeps the mode toggle inside the 20px label row without growing it", () => {
+      const wrapper = mountField(180);
+      const row = wrapper.get('[data-part="label-row"]');
+      expect(row.classes()).toContain("h-5");
+
+      const toggle = row.get('[data-part="toggle"]');
+      expect(toggle.element.tagName).toBe("BUTTON");
+      expect(toggle.attributes("type")).toBe("button");
+      expect(toggle.classes()).toContain("h-5");
+      expect(toggle.text()).toContain("Pick dates");
+    });
+
+    it("marks a required field with an asterisk for the eye and a word for the ear", () => {
+      const wrapper = mount(DaysUntilRefiField, {
+        props: { modelValue: 180, label: "Days until Refi", required: true },
+        global: { stubs },
+      });
+      const marker = wrapper.get('label [data-part="required"]');
+      expect(marker.text()).toBe("*");
+      expect(marker.attributes("aria-hidden")).toBe("true");
+      expect(wrapper.get("label .sr-only").text()).toBe("required");
+      expect(mountField(180).find('[data-part="required"]').exists()).toBe(false);
+    });
+  });
+
   describe("calendar mode", () => {
     it("converts two dates into a day count", async () => {
       const wrapper = mountField(180);

@@ -85,8 +85,9 @@
     height: 8px;
   }
 
+  /* Transparent: a tinted track read as a light strip down the page edge in every dark look. */
   ::-webkit-scrollbar-track {
-    background-color: rgb(var(--color-surface-muted));
+    background-color: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -126,11 +127,15 @@
   }
 
   /*
-   * A 44px row where there is no hover pointer to aim with. Left off the
+   * The control row of every field is one height, so boxes in the same grid
+   * row line up exactly: 42px (16px text × 1.5 line-height + 2 × 8px padding
+   * + 2 × 1px border) stated explicitly rather than left to the font, and a
+   * 44px row where there is no hover pointer to aim with. Left off the
    * textarea, which sets its own taller floor below.
    */
   .ui-input,
   .ui-select {
+    min-height: 42px;
     @apply touch:min-h-11;
   }
 
@@ -175,6 +180,28 @@
 }
 
 @layer utilities {
+  /*
+   * Board drag states, set by SortableJS through VueDraggable's `chosen-class`,
+   * `drag-class` and `ghost-class`. CSS only: nothing may tween a Sortable child.
+   * `.board-ghost` is the placeholder left in the source column; `.board-chosen`
+   * is the card under the pointer; `.board-drag` is the native drag image.
+   */
+  .board-ghost {
+    opacity: 0.35;
+    outline: 2px dashed rgb(var(--color-primary) / 0.5);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+  }
+
+  .board-chosen {
+    box-shadow: var(--shadow-3);
+    transform: scale(1.02);
+  }
+
+  .board-drag {
+    opacity: 0.95;
+  }
+
   /* Money and percentage cells: digits must not change width as they change. */
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -230,7 +257,7 @@
    */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) rgb(var(--color-surface-muted));
+    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -239,7 +266,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background-color: rgb(var(--color-surface-muted));
+    background-color: transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {

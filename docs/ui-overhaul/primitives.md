@@ -547,10 +547,14 @@ reveals the full text — only the view has the string.
 
 ## UI v2 primitives (Task 1.4)
 
-Twelve more, added for the four-look shell and views. Seven are registered
-globally; `UiTooltip`, `UiSparkline`, `UiProgressRing`, `UiTimelineRail` and
-`UiDataTable` are exported from `components/ui/index.ts` and imported where
-used (no view uses them yet, so they stay out of the bundle). Same four rules as above
+Twelve more, added for the four-look shell and views. Eleven are registered
+globally (UI v3 promoted `UiTooltip`, `UiSparkline`, `UiProgressRing` and
+`UiTimelineRail` once the cards and boards adopted them); `UiDataTable` is
+exported from `components/ui/index.ts` and imported where used (no view uses
+it yet, so it stays out of the bundle). UI v3 also added
+`components/board/StageColumn.vue`, a board-only component (not a primitive):
+a stage as a numbered node with a CSS connector to the next, a count chip, an
+optional task legend, and a body slot the view fills with its `VueDraggable`. Same four rules as above
 — `inheritAttrs: false` with a `passthrough()` function, copy via slots (or via
 data props where the thing *is* data: a KPI, a step, a table row), tokens only,
 never a look id — and each has a sibling `*.test.ts`.

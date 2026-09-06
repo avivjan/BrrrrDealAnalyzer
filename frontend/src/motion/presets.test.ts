@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MODAL_PANEL_SELECTOR, presets, transitionHooks, type MotionPreset } from './presets';
+import {
+  HERO_BUDGET,
+  HERO_SELECTOR,
+  HERO_STAGGER,
+  MODAL_PANEL_SELECTOR,
+  heroSchedule,
+  presets,
+  transitionHooks,
+  type MotionPreset,
+} from './presets';
 import { CLEAR_PROPS, gsap } from './gsap';
+import { FALLBACK_DUR } from './tokens';
 
 /**
  * The `<Transition>` hook implementations.
@@ -18,13 +28,30 @@ import { CLEAR_PROPS, gsap } from './gsap';
  *    what a preset asks GSAP to touch, and what it promises to clean up after.
  */
 
-/** Flipped per test; read by the mocked `motionEnabled` below. */
-const state = vi.hoisted(() => ({ motionOn: false }));
+/**
+ * Flipped per test; read by the mocked `motionEnabled` and `DUR` below.
+ * `dur` unset means the real tokens (the `tokens.css` fallbacks under Vitest).
+ */
+const state = vi.hoisted(() => ({
+  motionOn: false,
+  dur: undefined as { fast: number; base: number; slow: number } | undefined,
+}));
 
 vi.mock('./gsap', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./gsap')>();
   // Same `gsap` object the presets hold, so `vi.spyOn(gsap, …)` reaches them.
   return { ...actual, motionEnabled: () => state.motionOn };
+});
+
+vi.mock('./tokens', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./tokens')>();
+  // A look's tempo, fed per test: `DUR` stays a getter object, read per tween.
+  const DUR = {
+    get fast() { return state.dur?.fast ?? actual.DUR.fast; },
+    get base() { return state.dur?.base ?? actual.DUR.base; },
+    get slow() { return state.dur?.slow ?? actual.DUR.slow; },
+  };
+  return { ...actual, DUR };
 });
 
 type Vars = Record<string, unknown>;
@@ -34,6 +61,12 @@ const allPresets = Object.entries(presets);
 
 /** The presets that animate on the way out. */
 const leavingPresets = allPresets.filter(([, preset]) => typeof preset.leave === 'function');
+
+/**
+ * The presets whose enter is standalone `gsap.fromTo` tweens. `hero` builds one
+ * `gsap.timeline` instead, so its vars are checked on the timeline's children.
+ */
+const tweenPresets = allPresets.filter(([name]) => name !== 'hero');
 
 /**
  * An element whose `pointer-events` writes are recorded in `order` alongside
@@ -84,6 +117,7 @@ function spyOnGsap(order: string[]): {
 
 beforeEach(() => {
   state.motionOn = false;
+  state.dur = undefined;
 });
 
 afterEach(() => {
@@ -177,7 +211,7 @@ describe('the page preset', () => {
 });
 
 describe('every enter, with motion on', () => {
-  it.each(allPresets)('%s promises to clear the properties it tweened', (_name, preset) => {
+  it.each(tweenPresets)('%s promises to clear the properties it tweened', (_name, preset) => {
     state.motionOn = true;
     const { fromTo } = spyOnGsap([]);
     preset.enter(document.createElement('div'), vi.fn());
@@ -190,7 +224,7 @@ describe('every enter, with motion on', () => {
     }
   });
 
-  it.each(allPresets)('%s ends by calling done', (_name, preset) => {
+  it.each(tweenPresets)('%s ends by calling done', (_name, preset) => {
     state.motionOn = true;
     const { fromTo } = spyOnGsap([]);
     const done = vi.fn();
@@ -309,6 +343,271 @@ describe('the modal preset', () => {
     expect(presets.modalEnterOnly.leave).toBeUndefined();
     expect(presets.fade.leave).toBeUndefined();
     expect(presets.slideUp.leave).toBeUndefined();
+  });
+});
+
+describe('the hero preset', () => {
+  /** Quiet Luxury: the slowest look there is. */
+  const LUXURY = { fast: 0.2, base: 0.34, slow: 0.44 };
+
+  /** A header block with marked descendants, plus one unmarked node between them. */
+  function header(counts: { eyebrows?: number; titles?: number; items?: number } = {}): {
+    el: HTMLElement;
+    eyebrows: HTMLElement[];
+    titles: HTMLElement[];
+    items: HTMLElement[];
+    plain: HTMLElement;
+  } {
+    const el = document.createElement('header');
+    const mark = (kind: string, n: number) =>
+      Array.from({ length: n }, () => {
+        const node = document.createElement('div');
+        node.setAttribute('data-hero', kind);
+        el.append(node);
+        return node;
+      });
+    const eyebrows = mark('eyebrow', counts.eyebrows ?? 1);
+    const titles = mark('title', counts.titles ?? 1);
+    const plain = document.createElement('p');
+    el.append(plain);
+    const items = mark('item', counts.items ?? 3);
+    document.body.append(el);
+    return { el, eyebrows, titles, items, plain };
+  }
+
+  /** The one timeline `hero` put on the global timeline. */
+  function heroTimeline(): gsap.core.Timeline {
+    const timelines = gsap.globalTimeline.getChildren(false, false, true) as gsap.core.Timeline[];
+    expect(timelines).toHaveLength(1);
+    return timelines[0]!;
+  }
+
+  /** The hero timeline's tweens in start order, with the elements each one targets. */
+  function parts(timeline: gsap.core.Timeline): { targets: Element[]; start: number; vars: Vars }[] {
+    return timeline
+      .getChildren(true, true, false)
+      .map((tween) => ({
+        targets: (tween as gsap.core.Tween).targets() as Element[],
+        start: tween.startTime(),
+        vars: tween.vars as Vars,
+      }))
+      .sort((a, b) => a.start - b.start);
+  }
+
+  it('is enter-only, so the header is gone the moment the route is', () => {
+    expect(presets.hero.leave).toBeUndefined();
+    expect(presets.hero.leaveCancelled).toBeUndefined();
+    expect(Object.keys(transitionHooks(presets.hero)).sort()).toEqual(['onEnter', 'onEnterCancelled']);
+  });
+
+  it('names the marks a header template writes', () => {
+    expect(HERO_SELECTOR).toEqual({
+      eyebrow: '[data-hero="eyebrow"]',
+      title: '[data-hero="title"]',
+      item: '[data-hero="item"]',
+    });
+  });
+
+  it('with motion off: calls done synchronously and writes no inline style, marks included', () => {
+    const { el, eyebrows, titles, items } = header();
+    const done = vi.fn();
+
+    presets.hero.enter(el, done);
+
+    expect(done).toHaveBeenCalledTimes(1);
+    for (const node of [el, ...eyebrows, ...titles, ...items]) {
+      expect(node.getAttribute('style') ?? '').toBe('');
+    }
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+  });
+
+  it('animates eyebrow, then title, then each item, and leaves the unmarked node alone', () => {
+    state.motionOn = true;
+    const { el, eyebrows, titles, items, plain } = header({ items: 3 });
+
+    presets.hero.enter(el, vi.fn());
+
+    const tweens = parts(heroTimeline());
+    // The items are one staggered tween: GSAP keeps its per-item sub-tweens
+    // inside it, so the order between items is its `stagger`, not a position.
+    expect(tweens.map((t) => t.targets)).toEqual([eyebrows, titles, items]);
+    for (let i = 1; i < tweens.length; i += 1) {
+      expect(tweens[i]!.start, `part ${i} starts after part ${i - 1}`).toBeGreaterThan(tweens[i - 1]!.start);
+    }
+    expect(tweens[2]!.vars.stagger).toBe(HERO_STAGGER);
+    expect(eyebrows[0]!.style.opacity).toBe('0');
+    expect(titles[0]!.style.opacity).toBe('0');
+    expect(items[0]!.style.opacity).toBe('0');
+    expect(plain.getAttribute('style') ?? '').toBe('');
+    expect(el.getAttribute('style') ?? '').toBe('');
+  });
+
+  it('gives each part the motion the spec names', () => {
+    state.motionOn = true;
+    const { el } = header({ items: 2 });
+
+    presets.hero.enter(el, vi.fn());
+
+    const [eyebrow, title, item] = parts(heroTimeline());
+    expect(eyebrow!.vars).toMatchObject({ opacity: 1, y: 0, duration: FALLBACK_DUR.fast });
+    expect(title!.vars).toMatchObject({ opacity: 1, y: 0, duration: FALLBACK_DUR.base, ease: 'power2.out' });
+    expect(item!.vars).toMatchObject({ opacity: 1, y: 0, duration: FALLBACK_DUR.fast });
+    expect(eyebrow!.vars.startAt).toMatchObject({ opacity: 0, y: 8 });
+    expect(title!.vars.startAt).toMatchObject({ opacity: 0, y: 12 });
+    expect(item!.vars.startAt).toMatchObject({ opacity: 0, y: 8 });
+  });
+
+  it('hands every mark back to the stylesheet once it has arrived', () => {
+    state.motionOn = true;
+    const { el, eyebrows, titles, items } = header();
+    const done = vi.fn();
+
+    presets.hero.enter(el, done);
+    for (const part of parts(heroTimeline())) {
+      expect(part.vars.clearProps).toBe('transform,opacity');
+      expect(part.vars.overwrite).toBe('auto');
+    }
+    expect(done).not.toHaveBeenCalled();
+
+    finishEveryTween();
+
+    expect(done).toHaveBeenCalledTimes(1);
+    for (const node of [el, ...eyebrows, ...titles, ...items]) {
+      expect(node.getAttribute('style') ?? '').toBe('');
+    }
+  });
+
+  it('calls done from the timeline itself, once, when it completes', () => {
+    state.motionOn = true;
+    const { el } = header();
+    const done = vi.fn();
+
+    presets.hero.enter(el, done);
+    heroTimeline().progress(1);
+
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
+  it('fades the element itself when nothing inside is marked, so it is never a no-op', () => {
+    state.motionOn = true;
+    const el = document.createElement('header');
+    el.append(document.createElement('p'));
+    document.body.append(el);
+    const done = vi.fn();
+
+    presets.hero.enter(el, done);
+
+    const [only, ...rest] = parts(heroTimeline());
+    expect(rest).toHaveLength(0);
+    expect(only!.targets).toEqual([el]);
+    expect(only!.vars).toMatchObject({ opacity: 1, duration: FALLBACK_DUR.base, clearProps: CLEAR_PROPS });
+    expect(only!.vars).not.toHaveProperty('y');
+    expect(el.style.opacity).toBe('0');
+
+    finishEveryTween();
+
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(el.getAttribute('style') ?? '').toBe('');
+  });
+
+  it.each([
+    ['the tokens.css fallbacks', undefined],
+    ['Quiet Luxury', LUXURY],
+  ])('has settled inside 450 ms under %s, with a full header', (_look, dur) => {
+    state.motionOn = true;
+    state.dur = dur;
+    const { el } = header({ items: 4 });
+
+    presets.hero.enter(el, vi.fn());
+
+    // A hair of float slack: `-=` offsets are summed in seconds.
+    expect(heroTimeline().duration()).toBeLessThanOrEqual(HERO_BUDGET + 1e-9);
+    expect(HERO_BUDGET).toBe(0.45);
+  });
+
+  it('holds the budget however many items a header lists', () => {
+    state.motionOn = true;
+    state.dur = LUXURY;
+    const { el } = header({ items: 12 });
+
+    presets.hero.enter(el, vi.fn());
+
+    expect(heroTimeline().duration()).toBeLessThanOrEqual(HERO_BUDGET + 1e-9);
+  });
+
+  it('enterCancelled kills the timeline and leaves no inline opacity or transform on any mark', () => {
+    state.motionOn = true;
+    const { el, eyebrows, titles, items } = header();
+    const done = vi.fn();
+
+    presets.hero.enter(el, done);
+    expect(gsap.globalTimeline.getChildren().length).toBeGreaterThanOrEqual(1);
+    expect(titles[0]!.style.opacity).toBe('0');
+
+    presets.hero.enterCancelled(el);
+
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+    for (const node of [el, ...eyebrows, ...titles, ...items]) {
+      expect(node.style.opacity, node.outerHTML).toBe('');
+      expect(node.style.transform, node.outerHTML).toBe('');
+    }
+    expect(done).not.toHaveBeenCalled();
+  });
+
+  it('a second enter replaces the first rather than stacking on it', () => {
+    state.motionOn = true;
+    const { el } = header();
+
+    presets.hero.enter(el, vi.fn());
+    presets.hero.enter(el, vi.fn());
+
+    expect(gsap.globalTimeline.getChildren(false, false, true)).toHaveLength(1);
+  });
+
+  describe('heroSchedule', () => {
+    const looks: [string, { fast: number; base: number }][] = [
+      ['Obsidian', { fast: 0.12, base: 0.18 }],
+      ['Brutal', { fast: 0.12, base: 0.2 }],
+      ['fallbacks', FALLBACK_DUR],
+      ['Aurora', { fast: 0.18, base: 0.3 }],
+      ['Quiet Luxury', LUXURY],
+    ];
+
+    it.each(looks)('%s: ends inside the budget for 0…12 items', (_look, { fast, base }) => {
+      for (let items = 0; items <= 12; items += 1) {
+        const plan = heroSchedule(fast, base, items);
+        expect(plan.total, `${items} items`).toBeLessThanOrEqual(HERO_BUDGET + 1e-9);
+        expect(plan.titleAt).toBeGreaterThanOrEqual(0);
+        expect(plan.itemsAt).toBeGreaterThanOrEqual(plan.titleAt);
+        expect(plan.stagger).toBeGreaterThanOrEqual(0);
+        expect(plan.stagger).toBeLessThanOrEqual(HERO_STAGGER);
+      }
+    });
+
+    it('keeps the preferred shape when the tempo leaves room for it', () => {
+      const plan = heroSchedule(FALLBACK_DUR.fast, FALLBACK_DUR.base, 2);
+      expect(plan.fast).toBe(FALLBACK_DUR.fast);
+      expect(plan.base).toBe(FALLBACK_DUR.base);
+      expect(plan.titleAt).toBeCloseTo(FALLBACK_DUR.fast * 0.4);
+      expect(plan.itemsAt).toBeCloseTo(plan.titleAt + FALLBACK_DUR.base * 0.5);
+      expect(plan.stagger).toBe(HERO_STAGGER);
+    });
+
+    it('starts the items earlier before it shortens their stagger', () => {
+      const roomy = heroSchedule(LUXURY.fast, LUXURY.base, 2);
+      expect(roomy.stagger).toBe(HERO_STAGGER);
+      expect(roomy.itemsAt).toBeLessThan(roomy.titleAt + LUXURY.base * 0.5);
+
+      const crowded = heroSchedule(LUXURY.fast, LUXURY.base, 12);
+      expect(crowded.itemsAt).toBe(crowded.titleAt);
+      expect(crowded.stagger).toBeLessThan(HERO_STAGGER);
+      expect(crowded.total).toBeLessThanOrEqual(HERO_BUDGET + 1e-9);
+    });
+
+    it('caps an absurd tempo rather than overrunning', () => {
+      const plan = heroSchedule(2, 3, 5);
+      expect(plan.total).toBeLessThanOrEqual(HERO_BUDGET + 1e-9);
+    });
   });
 });
 

@@ -133,6 +133,7 @@ if (typeof window !== "undefined") {
     flash: {},
     "count-up": {},
     "draw-on": {},
+    tilt: {},
   };
 }
 

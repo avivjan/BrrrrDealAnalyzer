@@ -6,8 +6,8 @@
  * writes `v-press` or `v-reveal.stagger` and that is the entire contract: the
  * element itself, and at most one modifier.
  *
- * Three rules hold for all five, because each one decorates an element some
- * other component owns:
+ * Three rules hold for every one of them, because each decorates an element
+ * some other component owns:
  *
  *  - Nothing happens when `motionEnabled()` is false. No tween, and no listener
  *    either: a reduced-motion user should not pay for handlers that would do
@@ -28,6 +28,12 @@ export const REVEAL_CHILD_SELECTOR = '[data-reveal]';
 
 /** How long `v-flash` tints a value that just changed, in seconds. */
 export const FLASH_DURATION = 0.4;
+
+/** The most `v-tilt` ever rotates a card on either axis, in degrees. */
+export const TILT_MAX_DEG = 6;
+
+/** The `transformPerspective` a tilted card is viewed through, in pixels. */
+const TILT_PERSPECTIVE = 800;
 
 /**
  * The stagger ease. A slight overshoot reads as "these arrived" rather than
@@ -57,6 +63,7 @@ const REVEAL = 'reveal';
 const FLASH = 'flash';
 const COUNT_UP = 'count-up';
 const DRAW_ON = 'draw-on';
+const TILT = 'tilt';
 
 /**
  * Listeners a directive attached, keyed by element *and* directive.
@@ -94,6 +101,26 @@ const countText = new WeakMap<HTMLElement, string>();
 
 /** The number object `v-count-up` tweens (the element's text is not a tween target). */
 const counters = new WeakMap<HTMLElement, { value: number }>();
+
+/**
+ * What one `v-tilt` element knows between `pointerenter` and `pointerleave`.
+ *
+ * `box` is read once per enter, not per move: `getBoundingClientRect` forces
+ * layout, and a pointer crossing a card fires dozens of moves a second. `x`/`y`
+ * are the newest pointer position and `frame` the one animation frame waiting
+ * to paint it — a burst of moves inside a frame updates the position and lets
+ * that frame paint the last one. `box` doubles as the "hovered" flag: null
+ * means a frame that somehow still fires has nothing to paint.
+ */
+interface TiltState {
+  box: DOMRect | null;
+  x: number;
+  y: number;
+  frame: number;
+}
+
+/** The live tilt state per element, so `unmounted` can stop a pending frame. */
+const tilts = new WeakMap<HTMLElement, TiltState>();
 
 /** Attach `entries` passively and remember them under `name`. */
 function listen(el: HTMLElement, name: string, entries: Listener[]): void {
@@ -149,6 +176,20 @@ function release(el: HTMLElement, name: string): void {
     gsap.killTweensOf(children);
     gsap.set(children, { clearProps: CLEAR_PROPS });
   }
+}
+
+/** Cancel the frame `v-tilt` has waiting and forget the box, so nothing paints. */
+function stopTilt(state: TiltState): void {
+  if (state.frame !== 0) {
+    window.cancelAnimationFrame(state.frame);
+    state.frame = 0;
+  }
+  state.box = null;
+}
+
+/** `value` held to ±`TILT_MAX_DEG`. */
+function clampTilt(value: number): number {
+  return Math.min(TILT_MAX_DEG, Math.max(-TILT_MAX_DEG, value));
 }
 
 /** True when the device has a real pointer that can hover. */
@@ -305,6 +346,80 @@ export const vHoverLift: ObjectDirective<HTMLElement> = {
 };
 
 /**
+ * `v-tilt` — a card leans towards the pointer, by six degrees at most.
+ *
+ * Gated on `(hover: hover)` like `v-hover-lift`, and for the same reason: a
+ * touch screen fires `pointerenter` on tap and never the matching leave.
+ *
+ * Every move is painted with `gsap.set`, never a tween, and at most once per
+ * animation frame: a frame is requested on the first move and the ones that
+ * follow only update the coordinates it will read. So the global timeline holds
+ * nothing while the pointer is over the card, and the one tween that exists —
+ * the return to flat on leave — hands `transform` and `will-change` back to
+ * the stylesheet when it lands. Never on a `VueDraggable` child: the drag
+ * library owns that element's transform.
+ */
+export const vTilt: ObjectDirective<HTMLElement> = {
+  mounted(el) {
+    if (!motionEnabled()) return;
+    if (!hoverSupported()) return;
+    const state: TiltState = { box: null, x: 0, y: 0, frame: 0 };
+    tilts.set(el, state);
+    const paint = (): void => {
+      state.frame = 0;
+      const { box } = state;
+      if (!box) return;
+      const halfWidth = box.width / 2;
+      const halfHeight = box.height / 2;
+      if (halfWidth <= 0 || halfHeight <= 0) return;
+      const dx = state.x - (box.left + halfWidth);
+      const dy = state.y - (box.top + halfHeight);
+      gsap.set(el, {
+        rotateX: clampTilt(-(dy / halfHeight) * TILT_MAX_DEG),
+        rotateY: clampTilt((dx / halfWidth) * TILT_MAX_DEG),
+        transformPerspective: TILT_PERSPECTIVE,
+      });
+    };
+    const enter = (): void => {
+      state.box = el.getBoundingClientRect();
+      gsap.set(el, { willChange: 'transform', transformPerspective: TILT_PERSPECTIVE });
+    };
+    const move = (event: Event): void => {
+      if (!state.box) return;
+      const { clientX, clientY } = event as PointerEvent;
+      state.x = clientX ?? 0;
+      state.y = clientY ?? 0;
+      if (state.frame !== 0) return;
+      state.frame = window.requestAnimationFrame(paint);
+    };
+    const leave = (): void => {
+      stopTilt(state);
+      gsap.to(el, {
+        rotateX: 0,
+        rotateY: 0,
+        duration: DUR.fast,
+        ease: EASE.standard,
+        overwrite: 'auto',
+        clearProps: 'transform,willChange',
+      });
+    };
+    listen(el, TILT, [
+      ['pointerenter', enter],
+      ['pointermove', move],
+      ['pointerleave', leave],
+    ]);
+  },
+  unmounted(el) {
+    const state = tilts.get(el);
+    if (state) {
+      stopTilt(state);
+      tilts.delete(el);
+    }
+    release(el, TILT);
+  },
+};
+
+/**
  * `v-flash` — a value that changed tints its own background for 400 ms.
  *
  * The text is compared, never written: the number on screen is Vue's, and this
@@ -402,12 +517,19 @@ function formatLike(template: string, value: number): string {
  * a number wrapped in markup (an icon, a nested `<span>`) is left alone rather
  * than flattened. See `isSingleTextNode`.
  */
+/** The last string the tween itself wrote, per element (see `updated`). */
+const countWritten = new WeakMap<HTMLElement, string>();
+
 export const vCountUp: ObjectDirective<HTMLElement> = {
   mounted(el) {
     countText.set(el, el.textContent ?? '');
   },
   updated(el) {
     const target = el.textContent ?? '';
+    // A parent re-render mid-tween leaves the tween's own intermediate text in
+    // place (Vue rewrites only a string that changed), so it is not a new
+    // value: without this the count would latch onto the half-way number.
+    if (target === countWritten.get(el)) return;
     const previous = countText.get(el) ?? '';
     countText.set(el, target);
     if (!motionEnabled()) return;
@@ -430,9 +552,12 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       ease: EASE.standard,
       overwrite: 'auto',
       onUpdate: () => {
-        el.textContent = formatLike(target, counter.value);
+        const text = formatLike(target, counter.value);
+        countWritten.set(el, text);
+        el.textContent = text;
       },
       onComplete: () => {
+        countWritten.set(el, target);
         el.textContent = target;
       },
     });
@@ -443,6 +568,7 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       gsap.killTweensOf(counter);
       counters.delete(el);
     }
+    countWritten.delete(el);
     release(el, COUNT_UP);
   },
 };

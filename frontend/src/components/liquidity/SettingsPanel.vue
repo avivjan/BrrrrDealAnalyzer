@@ -60,9 +60,9 @@ function onSave() {
                     :aria-describedby="describedBy"
                     type="number"
                     step="0.01"
-                    class="ui-input numeric pr-8 text-lg"
+                    class="ui-input numeric pr-10"
                   />
-                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
                 </div>
               </template>
               <template #helper>Balance at start of the anchor date. e.g. 49 = $49,000</template>
@@ -94,9 +94,9 @@ function onSave() {
                     type="number"
                     step="0.1"
                     min="0"
-                    class="ui-input numeric pr-8"
+                    class="ui-input numeric pr-10"
                   />
-                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
+                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
                 </div>
               </template>
               <template #helper>Soft warning if balance drops below this. Default: 5k</template>

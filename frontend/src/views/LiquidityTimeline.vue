@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import type {
   LiquidityTransaction,
@@ -16,7 +15,6 @@ import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
 
-const router = useRouter()
 const store = useLiquidityStore()
 
 // Save payloads emitted by TransactionForm. Mirrors the discriminated
@@ -84,6 +82,15 @@ const kpis = computed(() => {
     daysTone: daysToNegative === null ? 'positive' : daysToNegative <= 30 ? 'negative' : 'warning',
     reserve: fmt(store.settings.reserve_k),
   } as const
+})
+
+/** "HH:MM" of the last Mercury sync, for the balance KPI's status title. */
+const mercurySyncedTime = computed(() => {
+  if (!store.mercuryLastSyncedAt) return null
+  const d = new Date(store.mercuryLastSyncedAt)
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
 })
 
 const toastMessage = ref('')
@@ -394,8 +401,9 @@ function showToast(msg: string) {
 
 <template>
   <!--
-    UI v2: a grid dashboard inside the shell (which owns the viewport, the
-    sticky header and the h1). Toolbar → four KPIs → the chart → day detail +
+    UI v3: a grid dashboard inside the shell (which owns the viewport, the
+    sticky header and the h1). Hero header → four KPIs (Today's balance
+    carries the Mercury status) → the chart → day detail + the Upcoming
     sidebar. Below `lg` the sidebar is an inline collapsible section rather
     than a hidden rail, so every figure is reachable on a phone. Every hook,
     handler, store call, modal and the 4 s toast are the v1 ones.
@@ -404,36 +412,47 @@ function showToast(msg: string) {
     ancestors: the chart re-measures itself from a ResizeObserver.
   -->
   <div class="mx-auto flex w-full max-w-[96rem] flex-col gap-4 px-3 py-4 text-fg sm:px-5 lg:px-6 lg:py-6">
-    <!-- Toolbar -->
-    <div class="flex flex-wrap items-center gap-2">
-      <UiIconButton data-testid="liquidity.back" size="md" title="Back" label="Back" @click="router.push('/')">
-        <i class="pi pi-arrow-left text-sm" aria-hidden="true"></i>
-      </UiIconButton>
-      <h2 class="mr-auto min-w-0 truncate font-display text-xl font-semibold tracking-display text-fg">Liquidity Timeline</h2>
-      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-        <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">
-          <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
-        </UiButton>
-        <UiButton
-          data-testid="liquidity.mercury-sync"
-          variant="secondary"
-          size="sm"
-          class="min-h-9 touch:min-h-11 gap-1.5"
-          :disabled="store.mercurySyncing"
-          :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
-          @click="refreshFromMercury"
-        >
-          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]" aria-hidden="true"></i>
-          {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
-        </UiButton>
-        <UiButton data-testid="liquidity.settings-open" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="settingsOpen = true">
-          <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
-        </UiButton>
-        <UiButton data-testid="liquidity.add-flow" variant="primary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5 shadow-glow-primary" @click="openAddForm()">
-          <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
-        </UiButton>
-      </div>
-    </div>
+    <!-- Header: the hero pattern every page shares (eyebrow, title, controls). -->
+    <UiTransition preset="hero" appear>
+      <header class="flex flex-wrap items-end gap-3">
+        <div class="min-w-0 flex-1">
+          <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+            Cash
+          </p>
+          <UiSectionHeader
+            as="h2"
+            data-hero="title"
+            class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+          >
+            Liquidity Timeline
+          </UiSectionHeader>
+        </div>
+
+        <div data-hero="item" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">
+            <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
+          </UiButton>
+          <UiButton
+            data-testid="liquidity.mercury-sync"
+            variant="secondary"
+            size="sm"
+            class="min-h-9 touch:min-h-11 gap-1.5"
+            :disabled="store.mercurySyncing"
+            :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
+            @click="refreshFromMercury"
+          >
+            <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]" aria-hidden="true"></i>
+            {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
+          </UiButton>
+          <UiButton data-testid="liquidity.settings-open" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="settingsOpen = true">
+            <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
+          </UiButton>
+          <UiButton data-testid="liquidity.add-flow" variant="primary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5 shadow-glow-primary" @click="openAddForm()">
+            <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
+          </UiButton>
+        </div>
+      </header>
+    </UiTransition>
 
     <!-- Loading -->
     <div v-if="store.loading" data-testid="liquidity.loading" class="flex min-h-[40vh] items-center justify-center p-6">
@@ -478,10 +497,81 @@ function showToast(msg: string) {
     <!-- Dashboard -->
     <template v-else>
       <div v-reveal.stagger class="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.balance" label="Today's balance" :value="kpis.balance" :tone="kpis.balanceTone" icon="pi pi-wallet" />
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.min" label="Window minimum" :value="kpis.min" :tone="kpis.minTone" icon="pi pi-arrow-down" :delta="kpis.minDate ? `on ${kpis.minDate}` : undefined" />
+        <!--
+          Today's balance carries the Mercury status in its footer: the sync
+          line and the per-workspace breakdown that used to be a sidebar card.
+          The `sidebar.*` hooks on them are the e2e's and stay as they were.
+        -->
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.balance" label="Today's balance" :tone="kpis.balanceTone" icon="pi pi-wallet">
+          <template #value><span v-count-up>{{ kpis.balance }}</span></template>
+          <template #footer>
+            <div v-if="store.mercurySyncing" class="flex items-center gap-1 text-[10px] text-fg-muted">
+              <i class="pi pi-spin pi-spinner text-[9px]" aria-hidden="true"></i> syncing
+            </div>
+            <div
+              v-else-if="store.mercuryError"
+              class="flex items-center gap-1 text-[10px] text-negative"
+              :title="store.mercuryError"
+            >
+              <i class="pi pi-exclamation-triangle text-[9px]" aria-hidden="true"></i>
+              {{ store.mercuryBalance && store.mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
+            </div>
+            <div
+              v-else-if="store.mercuryBalance"
+              class="flex items-center gap-1 text-[10px] text-positive"
+              :title="`Synced ${store.mercuryBalance.account_count} account(s) across ${store.mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
+            >
+              <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
+              mercury · {{ store.mercuryBalance.workspace_count }}
+            </div>
+
+            <!-- Per-workspace breakdown -->
+            <div
+              v-if="store.mercuryBalance && store.mercuryBalance.workspaces.length > 0"
+              class="mt-2 space-y-2 border-t border-line pt-2"
+            >
+              <div v-for="ws in store.mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
+                <div class="flex items-center justify-between gap-2 text-[10px]">
+                  <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
+                  <span class="whitespace-nowrap numeric text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
+                </div>
+                <div
+                  v-for="a in ws.accounts"
+                  :key="a.id"
+                  :data-testid="`sidebar.account.${a.id}`"
+                  class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
+                >
+                  <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
+                  <span class="whitespace-nowrap numeric text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Per-workspace errors -->
+            <div
+              v-if="store.mercuryBalance && store.mercuryBalance.workspace_errors.length > 0"
+              class="mt-2 space-y-0.5 border-t border-line pt-2"
+            >
+              <div
+                v-for="err in store.mercuryBalance.workspace_errors"
+                :key="err.workspace"
+                :data-testid="`sidebar.workspace-error.${err.workspace}`"
+                class="flex items-center justify-between gap-2 text-[10px] text-negative"
+                :title="err.error"
+              >
+                <span class="font-semibold uppercase tracking-wide">{{ err.workspace }}</span>
+                <span class="min-w-0 truncate pl-2">{{ err.error }}</span>
+              </div>
+            </div>
+          </template>
+        </UiKpiCard>
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.min" label="Window minimum" :tone="kpis.minTone" icon="pi pi-arrow-down" :delta="kpis.minDate ? `on ${kpis.minDate}` : undefined">
+          <template #value><span v-count-up>{{ kpis.min }}</span></template>
+        </UiKpiCard>
         <UiKpiCard data-reveal data-testid="liquidity.kpi.negative" label="Days to negative" :value="kpis.daysToNegative" :tone="kpis.daysTone" icon="pi pi-exclamation-triangle" />
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.reserve" label="Reserve floor" :value="kpis.reserve" icon="pi pi-shield" />
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.reserve" label="Reserve floor" icon="pi pi-shield">
+          <template #value><span v-count-up>{{ kpis.reserve }}</span></template>
+        </UiKpiCard>
       </div>
 
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -495,6 +585,7 @@ function showToast(msg: string) {
                 :global-min="store.series.globalMin"
                 :global-min-dates="store.series.globalMinDates"
                 :first-negative-date="store.series.firstNegativeDate"
+                :reserve-k="store.settings.reserve_k"
                 @select-day="onSelectDay"
               />
             </div>
@@ -514,8 +605,8 @@ function showToast(msg: string) {
           </div>
         </div>
 
-        <!-- Sidebar: right rail on lg+, inline collapsible below -->
-        <aside aria-label="Liquidity overview" class="min-w-0">
+        <!-- Sidebar (Upcoming): right rail on lg+, inline collapsible below -->
+        <aside aria-label="Upcoming" class="min-w-0">
           <UiButton
             data-testid="liquidity.sidebar-toggle"
             variant="secondary"

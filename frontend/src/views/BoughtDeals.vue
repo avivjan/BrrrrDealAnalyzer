@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, computed, nextTick } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import BoughtDealCard from "../components/BoughtDealCard.vue";
+import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
@@ -13,10 +14,10 @@ import type { BoughtDealRes, AnalyzeDealReq } from "../types";
 import { ensureBrrrLegacyDefaults } from "../utils/dealUtils";
 import {
   resolveStage,
-  getSubStagesForStage,
   canAdvance,
   getMissingSubstages,
   isTerminalStage,
+  type BoughtDealStage,
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
@@ -69,17 +70,84 @@ onMounted(async () => {
     pipelineStore.fetchTemplates(),
   ]);
   refreshColumns();
+  await nextTick();
+  centreBusiestColumn();
 });
 
-// Stage color based on position in pipeline
-const getStageAccentColor = (stageId: string) => {
+// UI v3 (4.3): the stage rail.
+const railEl = ref<HTMLElement | null>(null);
+
+/** On lg+ the rail opens on the stage holding the most deals. */
+const centreBusiestColumn = () => {
+  const rail = railEl.value;
+  if (!rail || typeof window.matchMedia !== "function") return;
+  if (!window.matchMedia("(min-width: 1024px)").matches) return;
+  let best = 0;
+  let bestCount = -1;
+  currentStages.value.forEach((s, i) => {
+    const n = columns.value[s.id]?.length || 0;
+    if (n > bestCount) {
+      bestCount = n;
+      best = i;
+    }
+  });
+  const column = rail.children[best] as HTMLElement | undefined;
+  column?.scrollIntoView({ inline: "center", block: "nearest" });
+};
+
+/** While a card is in flight, columns more than one stage away are inert. */
+const draggingFromIdx = ref<number | null>(null);
+const onDragStart = (stageId: string) => {
+  draggingFromIdx.value = currentStages.value.findIndex((s) => s.id === stageId);
+};
+const onDragEnd = () => {
+  draggingFromIdx.value = null;
+};
+const isInertDuringDrag = (idx: number) =>
+  draggingFromIdx.value !== null && Math.abs(idx - draggingFromIdx.value) > 1;
+
+/** Stage colour by position in the pipeline: a four-step ramp, as a fill, for the flow strip and the rail nodes. */
+const getStageBarColor = (stageId: string) => {
   const stages = currentStages.value;
   const idx = stages.findIndex((s) => s.id === stageId);
   const ratio = stages.length > 1 ? idx / (stages.length - 1) : 0;
-  if (ratio < 0.25) return "border-l-chart-4";
-  if (ratio < 0.5) return "border-l-chart-8";
-  if (ratio < 0.75) return "border-l-chart-2";
-  return "border-l-positive";
+  if (ratio < 0.25) return "bg-chart-4";
+  if (ratio < 0.5) return "bg-chart-8";
+  if (ratio < 0.75) return "bg-chart-2";
+  return "bg-positive";
+};
+
+/**
+ * UI v3 (4.0): a stage move keeps every tick. Every stage's checklist is on
+ * the card now, so a task ticked ahead of time must survive the move that
+ * reaches it — and a move back must not erase the stage just left. The store's
+ * `updateBoughtDealStage` / `advanceStage` reset `completedSubstages` (and are
+ * frozen), so moves go through the generic `updateBoughtDeal`: the same
+ * `PUT /bought-deals/{id}` autosave sends, with the map untouched. Optimistic,
+ * reverted on error, like the store action it replaces.
+ */
+const moveDealToStage = async (deal: BoughtDealRes, targetStageId: string) => {
+  const oldStage = deal.boughtStage;
+  deal.boughtStage = targetStageId;
+  try {
+    await store.updateBoughtDeal(deal);
+  } catch (err) {
+    deal.boughtStage = oldStage;
+    console.error("Failed to move bought deal stage:", err);
+  }
+};
+
+/** The card's "Advance →": one stage forward, only when its checklist is done. */
+const advanceDeal = async (deal: BoughtDealRes) => {
+  const dealType = (deal.deal_type || "BRRRR") as "FLIP" | "BRRRR";
+  const pipeline = pipelineStore.pipelineFor(dealType);
+  if (!canAdvance(pipeline, deal.boughtStage, deal.completedSubstages)) return;
+  if (isTerminalStage(pipeline, deal.boughtStage)) return;
+  const idx = pipeline.stages.findIndex((s) => s.id === deal.boughtStage);
+  const next = pipeline.stages[idx + 1];
+  if (!next) return;
+  await moveDealToStage(deal, next.id);
+  refreshColumns();
 };
 
 // Drag-and-drop
@@ -117,7 +185,7 @@ const onDrop = async (event: any, targetStageId: string) => {
     }
   }
 
-  await store.updateBoughtDealStage(deal.id, targetStageId);
+  await moveDealToStage(deal, targetStageId);
   refreshColumns();
 };
 
@@ -154,7 +222,7 @@ const onAdd = async (event: any, targetStageId: string) => {
         return;
       }
 
-      await store.updateBoughtDealStage(deal.id, targetStageId);
+      await moveDealToStage(deal, targetStageId);
       refreshColumns();
     }
   }
@@ -226,6 +294,7 @@ const openDeal = (deal: BoughtDealRes) => {
   const clone = JSON.parse(JSON.stringify(deal)) as BoughtDealRes;
   ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
+  modalOpenStage.value = clone.boughtStage;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
@@ -297,16 +366,6 @@ const editingDealType = computed(
 const editingPipeline = computed(() =>
   pipelineStore.pipelineFor(editingDealType.value)
 );
-const editingStageConfig = computed(() =>
-  editingDeal.value
-    ? resolveStage(editingPipeline.value, editingDeal.value.boughtStage)
-    : null
-);
-const editingSubStages = computed(() =>
-  editingDeal.value
-    ? getSubStagesForStage(editingPipeline.value, editingDeal.value.boughtStage)
-    : []
-);
 const editingCanAdvance = computed(() =>
   editingDeal.value
     ? canAdvance(
@@ -328,6 +387,34 @@ const editingStageIndex = computed(() =>
       )
     : -1,
 );
+
+// UI v3 (4.4): the modal shows every stage's checklist; the current one is open.
+const modalOpenStage = ref<string | null>(null);
+watch(
+  () => editingDeal.value?.boughtStage,
+  (stageId) => {
+    modalOpenStage.value = stageId ?? null;
+  },
+);
+const modalRailItems = computed(() =>
+  editingPipeline.value.stages.map((s, i) => ({
+    id: s.id,
+    label: s.name,
+    state: (i < editingStageIndex.value
+      ? "done"
+      : i === editingStageIndex.value
+        ? "active"
+        : "todo") as "done" | "active" | "todo",
+  })),
+);
+const modalStageDone = (stage: BoughtDealStage) =>
+  stage.subStages.filter((s) => editingDeal.value?.completedSubstages[s.id] === true).length;
+/** Past: muted. Current, or a later stage already started: primary tint. */
+const modalStagePillClass = (stage: BoughtDealStage, idx: number) => {
+  if (idx === editingStageIndex.value) return "bg-primary/12 text-primary";
+  if (idx > editingStageIndex.value && modalStageDone(stage) > 0) return "bg-primary/12 text-primary";
+  return "bg-surface-3 text-fg-muted";
+};
 
 const toggleModalSubstage = (substageId: string) => {
   if (!editingDeal.value) return;
@@ -351,8 +438,8 @@ const advanceEditingDeal = async () => {
   if (currentIdx < pipeline.stages.length - 1) {
     const nextStage = pipeline.stages[currentIdx + 1];
     if (nextStage) {
+      // Ticks are kept (UI v3 4.0): the next stage's boxes may already be ticked.
       editingDeal.value.boughtStage = nextStage.id;
-      editingDeal.value.completedSubstages = {};
       isDirty = true;
       debouncedAutoSave();
     }
@@ -417,19 +504,30 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
 </script>
 
 <template>
-  <!-- UI v2: sticky toolbar over rows of pipeline stages; the shell owns the viewport and scroller. -->
+  <!--
+    UI v3: a hero header (eyebrow → title → controls, one ≤ 450 ms sequence),
+    then the flow strip, then the stage rail. Not sticky: each stage column
+    carries its own header. The shell owns the viewport and the page scroller.
+  -->
   <div class="flex min-h-full flex-col text-fg">
-    <div
-      class="glass sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-4 py-3 md:px-6"
-    >
-      <div class="flex items-center gap-3">
-        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
-          Bought Deals
-        </UiSectionHeader>
-      </div>
+    <UiTransition preset="hero" appear>
+      <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-0 flex-1">
+            <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              Execution
+            </p>
+            <UiSectionHeader
+              as="h2"
+              data-hero="title"
+              class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+            >
+              Bought Deals
+            </UiSectionHeader>
+          </div>
 
       <!-- Tabs -->
-      <UiTabs aria-label="Deal type" class="max-w-full">
+      <UiTabs data-hero="item" aria-label="Deal type" class="max-w-full">
         <UiButton
           v-for="tab in [
             { id: 'FLIP' as const, label: 'Flip', count: store.countByType.FLIP },
@@ -451,7 +549,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </UiButton>
       </UiTabs>
 
-      <div class="flex items-center gap-2 shrink-0 ml-auto">
+      <div data-hero="item" class="flex items-center gap-2 shrink-0">
         <UiButton
           type="button"
           data-testid="boughtdeals.edit-pipeline"
@@ -470,92 +568,105 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             {{ activeTab }}
           </UiBadge>
         </UiButton>
-        <UiButton
-          type="button"
-          data-testid="boughtdeals.my-deals"
-          @click="$router.push('/my-deals')"
-          variant="secondary"
-          size="sm"
-          class="min-h-9 touch:min-h-11 gap-2"
-          title="Back to active deal pipeline"
-        >
-          <i class="pi pi-th-large" aria-hidden="true"></i>
-          <span class="hidden sm:inline">My Deals</span>
-        </UiButton>
       </div>
-    </div>
+        </div>
 
-    <!-- Board: rows of stages. The shell's <main> scrolls; nothing here does. -->
+        <!--
+          Flow strip: one segment per stage, width ∝ deals in it (a floor keeps
+          empty stages visible). The one-glance answer to "where is everything".
+          Computed from the columns already on screen; no fetch.
+        -->
+        <div data-hero="item" data-testid="boughtdeals.flow-strip" class="mt-4">
+          <div class="flex h-2 gap-1 overflow-hidden rounded-full" aria-hidden="true">
+            <div
+              v-for="stage in currentStages"
+              :key="stage.id"
+              class="h-full rounded-full transition-[flex-grow] duration-slow ease-standard"
+              :class="getStageBarColor(stage.id)"
+              :style="{ flexGrow: Math.max(columns[stage.id]?.length || 0, 0.35) }"
+            ></div>
+          </div>
+          <ol class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-fg-muted">
+            <li v-for="stage in currentStages" :key="stage.id" class="flex items-center gap-1.5">
+              <span class="h-2 w-2 shrink-0 rounded-full" :class="getStageBarColor(stage.id)" aria-hidden="true"></span>
+              <span>{{ stage.name }}</span>
+              <span v-count-up class="numeric font-semibold text-fg">{{ columns[stage.id]?.length || 0 }}</span>
+            </li>
+          </ol>
+        </div>
+      </header>
+    </UiTransition>
+
+    <!--
+      Board: the stage rail. On lg+ the stages are scroll-snapped columns joined
+      by the connectors their headers draw; below lg they stack, as the phones
+      always did. The rail is the only thing that scrolls sideways; the shell's
+      <main> still owns the page scroll. `v-reveal` on the container only:
+      nothing inside a VueDraggable is ever animated (SortableJS owns that DOM).
+      While a card is being dragged, columns more than one stage away go inert,
+      so the ±1 rule is visible before the drop and the alert is the fallback.
+    -->
     <div class="flex-1 pb-safe-b">
-      <!--
-        Bare `v-reveal`, not `v-reveal.stagger`, matching the twin board in
-        `MyDeals.vue` line for line. `/my-deals` is the route the frozen
-        `deep-link-open` spec measures, and it asserts *zero live tweens* 500 ms
-        (of its own paused clock) after the overlay appears; a stagger over five
-        stage rows runs 0.4 s + 4 x 0.06 s = 0.64 s and is still live at that
-        mark, while one reveal of the container is 0.4 s and is not. No motion
-        spec visits *this* route, but the two boards are one pattern and read as
-        one thing, so they stay identical rather than drifting for a reason that
-        is invisible here. Either way nothing inside `<VueDraggable>` is
-        touched: SortableJS owns that DOM.
-      -->
       <div
+        ref="railEl"
         v-reveal
-        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
+        data-testid="boughtdeals.rail"
+        class="mx-auto flex w-full max-w-[1920px] flex-col gap-4 px-4 pb-4 pt-4 md:px-6 lg:snap-x lg:snap-mandatory lg:flex-row lg:items-start lg:overflow-x-auto lg:overscroll-x-contain lg:pb-6"
       >
-        <UiCard
-          v-for="stage in currentStages"
+        <StageColumn
+          v-for="(stage, idx) in currentStages"
           :key="stage.id"
           :data-testid="`boughtdeals.stage.${stage.id}`"
-          tone="surface"
-          padding="sm"
-          :class="'w-full border-ui border-l-4 ' + getStageAccentColor(stage.id)"
+          :name="stage.name"
+          :count="columns[stage.id]?.length || 0"
+          :index="idx + 1"
+          :total="currentStages.length"
+          :tone="getStageBarColor(stage.id)"
+          :legend="stage.subStages.map((s) => s.label)"
+          :terminal="idx === currentStages.length - 1"
+          :inert="isInertDuringDrag(idx)"
+          class="lg:min-h-[24rem]"
         >
-          <!-- Row Header -->
-          <template #header>
-            <UiSectionHeader as="h3" class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-base [&_[data-part=title]]:tracking-display">
-              {{ stage.name }}
-              <UiChip class="ml-2 align-middle" size="sm">
-                <span class="numeric">{{ columns[stage.id]?.length || 0 }}</span>
-              </UiChip>
-            </UiSectionHeader>
-          </template>
-
           <!-- Draggable Area: SortableJS owns the DOM under VueDraggable -->
-          <div>
-            <VueDraggable
-              v-if="columns[stage.id]"
-              :data-testid="`boughtdeals.draggable.${stage.id}`"
-              v-model="columns[stage.id]!"
-              group="bought-deals"
-              @change="(e: any) => onDrop(e, stage.id)"
-              @add="(e: any) => onAdd(e, stage.id)"
-              :animation="150"
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
-              ghost-class="opacity-50"
+          <VueDraggable
+            v-if="columns[stage.id]"
+            :data-testid="`boughtdeals.draggable.${stage.id}`"
+            v-model="columns[stage.id]!"
+            group="bought-deals"
+            @change="(e: any) => onDrop(e, stage.id)"
+            @add="(e: any) => onAdd(e, stage.id)"
+            @start="onDragStart(stage.id)"
+            @end="onDragEnd"
+            :animation="150"
+            class="grid min-h-[100px] grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1"
+            ghost-class="board-ghost"
+            chosen-class="board-chosen"
+            drag-class="board-drag"
+          >
+            <!-- The `boughtdeals.card.<id>` hook lives on the card's header block (see BoughtDealCard). -->
+            <div
+              v-for="deal in columns[stage.id]"
+              :key="deal.id"
+              @click="openDeal(deal)"
+              class="h-full"
             >
-              <div
-                v-for="deal in columns[stage.id]"
-                :key="deal.id"
-                :data-testid="`boughtdeals.card.${deal.id}`"
-                @click="openDeal(deal)"
+              <BoughtDealCard
+                :deal="deal"
+                @delete="confirmDelete(deal)"
+                @advance="advanceDeal(deal)"
                 class="h-full"
-              >
-                <BoughtDealCard
-                  :deal="deal"
-                  @delete="confirmDelete(deal)"
-                  class="h-full"
-                />
-              </div>
-            </VueDraggable>
+              />
+            </div>
+          </VueDraggable>
+          <template #empty>
             <p
               v-if="!columns[stage.id]?.length"
               class="mt-2 rounded-ctl border-ui border-dashed border-line px-3 py-2.5 text-center text-xs text-fg-muted"
             >
               No deals in this stage
             </p>
-          </div>
-        </UiCard>
+          </template>
+        </StageColumn>
       </div>
     </div>
 
@@ -635,84 +746,18 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             context without making this a scroll port.
           -->
           <div ref="modalScrollContainer" class="flow-root">
-            <!-- Pipeline Progress Stepper -->
+            <!--
+              Pipeline progress (UI v3 4.4): the rail, then EVERY stage's
+              checklist — the current stage open, any other a click away — so a
+              task that matters two stages ahead is visible and tickable now.
+              The hooks and `toggleModalSubstage` are the same as before.
+            -->
             <UiCard tone="muted" class="mb-6">
               <UiSectionHeader as="h4" class="mb-3">
                 Pipeline Progress
-              </UiSectionHeader>
-              <div class="flex items-center gap-1">
-                <template
-                  v-for="(pStage, idx) in editingPipeline.stages"
-                  :key="pStage.id"
-                >
-                  <div
-                    class="flex items-center gap-1"
-                    :class="idx > 0 ? 'flex-1' : ''"
-                  >
-                    <div
-                      v-if="idx > 0"
-                      class="h-0.5 flex-1 rounded"
-                      :class="
-                        idx <= editingStageIndex ? 'bg-positive' : 'bg-line'
-                      "
-                    ></div>
-                    <div
-                      :data-testid="`boughtdeals.modal.stage-step.${pStage.id}`"
-                      class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-fast ease-standard"
-                      :class="
-                        idx < editingStageIndex
-                          ? 'bg-positive text-primary-fg'
-                          : pStage.id === editingDeal.boughtStage
-                            ? 'bg-primary text-primary-fg ring-2 ring-primary/30'
-                            : 'bg-line text-fg-muted'
-                      "
-                    >
-                      <i
-                        v-if="idx < editingStageIndex"
-                        class="pi pi-check text-[10px]"
-                        aria-hidden="true"
-                      ></i>
-                      <span v-else>{{ idx + 1 }}</span>
-                    </div>
-                  </div>
-                </template>
-              </div>
-              <UiStepper
-                :count="editingPipeline.stages.length"
-                compact
-                class="mt-2"
-              >
-                <span
-                  v-for="(pStage, idx) in editingPipeline.stages"
-                  :key="pStage.id"
-                  role="listitem"
-                  :data-testid="`boughtdeals.modal.stage-label.${pStage.id}`"
-                  :data-step="
-                    idx < editingStageIndex
-                      ? 'done'
-                      : pStage.id === editingDeal.boughtStage
-                        ? 'active'
-                        : 'todo'
-                  "
-                  :data-title="pStage.name"
-                  class="text-[9px] md:text-xs"
-                >
-                  {{ pStage.name }}
-                </span>
-              </UiStepper>
-            </UiCard>
-
-            <!-- Sub-stage Checklist for Current Stage -->
-            <UiCard
-              v-if="editingSubStages.length > 0"
-              tone="muted"
-              class="mb-6 border-primary/20 bg-primary/5"
-            >
-              <UiSectionHeader as="h4" class="mb-3">
-                {{ editingStageConfig?.name }} — Checklist
                 <template #actions>
                   <UiBadge
-                    v-if="editingCanAdvance"
+                    v-if="editingCanAdvance && !editingIsTerminal"
                     tone="positive"
                     class="font-semibold"
                   >
@@ -720,30 +765,73 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </UiBadge>
                 </template>
               </UiSectionHeader>
-              <div class="space-y-1">
-                <label
-                  v-for="sub in editingSubStages"
-                  :key="sub.id"
-                  :data-testid="`boughtdeals.modal.substage.${sub.id}`"
-                  class="flex items-center gap-3 cursor-pointer group -mx-2 rounded-ctl px-2 py-1.5 min-h-9 hover:bg-surface transition-colors duration-fast ease-standard"
+              <UiTimelineRail :items="modalRailItems" class="mb-4" />
+              <div data-testid="boughtdeals.modal.stages" class="space-y-1.5">
+                <div
+                  v-for="(pStage, idx) in editingPipeline.stages"
+                  :key="pStage.id"
+                  class="rounded-ctl border-ui bg-surface"
+                  :class="pStage.id === editingDeal.boughtStage ? 'border-primary/40' : 'border-line'"
                 >
-                  <input
-                    type="checkbox"
-                    :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
-                    :checked="editingDeal.completedSubstages[sub.id] === true"
-                    @change="toggleModalSubstage(sub.id)"
-                    class="h-4 w-4 shrink-0 rounded border-line accent-primary"
-                  />
-                  <span
-                    class="text-sm text-fg"
-                    :class="{
-                      'line-through text-fg-muted':
-                        editingDeal.completedSubstages[sub.id],
-                    }"
+                  <button
+                    type="button"
+                    :data-testid="`boughtdeals.modal.stage.${pStage.id}`"
+                    class="flex min-h-9 w-full items-center gap-2 px-3 py-2 text-left touch:min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl"
+                    :aria-expanded="modalOpenStage === pStage.id"
+                    @click="modalOpenStage = modalOpenStage === pStage.id ? null : pStage.id"
                   >
-                    {{ sub.label }}
-                  </span>
-                </label>
+                    <span
+                      class="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold"
+                      :class="
+                        idx < editingStageIndex
+                          ? 'bg-positive text-primary-fg'
+                          : pStage.id === editingDeal.boughtStage
+                            ? 'bg-primary text-primary-fg'
+                            : 'bg-line text-fg-muted'
+                      "
+                    >
+                      <i v-if="idx < editingStageIndex" class="pi pi-check text-[9px]" aria-hidden="true"></i>
+                      <span v-else class="numeric">{{ idx + 1 }}</span>
+                    </span>
+                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-fg">{{ pStage.name }}</span>
+                    <span class="numeric rounded-full px-1.5 py-0.5 text-[10px]" :class="modalStagePillClass(pStage, idx)">
+                      {{ pStage.subStages.length ? `${modalStageDone(pStage)}/${pStage.subStages.length}` : "—" }}
+                    </span>
+                    <i
+                      class="pi text-[10px] text-fg-muted"
+                      :class="modalOpenStage === pStage.id ? 'pi-chevron-down' : 'pi-chevron-right'"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                  <div
+                    v-if="modalOpenStage === pStage.id && pStage.subStages.length"
+                    class="space-y-1 border-t border-line px-2 pb-2 pt-1"
+                  >
+                    <label
+                      v-for="sub in pStage.subStages"
+                      :key="sub.id"
+                      :data-testid="`boughtdeals.modal.substage.${sub.id}`"
+                      class="flex items-center gap-3 cursor-pointer group rounded-ctl px-2 py-1.5 min-h-9 hover:bg-surface-2 transition-colors duration-fast ease-standard"
+                    >
+                      <input
+                        type="checkbox"
+                        :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
+                        :checked="editingDeal.completedSubstages[sub.id] === true"
+                        @change="toggleModalSubstage(sub.id)"
+                        class="h-4 w-4 shrink-0 rounded border-line accent-primary"
+                      />
+                      <span
+                        class="text-sm text-fg"
+                        :class="{
+                          'line-through text-fg-muted':
+                            editingDeal.completedSubstages[sub.id],
+                        }"
+                      >
+                        {{ sub.label }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
               <UiButton
                 v-if="editingCanAdvance && !editingIsTerminal"
@@ -761,14 +849,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <UiCard tone="muted" class="md:col-span-2">
                 <label
                   for="boughtdeals-modal-task"
-                  class="text-xs text-fg-muted uppercase font-bold tracking-wider mb-2 block"
+                  class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                   >Current Task / Status</label
                 >
                 <textarea
                   id="boughtdeals-modal-task"
                   data-testid="boughtdeals.modal.task"
                   v-model="editingDeal.task"
-                  class="ui-textarea min-h-[168px] resize-none text-lg"
+                  class="ui-textarea min-h-[168px] resize-none text-base"
                   placeholder="What needs to be done?"
                 ></textarea>
               </UiCard>
@@ -783,15 +871,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                     label="SqFt"
                   />
-                  <div class="flex flex-col gap-1">
-                    <label for="boughtdeals-modal-stage" class="text-xs text-fg-muted font-medium"
-                      >Pipeline Stage</label
+                  <!-- The gated path (checklist → Advance) is the primary one; this select is the override and stays visible. -->
+                  <div class="flex flex-col gap-1.5">
+                    <label for="boughtdeals-modal-stage" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
+                      >Override stage</label
                     >
                     <select
                       id="boughtdeals-modal-stage"
                       data-testid="boughtdeals.modal.stage-select"
                       v-model="editingDeal.boughtStage"
-                      class="ui-select text-sm"
+                      class="ui-select"
                     >
                       <option
                         v-for="s in editingPipeline.stages"
@@ -827,15 +916,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <!-- Quick Links & Additional Info -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-zillow" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-zillow" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Zillow Link</label
                   >
                   <input
                     id="boughtdeals-modal-zillow"
                     data-testid="boughtdeals.modal.zillow-link"
                     v-model="editingDeal.zillow_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="https://..."
                   />
                   <a
@@ -847,15 +936,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-pics" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-pics" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Photos Link</label
                   >
                   <input
                     id="boughtdeals-modal-pics"
                     data-testid="boughtdeals.modal.pics-link"
                     v-model="editingDeal.pics_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="Google Drive / Dropbox..."
                   />
                   <a
@@ -869,34 +958,34 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-design" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-design" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Overall Design</label
                   >
                   <input
                     id="boughtdeals-modal-design"
                     data-testid="boughtdeals.modal.overall-design"
                     v-model="editingDeal.overall_design"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Modern Farmhouse"
                   />
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-crime" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-crime" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Crime Rate</label
                   >
                   <input
                     id="boughtdeals-modal-crime"
                     data-testid="boughtdeals.modal.crime-rate"
                     v-model="editingDeal.crime_rate"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Low / B-"
                   />
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-contact" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-contact" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Contact Info</label
                   >
                   <textarea
@@ -904,19 +993,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     data-testid="boughtdeals.modal.contact"
                     v-model="editingDeal.contact"
                     rows="2"
-                    class="ui-textarea min-h-0 text-sm"
+                    class="ui-textarea min-h-[42px]"
                     placeholder="Agent / Owner details"
                   ></textarea>
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-niche" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-niche" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Niche</label
                   >
                   <input
                     id="boughtdeals-modal-niche"
                     data-testid="boughtdeals.modal.niche"
                     v-model="editingDeal.niche"
-                    class="ui-input text-sm"
+                    class="ui-input"
                   />
                 </div>
               </div>
@@ -935,7 +1024,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 ref="analysisResultsEl"
                 v-if="currentAnalysis"
                 data-testid="boughtdeals.modal.results"
-                class="bg-surface-2 p-4 rounded-card border border-line mb-6"
+                class="bg-surface-2 p-4 rounded-card border-ui border-line mb-6"
               >
                 <UiSectionHeader as="h4" class="mb-3">
                   Analysis Results
@@ -1117,7 +1206,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <div class="mt-6">
               <label
                 for="boughtdeals-modal-notes"
-                class="text-xs text-fg-muted font-medium uppercase mb-2 block"
+                class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                 >Notes</label
               >
               <textarea
@@ -1125,7 +1214,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 data-testid="boughtdeals.modal.notes"
                 v-model="editingDeal.notes"
                 rows="4"
-                class="ui-textarea p-4 text-sm"
+                class="ui-textarea"
                 placeholder="Additional notes..."
               ></textarea>
             </div>
@@ -1149,7 +1238,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </template>
                 </UiSectionHeader>
                 <div v-if="editingDeal.sold_comps && editingDeal.sold_comps.length > 0" class="space-y-3">
-                  <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                  <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                     <UiIconButton :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" label="Remove sold comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                     <div class="flex items-center gap-2 mb-1">
                       <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1184,7 +1273,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <!-- Flip Sale Comps -->
                 <div v-if="editingDealType === 'FLIP'">
                   <div v-if="(editingDeal as any).sale_comps && (editingDeal as any).sale_comps.length > 0" class="space-y-3">
-                    <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                       <UiIconButton :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" label="Remove sale comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1202,7 +1291,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <!-- BRRRR Rent Comps -->
                 <div v-else>
                   <div v-if="editingDeal.rent_comps && editingDeal.rent_comps.length > 0" class="space-y-3">
-                    <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                       <UiIconButton :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" label="Remove rent comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />

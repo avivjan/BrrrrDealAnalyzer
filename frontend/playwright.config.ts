@@ -19,6 +19,15 @@ import { API_ORIGIN, APP_ORIGIN, APP_PORT } from './e2e/fixtures/env';
 /** Animations off — the default for every functional project. */
 const REDUCED = { reducedMotion: 'reduce' } as const;
 
+/**
+ * A Chromium binary to use instead of the one Playwright downloaded. Set
+ * `PW_CHROMIUM_PATH` on a machine that ships its own Chromium (a hosted
+ * sandbox with no browser download); unset, every project runs as before.
+ */
+const CHROMIUM = process.env.PW_CHROMIUM_PATH
+  ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } }
+  : {};
+
 export default defineConfig({
   // `e2e/flows` holds the user journeys; `e2e/fixtures` holds one spec that
   // checks the axe baseline's comparison rule without a page.
@@ -52,7 +61,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], contextOptions: { ...REDUCED } },
+      use: { ...devices['Desktop Chrome'], ...CHROMIUM, contextOptions: { ...REDUCED } },
     },
     {
       name: 'webkit',
@@ -64,7 +73,7 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 7'], contextOptions: { ...REDUCED } },
+      use: { ...devices['Pixel 7'], ...CHROMIUM, contextOptions: { ...REDUCED } },
     },
     {
       // Same browser, animations ON. Only the @motion specs run here.
@@ -72,6 +81,7 @@ export default defineConfig({
       grep: /@motion/,
       use: {
         ...devices['Desktop Chrome'],
+        ...CHROMIUM,
         contextOptions: { reducedMotion: 'no-preference' },
       },
     },

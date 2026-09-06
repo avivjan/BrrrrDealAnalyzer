@@ -97,26 +97,28 @@ const mercury = (
 
 describe("LiquiditySidebar", () => {
   describe("the summary tiles", () => {
-    it("shows today's balance from the series", () => {
-      expect(mountSidebar().text()).toContain("42.5k");
+    it("does not repeat the KPIs (today's balance, window minimum)", () => {
+      const text = mountSidebar().text();
+      expect(text).not.toContain("Today's Balance");
+      expect(text).not.toContain("Window Min");
     });
 
-    it("shows an em dash when the series has no bucket for today", () => {
-      const wrapper = mountSidebar({
-        series: series({ days: [], globalMinDates: [] }),
-      });
-      expect(wrapper.text()).toContain("—");
-    });
-
-    it("shows the window minimum, rounded to one decimal, and its date", () => {
+    it("shows the 90-day low, rounded to one decimal, and its date", () => {
       const minDate = addDays(TODAY, 10);
       const [, month, day] = minDate.split("-") as [string, string, string];
       const label = MONTHS[Number(month) - 1] + " " + Number(day);
 
       const text = mountSidebar().text();
-      expect(text).toContain("Window Min");
+      expect(text).toContain("Low (next 90d)");
       expect(text).toContain("8.3k"); // 8.25 -> toFixed(1)
-      expect(text).toContain("on " + label);
+      expect(text).toContain(label);
+    });
+
+    it("hides the 90-day low when the series has no bucket in the window", () => {
+      const wrapper = mountSidebar({
+        series: series({ days: [], globalMinDates: [] }),
+      });
+      expect(wrapper.text()).not.toContain("Low (next 90d)");
     });
 
     it("shows the reserve threshold", () => {
@@ -170,45 +172,13 @@ describe("LiquiditySidebar", () => {
   });
 
   describe("the Mercury status line", () => {
-    it("says 'syncing' while a sync is running", () => {
-      expect(
-        mountSidebar({ mercurySyncing: true, mercuryError: "boom" }).text(),
-      ).toContain("syncing");
-    });
-
-    it("says 'mercury offline' when the sync failed with nothing to show", () => {
-      const wrapper = mountSidebar({ mercuryError: "401 unauthorised" });
-      expect(wrapper.text()).toContain("mercury offline");
-    });
-
-    it("says 'partial sync' when the sync failed but some workspaces landed", () => {
+    it("is not the sidebar's any more (it moved into the balance KPI)", () => {
       const wrapper = mountSidebar({
-        mercuryError: "one workspace failed",
+        mercuryError: "401 unauthorised",
         mercuryBalance: mercury(),
       });
-      expect(wrapper.text()).toContain("partial sync");
-    });
-
-    it("counts the synced workspaces when everything is fine", () => {
-      const wrapper = mountSidebar({ mercuryBalance: mercury() });
-      expect(wrapper.text()).toContain("mercury · 1");
-      expect(wrapper.find('[data-testid="sidebar.workspace.brrrr"]').text()).toContain(
-        "42.5k",
-      );
-      expect(wrapper.find('[data-testid="sidebar.account.acc-1"]').text()).toContain(
-        "Operating",
-      );
-    });
-
-    it("lists per-workspace errors alongside the balances", () => {
-      const wrapper = mountSidebar({
-        mercuryBalance: mercury({
-          workspace_errors: [{ workspace: "flip", error: "token expired" }],
-        }),
-      });
-      expect(
-        wrapper.find('[data-testid="sidebar.workspace-error.flip"]').text(),
-      ).toContain("token expired");
+      expect(wrapper.text()).not.toContain("mercury");
+      expect(wrapper.find('[data-testid="sidebar.workspace.brrrr"]').exists()).toBe(false);
     });
   });
 

@@ -35,6 +35,27 @@ describe("NumberInput", () => {
     it("still renders the input when bare", () => {
       expect(field(mountInput()).exists()).toBe(true);
     });
+
+    it("draws the label in the shared 20px row", () => {
+      const wrapper = mountInput({ label: "Refi Points" });
+      const row = wrapper.get('[data-part="label-row"]');
+      expect(row.classes()).toContain("h-5");
+      expect(row.find('[data-part="label"]').exists()).toBe(true);
+    });
+
+    it("draws no label row at all when bare", () => {
+      // The caller owns the row then; an empty 20px strip would push the box.
+      expect(mountInput().find('[data-part="label-row"]').exists()).toBe(false);
+    });
+
+    it("marks a required field with an asterisk for the eye and a word for the ear", () => {
+      const wrapper = mountInput({ label: "Refi Points", required: true });
+      const marker = wrapper.get('label [data-part="required"]');
+      expect(marker.text()).toBe("*");
+      expect(marker.attributes("aria-hidden")).toBe("true");
+      expect(wrapper.get("label .sr-only").text()).toBe("required");
+      expect(mountInput({ label: "Refi Points" }).find('[data-part="required"]').exists()).toBe(false);
+    });
   });
 
   describe("the value in", () => {

@@ -90,8 +90,15 @@ const rootClass = computed(() => {
   return composed || undefined;
 });
 
+/**
+ * Block mode: the label is the same 20px row every field primitive draws, so a
+ * `UiField` and a `MoneyInput` in one grid row start their boxes at the same y.
+ */
 const labelClass = computed(() =>
-  cn("text-sm font-medium text-fg", props.inline ? "shrink-0" : "mb-1.5 block"),
+  cn(
+    "text-sm font-medium leading-5 text-fg",
+    props.inline ? "shrink-0" : "mb-1.5 flex h-5 items-center",
+  ),
 );
 
 /**

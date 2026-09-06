@@ -44,19 +44,19 @@ function fmt(n: number | undefined | null) {
     <div v-reveal.stagger class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
       <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Total Hours</template>
-        {{ fmt(stats?.total_hours) }}
+        <span v-count-up>{{ fmt(stats?.total_hours) }}</span>
       </UiStatTile>
       <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Material (Rentals)</template>
-        {{ fmt(stats?.material_hours) }}
+        <span v-count-up>{{ fmt(stats?.material_hours) }}</span>
       </UiStatTile>
       <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Avg/Day Total</template>
-        {{ fmt(stats?.avg_daily_hours_total) }}
+        <span v-count-up>{{ fmt(stats?.avg_daily_hours_total) }}</span>
       </UiStatTile>
       <UiStatTile tone="neutral" size="md" data-reveal>
         <template #label>Avg/Day Material</template>
-        {{ fmt(stats?.avg_daily_hours_material) }}
+        <span v-count-up>{{ fmt(stats?.avg_daily_hours_material) }}</span>
       </UiStatTile>
     </div>
 
@@ -67,7 +67,7 @@ function fmt(n: number | undefined | null) {
         <span class="shrink-0 tabular text-fg-muted">{{ yearPct.toFixed(1) }}%</span>
       </div>
       <div class="h-2 overflow-hidden rounded-full bg-surface-muted">
-        <div class="h-full bg-fg-muted/60 transition-all" :style="{ width: yearPct + '%' }"></div>
+        <div class="h-full bg-fg-muted/60 transition-[width] duration-slow ease-standard" :style="{ width: yearPct + '%' }"></div>
       </div>
     </div>
 
@@ -86,7 +86,7 @@ function fmt(n: number | undefined | null) {
       </div>
       <div class="relative h-3 overflow-hidden rounded-full bg-surface-muted">
         <div
-          class="absolute left-0 top-0 h-full transition-all"
+          class="absolute left-0 top-0 h-full transition-[width] duration-slow ease-standard"
           :class="repsAhead ? 'bg-positive' : 'bg-negative'"
           :style="{ width: repsPct + '%' }"
         ></div>
@@ -114,7 +114,7 @@ function fmt(n: number | undefined | null) {
       </div>
       <div class="relative h-3 overflow-hidden rounded-full bg-surface-muted">
         <div
-          class="absolute left-0 top-0 h-full transition-all"
+          class="absolute left-0 top-0 h-full transition-[width] duration-slow ease-standard"
           :class="matAhead ? 'bg-positive' : 'bg-negative'"
           :style="{ width: matPct + '%' }"
         ></div>

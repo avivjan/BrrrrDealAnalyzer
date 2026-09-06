@@ -122,21 +122,16 @@ const inputId = useId();
       it: a reading that changes on every keystroke must not become part of the
       field's accessible name.
     -->
-    <div class="flex items-baseline justify-between gap-2">
+    <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
       <label
         :for="inputId"
         data-part="label"
-        class="text-sm font-medium text-fg"
-        :class="{
-          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
-        }"
-      >
-        {{ label }}
-      </label>
+        class="text-sm font-medium leading-5 text-fg"
+      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
       <span
         v-if="hint"
         data-part="hint"
-        class="numeric text-xs font-medium text-primary"
+        class="numeric text-xs font-medium leading-5 text-primary"
       >{{ hint }}</span>
     </div>
     <input

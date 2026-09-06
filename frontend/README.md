@@ -148,14 +148,14 @@ names — a test fails if the two drift), `reducedMotion.ts`, `presets.ts`,
 `<UiTransition preset="modal" appear>` or `v-reveal` with no import and no script
 change.
 
-| Surface | Registered | Attached in v1 |
+| Surface | Registered | Attached (UI v3) |
 | --- | --- | --- |
-| `<UiTransition>` presets | `page`, `modal`, `modalEnterOnly`, `fade`, `slideUp`, `listItem` | `page` (the `App.vue` `RouterView` slot), `modal` ×5, `modalEnterOnly` ×2 |
-| Directives | `v-reveal` (`.stagger`), `v-press`, `v-hover-lift`, `v-flash`, `v-count-up` | `v-reveal` only, in 7 files |
-| `<UiTransitionGroup>` | yes | nowhere |
+| `<UiTransition>` presets | `page`, `modal`, `modalEnterOnly`, `fade`, `slideUp`, `listItem`, `commandPalette`, `drawer`, `hero` | `page` (the `App.vue` `RouterView` slot), `modal`/`modalEnterOnly` on every modal, `commandPalette`, `drawer` (settings), `hero` on every page header except the dashboard |
+| Directives | `v-reveal` (`.stagger`), `v-press`, `v-hover-lift`, `v-flash`, `v-count-up`, `v-draw-on`, `v-tilt` | `v-reveal` on boards, forms, KPI grids; `v-press` inside `UiButton`; `v-hover-lift` inside `UiKpiCard`/`UiStatTile`; `v-flash` on result tiles and card hero metrics; `v-count-up` on page figures; `v-draw-on` on sparklines and the balance line; `v-tilt` on the Analyze summary rail |
+| `<UiTransitionGroup>` | yes | the id-keyed liquidity lists (day detail rows, recurring rules) |
 
-Everything in the right-hand gap is built, unit-tested and inert: Plan B skipped
-Tasks 4.4–4.6 for UI v2 to redo in its own templates (see the decisions log).
+Cards inside a `VueDraggable` get CSS hover only — never a directive or a
+transition group (decisions log §12).
 
 **Reduced motion.** `motionEnabled()` is false under Vitest, when `matchMedia` is
 missing, when `prefers-reduced-motion: reduce` matches, and when

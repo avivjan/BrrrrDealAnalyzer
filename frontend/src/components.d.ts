@@ -35,6 +35,10 @@ declare module "vue" {
     UiDrawer: typeof import("./components/ui/UiDrawer.vue")["default"];
     UiCommandItem: typeof import("./components/ui/UiCommandItem.vue")["default"];
     UiSegmented: typeof import("./components/ui/UiSegmented.vue")["default"];
+    UiTooltip: typeof import("./components/ui/UiTooltip.vue")["default"];
+    UiSparkline: typeof import("./components/ui/UiSparkline.vue")["default"];
+    UiProgressRing: typeof import("./components/ui/UiProgressRing.vue")["default"];
+    UiTimelineRail: typeof import("./components/ui/UiTimelineRail.vue")["default"];
 
     // Motion (src/motion), registered by `registerMotion`.
     UiTransition: typeof import("./motion/UiTransition.vue")["default"];

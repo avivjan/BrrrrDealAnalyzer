@@ -91,6 +91,78 @@ const cardClass = computed(() => {
 
 const formatMoney = (val?: number) =>
   val ? `$${Math.round(val).toLocaleString()}` : "-";
+
+const formatPercent = (val?: number) => (val ? `${val.toFixed(1)}%` : "-");
+
+/**
+ * The verdict. A BRRRR is judged on cash-on-cash against a 10 % target, a FLIP
+ * on ROI against 20 %; the ring fills toward the target and its tone turns at
+ * the target (positive) and at half of it (warning).
+ */
+const heroTarget = computed(() => (isBrrr.value ? 10 : 20));
+
+const heroPercent = computed(() => {
+  const value = isBrrr.value ? brrrDeal.value?.cash_on_cash : flipDeal.value?.roi;
+  return Number.isFinite(value) ? (value as number) : 0;
+});
+
+/** 0..1 — the ring's own scale — so an over-target deal shows a full ring. */
+const ringValue = computed(() =>
+  Math.min(1, Math.max(0, heroPercent.value / heroTarget.value)),
+);
+
+const ringTone = computed(() =>
+  heroPercent.value >= heroTarget.value
+    ? "positive"
+    : heroPercent.value >= heroTarget.value / 2
+      ? "warning"
+      : "negative",
+);
+
+const heroToneClass = computed(
+  () =>
+    ({
+      positive: "text-positive",
+      warning: "text-warning",
+      negative: "text-negative",
+    })[ringTone.value],
+);
+
+const heroText = computed(() =>
+  isBrrr.value
+    ? formatPercent(brrrDeal.value?.cash_on_cash)
+    : formatMoney(flipDeal.value?.net_profit),
+);
+
+const ringLabel = computed(
+  () =>
+    `${formatPercent(heroPercent.value)} ${isBrrr.value ? "cash on cash" : "ROI"} ` +
+    `of a ${heroTarget.value}% target`,
+);
+
+/** Cash needed, and the same figure with the buffer, per deal type. */
+const cashNeeded = computed(() =>
+  isBrrr.value
+    ? brrrDeal.value?.total_cash_needed_for_deal
+    : flipDeal.value?.total_cash_needed,
+);
+const cashNeededWithBuffer = computed(() =>
+  isBrrr.value
+    ? brrrDeal.value?.total_cash_needed_for_deal_with_buffer
+    : flipDeal.value?.total_cash_needed_with_buffer,
+);
+
+/**
+ * The solid share of the cash bar: needed ÷ with-buffer, 0..1. Without a
+ * buffer figure there is nothing to extend into, so the needed amount fills
+ * the track (and an empty deal shows an empty one).
+ */
+const cashNeededShare = computed(() => {
+  const needed = cashNeeded.value ?? 0;
+  const withBuffer = cashNeededWithBuffer.value ?? 0;
+  if (!(withBuffer > 0)) return needed > 0 ? 1 : 0;
+  return Math.min(1, Math.max(0, needed / withBuffer));
+});
 </script>
 
 <template>
@@ -99,16 +171,14 @@ const formatMoney = (val?: number) =>
     padding="md"
     :data-stage="deal.stage"
     :class="cardClass"
-    class="group relative overflow-hidden border-ui border-line border-l-4 cursor-grab active:cursor-grabbing hover:shadow-2 hover:-translate-y-px"
+    class="group relative overflow-hidden border-ui border-line cursor-grab active:cursor-grabbing hover:shadow-2 hover:-translate-y-px"
   >
-    <!-- Badge -->
-    <UiBadge
-      :deal-type="isBrrr ? 'BRRRR' : 'FLIP'"
-      size="sm"
-      class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
-    >
-      {{ isBrrr ? "BRRRR" : "FLIP" }}
-    </UiBadge>
+    <!-- The stage accent: a 3 px strip along the top, coloured by the scoped CSS below. -->
+    <span
+      data-part="stage-strip"
+      class="absolute inset-x-0 top-0 h-[3px]"
+      aria-hidden="true"
+    ></span>
 
     <!--
       One action row instead of four hand-placed `right-*` offsets. The children
@@ -183,29 +253,59 @@ const formatMoney = (val?: number) =>
       </UiIconButton>
     </div>
 
-    <!-- Header: Address -->
-    <div class="text-center mb-3 mt-6">
-      <h3 class="line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
+    <!-- Header: type badge on the action row's line, then the address -->
+    <div data-part="header" class="mb-3">
+      <UiBadge
+        :deal-type="isBrrr ? 'BRRRR' : 'FLIP'"
+        size="sm"
+        class="text-[10px] font-bold uppercase tracking-wide"
+      >
+        {{ isBrrr ? "BRRRR" : "FLIP" }}
+      </UiBadge>
+      <h3 class="mt-2 line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
 
-    <!-- Task Box -->
-    <div
-      v-if="deal.task"
-      class="bg-surface-2 rounded-ctl p-2 mb-3 text-center border-ui border-line"
-    >
-      <span class="text-xs text-primary uppercase tracking-wider font-semibold"
-        >Current Task</span
-      >
-      <p class="text-sm text-fg font-medium mt-1 line-clamp-2">
-        {{ deal.task }}
-      </p>
+    <!-- Hero: the one number that says whether this is a good deal -->
+    <div data-part="hero" class="mb-3 flex items-center gap-3">
+      <div class="min-w-0 flex-1">
+        <span
+          class="numeric font-display text-2xl font-semibold leading-none tracking-display"
+          :class="heroToneClass"
+        >{{ heroText }}</span>
+        <div class="mt-1 text-[10px] uppercase tracking-wide text-fg-muted">
+          {{ isBrrr ? "Cash on cash" : "Net profit" }}
+        </div>
+      </div>
+      <UiProgressRing
+        :value="ringValue"
+        :label="ringLabel"
+        :size="44"
+        :thickness="4"
+        :tone="ringTone"
+        class="shrink-0"
+      />
     </div>
 
-    <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-2 gap-y-2 gap-x-2 text-xs text-fg-muted">
-      <!-- Row 1: Purchase & Rehab -->
+    <!-- Cash needed: one track, the buffer hatched beyond the solid amount -->
+    <div data-part="cash-bar" class="mb-3">
+      <div class="flex h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+        <span
+          data-part="cash-needed"
+          class="h-full bg-warning"
+          :style="{ width: `${cashNeededShare * 100}%` }"
+        ></span>
+        <span data-part="cash-buffer" class="h-full flex-1 bg-warning/35"></span>
+      </div>
+      <div class="numeric mt-1 flex justify-between gap-2 text-[11px] text-fg-muted">
+        <span>{{ formatMoney(cashNeeded) }} needed</span>
+        <span>w/ buffer {{ formatMoney(cashNeededWithBuffer) }}</span>
+      </div>
+    </div>
+
+    <!-- Secondary metrics: 2×2, every value the same size on one baseline -->
+    <div data-part="metrics" class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
         <span class="numeric text-fg font-medium">{{
@@ -219,57 +319,8 @@ const formatMoney = (val?: number) =>
         }}</span>
       </div>
 
-      <!-- Row 2: Cash Needed (with and without buffer) -->
-      <div class="flex flex-col min-w-0">
-        <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Needed</span>
-        <span class="numeric text-warning font-medium">{{
-          formatMoney(
-            isBrrr
-              ? brrrDeal?.total_cash_needed_for_deal
-              : flipDeal?.total_cash_needed,
-          )
-        }}</span>
-        <span class="text-[9px] text-fg-muted uppercase tracking-wide mt-1">w/ Buffer</span>
-        <span class="numeric text-warning text-[11px]">{{
-          formatMoney(
-            isBrrr
-              ? brrrDeal?.total_cash_needed_for_deal_with_buffer
-              : flipDeal?.total_cash_needed_with_buffer,
-          )
-        }}</span>
-      </div>
-
-      <!-- Type Specific Rows -->
       <template v-if="isBrrr">
-        <div class="flex flex-col min-w-0 text-right">
-          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Out</span>
-          <span
-            class="numeric font-semibold"
-            :class="
-              (brrrDeal?.cash_out || 0) >= 0
-                ? 'text-positive'
-                : 'text-negative'
-            "
-          >
-            {{ formatMoney(brrrDeal?.cash_out) }}
-          </span>
-        </div>
         <div class="flex flex-col min-w-0">
-          <span class="text-[10px] text-fg-muted uppercase tracking-wide"
-            >Cash Out Routi</span
-          >
-          <span
-            class="numeric font-medium"
-            :class="
-              (brrrDeal?.cash_out_routi || 0) >= 0
-                ? 'text-positive'
-                : 'text-negative'
-            "
-          >
-            {{ formatMoney(brrrDeal?.cash_out_routi) }}
-          </span>
-        </div>
-        <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
           <span
             class="numeric font-medium"
@@ -282,62 +333,47 @@ const formatMoney = (val?: number) =>
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
-        <div class="flex flex-col min-w-0">
-          <span class="text-[10px] text-fg-muted uppercase tracking-wide">CoC</span>
-          <span class="numeric text-primary font-medium">{{
-            brrrDeal?.cash_on_cash
-              ? brrrDeal.cash_on_cash.toFixed(1) + "%"
-              : "-"
-          }}</span>
-        </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
-          <span class="numeric text-positive font-medium">{{
+          <span class="numeric text-fg font-medium">{{
             formatMoney(brrrDeal?.equity)
           }}</span>
         </div>
       </template>
 
       <template v-else>
-        <!-- Flip Metrics -->
-        <div class="flex flex-col min-w-0 text-right">
-          <span class="text-[10px] text-fg-muted uppercase tracking-wide">Net Profit</span>
-          <span
-            class="numeric font-bold"
-            :class="
-              (flipDeal?.net_profit || 0) > 0
-                ? 'text-positive'
-                : 'text-negative'
-            "
-          >
-            {{ formatMoney(flipDeal?.net_profit) }}
-          </span>
-        </div>
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">ROI</span>
-          <span class="numeric font-semibold text-primary">
-            {{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}
+          <span class="numeric text-fg font-medium">
+            {{ formatPercent(flipDeal?.roi) }}
           </span>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Ann. ROI</span>
           <span class="numeric text-fg font-medium">
-            {{
-              flipDeal?.annualized_roi
-                ? flipDeal.annualized_roi.toFixed(1) + "%"
-                : "-"
-            }}
+            {{ formatPercent(flipDeal?.annualized_roi) }}
           </span>
         </div>
       </template>
     </div>
 
+    <!-- Next action -->
+    <div
+      v-if="deal.task"
+      data-part="task"
+      class="mt-3 flex items-center gap-2 rounded-ctl bg-surface-2 px-2 py-1.5 text-xs text-fg"
+    >
+      <i class="pi pi-flag text-[11px] text-primary" aria-hidden="true"></i>
+      <span class="min-w-0 flex-1 truncate font-medium">{{ deal.task }}</span>
+    </div>
+
     <!-- Footer Stats -->
     <div
-      class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted numeric"
+      data-part="footer"
+      class="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-2"
     >
-      <span>{{ deal.sqft || "-" }} sqft</span>
-      <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
+      <UiChip size="sm" class="numeric">{{ deal.sqft || "-" }} sqft</UiChip>
+      <UiChip size="sm" class="numeric">{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</UiChip>
     </div>
   </UiCard>
 </template>
@@ -345,32 +381,48 @@ const formatMoney = (val?: number) =>
 <style scoped>
 /*
  * The stage accent. It cannot be a utility class: `cardClass` reaches `UiCard`
- * as one string and `cn()` drops `border-l-blue-500` the moment the same string
- * also sets `border` and `border-gray-100`. Keying the colour off `data-stage`
- * keeps the five stages apart, on tokens, whatever the class list merges to.
+ * as one string and `cn()` would drop a stage colour the moment the same
+ * string also carries the root's own colours. Keying the colour off
+ * `data-stage` keeps the five stages apart, on tokens, whatever the class list
+ * merges to; the strip element under the root is what wears it.
  *
- * The same merge is what puts the *card* border on a token. G3 freezes
- * `stageColors`, so the baseline's `border-gray-100` stays in the script; the
- * root's static `class` carries `border-line`, Vue normalises `:class` ahead of
- * `class`, and tailwind-merge keeps the later of two border colours. Swapping
- * the order of those two attributes would quietly restore the grey, so
+ * The same merge is what puts the *card* border on a token: the root's static
+ * `class` carries `border-line`, Vue normalises `:class` ahead of `class`, and
+ * tailwind-merge keeps the later of two border colours. Swapping the order of
+ * those two attributes would quietly restore a grey, so
  * `DealCard.contract.test.ts` asserts the resolved class list on all five
  * stages.
  */
 /* The frozen `cardClass` falls back to the stage-1 entry for an unknown stage; so does this. */
 [data-stage] {
-  border-left-color: rgb(var(--color-chart-1));
+  --stage-accent: rgb(var(--color-chart-1));
 }
 [data-stage="2"] {
-  border-left-color: rgb(var(--color-chart-3));
+  --stage-accent: rgb(var(--color-chart-3));
 }
 [data-stage="3"] {
-  border-left-color: rgb(var(--color-chart-2));
+  --stage-accent: rgb(var(--color-chart-2));
 }
 [data-stage="4"] {
-  border-left-color: rgb(var(--color-chart-6));
+  --stage-accent: rgb(var(--color-chart-6));
 }
 [data-stage="5"] {
-  border-left-color: rgb(var(--color-fg-muted) / 0.4);
+  --stage-accent: rgb(var(--color-fg-muted) / 0.4);
+}
+[data-part="stage-strip"] {
+  background-image: linear-gradient(
+    90deg,
+    var(--stage-accent) 0%,
+    var(--stage-accent) 55%,
+    transparent 100%
+  );
+}
+/* The buffer: the warning wash, hatched so it reads as "beyond the amount". */
+[data-part="cash-buffer"] {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 3px,
+    rgb(var(--color-warning) / 0.35) 3px 5px
+  );
 }
 </style>
