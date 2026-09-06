@@ -114,12 +114,14 @@ exercised on real Postgres), and `cd frontend && npm ci && npm test && npm run b
 To make a red run block the merge, require the two checks — **Backend tests** and
 **Frontend tests + build** — under *Settings → Branches → main*.
 
-**Nightly.** `.github/workflows/e2e-nightly.yml` runs at 00:00 UTC every day,
-and on demand from the Actions tab: the same backend + frontend jobs as the CI
-workflow above, plus the full Playwright suite (all five browser projects). The
-Playwright HTML report and traces are uploaded as a run artifact, and once every
-job has finished the result is emailed from the runner over Gmail SMTP, pass or
-fail. That step needs
+**Nightly.** `.github/workflows/e2e-nightly.yml` runs at midnight Israel time
+every day (both 21:00 and 22:00 UTC are scheduled and a first job lets only the
+one that is 00:xx in Asia/Jerusalem continue, so summer and winter time both
+work), and on demand from the Actions tab: the same backend + frontend jobs as
+the CI workflow above, plus the full Playwright suite (all five browser
+projects). The Playwright HTML report and traces are uploaded as a run artifact,
+and once every job has finished a styled HTML session report is emailed from the
+runner over Gmail SMTP, pass or fail. That step needs
 two repository secrets under *Settings → Secrets and variables → Actions*:
 `NIGHTLY_MAIL_USERNAME` (the sending Gmail address) and `NIGHTLY_MAIL_PASSWORD`
 (a Gmail app password for it). Without them the job fails with a clear message.

@@ -5,8 +5,14 @@ on:
     branches: [main]
   push:
     branches: [main]
-  # Lets e2e-nightly.yml run the same two jobs as part of the nightly run.
+  # Lets e2e-nightly.yml run the same two jobs as part of the nightly run and
+  # read each job's result for its email.
   workflow_call:
+    outputs:
+      backend_result:
+        value: ${{ jobs.backend.result }}
+      frontend_result:
+        value: ${{ jobs.frontend.result }}
 
 # Cancel superseded runs on the same PR branch; never cancel a run on main.
 concurrency:
