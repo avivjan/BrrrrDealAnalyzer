@@ -7,15 +7,17 @@ import { DUR } from './tokens';
 import {
   FLASH_DURATION,
   REVEAL_CHILD_SELECTOR,
+  TILT_MAX_DEG,
   vCountUp,
   vFlash,
   vHoverLift,
   vPress,
   vReveal,
+  vTilt,
 } from './directives';
 
 /**
- * The five directives.
+ * The directives.
  *
  * They are attached to frozen view templates as bare attributes — `v-press`,
  * never `v-press="something"` — because Phase 4 may not add a single line to a
@@ -113,6 +115,7 @@ const allDirectives: [string, Directive][] = [
   ['v-hover-lift', vHoverLift],
   ['v-flash', vFlash],
   ['v-count-up', vCountUp],
+  ['v-tilt', vTilt],
 ];
 
 beforeEach(() => {
@@ -239,6 +242,7 @@ describe('the pointer directives', () => {
   const pointerEvents = [
     ['v-press', vPress, ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave']],
     ['v-hover-lift', vHoverLift, ['pointerenter', 'pointerleave']],
+    ['v-tilt', vTilt, ['pointerenter', 'pointermove', 'pointerleave']],
   ] as const;
 
   it.each(pointerEvents)('%s never cancels or swallows the event', (_name, directive, events) => {
@@ -380,6 +384,198 @@ describe('v-hover-lift', () => {
     hook(vHoverLift, 'mounted', el);
 
     expect(addEventListener).not.toHaveBeenCalled();
+  });
+});
+
+describe('v-tilt', () => {
+  /** A 200 × 100 box whose top-left corner sits at (100, 100). */
+  const box = { left: 100, top: 100, width: 200, height: 100 } as const;
+
+  /** Hold `getBoundingClientRect` to `box`, and count how often it is asked. */
+  function withBox(el: HTMLElement): ReturnType<typeof vi.spyOn> {
+    return vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+      ...box,
+      right: box.left + box.width,
+      bottom: box.top + box.height,
+      x: box.left,
+      y: box.top,
+      toJSON: () => box,
+    } as DOMRect);
+  }
+
+  /** Capture animation frames instead of running them. */
+  function stubFrames(): {
+    frames: FrameRequestCallback[];
+    request: ReturnType<typeof vi.fn>;
+    cancel: ReturnType<typeof vi.fn>;
+  } {
+    const frames: FrameRequestCallback[] = [];
+    const request = vi.fn((callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const cancel = vi.fn();
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(request);
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(cancel);
+    return { frames, request, cancel };
+  }
+
+  /** A `pointer*` event at viewport coordinates (`x`, `y`). */
+  function pointer(type: string, x: number, y: number): Event {
+    return new MouseEvent(type, { bubbles: true, clientX: x, clientY: y });
+  }
+
+  /** Mount a tilting element under a real pointer, with frames captured. */
+  function mountTilted(): {
+    el: HTMLElement;
+    rect: ReturnType<typeof withBox>;
+    set: ReturnType<typeof vi.spyOn>;
+  } & ReturnType<typeof stubFrames> {
+    state.motionOn = true;
+    const el = document.createElement('div');
+    document.body.append(el);
+    const rect = withBox(el);
+    const set = vi.spyOn(gsap, 'set').mockImplementation((() => undefined) as never);
+    const frames = stubFrames();
+    hook(vTilt, 'mounted', el);
+    return { el, rect, set, ...frames };
+  }
+
+  it('stays out of the way on a device with no hover', () => {
+    state.motionOn = true;
+    stubTweens();
+    setHoverSupport(false);
+    const el = document.createElement('div');
+    document.body.append(el);
+    const addEventListener = vi.spyOn(el, 'addEventListener');
+
+    hook(vTilt, 'mounted', el);
+
+    expect(addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('promises the transform on enter and measures the box once', () => {
+    const { el, rect, set } = mountTilted();
+
+    el.dispatchEvent(pointer('pointerenter', 150, 125));
+    el.dispatchEvent(pointer('pointermove', 150, 125));
+    el.dispatchEvent(pointer('pointermove', 160, 130));
+
+    expect(set).toHaveBeenCalledWith(el, { willChange: 'transform', transformPerspective: 800 });
+    expect(rect).toHaveBeenCalledTimes(1);
+  });
+
+  it('paints a burst of moves in one frame, at the last position', () => {
+    stubTweens();
+    const { el, set, frames, request } = mountTilted();
+    el.dispatchEvent(pointer('pointerenter', 200, 150));
+    set.mockClear();
+
+    // Three moves inside one frame: one request, and the frame reads the last.
+    el.dispatchEvent(pointer('pointermove', 200, 150));
+    el.dispatchEvent(pointer('pointermove', 250, 175));
+    el.dispatchEvent(pointer('pointermove', 150, 125));
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(set).not.toHaveBeenCalled();
+
+    frames[0]?.(0);
+
+    // (150, 125) in a box centred on (200, 150): half-way to the left edge
+    // (dx = -50 of 100 → rotateY = -3°) and half-way to the top edge
+    // (dy = -25 of 50 → rotateX = +3°, the card leaning up towards the pointer).
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledWith(el, { rotateX: 3, rotateY: -3, transformPerspective: 800 });
+
+    // The next move after a painted frame asks for a new one.
+    el.dispatchEvent(pointer('pointermove', 250, 175));
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it('never rotates past six degrees', () => {
+    stubTweens();
+    const { el, set, frames } = mountTilted();
+    el.dispatchEvent(pointer('pointerenter', 200, 150));
+    set.mockClear();
+
+    // Far outside the box on both axes: the raw values would be -12 and +18.
+    el.dispatchEvent(pointer('pointermove', 0, 0));
+    frames[0]?.(0);
+
+    expect(set).toHaveBeenCalledWith(el, {
+      rotateX: TILT_MAX_DEG,
+      rotateY: -TILT_MAX_DEG,
+      transformPerspective: 800,
+    });
+    expect(TILT_MAX_DEG).toBe(6);
+  });
+
+  it('creates no tween while the pointer is over the card', () => {
+    const { to } = stubTweens();
+    const { el, frames } = mountTilted();
+
+    el.dispatchEvent(pointer('pointerenter', 200, 150));
+    el.dispatchEvent(pointer('pointermove', 210, 160));
+    frames[0]?.(0);
+
+    expect(to).not.toHaveBeenCalled();
+  });
+
+  it('ignores a move that arrives before any enter', () => {
+    const { el, request, set } = mountTilted();
+
+    el.dispatchEvent(pointer('pointermove', 210, 160));
+
+    expect(request).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  it('tweens back to flat on leave and hands the transform back', () => {
+    const { to } = stubTweens();
+    const { el, cancel, set } = mountTilted();
+    el.dispatchEvent(pointer('pointerenter', 200, 150));
+    el.dispatchEvent(pointer('pointermove', 210, 160));
+    set.mockClear();
+
+    el.dispatchEvent(pointer('pointerleave', 400, 400));
+
+    expect(cancel).toHaveBeenCalledWith(1);
+    expect(to).toHaveBeenCalledTimes(1);
+    const [target, vars] = to.mock.calls[0] as [HTMLElement, Vars];
+    expect(target).toBe(el);
+    expect(vars).toMatchObject({
+      rotateX: 0,
+      rotateY: 0,
+      duration: DUR.fast,
+      overwrite: 'auto',
+      clearProps: 'transform,willChange',
+    });
+    // The frame the leave cancelled has nothing left to paint.
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  it('cancels the pending frame on unmount and leaves no inline transform', () => {
+    // Real `gsap.set`, so the inline style is what a browser would hold.
+    state.motionOn = true;
+    const el = document.createElement('div');
+    document.body.append(el);
+    withBox(el);
+    const { frames, cancel } = stubFrames();
+    hook(vTilt, 'mounted', el);
+
+    el.dispatchEvent(pointer('pointerenter', 200, 150));
+    expect(el.style.willChange).toBe('transform');
+    el.dispatchEvent(pointer('pointermove', 210, 160));
+
+    hook(vTilt, 'unmounted', el);
+
+    expect(cancel).toHaveBeenCalledWith(1);
+    expect(el.style.transform).toBe('');
+    expect(el.style.willChange).toBe('');
+    expect(gsap.globalTimeline.getChildren()).toHaveLength(0);
+
+    // A frame the browser had already queued paints nothing either.
+    frames[0]?.(0);
+    expect(el.style.transform).toBe('');
   });
 });
 
