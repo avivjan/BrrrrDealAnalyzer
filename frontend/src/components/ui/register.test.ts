@@ -34,6 +34,11 @@ const EXPECTED_NAMES = [
   "UiDrawer",
   "UiCommandItem",
   "UiSegmented",
+  // UI v3
+  "UiTooltip",
+  "UiSparkline",
+  "UiProgressRing",
+  "UiTimelineRail",
 ];
 
 /** A view-shaped component: it names two primitives and imports neither. */
@@ -51,7 +56,7 @@ afterEach(() => {
 });
 
 describe("UI_COMPONENTS", () => {
-  it("holds exactly the twenty registered presentational primitives", () => {
+  it("holds exactly the twenty-four registered presentational primitives", () => {
     expect(Object.keys(UI_COMPONENTS)).toEqual(EXPECTED_NAMES);
   });
 });

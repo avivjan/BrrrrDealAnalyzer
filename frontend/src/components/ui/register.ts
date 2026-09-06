@@ -26,14 +26,18 @@ import {
   UiIconButton,
   UiKpiCard,
   UiModalPanel,
+  UiProgressRing,
   UiSaveStatus,
   UiSectionHeader,
   UiSegmented,
   UiSkeleton,
+  UiSparkline,
   UiStatTile,
   UiStepper,
   UiSurface,
   UiTabs,
+  UiTimelineRail,
+  UiTooltip,
 } from "./index";
 
 /**
@@ -56,11 +60,10 @@ export const UI_COMPONENTS = {
   UiSaveStatus,
   UiTabs,
   UiStepper,
-  // UI v2. Registered = used by a template somewhere. `UiTooltip`,
-  // `UiSparkline`, `UiProgressRing`, `UiTimelineRail` and `UiDataTable` are
-  // built, tested and exported from `./index`, but no view has adopted them
-  // yet; registering by value would put them in the bundle for nothing, so a
-  // view that wants one imports it (and moves it here once it is global).
+  // UI v2. Registered = used by a template somewhere. `UiDataTable` is built,
+  // tested and exported from `./index`, but no view has adopted it yet;
+  // registering by value would put it in the bundle for nothing, so a view
+  // that wants it imports it (and moves it here once it is global).
   UiSurface,
   UiGlassPanel,
   UiChip,
@@ -68,6 +71,11 @@ export const UI_COMPONENTS = {
   UiDrawer,
   UiCommandItem,
   UiSegmented,
+  // UI v3: the cards and boards adopt these four.
+  UiTooltip,
+  UiSparkline,
+  UiProgressRing,
+  UiTimelineRail,
 } as const;
 
 /** Register every primitive on `app`, so templates need no import. */
