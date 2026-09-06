@@ -14,6 +14,11 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
 jobs:
+  # The same backend + frontend jobs that gate every PR (.github/workflows/ci.yml).
+  ci:
+    name: CI suites
+    uses: ./.github/workflows/ci.yml
+
   playwright:
     name: Playwright (all browsers)
     runs-on: ubuntu-latest
@@ -67,15 +72,33 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      # Sent from the runner over Gmail SMTP, pass or fail. Needs two
-      # repository secrets: NIGHTLY_MAIL_USERNAME (the Gmail address) and
-      # NIGHTLY_MAIL_PASSWORD (a Gmail app password for it).
-      - name: Email the result
-        if: always()
+  # Sent from the runner over Gmail SMTP once every job above has finished,
+  # pass or fail. Needs two repository secrets: NIGHTLY_MAIL_USERNAME (the
+  # Gmail address) and NIGHTLY_MAIL_PASSWORD (a Gmail app password for it).
+  notify:
+    name: Email the result
+    needs: [ci, playwright]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Absent when the Playwright job died before producing anything; the
+      # script then reports that instead of the per-browser counts.
+      - name: Download the Playwright JSON report
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: artifact
+
+      - name: Send the email
         env:
-          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          CI_OUTCOME: ${{ needs.ci.result }}
+          E2E_OUTCOME: ${{ needs.playwright.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           MAIL_TO: bigwhalesllc@gmail.com
           MAIL_USERNAME: ${{ secrets.NIGHTLY_MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.NIGHTLY_MAIL_PASSWORD }}
-        run: python3 ../.github/scripts/nightly_e2e_email.py e2e/reports/last-run.json
+        run: python3 .github/scripts/nightly_e2e_email.py artifact/e2e/reports/last-run.json

@@ -5,7 +5,9 @@ Usage: nightly_e2e_email.py <playwright-json-report>
 Reads the JSON reporter output, builds a per-browser summary and sends it over
 Gmail SMTP (SSL, port 465). Configuration comes from the environment:
 
-    E2E_OUTCOME     outcome of the Playwright step: success / failure / cancelled
+    CI_OUTCOME      result of the backend + frontend CI job: success / failure /
+                    cancelled / skipped (optional; omitted from the mail if unset)
+    E2E_OUTCOME     result of the Playwright job: success / failure / cancelled
     RUN_URL         link to the workflow run (the HTML report is an artifact there)
     MAIL_TO         recipient
     MAIL_USERNAME   Gmail address used as the sender (repository secret)
@@ -101,17 +103,22 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
-    outcome = os.environ.get("E2E_OUTCOME", "unknown")
-    verdict = "PASS" if outcome == "success" else "FAIL"
+    e2e_outcome = os.environ.get("E2E_OUTCOME", "unknown")
+    ci_outcome = os.environ.get("CI_OUTCOME", "")
+    outcomes = [e2e_outcome] + ([ci_outcome] if ci_outcome else [])
+    verdict = "PASS" if all(o == "success" for o in outcomes) else "FAIL"
     today = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
     run_url = os.environ.get("RUN_URL", "")
 
     totals, detail = summarise(pathlib.Path(argv[1]))
 
     body_lines = [
-        f"Nightly Playwright run: {verdict} ({outcome})",
+        f"Nightly run: {verdict}",
         f"Date: {today} (UTC)",
-        f"Totals: {totals}",
+        "",
+        *([f"Backend + frontend CI suites: {ci_outcome}"] if ci_outcome else []),
+        f"Playwright (all browsers): {e2e_outcome}",
+        f"Playwright totals: {totals}",
         "",
         *detail,
         "",
@@ -119,7 +126,7 @@ def main(argv: list[str]) -> int:
     ]
 
     message = EmailMessage()
-    message["Subject"] = f"[BrrrrDealAnalyzer] Nightly e2e {verdict} - {today}"
+    message["Subject"] = f"[BrrrrDealAnalyzer] Nightly {verdict} - {today}"
     message["From"] = username
     message["To"] = os.environ.get("MAIL_TO", username)
     message.set_content("\n".join(body_lines))
@@ -128,7 +135,7 @@ def main(argv: list[str]) -> int:
         smtp.login(username, password)
         smtp.send_message(message)
 
-    print(f"Sent nightly e2e email: {message['Subject']} -> {message['To']}")
+    print(f"Sent nightly email: {message['Subject']} -> {message['To']}")
     return 0
 
 

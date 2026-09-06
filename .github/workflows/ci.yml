@@ -5,6 +5,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Lets e2e-nightly.yml run the same two jobs as part of the nightly run.
+  workflow_call:
 
 # Cancel superseded runs on the same PR branch; never cancel a run on main.
 concurrency:
