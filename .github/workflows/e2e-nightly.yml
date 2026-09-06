@@ -47,6 +47,8 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     uses: ./.github/workflows/ci.yml
+    with:
+      upload_reports: true
 
   playwright:
     name: Playwright (all browsers)
@@ -138,20 +140,58 @@ jobs:
     needs: [gate, ci, playwright]
     if: always() && needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
+    # Only this job may write, and only to the `nightly-history` branch (see the push step).
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      # Absent when the Playwright job died before producing anything; the
-      # script then reports that instead of the per-browser counts.
+      # Absent when a job died before producing anything; the email says so instead.
       - name: Download the Playwright JSON report
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: playwright-report-${{ github.run_number }}
           path: artifact
+      - name: Download backend reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: junit-backend-${{ github.run_number }}
+          path: artifact/backend
+      - name: Download frontend reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: junit-frontend-${{ github.run_number }}
+          path: artifact/frontend
 
-      - name: Send the email
+      # One JSON record per run lives on the orphan branch `nightly-history`.
+      - name: Check out nightly-history (or start it)
+        run: |
+          if git fetch --depth=100 origin nightly-history; then
+            git worktree add history FETCH_HEAD
+            git -C history checkout -q -B nightly-history
+          else
+            git worktree add --detach history
+            git -C history checkout -q --orphan nightly-history
+            git -C history rm -rfq . || true
+            printf '# nightly-history\n\nAppend-only records of the nightly test runs, one JSON line per run, read by\n`.github/scripts/nightly/` on main to draw trends. Not meant for humans.\n' > history/README.md
+          fi
+          touch history/history.jsonl
+          echo "history has $(wc -l < history/history.jsonl) record(s)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/nightly/requirements.txt
+      - name: Install chart dependency
+        continue-on-error: true   # the email falls back to a table without it
+        run: pip install -r .github/nightly/requirements.txt
+
+      - name: Build and send the email
         env:
           CI_OUTCOME: ${{ needs.ci.result }}
           BACKEND_OUTCOME: ${{ needs.ci.outputs.backend_result }}
@@ -159,7 +199,40 @@ jobs:
           E2E_OUTCOME: ${{ needs.playwright.result }}
           E2E_EXIT_CODE: ${{ needs.playwright.outputs.exit_code }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          GIT_SHA: ${{ github.sha }}
           MAIL_TO: bigwhalesllc@gmail.com
           MAIL_USERNAME: ${{ secrets.NIGHTLY_MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.NIGHTLY_MAIL_PASSWORD }}
-        run: python3 .github/scripts/nightly_e2e_email.py artifact/e2e/reports/last-run.json
+        run: |
+          python3 .github/scripts/nightly_e2e_email.py \
+            --playwright artifact/e2e/reports/last-run.json \
+            --backend-junit artifact/backend/backend-junit.xml \
+            --frontend-junit artifact/frontend/frontend-junit.xml \
+            --backend-coverage artifact/backend/backend-coverage.json \
+            --frontend-coverage artifact/frontend/frontend-coverage/coverage-summary.json \
+            --history history/history.jsonl --append-history --write-record record.json
+
+      # Runs even when the email step failed (e.g. missing secrets), so no night is lost.
+      - name: Push the history record
+        if: always() && hashFiles('record.json') != ''
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          cd history
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git add history.jsonl README.md 2>/dev/null || git add history.jsonl
+            git commit -qm "nightly: run ${RUN_NUMBER} (${GITHUB_SHA::7})" || true
+            if git push -q origin HEAD:nightly-history; then
+              echo "history pushed"; exit 0
+            fi
+            echo "push rejected, refetching (attempt $attempt)"
+            git fetch -q origin nightly-history && git reset -q --hard origin/nightly-history
+            cat ../record.json >> history.jsonl
+          done
+          echo "::warning::history push failed after 3 attempts; tonight's record follows"
+          cat ../record.json

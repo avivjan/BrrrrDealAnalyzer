@@ -8,6 +8,11 @@ on:
   # Lets e2e-nightly.yml run the same two jobs as part of the nightly run and
   # read each job's result for its email.
   workflow_call:
+    inputs:
+      upload_reports:
+        description: Upload JUnit XML and coverage summaries as run artifacts (the nightly email reads them)
+        type: boolean
+        default: false
     outputs:
       backend_result:
         value: ${{ jobs.backend.result }}
@@ -83,10 +88,31 @@ jobs:
       # tests/conftest.py only reads TEST_DATABASE_URL (never DATABASE_URL),
       # verifies it is PostgreSQL on a loopback host with a `_test` database,
       # and drops/recreates the schema before the suite runs.
+      # JUnit XML + coverage JSON go to the runner's temp dir (never the checkout);
+      # the nightly workflow uploads them for its email.
       - name: Run pytest
         env:
           TEST_DATABASE_URL: postgresql+psycopg2://brrrr_test:brrrr_test@localhost:5432/brrrr_test
-        run: pytest -ra
+        run: |
+          mkdir -p "$RUNNER_TEMP/reports"
+          pytest -ra \
+            --junitxml="$RUNNER_TEMP/reports/backend-junit.xml" \
+            --cov=. --cov-config=../.github/nightly/coveragerc \
+            --cov-report=json:"$RUNNER_TEMP/reports/backend-coverage.json" \
+            --cov-report=term:skip-covered
+
+      - name: Nightly email package unit tests
+        run: python3 -m unittest discover -s ../.github/scripts/nightly/tests -t ../.github/scripts
+
+      - name: Upload backend reports
+        if: always() && inputs.upload_reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-backend-${{ github.run_number }}
+          path: ${{ runner.temp }}/reports/
+          if-no-files-found: ignore
+          overwrite: true
+          retention-days: 14
 
   frontend:
     name: Frontend tests + build
@@ -107,8 +133,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `--reporter` replaces vitest's defaults, so the GitHub annotations reporter
+      # is re-added explicitly. JUnit + coverage summary go to the runner's temp dir.
       - name: Run vitest
-        run: npm test
+        run: |
+          mkdir -p "$RUNNER_TEMP/reports"
+          npm test -- --reporter=default --reporter=github-actions --reporter=junit \
+            --outputFile.junit="$RUNNER_TEMP/reports/frontend-junit.xml" \
+            --coverage.enabled --coverage.provider=v8 --coverage.reporter=json-summary \
+            --coverage.reportsDirectory="$RUNNER_TEMP/reports/frontend-coverage"
+
+      - name: Upload frontend reports
+        if: always() && inputs.upload_reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-frontend-${{ github.run_number }}
+          path: ${{ runner.temp }}/reports/
+          if-no-files-found: ignore
+          overwrite: true
+          retention-days: 14
 
       # `vue-tsc -b && vite build` is the only type-check in the repo.
       - name: Type-check and build

@@ -1,0 +1,12 @@
+# coverage.py config for the CI backend job (pytest --cov-config=../.github/nightly/coveragerc).
+# Kept outside BackEnd/ so the application tree carries no CI-only files.
+[run]
+# Keep the data file out of the checkout (RUNNER_TEMP on CI, /tmp locally).
+data_file = ${RUNNER_TEMP-/tmp}/brrrr-backend.coverage
+omit =
+    tests/*
+    verify_regression.py
+    */__pycache__/*
+
+[report]
+skip_empty = True

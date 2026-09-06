@@ -135,3 +135,64 @@ The pytest suite already runs on the throwaway Postgres (`BackEnd/docker-compose
 **Validated on a local PostgreSQL 16.** pytest: 118 passed. `verify_regression.py verify`: all five snapshots identical. Playwright, two flows on chromium through `serve_throwaway.py`: 4 passed, backend log shows `DATABASE_URL=postgresql+psycopg2://brrrr_test:...@127.0.0.1:55432/brrrr_test`.
 
 **Worth knowing.** The duplicate-name endpoint leaks the database driver's error text to the client; unchanged here, but it is now visible in the golden.
+
+---
+
+# Nightly report email v2
+
+Plan approved in plan mode. Additive only: every existing metric stays.
+
+- [x] **N1** (5 min) — Branch `feature/nightly-report-enhancements` from `main`; this checklist.
+- [x] **N2** (45 min) — Split `nightly_e2e_email.py` into `.github/scripts/nightly/` (shim keeps the CLI); text output identical for the same input.
+- [x] **N3** (30 min) — `playwright_report.py`: annotations, skip reasons, repo-relative keys (port of `compare-reports.mjs`), spec-file totals.
+- [x] **N4** (45 min) — `known_skips.json` allow-list + `skips.py` (grouping, expected vs observed, rules S1–S6).
+- [x] **N5** (30 min) — `junit.py`: pytest + vitest JUnit XML → counts, durations, slowest, failed.
+- [x] **N6** (25 min) — `coverage.py`: pytest-cov JSON + vitest json-summary → lowest-covered modules; not-wired steps.
+- [x] **N7** (40 min) — `history.py`: record v1, tail read, append, same-matrix, previous / week-ago.
+- [x] **N8** (45 min) — `anomalies.py`: deltas, first-seen vs recurring, flaky, slow regressions, wall-clock, spec-file trend, coverage drop.
+- [x] **N9** (60 min) — `charts.py`: three matplotlib PNGs (CID) + table fallback.
+- [x] **N10** (90 min) — `theme.py`, `render_html.py`, `render_text.py`: luxury tokens, new sections, size budget.
+- [x] **N11** (40 min) — `ci.yml` (junit + coverage + uploads + unit-test step), `e2e-nightly.yml` (downloads, history branch, push), coverage deps.
+- [x] **N12** (60 min) — Fixtures + stdlib unit tests.
+- [x] **N13** (45 min) — Local validation: unit tests, pytest/vitest with the new flags, previews + screenshots.
+- [x] **N14** (30 min) — README, review below, commit, push, PR with screenshots and follow-ups.
+
+## Nightly v2 review
+
+**What changed.** The nightly email script became a package, `.github/scripts/nightly/`
+(the old `nightly_e2e_email.py` is a six-line shim, so the workflow command and the
+`report.json out.html` preview form still work). Every line and metric of the previous
+email is still produced, in the same order; a unit test renders the plain-text body and
+checks the legacy lines. On top of that:
+
+- **Skipped by reason.** Playwright's `skip` annotations are grouped by reason and matched
+  against `.github/nightly/known_skips.json` (12 reasons, 6 categories, expected counts per
+  project summing to the 181 we see today). Unknown reasons, skips with no annotation
+  (fixture failure signature), "should never fire" reasons and counts above the expected
+  are flagged as anomalies at the top of the mail; routine skips are listed in ink with a
+  one-line explanation and expected vs observed.
+- **Suites.** pytest and vitest now write JUnit XML (and coverage) into `$RUNNER_TEMP`; the
+  nightly uploads them as artifacts and the email shows counts, wall time, failing and five
+  slowest cases per suite. PR/push CI behaviour is unchanged apart from those extra flags.
+- **History and trends.** One JSON record per run (`history.jsonl`) on the orphan branch
+  `nightly-history`, appended and pushed by the notify job (`contents: write` on that job
+  only, `HEAD:nightly-history`, three retries). Three matplotlib PNGs (pass/fail, skips by
+  category, tonight's five slowest tests) are embedded as CID images; a compact table takes
+  over when matplotlib or history is missing.
+- **Low-effort analytics implemented.** Tile deltas vs last run and vs 7 days ago;
+  first-seen vs recurring failures; flaky list; slower-than-usual tests (>1.5× the 7-run
+  median); wall-clock drift; spec-file trend arrows; coverage-drop check; lowest-covered
+  modules per side.
+- **Restyle.** `theme.py` carries the site's "quiet luxury" light tokens; status is a 10 %
+  wash pill, KPI numbers stay in ink, strong colour only in Anomalies. HTML body is ~66 KB
+  (pass) / ~79 KB (fail), under the 95 KB budget enforced by a test.
+
+**Verified.** 19 stdlib unit tests pass; pytest (118) with `--junitxml --cov` against a
+scratch Postgres and vitest (1368) with junit + coverage reporters both produced parsable
+files; PASS and FAIL previews rendered with 22 synthetic history records and screenshotted
+(`docs/nightly/preview-*.png`); FAIL fixture triggers every anomaly rule.
+
+**Not done (listed as follow-ups in the PR).** Quarantine list / summary issue for tests
+flaky in ≥3 of 14 runs; history rotation past ~365 records; bootstrapping history from the
+four archived reports; trends for the custom perf annotations already in the Playwright
+report; a repository ruleset keeping the Actions token off `main`.

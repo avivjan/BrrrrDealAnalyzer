@@ -1,0 +1,3 @@
+# Installed only by the nightly email job (charts). The email falls back to
+# tables when this is missing, so a failed install never blocks the mail.
+matplotlib>=3.8,<4

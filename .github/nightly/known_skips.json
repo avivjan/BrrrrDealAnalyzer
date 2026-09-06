@@ -1,0 +1,102 @@
+{
+  "_comment": "Allow-list of intentional Playwright skips. Every `test.skip(condition, reason)` reason in frontend/e2e must have an entry here (exact `match` or regex `pattern`); the nightly email flags any reason it cannot classify. `expected` is the per-project count of tests this reason skips on a full-matrix run; `expected_total: 0` marks reasons that should never fire on a nightly run and are anomalies when they do. Update this file in the same PR that adds or removes specs.",
+  "expected_projects": ["chromium", "webkit", "Mobile Safari", "Mobile Chrome", "chromium-motion"],
+  "reasons": [
+    {
+      "id": "axe-baseline-chromium",
+      "match": "the axe baseline is recorded and replayed on chromium only",
+      "category": "Chromium-only golden",
+      "explain": "The axe accessibility baseline was recorded on Chromium. Axe rules are engine-independent, so replaying it on three more engines would only add minutes.",
+      "files": ["flows/a11y.spec.ts", "checks/axe-modals.spec.ts"],
+      "expected": {"webkit": 17, "Mobile Safari": 17, "Mobile Chrome": 17}
+    },
+    {
+      "id": "drag-characterization-chromium",
+      "match": "drag characterization is recorded and replayed on chromium only",
+      "category": "Chromium-only golden",
+      "explain": "The drag-and-drop golden needs faithful synthetic pointer events, which differ per engine; the rules it checks do not, and phones render a plain grid anyway.",
+      "files": ["flows/bought-deals-drag.spec.ts"],
+      "expected": {"webkit": 4, "Mobile Safari": 4, "Mobile Chrome": 4}
+    },
+    {
+      "id": "token-resolution-chromium",
+      "match": "token resolution is engine-independent; checked on chromium only",
+      "category": "Engine-independent, runs once",
+      "explain": "CSS custom-property resolution and the look/mode axe sweep do not vary by engine, so one run on Chromium is the whole answer.",
+      "files": ["checks/theme.spec.ts"],
+      "expected": {"webkit": 15, "Mobile Safari": 15, "Mobile Chrome": 15}
+    },
+    {
+      "id": "shell-layout-chromium",
+      "match": "shell layout is engine-independent; checked on chromium only",
+      "category": "Engine-independent, runs once",
+      "explain": "Nav, command palette and drawer behaviour touches no store or network and renders identically across engines.",
+      "files": ["checks/shell.spec.ts"],
+      "expected": {"webkit": 4, "Mobile Safari": 4, "Mobile Chrome": 4}
+    },
+    {
+      "id": "custom-property-chromium",
+      "match": "custom-property resolution is engine-independent; checked on chromium only",
+      "category": "Engine-independent, runs once",
+      "explain": "The --chart-* token check on /liquidity is the same computation in every engine.",
+      "files": ["checks/chart-tokens.spec.ts"],
+      "expected": {"webkit": 1, "Mobile Safari": 1, "Mobile Chrome": 1}
+    },
+    {
+      "id": "pure-comparison-once",
+      "match": "a pure comparison needs checking once, not once per engine",
+      "category": "Engine-independent, runs once",
+      "explain": "Pure unit tests of the axe regression comparator; no browser is involved at all.",
+      "files": ["fixtures/axe.compare.spec.ts"],
+      "expected": {"webkit": 4, "Mobile Safari": 4, "Mobile Chrome": 4}
+    },
+    {
+      "id": "perf-entries-chromium",
+      "pattern": "performance entries are Chromium's; this test runs on chromium only",
+      "category": "Chromium-only browser feature",
+      "explain": "Long-task and layout-shift PerformanceObserver entries exist only in Chromium, so the perf checks cannot measure anything elsewhere.",
+      "files": ["checks/perf.spec.ts"],
+      "expected": {"webkit": 10, "Mobile Safari": 10, "Mobile Chrome": 10}
+    },
+    {
+      "id": "perf-entries-motion",
+      "pattern": "performance entries are Chromium's; this test runs on chromium-motion only",
+      "category": "Motion-only project",
+      "explain": "The two @motion board perf checks must measure with animations live, so they belong to the chromium-motion project and skip on the four reduced-motion projects.",
+      "files": ["checks/perf.spec.ts"],
+      "expected": {"chromium": 2, "webkit": 2, "Mobile Safari": 2, "Mobile Chrome": 2}
+    },
+    {
+      "id": "motion-guard",
+      "match": "the motion-on guard; the other projects run with reducedMotion: reduce",
+      "category": "Motion-only project",
+      "explain": "GSAP is inert under reducedMotion: reduce, so the leaked-tween guard only means something on the motion-enabled project.",
+      "files": ["checks/no-live-tweens.spec.ts"],
+      "expected": {"chromium": 1, "webkit": 1, "Mobile Safari": 1, "Mobile Chrome": 1}
+    },
+    {
+      "id": "wheel-emulation-chromium",
+      "match": "wheel emulation is Chromium-only",
+      "category": "Chromium-only browser feature",
+      "explain": "mouse.wheel is a Chromium capability; the sibling structural test covers the scroll trap on every engine. Pixel 7 reports itself as Chromium, so only the WebKit projects skip.",
+      "files": ["checks/modal-scroll.spec.ts"],
+      "expected": {"webkit": 2, "Mobile Safari": 2}
+    },
+    {
+      "id": "zoomed-out-device",
+      "match": "the header overflows this device, so the page is zoomed out and its controls cannot be driven",
+      "category": "Device-dependent viewport skip",
+      "explain": "Fires only when the liquidity header overflows a phone viewport and the page zooms out. The UI overhaul fixed the overflow; if this reappears the header has regressed.",
+      "files": ["flows/liquidity.spec.ts"],
+      "expected_total": 0
+    },
+    {
+      "id": "no-dist-build",
+      "match": "no dist/ build to measure",
+      "category": "Build precondition",
+      "explain": "The bundle-size check needs the production build that the suite's webServer produces. A nightly run always has it; this firing means the build step was skipped.",
+      "files": ["checks/perf.spec.ts"],
+      "expected_total": 0
+    }
+  ]
+}
