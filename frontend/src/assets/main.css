@@ -180,6 +180,28 @@
 }
 
 @layer utilities {
+  /*
+   * Board drag states, set by SortableJS through VueDraggable's `chosen-class`,
+   * `drag-class` and `ghost-class`. CSS only: nothing may tween a Sortable child.
+   * `.board-ghost` is the placeholder left in the source column; `.board-chosen`
+   * is the card under the pointer; `.board-drag` is the native drag image.
+   */
+  .board-ghost {
+    opacity: 0.35;
+    outline: 2px dashed rgb(var(--color-primary) / 0.5);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+  }
+
+  .board-chosen {
+    box-shadow: var(--shadow-3);
+    transform: scale(1.02);
+  }
+
+  .board-drag {
+    opacity: 0.95;
+  }
+
   /* Money and percentage cells: digits must not change width as they change. */
   .tabular {
     font-variant-numeric: tabular-nums;

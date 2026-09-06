@@ -520,7 +520,9 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               @add="(e: any) => onAdd(e, stage.id)"
               :animation="150"
               class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
-              ghost-class="opacity-50"
+              ghost-class="board-ghost"
+              chosen-class="board-chosen"
+              drag-class="board-drag"
             >
               <div
                 v-for="deal in columns[stage.id]"
