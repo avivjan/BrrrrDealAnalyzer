@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 from ReqRes.email.sendOffer.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOffer.sendOfferRes import SendOfferRes
-from BL.email.sendOffer.sendOffer import send_offer_email
+from BL.email.sendOffer import send_offer_email
 
 logger = logging.getLogger(__name__)
 

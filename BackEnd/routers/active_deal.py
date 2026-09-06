@@ -10,11 +10,11 @@ from ReqRes.common.active_deal_schemas import (
     BrrrActiveDealCreate, BrrrActiveDealRes,
     FlipActiveDealCreate, FlipActiveDealRes,
 )
-from BL.activeDeal.getActiveDeals.getActiveDeals import get_active_deals as get_active_deals_bl
-from BL.activeDeal.addActiveDeal.addActiveDeal import add_active_deal as add_active_deal_bl
-from BL.activeDeal.updateActiveDeal.updateActiveDeal import update_deal as update_deal_bl
-from BL.activeDeal.deleteActiveDeal.deleteActiveDeal import delete_deal as delete_deal_bl
-from BL.activeDeal.duplicateActiveDeal.duplicateActiveDeal import duplicate_deal as duplicate_deal_bl
+from BL.activeDeal.getActiveDeals import get_active_deals as get_active_deals_bl
+from BL.activeDeal.addActiveDeal import add_active_deal as add_active_deal_bl
+from BL.activeDeal.updateActiveDeal import update_deal as update_deal_bl
+from BL.activeDeal.deleteActiveDeal import delete_deal as delete_deal_bl
+from BL.activeDeal.duplicateActiveDeal import duplicate_deal as duplicate_deal_bl
 
 router = APIRouter()
 

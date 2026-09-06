@@ -43,10 +43,17 @@ migrations/         # hand-rolled, idempotent schema migrations (no Alembic)
 routers/            # HTTP only: path, method, status codes, exception mapping.
                      # Each endpoint function is a one-liner delegating to BL.
 BL/                 # Framework-agnostic business logic. Takes/returns plain
-                     # Python types, Pydantic models, or a DB Session -- never
-                     # a FastAPI Request/Response. common/ holds the calc
-                     # engine (deal_math, deal_analysis, deal_validation) and
-                     # ORM->Res transforms shared across a division.
+  <division>/         # Python types, Pydantic models, or a DB Session -- never
+    <endpoint>.py     # a FastAPI Request/Response. One flat module per
+    common/           # endpoint, plus common/ for what that division shares.
+  analyze/            # The calc engine -- the core of the product:
+    analyzeBRRR.py    #   analyze_brrr()  + calculate_brrr_results()
+    analyzeFlip.py    #   analyze_flip()  + calculate_flip_results()
+    brrrSteps/        #   one file per calculation subject (cash_flow, dscr,
+    flipSteps/        #   roi, total_cash_needed, ...)
+    common/           #   deal_math, calc_breakdown, validation
+  common/             # deal_response: ORM row -> *Res, shared by the
+                     # activeDeal and boughtDeal divisions.
 DAL/
   data_models/       # SQLAlchemy ORM tables, grouped by division
   crud/              # Query functions only (add/filter/first/delete) -- no
@@ -59,9 +66,18 @@ ReqRes/
                            # so routers only ever import from ReqRes/.
 ```
 
-Within `BL/` and `ReqRes/`, each division folder has a `common/` subfolder for
-logic/schemas shared across that division's endpoints, plus one folder per
-endpoint (e.g. `BL/liquidity/createRecurring/`).
+Within `BL/`, a division folder holds one flat module per endpoint
+(`BL/liquidity/createRecurring.py`) plus a `common/` subfolder for logic shared
+across that division's endpoints. `ReqRes/` still nests one folder per endpoint
+(`ReqRes/liquidity/createRecurring/`), holding the two thin re-export modules.
+
+`BL/analyze/` is the exception worth knowing: it holds the whole BRRRR/Flip
+calculation. `analyzeBRRR.py` and `analyzeFlip.py` each carry both the
+validate-then-calculate entry point and the orchestrator underneath it, and the
+orchestrator reads top-to-bottom as the calculation itself -- each line calls
+one `*_step` from `brrrSteps/` / `flipSteps/`, where a step does its slice of
+the math *and* registers its own `breakdown.add()` lines, so the explanation
+the frontend renders travels with the code that computes the value.
 
 ### Tests
 

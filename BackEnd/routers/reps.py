@@ -21,21 +21,21 @@ from ReqRes.reps.listActivityCategories.listActivityCategoriesRes import RepsAct
 from ReqRes.reps.createActivityCategory.createActivityCategoryReq import RepsActivityCategoryCreate
 from BL.reps.common import reps_service
 from BL.reps.common.valid_users import VALID_REPS_USERS
-from BL.reps.log.log import create_log as create_log_bl
-from BL.reps.entries.entries import get_entries as get_entries_bl
-from BL.reps.uploadBatch.uploadBatch import upload_batch as upload_batch_bl
-from BL.reps.upload.upload import upload_single as upload_single_bl
-from BL.reps.listProperties.listProperties import list_property_options as list_property_options_bl
-from BL.reps.createProspect.createProspect import create_prospect as create_prospect_bl
-from BL.reps.deleteProspect.deleteProspect import delete_prospect as delete_prospect_bl
-from BL.reps.listPeople.listPeople import list_people as list_people_bl
-from BL.reps.createPerson.createPerson import create_person as create_person_bl
-from BL.reps.updatePerson.updatePerson import update_person as update_person_bl
-from BL.reps.deletePerson.deletePerson import delete_person as delete_person_bl
-from BL.reps.listActivityCategories.listActivityCategories import list_activity_categories as list_activity_categories_bl
-from BL.reps.createActivityCategory.createActivityCategory import create_activity_category as create_activity_category_bl
-from BL.reps.deleteActivityCategory.deleteActivityCategory import delete_activity_category as delete_activity_category_bl
-from BL.reps.configStatus.configStatus import get_config_status as get_config_status_bl
+from BL.reps.log import create_log as create_log_bl
+from BL.reps.entries import get_entries as get_entries_bl
+from BL.reps.uploadBatch import upload_batch as upload_batch_bl
+from BL.reps.upload import upload_single as upload_single_bl
+from BL.reps.listProperties import list_property_options as list_property_options_bl
+from BL.reps.createProspect import create_prospect as create_prospect_bl
+from BL.reps.deleteProspect import delete_prospect as delete_prospect_bl
+from BL.reps.listPeople import list_people as list_people_bl
+from BL.reps.createPerson import create_person as create_person_bl
+from BL.reps.updatePerson import update_person as update_person_bl
+from BL.reps.deletePerson import delete_person as delete_person_bl
+from BL.reps.listActivityCategories import list_activity_categories as list_activity_categories_bl
+from BL.reps.createActivityCategory import create_activity_category as create_activity_category_bl
+from BL.reps.deleteActivityCategory import delete_activity_category as delete_activity_category_bl
+from BL.reps.configStatus import get_config_status as get_config_status_bl
 
 logger = logging.getLogger(__name__)
 

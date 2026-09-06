@@ -10,11 +10,11 @@ from ReqRes.common.bought_deal_schemas import (
     BoughtBrrrDealCreate, BoughtBrrrDealRes,
     BoughtFlipDealCreate, BoughtFlipDealRes,
 )
-from BL.boughtDeal.getBoughtDeals.getBoughtDeals import get_bought_deals as get_bought_deals_bl
-from BL.boughtDeal.addBoughtDeal.addBoughtDeal import add_bought_deal as add_bought_deal_bl
-from BL.boughtDeal.updateBoughtDeal.updateBoughtDeal import update_bought_deal as update_bought_deal_bl
-from BL.boughtDeal.deleteBoughtDeal.deleteBoughtDeal import delete_bought_deal as delete_bought_deal_bl
-from BL.boughtDeal.moveToBought.moveToBought import move_to_bought as move_to_bought_bl
+from BL.boughtDeal.getBoughtDeals import get_bought_deals as get_bought_deals_bl
+from BL.boughtDeal.addBoughtDeal import add_bought_deal as add_bought_deal_bl
+from BL.boughtDeal.updateBoughtDeal import update_bought_deal as update_bought_deal_bl
+from BL.boughtDeal.deleteBoughtDeal import delete_bought_deal as delete_bought_deal_bl
+from BL.boughtDeal.moveToBought import move_to_bought as move_to_bought_bl
 from DAL.crud.active_deal import get_brrr_deal, get_flip_deal
 
 router = APIRouter()

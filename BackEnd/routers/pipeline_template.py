@@ -11,9 +11,9 @@ from ReqRes.common.pipeline_template_schemas import (
     PipelineTemplateRes,
     PipelineTemplateStatsRes,
 )
-from BL.pipelineTemplate.listTemplates.listTemplates import list_templates as list_templates_bl
-from BL.pipelineTemplate.updateTemplate.updateTemplate import update_template as update_template_bl
-from BL.pipelineTemplate.templateStats.templateStats import template_stats as template_stats_bl
+from BL.pipelineTemplate.listTemplates import list_templates as list_templates_bl
+from BL.pipelineTemplate.updateTemplate import update_template as update_template_bl
+from BL.pipelineTemplate.templateStats import template_stats as template_stats_bl
 
 router = APIRouter()
 
