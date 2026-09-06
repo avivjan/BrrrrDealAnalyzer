@@ -112,7 +112,6 @@ async function pageIsZoomedOut(page: Page): Promise<boolean> {
 async function annotateHeaderWidth(page: Page): Promise<void> {
   const needed = await page.evaluate(() => {
     const ids = [
-      'liquidity.back',
       'liquidity.today',
       'liquidity.mercury-sync',
       'liquidity.settings-open',
