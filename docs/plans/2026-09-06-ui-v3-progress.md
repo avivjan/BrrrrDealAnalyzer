@@ -28,3 +28,6 @@ Plan: `docs/plans/2026-09-06-ui-v3-plan.md`. One row per finished task: task · 
 | 4.1–4.3 Bought header, flow strip, stage rail | 8d144f8 | views+components 677; vue-tsc clean | `components/board/StageColumn.vue`; connectors are CSS (no SVG draw-on: a horizontally scrolling rail has no single path to draw); pipeline-editor visual pass deferred to 8.x if time |
 | 4.4 modal: rail + every stage's checklist | a29e2d3 | stagemove 6 + hooks | stage select behind an "Override stage" disclosure, hook and v-model unchanged |
 | 5.1–5.3 My Deals on the rail | 5bae854 | views 39; vue-tsc clean | live figures from the columns; compact rail in the modal header |
+| 4.5 card hook on the inert header block | 6550b6f | card 35 + stagemove + hooks | gate 2 found the modal no longer opened from the specs: the taller card's centre is a stage row that stops propagation |
+| 6.3 liquidity page hero, counting KPIs, Upcoming sidebar (‖D) | c6302d9 | liquidity 92 | worktree agent; Mercury status lives in the balance KPI footer; sidebar keeps Next Outflow/Inflow, Recurring, Low (90d), Reserve |
+| 7.1–7.2 REPS + Analyze (‖D) | ec83303 | reps+analyze+hooks 65 | worktree agent; People panel uses `slideUp` (the `drawer` preset is built for the fixed side drawer) |
