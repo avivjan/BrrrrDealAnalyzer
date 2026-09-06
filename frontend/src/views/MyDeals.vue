@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
@@ -10,6 +10,7 @@ import {
   ensureBrrrLegacyDefaults,
 } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
+import StageColumn from "../components/board/StageColumn.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import type { ActiveDealRes, AnalyzeDealReq } from "../types";
@@ -27,16 +28,13 @@ const router = useRouter();
 const useSortableBoard = useMediaQuery("(pointer: fine)");
 
 const activeTab = ref(1); // 1=Wholesale, 2=Market, 3=OffMarket
+// `tone` is the rail node's fill, on the same ramp the cards' stage strip uses.
 const stages = [
-  { id: 1, name: "New - need to analyze", color: "bg-surface border-line" },
-  { id: 2, name: "Working", color: "bg-surface border-line" },
-  { id: 3, name: "Brought", color: "bg-surface border-line" },
-  {
-    id: 4,
-    name: "Keep in Mind",
-    color: "bg-surface border-line",
-  },
-  { id: 5, name: "Dead", color: "bg-surface border-line" },
+  { id: 1, name: "New - need to analyze", tone: "bg-chart-4" },
+  { id: 2, name: "Working", tone: "bg-chart-8" },
+  { id: 3, name: "Brought", tone: "bg-chart-2" },
+  { id: 4, name: "Keep in Mind", tone: "bg-warning" },
+  { id: 5, name: "Dead", tone: "bg-fg-muted" },
 ];
 
 // Local state for each column to support drag-and-drop
@@ -47,6 +45,27 @@ const columns = ref<Record<number, ActiveDealRes[]>>({
   4: [],
   5: [],
 });
+
+/** The header's live figures for the section in view; nothing here fetches. */
+const viewFigures = computed(() => {
+  const deals = Object.values(columns.value).flat();
+  let cashNeeded = 0;
+  const cocs: number[] = [];
+  for (const d of deals) {
+    const any = d as any;
+    const isFlip = d.deal_type === "FLIP";
+    const needed = Number(isFlip ? any.total_cash_needed : any.total_cash_needed_for_deal);
+    if (Number.isFinite(needed)) cashNeeded += needed;
+    const coc = Number(any.cash_on_cash);
+    if (!isFlip && Number.isFinite(coc)) cocs.push(coc);
+  }
+  return {
+    count: deals.length,
+    cashNeeded,
+    avgCoc: cocs.length ? cocs.reduce((a, b) => a + b, 0) / cocs.length : null,
+  };
+});
+
 
 // Sync local columns with store data based on active tab
 const refreshColumns = () => {
@@ -270,6 +289,20 @@ const deleteEditingDeal = async () => {
 const showDetailModal = ref(false);
 const selectedDeal = ref<ActiveDealRes | null>(null);
 const editingDeal = ref<ActiveDealRes | null>(null);
+
+/** The modal's rail: the five stages with the deal's own marked active. */
+const modalRailItems = computed(() => {
+  const current = Number(editingDeal.value?.stage ?? 1);
+  return stages.map((s) => ({
+    id: s.id,
+    label: s.name,
+    state: (s.id < current ? "done" : s.id === current ? "active" : "todo") as
+      | "done"
+      | "active"
+      | "todo",
+  }));
+});
+
 
 const currentAnalysis = ref<ActiveDealRes | null>(null);
 const modalScrollContainer = ref<HTMLElement | null>(null);
@@ -501,151 +534,167 @@ console.groupEnd();
     into a responsive grid. `VueDraggable` and its children are untouched.
   -->
   <div class="flex min-h-full flex-col text-fg">
-    <!-- Toolbar -->
-    <div
-      class="glass sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-4 py-3 md:px-6"
-    >
-      <div class="flex items-center gap-3">
-        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
-          My Deals
-        </UiSectionHeader>
-      </div>
+    <!--
+      UI v3: a hero header (eyebrow → title → live figures → controls), then the
+      five stages as scroll-snapped StageColumn columns on lg+ (stacked below,
+      as the phones always rendered). The figures are computed from the deals
+      already on screen; no fetch. `v-reveal` on the rail container only, and
+      bare, not `.stagger`: `/my-deals` is the route the frozen deep-link spec
+      measures, and it asserts zero live tweens 500 ms after the overlay
+      appears. Nothing inside a VueDraggable is ever animated.
+    -->
+    <UiTransition preset="hero" appear>
+      <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-0 flex-1">
+            <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              Pipeline
+            </p>
+            <UiSectionHeader
+              as="h2"
+              data-hero="title"
+              class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+            >
+              My Deals
+            </UiSectionHeader>
+          </div>
 
-      <!-- Tabs -->
-      <UiTabs aria-label="Deal type" class="max-w-full">
-        <UiButton
-          v-for="tab in [
-            {
-              id: 1,
-              label: 'Wholesale',
-              count: store.activeDealsCount.wholesale,
-            },
-            {
-              id: 2,
-              label: 'Market',
-              count: store.activeDealsCount.market,
-            },
-            {
-              id: 3,
-              label: 'Off Market',
-              count: store.activeDealsCount.offMarket,
-            },
-          ]"
-          :key="tab.id"
-          :data-testid="`mydeals.tab.${tab.id}`"
-          @click="activeTab = tab.id"
-          variant="tab"
-          size="sm"
-          :active="activeTab === tab.id"
-          class="min-h-9 touch:min-h-11 shrink-0 px-3"
-        >
-          {{ tab.label }}
-          <span
-            class="numeric rounded-full bg-surface-3 px-1.5 py-0.5 text-[10px] text-fg-muted"
-            >{{ tab.count }}</span
+          <!-- Tabs -->
+          <UiTabs data-hero="item" aria-label="Deal type" class="max-w-full">
+            <UiButton
+              v-for="tab in [
+                {
+                  id: 1,
+                  label: 'Wholesale',
+                  count: store.activeDealsCount.wholesale,
+                },
+                {
+                  id: 2,
+                  label: 'Market',
+                  count: store.activeDealsCount.market,
+                },
+                {
+                  id: 3,
+                  label: 'Off Market',
+                  count: store.activeDealsCount.offMarket,
+                },
+              ]"
+              :key="tab.id"
+              :data-testid="`mydeals.tab.${tab.id}`"
+              @click="activeTab = tab.id"
+              variant="tab"
+              size="sm"
+              :active="activeTab === tab.id"
+              class="min-h-9 touch:min-h-11 shrink-0 px-3"
+            >
+              {{ tab.label }}
+              <span
+                class="numeric rounded-full bg-surface-3 px-1.5 py-0.5 text-[10px] text-fg-muted"
+                >{{ tab.count }}</span
+              >
+            </UiButton>
+          </UiTabs>
+
+          <!-- Labelled at every width (the v1 icon-only phone variant failed axe button-name). -->
+          <UiButton
+            data-hero="item"
+            data-testid="mydeals.add-deal"
+            @click="$router.push('/analyze')"
+            class="font-bold shadow-glow-primary"
           >
-        </UiButton>
-      </UiTabs>
+            <i class="pi pi-plus" aria-hidden="true"></i>
+            <span>Add Deal</span>
+          </UiButton>
+        </div>
 
-      <!-- Labelled at every width (the v1 icon-only phone variant failed axe button-name). -->
-      <UiButton
-        data-testid="mydeals.add-deal"
-        @click="$router.push('/analyze')"
-        class="ml-auto font-bold shadow-glow-primary"
-      >
-        <i class="pi pi-plus" aria-hidden="true"></i>
-        <span>Add Deal</span>
-      </UiButton>
-    </div>
+        <!-- Live figures for the section in view -->
+        <dl data-hero="item" data-testid="mydeals.figures" class="mt-4 flex flex-wrap gap-x-8 gap-y-2">
+          <div class="flex flex-col">
+            <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-muted">Deals in view</dt>
+            <dd v-count-up class="numeric font-display text-xl leading-tight tracking-display text-fg">{{ viewFigures.count }}</dd>
+          </div>
+          <div class="flex flex-col">
+            <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-muted">Cash needed</dt>
+            <dd v-count-up class="numeric font-display text-xl leading-tight tracking-display text-warning">{{ formatCurrency(viewFigures.cashNeeded) }}</dd>
+          </div>
+          <div class="flex flex-col">
+            <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-muted">Avg cash on cash</dt>
+            <dd v-count-up class="numeric font-display text-xl leading-tight tracking-display text-fg">{{ viewFigures.avgCoc == null ? "—" : formatPercent(viewFigures.avgCoc) }}</dd>
+          </div>
+        </dl>
+      </header>
+    </UiTransition>
 
-    <!-- Board: rows of stages. The shell's <main> scrolls; nothing here does. -->
+    <!-- Board: the stage rail (see the header comment). -->
     <div class="flex-1 pb-safe-b">
-      <!--
-        Bare `v-reveal`, not `v-reveal.stagger` -- the two boards and their two
-        modals are the only reveals in the overhaul that do not stagger.
-        `/my-deals` is the route the frozen `deep-link-open` spec measures, and
-        it asserts *zero live tweens* 500 ms (of its own paused clock) after the
-        overlay appears. A stagger over the five stage rows runs
-        0.4 s + 4 x 0.06 s = 0.64 s and is still live at that mark; one reveal
-        of the container is 0.4 s and is not. The twin board in
-        `BoughtDeals.vue` is kept identical to this one -- no motion spec visits
-        that route, but the two boards are one pattern and should not drift.
-        Either way nothing inside `<VueDraggable>` is touched:
-        SortableJS owns that DOM.
-      -->
       <div
         v-reveal
-        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
+        data-testid="mydeals.rail"
+        class="mx-auto flex w-full max-w-[1920px] flex-col gap-4 px-4 pb-4 pt-4 md:px-6 lg:snap-x lg:snap-mandatory lg:flex-row lg:items-start lg:overflow-x-auto lg:overscroll-x-contain lg:pb-6"
       >
-        <UiCard
-          v-for="stage in stages"
+        <StageColumn
+          v-for="(stage, idx) in stages"
           :key="stage.id"
           :data-testid="`mydeals.stage.${stage.id}`"
-          tone="surface"
-          padding="sm"
-          class="w-full border-ui"
+          :name="stage.name"
+          :count="columns[stage.id]?.length || 0"
+          :index="idx + 1"
+          :total="stages.length"
+          :tone="stage.tone"
+          :terminal="idx === stages.length - 1"
+          class="lg:min-h-[24rem]"
         >
-          <!-- Row Header -->
-          <template #header>
-            <UiSectionHeader as="h3" class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-base [&_[data-part=title]]:tracking-display">
-              {{ stage.name }}
-              <UiChip class="ml-2 align-middle" size="sm">
-                <span class="numeric">{{ columns[stage.id]?.length || 0 }}</span>
-              </UiChip>
-            </UiSectionHeader>
-          </template>
-
           <!-- Draggable Area: Sortable breaks Vue DOM on many touch browsers; plain list for coarse pointer -->
-          <div>
-            <VueDraggable
-              v-if="useSortableBoard && columns[stage.id]"
-              :data-testid="`mydeals.draggable.${stage.id}`"
-              v-model="columns[stage.id]!"
-              group="deals"
-              @change="(e) => onDrop(e, stage.id)"
-              @add="(e) => onAdd(e, stage.id)"
-              :animation="150"
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
-              ghost-class="board-ghost"
-              chosen-class="board-chosen"
-              drag-class="board-drag"
-            >
-              <div
-                v-for="deal in columns[stage.id]"
-                :key="deal.id"
-                :data-testid="`mydeals.card.${deal.id}`"
-                @click="openDeal(deal)"
-                class="h-full"
-              >
-                <DealCard
-                  :deal="deal"
-                  @delete="confirmDelete(deal)"
-                  @moveToBought="moveToBought(deal)"
-                  @duplicate="duplicateDeal(deal)"
-                  class="h-full"
-                />
-              </div>
-            </VueDraggable>
+          <VueDraggable
+            v-if="useSortableBoard && columns[stage.id]"
+            :data-testid="`mydeals.draggable.${stage.id}`"
+            v-model="columns[stage.id]!"
+            group="deals"
+            @change="(e) => onDrop(e, stage.id)"
+            @add="(e) => onAdd(e, stage.id)"
+            :animation="150"
+            class="grid min-h-[100px] grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1"
+            ghost-class="board-ghost"
+            chosen-class="board-chosen"
+            drag-class="board-drag"
+          >
             <div
-              v-else-if="columns[stage.id]"
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
+              v-for="deal in columns[stage.id]"
+              :key="deal.id"
+              :data-testid="`mydeals.card.${deal.id}`"
+              @click="openDeal(deal)"
+              class="h-full"
             >
-              <div
-                v-for="deal in columns[stage.id]"
-                :key="deal.id"
-                :data-testid="`mydeals.card.${deal.id}`"
-                @click="openDeal(deal)"
+              <DealCard
+                :deal="deal"
+                @delete="confirmDelete(deal)"
+                @moveToBought="moveToBought(deal)"
+                @duplicate="duplicateDeal(deal)"
                 class="h-full"
-              >
-                <DealCard
-                  :deal="deal"
-                  @delete="confirmDelete(deal)"
-                  @moveToBought="moveToBought(deal)"
-                  @duplicate="duplicateDeal(deal)"
-                  class="h-full"
-                />
-              </div>
+              />
             </div>
+          </VueDraggable>
+          <div
+            v-else-if="columns[stage.id]"
+            class="grid min-h-[100px] grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1"
+          >
+            <div
+              v-for="deal in columns[stage.id]"
+              :key="deal.id"
+              :data-testid="`mydeals.card.${deal.id}`"
+              @click="openDeal(deal)"
+              class="h-full"
+            >
+              <DealCard
+                :deal="deal"
+                @delete="confirmDelete(deal)"
+                @moveToBought="moveToBought(deal)"
+                @duplicate="duplicateDeal(deal)"
+                class="h-full"
+              />
+            </div>
+          </div>
+          <template #empty>
             <!-- Compact: a phone column no longer reserves a 243 px well for nothing. -->
             <p
               v-if="!columns[stage.id]?.length"
@@ -653,8 +702,8 @@ console.groupEnd();
             >
               No deals in this stage
             </p>
-          </div>
-        </UiCard>
+          </template>
+        </StageColumn>
       </div>
     </div>
 
@@ -698,6 +747,8 @@ console.groupEnd();
                 v-model="editingDeal.address"
                 class="w-full bg-transparent text-xl md:text-2xl font-bold text-fg border-b border-transparent hover:border-line focus:border-primary outline-none transition-colors"
               />
+              <!-- Where the deal sits on the pipeline; display only — the stage select below is still the control. -->
+              <UiTimelineRail compact :items="modalRailItems" class="mt-2 max-w-md" />
             </div>
             <div class="flex items-center gap-2">
               <UiButton
