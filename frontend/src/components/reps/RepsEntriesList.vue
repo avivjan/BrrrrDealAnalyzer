@@ -111,8 +111,14 @@ function fmtTimeRange(start: string | null, end: string | null) {
     <UiEmptyState v-else-if="filtered.length === 0" data-testid="repsentries.empty" class="m-4">
       No entries match your filters.
     </UiEmptyState>
+    <!--
+      `v-reveal.stagger`, not a transition group: the key is not a stable id.
+      Only the first eight rows carry `data-reveal`, which keeps the stagger
+      inside the 500 ms entrance budget.
+    -->
     <ul
       v-else
+      v-reveal.stagger
       class="custom-scrollbar max-h-[480px] space-y-2 overflow-y-auto overscroll-contain p-3"
     >
       <UiCard
@@ -120,6 +126,7 @@ function fmtTimeRange(start: string | null, end: string | null) {
         v-for="(e, idx) in filtered"
         :key="(e.created_at || '') + idx"
         :data-testid="`repsentries.entry.${idx}`"
+        :data-reveal="idx < 8 ? '' : undefined"
         tone="surface"
         padding="sm"
         class="hover:bg-surface-muted"

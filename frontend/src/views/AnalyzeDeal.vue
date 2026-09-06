@@ -120,13 +120,23 @@ const saveDeal = async () => {
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
       <!-- Left: the inputs -->
       <div class="flex min-w-0 flex-col gap-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="min-w-0">
-            <h2 class="font-display text-2xl font-semibold tracking-display text-fg">New deal</h2>
-            <p class="text-sm text-fg-muted">Enter the numbers; the analysis runs when you save.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <UiTabs aria-label="Deal type">
+        <!-- UI v3: the hero header — eyebrow → title → the deal-type tabs. -->
+        <UiTransition preset="hero" appear>
+          <header class="flex flex-wrap items-end justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                Analyze
+              </p>
+              <UiSectionHeader
+                as="h2"
+                data-hero="title"
+                class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+              >
+                New deal
+                <template #subtitle>Enter the numbers; the analysis runs when you save.</template>
+              </UiSectionHeader>
+            </div>
+            <UiTabs data-hero="item" aria-label="Deal type" class="max-w-full">
               <UiButton
                 data-testid="analyze.type-brrrr"
                 variant="tab"
@@ -144,15 +154,15 @@ const saveDeal = async () => {
                 <i class="pi pi-dollar text-xs" aria-hidden="true"></i> FLIP
               </UiButton>
             </UiTabs>
-          </div>
-        </div>
+          </header>
+        </UiTransition>
 
         <DealInputsForm :deal="form" :deal-type="selectedType" surface="card" />
       </div>
 
       <!-- Right: the sticky rail -->
       <aside aria-label="Deal summary" class="flex flex-col gap-4 lg:sticky lg:top-4">
-        <UiSurface :level="1" padding="lg" class="flex flex-col gap-5">
+        <UiSurface v-tilt :level="1" padding="lg" class="flex flex-col gap-5">
           <div class="flex items-center justify-between gap-3">
             <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-fg-muted">Summary</span>
             <UiBadge :deal-type="selectedType" size="md">{{ selectedType }}</UiBadge>
@@ -161,7 +171,7 @@ const saveDeal = async () => {
           <dl class="grid grid-cols-3 gap-3">
             <div v-for="row in summary" :key="row.label" class="min-w-0">
               <dt class="truncate text-[11px] uppercase tracking-[0.1em] text-fg-muted">{{ row.label }}</dt>
-              <dd class="numeric mt-1 truncate text-lg font-semibold text-fg">{{ row.value }}</dd>
+              <dd v-count-up class="numeric mt-1 truncate text-lg font-semibold text-fg">{{ row.value }}</dd>
             </div>
           </dl>
 

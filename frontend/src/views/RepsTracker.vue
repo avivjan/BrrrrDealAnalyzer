@@ -63,57 +63,71 @@ function onSaved() {
 </script>
 
 <template>
-  <!-- UI v2 mount-only edits (plan Task 3.5): the shell owns the viewport, the sticky bar and the <main> landmark. -->
+  <!-- The shell owns the viewport, the sticky bar and the <main> landmark. -->
   <div class="min-h-full bg-page pb-safe-b">
-    <!-- Header -->
-    <header class="border-b border-line bg-surface">
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <div class="flex min-w-0 items-center gap-3">
-          <h1 class="flex min-w-0 items-center gap-2 text-lg font-bold tracking-tight text-fg md:text-xl">
-            <i class="pi pi-clock text-primary" aria-hidden="true"></i>
-            REPS Tracker · 2026
-          </h1>
-        </div>
-        <UiButton
-          data-testid="reps.people-toggle"
-          :variant="showPeoplePanel ? 'primary' : 'secondary'"
-          size="sm"
-          class="min-h-9 touch:min-h-11 shrink-0"
-          @click="showPeoplePanel = !showPeoplePanel"
-        >
-          <i class="pi pi-users" aria-hidden="true"></i> People
-        </UiButton>
-      </div>
+    <!--
+      UI v3: the hero header (eyebrow → title → controls, one ≤ 450 ms
+      sequence), on the same container as Bought Deals rather than a full-width
+      band. The user tabs and the People toggle are the two hero items.
+    -->
+    <UiTransition preset="hero" appear>
+      <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-0 flex-1">
+            <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              Time
+            </p>
+            <UiSectionHeader
+              as="h2"
+              data-hero="title"
+              class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+            >
+              <i class="pi pi-clock text-primary" aria-hidden="true"></i>
+              REPS Tracker · 2026
+            </UiSectionHeader>
+          </div>
 
-      <!-- Tabs -->
-      <div class="mx-auto max-w-6xl px-4 pb-3">
-        <UiTabs aria-label="REPS user" class="max-w-full">
-          <UiButton
-            v-for="u in REPS_USERS"
-            :key="u"
-            :data-testid="`reps.tab.${u}`"
-            variant="tab"
-            size="sm"
-            :active="store.activeUser === u"
-            class="min-h-9 touch:min-h-11 shrink-0"
-            @click="setUser(u)"
-          >
-            <i class="pi pi-user text-xs" aria-hidden="true"></i>
-            {{ REPS_USER_DISPLAY[u] }}
-            <span
-              v-if="store.timers[u].running"
-              class="ml-1 inline-block h-2 w-2 shrink-0 rounded-full bg-positive animate-pulse"
-              title="Stopwatch running"
-            ></span>
-            <span
-              v-else-if="store.timers[u].sessionStartedAt || store.timers[u].accumulatedMs > 0"
-              class="ml-1 inline-block h-2 w-2 shrink-0 rounded-full bg-warning"
-              title="Stopwatch paused"
-            ></span>
-          </UiButton>
-        </UiTabs>
-      </div>
-    </header>
+          <!-- Tabs -->
+          <UiTabs data-hero="item" aria-label="REPS user" class="max-w-full">
+            <UiButton
+              v-for="u in REPS_USERS"
+              :key="u"
+              :data-testid="`reps.tab.${u}`"
+              variant="tab"
+              size="sm"
+              :active="store.activeUser === u"
+              class="min-h-9 touch:min-h-11 shrink-0"
+              @click="setUser(u)"
+            >
+              <i class="pi pi-user text-xs" aria-hidden="true"></i>
+              {{ REPS_USER_DISPLAY[u] }}
+              <span
+                v-if="store.timers[u].running"
+                class="ml-1 inline-block h-2 w-2 shrink-0 rounded-full bg-positive animate-pulse"
+                title="Stopwatch running"
+              ></span>
+              <span
+                v-else-if="store.timers[u].sessionStartedAt || store.timers[u].accumulatedMs > 0"
+                class="ml-1 inline-block h-2 w-2 shrink-0 rounded-full bg-warning"
+                title="Stopwatch paused"
+              ></span>
+            </UiButton>
+          </UiTabs>
+
+          <div data-hero="item" class="flex shrink-0 items-center gap-2">
+            <UiButton
+              data-testid="reps.people-toggle"
+              :variant="showPeoplePanel ? 'primary' : 'secondary'"
+              size="sm"
+              class="min-h-9 touch:min-h-11 shrink-0"
+              @click="showPeoplePanel = !showPeoplePanel"
+            >
+              <i class="pi pi-users" aria-hidden="true"></i> People
+            </UiButton>
+          </div>
+        </div>
+      </header>
+    </UiTransition>
 
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-6">
       <!-- Config banner -->
@@ -164,8 +178,11 @@ function onSaved() {
         </UiButton>
       </div>
 
-      <!-- People panel (toggle) -->
-      <RepsPeopleManager v-if="showPeoplePanel" />
+      <!-- People panel (toggle). `slideUp`, not `drawer`: that preset is a scrim
+           plus a side panel; this is an inline card. -->
+      <UiTransition preset="slideUp" appear>
+        <RepsPeopleManager v-if="showPeoplePanel" />
+      </UiTransition>
 
       <!-- Entries list -->
       <RepsEntriesList
