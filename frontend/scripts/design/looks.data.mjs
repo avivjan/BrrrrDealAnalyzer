@@ -99,7 +99,7 @@ export const LOOKS = [
       line: '#2a3566', fg: '#eef0ff', fgMuted: '#c5c9e2',
       primary: '#8b7cff', primaryHover: '#a99dff', primaryFg: '#0c0a24', accent: '#a99dff', accent2: '#22d3ee',
       positive: '#3ddc97', negative: '#ff7f9c', warning: '#ffc857', ring: '#8b7cff',
-      glass: '#ffffff', glassLine: '#ffffff',
+      glass: '#111a3a', glassLine: '#eef0ff',
       chart: ['#8b7cff', '#22d3ee', '#f472b6', '#3ddc97', '#ffc857', '#60a5fa', '#fb923c', '#c084fc'],
     },
   },
