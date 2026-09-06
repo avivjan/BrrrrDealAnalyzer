@@ -71,7 +71,7 @@ function onSaved() {
       band. The user tabs and the People toggle are the two hero items.
     -->
     <UiTransition preset="hero" appear>
-      <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
+      <header class="mx-auto w-full max-w-6xl px-4 pt-4 md:pt-6">
         <div class="flex flex-wrap items-end gap-3">
           <div class="min-w-0 flex-1">
             <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
