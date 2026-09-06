@@ -14,10 +14,10 @@ import type { BoughtDealRes, AnalyzeDealReq } from "../types";
 import { ensureBrrrLegacyDefaults } from "../utils/dealUtils";
 import {
   resolveStage,
-  getSubStagesForStage,
   canAdvance,
   getMissingSubstages,
   isTerminalStage,
+  type BoughtDealStage,
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
@@ -365,16 +365,6 @@ const editingDealType = computed(
 const editingPipeline = computed(() =>
   pipelineStore.pipelineFor(editingDealType.value)
 );
-const editingStageConfig = computed(() =>
-  editingDeal.value
-    ? resolveStage(editingPipeline.value, editingDeal.value.boughtStage)
-    : null
-);
-const editingSubStages = computed(() =>
-  editingDeal.value
-    ? getSubStagesForStage(editingPipeline.value, editingDeal.value.boughtStage)
-    : []
-);
 const editingCanAdvance = computed(() =>
   editingDeal.value
     ? canAdvance(
@@ -396,6 +386,34 @@ const editingStageIndex = computed(() =>
       )
     : -1,
 );
+
+// UI v3 (4.4): the modal shows every stage's checklist; the current one is open.
+const modalOpenStage = ref<string | null>(null);
+watch(
+  () => editingDeal.value?.boughtStage,
+  (stageId) => {
+    modalOpenStage.value = stageId ?? null;
+  },
+);
+const modalRailItems = computed(() =>
+  editingPipeline.value.stages.map((s, i) => ({
+    id: s.id,
+    label: s.name,
+    state: (i < editingStageIndex.value
+      ? "done"
+      : i === editingStageIndex.value
+        ? "active"
+        : "todo") as "done" | "active" | "todo",
+  })),
+);
+const modalStageDone = (stage: BoughtDealStage) =>
+  stage.subStages.filter((s) => editingDeal.value?.completedSubstages[s.id] === true).length;
+/** Past: muted. Current, or a later stage already started: primary tint. */
+const modalStagePillClass = (stage: BoughtDealStage, idx: number) => {
+  if (idx === editingStageIndex.value) return "bg-primary/12 text-primary";
+  if (idx > editingStageIndex.value && modalStageDone(stage) > 0) return "bg-primary/12 text-primary";
+  return "bg-surface-3 text-fg-muted";
+};
 
 const toggleModalSubstage = (substageId: string) => {
   if (!editingDeal.value) return;
@@ -727,84 +745,18 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             context without making this a scroll port.
           -->
           <div ref="modalScrollContainer" class="flow-root">
-            <!-- Pipeline Progress Stepper -->
+            <!--
+              Pipeline progress (UI v3 4.4): the rail, then EVERY stage's
+              checklist — the current stage open, any other a click away — so a
+              task that matters two stages ahead is visible and tickable now.
+              The hooks and `toggleModalSubstage` are the same as before.
+            -->
             <UiCard tone="muted" class="mb-6">
               <UiSectionHeader as="h4" class="mb-3">
                 Pipeline Progress
-              </UiSectionHeader>
-              <div class="flex items-center gap-1">
-                <template
-                  v-for="(pStage, idx) in editingPipeline.stages"
-                  :key="pStage.id"
-                >
-                  <div
-                    class="flex items-center gap-1"
-                    :class="idx > 0 ? 'flex-1' : ''"
-                  >
-                    <div
-                      v-if="idx > 0"
-                      class="h-0.5 flex-1 rounded"
-                      :class="
-                        idx <= editingStageIndex ? 'bg-positive' : 'bg-line'
-                      "
-                    ></div>
-                    <div
-                      :data-testid="`boughtdeals.modal.stage-step.${pStage.id}`"
-                      class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-fast ease-standard"
-                      :class="
-                        idx < editingStageIndex
-                          ? 'bg-positive text-primary-fg'
-                          : pStage.id === editingDeal.boughtStage
-                            ? 'bg-primary text-primary-fg ring-2 ring-primary/30'
-                            : 'bg-line text-fg-muted'
-                      "
-                    >
-                      <i
-                        v-if="idx < editingStageIndex"
-                        class="pi pi-check text-[10px]"
-                        aria-hidden="true"
-                      ></i>
-                      <span v-else>{{ idx + 1 }}</span>
-                    </div>
-                  </div>
-                </template>
-              </div>
-              <UiStepper
-                :count="editingPipeline.stages.length"
-                compact
-                class="mt-2"
-              >
-                <span
-                  v-for="(pStage, idx) in editingPipeline.stages"
-                  :key="pStage.id"
-                  role="listitem"
-                  :data-testid="`boughtdeals.modal.stage-label.${pStage.id}`"
-                  :data-step="
-                    idx < editingStageIndex
-                      ? 'done'
-                      : pStage.id === editingDeal.boughtStage
-                        ? 'active'
-                        : 'todo'
-                  "
-                  :data-title="pStage.name"
-                  class="text-[9px] md:text-xs"
-                >
-                  {{ pStage.name }}
-                </span>
-              </UiStepper>
-            </UiCard>
-
-            <!-- Sub-stage Checklist for Current Stage -->
-            <UiCard
-              v-if="editingSubStages.length > 0"
-              tone="muted"
-              class="mb-6 border-primary/20 bg-primary/5"
-            >
-              <UiSectionHeader as="h4" class="mb-3">
-                {{ editingStageConfig?.name }} — Checklist
                 <template #actions>
                   <UiBadge
-                    v-if="editingCanAdvance"
+                    v-if="editingCanAdvance && !editingIsTerminal"
                     tone="positive"
                     class="font-semibold"
                   >
@@ -812,30 +764,73 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </UiBadge>
                 </template>
               </UiSectionHeader>
-              <div class="space-y-1">
-                <label
-                  v-for="sub in editingSubStages"
-                  :key="sub.id"
-                  :data-testid="`boughtdeals.modal.substage.${sub.id}`"
-                  class="flex items-center gap-3 cursor-pointer group -mx-2 rounded-ctl px-2 py-1.5 min-h-9 hover:bg-surface transition-colors duration-fast ease-standard"
+              <UiTimelineRail :items="modalRailItems" class="mb-4" />
+              <div data-testid="boughtdeals.modal.stages" class="space-y-1.5">
+                <div
+                  v-for="(pStage, idx) in editingPipeline.stages"
+                  :key="pStage.id"
+                  class="rounded-ctl border-ui bg-surface"
+                  :class="pStage.id === editingDeal.boughtStage ? 'border-primary/40' : 'border-line'"
                 >
-                  <input
-                    type="checkbox"
-                    :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
-                    :checked="editingDeal.completedSubstages[sub.id] === true"
-                    @change="toggleModalSubstage(sub.id)"
-                    class="h-4 w-4 shrink-0 rounded border-line accent-primary"
-                  />
-                  <span
-                    class="text-sm text-fg"
-                    :class="{
-                      'line-through text-fg-muted':
-                        editingDeal.completedSubstages[sub.id],
-                    }"
+                  <button
+                    type="button"
+                    :data-testid="`boughtdeals.modal.stage.${pStage.id}`"
+                    class="flex min-h-9 w-full items-center gap-2 px-3 py-2 text-left touch:min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl"
+                    :aria-expanded="modalOpenStage === pStage.id"
+                    @click="modalOpenStage = modalOpenStage === pStage.id ? null : pStage.id"
                   >
-                    {{ sub.label }}
-                  </span>
-                </label>
+                    <span
+                      class="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold"
+                      :class="
+                        idx < editingStageIndex
+                          ? 'bg-positive text-primary-fg'
+                          : pStage.id === editingDeal.boughtStage
+                            ? 'bg-primary text-primary-fg'
+                            : 'bg-line text-fg-muted'
+                      "
+                    >
+                      <i v-if="idx < editingStageIndex" class="pi pi-check text-[9px]" aria-hidden="true"></i>
+                      <span v-else class="numeric">{{ idx + 1 }}</span>
+                    </span>
+                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-fg">{{ pStage.name }}</span>
+                    <span class="numeric rounded-full px-1.5 py-0.5 text-[10px]" :class="modalStagePillClass(pStage, idx)">
+                      {{ pStage.subStages.length ? `${modalStageDone(pStage)}/${pStage.subStages.length}` : "—" }}
+                    </span>
+                    <i
+                      class="pi text-[10px] text-fg-muted"
+                      :class="modalOpenStage === pStage.id ? 'pi-chevron-down' : 'pi-chevron-right'"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                  <div
+                    v-if="modalOpenStage === pStage.id && pStage.subStages.length"
+                    class="space-y-1 border-t border-line px-2 pb-2 pt-1"
+                  >
+                    <label
+                      v-for="sub in pStage.subStages"
+                      :key="sub.id"
+                      :data-testid="`boughtdeals.modal.substage.${sub.id}`"
+                      class="flex items-center gap-3 cursor-pointer group rounded-ctl px-2 py-1.5 min-h-9 hover:bg-surface-2 transition-colors duration-fast ease-standard"
+                    >
+                      <input
+                        type="checkbox"
+                        :data-testid="`boughtdeals.modal.substage.${sub.id}.input`"
+                        :checked="editingDeal.completedSubstages[sub.id] === true"
+                        @change="toggleModalSubstage(sub.id)"
+                        class="h-4 w-4 shrink-0 rounded border-line accent-primary"
+                      />
+                      <span
+                        class="text-sm text-fg"
+                        :class="{
+                          'line-through text-fg-muted':
+                            editingDeal.completedSubstages[sub.id],
+                        }"
+                      >
+                        {{ sub.label }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
               <UiButton
                 v-if="editingCanAdvance && !editingIsTerminal"
@@ -875,15 +870,17 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                     label="SqFt"
                   />
-                  <div class="flex flex-col gap-1.5">
-                    <label for="boughtdeals-modal-stage" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
-                      >Pipeline Stage</label
-                    >
+                  <!-- The gated path (checklist → Advance) is the default; the raw select stays behind a disclosure. -->
+                  <details class="flex flex-col gap-1.5 [&[open]>summary_i]:rotate-90">
+                    <summary class="flex h-5 cursor-pointer list-none items-center gap-1 text-sm font-medium leading-5 text-fg [&::-webkit-details-marker]:hidden">
+                      <i class="pi pi-chevron-right text-[10px] text-fg-muted transition-transform duration-fast ease-standard" aria-hidden="true"></i>
+                      <label for="boughtdeals-modal-stage" class="cursor-pointer">Override stage</label>
+                    </summary>
                     <select
                       id="boughtdeals-modal-stage"
                       data-testid="boughtdeals.modal.stage-select"
                       v-model="editingDeal.boughtStage"
-                      class="ui-select"
+                      class="ui-select mt-1.5"
                     >
                       <option
                         v-for="s in editingPipeline.stages"
@@ -893,7 +890,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                         {{ s.name }}
                       </option>
                     </select>
-                  </div>
+                  </details>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <NumberInput
