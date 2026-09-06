@@ -44,7 +44,7 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 - [x] **5.1** (20 min) — Header with `hero`
 - [x] **5.2** (35 min) — Five stage columns on `lg+` via `StageColumn.vue` (rows below `lg`, touch fallback list kept); same `VueDragga
 - [x] **5.3** (15 min) — Modal header
-- [ ] **exit** (15 min) — Full gate 2
+- [x] **exit** (15 min) — Full gate 2 (132 passed; the 19 failures were one modal-click defect + REPS CLS, both fixed)
 
 ## Phases 6 + 7 — Liquidity line, REPS, Analyze (items 2, 3) · **≈ 1 h 50 wall-clock** (2 h 30 sequential)
 
@@ -53,7 +53,7 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 - [x] **6.3 ‖D** (35 min) — Page
 - [x] **7.1 ‖D** (25 min) — REPS
 - [x] **7.2 ‖D** (15 min) — Analyze
-- [ ] **exit** (15 min) — Full gate 3
+- [x] **exit** (15 min) — Full gate 3 (148 passed; 3 failures fixed in the review round; targeted re-run 21 passed)
 
 ## Phase 8 — Closure · **≈ 45 min**
 
@@ -62,4 +62,21 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 ## Review
 
-_(filled in at Phase 8)_
+**What changed (high level).**
+1. *Aurora Glass* — the dark look's glass token was white; now the look's surface. Scrollbar tracks transparent. No more light slab down the side.
+2. *Alignment* — one field anatomy (20 px label row, 42 px control row) across the four input primitives, `UiField`, the deal modals' raw fields and the liquidity forms; the required asterisk finally renders; an e2e check asserts every control row lines up within 1 px.
+3. *Navigation* — the back/home buttons on Liquidity, REPS and Analyze are gone, as are the two toolbar cross-links; the shell (sidebar, bottom nav, ⌘K) carries every route.
+4. *Cards* — `DealCard` is a verdict card (hero metric + ring against a target, one cash-needed bar with the buffer); `BoughtDealCard` is a progress card (rail, step k of n, ring, every stage's checklist as an accordion with the current stage open, Advance).
+5. *Boards* — both pages open with a hero header and live figures; stages are scroll-snapped rail columns on desktop (stacked on phones). Bought Deals adds a flow strip and goes inert on columns more than one stage away while dragging.
+6. *Bought flow* — stage moves (drag, card Advance, modal Advance) keep every tick; the modal shows every stage's checklist, current one open; the stage select stays as "Override stage".
+7. *Liquidity* — the chart is a line + area with a reserve floor and flow markers (no bars); the page has a hero, counting KPIs (Mercury status in the balance KPI), and an "Upcoming" sidebar.
+8. *Motion* — `hero` preset, `v-tilt`, `v-press` in every `UiButton`, `v-hover-lift` in KPI/stat tiles, transition groups on the id-keyed lists, count-up on page figures; four more primitives registered; drag states styled; a perf spec (CLS, long tasks, bundle) and a wider motion guard.
+9. *REPS / Analyze* — hero headers, counting figures, tilt on the summary rail, a fixed config notice (no layout shift).
+
+**Kept.** Every flow in the plan's Appendix B; every e2e hook; every network golden (unchanged); dialog copy; the backend (byte-identical).
+
+**Deviations from the plan.** The stage-rail connector is CSS, not a drawn SVG path (a horizontally scrolling rail has no single path to draw). The stage select is a visible override field, not a disclosure (the closed disclosure broke the recorded stage-select flow). `UiSegmented` was already registered in v2; the pipeline-template editor needed no visual pass. `v-flash` is not on the card hero (nothing inside a Sortable child may tween).
+
+**Environment.** WebKit and Mobile Safari could not run here (no WebKit build, download blocked); the browser suite ran on chromium, Mobile Chrome and chromium-motion. The clone was shallow and needed `git fetch --unshallow` for the gates' tags. The backend regression snapshots `openapi`/`models` differ only by a Pydantic 2.13 `pattern` key.
+
+**Final gate numbers.** _(gate 4 — filled below when the run completes)_
