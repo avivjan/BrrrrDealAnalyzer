@@ -29,6 +29,7 @@ describe('verify:ui pathspecs', () => {
       ':!.claude',
       ':!tasks',
       ':!.github',
+      ':!.mcp.json',
     ]);
   });
 

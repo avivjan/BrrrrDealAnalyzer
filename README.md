@@ -114,6 +114,31 @@ exercised on real Postgres), and `cd frontend && npm ci && npm test && npm run b
 To make a red run block the merge, require the two checks — **Backend tests** and
 **Frontend tests + build** — under *Settings → Branches → main*.
 
+## GitHub MCP for Claude Code
+
+`.mcp.json` at the repo root registers GitHub's official MCP server
+([github/github-mcp-server](https://github.com/github/github-mcp-server), remote
+edition) for anyone opening this repo in Claude Code, so the assistant can read
+and act on issues, pull requests, Actions runs and files through GitHub's API.
+It authenticates with a personal access token read from the `GITHUB_PAT`
+environment variable; nothing secret is committed.
+
+1. Create a fine-grained token at *GitHub → Settings → Developer settings →
+   Personal access tokens*, scoped to this repository, with at least
+   **Contents**, **Issues**, **Pull requests** and **Actions** (read/write as you
+   need).
+2. Export it in the shell you start Claude Code from, e.g. in `~/.zshrc`:
+   `export GITHUB_PAT=github_pat_...`
+3. Start `claude` in the repo and approve the project server when prompted;
+   `/mcp` shows it as connected.
+
+To install it user-wide instead of per project (any directory), run once:
+
+```bash
+claude mcp add-json --scope user github \
+  '{"type":"http","url":"https://api.githubcopilot.com/mcp/","headers":{"Authorization":"Bearer '"$GITHUB_PAT"'"}}'
+```
+
 ## Adding an input to the deal form
 
 There are three places a user types deal numbers — the Analyze page, the My Deals

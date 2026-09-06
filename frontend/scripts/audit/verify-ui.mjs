@@ -63,6 +63,8 @@ export const G1_PATHSPEC = [
   // CI configuration: infrastructure, not app behaviour. The workflow only
   // runs the two suites and a build; nothing under it is imported by the app.
   ':!.github',
+  // Claude Code MCP server registration: tooling config, not app behaviour.
+  ':!.mcp.json',
 ];
 
 /** G2: frontend directories that hold behaviour rather than presentation. */
