@@ -55,6 +55,11 @@ export const G1_PATHSPEC = [
   // Nothing executable lives here either; `BackEnd/`, `runtime.txt` and
   // `.gitignore` stay frozen.
   ':!README.md',
+  // Working notes and agent instructions, in the same class as `docs/`:
+  // `.claude/CLAUDE.md` (added on main after v2) and `tasks/todo.md` (the UI v3
+  // checklist that file asks for). Nothing executable lives in either.
+  ':!.claude',
+  ':!tasks',
 ];
 
 /** G2: frontend directories that hold behaviour rather than presentation. */
