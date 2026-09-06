@@ -713,6 +713,34 @@ describe('v-count-up', () => {
     expect(el.textContent).toBe('$2,000');
   });
 
+  it('ignores a parent re-render that only echoes the tween\'s own text', () => {
+    state.motionOn = true;
+    const el = document.createElement('span');
+    el.textContent = '2';
+    document.body.append(el);
+    hook(vCountUp, 'mounted', el);
+
+    // A tween that has written one intermediate frame and is still running.
+    const to = vi.spyOn(gsap, 'to').mockImplementation(((target: unknown, vars: unknown) => {
+      const counter = target as { value: number };
+      const options = vars as { value: number; onUpdate?: () => void };
+      counter.value = 2.4;
+      options.onUpdate?.();
+      return undefined as never;
+    }) as never);
+    el.textContent = '3';
+    hook(vCountUp, 'updated', el);
+    expect(to).toHaveBeenCalledTimes(1);
+    const midway = el.textContent;
+    expect(midway).not.toBe('3');
+
+    // Vue re-renders the parent with the same vnode string: the text node is
+    // left as the tween wrote it. That is not a new value.
+    hook(vCountUp, 'updated', el);
+    expect(to).toHaveBeenCalledTimes(1);
+    expect(el.textContent).toBe(midway);
+  });
+
   it.each(['-', '∞', '$-'])('leaves %s exactly as rendered', (unparsable) => {
     state.motionOn = true;
     const { to } = stubTweens();
