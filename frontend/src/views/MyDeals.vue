@@ -509,18 +509,6 @@ console.groupEnd();
         <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
           My Deals
         </UiSectionHeader>
-        <UiButton
-          type="button"
-          data-testid="mydeals.bought-deals"
-          @click="$router.push('/bought-deals')"
-          variant="secondary"
-          size="sm"
-          class="min-h-9 touch:min-h-11 gap-2"
-          title="Open bought deals pipeline"
-        >
-          <i class="pi pi-arrow-circle-right" aria-hidden="true"></i>
-          <span class="hidden sm:inline">Bought Deals</span>
-        </UiButton>
       </div>
 
       <!-- Tabs -->

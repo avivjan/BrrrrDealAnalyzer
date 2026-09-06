@@ -144,9 +144,6 @@ const saveDeal = async () => {
                 <i class="pi pi-dollar text-xs" aria-hidden="true"></i> FLIP
               </UiButton>
             </UiTabs>
-            <UiIconButton data-testid="analyze.home" label="Home" size="md" @click="$router.push('/')">
-              <i class="pi pi-home" aria-hidden="true"></i>
-            </UiIconButton>
           </div>
         </div>
 

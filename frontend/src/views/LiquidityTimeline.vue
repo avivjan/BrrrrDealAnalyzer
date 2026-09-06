@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import type {
   LiquidityTransaction,
@@ -16,7 +15,6 @@ import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
 
-const router = useRouter()
 const store = useLiquidityStore()
 
 // Save payloads emitted by TransactionForm. Mirrors the discriminated
@@ -406,9 +404,6 @@ function showToast(msg: string) {
   <div class="mx-auto flex w-full max-w-[96rem] flex-col gap-4 px-3 py-4 text-fg sm:px-5 lg:px-6 lg:py-6">
     <!-- Toolbar -->
     <div class="flex flex-wrap items-center gap-2">
-      <UiIconButton data-testid="liquidity.back" size="md" title="Back" label="Back" @click="router.push('/')">
-        <i class="pi pi-arrow-left text-sm" aria-hidden="true"></i>
-      </UiIconButton>
       <h2 class="mr-auto min-w-0 truncate font-display text-xl font-semibold tracking-display text-fg">Liquidity Timeline</h2>
       <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
         <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">

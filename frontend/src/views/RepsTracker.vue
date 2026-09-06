@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useRepsStore } from '../stores/repsStore';
 import { REPS_USERS, REPS_USER_DISPLAY, type RepsUser } from '../types/reps';
 import RepsTimer from '../components/reps/RepsTimer.vue';
@@ -9,7 +8,6 @@ import RepsStats from '../components/reps/RepsStats.vue';
 import RepsEntriesList from '../components/reps/RepsEntriesList.vue';
 import RepsPeopleManager from '../components/reps/RepsPeopleManager.vue';
 
-const router = useRouter();
 const store = useRepsStore();
 
 const showModal = ref(false);
@@ -71,15 +69,6 @@ function onSaved() {
     <header class="border-b border-line bg-surface">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div class="flex min-w-0 items-center gap-3">
-          <UiIconButton
-            data-testid="reps.back"
-            label="Back"
-            size="md"
-            title="Back"
-            @click="router.push('/')"
-          >
-            <i class="pi pi-arrow-left" aria-hidden="true"></i>
-          </UiIconButton>
           <h1 class="flex min-w-0 items-center gap-2 text-lg font-bold tracking-tight text-fg md:text-xl">
             <i class="pi pi-clock text-primary" aria-hidden="true"></i>
             REPS Tracker · 2026

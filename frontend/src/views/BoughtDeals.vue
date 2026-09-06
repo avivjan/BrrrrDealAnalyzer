@@ -470,18 +470,6 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             {{ activeTab }}
           </UiBadge>
         </UiButton>
-        <UiButton
-          type="button"
-          data-testid="boughtdeals.my-deals"
-          @click="$router.push('/my-deals')"
-          variant="secondary"
-          size="sm"
-          class="min-h-9 touch:min-h-11 gap-2"
-          title="Back to active deal pipeline"
-        >
-          <i class="pi pi-th-large" aria-hidden="true"></i>
-          <span class="hidden sm:inline">My Deals</span>
-        </UiButton>
       </div>
     </div>
 
