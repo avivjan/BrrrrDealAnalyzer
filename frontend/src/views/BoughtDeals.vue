@@ -749,14 +749,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <UiCard tone="muted" class="md:col-span-2">
                 <label
                   for="boughtdeals-modal-task"
-                  class="text-xs text-fg-muted uppercase font-bold tracking-wider mb-2 block"
+                  class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                   >Current Task / Status</label
                 >
                 <textarea
                   id="boughtdeals-modal-task"
                   data-testid="boughtdeals.modal.task"
                   v-model="editingDeal.task"
-                  class="ui-textarea min-h-[168px] resize-none text-lg"
+                  class="ui-textarea min-h-[168px] resize-none text-base"
                   placeholder="What needs to be done?"
                 ></textarea>
               </UiCard>
@@ -771,15 +771,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                     label="SqFt"
                   />
-                  <div class="flex flex-col gap-1">
-                    <label for="boughtdeals-modal-stage" class="text-xs text-fg-muted font-medium"
+                  <div class="flex flex-col gap-1.5">
+                    <label for="boughtdeals-modal-stage" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                       >Pipeline Stage</label
                     >
                     <select
                       id="boughtdeals-modal-stage"
                       data-testid="boughtdeals.modal.stage-select"
                       v-model="editingDeal.boughtStage"
-                      class="ui-select text-sm"
+                      class="ui-select"
                     >
                       <option
                         v-for="s in editingPipeline.stages"
@@ -815,15 +815,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <!-- Quick Links & Additional Info -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-zillow" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-zillow" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Zillow Link</label
                   >
                   <input
                     id="boughtdeals-modal-zillow"
                     data-testid="boughtdeals.modal.zillow-link"
                     v-model="editingDeal.zillow_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="https://..."
                   />
                   <a
@@ -835,15 +835,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-pics" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-pics" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Photos Link</label
                   >
                   <input
                     id="boughtdeals-modal-pics"
                     data-testid="boughtdeals.modal.pics-link"
                     v-model="editingDeal.pics_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="Google Drive / Dropbox..."
                   />
                   <a
@@ -857,34 +857,34 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-design" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-design" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Overall Design</label
                   >
                   <input
                     id="boughtdeals-modal-design"
                     data-testid="boughtdeals.modal.overall-design"
                     v-model="editingDeal.overall_design"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Modern Farmhouse"
                   />
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-crime" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-crime" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Crime Rate</label
                   >
                   <input
                     id="boughtdeals-modal-crime"
                     data-testid="boughtdeals.modal.crime-rate"
                     v-model="editingDeal.crime_rate"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Low / B-"
                   />
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-contact" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-contact" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Contact Info</label
                   >
                   <textarea
@@ -892,19 +892,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     data-testid="boughtdeals.modal.contact"
                     v-model="editingDeal.contact"
                     rows="2"
-                    class="ui-textarea min-h-0 text-sm"
+                    class="ui-textarea min-h-[42px]"
                     placeholder="Agent / Owner details"
                   ></textarea>
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="boughtdeals-modal-niche" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-niche" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Niche</label
                   >
                   <input
                     id="boughtdeals-modal-niche"
                     data-testid="boughtdeals.modal.niche"
                     v-model="editingDeal.niche"
-                    class="ui-input text-sm"
+                    class="ui-input"
                   />
                 </div>
               </div>
@@ -923,7 +923,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 ref="analysisResultsEl"
                 v-if="currentAnalysis"
                 data-testid="boughtdeals.modal.results"
-                class="bg-surface-2 p-4 rounded-card border border-line mb-6"
+                class="bg-surface-2 p-4 rounded-card border-ui border-line mb-6"
               >
                 <UiSectionHeader as="h4" class="mb-3">
                   Analysis Results
@@ -1105,7 +1105,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <div class="mt-6">
               <label
                 for="boughtdeals-modal-notes"
-                class="text-xs text-fg-muted font-medium uppercase mb-2 block"
+                class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                 >Notes</label
               >
               <textarea
@@ -1113,7 +1113,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 data-testid="boughtdeals.modal.notes"
                 v-model="editingDeal.notes"
                 rows="4"
-                class="ui-textarea p-4 text-sm"
+                class="ui-textarea"
                 placeholder="Additional notes..."
               ></textarea>
             </div>
@@ -1137,7 +1137,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   </template>
                 </UiSectionHeader>
                 <div v-if="editingDeal.sold_comps && editingDeal.sold_comps.length > 0" class="space-y-3">
-                  <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                  <div :data-testid="`boughtdeals.sold-comp.${index}`" v-for="(comp, index) in editingDeal.sold_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                     <UiIconButton :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" label="Remove sold comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                     <div class="flex items-center gap-2 mb-1">
                       <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1172,7 +1172,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <!-- Flip Sale Comps -->
                 <div v-if="editingDealType === 'FLIP'">
                   <div v-if="(editingDeal as any).sale_comps && (editingDeal as any).sale_comps.length > 0" class="space-y-3">
-                    <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <div :data-testid="`boughtdeals.sale-comp.${index}`" v-for="(comp, index) in (editingDeal as any).sale_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                       <UiIconButton :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" label="Remove sale comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1190,7 +1190,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <!-- BRRRR Rent Comps -->
                 <div v-else>
                   <div v-if="editingDeal.rent_comps && editingDeal.rent_comps.length > 0" class="space-y-3">
-                    <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border border-line">
+                    <div :data-testid="`boughtdeals.rent-comp.${index}`" v-for="(comp, index) in editingDeal.rent_comps" :key="index" class="bg-surface p-2 rounded-ctl relative group border-ui border-line">
                       <UiIconButton :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" label="Remove rent comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />

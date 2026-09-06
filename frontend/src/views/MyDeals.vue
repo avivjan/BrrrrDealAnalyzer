@@ -767,57 +767,63 @@ console.groupEnd();
               >
                 <label
                   for="mydeals-modal-task"
-                  class="text-xs text-fg-muted uppercase font-bold tracking-wider mb-2 block"
+                  class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                   >Current Task / Status</label
                 >
                 <textarea
                   id="mydeals-modal-task"
                   data-testid="mydeals.modal.task"
                   v-model="editingDeal.task"
-                  class="ui-textarea min-h-[168px] resize-none text-lg"
+                  class="ui-textarea min-h-[168px] resize-none text-base"
                   placeholder="What needs to be done?"
                 ></textarea>
               </UiCard>
 
-              <!-- Basic Details -->
+              <!-- Basic Details: the property row, then the pipeline row — no placeholder cell -->
               <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                   <NumberInput
                     data-testid="mydeals.modal.sqft"
                     :model-value="editingDeal.sqft ?? null"
                     @update:model-value="(val) => (editingDeal!.sqft = val ?? undefined)"
                     label="SqFt"
                   />
-                  <div class="flex flex-col gap-1">
-                    <label for="mydeals-modal-stage" class="text-xs text-fg-muted font-medium">Stage</label>
-                    <select
-                      id="mydeals-modal-stage"
-                      data-testid="mydeals.modal.stage-select"
-                      v-model="editingDeal.stage"
-                      class="ui-select text-sm"
-                    >
-                      <option v-for="s in stages" :key="s.id" :value="s.id">
-                        {{ s.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
                   <NumberInput
                     data-testid="mydeals.modal.bedrooms"
                     :model-value="editingDeal.bedrooms ?? null"
                     @update:model-value="(val) => (editingDeal!.bedrooms = val ?? undefined)"
                     label="Beds"
                   />
-                  <div class="flex flex-col gap-1">
-                    <label for="mydeals-modal-section" class="text-xs text-fg-muted font-medium"
+                  <NumberInput
+                    data-testid="mydeals.modal.bathrooms"
+                    :model-value="editingDeal.bathrooms ?? null"
+                    @update:model-value="(val) => (editingDeal!.bathrooms = val ?? undefined)"
+                    label="Baths"
+                  />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label for="mydeals-modal-stage" class="flex h-5 items-center text-sm font-medium leading-5 text-fg">Stage</label>
+                    <select
+                      id="mydeals-modal-stage"
+                      data-testid="mydeals.modal.stage-select"
+                      v-model="editingDeal.stage"
+                      class="ui-select"
+                    >
+                      <option v-for="s in stages" :key="s.id" :value="s.id">
+                        {{ s.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label for="mydeals-modal-section" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                       >Section</label
                     >
                     <select
                       id="mydeals-modal-section"
                       data-testid="mydeals.modal.section"
                       v-model="editingDeal.section"
-                      class="ui-select text-sm"
+                      class="ui-select"
                     >
                       <option :value="1">Wholesale</option>
                       <option :value="2">Market</option>
@@ -825,31 +831,21 @@ console.groupEnd();
                     </select>
                   </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <NumberInput
-                    data-testid="mydeals.modal.bathrooms"
-                    :model-value="editingDeal.bathrooms ?? null"
-                    @update:model-value="(val) => (editingDeal!.bathrooms = val ?? undefined)"
-                    label="Baths"
-                  />
-                  <!-- Placeholder to align grid -->
-                  <div></div>
-                </div>
               </div>
             </div>
 
             <!-- Quick Links & Additional Info -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-zillow" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-zillow" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Zillow Link</label
                   >
                   <input
                     id="mydeals-modal-zillow"
                     data-testid="mydeals.modal.zillow-link"
                     v-model="editingDeal.zillow_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="https://..."
                   />
                   <a
@@ -861,15 +857,15 @@ console.groupEnd();
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-pics" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-pics" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Photos Link</label
                   >
                   <input
                     id="mydeals-modal-pics"
                     data-testid="mydeals.modal.pics-link"
                     v-model="editingDeal.pics_link"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="Google Drive / Dropbox..."
                   />
                   <a
@@ -883,34 +879,34 @@ console.groupEnd();
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-design" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-design" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Overall Design</label
                   >
                   <input
                     id="mydeals-modal-design"
                     data-testid="mydeals.modal.overall-design"
                     v-model="editingDeal.overall_design"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Modern Farmhouse"
                   />
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-crime" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-crime" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Crime Rate</label
                   >
                   <input
                     id="mydeals-modal-crime"
                     data-testid="mydeals.modal.crime-rate"
                     v-model="editingDeal.crime_rate"
-                    class="ui-input text-sm"
+                    class="ui-input"
                     placeholder="e.g. Low / B-"
                   />
                 </div>
               </div>
               <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-contact" class="text-xs text-fg-muted font-medium"
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-contact" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
                     >Contact Info</label
                   >
                   <textarea
@@ -918,17 +914,17 @@ console.groupEnd();
                     data-testid="mydeals.modal.contact"
                     v-model="editingDeal.contact"
                     rows="2"
-                    class="ui-textarea min-h-0 text-sm"
+                    class="ui-textarea min-h-[42px]"
                     placeholder="Agent / Owner details"
                   ></textarea>
                 </div>
-                <div class="flex flex-col gap-1">
-                  <label for="mydeals-modal-niche" class="text-xs text-fg-muted font-medium">Niche</label>
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-niche" class="flex h-5 items-center text-sm font-medium leading-5 text-fg">Niche</label>
                   <input
                     id="mydeals-modal-niche"
                     data-testid="mydeals.modal.niche"
                     v-model="editingDeal.niche"
-                    class="ui-input text-sm"
+                    class="ui-input"
                   />
                 </div>
               </div>
@@ -944,7 +940,7 @@ console.groupEnd();
               />
 
               <!-- Results Preview -->
-              <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-surface-2 p-4 rounded-card border border-line mb-6">
+              <div ref="analysisResultsEl" v-if="currentAnalysis" data-testid="mydeals.modal.results" class="bg-surface-2 p-4 rounded-card border-ui border-line mb-6">
                   <UiSectionHeader as="h4" class="mb-3">Analysis Results</UiSectionHeader>
                   <!--
                     The reveal goes on the tile grid, never on the panel above
@@ -1040,7 +1036,7 @@ console.groupEnd();
             <div class="mt-6">
               <label
                 for="mydeals-modal-notes"
-                class="text-xs text-fg-muted font-medium uppercase mb-2 block"
+                class="mb-2 block text-xs font-semibold uppercase tracking-wider text-fg-muted"
                 >Notes</label
               >
               <textarea
@@ -1048,7 +1044,7 @@ console.groupEnd();
                 data-testid="mydeals.modal.notes"
                 v-model="editingDeal.notes"
                 rows="4"
-                class="ui-textarea p-4 text-sm"
+                class="ui-textarea"
                 placeholder="Additional notes..."
               ></textarea>
             </div>
@@ -1091,7 +1087,7 @@ console.groupEnd();
                     v-for="(comp, index) in editingDeal.sold_comps"
                     :key="index"
                     :data-testid="`mydeals.sold-comp.${index}`"
-                    class="bg-surface p-2 rounded-ctl relative group border border-line"
+                    class="bg-surface p-2 rounded-ctl relative group border-ui border-line"
                   >
                     <UiIconButton
                       :data-testid="`mydeals.sold-comp.${index}.delete`"
@@ -1178,7 +1174,7 @@ console.groupEnd();
                         v-for="(comp, index) in (editingDeal as any).sale_comps"
                         :key="index"
                         :data-testid="`mydeals.sale-comp.${index}`"
-                        class="bg-surface p-2 rounded-ctl relative group border border-line"
+                        class="bg-surface p-2 rounded-ctl relative group border-ui border-line"
                       >
                          <UiIconButton
                           :data-testid="`mydeals.sale-comp.${index}.delete`"
@@ -1213,7 +1209,7 @@ console.groupEnd();
                     v-for="(comp, index) in editingDeal.rent_comps"
                     :key="index"
                     :data-testid="`mydeals.rent-comp.${index}`"
-                    class="bg-surface p-2 rounded-ctl relative group border border-line"
+                    class="bg-surface p-2 rounded-ctl relative group border-ui border-line"
                   >
                     <UiIconButton
                       :data-testid="`mydeals.rent-comp.${index}.delete`"
