@@ -517,12 +517,19 @@ function formatLike(template: string, value: number): string {
  * a number wrapped in markup (an icon, a nested `<span>`) is left alone rather
  * than flattened. See `isSingleTextNode`.
  */
+/** The last string the tween itself wrote, per element (see `updated`). */
+const countWritten = new WeakMap<HTMLElement, string>();
+
 export const vCountUp: ObjectDirective<HTMLElement> = {
   mounted(el) {
     countText.set(el, el.textContent ?? '');
   },
   updated(el) {
     const target = el.textContent ?? '';
+    // A parent re-render mid-tween leaves the tween's own intermediate text in
+    // place (Vue rewrites only a string that changed), so it is not a new
+    // value: without this the count would latch onto the half-way number.
+    if (target === countWritten.get(el)) return;
     const previous = countText.get(el) ?? '';
     countText.set(el, target);
     if (!motionEnabled()) return;
@@ -545,9 +552,12 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       ease: EASE.standard,
       overwrite: 'auto',
       onUpdate: () => {
-        el.textContent = formatLike(target, counter.value);
+        const text = formatLike(target, counter.value);
+        countWritten.set(el, text);
+        el.textContent = text;
       },
       onComplete: () => {
+        countWritten.set(el, target);
         el.textContent = target;
       },
     });
@@ -558,6 +568,7 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       gsap.killTweensOf(counter);
       counters.delete(el);
     }
+    countWritten.delete(el);
     release(el, COUNT_UP);
   },
 };

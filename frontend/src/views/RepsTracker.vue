@@ -130,11 +130,17 @@ function onSaved() {
     </UiTransition>
 
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-6">
-      <!-- Config banner -->
+      <!--
+        Config banner. Fixed above the bottom edge (clear of the phone nav)
+        rather than in flow: it arrives after the status fetch, and in flow it
+        pushed the whole page down — the one layout shift the perf gate found here.
+      -->
+      <UiTransition preset="slideUp" appear>
       <div
         v-if="store.configStatus && !isConfigured"
         data-testid="reps.config-banner"
-        class="rounded-card border border-warning/40 bg-warning/10 p-4 text-sm text-fg"
+        role="status"
+        class="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 mx-auto max-w-2xl rounded-card border border-warning/40 bg-surface p-4 text-sm text-fg shadow-3 lg:bottom-4"
       >
         <div class="mb-1 flex items-center gap-2 font-semibold">
           <i class="pi pi-exclamation-triangle text-warning" aria-hidden="true"></i> REPS feature is not connected yet
@@ -144,6 +150,7 @@ function onSaved() {
           See <code class="rounded-ctl bg-warning/20 px-1 tabular">REPS_README.md</code> for setup instructions.
         </div>
       </div>
+      </UiTransition>
 
       <!-- Top row: timer + stats -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">

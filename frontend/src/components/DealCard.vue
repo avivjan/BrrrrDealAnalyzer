@@ -271,7 +271,6 @@ const cashNeededShare = computed(() => {
     <div data-part="hero" class="mb-3 flex items-center gap-3">
       <div class="min-w-0 flex-1">
         <span
-          v-flash
           class="numeric font-display text-2xl font-semibold leading-none tracking-display"
           :class="heroToneClass"
         >{{ heroText }}</span>

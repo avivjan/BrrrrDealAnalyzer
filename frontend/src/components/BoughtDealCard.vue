@@ -307,17 +307,16 @@ const onToggleSubstage = (substageId: string) => {
       </div>
     </div>
 
-    <!-- Advance: the view moves the deal (4.0), keeping every tick -->
-    <UiButton
+    <!-- Advance: the view moves the deal (4.0), keeping every tick. A native button: UiButton carries v-press, and nothing inside a Sortable child may tween. -->
+<button
       v-if="canAdvanceNow"
+      type="button"
       data-testid="boughtcard.advance"
-      size="sm"
-      block
-      class="mt-2"
+      class="mt-2 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-ctl bg-primary px-4 text-sm font-medium text-primary-fg transition-[background-color,box-shadow] duration-fast ease-standard hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch:min-h-11"
       @click.stop="emit('advance', deal.id)"
     >
       Advance →
-    </UiButton>
+    </button>
 
     <!-- Post-purchase metrics -->
     <div data-part="metrics" class="numeric mt-3 grid grid-cols-2 gap-x-2 gap-y-2 border-t border-line pt-2 text-xs text-fg-muted">

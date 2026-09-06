@@ -294,6 +294,7 @@ const openDeal = (deal: BoughtDealRes) => {
   const clone = JSON.parse(JSON.stringify(deal)) as BoughtDealRes;
   ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
+  modalOpenStage.value = clone.boughtStage;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
@@ -870,17 +871,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     "
                     label="SqFt"
                   />
-                  <!-- The gated path (checklist → Advance) is the default; the raw select stays behind a disclosure. -->
-                  <details class="flex flex-col gap-1.5 [&[open]>summary_i]:rotate-90">
-                    <summary class="flex h-5 cursor-pointer list-none items-center gap-1 text-sm font-medium leading-5 text-fg [&::-webkit-details-marker]:hidden">
-                      <i class="pi pi-chevron-right text-[10px] text-fg-muted transition-transform duration-fast ease-standard" aria-hidden="true"></i>
-                      <label for="boughtdeals-modal-stage" class="cursor-pointer">Override stage</label>
-                    </summary>
+                  <!-- The gated path (checklist → Advance) is the primary one; this select is the override and stays visible. -->
+                  <div class="flex flex-col gap-1.5">
+                    <label for="boughtdeals-modal-stage" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
+                      >Override stage</label
+                    >
                     <select
                       id="boughtdeals-modal-stage"
                       data-testid="boughtdeals.modal.stage-select"
                       v-model="editingDeal.boughtStage"
-                      class="ui-select mt-1.5"
+                      class="ui-select"
                     >
                       <option
                         v-for="s in editingPipeline.stages"
@@ -890,7 +890,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                         {{ s.name }}
                       </option>
                     </select>
-                  </details>
+                  </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <NumberInput

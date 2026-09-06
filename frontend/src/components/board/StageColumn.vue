@@ -49,8 +49,8 @@ const rootClass = computed(() =>
 
 <template>
   <section :class="rootClass" :data-stage-index="index" :aria-label="name">
-    <!-- Header node on the rail. Sticky inside the column so the name stays put while the column scrolls. -->
-    <header class="sticky top-0 z-10 rounded-t-card border-b border-line bg-surface/95 px-3 pb-2 pt-3">
+    <!-- Header node on the rail. -->
+    <header class="relative rounded-t-card border-b border-line bg-surface px-3 pb-2 pt-3">
       <!-- Connector to the next column (lg+ only): the rail is these segments joined end to end. -->
       <span
         v-if="!isLast"
