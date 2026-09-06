@@ -28,6 +28,7 @@ describe('verify:ui pathspecs', () => {
       ':!README.md',
       ':!.claude',
       ':!tasks',
+      ':!.github',
     ]);
   });
 
