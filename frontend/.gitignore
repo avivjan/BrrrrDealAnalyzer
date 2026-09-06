@@ -27,3 +27,6 @@ dist-ssr
 test-results/
 playwright-report/
 e2e/reports/last-run.json
+
+# Vitest coverage output (CI writes it to the runner's temp dir; local runs here)
+coverage/

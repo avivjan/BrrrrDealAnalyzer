@@ -133,6 +133,29 @@ two repository secrets under *Settings → Secrets and variables → Actions*:
 `NIGHTLY_MAIL_USERNAME` (the sending Gmail address) and `NIGHTLY_MAIL_PASSWORD`
 (a Gmail app password for it). Without them the job fails with a clear message.
 
+The report is built by the `.github/scripts/nightly/` package from the Playwright
+JSON report plus the backend and frontend JUnit XML and coverage files the CI jobs
+upload when called from the nightly. Besides the session summary it explains
+every skipped test against the allow-list in `.github/nightly/known_skips.json`
+(a skip reason that is not listed, a skipped test without a `test.skip(...)`
+reason, or a count above the expected one is flagged at the top under
+*Anomalies*), breaks the backend and frontend suites down, and draws trend
+charts over the last runs. One JSON record per run is appended to
+`history.jsonl` on the orphan branch `nightly-history`, which the email job
+creates on its first run and pushes to with the workflow token. To preview the
+email locally without sending anything:
+
+```bash
+python3 .github/scripts/nightly/make_preview_fixtures.py          # writes .github/scripts/nightly/out/{pass,fail}
+python3 .github/scripts/nightly_e2e_email.py --playwright .github/scripts/nightly/out/fail/report.json \
+  --history .github/scripts/nightly/out/fail/history.jsonl --write-html /tmp/nightly.html --no-send
+python3 -m unittest discover -s .github/scripts/nightly/tests -t .github/scripts   # the package's own tests
+```
+
+Adding a Playwright spec that skips on some projects means adding (or bumping)
+its reason in `known_skips.json` in the same PR, otherwise the next nightly
+flags it.
+
 ## Adding an input to the deal form
 
 There are three places a user types deal numbers — the Analyze page, the My Deals
