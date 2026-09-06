@@ -35,3 +35,4 @@ Plan: `docs/plans/2026-09-05-ui-v2-plan.md` (inline execution). One line per fin
 | 5.1 full FCS on the final tree | 35356e7 | `verify:ui --phase` PASS: G1 G2 G-HOVER G8 G6 (84 files / 1275 tests) G5/G7 (211 passed, 143 skipped, 0 failed, 5 projects, 7.0 min) GOLDEN-POLICY (18) BACKEND; ADVISORY G3 880 / G4 57 / G4b 37. Compare phase5-final → v2-final: 149 passed→passed, 4 skipped→passed, 152 added, 0 failures | report archived as `e2e/reports/v2-final.json` (Golden update) |
 | 5.2 quality snapshot | (next commit) | `docs/ui-overhaul/v2-quality-snapshot.md` | Lighthouse not run (no launcher); CLS 0.031 measured via PerformanceObserver |
 | 5.3 docs | befa9c8 | README UI v2 section, decisions §9–11, device checklist v2 | real-device pass left for the user |
+| **Phase 4 + 5 exit** | eb9d7fe | single full-suite run (user asked to finish in one go): PASS across all gates; review MERGEABLE WITH FIXES → fixes landed in 35356e7 | tag `ui-v2-p5`; PR v2 → main |
