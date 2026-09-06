@@ -52,7 +52,8 @@ function formatDate(iso: string): string {
       No transactions on this date.
     </div>
 
-    <div v-else class="space-y-1.5">
+    <!-- Rows enter, leave and reflow (id-keyed); the group is inert under reduced motion. -->
+    <UiTransitionGroup v-else preset="listItem" tag="div" class="space-y-1.5">
       <div
         v-for="txn in bucket.transactions"
         :key="txn.id"
@@ -102,6 +103,6 @@ function formatDate(iso: string): string {
           </UiIconButton>
         </div>
       </div>
-    </div>
+    </UiTransitionGroup>
   </div>
 </template>

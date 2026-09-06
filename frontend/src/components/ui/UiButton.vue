@@ -97,11 +97,14 @@ const rootClass = computed(() =>
   ),
 );
 
+// `v-press` on the root (below) is the one press language for every button: a 0.97 scale on
+// pointerdown, a no-op under reduced motion, and never inside a VueDraggable (cards use UiIconButton).
 const isTab = computed(() => props.variant === "tab");
 </script>
 
 <template>
   <button
+    v-press
     data-ui="button"
     :type="type"
     :role="isTab ? 'tab' : undefined"

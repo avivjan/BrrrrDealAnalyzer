@@ -81,7 +81,7 @@ const valueClass = computed(() =>
 </script>
 
 <template>
-  <div data-ui="stat-tile" :class="rootClass" v-bind="passthrough()">
+  <div v-hover-lift data-ui="stat-tile" :class="rootClass" v-bind="passthrough()">
     <span
       v-if="$slots.label || label"
       data-part="label"

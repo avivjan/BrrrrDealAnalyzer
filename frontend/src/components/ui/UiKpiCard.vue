@@ -54,7 +54,7 @@ const deltaClass = computed(() => cn("numeric text-xs", DELTA_TONES[props.tone])
 </script>
 
 <template>
-  <div data-ui="kpi-card" :class="rootClass" v-bind="passthrough()">
+  <div v-hover-lift data-ui="kpi-card" :class="rootClass" v-bind="passthrough()">
     <div class="flex items-center justify-between gap-2">
       <span data-part="label" class="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-muted">
         <slot name="label">{{ label }}</slot>

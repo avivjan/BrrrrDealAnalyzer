@@ -230,7 +230,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
           <div class="text-[10px] numeric text-fg-muted">{{ activeRecurringRules.length }}</div>
         </template>
       </UiSectionHeader>
-      <div class="space-y-1.5">
+      <UiTransitionGroup preset="listItem" tag="div" class="space-y-1.5">
         <div
           v-for="rule in activeRecurringRules"
           :key="rule.id"
@@ -273,7 +273,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
             </div>
           </div>
         </div>
-      </div>
+      </UiTransitionGroup>
     </UiCard>
   </div>
 </template>
