@@ -463,3 +463,66 @@ is `docs/plans/2026-09-05-ui-v2-progress.md`. Rulings made while executing:
 11. **Screenshot review artifacts were dropped** at the user's request; phases 4
    and 5 ran without review stops and their full-suite runs were merged into one.
 
+## 12. UI v3 rulings (2026-09-06)
+
+Plan: `docs/plans/2026-09-06-ui-v3-plan.md`; progress:
+`docs/plans/2026-09-06-ui-v3-progress.md`. The six requests, the seventh added
+on review, and the root causes are in the plan's Context; these are the rulings
+the work produced.
+
+1. **Aurora dark glass was white.** `looks.data.mjs` gave Aurora's dark block
+   `glass: '#ffffff'` while every other look uses a dark glass; at 60 % alpha
+   the sidebar, topbar and toolbars read as a light slab. Now `#111a3a`
+   (the look's surface). Scrollbar tracks are transparent for the same reason.
+2. **One field anatomy.** Label row exactly 20 px (`h-5`), control row
+   `min-h-[42px]` (on `.ui-input`/`.ui-select`), `gap-1.5` — in the four input
+   primitives, `UiField`, the raw modal fields and the liquidity forms. The
+   slider's value box moved into the control row; the days-until-refi toggle
+   became a 20 px text control. The never-compiling `after:content-['*']`
+   required marker (v1 item 19) is a span + sr-only text. Proved by
+   `e2e/checks/alignment.spec.ts` (tops and heights within 1 px per row).
+3. **No back or home buttons.** The shell owns navigation (sidebar, bottom nav,
+   ⌘K); the toolbar cross-links between the two boards went with them. One
+   `Golden update:` dropped `liquidity.back` from a width annotation.
+4. **Stage moves keep every tick (the seventh request).** Every stage's
+   checklist is on the card and in the modal, current stage open, any other a
+   click away, every box on the same hook and the same toggle. Drag, the card's
+   Advance and the modal's Advance route through the generic `updateBoughtDeal`
+   PUT with `completedSubstages` untouched; the frozen store actions that reset
+   the map are no longer called. No recorded request body changed (the modal
+   path already sent the map; drag records no golden). Ticks are kept on moves
+   back as well — history is never wiped.
+5. **Two cards, two objects.** `DealCard` is a verdict card (hero metric with a
+   ring against a target, one cash-needed bar with the buffer as a hatched
+   extension); `BoughtDealCard` is a progress card (mini rail, step k of n,
+   ring for the current stage, the all-stage accordion, Advance). Cards inside
+   `VueDraggable` get CSS hover only; no GSAP, no `v-tilt`, no reveal.
+6. **Boards are rails.** `components/board/StageColumn.vue` renders a stage as
+   a numbered node with a CSS connector to the next; on `lg+` the columns
+   scroll-snap sideways inside the page, below `lg` they stack as before. The
+   connector is CSS, not a drawn SVG path: a horizontally scrolling rail has no
+   single path to draw, and a per-column segment needs nothing to release.
+   During a drag, columns more than one stage away go inert so the ±1 rule is
+   visible before the drop; the alert stays as the fallback.
+7. **Motion attached, budget kept.** `hero` preset (eyebrow → title → items,
+   ≤ 450 ms in the slowest look), `v-tilt` (hover-only, one rAF per move, no
+   tween on move), `v-press` on every `UiButton`, `v-hover-lift` on
+   `UiKpiCard`/`UiStatTile`, `UiTransitionGroup` on the id-keyed liquidity
+   lists only (comps and REPS entries are index-keyed and stay plain).
+   `UiTooltip`, `UiSparkline`, `UiProgressRing`, `UiTimelineRail` are now
+   registered; `UiDataTable` is still import-only.
+8. **Perf is a gate.** `e2e/checks/perf.spec.ts` measures CLS per route
+   (≤ 0.05), long tasks on the boards with 20 cards and during a chart pan
+   (none > 50 ms), and annotates the gzip bundle. Its first run, on the old
+   boards, failed CLS on `/my-deals` (0.60), `/bought-deals` and `/reps` — the
+   pages v3 rebuilt.
+9. **Environment facts, not decisions.** The clone was shallow (`ui-p0`
+   appeared to be outside `HEAD`'s lineage until `git fetch --unshallow`);
+   WebKit is not installable in the sandbox, so the browser suite ran on the
+   three Chromium projects and `playwright.config.ts` gained an env-gated
+   `PW_CHROMIUM_PATH`; the backend regression snapshots `openapi`/`models`
+   differ only by a `pattern` key Pydantic 2.13 emits for Decimal fields —
+   `BackEnd/` is byte-identical (G1) and pytest is green.
+10. **CLAUDE.md arrived on main mid-run.** `tasks/todo.md` carries the estimated
+    checklist it asks for; G1 excludes `.claude/` and `tasks/` as notes.
+
