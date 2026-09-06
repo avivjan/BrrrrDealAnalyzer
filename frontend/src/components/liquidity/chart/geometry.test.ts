@@ -3,13 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   DAY_WIDTH,
   PAD_LEFT,
+  areaPath,
   balanceRange,
   clampScroll,
   formatK,
   indexForOffsetX,
+  linePath,
   nextIndex,
   niceGridSteps,
   scrollToReveal,
+  splitAtZero,
   visibleRange,
   xForIndex,
   yForBalance,
@@ -72,5 +75,41 @@ describe("chart geometry", () => {
     expect(niceGridSteps(5, 5, 6)).toEqual([0]);
     expect(formatK(12.34)).toBe("12.3k");
     expect(formatK(1500)).toBe("1.5M");
+  });
+});
+
+describe("line + area paths", () => {
+  it("linePath: empty → '', one point → a lone M, two points → M then L", () => {
+    expect(linePath([])).toBe("");
+    expect(linePath([{ x: 1, y: 2 }])).toBe("M1.0,2.0");
+    expect(linePath([{ x: 1, y: 2 }, { x: 3.25, y: 4 }])).toBe("M1.0,2.0 L3.3,4.0");
+  });
+
+  it("areaPath: empty → '', otherwise the line closed down to the baseline and back", () => {
+    expect(areaPath([], 10)).toBe("");
+    expect(areaPath([{ x: 1, y: 2 }], 10)).toBe("M1.0,2.0 L1.0,10.0 L1.0,10.0 Z");
+    expect(areaPath([{ x: 1, y: 2 }, { x: 5, y: 4 }], 10)).toBe("M1.0,2.0 L5.0,4.0 L5.0,10.0 L1.0,10.0 Z");
+  });
+
+  it("splitAtZero: one run per sign, sharing the interpolated crossing point", () => {
+    expect(splitAtZero([])).toEqual([]);
+    const same = splitAtZero([{ x: 0, y: 0, value: 5 }, { x: 10, y: 5, value: 0 }]);
+    expect(same).toHaveLength(1);
+    expect(same[0]!.positive).toBe(true);
+    expect(same[0]!.points).toHaveLength(2);
+
+    const runs = splitAtZero([
+      { x: 0, y: 0, value: 10 },
+      { x: 10, y: 20, value: -10 },
+      { x: 20, y: 30, value: -20 },
+      { x: 30, y: 10, value: 20 },
+    ]);
+    expect(runs.map((r) => r.positive)).toEqual([true, false, true]);
+    expect(runs.map((r) => [r.first, r.last])).toEqual([[0, 0], [1, 2], [3, 3]]);
+    // The crossing between samples 0 and 1 sits halfway: it ends run 0 and starts run 1.
+    expect(runs[0]!.points).toEqual([{ x: 0, y: 0 }, { x: 5, y: 10 }]);
+    expect(runs[1]!.points[0]).toEqual({ x: 5, y: 10 });
+    expect(runs[1]!.points).toHaveLength(4);
+    expect(runs[2]!.points[0]).toEqual({ x: 25, y: 20 });
   });
 });

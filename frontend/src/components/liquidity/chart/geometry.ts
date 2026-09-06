@@ -132,3 +132,68 @@ export function formatDateLong(iso: string): string {
   const [, mo, dy] = parseDateParts(iso);
   return `${WEEKDAY_NAMES[weekday(iso)] ?? ""}, ${MONTH_NAMES[parseInt(mo, 10) - 1] ?? ""} ${parseInt(dy, 10)}`;
 }
+
+// ---------------------------------------------------------------------------
+// line + area (UI v3: the balance is one line with a filled area, no bars)
+// ---------------------------------------------------------------------------
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** A point that still knows the balance it was plotted from. */
+export interface Sample extends Point {
+  value: number;
+}
+
+/** One same-sign stretch of the series, with the sample indices it spans (inclusive). */
+export interface Run {
+  positive: boolean;
+  points: Point[];
+  first: number;
+  last: number;
+}
+
+const fmt = (n: number) => n.toFixed(1);
+
+/** `M x,y L x,y …` through the points; `''` for none. */
+export function linePath(points: readonly Point[]): string {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"}${fmt(p.x)},${fmt(p.y)}`).join(" ");
+}
+
+/** The line, closed straight down to `baseY` and back along it; `''` for none. */
+export function areaPath(points: readonly Point[], baseY: number): string {
+  if (points.length === 0) return "";
+  const first = points[0]!;
+  const last = points[points.length - 1]!;
+  return `${linePath(points)} L${fmt(last.x)},${fmt(baseY)} L${fmt(first.x)},${fmt(baseY)} Z`;
+}
+
+/**
+ * Split a polyline into runs of one sign (zero counts as positive). Where the
+ * sign flips between two samples the interpolated crossing point ends one run
+ * and starts the next, so their areas meet exactly on the zero line.
+ */
+export function splitAtZero(samples: readonly Sample[]): Run[] {
+  const runs: Run[] = [];
+  let run: Run | null = null;
+  for (let i = 0; i < samples.length; i += 1) {
+    const s = samples[i]!;
+    const positive = s.value >= 0;
+    if (run && run.positive !== positive) {
+      const a = samples[i - 1]!;
+      const t = a.value / (a.value - s.value);
+      const cross = { x: a.x + (s.x - a.x) * t, y: a.y + (s.y - a.y) * t };
+      run.points.push(cross);
+      run = { positive, points: [cross], first: i, last: i };
+      runs.push(run);
+    } else if (!run) {
+      run = { positive, points: [], first: i, last: i };
+      runs.push(run);
+    }
+    run.points.push({ x: s.x, y: s.y });
+    run.last = i;
+  }
+  return runs;
+}

@@ -145,4 +145,37 @@ describe("TimelineChart contract", () => {
     expect(wrapper.emitted("selectDay")).toEqual([["2026-10-01"]]);
     wrapper.unmount();
   });
+
+  it("draws the reserve floor only when reserveK is given (UI v3)", async () => {
+    // jsdom lays nothing out: give the container a size so the plot renders.
+    const proto = HTMLElement.prototype;
+    const size = (name: "clientWidth" | "clientHeight", value: number) =>
+      Object.defineProperty(proto, name, { configurable: true, get: () => value });
+    size("clientWidth", 800);
+    size("clientHeight", 400);
+    try {
+      const without = mountChart();
+      await without.vm.$nextTick();
+      expect(without.find('[data-part="balance-line"]').exists()).toBe(true);
+      expect(without.find('[data-part="reserve-line"]').exists()).toBe(false);
+      expect(without.find('[data-part="bar"]').exists()).toBe(false);
+      without.unmount();
+
+      const withReserve = mount(TimelineChart, {
+        props: { days: DAYS, globalMin: -3, globalMinDates: ["2026-09-05"], firstNegativeDate: "2026-09-05", reserveK: 10 },
+        attachTo: document.body,
+      });
+      await withReserve.vm.$nextTick();
+      expect(withReserve.find('[data-part="reserve-line"]').exists()).toBe(true);
+      expect(withReserve.findAll('[data-part="balance-area"]').length).toBeGreaterThan(0);
+      // Four days carry a net flow: four markers, none for the flat days.
+      const flowDays = DAYS.map((d) => ({ ...d, transactions: d.net_k !== 0 ? [{ id: d.date } as never] : [] }));
+      await withReserve.setProps({ days: flowDays });
+      expect(withReserve.findAll('[data-part="flow-marker"]')).toHaveLength(4);
+      withReserve.unmount();
+    } finally {
+      Reflect.deleteProperty(proto, "clientWidth");
+      Reflect.deleteProperty(proto, "clientHeight");
+    }
+  });
 });

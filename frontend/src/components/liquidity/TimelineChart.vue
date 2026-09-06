@@ -18,11 +18,16 @@
  * that re-evaluates when `themeEpoch` changes — `chartTokens.test.ts` checks
  * that each of the 32 names is read exactly once in this file.
  *
+ * UI v3: the balance is drawn once — a line with a gradient area under it to
+ * the zero line (positive and negative runs split at each crossing), the
+ * reserve floor from settings as a dashed line + wash (`reserveK`, optional),
+ * and each day's flows as one marker on the line sized by |net|. No bars.
+ *
  * Geometry is pure (`./chart/geometry.ts`). No size, padding or transform
  * transition may be applied to this element or any ancestor: the plot is
  * re-measured from a ResizeObserver.
  */
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 
 import { chartToken } from '../../design/chartTokens'
 import { themeEpoch } from '../../design/theme'
@@ -35,20 +40,24 @@ import {
   PAD_LEFT,
   PAD_TOP,
   WEEKDAY_NAMES,
+  areaPath,
   balanceRange,
   clampScroll,
   formatDateLong,
   formatK,
   indexForOffsetX,
+  linePath,
   nextIndex,
   niceGridSteps,
   parseDateParts,
   scrollToCentre,
   scrollToReveal,
+  splitAtZero,
   visibleRange,
   weekday,
   xForIndex,
   yForBalance,
+  type Sample,
 } from './chart/geometry'
 
 const props = defineProps<{
@@ -56,6 +65,8 @@ const props = defineProps<{
   globalMin: number
   globalMinDates: string[]
   firstNegativeDate: string | null
+  /** Reserve floor in k; undefined = not drawn. */
+  reserveK?: number
 }>()
 
 const emit = defineEmits<{
@@ -156,10 +167,14 @@ interface DayShape {
   weekdayName: string
   hasTxns: boolean
   hovered: boolean
-  barTop: number
-  barHeight: number
-  positive: boolean
+  /** y of the balance on this day: where the flow marker sits. */
+  y: number
+  /** One marker per day with transactions, 3–7 px by |net| against the series' max. */
+  marker: { r: number; positive: boolean } | null
 }
+
+/** The largest |net| in the series, the scale for the flow markers. */
+const maxAbsNet = computed(() => props.days.reduce((m, d) => Math.max(m, Math.abs(d.net_k)), 0))
 
 /** Everything the template needs per visible day, computed once per render. */
 const shapes = computed<DayShape[]>(() => {
@@ -171,8 +186,7 @@ const shapes = computed<DayShape[]>(() => {
     const [yr, mo, dy] = parseDateParts(day.date)
     const monthKey = `${yr}-${mo}`
     const wd = weekday(day.date)
-    const balY = y(day.balance_k)
-    const positive = day.balance_k >= 0
+    const scale = maxAbsNet.value > 0 ? Math.abs(day.net_k) / maxAbsNet.value : 0
     out.push({
       i,
       x: x(i),
@@ -185,26 +199,64 @@ const shapes = computed<DayShape[]>(() => {
       weekdayName: WEEKDAY_NAMES[wd] ?? '',
       hasTxns: day.net_k !== 0,
       hovered: i === activeIndex.value,
-      barTop: positive ? Math.min(balY, baseY.value) : baseY.value,
-      barHeight: Math.abs(baseY.value - balY),
-      positive,
+      y: y(day.balance_k),
+      marker: day.transactions.length > 0 ? { r: 3 + 4 * scale, positive: day.net_k >= 0 } : null,
     })
     prevMonth = monthKey
   }
   return out
 })
 
-/** The running-balance line through the visible days (plus one each side, so it enters and leaves the frame). */
-const balancePath = computed(() => {
+interface LinePoint extends Sample {
+  i: number
+}
+
+/** The balance through the visible days (plus one each side, so the line enters and leaves the frame). */
+const linePoints = computed<LinePoint[]>(() => {
   const [first, last] = window_.value
-  if (last < first) return ''
+  if (last < first) return []
   const from = Math.max(0, first - 1)
   const to = Math.min(count.value - 1, last + 1)
-  let d = ''
+  const out: LinePoint[] = []
   for (let i = from; i <= to; i += 1) {
-    d += `${i === from ? 'M' : 'L'}${x(i).toFixed(1)},${y(props.days[i]!.balance_k).toFixed(1)} `
+    const value = props.days[i]!.balance_k
+    out.push({ i, x: x(i), y: y(value), value })
   }
-  return d.trim()
+  return out
+})
+
+const balancePath = computed(() => linePath(linePoints.value))
+
+/** Gradient ids, unique per chart instance. */
+const gid = useId()
+
+/**
+ * The area under the line, one path per same-sign run so a stretch above zero
+ * takes the inflow gradient and a stretch below takes the outflow one. The run
+ * holding the active day gets the hover pair.
+ */
+const areaRuns = computed(() => {
+  const pts = linePoints.value
+  const active = activeIndex.value
+  return splitAtZero(pts).map((run, k) => {
+    const hovered = active !== null && active >= pts[run.first]!.i && active <= pts[run.last]!.i
+    const fill = `url(#${gid}-${run.positive ? 'pos' : 'neg'}${hovered ? '-hover' : ''})`
+    return { key: k, d: areaPath(run.points, baseY.value), fill }
+  })
+})
+
+/** The reserve floor: a dashed line at `reserveK` and a wash between it and the zero line (both clipped to the plot). */
+const reserve = computed(() => {
+  const k = props.reserveK
+  if (k === undefined || !Number.isFinite(k)) return null
+  const lineY = y(k)
+  const clamped = Math.min(Math.max(lineY, PAD_TOP), plotBottom.value)
+  return {
+    lineY,
+    lineVisible: lineY >= PAD_TOP && lineY <= plotBottom.value,
+    bandY: Math.min(clamped, baseY.value),
+    bandHeight: Math.abs(baseY.value - clamped),
+  }
 })
 
 const minMarkers = computed(() => {
@@ -222,9 +274,6 @@ const crosshair = computed(() => {
   const day = props.days[idx]!
   return { y: y(day.balance_k), x: x(idx), label: formatK(day.balance_k), negative: day.balance_k < 0 }
 })
-
-const BAR_GAP = 2
-const barWidth = DAY_WIDTH - BAR_GAP * 2
 
 // ---------------------------------------------------------------------------
 // interaction
@@ -385,6 +434,30 @@ defineExpose({ centerOnToday })
     >
       <rect data-part="bg" x="0" y="0" :width="width" :height="height" :fill="C.bg" />
 
+      <!--
+        Area gradients, top to bottom. A positive run fades from the inflow fill
+        at the line down to nothing at zero; a negative run mirrors that with
+        the outflow pair. The run under the active day takes the hover pair.
+      -->
+      <defs>
+        <linearGradient :id="`${gid}-pos`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" :stop-color="C.inflowFill" />
+          <stop offset="1" :stop-color="C.inflowStroke" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient :id="`${gid}-pos-hover`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" :stop-color="C.inflowFillHover" />
+          <stop offset="1" :stop-color="C.inflowStrokeHover" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient :id="`${gid}-neg`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" :stop-color="C.outflowStroke" stop-opacity="0" />
+          <stop offset="1" :stop-color="C.outflowFill" />
+        </linearGradient>
+        <linearGradient :id="`${gid}-neg-hover`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" :stop-color="C.outflowStrokeHover" stop-opacity="0" />
+          <stop offset="1" :stop-color="C.outflowFillHover" />
+        </linearGradient>
+      </defs>
+
       <template v-if="count > 0 && width > 0">
         <!-- Negative region wash, behind everything -->
         <rect
@@ -394,6 +467,17 @@ defineExpose({ centerOnToday })
           :y="Math.max(zeroY, PAD_TOP)"
           :width="Math.max(0, width - PAD_LEFT)"
           :height="Math.max(0, Math.min(y(range.min), plotBottom) - Math.max(zeroY, PAD_TOP))"
+          :fill="C.reserveBand"
+        />
+
+        <!-- Below the reserve floor: the same wash between the floor and the zero line -->
+        <rect
+          v-if="reserve && reserve.bandHeight > 0"
+          data-part="reserve-band"
+          :x="PAD_LEFT"
+          :y="reserve.bandY"
+          :width="Math.max(0, width - PAD_LEFT)"
+          :height="reserve.bandHeight"
           :fill="C.reserveBand"
         />
 
@@ -446,27 +530,41 @@ defineExpose({ centerOnToday })
               stroke-width="1.5"
               stroke-dasharray="3 3"
             />
-            <circle v-if="s.hasTxns" :cx="s.x" :cy="plotBottom + 3" r="1.5" :fill="s.day.net_k > 0 ? C.netPositive : C.netNegative" />
-            <!-- Balance bar -->
-            <rect
-              data-part="bar"
-              :x="s.x - barWidth / 2"
-              :y="s.barTop"
-              :width="barWidth"
-              :height="Math.max(0, s.barHeight)"
-              rx="2"
-              :fill="s.positive ? (s.hovered ? C.inflowFillHover : C.inflowFill) : s.hovered ? C.outflowFillHover : C.outflowFill"
-              :stroke="s.positive ? (s.hovered ? C.inflowStrokeHover : C.inflowStroke) : s.hovered ? C.outflowStrokeHover : C.outflowStroke"
-              :stroke-width="s.hovered ? 1.5 : 0.5"
-            />
           </g>
         </g>
 
-        <!-- Zero line, on top of the bars -->
+        <!-- Area under the balance line, one path per same-sign run -->
+        <g data-part="balance-areas">
+          <path v-for="run in areaRuns" :key="run.key" data-part="balance-area" :d="run.d" :fill="run.fill" stroke="none" />
+        </g>
+
+        <!-- Zero line, on top of the area -->
         <line v-if="zeroVisible" data-part="zero-line" :x1="PAD_LEFT" :x2="width" :y1="zeroY" :y2="zeroY" :stroke="C.reserveLine" stroke-width="2" />
+
+        <!-- Reserve floor: dashed line + right-edge label -->
+        <g v-if="reserve && reserve.lineVisible" data-part="reserve-floor">
+          <line data-part="reserve-line" :x1="PAD_LEFT" :x2="width" :y1="reserve.lineY" :y2="reserve.lineY" :stroke="C.reserveLine" stroke-width="1.5" stroke-dasharray="6 4" />
+          <text :x="width - 6" :y="reserve.lineY - 5" text-anchor="end" font-size="9" font-weight="700" letter-spacing="0.08em" :fill="C.reserveLine">reserve</text>
+        </g>
 
         <!-- Running balance line -->
         <path v-draw-on data-part="balance-line" :d="balancePath" fill="none" :stroke="C.balanceDot" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+
+        <!-- Flow markers: one per day with transactions, sized by |net| -->
+        <g data-part="flow-markers">
+          <template v-for="s in shapes" :key="s.day.date">
+            <circle
+              v-if="s.marker"
+              data-part="flow-marker"
+              :cx="s.x"
+              :cy="s.y"
+              :r="s.marker.r"
+              :fill="s.marker.positive ? C.netPositive : C.netNegative"
+              :stroke="C.balanceDotCore"
+              stroke-width="1.5"
+            />
+          </template>
+        </g>
 
         <!-- Crosshair + y badge for the active day -->
         <g v-if="crosshair" data-part="crosshair">
