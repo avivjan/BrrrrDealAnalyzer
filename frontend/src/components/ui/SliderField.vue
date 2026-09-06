@@ -53,19 +53,32 @@ const inputId = useId();
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
-    <div class="flex items-center justify-between gap-2">
+  <div class="flex flex-col gap-1.5">
+    <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
       <label
         :for="inputId"
         data-part="label"
-        class="text-sm font-medium text-fg"
-        :class="{
-          'after:content-[\'*\'] after:ml-0.5 after:text-negative': required,
-        }"
-      >
-        {{ label }}
-      </label>
-      <div class="w-24">
+        class="text-sm font-medium leading-5 text-fg"
+      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+    </div>
+    <!--
+      Slider and number box share one control row, the same 42px row every
+      other field has, so a slider field sits level with the money and number
+      fields beside it in a grid. The box is the plain `.ui-input` — no smaller
+      padding or type size — for the same reason.
+    -->
+    <div data-part="control" class="flex min-h-[42px] items-center gap-3">
+      <div class="min-w-0 flex-1 px-1">
+        <Slider
+          data-part="slider"
+          v-model="sliderValue"
+          :min="thumbMin"
+          :max="thumbMax"
+          :step="step"
+          class="relative h-2 w-full cursor-pointer rounded-full bg-line"
+        />
+      </div>
+      <div class="w-24 shrink-0">
         <InputNumber
           data-part="input"
           :input-id="inputId"
@@ -77,20 +90,10 @@ const inputId = useId();
           :allowEmpty="true"
           :minFractionDigits="0"
           :maxFractionDigits="3"
-          inputClass="ui-input numeric px-2 py-1 text-right text-sm"
+          inputClass="ui-input numeric text-right"
           @input="(e: any) => emit('update:modelValue', e.value)"
         />
       </div>
-    </div>
-    <div class="px-1">
-      <Slider
-        data-part="slider"
-        v-model="sliderValue"
-        :min="thumbMin"
-        :max="thumbMax"
-        :step="step"
-        class="relative h-2 w-full cursor-pointer rounded-full bg-line"
-      />
     </div>
   </div>
 </template>

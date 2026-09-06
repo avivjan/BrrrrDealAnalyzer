@@ -127,11 +127,15 @@
   }
 
   /*
-   * A 44px row where there is no hover pointer to aim with. Left off the
+   * The control row of every field is one height, so boxes in the same grid
+   * row line up exactly: 42px (16px text × 1.5 line-height + 2 × 8px padding
+   * + 2 × 1px border) stated explicitly rather than left to the font, and a
+   * 44px row where there is no hover pointer to aim with. Left off the
    * textarea, which sets its own taller floor below.
    */
   .ui-input,
   .ui-select {
+    min-height: 42px;
     @apply touch:min-h-11;
   }
 

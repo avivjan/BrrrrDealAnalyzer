@@ -28,6 +28,42 @@ describe("SliderField", () => {
     expect(mountField().find('[data-part="label"]').text()).toBe("LTV");
   });
 
+  describe("the field anatomy", () => {
+    it("draws the label alone in the shared 20px row", () => {
+      const row = mountField().get('[data-part="label-row"]');
+      expect(row.classes()).toContain("h-5");
+      expect(row.find('[data-part="label"]').exists()).toBe(true);
+      // The number box used to sit up here and made the row taller than every
+      // other field's label row.
+      expect(row.find('[data-part="input"]').exists()).toBe(false);
+    });
+
+    it("puts the slider and the number box together in one 42px control row", () => {
+      const control = mountField().get('[data-part="control"]');
+      expect(control.classes()).toContain("min-h-[42px]");
+      expect(control.find('[data-part="slider"]').exists()).toBe(true);
+      expect(control.find('[data-part="input"]').exists()).toBe(true);
+    });
+
+    it("gives the number box the same box every other field has", () => {
+      const classes = box(mountField()).classes();
+      expect(classes).toContain("ui-input");
+      // No smaller padding or type size: the box must be the standard height.
+      expect(classes).not.toContain("text-sm");
+      expect(classes).not.toContain("py-1");
+      expect(classes).not.toContain("px-2");
+    });
+
+    it("marks a required field with an asterisk for the eye and a word for the ear", () => {
+      const wrapper = mountField({ required: true });
+      const marker = wrapper.get('label [data-part="required"]');
+      expect(marker.text()).toBe("*");
+      expect(marker.attributes("aria-hidden")).toBe("true");
+      expect(wrapper.get("label .sr-only").text()).toBe("required");
+      expect(mountField().find('[data-part="required"]').exists()).toBe(false);
+    });
+  });
+
   describe("the number box", () => {
     it("shows the bound value", () => {
       expect(box(mountField({ modelValue: 80 })).element.value).toBe("80");
