@@ -41,9 +41,9 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 ## Phase 5 — My Deals board (item 1) · **≈ 1 h 25 sequential**
 
-- [ ] **5.1** (20 min) — Header with `hero`
-- [ ] **5.2** (35 min) — Five stage columns on `lg+` via `StageColumn.vue` (rows below `lg`, touch fallback list kept); same `VueDragga
-- [ ] **5.3** (15 min) — Modal header
+- [x] **5.1** (20 min) — Header with `hero`
+- [x] **5.2** (35 min) — Five stage columns on `lg+` via `StageColumn.vue` (rows below `lg`, touch fallback list kept); same `VueDragga
+- [x] **5.3** (15 min) — Modal header
 - [ ] **exit** (15 min) — Full gate 2
 
 ## Phases 6 + 7 — Liquidity line, REPS, Analyze (items 2, 3) · **≈ 1 h 50 wall-clock** (2 h 30 sequential)
