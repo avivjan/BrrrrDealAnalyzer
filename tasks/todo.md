@@ -28,16 +28,16 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 ## Phase 3 — Two cards (item 1, 7) · **≈ 1 h wall-clock** (1 h 45 sequential)
 
-- [ ] **3.1 ‖C** (40 min) — `DealCard` → verdict card
-- [ ] **3.2 ‖C** (65 min) — `BoughtDealCard` → progress card
+- [x] **3.1 ‖C** (40 min) — `DealCard` → verdict card
+- [x] **3.2 ‖C** (65 min) — `BoughtDealCard` → progress card
 
 ## Phase 4 — Bought Deals flow tracker (items 1, 7) · **≈ 3 h sequential**
 
-- [ ] **4.0** (25 min) — Stage moves keep ticks. View helper `moveDealToStage(deal, stageId)`
-- [ ] **4.1** (20 min) — Header with `hero`
-- [ ] **4.2** (20 min) — Flow strip
-- [ ] **4.3** (70 min) — Stage-rail board on `lg+`
-- [ ] **4.4** (45 min) — Modal
+- [x] **4.0** (25 min) — Stage moves keep ticks. View helper `moveDealToStage(deal, stageId)`
+- [x] **4.1** (20 min) — Header with `hero`
+- [x] **4.2** (20 min) — Flow strip
+- [x] **4.3** (70 min) — Stage-rail board on `lg+`
+- [x] **4.4** (45 min) — Modal
 
 ## Phase 5 — My Deals board (item 1) · **≈ 1 h 25 sequential**
 
