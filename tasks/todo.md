@@ -10,10 +10,10 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 - [x] **1.2** (5 min) — Scrollbar track → transparent (global + `.custom-scrollbar`).
 - [x] **1.3** (5 min) — Golden update A
 - [x] **1.4** (10 min) — Remove `liquidity.back`, `reps.back` (+ unused `useRouter`), `analyze.home`, and toolbar cross-links `mydeals.
-- [ ] **1.5 ‖A** (40 min) — One field anatomy — label row `h-5 items-center`, control row `min-h-[42px]` — in `MoneyInput`, `NumberInput`,
+- [x] **1.5 ‖A** (40 min) — One field anatomy — label row `h-5 items-center`, control row `min-h-[42px]` — in `MoneyInput`, `NumberInput`,
 - [x] **1.6** (25 min) — Deal modals
-- [ ] **1.7 ‖A** (30 min) — Liquidity `TransactionForm`/`SettingsPanel`
-- [ ] **1.8 ‖A** (20 min) — `e2e/checks/alignment.spec.ts`
+- [x] **1.7 ‖A** (30 min) — Liquidity `TransactionForm`/`SettingsPanel`
+- [x] **1.8 ‖A** (20 min) — `e2e/checks/alignment.spec.ts`
 - [ ] **exit** (5 min) — `verify:ui --fast`; Aurora dark screenshots of all routes.
 
 ## Phase 2 — Motion foundation (item 2) · **≈ 1 h 40 wall-clock** (2 h 35 sequential)
