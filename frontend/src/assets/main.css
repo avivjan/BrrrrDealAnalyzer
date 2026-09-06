@@ -85,8 +85,9 @@
     height: 8px;
   }
 
+  /* Transparent: a tinted track read as a light strip down the page edge in every dark look. */
   ::-webkit-scrollbar-track {
-    background-color: rgb(var(--color-surface-muted));
+    background-color: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -230,7 +231,7 @@
    */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) rgb(var(--color-surface-muted));
+    scrollbar-color: rgb(var(--color-fg-muted) / 0.22) transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -239,7 +240,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background-color: rgb(var(--color-surface-muted));
+    background-color: transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
