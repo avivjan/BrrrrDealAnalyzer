@@ -23,14 +23,15 @@ Five snapshots land under `tests/_regression_snapshots/`:
 
 Determinism
 -----------
-* `$DATABASE_URL` is redirected at a throwaway SQLite file and `dotenv` is stubbed
-  *before* the app is imported, exactly like `tests/conftest.py`.
+* `$DATABASE_URL` is redirected at the throwaway test PostgreSQL (see
+  `tests/db_isolation_guard.py`) and `dotenv` is stubbed *before* the app is
+  imported, exactly like `tests/conftest.py`.
 * Google / Mercury / SMTP credentials are scrubbed from the environment so the
   integration endpoints take their deterministic, network-free "not configured"
   branch (502 / 503 / 500 / {"configured": false}).
 * Volatile values (uuids, timestamps, auto-created dates) are redacted by key.
-* Top-level list responses are sorted by content: two rows written in the same
-  SQLite second share a `created_at`, so their order here is a coin flip. The
+* Top-level list responses are sorted by content, so row order (which depends
+  on `created_at` ties and the database) can never make a snapshot differ. The
   ordering contract stays guarded by `tests/test_deal_crud.py`.
 
 Helpers and models are resolved through `_resolve()`, which prefers the
@@ -48,8 +49,6 @@ import os
 import pathlib
 import re
 import sys
-import tempfile
-import uuid as uuid_module
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -64,11 +63,17 @@ if str(BACKEND_DIR) not in sys.path:
 SNAPSHOT_DIR = BACKEND_DIR / "tests" / "_regression_snapshots"
 
 # ---------------------------------------------------------------------------
-# 2. Hard database isolation, before any application import.
+# 2. Hard database isolation, before any application import. Same rules and
+#    same throwaway PostgreSQL as tests/conftest.py (tests/db_isolation_guard.py).
 # ---------------------------------------------------------------------------
-_TEST_DB_DIR = tempfile.mkdtemp(prefix="brrrr-verify-db-")
-TEST_DB_PATH = pathlib.Path(_TEST_DB_DIR) / "verify.db"
-TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
+from tests.db_isolation_guard import (  # noqa: E402
+    assert_isolated as _assert_isolated,
+    reset_schema as _reset_schema,
+    resolve_test_database_url,
+)
+
+INHERITED_DATABASE_URL = os.environ.get("DATABASE_URL")
+TEST_DATABASE_URL = resolve_test_database_url()
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
 # `main.py` calls load_dotenv(); BackEnd/.env carries live credentials a
@@ -94,45 +99,17 @@ for _var in (
 for _var in [k for k in os.environ if k.startswith("MERCURY_API_TOKEN")]:
     os.environ.pop(_var, None)
 
-# SQLite compatibility shim for `Uuid(as_uuid=True)` primary keys: production is
-# Postgres, where psycopg2 adapts a plain string id in a WHERE clause. SQLite's
-# bind processor calls `value.hex` and blows up on a str.
-from sqlalchemy.sql import sqltypes  # noqa: E402
-
-_original_uuid_bind_processor = sqltypes.Uuid.bind_processor
-
-
-def _uuid_bind_processor(self, dialect):  # type: ignore[no-untyped-def]
-    processor = _original_uuid_bind_processor(self, dialect)
-    if processor is None:
-        return None
-
-    def process(value):
-        if isinstance(value, str):
-            try:
-                value = uuid_module.UUID(value)
-            except ValueError:
-                pass
-        return processor(value)
-
-    return process
-
-
-sqltypes.Uuid.bind_processor = _uuid_bind_processor  # type: ignore[assignment]
-
 # ---------------------------------------------------------------------------
 # 3. Import the application. This runs create_all + migrations + seeding.
 # ---------------------------------------------------------------------------
 import db as app_db  # noqa: E402
 
-if app_db.engine.url.get_backend_name() != "sqlite" or app_db.engine.url.database != str(
-    TEST_DB_PATH
-):
-    raise RuntimeError(
-        f"Refusing to run: engine is {app_db.engine.url!r}, not the temp SQLite file."
-    )
+_assert_isolated(app_db.engine, TEST_DATABASE_URL, INHERITED_DATABASE_URL)
+_reset_schema(app_db.engine)
 
 import main as app_main  # noqa: E402
+
+_assert_isolated(app_db.engine, TEST_DATABASE_URL, INHERITED_DATABASE_URL)
 from fastapi.testclient import TestClient  # noqa: E402
 
 # `main` configures INFO logging on import; the endpoint battery walks every

@@ -106,10 +106,13 @@ snapshots the full observable contract -- the OpenAPI schema, every ORM
 table/column, Pydantic model behavior, calculation results to the last decimal
 place, and a scripted pass through all 45 endpoints -- and asserts bit-for-bit
 identity on replay. It was built to guard the router/BL/DAL layering
-refactor; re-run it after any change that could shift behavior:
+refactor; re-run it after any change that could shift behavior. It uses the
+same throwaway test PostgreSQL as `pytest` (start it first, see Tests above)
+and the same isolation guard, `tests/db_isolation_guard.py`:
 
 ```bash
-python3 verify_regression.py verify
+python3 verify_regression.py verify      # compare against tests/_regression_snapshots/
+python3 verify_regression.py snapshot    # re-record the goldens (review the diff!)
 ```
 
 ### Adding an input to the deal form

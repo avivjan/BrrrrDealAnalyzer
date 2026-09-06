@@ -6139,7 +6139,7 @@
   },
   "reps/people_create_duplicate": {
     "body": {
-      "detail": "Could not add person: (sqlite3.IntegrityError) UNIQUE constraint failed: reps_people.name\n[SQL: INSERT INTO reps_people (id, name, role, notes) VALUES (?, ?, ?, ?) RETURNING created_at, updated_at]\n[parameters: ('<uuid>', 'Bob', None, None)]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)"
+      "detail": "Could not add person: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint \"ix_reps_people_name\"\nDETAIL:  Key (name)=(Bob) already exists.\n\n[SQL: INSERT INTO reps_people (id, name, role, notes) VALUES (%(id)s::UUID, %(name)s, %(role)s, %(notes)s) RETURNING reps_people.created_at, reps_people.updated_at]\n[parameters: {'id': UUID('<uuid>'), 'name': 'Bob', 'role': None, 'notes': None}]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)"
     },
     "content_type": "application/json",
     "status": 400

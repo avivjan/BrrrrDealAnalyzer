@@ -32,10 +32,8 @@ from __future__ import annotations
 import os
 import pathlib
 import sys
-from typing import NoReturn
 
 import pytest
-from sqlalchemy import text
 
 # ---------------------------------------------------------------------------
 # 1. Flat imports. `main.py` does `from db import ...`, so BackEnd/ must be on
@@ -48,11 +46,20 @@ if str(BACKEND_DIR) not in sys.path:
 # ---------------------------------------------------------------------------
 # 2. Replace whatever DATABASE_URL the environment supplied, before any import.
 #    Only TEST_DATABASE_URL is consulted; the production variable never is.
+#    The rules live in tests/db_isolation_guard.py, shared with
+#    verify_regression.py (and through it the Playwright backend server).
 # ---------------------------------------------------------------------------
-INHERITED_DATABASE_URL = os.environ.get("DATABASE_URL")
+from tests.db_isolation_guard import (  # noqa: E402
+    FORBIDDEN_URL_MARKERS as _FORBIDDEN_URL_MARKERS,
+    LOOPBACK_HOSTS as _LOOPBACK_HOSTS,
+    TEST_DB_SUFFIX as _TEST_DB_SUFFIX,
+    assert_isolated as _assert_isolated,
+    reset_schema as _reset_schema,
+    resolve_test_database_url,
+)
 
-DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg2://brrrr_test:brrrr_test@127.0.0.1:55432/brrrr_test"
-TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or DEFAULT_TEST_DATABASE_URL
+INHERITED_DATABASE_URL = os.environ.get("DATABASE_URL")
+TEST_DATABASE_URL = resolve_test_database_url()
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
@@ -69,89 +76,14 @@ dotenv.load_dotenv = lambda *args, **kwargs: False  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
-# 4. The safety guard.
+# 4. The safety guard, bound to this harness's expected URL.
 # ---------------------------------------------------------------------------
-# Hosts a test database may live on. Production databases are remote.
-_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
-
-# Substrings that must never appear in the engine URL during a test run.
-_FORBIDDEN_URL_MARKERS = (
-    "render.com",
-    "amazonaws.com",
-    "neon.tech",
-    "supabase",
-    "railway",
-    "azure.com",
-    "googleapis.com",
-    "digitalocean",
-)
-
-# The database name must end with this so a test URL can never be mistaken
-# for a real one, even on a loopback host.
-_TEST_DB_SUFFIX = "_test"
-
-
-def _abort(reason: str) -> NoReturn:
-    """Kill the run loudly. Never degrade to 'best effort' on a safety check."""
-    banner = (
-        "\n"
-        "================= TEST DATABASE SAFETY ABORT =================\n"
-        f"{reason}\n"
-        f"  expected : {TEST_DATABASE_URL}\n"
-        f"  in env   : {os.environ.get('DATABASE_URL')!r}\n"
-        f"  inherited: {'<set>' if INHERITED_DATABASE_URL else '<unset>'}\n"
-        "Tests must never touch a real database. Aborting the run.\n"
-        "==============================================================\n"
-    )
-    sys.stderr.write(banner)
-    sys.stderr.flush()
-    raise RuntimeError(banner)
-
-
 def assert_isolated(engine) -> None:
     """Verify `engine` is the throwaway test PostgreSQL and nothing else.
 
     Called at import time, at session start, and before every single test.
     """
-    url = engine.url
-
-    if url.get_backend_name() != "postgresql":
-        _abort(f"Engine backend is {url.get_backend_name()!r}, expected 'postgresql'.")
-
-    if (url.host or "") not in _LOOPBACK_HOSTS:
-        _abort(f"Engine host is {url.host!r}, not a loopback address.")
-
-    if not (url.database or "").endswith(_TEST_DB_SUFFIX):
-        _abort(f"Engine database is {url.database!r}; a test database name must end with {_TEST_DB_SUFFIX!r}.")
-
-    rendered = str(url).lower()
-    for marker in _FORBIDDEN_URL_MARKERS:
-        if marker in rendered:
-            _abort(f"Engine URL contains forbidden marker {marker!r}.")
-
-    if os.environ.get("DATABASE_URL") != TEST_DATABASE_URL:
-        _abort("DATABASE_URL was mutated after the harness set it.")
-
-    try:
-        with engine.connect() as connection:
-            actual = connection.exec_driver_sql("SELECT current_database()").scalar()
-    except Exception as exc:
-        _abort(
-            f"Could not connect to the isolated test database: {exc!r}\n"
-            "  Is it running?  docker compose -f BackEnd/docker-compose.test.yml up -d --wait"
-        )
-    if actual != url.database:
-        _abort(f"Connected to database {actual!r}, expected {url.database!r}.")
-
-
-def _reset_schema(engine) -> None:
-    """Drop everything in the test database so the models define the schema.
-
-    Only ever called after `assert_isolated` has passed for the same engine.
-    """
-    with engine.begin() as connection:
-        connection.execute(text("DROP SCHEMA public CASCADE"))
-        connection.execute(text("CREATE SCHEMA public"))
+    _assert_isolated(engine, TEST_DATABASE_URL, INHERITED_DATABASE_URL)
 
 
 # ---------------------------------------------------------------------------

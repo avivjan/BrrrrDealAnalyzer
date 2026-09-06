@@ -59,6 +59,22 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    # The FastAPI server Playwright talks to (e2e/backend/serve_throwaway.py)
+    # runs on the same throwaway PostgreSQL as the backend tests.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: brrrr_test
+          POSTGRES_PASSWORD: brrrr_test
+          POSTGRES_DB: brrrr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brrrr_test -d brrrr_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -93,6 +109,8 @@ jobs:
       # still fails on any failing test.
       - name: Run Playwright
         id: e2e
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg2://brrrr_test:brrrr_test@localhost:5432/brrrr_test
         run: |
           set +e
           npm run e2e

@@ -111,3 +111,27 @@ Approved plan: run both suites on every PR into `main` and push to `main`, with 
 **Not covered, on purpose.** Playwright e2e, `verify:ui` and `verify_regression.py verify` stay local (browsers, git tags and a golden-drift artifact respectively). The smoke exercises the fresh-database path, not the legacy upgrade branches in the migrations; that needs a legacy-schema fixture as a follow-up.
 
 **Still manual.** C7: make `Backend tests` and `Frontend tests + build` required checks on `main` after the workflow has run once.
+
+---
+
+# Postgres everywhere: golden harness + Playwright backend
+
+The pytest suite already runs on the throwaway Postgres (`BackEnd/docker-compose.test.yml`). Two harnesses still built their own temp SQLite file: `BackEnd/verify_regression.py` (golden snapshots) and, through it, `frontend/e2e/backend/serve_throwaway.py` (the FastAPI server Playwright talks to). Move both to the same Postgres, with the same guard.
+
+- [x] **P1** (10 min) — Extract the guard from `tests/conftest.py` into `BackEnd/tests/db_isolation_guard.py` (URL resolution, loopback + `_test` + marker checks, `current_database()` check, schema reset); `conftest.py` imports it.
+- [x] **P2** (10 min) — `verify_regression.py`: replace the temp-SQLite block and the UUID shim with the shared guard; docstring.
+- [x] **P3** (5 min) — `serve_throwaway.py`: docstring says Postgres; nothing else changes (it imports `verify_regression` for the side effects).
+- [x] **P4** (10 min) — Nightly `playwright` job gets the same `postgres:16` service and passes `TEST_DATABASE_URL` to `npm run e2e` (the webServer inherits it).
+- [x] **P5** (5 min) — Docs: root README, BackEnd README (regression harness), frontend README (e2e needs the container).
+- [x] **P6** (15 min) — Validate on a local Postgres 16: pytest; `verify_regression.py verify` (re-snapshot if the only drift is the known Pydantic one / DB representation, and say so); Playwright chromium on two specs through `serve_throwaway.py`.
+- [ ] **P7** (5 min) — Commit to `ci/nightly-e2e`, push, update PR #32; review below.
+
+## Postgres-everywhere review
+
+**What changed.** One new module, `BackEnd/tests/db_isolation_guard.py`, now holds the isolation rules (URL from `TEST_DATABASE_URL` only, loopback host, `_test` database name, no hosted-provider marker, `current_database()` check, schema reset). `tests/conftest.py` and `verify_regression.py` both use it; the Playwright backend server (`frontend/e2e/backend/serve_throwaway.py`) inherits it by importing `verify_regression`. The temp-SQLite setup and the SQLite UUID bind shim are gone from both harnesses. The nightly Playwright job gets the same `postgres:16` service and passes `TEST_DATABASE_URL` to `npm run e2e`.
+
+**Goldens re-recorded on Postgres** (`verify_regression.py snapshot`). The diff is exactly two things: (1) `endpoints.json`, one entry, the `detail` string of `POST /reps/people` on a duplicate name, which echoes the raw driver error and now reads psycopg2's `UniqueViolation` instead of SQLite's `IntegrityError`; (2) `openapi.json` and `models.json`, the Pydantic 2.13 `pattern` keys on Decimal fields that PR #26 already documented as drift. `schema.json` and `calculations.json` are byte-identical. `verify` is clean after the re-record.
+
+**Validated on a local PostgreSQL 16.** pytest: 118 passed. `verify_regression.py verify`: all five snapshots identical. Playwright, two flows on chromium through `serve_throwaway.py`: 4 passed, backend log shows `DATABASE_URL=postgresql+psycopg2://brrrr_test:...@127.0.0.1:55432/brrrr_test`.
+
+**Worth knowing.** The duplicate-name endpoint leaks the database driver's error text to the client; unchanged here, but it is now visible in the golden.
