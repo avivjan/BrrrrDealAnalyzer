@@ -1,0 +1,12 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/helloworld"
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
+    }
+  ]
+}

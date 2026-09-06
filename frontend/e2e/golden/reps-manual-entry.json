@@ -1,0 +1,15 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/reps/upload-batch",
+      "body": {
+        "fields": [
+          "log_timestamp",
+          "user"
+        ],
+        "files": 1
+      }
+    }
+  ]
+}

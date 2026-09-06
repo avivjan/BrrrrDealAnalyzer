@@ -1,0 +1,546 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/analyze/brrr",
+      "body": {
+        "HMLInterestRate": "11.00",
+        "address": "1 Shared Form St",
+        "annual_insurance": "1200.00",
+        "annual_property_taxes": "3600.00",
+        "arv_in_thousands": "320.0000",
+        "bathrooms": null,
+        "bedrooms": null,
+        "breakdowns": {
+          "cash_flow": [
+            {
+              "formula": "Rent ($2,600) × (Vacancy 5.00% + Mgmt 8.00% + Maint 5.00% + CapEx 5.00%) + Taxes ($3,600)/12 + Insurance ($1,200)/12 + HOA ($0) = $998",
+              "label": "Monthly Operating Expenses",
+              "value": 998
+            },
+            {
+              "formula": "Amortize Loan ($240,000 = ARV $320,000 × LTV 75.00%) at 6.50%/yr over 30 years = $1,516.96",
+              "label": "Monthly Mortgage Payment",
+              "value": 1516.963256383113
+            },
+            {
+              "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602",
+              "label": "Net Operating Income (NOI)",
+              "value": 1602
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            }
+          ],
+          "cash_on_cash": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            },
+            {
+              "formula": "Annual Cash Flow ($1,020.44) / |Cash Out| ($48,125) × 100 = 2.12%",
+              "label": "Cash on Cash",
+              "value": 2.120396723953547
+            }
+          ],
+          "cash_out": [
+            {
+              "formula": "ARV ($320,000) × LTV 75.00% = $240,000",
+              "label": "Refi Loan Amount",
+              "value": 240000
+            },
+            {
+              "formula": "Purchase Loan + Rehab ($215,000) — full HM stack carried into refi",
+              "label": "HML Payoff at Refi",
+              "value": 215000
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Rehab Out-of-Pocket ($0) + HML Interest ($11,825) + Holding ($2,400) = $63,525",
+              "label": "Total Cash Invested (pre-refi)",
+              "value": 63525
+            },
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            }
+          ],
+          "dscr": [
+            {
+              "formula": "Amortize Loan ($240,000 = ARV $320,000 × LTV 75.00%) at 6.50%/yr over 30 years = $1,516.96",
+              "label": "Monthly Mortgage Payment",
+              "value": 1516.963256383113
+            },
+            {
+              "formula": "Rent ($2,600) / PITIA ($1,916.96 = Mortgage + Taxes/12 + Ins/12 + HOA) = 1.36",
+              "label": "DSCR",
+              "value": 1.356311860095653
+            }
+          ],
+          "equity": [
+            {
+              "formula": "ARV ($320,000) × LTV 75.00% = $240,000",
+              "label": "Refi Loan Amount",
+              "value": 240000
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            }
+          ],
+          "net_profit": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            },
+            {
+              "formula": "Equity ($80,000) + Cash Out ($-48,125) = $31,875",
+              "label": "Net Profit",
+              "value": 31875
+            }
+          ],
+          "roi": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            },
+            {
+              "formula": "Equity ($80,000) + Cash Out ($-48,125) = $31,875",
+              "label": "Net Profit",
+              "value": 31875
+            },
+            {
+              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($31,875)) / |Cash Out| ($48,125) × 100 = 68.35%",
+              "label": "ROI",
+              "value": 68.35416295771978
+            }
+          ],
+          "total_cash_needed_for_deal": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "$11,825 accrued over 180 days at 11.00%/yr ÷ 360 per diem",
+              "label": "HML Interest (cash, until refi)",
+              "value": 11825
+            },
+            {
+              "formula": "Taxes + Insurance + HOA accrued over 180 days = $2,400",
+              "label": "Holding Costs (until refi)",
+              "value": 2400
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest ($11,825) + Holding ($2,400) = $63,525",
+              "label": "Total Cash Needed",
+              "value": 63525
+            }
+          ],
+          "total_cash_needed_for_deal_with_buffer": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "Closing ($5,000) × 1.1 = $5,500",
+              "label": "Closing × 1.1 buffer",
+              "value": 5500
+            },
+            {
+              "formula": "HML Interest ($11,825) × 1.5 = $17,737.50",
+              "label": "HML Interest × 1.5 buffer",
+              "value": 17737.5
+            },
+            {
+              "formula": "Holding ($2,400) × 1.5 = $3,600",
+              "label": "Holding × 1.5 buffer",
+              "value": 3600
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing×1.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest×1.5 ($17,737.50) + Holding×1.5 ($3,600) = $76,637.50",
+              "label": "Total Cash Needed (Buffered)",
+              "value": 76637.5
+            }
+          ]
+        },
+        "capexPercent": "5.00",
+        "cashReserve": "0.0000",
+        "cash_flow": 85.03674361688704,
+        "cash_on_cash": 2.120396723953547,
+        "cash_out": -48125,
+        "cash_out_routi": 15400,
+        "closingCostsBuy": "5.0000",
+        "closingCostsRefi": "6.0000",
+        "contact": null,
+        "created_at": "<redacted>",
+        "crime_rate": null,
+        "daysUntilRefi": 180,
+        "deal_type": "BRRRR",
+        "down_payment": "20.00",
+        "dscr": 1.356311860095653,
+        "equity": 80000,
+        "hmlPoints": "2.00",
+        "id": "<redacted>",
+        "interestRate": "6.50",
+        "loanTermYears": 30,
+        "ltv_as_precent": "75.00",
+        "maintenancePercent": "5.00",
+        "messages": null,
+        "montly_hoa": "0.00",
+        "net_profit": 31875,
+        "niche": null,
+        "notes": null,
+        "overall_design": null,
+        "pics_link": null,
+        "property_managment_fee_precentages_from_rent": "8.00",
+        "purchasePrice": "200.0000",
+        "refiPoints": "1.50",
+        "rehabContingency": "10.00",
+        "rehabCost": "50.0000",
+        "rent": "2600.00",
+        "rent_comps": null,
+        "roi": 68.35416295771978,
+        "section": 1,
+        "sold_comps": null,
+        "sqft": null,
+        "stage": 2,
+        "task": "Call the lender",
+        "total_cash_needed_for_deal": 63525,
+        "total_cash_needed_for_deal_with_buffer": 76637.5,
+        "updated_at": "<redacted>",
+        "use_HM_for_rehab": true,
+        "vacancyPercent": "5.00",
+        "zillow_link": null
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/active-deals/{id}",
+      "body": {
+        "HMLInterestRate": "11.00",
+        "address": "1 Shared Form St",
+        "annual_insurance": "1200.00",
+        "annual_property_taxes": "3600.00",
+        "arv_in_thousands": "320.0000",
+        "bathrooms": null,
+        "bedrooms": null,
+        "breakdowns": {
+          "cash_flow": [
+            {
+              "formula": "Rent ($2,600) × (Vacancy 5.00% + Mgmt 8.00% + Maint 5.00% + CapEx 5.00%) + Taxes ($3,600)/12 + Insurance ($1,200)/12 + HOA ($0) = $998",
+              "label": "Monthly Operating Expenses",
+              "value": 998
+            },
+            {
+              "formula": "Amortize Loan ($240,000 = ARV $320,000 × LTV 75.00%) at 6.50%/yr over 30 years = $1,516.96",
+              "label": "Monthly Mortgage Payment",
+              "value": 1516.963256383113
+            },
+            {
+              "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602",
+              "label": "Net Operating Income (NOI)",
+              "value": 1602
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            }
+          ],
+          "cash_on_cash": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            },
+            {
+              "formula": "Annual Cash Flow ($1,020.44) / |Cash Out| ($48,125) × 100 = 2.12%",
+              "label": "Cash on Cash",
+              "value": 2.120396723953547
+            }
+          ],
+          "cash_out": [
+            {
+              "formula": "ARV ($320,000) × LTV 75.00% = $240,000",
+              "label": "Refi Loan Amount",
+              "value": 240000
+            },
+            {
+              "formula": "Purchase Loan + Rehab ($215,000) — full HM stack carried into refi",
+              "label": "HML Payoff at Refi",
+              "value": 215000
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Rehab Out-of-Pocket ($0) + HML Interest ($11,825) + Holding ($2,400) = $63,525",
+              "label": "Total Cash Invested (pre-refi)",
+              "value": 63525
+            },
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            }
+          ],
+          "dscr": [
+            {
+              "formula": "Amortize Loan ($240,000 = ARV $320,000 × LTV 75.00%) at 6.50%/yr over 30 years = $1,516.96",
+              "label": "Monthly Mortgage Payment",
+              "value": 1516.963256383113
+            },
+            {
+              "formula": "Rent ($2,600) / PITIA ($1,916.96 = Mortgage + Taxes/12 + Ins/12 + HOA) = 1.36",
+              "label": "DSCR",
+              "value": 1.356311860095653
+            }
+          ],
+          "equity": [
+            {
+              "formula": "ARV ($320,000) × LTV 75.00% = $240,000",
+              "label": "Refi Loan Amount",
+              "value": 240000
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            }
+          ],
+          "net_profit": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            },
+            {
+              "formula": "Equity ($80,000) + Cash Out ($-48,125) = $31,875",
+              "label": "Net Profit",
+              "value": 31875
+            }
+          ],
+          "roi": [
+            {
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Refi Closing ($6,000) − Refi Points ($3,600) − Cash Reserve ($0) − Total Cash Invested ($63,525) = $-48,125",
+              "label": "Cash Out from Deal",
+              "value": -48125
+            },
+            {
+              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "label": "Monthly Cash Flow",
+              "value": 85.03674361688704
+            },
+            {
+              "formula": "ARV ($320,000) × (1 − LTV 75.00%) + Cash Reserve ($0) = $80,000",
+              "label": "Equity (post-refi)",
+              "value": 80000
+            },
+            {
+              "formula": "Equity ($80,000) + Cash Out ($-48,125) = $31,875",
+              "label": "Net Profit",
+              "value": 31875
+            },
+            {
+              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($31,875)) / |Cash Out| ($48,125) × 100 = 68.35%",
+              "label": "ROI",
+              "value": 68.35416295771978
+            }
+          ],
+          "total_cash_needed_for_deal": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "$11,825 accrued over 180 days at 11.00%/yr ÷ 360 per diem",
+              "label": "HML Interest (cash, until refi)",
+              "value": 11825
+            },
+            {
+              "formula": "Taxes + Insurance + HOA accrued over 180 days = $2,400",
+              "label": "Holding Costs (until refi)",
+              "value": 2400
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest ($11,825) + Holding ($2,400) = $63,525",
+              "label": "Total Cash Needed",
+              "value": 63525
+            }
+          ],
+          "total_cash_needed_for_deal_with_buffer": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "Closing ($5,000) × 1.1 = $5,500",
+              "label": "Closing × 1.1 buffer",
+              "value": 5500
+            },
+            {
+              "formula": "HML Interest ($11,825) × 1.5 = $17,737.50",
+              "label": "HML Interest × 1.5 buffer",
+              "value": 17737.5
+            },
+            {
+              "formula": "Holding ($2,400) × 1.5 = $3,600",
+              "label": "Holding × 1.5 buffer",
+              "value": 3600
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing×1.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest×1.5 ($17,737.50) + Holding×1.5 ($3,600) = $76,637.50",
+              "label": "Total Cash Needed (Buffered)",
+              "value": 76637.5
+            }
+          ]
+        },
+        "capexPercent": "5.00",
+        "cashReserve": "0.0000",
+        "cash_flow": 85.03674361688704,
+        "cash_on_cash": 2.120396723953547,
+        "cash_out": -48125,
+        "cash_out_routi": 15400,
+        "closingCostsBuy": "5.0000",
+        "closingCostsRefi": "6.0000",
+        "contact": null,
+        "created_at": "<redacted>",
+        "crime_rate": null,
+        "daysUntilRefi": 180,
+        "deal_type": "BRRRR",
+        "down_payment": "20.00",
+        "dscr": 1.356311860095653,
+        "equity": 80000,
+        "hmlPoints": "2.00",
+        "id": "<redacted>",
+        "interestRate": "6.50",
+        "loanTermYears": 30,
+        "ltv_as_precent": "75.00",
+        "maintenancePercent": "5.00",
+        "messages": null,
+        "montly_hoa": "0.00",
+        "net_profit": 31875,
+        "niche": null,
+        "notes": null,
+        "overall_design": null,
+        "pics_link": null,
+        "property_managment_fee_precentages_from_rent": "8.00",
+        "purchasePrice": "200.0000",
+        "refiPoints": "1.50",
+        "rehabContingency": "10.00",
+        "rehabCost": "50.0000",
+        "rent": "2600.00",
+        "rent_comps": null,
+        "roi": 68.35416295771978,
+        "section": 1,
+        "sold_comps": null,
+        "sqft": null,
+        "stage": 2,
+        "task": "Call the lender",
+        "total_cash_needed_for_deal": 63525,
+        "total_cash_needed_for_deal_with_buffer": 76637.5,
+        "updated_at": "<redacted>",
+        "use_HM_for_rehab": true,
+        "vacancyPercent": "5.00",
+        "zillow_link": null
+      }
+    }
+  ]
+}

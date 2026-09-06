@@ -1,0 +1,24 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/helloworld"
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
+    },
+    {
+      "method": "GET",
+      "path": "/reps/config-status"
+    },
+    {
+      "method": "GET",
+      "path": "/reps/properties"
+    },
+    {
+      "method": "GET",
+      "path": "/reps/people"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "requests": [
+    {
+      "method": "PUT",
+      "path": "/liquidity/settings",
+      "body": {
+        "opening_balance_date": "<redacted>",
+        "opening_balance_k": 50,
+        "reserve_k": 5
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/transactions",
+      "body": {
+        "amount_k": 12.5,
+        "description": "Refi proceeds",
+        "effective_date": "2026-09-10"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/transactions"
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/recurring",
+      "body": {
+        "amount_k": 2.6,
+        "description": "Unit A rent",
+        "end_date": null,
+        "frequency": "monthly",
+        "interval": 1,
+        "occurrences": null,
+        "start_date": "2026-09-05"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/recurring"
+    }
+  ]
+}

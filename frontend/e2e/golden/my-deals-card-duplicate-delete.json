@@ -1,0 +1,19 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/active-deals/{id}/duplicate",
+      "query": {
+        "deal_type": "BRRRR"
+      },
+      "body": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/active-deals/{id}",
+      "query": {
+        "deal_type": "BRRRR"
+      }
+    }
+  ]
+}

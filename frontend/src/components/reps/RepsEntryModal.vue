@@ -422,402 +422,516 @@ function close() {
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    @click.self="close"
-  >
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-      <header class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <div>
-          <h3 class="text-lg font-bold text-slate-800">
-            New REPS Entry · {{ user }}
-          </h3>
-          <p class="text-xs font-mono text-slate-500">
-            Total: <span class="font-bold text-slate-700">{{ totalHours.toFixed(2) }} h</span>
-            · server stamps Created-At at save
-          </p>
-        </div>
-        <button class="text-slate-400 hover:text-slate-700 transition-colors" @click="close">
-          <i class="pi pi-times text-lg"></i>
-        </button>
-      </header>
+  <!--
+    `UiTransition` wraps the overlay, never the panel: the `modal` preset fades
+    the fixed overlay's opacity and scales only `[data-ui="modal-panel"]` inside
+    it, so the box that must cover the viewport is never transformed. The 150 ms
+    leave sets `pointer-events: none` before it starts, so the second half of a
+    double-click cannot reach the close handler behind it.
+  -->
+  <UiTransition preset="modal" appear>
+    <div
+      v-if="open"
+      data-testid="repsmodal.root"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 md:backdrop-blur-sm"
+      @click.self="close"
+    >
+      <UiModalPanel size="lg" labelled-by="repsmodal-title">
+        <template #header>
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 id="repsmodal-title" class="text-base font-semibold text-fg md:text-lg">
+                New REPS Entry · {{ user }}
+              </h3>
+              <p class="mt-0.5 text-xs text-fg-muted">
+                Total: <span class="font-semibold tabular text-fg">{{ totalHours.toFixed(2) }} h</span>
+                · server stamps Created-At at save
+              </p>
+            </div>
+            <UiIconButton data-testid="repsmodal.close" label="Close" size="md" @click="close">
+              <i class="pi pi-times text-lg" aria-hidden="true"></i>
+            </UiIconButton>
+          </div>
+        </template>
 
-      <div class="p-6 space-y-4 overflow-y-auto flex-1">
-        <div v-if="formError" class="p-3 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium">
-          {{ formError }}
-        </div>
-
-        <!-- Property autocomplete -->
-        <div class="relative">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Property Name</label>
-          <input
-            v-model="propertyQuery"
-            type="text"
-            placeholder="Type or pick a property... (e.g. 10th St, Honda, Galveston)"
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            @focus="showPropertyDropdown = true"
-            @input="propertyName = propertyQuery"
-            @blur="onPropertyBlur"
-          />
+        <div class="space-y-4">
           <div
-            v-if="showPropertyDropdown && (filteredProperties.length > 0 || (propertyQuery.trim() && !isExactMatch))"
-            class="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg"
+            v-if="formError"
+            data-testid="repsmodal.error"
+            class="rounded-ctl bg-negative/10 p-3 text-sm font-medium text-negative"
           >
-            <button
-              v-for="opt in filteredProperties"
-              :key="opt.name"
-              type="button"
-              class="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center justify-between"
-              @mousedown.prevent="pickProperty(opt.name)"
-            >
-              <span class="text-sm text-slate-800">{{ opt.name }}</span>
-              <span
-                class="text-[10px] font-mono uppercase px-2 py-0.5 rounded"
-                :class="opt.source === 'bought' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
+            {{ formError }}
+          </div>
+
+          <!-- Property autocomplete -->
+          <UiField class="relative">
+            <template #label>Property Name</template>
+            <template #default="{ id, describedBy }">
+              <input
+                data-testid="repsmodal.property-query"
+                v-model="propertyQuery"
+                :id="id"
+                :aria-describedby="describedBy"
+                type="text"
+                placeholder="Type or pick a property... (e.g. 10th St, Honda, Galveston)"
+                class="ui-input"
+                role="combobox"
+                aria-autocomplete="list"
+                :aria-expanded="showPropertyDropdown"
+                @focus="showPropertyDropdown = true"
+                @input="propertyName = propertyQuery"
+                @blur="onPropertyBlur"
+              />
+              <div
+                v-if="showPropertyDropdown && (filteredProperties.length > 0 || (propertyQuery.trim() && !isExactMatch))"
+                data-testid="repsmodal.property-dropdown"
+                role="listbox"
+                aria-label="Matching properties"
+                class="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-ctl border border-line bg-surface shadow-2"
               >
-                {{ opt.source }}
-              </span>
-            </button>
-            <div
-              v-if="propertyQuery.trim() && !isExactMatch"
-              class="px-3 py-2 text-xs text-slate-500 border-t border-slate-100 italic"
-            >
-              "{{ propertyQuery }}" will be saved to Prospects on submit.
-            </div>
-          </div>
-        </div>
-
-        <!-- Activity category -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-sm font-medium text-slate-700">Activity Category</label>
-            <button
-              type="button"
-              class="text-[11px] font-mono text-blue-600 hover:underline"
-              @click="showAddCategory = !showAddCategory"
-            >
-              <i class="pi pi-plus mr-1"></i>{{ showAddCategory ? 'Cancel' : 'Add new' }}
-            </button>
-          </div>
-          <select
-            v-model="activityCategory"
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-          >
-            <option value="">— Select —</option>
-            <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
-          </select>
-          <div v-if="showAddCategory" class="mt-2 flex gap-2">
-            <input
-              v-model="newCategoryName"
-              type="text"
-              placeholder="New category name..."
-              class="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              @keyup.enter="addCategoryInline"
-            />
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
-              :disabled="addingCategory || !newCategoryName.trim()"
-              @click="addCategoryInline"
-            >
-              <i v-if="addingCategory" class="pi pi-spin pi-spinner"></i>
-              <span v-else>Add</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">
-            Description <span class="text-rose-500">*</span>
-            <span class="text-xs font-normal text-slate-500">
-              (≥ {{ MIN_DESC }} chars — be specific, e.g. "Met with Gilly at Honda to review plumbing")
-            </span>
-          </label>
-          <textarea
-            v-model="description"
-            rows="3"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="descTooShort ? 'border-rose-300' : 'border-slate-300'"
-          ></textarea>
-          <div class="text-[11px] font-mono mt-1" :class="descTooShort ? 'text-rose-500' : 'text-emerald-600'">
-            <span v-if="descTooShort">{{ descRemaining }} more characters required</span>
-            <span v-else>{{ description.trim().length }} chars</span>
-          </div>
-        </div>
-
-        <!-- Times -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Start Time <span class="text-rose-500">*</span></label>
-            <input
-              v-model="startLocal"
-              type="datetime-local"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">End Time <span class="text-rose-500">*</span></label>
-            <input
-              v-model="endLocal"
-              type="datetime-local"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <!-- Material participation -->
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <label class="flex items-start gap-2 cursor-pointer">
-            <input v-model="materialParticipation" type="checkbox" class="mt-1" />
-            <div>
-              <div class="text-sm font-medium text-slate-700">
-                Material Participation in rentals?
+                <button
+                  v-for="opt in filteredProperties"
+                  :key="opt.name"
+                  :data-testid="`repsmodal.property-option.${opt.name}`"
+                  type="button"
+                  role="option"
+                  :aria-selected="propertyName === opt.name"
+                  class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  @mousedown.prevent="pickProperty(opt.name)"
+                >
+                  <span class="min-w-0 break-words text-sm text-fg">{{ opt.name }}</span>
+                  <UiBadge
+                    class="shrink-0 uppercase"
+                    :tone="opt.source === 'bought' ? 'positive' : 'warning'"
+                  >
+                    {{ opt.source }}
+                  </UiBadge>
+                </button>
+                <div
+                  v-if="propertyQuery.trim() && !isExactMatch"
+                  role="presentation"
+                  class="border-t border-line px-3 py-2 text-xs italic text-fg-muted"
+                >
+                  "{{ propertyQuery }}" will be saved to Prospects on submit.
+                </div>
               </div>
-              <div class="text-[11px] text-slate-500">
-                Counts toward the 500-hour material participation test (in addition to the 750-hour test).
-              </div>
-            </div>
-          </label>
-        </div>
+            </template>
+          </UiField>
 
-        <!-- Location: GPS breadcrumbs + manual override.
-             Capture is ALWAYS manual: nothing is recorded unless the user
-             taps "Capture GPS now" or "Mark as Remote". -->
-        <div class="rounded-lg border border-slate-200 p-3">
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-slate-700">
-              Location · {{ allSnapshots.length }} GPS pin{{ allSnapshots.length === 1 ? '' : 's' }}
-            </label>
-            <div class="flex gap-1.5">
-              <button
+          <!-- Activity category -->
+          <div>
+            <div class="mb-1 flex items-center justify-between gap-2">
+              <label for="repsmodal-category" class="block text-sm font-medium text-fg">Activity Category</label>
+              <UiButton
                 type="button"
-                class="px-2.5 py-1 text-[11px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg flex items-center gap-1 disabled:opacity-50"
-                :disabled="capturingSnapshot"
-                @click="captureSnapshotNow('manual_save')"
+                data-testid="repsmodal.category-toggle"
+                variant="ghost"
+                size="sm"
+                class="min-h-9 touch:min-h-11 text-[11px] text-primary"
+                @click="showAddCategory = !showAddCategory"
               >
-                <i class="pi pi-map-marker text-[10px]"></i>
-                {{ capturingSnapshot ? 'Capturing...' : 'Capture GPS now' }}
-              </button>
-              <button
-                type="button"
-                class="px-2.5 py-1 text-[11px] bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg"
-                @click="markRemote"
-              >
-                Mark as Remote
-              </button>
+                <i class="pi pi-plus mr-1" aria-hidden="true"></i>{{ showAddCategory ? 'Cancel' : 'Add new' }}
+              </UiButton>
             </div>
-          </div>
-
-          <ul v-if="allSnapshots.length > 0" class="space-y-1 mb-2 max-h-32 overflow-y-auto">
-            <li
-              v-for="(s, idx) in allSnapshots"
-              :key="idx"
-              class="text-[11px] font-mono text-slate-700 flex items-start justify-between gap-2 py-0.5"
+            <select
+              data-testid="repsmodal.category-select"
+              v-model="activityCategory"
+              id="repsmodal-category"
+              class="ui-select"
             >
-              <span class="flex-1 truncate">
-                <span class="inline-block px-1.5 rounded bg-slate-100 text-slate-700 mr-1">{{ snapshotLabel(s) }}</span>
-                <span v-if="s.lat != null && s.lng != null">
-                  {{ s.lat.toFixed(5) }}, {{ s.lng.toFixed(5) }}<span v-if="s.accuracy_m"> (±{{ Math.round(s.accuracy_m) }}m)</span>
-                </span>
-                <span v-else class="text-slate-500">[{{ s.note || 'no GPS' }}]</span>
-                <a
-                  v-if="snapshotMapHref(s)"
-                  :href="snapshotMapHref(s)!"
-                  target="_blank"
-                  class="text-blue-600 hover:underline ml-1"
-                >map</a>
-              </span>
-              <!-- Only allow dropping breadcrumbs the modal added; timer-driven ones live in the store. -->
-              <button
-                v-if="idx >= store.snapshotsByUser[user].length"
+              <option value="">— Select —</option>
+              <option v-for="c in categoryOptions" :key="c" :data-testid="`repsmodal.category-option.${c}`" :value="c">{{ c }}</option>
+            </select>
+            <div v-if="showAddCategory" class="mt-2 flex gap-2">
+              <input
+                data-testid="repsmodal.category-name"
+                v-model="newCategoryName"
+                type="text"
+                placeholder="New category name..."
+                class="ui-input flex-1 text-sm"
+                aria-label="New category name"
+                @keyup.enter="addCategoryInline"
+              />
+              <UiButton
                 type="button"
-                class="text-rose-500 hover:text-rose-700 text-xs"
-                @click="dropPendingSnapshot(idx - store.snapshotsByUser[user].length)"
+                data-testid="repsmodal.category-add"
+                size="sm"
+                class="min-h-9 touch:min-h-11 shrink-0"
+                :disabled="addingCategory || !newCategoryName.trim()"
+                @click="addCategoryInline"
               >
-                <i class="pi pi-times"></i>
-              </button>
-            </li>
-          </ul>
-          <div v-else class="text-[11px] text-slate-500 italic mb-2">
-            No location recorded yet. Tap "Capture GPS now" if you want to log
-            where you are; otherwise leave the column blank or use the note
-            below (e.g. "Remote — phone call").
+                <i v-if="addingCategory" class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                <span v-else>Add</span>
+              </UiButton>
+            </div>
           </div>
 
-          <input
-            v-model="locationNote"
-            type="text"
-            placeholder="Optional note (e.g. 'Remote — phone call', 'Honda — 1234 Maple St')"
-            class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-
-        <!-- Multi-asset evidence -->
-        <div class="rounded-lg border border-slate-200 p-3">
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-slate-700">
-              Evidence
-              <span
-                v-if="allFiles.length > 0"
-                class="ml-1 inline-block px-2 py-0.5 text-[10px] font-mono rounded-full bg-blue-100 text-blue-700"
-              >
-                {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }} attached
+          <!-- Description -->
+          <UiField :invalid="descTooShort">
+            <template #label>
+              Description <span class="text-negative" aria-hidden="true">*</span>
+              <span class="text-xs font-normal text-fg-muted">
+                (≥ {{ MIN_DESC }} chars — be specific, e.g. "Met with Gilly at Honda to review plumbing")
               </span>
-            </label>
-            <div class="flex gap-1.5">
-              <button
-                type="button"
-                class="px-2.5 py-1 text-[11px] bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg flex items-center gap-1"
-                @click="openCameraDirect"
-              >
-                <i class="pi pi-camera text-[10px]"></i> Camera
-              </button>
-              <label
-                class="px-2.5 py-1 text-[11px] bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg flex items-center gap-1 cursor-pointer"
-              >
-                <i class="pi pi-paperclip text-[10px]"></i> Attach
+            </template>
+            <template #default="{ id, describedBy, invalid }">
+              <textarea
+                data-testid="repsmodal.description"
+                v-model="description"
+                :id="id"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                aria-required="true"
+                rows="3"
+                class="ui-textarea"
+                :class="descTooShort ? 'ui-input-invalid' : ''"
+              ></textarea>
+              <div class="mt-1 text-[11px] tabular" :class="descTooShort ? 'text-negative' : 'text-positive'">
+                <span v-if="descTooShort">{{ descRemaining }} more characters required</span>
+                <span v-else>{{ description.trim().length }} chars</span>
+              </div>
+            </template>
+          </UiField>
+
+          <!-- Times -->
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <UiField>
+              <template #label>Start Time <span class="text-negative" aria-hidden="true">*</span></template>
+              <template #default="{ id, describedBy }">
                 <input
-                  type="file"
-                  :accept="ALLOWED_FILE_ACCEPT"
-                  multiple
-                  class="hidden"
-                  @change="onFileInputChange"
+                  data-testid="repsmodal.start-time"
+                  v-model="startLocal"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  aria-required="true"
+                  type="datetime-local"
+                  class="ui-input"
                 />
+              </template>
+            </UiField>
+            <UiField>
+              <template #label>End Time <span class="text-negative" aria-hidden="true">*</span></template>
+              <template #default="{ id, describedBy }">
+                <input
+                  data-testid="repsmodal.end-time"
+                  v-model="endLocal"
+                  :id="id"
+                  :aria-describedby="describedBy"
+                  aria-required="true"
+                  type="datetime-local"
+                  class="ui-input"
+                />
+              </template>
+            </UiField>
+          </div>
+
+          <!-- Material participation -->
+          <div class="rounded-ctl border border-line bg-surface-muted p-3">
+            <label class="flex cursor-pointer items-start gap-2">
+              <input
+                data-testid="repsmodal.material-checkbox"
+                v-model="materialParticipation"
+                type="checkbox"
+                class="mt-1 h-4 w-4 shrink-0 accent-primary"
+              />
+              <div>
+                <div class="text-sm font-medium text-fg">
+                  Material Participation in rentals?
+                </div>
+                <div class="text-[11px] text-fg-muted">
+                  Counts toward the 500-hour material participation test (in addition to the 750-hour test).
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Location: GPS breadcrumbs + manual override.
+               Capture is ALWAYS manual: nothing is recorded unless the user
+               taps "Capture GPS now" or "Mark as Remote". -->
+          <div class="rounded-ctl border border-line p-3">
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <label class="text-sm font-medium text-fg">
+                Location · {{ allSnapshots.length }} GPS pin{{ allSnapshots.length === 1 ? '' : 's' }}
               </label>
+              <div class="flex gap-2">
+                <UiButton
+                  type="button"
+                  data-testid="repsmodal.capture-gps"
+                  variant="secondary"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11"
+                  :disabled="capturingSnapshot"
+                  @click="captureSnapshotNow('manual_save')"
+                >
+                  <i class="pi pi-map-marker text-[10px]" aria-hidden="true"></i>
+                  {{ capturingSnapshot ? 'Capturing...' : 'Capture GPS now' }}
+                </UiButton>
+                <UiButton
+                  type="button"
+                  data-testid="repsmodal.mark-remote"
+                  variant="ghost"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11"
+                  @click="markRemote"
+                >
+                  Mark as Remote
+                </UiButton>
+              </div>
+            </div>
+
+            <ul
+              v-if="allSnapshots.length > 0"
+              class="custom-scrollbar mb-2 max-h-32 space-y-1 overflow-y-auto overscroll-contain"
+            >
+              <li
+                v-for="(s, idx) in allSnapshots"
+                :key="idx"
+                :data-testid="`repsmodal.snapshot.${idx}`"
+                class="flex items-start justify-between gap-2 py-0.5 text-[11px] text-fg"
+              >
+                <span class="min-w-0 flex-1 break-words">
+                  <UiBadge tone="neutral" class="mr-1">{{ snapshotLabel(s) }}</UiBadge>
+                  <span v-if="s.lat != null && s.lng != null" class="tabular">
+                    {{ s.lat.toFixed(5) }}, {{ s.lng.toFixed(5) }}<span v-if="s.accuracy_m"> (±{{ Math.round(s.accuracy_m) }}m)</span>
+                  </span>
+                  <span v-else class="text-fg-muted">[{{ s.note || 'no GPS' }}]</span>
+                  <a
+                    v-if="snapshotMapHref(s)"
+                    :data-testid="`repsmodal.snapshot.${idx}.map`"
+                    :href="snapshotMapHref(s)!"
+                    target="_blank"
+                    class="ml-1 font-medium text-primary underline-offset-2 hover:underline"
+                  >map</a>
+                </span>
+                <!-- Only allow dropping breadcrumbs the modal added; timer-driven ones live in the store. -->
+                <UiIconButton
+                  v-if="idx >= store.snapshotsByUser[user].length"
+                  type="button"
+                  :data-testid="`repsmodal.snapshot.${idx}.delete`"
+                  label="Remove location pin"
+                  variant="danger"
+                  @click="dropPendingSnapshot(idx - store.snapshotsByUser[user].length)"
+                >
+                  <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                </UiIconButton>
+              </li>
+            </ul>
+            <div v-else data-testid="repsmodal.snapshot-empty" class="mb-2 text-[11px] italic text-fg-muted">
+              No location recorded yet. Tap "Capture GPS now" if you want to log
+              where you are; otherwise leave the column blank or use the note
+              below (e.g. "Remote — phone call").
+            </div>
+
+            <input
+              data-testid="repsmodal.location-note"
+              v-model="locationNote"
+              type="text"
+              placeholder="Optional note (e.g. 'Remote — phone call', 'Honda — 1234 Maple St')"
+              class="ui-input text-sm"
+              aria-label="Location note"
+            />
+          </div>
+
+          <!-- Multi-asset evidence -->
+          <div class="rounded-ctl border border-line p-3">
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <label class="text-sm font-medium text-fg">
+                Evidence
+                <UiBadge v-if="allFiles.length > 0" tone="primary" class="ml-1 tabular">
+                  {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }} attached
+                </UiBadge>
+              </label>
+              <div class="flex gap-2">
+                <UiButton
+                  type="button"
+                  data-testid="repsmodal.evidence-camera"
+                  variant="secondary"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11"
+                  @click="openCameraDirect"
+                >
+                  <i class="pi pi-camera text-[10px]" aria-hidden="true"></i> Camera
+                </UiButton>
+                <label
+                  class="inline-flex min-h-9 touch:min-h-11 cursor-pointer items-center gap-1 rounded-ctl border border-line bg-surface px-2.5 py-1 text-xs font-medium text-fg transition-colors hover:bg-surface-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                >
+                  <i class="pi pi-paperclip text-[10px]" aria-hidden="true"></i> Attach
+                  <input
+                    data-testid="repsmodal.file-input"
+                    type="file"
+                    :accept="ALLOWED_FILE_ACCEPT"
+                    multiple
+                    class="hidden"
+                    @change="onFileInputChange"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <input
+              ref="cameraInputRef"
+              data-testid="repsmodal.camera-input"
+              type="file"
+              accept="image/*,video/*"
+              capture="environment"
+              multiple
+              class="hidden"
+              @change="onFileInputChange"
+            />
+
+            <ul
+              v-if="allFiles.length > 0"
+              class="custom-scrollbar max-h-72 space-y-2 overflow-y-auto overscroll-contain"
+            >
+              <li
+                v-for="(f, idx) in store.inFlightFilesByUser[user]"
+                :key="`timer-${idx}-${f.name}`"
+                :data-testid="`repsmodal.timer-file.${idx}`"
+                class="rounded-ctl bg-positive/10 px-2 py-1.5 text-xs"
+              >
+                <div class="mb-1 flex items-center justify-between gap-2">
+                  <span class="min-w-0 flex-1 break-words">
+                    <i class="pi pi-clock mr-1 text-[10px] text-positive" aria-hidden="true"></i>
+                    <span class="tabular text-fg">{{ f.name }}</span>
+                    <span class="ml-1 tabular text-fg-muted">({{ Math.round(f.size / 1024) }} KB)</span>
+                    <span class="ml-1 text-[10px] uppercase text-positive">timer</span>
+                  </span>
+                  <UiIconButton
+                    type="button"
+                    :data-testid="`repsmodal.timer-file.${idx}.delete`"
+                    label="Remove file"
+                    variant="danger"
+                    @click="removeFileFromTimer(idx)"
+                  >
+                    <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                  </UiIconButton>
+                </div>
+                <input
+                  :data-testid="`repsmodal.timer-file.${idx}.label`"
+                  v-model="timerLabels[idx]"
+                  type="text"
+                  placeholder="Short link name in the Sheet (e.g. 'Closing meeting photo')"
+                  maxlength="120"
+                  class="ui-input px-2 py-1 text-[11px]"
+                  aria-label="Evidence link name"
+                />
+              </li>
+              <li
+                v-for="(f, idx) in localFiles"
+                :key="`local-${idx}-${f.name}`"
+                :data-testid="`repsmodal.local-file.${idx}`"
+                class="rounded-ctl bg-surface-muted px-2 py-1.5 text-xs"
+              >
+                <div class="mb-1 flex items-center justify-between gap-2">
+                  <span class="min-w-0 flex-1 break-words">
+                    <i class="pi pi-file mr-1 text-[10px] text-fg-muted" aria-hidden="true"></i>
+                    <span class="tabular text-fg">{{ f.name }}</span>
+                    <span class="ml-1 tabular text-fg-muted">({{ Math.round(f.size / 1024) }} KB)</span>
+                  </span>
+                  <UiIconButton
+                    type="button"
+                    :data-testid="`repsmodal.local-file.${idx}.delete`"
+                    label="Remove file"
+                    variant="danger"
+                    @click="removeFileFromLocal(idx)"
+                  >
+                    <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                  </UiIconButton>
+                </div>
+                <input
+                  :data-testid="`repsmodal.local-file.${idx}.label`"
+                  v-model="localLabels[idx]"
+                  type="text"
+                  placeholder="Short link name in the Sheet (e.g. 'Inspection report')"
+                  maxlength="120"
+                  class="ui-input px-2 py-1 text-[11px]"
+                  aria-label="Evidence link name"
+                />
+              </li>
+            </ul>
+            <div v-if="evidenceError" data-testid="repsmodal.evidence-error" class="mt-1 text-[11px] text-negative">{{ evidenceError }}</div>
+            <div v-if="allFiles.length === 0" data-testid="repsmodal.evidence-empty" class="text-[11px] italic text-fg-muted">
+              Add photos/PDFs/videos. Each file becomes a clickable named link in the Sheet's
+              evidence column — type a short name once you've attached.
             </div>
           </div>
 
-          <input
-            ref="cameraInputRef"
-            type="file"
-            accept="image/*,video/*"
-            capture="environment"
-            multiple
-            class="hidden"
-            @change="onFileInputChange"
-          />
-
-          <ul v-if="allFiles.length > 0" class="space-y-2 max-h-72 overflow-y-auto">
-            <li
-              v-for="(f, idx) in store.inFlightFilesByUser[user]"
-              :key="`timer-${idx}-${f.name}`"
-              class="text-xs py-1.5 px-2 bg-emerald-50 rounded"
-            >
-              <div class="flex items-center justify-between gap-2 mb-1">
-                <span class="truncate flex-1">
-                  <i class="pi pi-clock text-[10px] mr-1 text-emerald-700"></i>
-                  <span class="font-mono text-slate-700">{{ f.name }}</span>
-                  <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
-                  <span class="ml-1 text-[10px] uppercase text-emerald-700">timer</span>
-                </span>
-                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromTimer(idx)">
-                  <i class="pi pi-times text-xs"></i>
-                </button>
-              </div>
+          <!-- People involved -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-fg">People Involved</label>
+            <div v-if="store.people.length === 0" data-testid="repsmodal.people-empty" class="mb-2 text-xs text-fg-muted">
+              No people yet. Add some on the People tab, or quick-add below.
+            </div>
+            <div v-else class="mb-2 flex flex-wrap gap-2">
+              <UiButton
+                v-for="p in store.people"
+                :key="p.id"
+                :data-testid="`repsmodal.person.${p.id}`"
+                type="button"
+                variant="secondary"
+                size="sm"
+                class="min-h-9 touch:min-h-11 rounded-full"
+                :class="peopleSelected.has(p.name) ? 'border-primary bg-primary text-primary-fg hover:bg-primary-hover' : ''"
+                :aria-pressed="peopleSelected.has(p.name)"
+                @click="togglePerson(p.name)"
+              >
+                {{ p.name }}<span v-if="p.role" class="ml-1 opacity-75">· {{ p.role }}</span>
+              </UiButton>
+            </div>
+            <div class="flex gap-2">
               <input
-                v-model="timerLabels[idx]"
+                data-testid="repsmodal.person-name"
+                v-model="newPersonName"
                 type="text"
-                placeholder="Short link name in the Sheet (e.g. 'Closing meeting photo')"
-                maxlength="120"
-                class="w-full px-2 py-1 text-[11px] border border-emerald-200 rounded bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+                placeholder="Quick add a person..."
+                class="ui-input flex-1 text-sm"
+                aria-label="Quick add a person"
+                @keyup.enter="quickAddPerson"
               />
-            </li>
-            <li
-              v-for="(f, idx) in localFiles"
-              :key="`local-${idx}-${f.name}`"
-              class="text-xs py-1.5 px-2 bg-slate-50 rounded"
-            >
-              <div class="flex items-center justify-between gap-2 mb-1">
-                <span class="truncate flex-1">
-                  <i class="pi pi-file text-[10px] mr-1 text-slate-700"></i>
-                  <span class="font-mono text-slate-700">{{ f.name }}</span>
-                  <span class="text-slate-500 ml-1">({{ Math.round(f.size / 1024) }} KB)</span>
-                </span>
-                <button type="button" class="text-rose-500 hover:text-rose-700" @click="removeFileFromLocal(idx)">
-                  <i class="pi pi-times text-xs"></i>
-                </button>
-              </div>
-              <input
-                v-model="localLabels[idx]"
-                type="text"
-                placeholder="Short link name in the Sheet (e.g. 'Inspection report')"
-                maxlength="120"
-                class="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none"
-              />
-            </li>
-          </ul>
-          <div v-if="evidenceError" class="text-[11px] text-rose-600 mt-1">{{ evidenceError }}</div>
-          <div v-if="allFiles.length === 0" class="text-[11px] text-slate-500 italic">
-            Add photos/PDFs/videos. Each file becomes a clickable named link in the Sheet's
-            evidence column — type a short name once you've attached.
+              <UiIconButton
+                type="button"
+                data-testid="repsmodal.person-add"
+                label="Add person"
+                variant="secondary"
+                size="md"
+                @click="quickAddPerson"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+              </UiIconButton>
+            </div>
           </div>
         </div>
 
-        <!-- People involved -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">People Involved</label>
-          <div v-if="store.people.length === 0" class="text-xs text-slate-500 mb-2">
-            No people yet. Add some on the People tab, or quick-add below.
+        <template #footer>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0 text-[11px] text-fg-muted">
+              Once saved, this row is append-only — corrections must be a new entry.
+            </div>
+            <div class="flex shrink-0 gap-2">
+              <UiButton
+                type="button"
+                data-testid="repsmodal.cancel"
+                variant="ghost"
+                :disabled="submitting || uploadingFiles"
+                @click="close"
+              >
+                Cancel
+              </UiButton>
+              <UiButton
+                type="button"
+                data-testid="repsmodal.save"
+                :disabled="submitting || uploadingFiles || capturingSnapshot"
+                @click="save"
+              >
+                <i v-if="submitting || uploadingFiles" class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                <span v-if="uploadingFiles">Uploading {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }}...</span>
+                <span v-else-if="submitting">Saving...</span>
+                <span v-else>Save Entry</span>
+              </UiButton>
+            </div>
           </div>
-          <div v-else class="flex flex-wrap gap-1.5 mb-2">
-            <button
-              v-for="p in store.people"
-              :key="p.id"
-              type="button"
-              class="px-2.5 py-1 text-xs rounded-full border transition-colors"
-              :class="peopleSelected.has(p.name) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'"
-              @click="togglePerson(p.name)"
-            >
-              {{ p.name }}<span v-if="p.role" class="opacity-75 ml-1">· {{ p.role }}</span>
-            </button>
-          </div>
-          <div class="flex gap-2">
-            <input
-              v-model="newPersonName"
-              type="text"
-              placeholder="Quick add a person..."
-              class="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              @keyup.enter="quickAddPerson"
-            />
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700"
-              @click="quickAddPerson"
-            >
-              <i class="pi pi-plus"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <footer class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-        <div class="text-[11px] font-mono text-slate-500">
-          Once saved, this row is append-only — corrections must be a new entry.
-        </div>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-colors"
-            :disabled="submitting || uploadingFiles"
-            @click="close"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            :disabled="submitting || uploadingFiles || capturingSnapshot"
-            @click="save"
-          >
-            <i v-if="submitting || uploadingFiles" class="pi pi-spin pi-spinner"></i>
-            <span v-if="uploadingFiles">Uploading {{ allFiles.length }} file{{ allFiles.length === 1 ? '' : 's' }}...</span>
-            <span v-else-if="submitting">Saving...</span>
-            <span v-else>Save Entry</span>
-          </button>
-        </div>
-      </footer>
+        </template>
+      </UiModalPanel>
     </div>
-  </div>
+  </UiTransition>
 </template>

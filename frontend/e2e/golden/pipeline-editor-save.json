@@ -1,0 +1,117 @@
+{
+  "requests": [
+    {
+      "method": "PUT",
+      "path": "/pipeline-templates/BRRRR",
+      "body": {
+        "stages": [
+          {
+            "id": "<redacted>",
+            "name": "Under Contract",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Purchase Agreement"
+              },
+              {
+                "id": "<redacted>",
+                "label": "EMD"
+              },
+              {
+                "id": "<redacted>",
+                "label": "New Sub-stage"
+              }
+            ]
+          },
+          {
+            "id": "<redacted>",
+            "name": "Prepare for Closing",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Lender Approval"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Insurance"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Title Insurance"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Title Approval (Ready to Close)"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Understand Breakdown"
+              }
+            ]
+          },
+          {
+            "id": "<redacted>",
+            "name": "Closed",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Save Package"
+              }
+            ]
+          },
+          {
+            "id": "<redacted>",
+            "name": "Rehab",
+            "subStages": []
+          },
+          {
+            "id": "<redacted>",
+            "name": "Rent",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Decide Who Rents It"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Pictures & Ads"
+              }
+            ]
+          },
+          {
+            "id": "<redacted>",
+            "name": "Prepare for Refi",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Choose Best Lender"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Lender Approval"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Appraisal"
+              },
+              {
+                "id": "<redacted>",
+                "label": "Decide on Reserve (Down/% /Max)"
+              }
+            ]
+          },
+          {
+            "id": "<redacted>",
+            "name": "Refinanced",
+            "subStages": [
+              {
+                "id": "<redacted>",
+                "label": "Save Package"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

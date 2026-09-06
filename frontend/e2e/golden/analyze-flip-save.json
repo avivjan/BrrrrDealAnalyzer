@@ -1,0 +1,315 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/helloworld"
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
+    },
+    {
+      "method": "POST",
+      "path": "/active-deals",
+      "body": {
+        "HMLInterestRate": 11,
+        "address": "2 Shared Form Ave",
+        "annual_insurance": 1200,
+        "annual_property_taxes": 3600,
+        "arv_in_thousands": 320,
+        "buyerAgentSellingFee": 3,
+        "capexPercent": 0,
+        "capitalGainsTax": 20,
+        "cashReserve": 0,
+        "closingCostsBuy": 5,
+        "closingCostsRefi": 10,
+        "daysUntilRefi": 180,
+        "deal_type": "FLIP",
+        "down_payment": 20,
+        "hmlPoints": 2,
+        "holdingTime": 6,
+        "interestRate": 7,
+        "loanTermYears": 30,
+        "ltv_as_precent": 75,
+        "maintenancePercent": 5,
+        "monthly_utilities": 250,
+        "montly_hoa": 0,
+        "property_managment_fee_precentages_from_rent": 0,
+        "purchasePrice": 200,
+        "refiPoints": 2,
+        "rehabContingency": 10,
+        "rehabCost": 50,
+        "rent": 0,
+        "salePrice": 320,
+        "section": 2,
+        "sellerAgentSellingFee": 3,
+        "sellingClosingCosts": 5,
+        "stage": 2,
+        "use_HM_for_rehab": true,
+        "vacancyPercent": 5
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
+    },
+    {
+      "method": "POST",
+      "path": "/analyze/flip",
+      "body": {
+        "HMLInterestRate": "11.00",
+        "address": "2 Shared Form Ave",
+        "annual_insurance": "1200.00",
+        "annual_property_taxes": "3600.00",
+        "annualized_roi": 38.815840061514805,
+        "bathrooms": null,
+        "bedrooms": null,
+        "breakdowns": {
+          "annualized_roi": [
+            {
+              "formula": "Net Profit ($12,620) / Total Cash Invested ($65,025) × 100 = 19.41%",
+              "label": "ROI",
+              "value": 19.407920030757403
+            },
+            {
+              "formula": "ROI (19.41%) / Holding Years (0.50) = 38.82%",
+              "label": "Annualized ROI",
+              "value": 38.815840061514805
+            }
+          ],
+          "net_profit": [
+            {
+              "formula": "Base ($50,000) + Contingency 10.00% ($5,000) = $55,000",
+              "label": "Rehab Cost (with contingency)",
+              "value": 55000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Monthly Interest ($1,970.83) × 6 mos = $11,825",
+              "label": "Total HML Interest (over holding period)",
+              "value": 11825
+            },
+            {
+              "formula": "(Taxes/12 ($300) + Insurance/12 ($100) + HOA ($0) + Utilities ($250)) × 6 mos = $3,900",
+              "label": "Total Operating Costs (during holding)",
+              "value": 3900
+            },
+            {
+              "formula": "HML Interest ($11,825) + Operating ($3,900) = $15,725",
+              "label": "Total Holding Costs",
+              "value": 15725
+            },
+            {
+              "formula": "Sale Price ($320,000) × Agent Fees 6.00% + Closing ($5,000) = $24,200",
+              "label": "Selling Costs",
+              "value": 24200
+            },
+            {
+              "formula": "Purchase ($200,000) + Rehab ($55,000) + Closing ($5,000) + Holding ($15,725) + Selling ($24,200) + HML Points ($4,300) = $304,225",
+              "label": "Total Cost Basis",
+              "value": 304225
+            },
+            {
+              "formula": "Sale Price ($320,000) − Total Cost Basis ($304,225) = $15,775",
+              "label": "Gross Profit",
+              "value": 15775
+            },
+            {
+              "formula": "Gross Profit ($15,775) × 20.00% = $3,155",
+              "label": "Capital Gains Tax",
+              "value": 3155
+            },
+            {
+              "formula": "Gross Profit ($15,775) − Capital Gains Tax ($3,155) = $12,620",
+              "label": "Net Profit (after tax)",
+              "value": 12620
+            }
+          ],
+          "roi": [
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Holding ($15,725) + Rehab Out-of-Pocket ($0) = $65,025",
+              "label": "Total Cash Invested",
+              "value": 65025
+            },
+            {
+              "formula": "Gross Profit ($15,775) − Capital Gains Tax ($3,155) = $12,620",
+              "label": "Net Profit (after tax)",
+              "value": 12620
+            },
+            {
+              "formula": "Net Profit ($12,620) / Total Cash Invested ($65,025) × 100 = 19.41%",
+              "label": "ROI",
+              "value": 19.407920030757403
+            }
+          ],
+          "total_cash_needed": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "Monthly Interest × 6 mos = $11,825",
+              "label": "HML Interest (cash, during holding)",
+              "value": 11825
+            },
+            {
+              "formula": "Monthly Operating × 6 mos = $3,900",
+              "label": "Operating Costs (during holding)",
+              "value": 3900
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($5,000) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest ($11,825) + Operating ($3,900) = $65,025",
+              "label": "Total Cash Needed",
+              "value": 65025
+            }
+          ],
+          "total_cash_needed_with_buffer": [
+            {
+              "formula": "20.00% × Purchase ($200,000) = $40,000",
+              "label": "Down Payment (cash)",
+              "value": 40000
+            },
+            {
+              "formula": "$5,000",
+              "label": "Closing Costs (Buy)",
+              "value": 5000
+            },
+            {
+              "formula": "2.00% × HML Amount ($215,000) = $4,300",
+              "label": "HML Points (cash)",
+              "value": 4300
+            },
+            {
+              "formula": "Rehab ($55,000) is financed via HM → no out-of-pocket = $0",
+              "label": "Rehab Cash (out-of-pocket)",
+              "value": 0
+            },
+            {
+              "formula": "Closing ($5,000) × 1.1 = $5,500",
+              "label": "Closing × 1.1 buffer",
+              "value": 5500
+            },
+            {
+              "formula": "HML Interest ($11,825) × 1.5 = $17,737.50",
+              "label": "HML Interest × 1.5 buffer",
+              "value": 17737.5
+            },
+            {
+              "formula": "Operating ($3,900) × 1.5 = $5,850",
+              "label": "Operating × 1.5 buffer",
+              "value": 5850
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing×1.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest×1.5 ($17,737.50) + Operating×1.5 ($5,850) = $78,887.50",
+              "label": "Total Cash Needed (Buffered)",
+              "value": 78887.5
+            }
+          ],
+          "total_hml_interest": [
+            {
+              "formula": "Purchase Loan + Rehab ($215,000) — full HM stack",
+              "label": "HML Amount",
+              "value": 215000
+            },
+            {
+              "formula": "HML Amount ($215,000) × 11.00%/yr ÷ 12 = $1,970.83",
+              "label": "Monthly HML Interest",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "Monthly Interest ($1,970.83) × 6 mos = $11,825",
+              "label": "Total HML Interest (over holding period)",
+              "value": 11825
+            }
+          ],
+          "total_holding_costs": [
+            {
+              "formula": "Monthly Interest ($1,970.83) × 6 mos = $11,825",
+              "label": "Total HML Interest (over holding period)",
+              "value": 11825
+            },
+            {
+              "formula": "(Taxes/12 ($300) + Insurance/12 ($100) + HOA ($0) + Utilities ($250)) × 6 mos = $3,900",
+              "label": "Total Operating Costs (during holding)",
+              "value": 3900
+            },
+            {
+              "formula": "HML Interest ($11,825) + Operating ($3,900) = $15,725",
+              "label": "Total Holding Costs",
+              "value": 15725
+            }
+          ]
+        },
+        "buyerAgentSellingFee": "3.00",
+        "capitalGainsTax": "20.00",
+        "closingCostsBuy": "5.0000",
+        "contact": null,
+        "created_at": "<redacted>",
+        "crime_rate": null,
+        "deal_type": "FLIP",
+        "down_payment": "20.00",
+        "hmlPoints": "2.00",
+        "holdingTime": 6,
+        "id": "<redacted>",
+        "messages": [],
+        "monthly_utilities": "250.00",
+        "montly_hoa": "0.00",
+        "net_profit": 12620,
+        "niche": null,
+        "notes": null,
+        "overall_design": null,
+        "pics_link": null,
+        "purchasePrice": "200.0000",
+        "rehabContingency": "10.00",
+        "rehabCost": "50.0000",
+        "rent_comps": null,
+        "roi": 19.407920030757403,
+        "salePrice": "320.0000",
+        "sale_comps": null,
+        "section": 2,
+        "sellerAgentSellingFee": "3.00",
+        "sellingClosingCosts": "5.0000",
+        "sold_comps": null,
+        "sqft": null,
+        "stage": 2,
+        "task": null,
+        "total_cash_needed": 65025,
+        "total_cash_needed_with_buffer": 78887.5,
+        "total_hml_interest": 11825,
+        "total_holding_costs": 15725,
+        "updated_at": "<redacted>",
+        "use_HM_for_rehab": true,
+        "zillow_link": null
+      }
+    }
+  ],
+  "rendered": {
+    "net_profit": "$12,620",
+    "roi": "19.41%",
+    "annualized_roi": "38.82%",
+    "total_cash_needed": "$65,025",
+    "total_cash_needed_with_buffer": "$78,888",
+    "total_holding_costs": "$15,725",
+    "total_hml_interest": "$11,825"
+  }
+}

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Python 3.10+ (for the FastAPI backend)
-- Node not required; frontend is static HTML/JS
+- Node 20+ and npm (for the Vue frontend in `frontend/`)
 
 ## Run the FastAPI backend
 
@@ -27,18 +27,33 @@
 
 ## Run the frontend
 
-1. In a separate terminal, serve the static files from the `FrontEnd` directory:
+The frontend is a Vue 3 + Vite + TypeScript app in `frontend/`, styled with
+Tailwind CSS and unstyled PrimeVue, with a GSAP motion layer. (The old static
+`FrontEnd/` directory is gone; anything that still mentions it is out of date.)
+
+1. In a separate terminal:
    ```bash
-   cd FrontEnd
-   python -m http.server 5500
+   cd frontend
+   npm install
+   npm run dev
    ```
-   Then open http://localhost:5500 in your browser.
-2. The frontend expects the backend at http://localhost:8000. If you run the API on a different host/port, update the `fetch` URL in `FrontEnd/script.js`.
+   Vite prints the URL it is serving on (http://localhost:5173 by default) and
+   hot-reloads on save.
+2. It expects the backend at http://localhost:8000. To point it elsewhere, set
+   `VITE_API_URL` — there is no URL hard-coded in a source file to edit.
+3. `npm run build` type-checks with `vue-tsc` and produces the production build
+   Netlify deploys.
+
+`frontend/README.md` is the guide to the UI itself: the design tokens, the
+`Ui*` primitives, the motion layer, the eleven gates `npm run verify:ui` runs,
+and the Playwright characterization suite. The decisions behind all of it —
+including the follow-ups that were deliberately left for a later pass — are in
+`docs/ui-overhaul/`.
 
 ## Workflow
 
 - Start the backend first so the acquisition calculator can reach the `/CalcPrecentageOfARVRes` endpoint.
-- Refresh the browser after backend changes; frontend updates hot-reload when you refresh.
+- The frontend hot-reloads on save; restart `uvicorn` (or rely on `--reload`) after backend changes.
 
 ## Tests
 
@@ -78,6 +93,13 @@ cd frontend
 npm install
 npm test
 ```
+
+For a UI change there is a second command, `npm run verify:ui`, which runs the
+whole behaviour-freeze gate set — the unit suite and the production build, the
+static audits that hold every `.vue` script, template binding and on-screen
+string to the pre-overhaul baseline, and the Playwright suite that replays every
+flow's HTTP contract against a throwaway database. `frontend/README.md` lists
+each gate.
 
 Neither suite runs during a Netlify build (`npm run build` only compiles). To gate
 a Render deploy on the backend suite, set the service's **Pre-Deploy Command** to

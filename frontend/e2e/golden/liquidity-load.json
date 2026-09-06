@@ -1,0 +1,28 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/helloworld"
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/transactions"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/recurring"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/settings"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/mercury-balance"
+    }
+  ]
+}

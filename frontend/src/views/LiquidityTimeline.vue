@@ -8,7 +8,7 @@ import type {
   LiquidityRecurringFrequency,
   SimulationResult,
 } from '../types/liquidity'
-import { requiresSimulation } from '../utils/liquidityEngine'
+import { requiresSimulation, todayISO } from '../utils/liquidityEngine'
 import TimelineChart from '../components/liquidity/TimelineChart.vue'
 import LiquiditySidebar from '../components/liquidity/LiquiditySidebar.vue'
 import DayDetail from '../components/liquidity/DayDetail.vue'
@@ -56,6 +56,35 @@ const warningOpen = ref(false)
 const warningSeverity = ref<'hard' | 'soft' | 'none'>('none')
 const warningResult = ref<SimulationResult | null>(null)
 const pendingSave = ref<SavePayload | null>(null)
+
+/** Narrow screens: the sidebar is an inline collapsible section instead of a right rail. */
+const sidebarOpen = ref(false)
+
+/** Header KPIs, from the series App already computed — no fetch. */
+const todayIso = todayISO()
+const kpis = computed(() => {
+  const days = store.series.days
+  const todayBucket = days.find(d => d.date === todayIso) ?? null
+  const firstNeg = store.series.firstNegativeDate
+  const daysToNegative = firstNeg
+    ? Math.round((new Date(firstNeg + 'T00:00:00').getTime() - new Date(todayIso + 'T00:00:00').getTime()) / 86_400_000)
+    : null
+  const fmt = (v: number) => {
+    const sign = v < 0 ? '-' : ''
+    const a = Math.abs(v)
+    return a >= 1000 ? `${sign}$${(a / 1000).toFixed(1)}M` : `${sign}$${a.toFixed(1)}k`
+  }
+  return {
+    balance: todayBucket ? fmt(todayBucket.balance_k) : '—',
+    balanceTone: todayBucket && todayBucket.balance_k < 0 ? 'negative' : 'neutral',
+    min: fmt(store.series.globalMin),
+    minTone: store.series.globalMin < 0 ? 'negative' : store.series.globalMin < store.settings.reserve_k ? 'warning' : 'positive',
+    minDate: store.series.globalMinDates[0] ?? null,
+    daysToNegative: daysToNegative === null ? 'None' : daysToNegative <= 0 ? 'Now' : `${daysToNegative}d`,
+    daysTone: daysToNegative === null ? 'positive' : daysToNegative <= 30 ? 'negative' : 'warning',
+    reserve: fmt(store.settings.reserve_k),
+  } as const
+})
 
 const toastMessage = ref('')
 const toastVisible = ref(false)
@@ -364,149 +393,158 @@ function showToast(msg: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0f1117] text-slate-200 flex flex-col">
-    <!-- Header -->
-    <header class="flex items-center justify-between px-4 py-3 border-b border-[#1e2030] bg-[#0f1117]/90 backdrop-blur-sm sticky top-0 z-30">
-      <div class="flex items-center gap-3">
-        <button
-          class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] transition-all"
-          title="Back"
-          @click="router.push('/')"
-        >
-          <i class="pi pi-arrow-left text-sm"></i>
-        </button>
-        <h1 class="text-base font-mono font-bold text-slate-100 tracking-tight">
-          <i class="pi pi-chart-line text-indigo-400 mr-2"></i>
-          Liquidity Timeline
-        </h1>
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
-          @click="chartRef?.centerOnToday()"
-        >
-          <i class="pi pi-crosshair text-[10px]"></i> Today
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
+  <!--
+    UI v2: a grid dashboard inside the shell (which owns the viewport, the
+    sticky header and the h1). Toolbar → four KPIs → the chart → day detail +
+    sidebar. Below `lg` the sidebar is an inline collapsible section rather
+    than a hidden rail, so every figure is reachable on a phone. Every hook,
+    handler, store call, modal and the 4 s toast are the v1 ones.
+
+    No size, padding or transform transition on the chart panel or any of its
+    ancestors: the chart re-measures itself from a ResizeObserver.
+  -->
+  <div class="mx-auto flex w-full max-w-[96rem] flex-col gap-4 px-3 py-4 text-fg sm:px-5 lg:px-6 lg:py-6">
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-center gap-2">
+      <UiIconButton data-testid="liquidity.back" size="md" title="Back" label="Back" @click="router.push('/')">
+        <i class="pi pi-arrow-left text-sm" aria-hidden="true"></i>
+      </UiIconButton>
+      <h2 class="mr-auto min-w-0 truncate font-display text-xl font-semibold tracking-display text-fg">Liquidity Timeline</h2>
+      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">
+          <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
+        </UiButton>
+        <UiButton
+          data-testid="liquidity.mercury-sync"
+          variant="secondary"
+          size="sm"
+          class="min-h-9 touch:min-h-11 gap-1.5"
           :disabled="store.mercurySyncing"
           :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
           @click="refreshFromMercury"
         >
-          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]"></i>
+          <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]" aria-hidden="true"></i>
           {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-[#1e2030] rounded-lg transition-all flex items-center gap-1.5"
-          @click="settingsOpen = true"
-        >
-          <i class="pi pi-cog text-[10px]"></i> Settings
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all flex items-center gap-1.5"
-          @click="openAddForm()"
-        >
-          <i class="pi pi-plus text-[10px]"></i> Add Flow
-        </button>
+        </UiButton>
+        <UiButton data-testid="liquidity.settings-open" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="settingsOpen = true">
+          <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
+        </UiButton>
+        <UiButton data-testid="liquidity.add-flow" variant="primary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5 shadow-glow-primary" @click="openAddForm()">
+          <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
+        </UiButton>
       </div>
-    </header>
+    </div>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="flex-1 flex items-center justify-center">
+    <div v-if="store.loading" data-testid="liquidity.loading" class="flex min-h-[40vh] items-center justify-center p-6">
       <div class="text-center">
-        <i class="pi pi-spin pi-spinner text-2xl text-indigo-400 mb-3"></i>
-        <p class="text-sm font-mono text-slate-500">Loading liquidity data...</p>
+        <i class="pi pi-spin pi-spinner mb-3 text-2xl text-primary" aria-hidden="true"></i>
+        <p class="text-sm text-fg-muted">Loading liquidity data...</p>
       </div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="store.error" class="flex-1 flex items-center justify-center">
-      <div class="text-center max-w-sm">
-        <i class="pi pi-exclamation-circle text-3xl text-red-400 mb-3"></i>
-        <p class="text-sm font-mono text-red-300 mb-2">Failed to load</p>
-        <p class="text-xs font-mono text-slate-500 mb-4">{{ store.error }}</p>
-        <button
-          class="px-4 py-2 text-xs font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
-          @click="store.fetchAll()"
-        >
+    <div v-else-if="store.error" data-testid="liquidity.error" class="flex min-h-[40vh] items-center justify-center p-6">
+      <UiSurface :level="1" padding="lg" class="max-w-sm text-center">
+        <i class="pi pi-exclamation-circle mb-3 text-3xl text-negative" aria-hidden="true"></i>
+        <p class="mb-2 text-sm font-semibold text-negative">Failed to load</p>
+        <p class="mb-4 break-words text-xs text-fg-muted">{{ store.error }}</p>
+        <UiButton data-testid="liquidity.retry" variant="secondary" size="sm" class="min-h-9 touch:min-h-11" @click="store.fetchAll()">
           Retry
-        </button>
-      </div>
+        </UiButton>
+      </UiSurface>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!hasData && !store.loading" class="flex-1 flex items-center justify-center">
-      <div class="text-center max-w-md">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-          <i class="pi pi-chart-line text-3xl text-indigo-400"></i>
-        </div>
-        <h2 class="text-lg font-mono font-bold text-slate-200 mb-2">No liquidity data yet</h2>
-        <p class="text-sm font-mono text-slate-500 mb-6">
+    <div v-else-if="!hasData && !store.loading" data-testid="liquidity.empty" class="flex min-h-[40vh] items-center justify-center p-6">
+      <UiEmptyState icon="pi pi-chart-line" class="max-w-md">
+        No liquidity data yet
+        <template #description>
           Set your opening balance and add your first cash flow to get started.
-        </p>
-        <div class="flex gap-3 justify-center">
-          <button
-            class="px-4 py-2 text-sm font-mono bg-[#1e2030] border border-[#2a2f45] rounded-lg text-slate-300 hover:border-indigo-500 transition-all"
-            @click="settingsOpen = true"
-          >
-            Set Opening Balance
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-mono font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg transition-all"
-            @click="openAddForm()"
-          >
-            Add First Flow
-          </button>
-        </div>
-      </div>
+        </template>
+        <template #actions>
+          <div class="flex flex-wrap justify-center gap-3">
+            <UiButton data-testid="liquidity.empty.settings" variant="secondary" @click="settingsOpen = true">
+              Set Opening Balance
+            </UiButton>
+            <UiButton data-testid="liquidity.empty.add" variant="primary" @click="openAddForm()">
+              Add First Flow
+            </UiButton>
+          </div>
+        </template>
+      </UiEmptyState>
     </div>
 
-    <!-- Main content -->
-    <div v-else class="flex-1 flex min-h-0">
-      <!-- Chart area -->
-      <div class="flex-1 flex flex-col min-w-0">
-        <div class="flex-1 min-h-[300px]">
-          <TimelineChart
-            ref="chartRef"
-            :days="store.series.days"
-            :global-min="store.series.globalMin"
-            :global-min-dates="store.series.globalMinDates"
-            :first-negative-date="store.series.firstNegativeDate"
-            @select-day="onSelectDay"
-          />
-        </div>
+    <!-- Dashboard -->
+    <template v-else>
+      <div v-reveal.stagger class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.balance" label="Today's balance" :value="kpis.balance" :tone="kpis.balanceTone" icon="pi pi-wallet" />
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.min" label="Window minimum" :value="kpis.min" :tone="kpis.minTone" icon="pi pi-arrow-down" :delta="kpis.minDate ? `on ${kpis.minDate}` : undefined" />
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.negative" label="Days to negative" :value="kpis.daysToNegative" :tone="kpis.daysTone" icon="pi pi-exclamation-triangle" />
+        <UiKpiCard data-reveal data-testid="liquidity.kpi.reserve" label="Reserve floor" :value="kpis.reserve" icon="pi pi-shield" />
+      </div>
 
-        <!-- Bottom detail panel -->
-        <div class="border-t border-[#1e2030] p-3 bg-[#0f1117] max-h-[260px] overflow-y-auto">
-          <DayDetail
-            v-if="selectedBucket"
-            :bucket="selectedBucket"
-            @edit-txn="openEditForm"
-            @delete-txn="onDeleteTxn"
-            @add-on-date="openAddForm"
-          />
-          <div v-else class="text-xs font-mono text-slate-500 py-4 text-center">
-            Click or arrow-key to a day to see details
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <!-- Chart + day detail -->
+        <div class="flex min-w-0 flex-col gap-4">
+          <UiSurface :level="1" padding="none" class="overflow-hidden">
+            <div class="grid h-[340px] min-h-[320px] sm:h-[380px]">
+              <TimelineChart
+                ref="chartRef"
+                :days="store.series.days"
+                :global-min="store.series.globalMin"
+                :global-min-dates="store.series.globalMinDates"
+                :first-negative-date="store.series.firstNegativeDate"
+                @select-day="onSelectDay"
+              />
+            </div>
+          </UiSurface>
+
+          <div class="max-h-[320px] overflow-y-auto overscroll-contain">
+            <DayDetail
+              v-if="selectedBucket"
+              :bucket="selectedBucket"
+              @edit-txn="openEditForm"
+              @delete-txn="onDeleteTxn"
+              @add-on-date="openAddForm"
+            />
+            <UiSurface v-else :level="2" padding="md" class="text-center text-xs text-fg-muted">
+              Click or arrow-key to a day to see details
+            </UiSurface>
           </div>
         </div>
-      </div>
 
-      <!-- Right sidebar -->
-      <aside class="w-56 border-l border-[#1e2030] p-3 overflow-y-auto hidden lg:block bg-[#0f1117]">
-        <LiquiditySidebar
-          :series="store.series"
-          :settings="store.settings"
-          :transactions="store.transactions"
-          :recurring-rules="store.recurringRules"
-          :mercury-balance="store.mercuryBalance"
-          :mercury-syncing="store.mercurySyncing"
-          :mercury-error="store.mercuryError"
-          :mercury-last-synced-at="store.mercuryLastSyncedAt"
-          @edit-recurring="openEditRecurring"
-          @delete-recurring="onDeleteRecurringRule"
-        />
-      </aside>
-    </div>
+        <!-- Sidebar: right rail on lg+, inline collapsible below -->
+        <aside aria-label="Liquidity overview" class="min-w-0">
+          <UiButton
+            data-testid="liquidity.sidebar-toggle"
+            variant="secondary"
+            block
+            class="lg:hidden"
+            :aria-expanded="sidebarOpen"
+            aria-controls="liquidity-sidebar"
+            @click="sidebarOpen = !sidebarOpen"
+          >
+            <i :class="sidebarOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs" aria-hidden="true"></i>
+            {{ sidebarOpen ? 'Hide overview' : 'Show overview' }}
+          </UiButton>
+          <div id="liquidity-sidebar" :class="sidebarOpen ? 'mt-3 block' : 'hidden lg:block'">
+            <LiquiditySidebar
+              :series="store.series"
+              :settings="store.settings"
+              :transactions="store.transactions"
+              :recurring-rules="store.recurringRules"
+              :mercury-balance="store.mercuryBalance"
+              :mercury-syncing="store.mercurySyncing"
+              :mercury-error="store.mercuryError"
+              :mercury-last-synced-at="store.mercuryLastSyncedAt"
+              @edit-recurring="openEditRecurring"
+              @delete-recurring="onDeleteRecurringRule"
+            />
+          </div>
+        </aside>
+      </div>
+    </template>
 
     <!-- Modals -->
     <TransactionForm
@@ -537,7 +575,8 @@ function showToast(msg: string) {
     <Transition name="toast">
       <div
         v-if="toastVisible"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1e2030] border border-[#2a2f45] rounded-lg px-4 py-2.5 shadow-xl text-xs font-mono text-slate-300 max-w-md"
+        data-testid="liquidity.toast"
+        class="fixed inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-50 mx-auto w-fit max-w-[min(28rem,calc(100%-2rem))] rounded-card border-ui border-line bg-surface px-4 py-2.5 text-xs text-fg shadow-3"
       >
         {{ toastMessage }}
       </div>
@@ -546,15 +585,21 @@ function showToast(msg: string) {
 </template>
 
 <style scoped>
+/*
+ * The toast is `position: fixed`, so it is centred with auto margins rather
+ * than a permanent `translateX(-50%)`; only the entry and exit move it.
+ */
 .toast-enter-active, .toast-leave-active {
-  transition: all 0.3s ease;
+  transition:
+    opacity var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
 }
 .toast-enter-from {
   opacity: 0;
-  transform: translate(-50%, 12px);
+  transform: translateY(12px);
 }
 .toast-leave-to {
   opacity: 0;
-  transform: translate(-50%, 12px);
+  transform: translateY(12px);
 }
 </style>

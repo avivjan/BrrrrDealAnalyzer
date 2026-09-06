@@ -1,0 +1,16 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/pipeline-templates"
+    },
+    {
+      "method": "GET",
+      "path": "/pipeline-templates/BRRRR/stats"
+    },
+    {
+      "method": "GET",
+      "path": "/pipeline-templates/FLIP/stats"
+    }
+  ]
+}

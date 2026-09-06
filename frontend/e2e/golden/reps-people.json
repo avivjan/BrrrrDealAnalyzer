@@ -1,0 +1,16 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/reps/people",
+      "body": {
+        "name": "Gilly Plumber",
+        "role": "Plumber"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/reps/people/{id}"
+    }
+  ]
+}

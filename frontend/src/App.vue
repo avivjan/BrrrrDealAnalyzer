@@ -4,7 +4,7 @@ import { useConnectionStore } from "./stores/connectionStore";
 import { useDealStore } from "./stores/dealStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
-import PortfolioStatsBar from "./components/PortfolioStatsBar.vue";
+import AppShell from "./components/shell/AppShell.vue";
 
 const connectionStore = useConnectionStore();
 const dealStore = useDealStore();
@@ -45,27 +45,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-500 selection:text-white relative"
-  >
-    <!-- Server Status Indicator -->
-    <div
-      class="fixed top-2 right-2 z-50 w-3 h-3 rounded-full shadow-sm transition-colors duration-300"
-      :class="
-        connectionStore.isChecking || !connectionStore.isConnected
-          ? 'bg-red-500 animate-pulse'
-          : 'bg-green-500'
-      "
-      :title="
-        connectionStore.isChecking
-          ? 'Connecting to server...'
-          : connectionStore.isConnected
-            ? 'Server Connected'
-            : 'Disconnected'
-      "
-    ></div>
+  <!--
+    UI v2: the persistent shell (sidebar, topbar, one <main> scroller, bottom
+    nav, command palette, Appearance settings) frames every route. The stats
+    bar moved into the dashboard view, inside a height-reserved slot, so its
+    arrival after `fetchDeals` no longer shifts every page. `app.status` lives
+    in the topbar now, with the same hook, role and strings.
 
-    <PortfolioStatsBar />
-    <RouterView />
-  </div>
+    `page` is opacity-only and has no `leave` hook, so a route change is never
+    held back by an animation and a modal opened from a deep link is never
+    positioned relative to a transformed ancestor.
+  -->
+  <AppShell>
+    <RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>
+  </AppShell>
 </template>

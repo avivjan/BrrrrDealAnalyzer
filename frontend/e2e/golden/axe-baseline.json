@@ -1,0 +1,648 @@
+{
+  "analyze": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc11=\"\"] > .border-2.border-blue-500.w-5",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "label": {
+      "impact": "critical",
+      "count": 24,
+      "examples": [
+        "#pv_id_1",
+        "#pv_id_10",
+        "#pv_id_13",
+        "#pv_id_15",
+        "#pv_id_17"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 13,
+      "examples": [
+        ".gap-1\\.5.flex-col[data-part=\"input\"]",
+        ".shadow-xl",
+        "div[data-testid=\"form.field.arv_in_thousands\"]",
+        "div[data-testid=\"form.field.cashReserve\"]",
+        "div[data-testid=\"form.field.closingCostsRefi\"]"
+      ]
+    }
+  },
+  "analyze@390": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc21=\"\"] > .border-2.border-primary.w-6",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 13,
+      "examples": [
+        ".overflow-hidden",
+        "div[data-input-id=\"v-22\"]",
+        "div[data-testid=\"form.field.arv_in_thousands\"]",
+        "div[data-testid=\"form.field.cashReserve\"]",
+        "div[data-testid=\"form.field.closingCostsRefi\"]"
+      ]
+    }
+  },
+  "analyze@save-modal": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc21=\"\"] > .border-2.border-primary.w-6",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "landmark-no-duplicate-banner": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".lg\\:col-span-2 > header"
+      ]
+    },
+    "landmark-unique": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".lg\\:col-span-2 > header"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 13,
+      "examples": [
+        "div[data-input-id=\"v-22\"]",
+        "div[data-testid=\"form.field.arv_in_thousands\"]",
+        "div[data-testid=\"form.field.cashReserve\"]",
+        "div[data-testid=\"form.field.closingCostsRefi\"]",
+        "div[data-testid=\"form.field.interestRate\"]"
+      ]
+    }
+  },
+  "bought-deals": {
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "color-contrast": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-gray-700"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"boughtdeals.stage.purchase\"] > .border-l-blue-500.border-gray-100.bg-gray-50\\/50 > .gap-3.items-center.flex > h3"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    }
+  },
+  "bought-deals@390": {
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "page-has-heading-one": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".overflow-y-auto"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".overflow-y-auto"
+      ]
+    }
+  },
+  "bought-deals@modal": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc31=\"\"] > .border-2.border-primary.w-6",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 2,
+      "examples": [
+        "div[data-testid=\"boughtdeals.modal.results\"] > .mb-3.items-start[data-ui=\"section-header\"] > .min-w-0 > h4",
+        "div[data-testid=\"boughtdeals.stage.purchase\"] > .border-b.p-3[data-part=\"header\"] > .items-start.gap-3[data-ui=\"section-header\"] > .min-w-0 > h3"
+      ]
+    },
+    "label": {
+      "impact": "critical",
+      "count": 2,
+      "examples": [
+        ".py-0\\.5.gap-2.items-center:nth-child(1) > .accent-primary.h-4.w-4",
+        "input[data-testid=\"boughtcard.substage.emd.input\"]"
+      ]
+    },
+    "landmark-no-duplicate-banner": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".pt-\\[max\\(1rem\\,env\\(safe-area-inset-top\\)\\)\\]"
+      ]
+    },
+    "landmark-unique": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".pt-\\[max\\(1rem\\,env\\(safe-area-inset-top\\)\\)\\]"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 14,
+      "examples": [
+        ".border-l-blue-500.border-l-4.bg-surface-muted:nth-child(2)",
+        ".border-l-cyan-500",
+        ".border-l-green-600.border-l-4.bg-surface-muted:nth-child(6)",
+        ".flex-none[data-v-9f93e987=\"\"]",
+        ".gap-x-2.gap-y-2.grid-cols-2"
+      ]
+    }
+  },
+  "bought-deals@seeded": {
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"boughtdeals.stage.purchase\"] > .border-b.p-3[data-part=\"header\"] > .justify-between.gap-3[data-ui=\"section-header\"] > .min-w-0 > .font-semibold"
+      ]
+    },
+    "label": {
+      "impact": "critical",
+      "count": 2,
+      "examples": [
+        ".gap-2.py-0\\.5.items-center:nth-child(1) > input",
+        "input[data-testid=\"boughtcard.substage.emd.input\"]"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 14,
+      "examples": [
+        ".border-l-blue-500.bg-surface-muted.border-l-4:nth-child(2)",
+        ".border-l-cyan-500",
+        ".border-l-green-600.bg-surface-muted.border-l-4:nth-child(6)",
+        ".border-t.pt-2.mt-3:nth-child(6)",
+        ".border-t.pt-2.mt-3:nth-child(7)"
+      ]
+    }
+  },
+  "command@modal": {},
+  "landing": {
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 8,
+      "examples": [
+        ".idx-0 > .card-inner > .card-body",
+        ".idx-1 > .card-inner > .card-body",
+        ".idx-2 > .card-inner > .card-body",
+        ".idx-3 > .card-inner > .card-body",
+        ".idx-4 > .card-inner > .card-body"
+      ]
+    }
+  },
+  "landing@390": {
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 8,
+      "examples": [
+        ".idx-0 > .card-inner > .card-body",
+        ".idx-1 > .card-inner > .card-body",
+        ".idx-2 > .card-inner > .card-body",
+        ".idx-3 > .card-inner > .card-body",
+        ".idx-4 > .card-inner > .card-body"
+      ]
+    }
+  },
+  "landing@aurora-dark": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 8,
+      "examples": [
+        ".gap-2\\.5 > .font-bold.font-display.tracking-display",
+        "aside > nav > ul > li:nth-child(1) > a[href=\"/\"][data-testid=\"shell.nav.home\"][aria-current=\"page\"] > .truncate",
+        "aside > nav > ul > li:nth-child(2) > .hover\\:bg-fg\\/6[href$=\"analyze\"][data-testid=\"shell.nav.analyze\"] > .truncate",
+        "aside > nav > ul > li:nth-child(3) > .hover\\:bg-fg\\/6[href$=\"my-deals\"][data-testid=\"shell.nav.my-deals\"] > .truncate",
+        "aside > nav > ul > li:nth-child(4) > .hover\\:bg-fg\\/6[href$=\"bought-deals\"][data-testid=\"shell.nav.bought-deals\"] > .truncate"
+      ]
+    }
+  },
+  "landing@aurora-light": {},
+  "landing@brutal-dark": {},
+  "landing@brutal-light": {},
+  "landing@luxury-dark": {},
+  "landing@luxury-light": {},
+  "landing@obsidian-dark": {},
+  "landing@obsidian-light": {},
+  "liquidity": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        "p"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 3,
+      "examples": [
+        ".bottom-6",
+        "h2",
+        "p"
+      ]
+    }
+  },
+  "liquidity@390": {
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 3,
+      "examples": [
+        ".inset-x-0",
+        ".mt-1",
+        "p[data-part=\"title\"]"
+      ]
+    }
+  },
+  "liquidity@aurora-dark": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 8,
+      "examples": [
+        ".font-bold",
+        ".gap-3[href$=\"analyze\"][data-testid=\"shell.nav.analyze\"] > .truncate",
+        ".gap-3[href$=\"bought-deals\"][data-testid=\"shell.nav.bought-deals\"] > .truncate",
+        ".gap-3[href$=\"my-deals\"][data-testid=\"shell.nav.my-deals\"] > .truncate",
+        ".gap-3[href$=\"reps\"][data-testid=\"shell.nav.reps\"] > .truncate"
+      ]
+    }
+  },
+  "liquidity@aurora-light": {},
+  "liquidity@brutal-dark": {},
+  "liquidity@brutal-light": {},
+  "liquidity@luxury-dark": {},
+  "liquidity@luxury-light": {},
+  "liquidity@obsidian-dark": {},
+  "liquidity@obsidian-light": {},
+  "liquidity@settings": {
+    "landmark-no-duplicate-banner": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".z-30"
+      ]
+    },
+    "landmark-unique": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".z-30"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 3,
+      "examples": [
+        ".inset-x-0",
+        ".max-w-prose",
+        "p[data-part=\"title\"]"
+      ]
+    }
+  },
+  "liquidity@txnform": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".bg-negative\\/10"
+      ]
+    },
+    "landmark-no-duplicate-banner": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".z-30"
+      ]
+    },
+    "landmark-unique": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".z-30"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 3,
+      "examples": [
+        ".inset-x-0",
+        ".max-w-prose",
+        "p[data-part=\"title\"]"
+      ]
+    }
+  },
+  "my-deals": {
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".hover\\:text-blue-600"
+      ]
+    },
+    "color-contrast": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "button[data-testid=\"mydeals.tab.2\"]",
+        "button[data-testid=\"mydeals.tab.3\"]"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"mydeals.stage.1\"] > .border-gray-100.bg-gray-50\\/50.rounded-t-xl > .gap-3.items-center.flex > h3"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".flex-1"
+      ]
+    }
+  },
+  "my-deals@390": {
+    "button-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        ".bg-primary"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "page-has-heading-one": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".overflow-y-auto"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 1,
+      "examples": [
+        ".overflow-y-auto"
+      ]
+    }
+  },
+  "my-deals@modal": {
+    "aria-input-field-name": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "div[pc31=\"\"] > .border-2.border-primary.w-6",
+        "span[aria-valuemin=\"3\"]"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 2,
+      "examples": [
+        ".mb-3.items-start[data-ui=\"section-header\"] > .min-w-0 > h4",
+        "div[data-testid=\"mydeals.stage.1\"] > .border-b.p-3[data-part=\"header\"] > .items-start.gap-3[data-ui=\"section-header\"] > .min-w-0 > h3"
+      ]
+    },
+    "landmark-no-duplicate-banner": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".pt-\\[max\\(1rem\\,env\\(safe-area-inset-top\\)\\)\\]"
+      ]
+    },
+    "landmark-unique": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".pt-\\[max\\(1rem\\,env\\(safe-area-inset-top\\)\\)\\]"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 9,
+      "examples": [
+        ".gap-x-2",
+        ".left-2",
+        ".mt-6.mb-3.text-center",
+        ".pt-2.border-t.mt-3",
+        "div[data-testid=\"mydeals.stage.1\"]"
+      ]
+    }
+  },
+  "my-deals@seeded": {
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "div[data-testid=\"mydeals.stage.1\"] > .border-b.p-3[data-part=\"header\"] > .items-start.justify-between[data-ui=\"section-header\"] > .min-w-0 > h3"
+      ]
+    },
+    "landmark-one-main": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        "html"
+      ]
+    },
+    "region": {
+      "impact": "moderate",
+      "count": 9,
+      "examples": [
+        ".bg-primary\\/10",
+        ".border-t",
+        ".grid-cols-2",
+        ".mb-3",
+        "div[data-testid=\"mydeals.stage.1\"]"
+      ]
+    }
+  },
+  "reps": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 3,
+      "examples": [
+        ".bg-emerald-600",
+        ".mb-5:nth-child(4) > .mb-1.justify-between.text-xs > .text-emerald-600",
+        "div:nth-child(5) > .mb-1.justify-between.text-xs > .text-emerald-600"
+      ]
+    },
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".mb-6.justify-between.items-center > h3"
+      ]
+    },
+    "select-name": {
+      "impact": "critical",
+      "count": 1,
+      "examples": [
+        "select"
+      ]
+    }
+  },
+  "reps@390": {
+    "heading-order": {
+      "impact": "moderate",
+      "count": 1,
+      "examples": [
+        ".min-w-0 > h3"
+      ]
+    }
+  },
+  "settings@modal": {
+    "color-contrast": {
+      "impact": "serious",
+      "count": 2,
+      "examples": [
+        "span[data-look=\"brutal\"] > .gap-1\\.5.min-w-0.flex-col > .h-4.w-\\[55\\%\\].self-end",
+        "span[data-look=\"obsidian\"] > .gap-1\\.5.min-w-0.flex-col > .h-4.w-\\[55\\%\\].self-end"
+      ]
+    }
+  }
+}

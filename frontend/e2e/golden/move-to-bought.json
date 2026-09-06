@@ -1,0 +1,12 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/bought-deals/from-active/{id}",
+      "query": {
+        "deal_type": "BRRRR"
+      },
+      "body": null
+    }
+  ]
+}
