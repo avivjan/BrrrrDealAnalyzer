@@ -14,6 +14,11 @@ const props = defineProps<{
   settings: LiquiditySettings
   transactions: LiquidityTransaction[]
   recurringRules?: LiquidityRecurringTransaction[]
+  /**
+   * UI v3: the Today's-balance card (and its Mercury status) moved into the
+   * view's balance KPI. The Mercury props stay declared so the component's
+   * contract is unchanged; the sidebar itself no longer renders them.
+   */
   mercuryBalance?: MercuryBalanceResponse | null
   mercurySyncing?: boolean
   mercuryError?: string | null
@@ -32,19 +37,6 @@ function formatDate(iso: string): string {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   return (months[parseInt(parts[1] ?? '0') - 1] ?? '') + ' ' + parseInt(parts[2] ?? '0')
 }
-
-const todayBalance = computed(() => {
-  const bucket = props.series.days.find(d => d.date === today)
-  return bucket?.balance_k ?? null
-})
-
-const mercurySyncedTime = computed(() => {
-  if (!props.mercuryLastSyncedAt) return null
-  const d = new Date(props.mercuryLastSyncedAt)
-  const h = String(d.getHours()).padStart(2, '0')
-  const m = String(d.getMinutes()).padStart(2, '0')
-  return `${h}:${m}`
-})
 
 const next90dMin = computed(() => {
   const end = addDays(today, 90)
@@ -93,9 +85,13 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
 
 <template>
   <!--
+    Upcoming: the next outflow and inflow, the recurring series, and the two
+    floors (90-day low, reserve). Today's balance and the window minimum are
+    the view's KPIs, so they are not repeated here.
+
     The section titles are card labels, not page headings: one arbitrary
     variant here sizes and tones every `UiSectionHeader` title below,
-    instead of repeating a class on all seven.
+    instead of repeating a class on each card.
   -->
   <!--
     `v-reveal.stagger` on the container: the cards below carry `data-reveal`
@@ -103,97 +99,6 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     them — which redraws from a ResizeObserver — never sees a box change.
   -->
   <div v-reveal.stagger class="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-1 [&_[data-part=title]]:text-[11px] [&_[data-part=title]]:text-fg-muted">
-    <!-- Today's balance -->
-    <UiCard data-reveal padding="sm">
-      <UiSectionHeader as="h4" class="mb-1">
-        Today's Balance
-        <template #actions>
-          <div v-if="mercurySyncing" class="flex items-center gap-1 text-[10px] text-fg-muted">
-            <i class="pi pi-spin pi-spinner text-[9px]" aria-hidden="true"></i> syncing
-          </div>
-          <div
-            v-else-if="mercuryError"
-            class="flex items-center gap-1 text-[10px] text-negative"
-            :title="mercuryError"
-          >
-            <i class="pi pi-exclamation-triangle text-[9px]" aria-hidden="true"></i>
-            {{ mercuryBalance && mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
-          </div>
-          <div
-            v-else-if="mercuryBalance"
-            class="flex items-center gap-1 text-[10px] text-positive"
-            :title="`Synced ${mercuryBalance.account_count} account(s) across ${mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
-          >
-            <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
-            mercury · {{ mercuryBalance.workspace_count }}
-          </div>
-        </template>
-      </UiSectionHeader>
-      <div class="text-xl font-bold numeric" :class="todayBalance !== null && todayBalance < 0 ? 'text-negative' : 'text-primary'">
-        {{ todayBalance !== null ? todayBalance.toFixed(1) + 'k' : '—' }}
-      </div>
-
-      <!-- Per-workspace breakdown -->
-      <div
-        v-if="mercuryBalance && mercuryBalance.workspaces.length > 0"
-        class="mt-2 space-y-2 border-t border-line pt-2"
-      >
-        <div v-for="ws in mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
-          <div class="flex items-center justify-between gap-2 text-[10px]">
-            <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
-            <span class="whitespace-nowrap numeric text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
-          </div>
-          <div
-            v-for="a in ws.accounts"
-            :key="a.id"
-            :data-testid="`sidebar.account.${a.id}`"
-            class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
-          >
-            <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-            <span class="whitespace-nowrap numeric text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Per-workspace errors -->
-      <div
-        v-if="mercuryBalance && mercuryBalance.workspace_errors.length > 0"
-        class="mt-2 space-y-0.5 border-t border-line pt-2"
-      >
-        <div
-          v-for="err in mercuryBalance.workspace_errors"
-          :key="err.workspace"
-          :data-testid="`sidebar.workspace-error.${err.workspace}`"
-          class="flex items-center justify-between gap-2 text-[10px] text-negative"
-          :title="err.error"
-        >
-          <span class="font-semibold uppercase tracking-wide">{{ err.workspace }}</span>
-          <span class="min-w-0 truncate pl-2">{{ err.error }}</span>
-        </div>
-      </div>
-    </UiCard>
-
-    <!-- Window min -->
-    <UiCard data-reveal padding="sm">
-      <UiSectionHeader as="h4" class="mb-1">Window Min</UiSectionHeader>
-      <div class="font-bold numeric" :class="series.globalMin < 0 ? 'text-negative' : series.globalMin < settings.reserve_k ? 'text-warning' : 'text-fg'">
-        {{ series.globalMin.toFixed(1) }}k
-      </div>
-      <div class="mt-0.5 text-fg-muted">
-        on {{ series.globalMinDates.slice(0, 2).map(formatDate).join(', ') }}
-        <span v-if="series.globalMinDates.length > 2"> +{{ series.globalMinDates.length - 2 }}</span>
-      </div>
-    </UiCard>
-
-    <!-- 90d low -->
-    <UiCard v-if="next90dMin" data-reveal padding="sm">
-      <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
-      <div class="font-bold numeric" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
-        {{ next90dMin.value.toFixed(1) }}k
-      </div>
-      <div class="mt-0.5 text-fg-muted">{{ formatDate(next90dMin.date) }}</div>
-    </UiCard>
-
     <!-- Next outflow -->
     <UiCard v-if="nextOutflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
@@ -208,12 +113,6 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
       <div class="font-bold numeric text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
       <div class="text-fg-muted">{{ formatDate(nextInflow.effective_date) }}</div>
-    </UiCard>
-
-    <!-- Reserve -->
-    <UiCard data-reveal padding="sm">
-      <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
-      <div class="font-bold numeric text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
     </UiCard>
 
     <!-- Recurring series -->
@@ -274,6 +173,21 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
           </div>
         </div>
       </UiTransitionGroup>
+    </UiCard>
+
+    <!-- 90d low -->
+    <UiCard v-if="next90dMin" data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
+      <div class="font-bold numeric" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
+        {{ next90dMin.value.toFixed(1) }}k
+      </div>
+      <div class="mt-0.5 text-fg-muted">{{ formatDate(next90dMin.date) }}</div>
+    </UiCard>
+
+    <!-- Reserve -->
+    <UiCard data-reveal padding="sm">
+      <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
+      <div class="font-bold numeric text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
     </UiCard>
   </div>
 </template>
