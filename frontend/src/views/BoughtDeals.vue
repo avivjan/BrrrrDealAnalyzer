@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, computed, nextTick } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import BoughtDealCard from "../components/BoughtDealCard.vue";
+import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
@@ -69,17 +70,51 @@ onMounted(async () => {
     pipelineStore.fetchTemplates(),
   ]);
   refreshColumns();
+  await nextTick();
+  centreBusiestColumn();
 });
 
-// Stage color based on position in pipeline
-const getStageAccentColor = (stageId: string) => {
+// UI v3 (4.3): the stage rail.
+const railEl = ref<HTMLElement | null>(null);
+
+/** On lg+ the rail opens on the stage holding the most deals. */
+const centreBusiestColumn = () => {
+  const rail = railEl.value;
+  if (!rail || typeof window.matchMedia !== "function") return;
+  if (!window.matchMedia("(min-width: 1024px)").matches) return;
+  let best = 0;
+  let bestCount = -1;
+  currentStages.value.forEach((s, i) => {
+    const n = columns.value[s.id]?.length || 0;
+    if (n > bestCount) {
+      bestCount = n;
+      best = i;
+    }
+  });
+  const column = rail.children[best] as HTMLElement | undefined;
+  column?.scrollIntoView({ inline: "center", block: "nearest" });
+};
+
+/** While a card is in flight, columns more than one stage away are inert. */
+const draggingFromIdx = ref<number | null>(null);
+const onDragStart = (stageId: string) => {
+  draggingFromIdx.value = currentStages.value.findIndex((s) => s.id === stageId);
+};
+const onDragEnd = () => {
+  draggingFromIdx.value = null;
+};
+const isInertDuringDrag = (idx: number) =>
+  draggingFromIdx.value !== null && Math.abs(idx - draggingFromIdx.value) > 1;
+
+/** Stage colour by position in the pipeline: a four-step ramp, as a fill, for the flow strip and the rail nodes. */
+const getStageBarColor = (stageId: string) => {
   const stages = currentStages.value;
   const idx = stages.findIndex((s) => s.id === stageId);
   const ratio = stages.length > 1 ? idx / (stages.length - 1) : 0;
-  if (ratio < 0.25) return "border-l-chart-4";
-  if (ratio < 0.5) return "border-l-chart-8";
-  if (ratio < 0.75) return "border-l-chart-2";
-  return "border-l-positive";
+  if (ratio < 0.25) return "bg-chart-4";
+  if (ratio < 0.5) return "bg-chart-8";
+  if (ratio < 0.75) return "bg-chart-2";
+  return "bg-positive";
 };
 
 /**
@@ -450,19 +485,30 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
 </script>
 
 <template>
-  <!-- UI v2: sticky toolbar over rows of pipeline stages; the shell owns the viewport and scroller. -->
+  <!--
+    UI v3: a hero header (eyebrow → title → controls, one ≤ 450 ms sequence),
+    then the flow strip, then the stage rail. Not sticky: each stage column
+    carries its own header. The shell owns the viewport and the page scroller.
+  -->
   <div class="flex min-h-full flex-col text-fg">
-    <div
-      class="glass sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-4 py-3 md:px-6"
-    >
-      <div class="flex items-center gap-3">
-        <UiSectionHeader as="h2" class="sr-only md:not-sr-only md:block [&_[data-part=title]]:font-display [&_[data-part=title]]:tracking-display">
-          Bought Deals
-        </UiSectionHeader>
-      </div>
+    <UiTransition preset="hero" appear>
+      <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-0 flex-1">
+            <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              Execution
+            </p>
+            <UiSectionHeader
+              as="h2"
+              data-hero="title"
+              class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
+            >
+              Bought Deals
+            </UiSectionHeader>
+          </div>
 
       <!-- Tabs -->
-      <UiTabs aria-label="Deal type" class="max-w-full">
+      <UiTabs data-hero="item" aria-label="Deal type" class="max-w-full">
         <UiButton
           v-for="tab in [
             { id: 'FLIP' as const, label: 'Flip', count: store.countByType.FLIP },
@@ -484,7 +530,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
         </UiButton>
       </UiTabs>
 
-      <div class="flex items-center gap-2 shrink-0 ml-auto">
+      <div data-hero="item" class="flex items-center gap-2 shrink-0">
         <UiButton
           type="button"
           data-testid="boughtdeals.edit-pipeline"
@@ -504,81 +550,104 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
           </UiBadge>
         </UiButton>
       </div>
-    </div>
+        </div>
 
-    <!-- Board: rows of stages. The shell's <main> scrolls; nothing here does. -->
+        <!--
+          Flow strip: one segment per stage, width ∝ deals in it (a floor keeps
+          empty stages visible). The one-glance answer to "where is everything".
+          Computed from the columns already on screen; no fetch.
+        -->
+        <div data-hero="item" data-testid="boughtdeals.flow-strip" class="mt-4">
+          <div class="flex h-2 gap-1 overflow-hidden rounded-full" aria-hidden="true">
+            <div
+              v-for="stage in currentStages"
+              :key="stage.id"
+              class="h-full rounded-full transition-[flex-grow] duration-slow ease-standard"
+              :class="getStageBarColor(stage.id)"
+              :style="{ flexGrow: Math.max(columns[stage.id]?.length || 0, 0.35) }"
+            ></div>
+          </div>
+          <ol class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-fg-muted">
+            <li v-for="stage in currentStages" :key="stage.id" class="flex items-center gap-1.5">
+              <span class="h-2 w-2 shrink-0 rounded-full" :class="getStageBarColor(stage.id)" aria-hidden="true"></span>
+              <span>{{ stage.name }}</span>
+              <span v-count-up class="numeric font-semibold text-fg">{{ columns[stage.id]?.length || 0 }}</span>
+            </li>
+          </ol>
+        </div>
+      </header>
+    </UiTransition>
+
+    <!--
+      Board: the stage rail. On lg+ the stages are scroll-snapped columns joined
+      by the connectors their headers draw; below lg they stack, as the phones
+      always did. The rail is the only thing that scrolls sideways; the shell's
+      <main> still owns the page scroll. `v-reveal` on the container only:
+      nothing inside a VueDraggable is ever animated (SortableJS owns that DOM).
+      While a card is being dragged, columns more than one stage away go inert,
+      so the ±1 rule is visible before the drop and the alert is the fallback.
+    -->
     <div class="flex-1 pb-safe-b">
-      <!--
-        Bare `v-reveal`, not `v-reveal.stagger`, matching the twin board in
-        `MyDeals.vue` line for line. `/my-deals` is the route the frozen
-        `deep-link-open` spec measures, and it asserts *zero live tweens* 500 ms
-        (of its own paused clock) after the overlay appears; a stagger over five
-        stage rows runs 0.4 s + 4 x 0.06 s = 0.64 s and is still live at that
-        mark, while one reveal of the container is 0.4 s and is not. No motion
-        spec visits *this* route, but the two boards are one pattern and read as
-        one thing, so they stay identical rather than drifting for a reason that
-        is invisible here. Either way nothing inside `<VueDraggable>` is
-        touched: SortableJS owns that DOM.
-      -->
       <div
+        ref="railEl"
         v-reveal
-        class="flex flex-col px-4 pb-4 pt-2 md:pt-4 gap-6 w-full max-w-[1920px] mx-auto"
+        data-testid="boughtdeals.rail"
+        class="mx-auto flex w-full max-w-[1920px] flex-col gap-4 px-4 pb-4 pt-4 md:px-6 lg:snap-x lg:snap-mandatory lg:flex-row lg:items-start lg:overflow-x-auto lg:overscroll-x-contain lg:pb-6"
       >
-        <UiCard
-          v-for="stage in currentStages"
+        <StageColumn
+          v-for="(stage, idx) in currentStages"
           :key="stage.id"
           :data-testid="`boughtdeals.stage.${stage.id}`"
-          tone="surface"
-          padding="sm"
-          :class="'w-full border-ui border-l-4 ' + getStageAccentColor(stage.id)"
+          :name="stage.name"
+          :count="columns[stage.id]?.length || 0"
+          :index="idx + 1"
+          :total="currentStages.length"
+          :tone="getStageBarColor(stage.id)"
+          :legend="stage.subStages.map((s) => s.label)"
+          :terminal="idx === currentStages.length - 1"
+          :inert="isInertDuringDrag(idx)"
+          class="lg:min-h-[24rem]"
         >
-          <!-- Row Header -->
-          <template #header>
-            <UiSectionHeader as="h3" class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-base [&_[data-part=title]]:tracking-display">
-              {{ stage.name }}
-              <UiChip class="ml-2 align-middle" size="sm">
-                <span class="numeric">{{ columns[stage.id]?.length || 0 }}</span>
-              </UiChip>
-            </UiSectionHeader>
-          </template>
-
           <!-- Draggable Area: SortableJS owns the DOM under VueDraggable -->
-          <div>
-            <VueDraggable
-              v-if="columns[stage.id]"
-              :data-testid="`boughtdeals.draggable.${stage.id}`"
-              v-model="columns[stage.id]!"
-              group="bought-deals"
-              @change="(e: any) => onDrop(e, stage.id)"
-              @add="(e: any) => onAdd(e, stage.id)"
-              :animation="150"
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 min-h-[100px]"
-              ghost-class="board-ghost"
-              chosen-class="board-chosen"
-              drag-class="board-drag"
+          <VueDraggable
+            v-if="columns[stage.id]"
+            :data-testid="`boughtdeals.draggable.${stage.id}`"
+            v-model="columns[stage.id]!"
+            group="bought-deals"
+            @change="(e: any) => onDrop(e, stage.id)"
+            @add="(e: any) => onAdd(e, stage.id)"
+            @start="onDragStart(stage.id)"
+            @end="onDragEnd"
+            :animation="150"
+            class="grid min-h-[100px] grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1"
+            ghost-class="board-ghost"
+            chosen-class="board-chosen"
+            drag-class="board-drag"
+          >
+            <div
+              v-for="deal in columns[stage.id]"
+              :key="deal.id"
+              :data-testid="`boughtdeals.card.${deal.id}`"
+              @click="openDeal(deal)"
+              class="h-full"
             >
-              <div
-                v-for="deal in columns[stage.id]"
-                :key="deal.id"
-                :data-testid="`boughtdeals.card.${deal.id}`"
-                @click="openDeal(deal)"
+              <BoughtDealCard
+                :deal="deal"
+                @delete="confirmDelete(deal)"
+                @advance="advanceDeal(deal)"
                 class="h-full"
-              >
-                <BoughtDealCard
-                  :deal="deal"
-                  @delete="confirmDelete(deal)"
-                  class="h-full"
-                />
-              </div>
-            </VueDraggable>
+              />
+            </div>
+          </VueDraggable>
+          <template #empty>
             <p
               v-if="!columns[stage.id]?.length"
               class="mt-2 rounded-ctl border-ui border-dashed border-line px-3 py-2.5 text-center text-xs text-fg-muted"
             >
               No deals in this stage
             </p>
-          </div>
-        </UiCard>
+          </template>
+        </StageColumn>
       </div>
     </div>
 
