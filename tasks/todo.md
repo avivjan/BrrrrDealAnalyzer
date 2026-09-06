@@ -18,13 +18,13 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 ## Phase 2 — Motion foundation (item 2) · **≈ 1 h 40 wall-clock** (2 h 35 sequential)
 
-- [ ] **2.1 ‖B** (25 min) — `hero` preset (eyebrow → title → figures, ≤ 450 ms, enter-only) + tests.
-- [ ] **2.2 ‖B** (30 min) — `v-tilt` directive (≤ 6°, `(hover:hover)` only, `gsap.set` per rAF, reset tween on leave, released on unmount,
-- [ ] **2.6 ‖B** (30 min) — Extend `no-live-tweens.spec.ts` (hero, hover, column scroll, list reflow); add `e2e/checks/perf.spec.ts` (CLS 
-- [ ] **2.4** (15 min) — Promote `UiTimelineRail`, `UiProgressRing`, `UiSparkline`, `UiTooltip`, `UiSegmented` into `UI_COMPONENTS` (+ 
-- [ ] **2.3** (35 min) — Attach existing surfaces
-- [ ] **2.5** (20 min) — Drag polish
-- [ ] **exit** (15 min) — Full gate 1
+- [x] **2.1 ‖B** (25 min) — `hero` preset (eyebrow → title → figures, ≤ 450 ms, enter-only) + tests.
+- [x] **2.2 ‖B** (30 min) — `v-tilt` directive (≤ 6°, `(hover:hover)` only, `gsap.set` per rAF, reset tween on leave, released on unmount,
+- [x] **2.6 ‖B** (30 min) — Extend `no-live-tweens.spec.ts` (hero, hover, column scroll, list reflow); add `e2e/checks/perf.spec.ts` (CLS 
+- [x] **2.4** (15 min) — Promote `UiTimelineRail`, `UiProgressRing`, `UiSparkline`, `UiTooltip`, `UiSegmented` into `UI_COMPONENTS` (+ 
+- [x] **2.3** (35 min) — Attach existing surfaces
+- [x] **2.5** (20 min) — Drag polish
+- [x] **exit** (15 min) — Full gate 1 (148 passed; 3 CLS findings carried to Phases 4/5/7; webkit not available here)
 
 ## Phase 3 — Two cards (item 1, 7) · **≈ 1 h wall-clock** (1 h 45 sequential)
 

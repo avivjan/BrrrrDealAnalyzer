@@ -15,3 +15,10 @@ Plan: `docs/plans/2026-09-06-ui-v3-plan.md`. One row per finished task: task · 
 | 1.8 alignment spec (‖A) | 547bc9f | `--list` 16 tests | `e2e/checks/alignment.spec.ts` |
 | 1.7 liquidity forms (‖A) | (cherry-pick of 282d46e) | liquidity 102 | UiSegmented was already registered in v2; three segmented groups share one size |
 | **Phase 1 exit** | (this commit) | `verify:ui --fast` PASS: G1 G2 G-HOVER G8 G6 (84 files / 1288 tests) GOLDEN-POLICY (20); ADVISORY G3 884 / G4 76 / G4b 47 | clone was shallow → `git fetch --unshallow` so `ui-p0`/`ui-baseline` sit in HEAD's lineage; Aurora dark screenshots in `docs/ui-overhaul/screenshots/v3/phase1-*` |
+| 2.1 hero preset (‖B) | 3596f04 | motion 261 | worktree agent |
+| 2.2 v-tilt (‖B) | cf30023 | motion+test 249 | worktree agent; no directive typings exist in `components.d.ts` (never did) |
+| 2.6 motion guard + perf spec (‖B) | 96a572f | `--list` 55 tests | worktree agent |
+| 2.4 four primitives registered | 47a2a01 | ui 717 | UiSegmented was already registered in v2 |
+| 2.3 surfaces attached | 273a9f8 | ui/liquidity/views/motion 717 | v-press on every UiButton (a template comment before the root made it a fragment — moved to the script) |
+| 2.5 drag polish | ea5900b | — | ghost/chosen/drag classes, CSS only |
+| **Full gate 1** | (this commit) | Playwright chromium + Mobile Chrome + chromium-motion: **148 passed, 3 failed, 61 skipped (4.8 min)**; every network golden, axe, no-live-tweens, alignment and modal-scroll check green | The 3 failures are the new perf spec's CLS budget on the *old* boards and REPS: `/my-deals` 0.60, `/bought-deals` 0.07, `/reps` > 0.05 — the pages Phases 4, 5 and 7 rebuild (columns reserve height; cards fill inside). Re-checked at gate 2/3. **webkit and Mobile Safari did not run**: no WebKit build in this sandbox and the download is blocked; `playwright.config.ts` gained an env-gated `PW_CHROMIUM_PATH` so the pinned Chromium can be used. Backend proofs (`verify_regression.py verify` + `pytest`) run at gate 2 with the `--phase` wrapper. |
