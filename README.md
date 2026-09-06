@@ -60,6 +60,7 @@ including the follow-ups that were deliberately left for a later pass — are in
 **Backend** (`pytest`, in `BackEnd/tests/`):
 
 ```bash
+docker compose -f BackEnd/docker-compose.test.yml up -d --wait   # throwaway Postgres on 127.0.0.1:55432
 cd BackEnd
 pip install -r requirements.txt
 pytest
@@ -69,19 +70,25 @@ Covers `/analyze/brrr` + `/analyze/flip` (with the BRRRR and Flip results pinned
 to reference values, so a formula change fails loudly), active-deal CRUD,
 duplicate/delete, Move to Bought, bought-deal autosave, and the PDF reports.
 
-> **Database safety.** `BackEnd/tests/conftest.py` redirects `$DATABASE_URL` to a
-> throwaway SQLite file *before* any application module is imported — which it
-> has to, because `db.py` builds its `Engine` at import time and `main.py` runs
-> `bootstrap.run(...)` (schema `create_all` + the migrations in `BackEnd/migrations/`
-> + seeding) at import time. It also stubs out `load_dotenv` so `BackEnd/.env`
-> credentials never enter a test process.
+> **Database safety.** The backend suite runs against a throwaway PostgreSQL that
+> exists only for tests: locally the container in `BackEnd/docker-compose.test.yml`
+> (`docker compose -f BackEnd/docker-compose.test.yml up -d --wait`), in CI the
+> job's own `postgres:16` service. `BackEnd/tests/conftest.py` never reads
+> `$DATABASE_URL`: it overwrites it with `$TEST_DATABASE_URL` (default: the
+> compose container on `127.0.0.1:55432`) *before* any application module is
+> imported — which it has to, because `db.py` builds its `Engine` at import time
+> and `main.py` runs `bootstrap.run(...)` (schema `create_all` + the migrations in
+> `BackEnd/migrations/` + seeding) at import time. It also stubs out `load_dotenv`
+> so `BackEnd/.env` credentials never enter a test process.
 >
 > The redirect is then **verified**, at import, at session start, and before every
-> test: if the engine is not the temp SQLite file — or its URL contains a
-> Postgres/MySQL/Render/AWS marker — the run aborts with a
-> `TEST DATABASE SAFETY ABORT` banner instead of continuing. This matters because
-> a Render pre-deploy command runs with the production `DATABASE_URL` in its
-> environment. `tests/test_db_isolation.py` asserts the guard itself fires.
+> test: the engine must be PostgreSQL, on a loopback host, with a database whose
+> name ends in `_test`, and free of any hosted-provider marker in its URL — or the
+> run aborts with a `TEST DATABASE SAFETY ABORT` banner instead of continuing.
+> Only after that check passes is the schema dropped and recreated for the
+> session. This matters because a Render pre-deploy command runs with the
+> production `DATABASE_URL` in its environment. `tests/test_db_isolation.py`
+> asserts the guard itself fires.
 >
 > `BackEnd/db.py` is untouched by any of this — normal runtime still reads
 > `$DATABASE_URL` and builds a standard engine.
@@ -113,6 +120,18 @@ smoke that imports the app twice against a fresh `postgres:16` service container
 exercised on real Postgres), and `cd frontend && npm ci && npm test && npm run build`.
 To make a red run block the merge, require the two checks — **Backend tests** and
 **Frontend tests + build** — under *Settings → Branches → main*.
+
+**Nightly.** `.github/workflows/e2e-nightly.yml` runs at midnight Israel time
+every day (both 21:00 and 22:00 UTC are scheduled and a first job lets only the
+one that is 00:xx in Asia/Jerusalem continue, so summer and winter time both
+work), and on demand from the Actions tab: the same backend + frontend jobs as
+the CI workflow above, plus the full Playwright suite (all five browser
+projects). The Playwright HTML report and traces are uploaded as a run artifact,
+and once every job has finished a styled HTML session report is emailed from the
+runner over Gmail SMTP, pass or fail. That step needs
+two repository secrets under *Settings → Secrets and variables → Actions*:
+`NIGHTLY_MAIL_USERNAME` (the sending Gmail address) and `NIGHTLY_MAIL_PASSWORD`
+(a Gmail app password for it). Without them the job fails with a clear message.
 
 ## GitHub MCP for Claude Code
 

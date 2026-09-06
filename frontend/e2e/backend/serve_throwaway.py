@@ -1,14 +1,17 @@
-"""Serve the real FastAPI app against a throwaway SQLite database.
+"""Serve the real FastAPI app against the throwaway test PostgreSQL.
 
 Playwright's `webServer` starts this; every e2e run therefore talks to the
 *actual* backend, not a mock — the whole point of a network-contract golden.
 
 Nothing here touches `BackEnd/`. The isolation is entirely `verify_regression`'s
 doing: importing it (module-level code, its CLI is behind `if __name__ ==
-"__main__"`) redirects `DATABASE_URL` at a fresh temp SQLite file, stubs
-`load_dotenv`, scrubs every Google / Mercury / SMTP credential so the
-integration endpoints take their deterministic "not configured" branch, and
-installs the SQLite UUID bind shim. See `BackEnd/verify_regression.py` §2-3.
+"__main__"`) redirects `DATABASE_URL` at the test PostgreSQL from
+`TEST_DATABASE_URL` (default: the `BackEnd/docker-compose.test.yml` container on
+127.0.0.1:55432), verifies it is a loopback `_test` database and resets its
+schema, stubs `load_dotenv`, and scrubs every Google / Mercury / SMTP credential
+so the integration endpoints take their deterministic "not configured" branch.
+See `BackEnd/verify_regression.py` §2-3 and `BackEnd/tests/db_isolation_guard.py`.
+Start the database first: `docker compose -f BackEnd/docker-compose.test.yml up -d --wait`.
 
 `sys.dont_write_bytecode` is set before any backend import on purpose:
 `BackEnd/__pycache__/main.cpython-311.pyc` is a *tracked* file, and importing

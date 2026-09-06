@@ -5,6 +5,14 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Lets e2e-nightly.yml run the same two jobs as part of the nightly run and
+  # read each job's result for its email.
+  workflow_call:
+    outputs:
+      backend_result:
+        value: ${{ jobs.backend.result }}
+      frontend_result:
+        value: ${{ jobs.frontend.result }}
 
 # Cancel superseded runs on the same PR branch; never cancel a run on main.
 concurrency:
@@ -27,17 +35,20 @@ jobs:
     defaults:
       run:
         working-directory: BackEnd
+    # Throwaway PostgreSQL for this job only, mirroring
+    # BackEnd/docker-compose.test.yml: same user, password and `_test` database
+    # name that tests/conftest.py insists on.
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: brrrr_ci
+          POSTGRES_USER: brrrr_test
+          POSTGRES_PASSWORD: brrrr_test
+          POSTGRES_DB: brrrr_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d brrrr_ci"
+          --health-cmd "pg_isready -U brrrr_test -d brrrr_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -60,7 +71,7 @@ jobs:
       # fresh process must find everything already done and be a no-op.
       - name: Postgres migration smoke (boot app twice against fresh Postgres)
         env:
-          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/brrrr_ci
+          DATABASE_URL: postgresql+psycopg2://brrrr_test:brrrr_test@localhost:5432/brrrr_test
         run: |
           echo "::group::First boot (empty database)"
           python -c "import main"
@@ -69,9 +80,12 @@ jobs:
           python -c "import main"
           echo "::endgroup::"
 
-      # tests/conftest.py forces a throwaway SQLite file and aborts if it ever
-      # sees Postgres, so DATABASE_URL is deliberately NOT set on this step.
+      # tests/conftest.py only reads TEST_DATABASE_URL (never DATABASE_URL),
+      # verifies it is PostgreSQL on a loopback host with a `_test` database,
+      # and drops/recreates the schema before the suite runs.
       - name: Run pytest
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg2://brrrr_test:brrrr_test@localhost:5432/brrrr_test
         run: pytest -ra
 
   frontend:

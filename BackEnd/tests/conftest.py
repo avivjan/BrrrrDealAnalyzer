@@ -1,25 +1,30 @@
-"""Test harness with hard database isolation.
+"""Test harness with hard database isolation, on a throwaway PostgreSQL.
 
 Everything up to the ``# --- fixtures ---`` marker executes at *import* time,
 before pytest collects a single test. That ordering is not stylistic — it is
 required:
 
 * ``db.py`` reads ``$DATABASE_URL`` and builds its ``Engine`` at import time.
-* ``main.py`` runs ``Base.metadata.create_all``, ``_run_migrations()`` and the
+* ``main.py`` runs ``Base.metadata.create_all``, the migrations and the
   pipeline/REPS seeding at import time.
 
 So by the time ``import main`` returns, a real database would already have been
 connected to, migrated and written to. The only safe place to redirect it is
 here, before the first application import.
 
-Two environments make that redirect non-negotiable:
+The suite talks to a dedicated PostgreSQL that exists only for tests:
 
-* **Render pre-deploy commands** run with the production ``DATABASE_URL``
-  injected into the environment.
-* **Local machines** have a ``DATABASE_URL`` exported in the shell.
+* locally, the container from ``BackEnd/docker-compose.test.yml``
+  (``docker compose -f BackEnd/docker-compose.test.yml up -d --wait``);
+* in CI, the ``postgres`` service container of the backend job.
 
-Both are overwritten unconditionally below, and then verified. If verification
-ever fails the run aborts instead of falling back.
+``$DATABASE_URL`` from the environment is never used, whatever it says: it is
+overwritten with ``$TEST_DATABASE_URL`` (default: the compose container) before
+any application import, and the resulting engine is then verified — at import,
+at session start and before every test — to be PostgreSQL on a loopback host
+with a database whose name ends in ``_test``. Anything else aborts the run.
+Once verified, the schema is dropped and recreated so every session starts from
+the models as they are now, not from whatever the last run left behind.
 """
 
 from __future__ import annotations
@@ -27,9 +32,6 @@ from __future__ import annotations
 import os
 import pathlib
 import sys
-import tempfile
-import uuid as uuid_module
-from typing import NoReturn
 
 import pytest
 
@@ -43,12 +45,21 @@ if str(BACKEND_DIR) not in sys.path:
 
 # ---------------------------------------------------------------------------
 # 2. Replace whatever DATABASE_URL the environment supplied, before any import.
+#    Only TEST_DATABASE_URL is consulted; the production variable never is.
+#    The rules live in tests/db_isolation_guard.py, shared with
+#    verify_regression.py (and through it the Playwright backend server).
 # ---------------------------------------------------------------------------
-INHERITED_DATABASE_URL = os.environ.get("DATABASE_URL")
+from tests.db_isolation_guard import (  # noqa: E402
+    FORBIDDEN_URL_MARKERS as _FORBIDDEN_URL_MARKERS,
+    LOOPBACK_HOSTS as _LOOPBACK_HOSTS,
+    TEST_DB_SUFFIX as _TEST_DB_SUFFIX,
+    assert_isolated as _assert_isolated,
+    reset_schema as _reset_schema,
+    resolve_test_database_url,
+)
 
-_TEST_DB_DIR = tempfile.mkdtemp(prefix="brrrr-test-db-")
-TEST_DB_PATH = pathlib.Path(_TEST_DB_DIR) / "test.db"
-TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
+INHERITED_DATABASE_URL = os.environ.get("DATABASE_URL")
+TEST_DATABASE_URL = resolve_test_database_url()
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
@@ -63,122 +74,39 @@ import dotenv  # noqa: E402
 
 dotenv.load_dotenv = lambda *args, **kwargs: False  # type: ignore[assignment]
 
-# ---------------------------------------------------------------------------
-# 4. SQLite compatibility shim for `Uuid(as_uuid=True)` primary keys.
-#
-#    Production runs Postgres, where psycopg2 adapts a plain string id in a
-#    WHERE clause. SQLite's Uuid bind processor calls `value.hex` and blows up
-#    on a str. Every `/active-deals/{id}` and `/bought-deals/{id}` route passes
-#    the id through as a string, so without this the CRUD tests would fail for
-#    a reason that does not exist in production.
-# ---------------------------------------------------------------------------
-from sqlalchemy.sql import sqltypes  # noqa: E402
-
-_original_uuid_bind_processor = sqltypes.Uuid.bind_processor
-
-
-def _uuid_bind_processor(self, dialect):  # type: ignore[no-untyped-def]
-    processor = _original_uuid_bind_processor(self, dialect)
-    if processor is None:
-        return None
-
-    def process(value):
-        if isinstance(value, str):
-            try:
-                value = uuid_module.UUID(value)
-            except ValueError:
-                pass
-        return processor(value)
-
-    return process
-
-
-sqltypes.Uuid.bind_processor = _uuid_bind_processor  # type: ignore[assignment]
-
 
 # ---------------------------------------------------------------------------
-# 5. The safety guard.
+# 4. The safety guard, bound to this harness's expected URL.
 # ---------------------------------------------------------------------------
-# Substrings that must never appear in the engine URL during a test run.
-_FORBIDDEN_URL_MARKERS = (
-    "postgres",
-    "postgresql",
-    "psycopg",
-    "mysql",
-    "mariadb",
-    "mssql",
-    "oracle",
-    "cockroach",
-    "render.com",
-    "amazonaws.com",
-)
-
-
-def _abort(reason: str) -> NoReturn:
-    """Kill the run loudly. Never degrade to 'best effort' on a safety check."""
-    banner = (
-        "\n"
-        "================= TEST DATABASE SAFETY ABORT =================\n"
-        f"{reason}\n"
-        f"  expected : {TEST_DATABASE_URL}\n"
-        f"  in env   : {os.environ.get('DATABASE_URL')!r}\n"
-        f"  inherited: {'<set>' if INHERITED_DATABASE_URL else '<unset>'}\n"
-        "Tests must never touch a real database. Aborting the run.\n"
-        "==============================================================\n"
-    )
-    sys.stderr.write(banner)
-    sys.stderr.flush()
-    raise RuntimeError(banner)
-
-
 def assert_isolated(engine) -> None:
-    """Verify `engine` is the throwaway SQLite file and nothing else.
+    """Verify `engine` is the throwaway test PostgreSQL and nothing else.
 
     Called at import time, at session start, and before every single test.
     """
-    url = engine.url
-
-    if url.get_backend_name() != "sqlite":
-        _abort(f"Engine backend is {url.get_backend_name()!r}, expected 'sqlite'.")
-
-    if url.database != str(TEST_DB_PATH):
-        _abort(f"Engine points at {url.database!r}, not the temp test database.")
-
-    rendered = str(url).lower()
-    for marker in _FORBIDDEN_URL_MARKERS:
-        if marker in rendered:
-            _abort(f"Engine URL contains forbidden marker {marker!r}.")
-
-    if os.environ.get("DATABASE_URL") != TEST_DATABASE_URL:
-        _abort("DATABASE_URL was mutated after the harness set it.")
-
-    try:
-        with engine.connect() as connection:
-            connection.exec_driver_sql("SELECT 1")
-    except Exception as exc:  # pragma: no cover - only on a broken sandbox
-        _abort(f"Could not bind to the isolated test database: {exc!r}")
+    _assert_isolated(engine, TEST_DATABASE_URL, INHERITED_DATABASE_URL)
 
 
 # ---------------------------------------------------------------------------
-# 6. Now — and only now — import the application.
+# 5. Now — and only now — import the application.
 # ---------------------------------------------------------------------------
 import db as app_db  # noqa: E402
 
 assert_isolated(app_db.engine)
+_reset_schema(app_db.engine)
 
 import main as app_main  # noqa: E402
 from BL.pipelineTemplate.common.seed import ensure_defaults as ensure_pipeline_defaults  # noqa: E402
 from DAL.crud.reps import ensure_activity_category_defaults  # noqa: E402
 
 # `main` ran create_all + migrations + seeding on import. Re-verify that all of
-# that landed on the temp file and not somewhere else.
+# that landed on the test database and not somewhere else.
 assert_isolated(app_db.engine)
 
 app = app_main.app
 
 
 # ---------------------------------------------------------------------------
-# 7. Contain `get_db` inside the harness. `SessionLocal` is already bound to the
+# 6. Contain `get_db` inside the harness. `SessionLocal` is already bound to the
 #    test engine, so this is belt-and-braces: it guarantees request-scoped
 #    sessions come from the harness even if the app's wiring changes later.
 # ---------------------------------------------------------------------------

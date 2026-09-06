@@ -261,11 +261,12 @@ npm run e2e:compare             # phase0-baseline vs phase5-final, test by test
 ```
 
 Both servers start themselves: `playwright.config.ts` boots
-`e2e/backend/serve_throwaway.py` — the real FastAPI app on a fresh temporary
-SQLite database, with every Google / Mercury / SMTP credential scrubbed — on
-`:8011`, and serves a production build through `vite preview` on `:5173` (the
-backend's CORS allowlist only accepts that port). Nothing under `BackEnd/` is
-modified; the launcher only imports it. `workers: 1` and `fullyParallel: false`,
+`e2e/backend/serve_throwaway.py` — the real FastAPI app on the throwaway test
+PostgreSQL (`docker compose -f BackEnd/docker-compose.test.yml up -d --wait`
+first; its schema is reset on boot), with every Google / Mercury / SMTP
+credential scrubbed — on `:8011`, and serves a production build through
+`vite preview` on `:5173` (the backend's CORS allowlist only accepts that port).
+Nothing under `BackEnd/` is modified; the launcher only imports it. `workers: 1` and `fullyParallel: false`,
 because all five projects share one backend database.
 
 | Project | Browser | Why |
