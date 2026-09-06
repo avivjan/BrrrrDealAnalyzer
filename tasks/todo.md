@@ -48,8 +48,8 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 ## Phases 6 + 7 — Liquidity line, REPS, Analyze (items 2, 3) · **≈ 1 h 50 wall-clock** (2 h 30 sequential)
 
-- [ ] **6.1 ‖D** (20 min) — Pure `linePath`/`areaPath` + tests.
-- [ ] **6.2 ‖D** (50 min) — Remove bars; area fill under the line with the 8 inflow/outflow tokens as gradient stops (keeps the 32×once ru
+- [x] **6.1 ‖D** (20 min) — Pure `linePath`/`areaPath` + tests.
+- [x] **6.2 ‖D** (50 min) — Remove bars; area fill under the line with the 8 inflow/outflow tokens as gradient stops (keeps the 32×once ru
 - [x] **6.3 ‖D** (35 min) — Page
 - [x] **7.1 ‖D** (25 min) — REPS
 - [x] **7.2 ‖D** (15 min) — Analyze
