@@ -10,11 +10,11 @@ Numbers come from the gate run recorded in `docs/plans/2026-09-05-ui-v2-progress
 | --- | --- |
 | G1 backend + root files vs `ui-baseline` | PASS |
 | G2 `src/{stores,api,utils,router,types,config}` vs `ui-baseline` | PASS (byte-identical) |
-| G3 / G4 / G4b | ADVISORY — __G3__ / __G4__ / __G4B__ findings (the redesign moved templates and copy on purpose) |
+| G3 / G4 / G4b | ADVISORY — 880 / 57 / 37 findings (the redesign moved templates and copy on purpose) |
 | G-HOVER | PASS |
 | G8 absolute paths | PASS |
-| G6 unit + build | PASS — __UNIT__ tests |
-| G5 / G7 Playwright, 5 projects | PASS — __E2E__ |
+| G6 unit + build | PASS — 84 files, 1275 tests |
+| G5 / G7 Playwright, 5 projects | PASS — 211 passed, 143 skipped (chromium-only checks on the other four projects), 0 failed, 7.0 min |
 | GOLDEN-POLICY | PASS — 18 `Golden update:` commits, all golden-only; network goldens unchanged |
 | BACKEND | PASS |
 
@@ -23,7 +23,7 @@ Numbers come from the gate run recorded in `docs/plans/2026-09-05-ui-v2-progress
 - Network contracts (`e2e/golden/*.json`): **unchanged** since v1. No `Golden update:` commit in v2 touched a request golden.
 - Dialog copy (`alert`/`confirm`): unchanged; the six flows that assert it pass on every project.
 - Hooks: every `data-testid` the suite references exists (`src/test/hooks-inventory.test.ts`).
-- Report comparison: `phase5-final.json` (v1 exit) → `v2-final.json`: __COMPARE__.
+- Report comparison: `phase5-final.json` (v1 exit) → `v2-final.json`: 149 passed → passed, 4 skipped → passed (the narrow-viewport liquidity cases), 49 skipped → skipped, 152 added, 0 recovered, **0 failures** (`node e2e/scripts/compare-reports.mjs e2e/reports/phase5-final.json e2e/reports/v2-final.json`).
 
 ## 3. Accessibility
 
