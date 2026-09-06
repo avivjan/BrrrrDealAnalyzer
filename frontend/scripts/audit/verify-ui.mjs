@@ -60,6 +60,9 @@ export const G1_PATHSPEC = [
   // checklist that file asks for). Nothing executable lives in either.
   ':!.claude',
   ':!tasks',
+  // CI configuration: infrastructure, not app behaviour. The workflow only
+  // runs the two suites and a build; nothing under it is imported by the app.
+  ':!.github',
 ];
 
 /** G2: frontend directories that hold behaviour rather than presentation. */

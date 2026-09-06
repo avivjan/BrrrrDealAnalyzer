@@ -80,3 +80,34 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 **Environment.** WebKit and Mobile Safari could not run here (no WebKit build, download blocked); the browser suite ran on chromium, Mobile Chrome and chromium-motion. The clone was shallow and needed `git fetch --unshallow` for the gates' tags. The backend regression snapshots `openapi`/`models` differ only by a Pydantic 2.13 `pattern` key.
 
 **Final gate numbers (gate 4).** Playwright 151 passed / 0 failed / 61 skipped on the three Chromium projects (4.6 min); compare v2-final → v3-final PASS (0 regressions, 34 checks added); CLS ≤ 0.015 on every route (was 0.60 on My Deals); zero idle long tasks; bundle +6.9 kB gzip (budget +12 kB); pytest 115 passed; network goldens unchanged. Fast gate: `verify:ui --fast` PASS (G6 unit + build green, golden policy 21 commits clean).
+
+---
+
+# CI: GitHub Actions for backend + frontend tests
+
+Approved plan: run both suites on every PR into `main` and push to `main`, with no change to app or test logic. The backend suite stays on its throwaway SQLite harness; a separate step boots the app against an ephemeral Postgres to exercise the migrations.
+
+- [x] **C1** (15 min) — Create `.github/workflows/ci.yml`: two parallel jobs, `Backend tests` (Python 3.11, `postgres:16` service with `pg_isready` health check, migration smoke, `pytest -ra`) and `Frontend tests + build` (Node 22, `npm ci`, `npm test`, `npm run build`).
+- [x] **C2** (5 min) — Add `':!.github'` to `G1_PATHSPEC` in `frontend/scripts/audit/verify-ui.mjs` and to the matching `toEqual` array in `verify-ui.test.mjs`, so the local `verify:ui` gate keeps passing once `.github/` exists.
+- [x] **C3** (20 min) — Local sanity: `cd BackEnd && pytest -ra`; `cd frontend && npm ci && npm test && npm run build`; Postgres smoke via Docker if available.
+- [x] **C4** (5 min) — README paragraph under "Tests" describing the workflow and the branch-protection step.
+- [x] **C5** (10 min + CI) — Commit, push `ci/github-actions`, open a PR into `main`; confirm both jobs green.
+- [x] **C6** (5 min) — Review section below.
+- [ ] **C7** (manual, repo owner, after first merge) — Settings → Branches → `main` → require status checks `Backend tests` and `Frontend tests + build`.
+
+## CI review
+
+**What changed.** One new file, `.github/workflows/ci.yml`, plus three small edits: the `.github` exclusion in `G1_PATHSPEC` (`frontend/scripts/audit/verify-ui.mjs`) and its exact-match assertion (`verify-ui.test.mjs`), a CI paragraph in the root README, and this checklist. No application or test logic changed; every existing test runs exactly as before.
+
+**Test database.** There was nothing to tear down. `BackEnd/tests/conftest.py` already builds a throwaway SQLite file per run and aborts on any Postgres URL, so pytest in CI runs with no `DATABASE_URL` at all. The only Postgres in the workflow is a `postgres:16` service container used by one step that imports the app twice, proving `create_all` + `migrations/` + seeding work and are idempotent on real Postgres. Its credentials are literals pointing at `localhost` on the runner.
+
+**Local results before pushing.**
+- `cd BackEnd && pytest -ra`: 115 passed. Tracked `.pyc` files untouched (`PYTHONDONTWRITEBYTECODE=1`).
+- Postgres smoke against a scratch Postgres 16 cluster: both boots exit 0; 11 tables created; 2 pipeline templates seeded.
+- `cd frontend && npm ci && npm test`: 85 files, 1368 tests passed (includes the updated pathspec assertion).
+- `npm run build`: `vue-tsc -b` clean, Vite build succeeded.
+- `npm run verify:ui -- --fast`: G6 PASS, G1 FAIL. G1 is failing on `main` already: 88 files under `BackEnd/` changed since the `ui-baseline` tag (the PR #26 layering refactor), which the gate freezes. Not caused by this change and not fixed here; the `ui-baseline` tag needs moving or the gate needs a backend-aware baseline. Flagged for the repo owner.
+
+**Not covered, on purpose.** Playwright e2e, `verify:ui` and `verify_regression.py verify` stay local (browsers, git tags and a golden-drift artifact respectively). The smoke exercises the fresh-database path, not the legacy upgrade branches in the migrations; that needs a legacy-schema fixture as a follow-up.
+
+**Still manual.** C7: make `Backend tests` and `Frontend tests + build` required checks on `main` after the workflow has run once.

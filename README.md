@@ -106,6 +106,14 @@ a Render deploy on the backend suite, set the service's **Pre-Deploy Command** t
 `cd BackEnd && pytest` — `pytest` and `httpx` are in `BackEnd/requirements.txt`, so
 plain `pytest` with nothing installed will fail with `command not found`.
 
+**CI.** `.github/workflows/ci.yml` runs on every pull request into `main` and every
+push to `main`: `cd BackEnd && pytest` (SQLite, as above), a Postgres migration
+smoke that imports the app twice against a fresh `postgres:16` service container
+(so `create_all`, the migrations in `BackEnd/migrations/` and the seeding are
+exercised on real Postgres), and `cd frontend && npm ci && npm test && npm run build`.
+To make a red run block the merge, require the two checks — **Backend tests** and
+**Frontend tests + build** — under *Settings → Branches → main*.
+
 ## Adding an input to the deal form
 
 There are three places a user types deal numbers — the Analyze page, the My Deals
