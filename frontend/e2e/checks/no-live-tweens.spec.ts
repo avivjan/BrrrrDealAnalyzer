@@ -8,14 +8,31 @@ import { BRRRR_PAYLOAD, expect, fillForm, test } from '../fixtures';
  *
  * `e2e/fixtures/motion.ts` has carried `expectNoLiveTweens` since Phase 0, but
  * it only ever ran on one modal (`deep-link-open`). This walks the whole app:
- * six routes, four modals opened and closed again. What it is looking for is
- * the failure mode a motion layer actually has — not a dropped frame, but a
- * tween that never reaches `onComplete` and so sits on `gsap.globalTimeline`
- * forever. That costs a `requestAnimationFrame` loop for the rest of the
- * session, keeps the element it targets pinned in memory, and (for a `leave`)
- * holds a `pointer-events: none` node over the page. None of it is visible in a
+ * six routes, five modals opened and closed again, and (since UI v3) the
+ * pointer interactions the boards now animate — a card hovered and left, a
+ * board wheeled sideways. What it is looking for is the failure mode a motion
+ * layer actually has — not a dropped frame, but a tween that never reaches
+ * `onComplete` and so sits on `gsap.globalTimeline` forever. That costs a
+ * `requestAnimationFrame` loop for the rest of the session, keeps the element
+ * it targets pinned in memory, and (for a `leave`) holds a
+ * `pointer-events: none` node over the page. None of it is visible in a
  * screenshot, and none of the four functional projects can see it either,
  * because they run with `reducedMotion: 'reduce'` and GSAP is inert there.
+ *
+ * ## What UI v3 adds, and how the walk already covers it
+ *
+ * Every v3 page gets a `hero` preset on its header (enter-only, ≤ 450 ms), so
+ * each `(route)` reading below is now also the hero's reading: it starts on
+ * navigation and the route step reads the timeline before the clock moves.
+ * The three steps that are new are the ones a route load cannot reach — a
+ * hover (`v-tilt`'s reset tween fires on *leave*, so the pointer has to go in
+ * and come out again), a sideways wheel over a board (scroll-snapped columns
+ * on `lg+`; today the same element is a full-width row that does not scroll,
+ * and the step is a no-op that must still read zero), and the liquidity
+ * Add Flow form (a Vue `<Transition>` today; a preset once Phase 6 lands).
+ * All three drive hooks that exist today, so the steps are valid before v3
+ * ships and stay valid after: the only thing that changes is what they see
+ * in the `running` column.
  *
  * ## Why the clock is faked rather than slept through
  *
@@ -134,6 +151,42 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await expect(page.getByTestId(`mydeals.card.${activeDeal.id}`)).toBeVisible();
   await quietAfter('/my-deals (route)');
 
+  // A hover is two interactions, not one. `v-tilt` (UI v3, 2.2) follows the
+  // pointer with `gsap.set` on each frame — nothing that outlives a frame —
+  // and only on *leave* starts a real tween to bring the card back to rest.
+  // So the pointer goes in, wanders three times so any per-frame work has
+  // happened, is read, and then goes out to be read again. The way out lands
+  // on the stage's own header, which has no hover motion of its own, rather
+  // than on the next card along. Today a card has no hover motion at all
+  // (cards sit inside `VueDraggable`, which v3 never tilts), so both readings
+  // are a no-op that must still come back zero.
+  const card = page.getByTestId(`mydeals.card.${activeDeal.id}`);
+  const cardBox = await card.boundingBox();
+  expect(cardBox, '/my-deals: the seeded card has a box to hover').not.toBeNull();
+  await card.hover();
+  for (const [fx, fy] of [
+    [0.2, 0.3],
+    [0.8, 0.6],
+    [0.5, 0.9],
+  ] as const) {
+    await page.mouse.move(cardBox!.x + cardBox!.width * fx, cardBox!.y + cardBox!.height * fy);
+  }
+  await quietAfter('/my-deals card hovered');
+
+  const stageBox = await page.getByTestId('mydeals.stage.1').boundingBox();
+  expect(stageBox, '/my-deals: the first stage has a box to leave onto').not.toBeNull();
+  await page.mouse.move(stageBox!.x + 24, stageBox!.y + 12);
+  await quietAfter('/my-deals card hover left');
+
+  // A sideways wheel over the board. On `lg+` v3 lays the stages out as
+  // scroll-snapped columns (5.2), and this is the gesture that pans them;
+  // the pointer parks on the first stage's top-left corner — header, not a
+  // card — so the wheel reaches the board and not a tilt. `mouse.wheel`
+  // returns before the scroll settles, which is what `quietAfter` is for.
+  await page.getByTestId('mydeals.stage.1').hover({ position: { x: 24, y: 12 } });
+  await page.mouse.wheel(300, 0);
+  await quietAfter('/my-deals board wheeled 300 px');
+
   await page.getByTestId(`mydeals.card.${activeDeal.id}`).click();
   await expect(page.getByTestId('mydeals.modal')).toBeVisible();
   // The modal re-analyzes on a 500 ms debounce and reveals the tiles when the
@@ -151,6 +204,15 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await page.goto('/bought-deals');
   await expect(page.getByTestId(`boughtdeals.card.${boughtDeal.id}`)).toBeVisible();
   await quietAfter('/bought-deals (route)');
+
+  // The stage-rail board (4.3) is the first of the two to get scroll-snapped
+  // columns, so the same wheel as on `/my-deals`, parked on the first stage's
+  // header. `boughtDeal.boughtStage` is that stage's id.
+  await page
+    .getByTestId(`boughtdeals.stage.${boughtDeal.boughtStage}`)
+    .hover({ position: { x: 24, y: 12 } });
+  await page.mouse.wheel(300, 0);
+  await quietAfter('/bought-deals board wheeled 300 px');
 
   await page.getByTestId(`boughtdeals.card.${boughtDeal.id}`).click();
   await expect(page.getByTestId('boughtdeals.modal')).toBeVisible();
@@ -177,6 +239,18 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   // seven `data-reveal` cards. Grow the sidebar past elevenish cards and this
   // step, not the app, is what breaks first.
   await quietAfter('/liquidity (route)');
+
+  // Add Flow. `TransactionForm` is a Vue `<Transition>` today and, like the
+  // settings modal below, needs the clock to leave: `quietAfter` grants it.
+  // `toHaveCount(0)` rather than `toBeHidden` because the form is `v-if`'d
+  // out of the tree, which is how `flows/liquidity.spec.ts` asserts it too.
+  await page.getByTestId('liquidity.add-flow').click();
+  await expect(page.getByTestId('txnform.root')).toBeVisible();
+  await quietAfter('/liquidity add-flow open');
+
+  await page.getByTestId('txnform.cancel').click();
+  await quietAfter('/liquidity add-flow cancelled');
+  await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
   await page.getByTestId('liquidity.settings-open').click();
   await expect(page.getByTestId('settings.root')).toBeVisible();
