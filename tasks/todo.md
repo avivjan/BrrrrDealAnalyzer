@@ -58,7 +58,7 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 ## Phase 8 — Closure · **≈ 45 min**
 
 - [x] **8.1** (25 min) — Full gate 4 on the final tree; `e2e:compare` vs `v2-final.json`; screenshots archived; Golden update B (`axe-b
-- [ ] **8.2** (20 min) — Docs
+- [x] **8.2** (20 min) — Docs
 
 ## Review
 
@@ -79,4 +79,4 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 
 **Environment.** WebKit and Mobile Safari could not run here (no WebKit build, download blocked); the browser suite ran on chromium, Mobile Chrome and chromium-motion. The clone was shallow and needed `git fetch --unshallow` for the gates' tags. The backend regression snapshots `openapi`/`models` differ only by a Pydantic 2.13 `pattern` key.
 
-**Final gate numbers (gate 4).** Playwright 151 passed / 0 failed / 61 skipped on the three Chromium projects (4.6 min); compare v2-final → v3-final PASS (0 regressions, 34 checks added); CLS ≤ 0.015 on every route (was 0.60 on My Deals); zero idle long tasks; bundle +6.9 kB gzip (budget +12 kB); pytest 115 passed; network goldens unchanged. Fast gate: see the progress file's last row.
+**Final gate numbers (gate 4).** Playwright 151 passed / 0 failed / 61 skipped on the three Chromium projects (4.6 min); compare v2-final → v3-final PASS (0 regressions, 34 checks added); CLS ≤ 0.015 on every route (was 0.60 on My Deals); zero idle long tasks; bundle +6.9 kB gzip (budget +12 kB); pytest 115 passed; network goldens unchanged. Fast gate: `verify:ui --fast` PASS (G6 unit + build green, golden policy 21 commits clean).
