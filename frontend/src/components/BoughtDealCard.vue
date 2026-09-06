@@ -211,6 +211,12 @@ const onToggleSubstage = (substageId: string) => {
       </UiIconButton>
     </div>
 
+    <!--
+      The header block carries the board's card hook. Its centre is inert (rail,
+      step line, address), so a click there bubbles to the board's open handler;
+      the stage rows and checkboxes below stop propagation on purpose.
+    -->
+    <div data-part="header" :data-testid="`boughtdeals.card.${deal.id}`">
     <!-- Rail: every stage of the live template, the current one ringed -->
     <UiTimelineRail compact :items="railItems" class="mt-6" />
 
@@ -233,6 +239,7 @@ const onToggleSubstage = (substageId: string) => {
     <h3 class="mt-2 line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
       {{ deal.address || "No Address" }}
     </h3>
+    </div>
 
     <!-- Checklist: every stage, stacked; the open row's body is the substage boxes -->
     <div data-part="stages" class="mt-3 border-t border-line pt-1">

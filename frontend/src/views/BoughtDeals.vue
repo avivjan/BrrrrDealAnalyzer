@@ -642,10 +642,10 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             chosen-class="board-chosen"
             drag-class="board-drag"
           >
+            <!-- The `boughtdeals.card.<id>` hook lives on the card's header block (see BoughtDealCard). -->
             <div
               v-for="deal in columns[stage.id]"
               :key="deal.id"
-              :data-testid="`boughtdeals.card.${deal.id}`"
               @click="openDeal(deal)"
               class="h-full"
             >
