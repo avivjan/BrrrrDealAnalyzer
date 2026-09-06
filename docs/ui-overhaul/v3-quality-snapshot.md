@@ -14,7 +14,7 @@ come from the gate runs recorded in `docs/plans/2026-09-06-ui-v3-progress.md`.
 | G3 / G4 / G4b | ADVISORY — see the final fast-gate line in the progress file |
 | G-HOVER | PASS |
 | G8 absolute paths | PASS |
-| G6 unit + build | PASS — _(final count in the progress file)_ |
+| G6 unit + build | PASS — see the final fast-gate line in the progress file |
 | G5 / G7 Playwright | Run on the **three Chromium projects** (`chromium`, `Mobile Chrome`, `chromium-motion`); WebKit and Mobile Safari **did not run** — no WebKit build in the sandbox and the download is blocked. Final numbers in §2. |
 | GOLDEN-POLICY | PASS — every golden change is a `Golden update:` commit; network goldens unchanged |
 | BACKEND | pytest PASS (115 tests). `verify_regression.py verify`: `schema`, `calculations`, `endpoints` identical; `openapi` and `models` differ only by a `pattern` key Pydantic 2.13 emits for Decimal fields — an installed-package artefact, `BackEnd/` is byte-identical |
@@ -25,11 +25,11 @@ come from the gate runs recorded in `docs/plans/2026-09-06-ui-v3-progress.md`.
 - Dialog copy (`alert`/`confirm`): unchanged.
 - Hooks: every `data-testid` the suite references exists (`src/test/hooks-inventory.test.ts`); `boughtdeals.card.<id>` moved onto the card's inert header block.
 - Two `Golden update:` commits: A dropped `liquidity.back` from a width annotation; B archived the final run.
-- Final Playwright run: _(filled at gate 4)_.
+- Final Playwright run (gate 4, tree at 7449551): **151 passed, 0 failed, 61 skipped** across chromium, Mobile Chrome and chromium-motion in 4.6 min. `compare-reports v2-final → v3-final`: 131 passed → passed, 47 skipped → skipped, 34 added (alignment, perf, wider motion guard), 176 out of matrix (the two WebKit projects that did not run), 0 regressions — PASS.
 
 ## 3. Accessibility
 
-- Axe baseline: _(filled at gate 4 — rule counts per route may only fall)_.
+- Axe baseline: unchanged — every axe scan (routes, modals, seeded boards, 390 px, look × mode sets) passed against the v2 baseline, so no rule count rose; none fell far enough to warrant re-recording.
 - The alignment check (`e2e/checks/alignment.spec.ts`) is green on Analyze, both deal modals and the liquidity forms: every control row shares its top and height within 1 px.
 
 ## 4. Performance
@@ -38,12 +38,12 @@ Budget (plan §Guardrails): main chunk ≤ +12 kB gzip over `ui-v3-baseline`; CL
 
 | Measure | Baseline (gate 1, old boards) | Final |
 | --- | --- | --- |
-| CLS `/` `/analyze` `/liquidity` | ≤ 0.05 | _(gate 4)_ |
-| CLS `/my-deals` | 0.60 (rows filling) | _(gate 4)_ |
-| CLS `/bought-deals` | 0.07 | _(gate 4)_ |
-| CLS `/reps` | > 0.05 | _(gate 4)_ |
-| Long tasks, boards idle / chart pan | 0 | _(gate 4)_ |
-| Bundle gzip (all `dist/assets/*.js`) | _(gate 4)_ | _(gate 4)_ |
+| CLS `/` `/analyze` `/liquidity` | ≤ 0.05 | 0.0010 · 0.0019 · 0.0012 |
+| CLS `/my-deals` | 0.60 (rows filling) | 0.0019 |
+| CLS `/bought-deals` | 0.07 | 0.0058 |
+| CLS `/reps` | 0.073 (config banner arriving in flow) | 0.0145 |
+| Long tasks, boards idle / chart pan | 0 | 0 (load-phase bundle evaluation of ~140 ms is annotated, not counted) |
+| Bundle gzip (all `dist/assets/*.js`) | 227,746 B at `ui-v3-baseline` | 234,621 B (+6,875 B ≈ +6.9 kB, budget +12 kB) |
 
 ## 5. What is not measured here
 
