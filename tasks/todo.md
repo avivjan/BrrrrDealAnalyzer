@@ -14,7 +14,7 @@ Approved plan: `docs/plans/2026-09-06-ui-v3-plan.md`. Estimates are agent wall-c
 - [x] **1.6** (25 min) — Deal modals
 - [x] **1.7 ‖A** (30 min) — Liquidity `TransactionForm`/`SettingsPanel`
 - [x] **1.8 ‖A** (20 min) — `e2e/checks/alignment.spec.ts`
-- [ ] **exit** (5 min) — `verify:ui --fast`; Aurora dark screenshots of all routes.
+- [x] **exit** (5 min) — `verify:ui --fast`; Aurora dark screenshots of all routes.
 
 ## Phase 2 — Motion foundation (item 2) · **≈ 1 h 40 wall-clock** (2 h 35 sequential)
 
