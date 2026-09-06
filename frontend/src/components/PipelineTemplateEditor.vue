@@ -423,7 +423,7 @@ function close() {
                   v-for="(sub, subIdx) in stage.subStages"
                   :key="sub.id"
                   :data-testid="`pipeline.substage.${sub.id}`"
-                  class="flex flex-wrap items-center gap-2 rounded-ctl border border-line bg-surface-muted px-2.5 py-1.5"
+                  class="flex flex-wrap items-center gap-2 rounded-ctl border border-line bg-surface-2 px-2.5 py-1.5"
                 >
                   <i
                     class="pi pi-check-square text-xs text-fg-muted"

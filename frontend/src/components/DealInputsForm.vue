@@ -134,46 +134,7 @@ const useHmForRehab = computed({
 
 const isBrrr = computed(() => props.dealType === "BRRRR");
 
-// Surface-dependent styling. The two variants are a straight inversion of each
-// other: sections sit on white in the page, on grey inside the modals.
-const sectionClass = computed(() =>
-  props.surface === "panel"
-    ? "bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm"
-    : "bg-white p-6 rounded-2xl border border-gray-200 shadow-sm",
-);
-// The "Use HM for Rehab" box: grey-on-white in the page, white-on-grey in modals.
-const innerBoxClass = computed(() =>
-  props.surface === "panel"
-    ? "bg-white border border-gray-200"
-    : "bg-gray-50 border border-gray-200",
-);
-const quickButtonClass = computed(() =>
-  props.surface === "panel"
-    ? "bg-gray-50 border-gray-200 hover:bg-gray-100"
-    : "bg-white border-gray-200 hover:bg-gray-50",
-);
-// Vertical gap between the sections. Previously supplied by the parent
-// container (`space-y-8` on the Analyze page, `space-y-6` inside the modals);
-// the component now owns it so those parents don't have to know the layout.
-const rootSpacingClass = computed(() =>
-  props.surface === "panel" ? "space-y-6" : "space-y-8",
-);
-
-// The two surfaces diverged on a few cosmetic details before the merge; these
-// keep each host looking exactly as it did.
-//
-// Rehab Cost + Contingency: the modals pair them in a nested 2-col grid; the
-// Analyze page laid them out as two normal grid cells. `contents` dissolves the
-// wrapper so its children fall straight into the parent grid.
-const rehabPairClass = computed(() =>
-  props.surface === "panel" ? "grid grid-cols-2 gap-2" : "contents",
-);
-// Flip selling-costs box + heading.
-const sellingBoxClass = computed(() =>
-  props.surface === "panel"
-    ? "bg-white border border-gray-200 mt-1"
-    : "bg-gray-50 border border-gray-100",
-);
+// Cosmetic divergence kept from the two v1 hosts: the modal names the box more fully.
 const sellingBoxHeading = computed(() =>
   props.surface === "panel" ? "Selling Costs Breakdown" : "Selling Costs",
 );
@@ -186,6 +147,14 @@ const quickCalcSellingCosts = () => {
 };
 
 const hmToggleId = useId();
+
+/**
+ * Heading levels follow the host: on the Analyze page the topbar is the h1 and
+ * the view's own title the h2, so sections are h3; inside a deal modal the
+ * dialog title is the h2, so sections are h3 there too and their sub-boxes h4.
+ */
+const sectionHeading = computed(() => "h3" as const);
+const subHeading = computed(() => "h4" as const);
 </script>
 
 <template>
@@ -212,12 +181,12 @@ const hmToggleId = useId();
   <section
     v-reveal
     :data-surface="surface"
-    class="rounded-card border border-line p-4 shadow-1 md:p-6
-           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+    class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
   >
-    <UiSectionHeader class="mb-4">
+    <UiSectionHeader :as="sectionHeading" class="mb-4">
       <span class="flex items-center gap-2">
-        <i class="pi pi-home text-primary" aria-hidden="true"></i> Buy &amp; Rehab
+        <span class="grid h-7 w-7 place-items-center rounded-ctl bg-primary/12 text-primary" aria-hidden="true"><i class="pi pi-home text-xs"></i></span> Buy &amp; Rehab
       </span>
     </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,7 +229,7 @@ const hmToggleId = useId();
       />
 
       <div class="my-2 border-t border-line pt-4 md:col-span-2">
-        <UiSectionHeader as="h3" class="mb-3">
+        <UiSectionHeader :as="subHeading" class="mb-3">
           Hard Money Details
         </UiSectionHeader>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -293,8 +262,8 @@ const hmToggleId = useId();
           />
 
           <div
-            class="flex items-center justify-between gap-3 rounded-ctl border border-line p-3
-                   group-data-[surface=card]:bg-surface-muted group-data-[surface=panel]:bg-surface"
+            class="flex items-center justify-between gap-3 rounded-ctl border-ui border-line p-3
+                   group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface"
           >
             <label :for="hmToggleId" class="text-sm font-medium text-fg">
               Use HM for Rehab
@@ -315,12 +284,12 @@ const hmToggleId = useId();
     v-if="isBrrr"
     v-reveal
     :data-surface="surface"
-    class="rounded-card border border-line p-4 shadow-1 md:p-6
-           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+    class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
   >
-    <UiSectionHeader class="mb-4">
+    <UiSectionHeader :as="sectionHeading" class="mb-4">
       <span class="flex items-center gap-2">
-        <i class="pi pi-refresh text-primary" aria-hidden="true"></i> Refinance (BRRRR)
+        <span class="grid h-7 w-7 place-items-center rounded-ctl bg-primary/12 text-primary" aria-hidden="true"><i class="pi pi-refresh text-xs"></i></span> Refinance (BRRRR)
       </span>
     </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -405,12 +374,12 @@ const hmToggleId = useId();
     v-else
     v-reveal
     :data-surface="surface"
-    class="rounded-card border border-line p-4 shadow-1 md:p-6
-           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+    class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
   >
-    <UiSectionHeader class="mb-4">
+    <UiSectionHeader :as="sectionHeading" class="mb-4">
       <span class="flex items-center gap-2">
-        <i class="pi pi-dollar text-warning" aria-hidden="true"></i> Flip Strategy
+        <span class="grid h-7 w-7 place-items-center rounded-ctl bg-warning/12 text-warning" aria-hidden="true"><i class="pi pi-dollar text-xs"></i></span> Flip Strategy
       </span>
     </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -432,11 +401,11 @@ const hmToggleId = useId();
       />
 
       <div
-        class="rounded-card border border-line p-3 md:col-span-2
-               group-data-[surface=card]:bg-surface-muted
+        class="rounded-card border-ui border-line p-3 md:col-span-2
+               group-data-[surface=card]:bg-surface-2
                group-data-[surface=panel]:mt-1 group-data-[surface=panel]:bg-surface"
       >
-        <UiSectionHeader as="h3" class="mb-3 items-center">
+        <UiSectionHeader :as="subHeading" class="mb-3 items-center">
           {{ sellingBoxHeading }}
           <template #actions>
             <UiButton
@@ -496,16 +465,16 @@ const hmToggleId = useId();
   <section
     v-reveal
     :data-surface="surface"
-    class="rounded-card border border-line p-4 shadow-1 md:p-6
-           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-muted"
+    class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
+           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
   >
-    <UiSectionHeader class="mb-4">
+    <UiSectionHeader :as="sectionHeading" class="mb-4">
       <span class="flex items-center gap-2">
-        <i
-          class="pi pi-wallet"
-          :class="isBrrr ? 'text-primary' : 'text-warning'"
+        <span
+          class="grid h-7 w-7 place-items-center rounded-ctl"
+          :class="isBrrr ? 'bg-primary/12 text-primary' : 'bg-warning/12 text-warning'"
           aria-hidden="true"
-        ></i>
+        ><i class="pi pi-wallet text-xs"></i></span>
         Expenses
       </span>
     </UiSectionHeader>
@@ -588,33 +557,5 @@ const hmToggleId = useId();
     </div>
   </section>
 
-  <!--
-    The six surface-keyed class computeds are frozen `<script>` lines (Phase 3
-    G3) that no element wears any more — the sections style themselves from
-    `data-surface` / `data-layout` above — while `noUnusedLocals` rejects a
-    binding nothing reads. Parking them here keeps both rules true without a
-    legacy class string reaching a rendered box; they and this element go
-    together when the freeze lifts.
-
-    The inline `display: none` is load-bearing, not belt-and-braces: under
-    `surface="panel"` `rehabPairClass` contributes `grid`, and Preflight's
-    `[hidden]` rule is emitted *before* `.grid` at equal specificity, so the
-    attribute alone loses and an empty card renders at the foot of both deal
-    modals. An inline style outranks every utility, and `style` — like `class`
-    — is invisible to G4.
-  -->
-  <span
-    hidden
-    aria-hidden="true"
-    style="display: none"
-    :class="[
-      sectionClass,
-      innerBoxClass,
-      quickButtonClass,
-      rootSpacingClass,
-      rehabPairClass,
-      sellingBoxClass,
-    ]"
-  />
   </div>
 </template>

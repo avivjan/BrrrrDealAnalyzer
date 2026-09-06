@@ -1,47 +1,7 @@
-> Superseded where it conflicts by MASTER.md §Approved overrides; see the task report for what was applied.
-# Send Offer Modal Page Overrides
+# Send offer modal — v2 page rules
 
-> **PROJECT:** BRRRR Deal Analyzer
-> **Generated:** 2026-09-05 07:36:59
-> **Page Type:** Dashboard / Data View
+> **PROJECT:** BRRRR Deal Analyzer · **UI v2** (docs/plans/2026-09-05-ui-v2-plan.md)
+> Rules here override `MASTER.md`. Look-agnostic: they name tokens and primitives, never a look.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
-
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- **Max Width:** 1200px (standard)
-- **Layout:** Full-width sections, centered content
-
-### Spacing Overrides
-
-- No overrides — use Master spacing
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- No overrides — use Master colors
-
-### Component Overrides
-
-- Avoid: Remove focus outline without replacement
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Effects: Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflection, Z-depth
-- Interaction: Use a visible focus ring on every interactive control, including modal controls
+## Rules
+- `UiModalPanel size="md"` with `UiField`s; message banner tones via `UiBadge`/`UiSurface`; primary "Send" ≥ 44 px; the 1500 ms auto-close and form reset are untouched; enter-only motion (`modalEnterOnly`). `offer.*` hooks unchanged.

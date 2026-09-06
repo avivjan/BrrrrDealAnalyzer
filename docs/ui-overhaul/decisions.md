@@ -419,3 +419,47 @@ opening prompt for UI v2. Its two load-bearing points:
   templates and scripts open to change, the test suites are the only guard left,
   and today they have known holes: chromium-only drag flows, skipped
   narrow-viewport liquidity cases, and modal markup that axe never scans.
+
+## 9. UI v2 rulings (2026-09-05 → 2026-09-06)
+
+The v2 plan is `docs/plans/2026-09-05-ui-v2-plan.md`; the task-by-task record
+is `docs/plans/2026-09-05-ui-v2-progress.md`. Rulings made while executing:
+
+1. **Inline execution, no subagent ceremony.** The user chose to run v2 in
+   one session after v1's process overhead; the mechanical gates, not per-task
+   reviews, carry the robustness.
+2. **Four switchable looks, per-browser persistence.** `localStorage`, not a
+   cookie: nothing about appearance may reach the backend, and the pre-paint
+   script needs it before the first frame. Default Quiet Luxury; dark once every
+   view was on tokens (Phase 3 exit), light until then so the axe baseline never
+   grew on v1 templates.
+3. **Gate policy.** G3/G4/G4b are advisory reports; `e2e/flows` and
+   `e2e/fixtures` moved from the G2 freeze into the golden paths (edits only in
+   `Golden update:` commits); `--fast` skips the browser suite for per-task runs.
+4. **Tempo budget.** Every entrance, stagger included, completes within 500 ms
+   in every look — the frozen motion guard measures at +500 ms. Aurora and
+   Luxury express slowness through eases, not wall-clock. Boards keep a bare
+   `v-reveal`; `UiKpiCard` carries no `v-flash` (the stats bar's own rAF count-up
+   would flash per frame); the sidebar indicator is a CSS transform transition.
+5. **Contrast on washes.** The audit composites tone washes (`tone/10`, and the
+   compounded `warning/33` axe measured on REPS's config label) and holds ink on
+   them to 4.5:1; muted ink and base semantic tokens moved accordingly.
+6. **Drawer Escape at document level.** Vue's per-event timestamp guard skips
+   an outer template handler when an inner one ran first under a frozen clock —
+   exactly the e2e suite's paused clock — so `UiDrawer` listens natively.
+7. **Heading order.** The topbar owns the `h1`; the boards' hidden titles are
+   `sr-only` `h2`s; REPS lost its `<main>`, sticky header and `min-h-dvh` (the
+   only edits it received).
+8. **Primeicons 7 has no `pi-trello`**; the My Deals icon is `pi-objects-column`.
+9. **Two naming drifts from the plan, kept.** Radius tokens stay `--radius-sm/md/lg`
+   (the `ctl/card/panel` names live in `tailwind.config.js`, where `cn()` needs
+   them); `UiSegmented` marks its options with `data-value` rather than one
+   `data-testid` per option, so the specs select `shell.mode` + `[data-value]`.
+10. **Final review fixes.** Focus ring offset follows `--color-page`; the drawer
+    and palette make the rest of the page `inert` while open; the dashboard's
+    stats slot reserves the bar's real height; `UiSurface` transitions
+    `transform` only when interactive; the chart treats `pointercancel` as a
+    cancelled gesture; five unused primitives are exported but not registered.
+11. **Screenshot review artifacts were dropped** at the user's request; phases 4
+   and 5 ran without review stops and their full-suite runs were merged into one.
+

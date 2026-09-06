@@ -56,6 +56,7 @@ const HOVER_LIFT = 'hover-lift';
 const REVEAL = 'reveal';
 const FLASH = 'flash';
 const COUNT_UP = 'count-up';
+const DRAW_ON = 'draw-on';
 
 /**
  * Listeners a directive attached, keyed by element *and* directive.
@@ -443,5 +444,47 @@ export const vCountUp: ObjectDirective<HTMLElement> = {
       counters.delete(el);
     }
     release(el, COUNT_UP);
+  },
+};
+
+/**
+ * `v-draw-on` — an SVG path draws itself once, on mount.
+ *
+ * Complex tier, for the sparklines and the liquidity balance line. The stroke
+ * is dashed to its own length and the offset tweened to zero over `DUR.slow`,
+ * then both attributes are removed so the stylesheet's stroke is what stays.
+ * Nothing happens without motion, without a real path (`getTotalLength` is
+ * missing in jsdom) or on later updates — a redrawn path must not replay.
+ */
+export const vDrawOn: ObjectDirective<SVGPathElement> = {
+  mounted(el) {
+    if (!motionEnabled()) return;
+    if (typeof (el as { getTotalLength?: unknown }).getTotalLength !== 'function') return;
+    let length = 0;
+    try {
+      length = el.getTotalLength();
+    } catch {
+      return;
+    }
+    if (!Number.isFinite(length) || length <= 0) return;
+    el.setAttribute('stroke-dasharray', String(length));
+    el.setAttribute('stroke-dashoffset', String(length));
+    const tween = gsap.to(el, {
+      attr: { 'stroke-dashoffset': 0 },
+      duration: DUR.slow,
+      ease: EASE.standard,
+      overwrite: 'auto',
+      onComplete: () => {
+        el.removeAttribute('stroke-dasharray');
+        el.removeAttribute('stroke-dashoffset');
+      },
+    });
+    (el as unknown as Record<string, unknown>)[`__${DRAW_ON}`] = tween;
+  },
+  unmounted(el) {
+    const tween = (el as unknown as Record<string, unknown>)[`__${DRAW_ON}`] as { kill(): void } | undefined;
+    tween?.kill();
+    el.removeAttribute('stroke-dasharray');
+    el.removeAttribute('stroke-dashoffset');
   },
 };

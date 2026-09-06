@@ -42,7 +42,10 @@ function onSave() {
         <div data-testid="settings.backdrop" class="absolute inset-0 bg-fg/50 md:backdrop-blur-sm" @click="$emit('close')" />
         <UiModalPanel size="sm" labelled-by="settings-modal-title" class="modal-panel relative">
           <template #header>
-            <h2 id="settings-modal-title" class="text-base font-semibold text-fg">Liquidity Settings</h2>
+            <h2 id="settings-modal-title" class="flex items-center gap-2.5 font-display text-lg font-semibold tracking-display text-fg">
+              <span class="grid h-8 w-8 place-items-center rounded-ctl bg-primary/12 text-primary" aria-hidden="true"><i class="pi pi-cog text-xs"></i></span>
+              Liquidity Settings
+            </h2>
           </template>
 
           <div class="space-y-4">
@@ -57,7 +60,7 @@ function onSave() {
                     :aria-describedby="describedBy"
                     type="number"
                     step="0.01"
-                    class="ui-input pr-8 text-lg tabular"
+                    class="ui-input numeric pr-8 text-lg"
                   />
                   <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
                 </div>
@@ -91,7 +94,7 @@ function onSave() {
                     type="number"
                     step="0.1"
                     min="0"
-                    class="ui-input pr-8 tabular"
+                    class="ui-input numeric pr-8"
                   />
                   <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
                 </div>

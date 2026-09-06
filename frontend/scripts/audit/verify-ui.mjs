@@ -8,6 +8,16 @@
  *
  *   --phase   additionally run the backend regression proofs and, once the
  *             harness exists, the full Playwright device matrix.
+ *   --fast    skip the browser suite (G5/G7) and the backend proofs; used
+ *             after every task inside a phase. The full run happens once per
+ *             phase, at its end.
+ *
+ * v2 gate policy (docs/plans/2026-09-05-ui-v2-plan.md §2): G1, G2, G5/G7, G6,
+ * G-HOVER, G8 and GOLDEN-POLICY are still gates. G3 (script freeze), G4
+ * (binding manifest) and G4b (copy manifest) are ADVISORY: a redesign changes
+ * layout, structure and copy on purpose, so their findings are printed for the
+ * reviewer and never fail the run. The e2e flows and fixtures are goldens
+ * (editable in a `Golden update:` commit) rather than frozen files.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -21,7 +31,7 @@ import { run as runPaths, summarize as summarizePaths } from './paths.mjs';
 
 /** The baseline every non-frontend file is frozen against. */
 export const BASELINE_TAG = 'ui-baseline';
-/** The Phase 0 tag that additionally freezes the e2e suite and the goldens. */
+/** The v1 Phase 0 tag: the goldens have existed, and the policy applied, since it. */
 export const PHASE_0_TAG = 'ui-p0';
 
 /** G1: everything outside the frontend (and outside scratch dirs) is frozen. */
@@ -57,9 +67,6 @@ export const G2_FROZEN_PATHS = [
   'frontend/src/config',
 ];
 
-/** G2 (from ui-p0 on): the e2e suite itself is frozen. */
-export const E2E_FROZEN_PATHS = ['frontend/e2e/flows', 'frontend/e2e/fixtures'];
-
 /** Paths only a `Golden update:` commit may touch. */
 export const GOLDEN_POLICY_PATHS = [
   'frontend/scripts/audit/golden',
@@ -70,6 +77,12 @@ export const GOLDEN_POLICY_PATHS = [
   // proof, so re-archiving either one inside an ordinary commit would move the
   // proof's own baseline without anyone reviewing it.
   'frontend/e2e/reports',
+  // v2: the e2e flows and fixtures moved here from the G2 freeze. A spec may
+  // change — a hook that had to move, a `test.skip` whose reason is gone — but
+  // only in a reviewed `Golden update:` commit that carries nothing else.
+  // `frontend/e2e/checks` is deliberately absent: new check specs are code.
+  'frontend/e2e/flows',
+  'frontend/e2e/fixtures',
 ];
 
 const PLAYWRIGHT_CONFIG = join(FRONTEND_ROOT, 'playwright.config.ts');
@@ -128,13 +141,8 @@ export function isCleanAgainst(ref, paths) {
 }
 
 // ---------------------------------------------------------------------------
-// ui-p0-conditional pieces (inert until the tag is cut)
+// golden policy
 // ---------------------------------------------------------------------------
-
-/** The extra G2 diff checks that switch on once `ui-p0` exists. */
-export function e2eFreezeChecks({ tagExists = gitTagExists, tag = PHASE_0_TAG } = {}) {
-  return tagExists(tag) ? [{ ref: tag, paths: E2E_FROZEN_PATHS }] : [];
-}
 
 /** `%h\t%s` log output as `{ sha, subject }` records. */
 export function parseCommitLog(logOutput) {
@@ -236,6 +244,12 @@ export function goldenPolicyGate({
 // CLI
 // ---------------------------------------------------------------------------
 
+/** `--phase` and `--fast` are exclusive; `--fast` wins because it is the cheaper answer. */
+export function parseArgs(argv) {
+  const fast = argv.includes('--fast');
+  return { phase: !fast && argv.includes('--phase'), fast };
+}
+
 function printGateResult(status, gate, detail, failures) {
   if (status === 'FAIL') failures.push(gate);
   console.log(gateLine(status, gate, detail));
@@ -245,6 +259,20 @@ function printGateResult(status, gate, detail, failures) {
 function printAuditGate(gate, result, failures, okDetail = 'no behaviour drift') {
   for (const line of result.lines) console.log(`  ${line.level} ${line.text}`);
   printGateResult(result.ok ? 'PASS' : 'FAIL', gate, result.ok ? okDetail : 'see the lines above', failures);
+}
+
+/**
+ * Print an audit whose findings are for the reviewer, not for the exit code.
+ *
+ * The lines are the same ones the gate version prints; only the verdict
+ * changes, to `ADVISORY <gate> <n> finding(s), advisory only`. `failures` is
+ * accepted so the call sites read like the gates around them, and never
+ * written to: an advisory cannot fail the run by construction.
+ */
+export function printAdvisoryGate(gate, result, _failures, log = console.log) {
+  for (const line of result.lines) log(`  ${line.level} ${line.text}`);
+  const findings = result.lines.filter((line) => line.level === 'FAIL').length;
+  log(gateLine('ADVISORY', gate, findings === 0 ? 'no drift' : `${findings} finding(s), advisory only`));
 }
 
 function runCommand(command, args, cwd) {
@@ -260,7 +288,7 @@ function restorePycache() {
 }
 
 function main(argv) {
-  const phase = argv.includes('--phase');
+  const { phase, fast } = parseArgs(argv);
   const failures = [];
 
   const haveBaseline = gitTagExists(BASELINE_TAG);
@@ -274,10 +302,9 @@ function main(argv) {
     failures,
   );
 
-  // G2 — behavioural frontend directories (and, from ui-p0 on, the e2e suite).
-  const g2Checks = haveBaseline
-    ? [{ ref: BASELINE_TAG, paths: G2_FROZEN_PATHS }, ...e2eFreezeChecks()]
-    : [];
+  // G2 — behavioural frontend directories. (v1 also froze the e2e suite here
+  // from ui-p0 on; in v2 the suite is a golden, see GOLDEN_POLICY_PATHS.)
+  const g2Checks = haveBaseline ? [{ ref: BASELINE_TAG, paths: G2_FROZEN_PATHS }] : [];
   const dirty = g2Checks.filter((check) => !isCleanAgainst(check.ref, check.paths));
   printGateResult(
     haveBaseline && dirty.length === 0 ? 'PASS' : 'FAIL',
@@ -292,9 +319,13 @@ function main(argv) {
     failures,
   );
 
-  printAuditGate('G3', runScriptBlocks(), failures);
-  printAuditGate('G4', runBindings(), failures);
-  printAuditGate('G4b', runText(), failures);
+  // G3 / G4 / G4b — advisory in v2. The redesign restructures templates and
+  // copy on purpose; these reports tell the reviewer *what* moved, and the
+  // behaviour proof rests on G5 (network goldens), the contract tests and the
+  // hook inventory instead.
+  printAdvisoryGate('G3', runScriptBlocks(), failures);
+  printAdvisoryGate('G4', runBindings(), failures);
+  printAdvisoryGate('G4b', runText(), failures);
 
   // G-HOVER — with `hoverOnlyWhenSupported` on, a hover-only reveal is invisible
   // (but still clickable) on touch, which no Playwright or axe run can catch.
@@ -318,7 +349,10 @@ function main(argv) {
   );
 
   // G5 / G7 — end-to-end flows and screenshots, once the harness lands.
-  if (existsSync(PLAYWRIGHT_CONFIG)) {
+  if (fast) {
+    printGateResult('SKIP', 'G5', '--fast: browser suite runs at the phase end', failures);
+    printGateResult('SKIP', 'G7', '--fast: browser suite runs at the phase end', failures);
+  } else if (existsSync(PLAYWRIGHT_CONFIG)) {
     const projects = phase ? PHASE_PLAYWRIGHT_PROJECTS : [];
     const e2ePasses = runCommand('npx', ['playwright', 'test', ...projects], FRONTEND_ROOT);
     const detail = phase ? 'playwright, full device matrix' : 'playwright, default projects';

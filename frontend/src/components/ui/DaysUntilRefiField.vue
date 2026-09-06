@@ -65,8 +65,6 @@ const applyPickedDates = () => {
   picking.value = false;
 };
 
-const dateInputClass =
-  "w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-gray-50";
 
 const daysInputId = useId();
 const purchaseDateId = useId();
@@ -140,7 +138,7 @@ const refiDateId = useId();
         >{{ pickerProblem }}</span>
         <span
           v-else-if="pickedDays != null"
-          class="tabular text-sm font-semibold text-fg"
+          class="numeric text-sm font-semibold text-fg"
         >{{ pickedDays.toLocaleString() }} days</span>
         <span v-else class="text-xs text-fg-muted">
           Pick both dates to get the day count.
@@ -159,17 +157,5 @@ const refiDateId = useId();
       </div>
     </div>
 
-    <!--
-      `dateInputClass` is a frozen `<script>` line (Phase 3 G3) that the two
-      date boxes no longer wear — they are `.ui-input` now — and `noUnusedLocals`
-      rejects a binding nothing reads. Parking it here keeps both rules true
-      without a class string reaching a rendered box; the line and this element
-      go together when the freeze lifts.
-
-      Same inline `display: none` as the parking element in `DealInputsForm`:
-      `hidden` alone is only as strong as the class list it is asked to beat,
-      and both elements should fail the same way — which is to say, never.
-    -->
-    <span hidden aria-hidden="true" style="display: none" :class="dateInputClass" />
   </div>
 </template>

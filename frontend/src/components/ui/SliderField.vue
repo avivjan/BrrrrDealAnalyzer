@@ -77,7 +77,7 @@ const inputId = useId();
           :allowEmpty="true"
           :minFractionDigits="0"
           :maxFractionDigits="3"
-          inputClass="ui-input tabular px-2 py-1 text-right text-sm"
+          inputClass="ui-input numeric px-2 py-1 text-right text-sm"
           @input="(e: any) => emit('update:modelValue', e.value)"
         />
       </div>

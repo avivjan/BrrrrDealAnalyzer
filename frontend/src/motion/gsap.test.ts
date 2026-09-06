@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { gsap, motionEnabled } from './gsap';
 import { REDUCED_MOTION_QUERY, prefersReducedMotion } from './reducedMotion';
-import { DUR, EASE } from './tokens';
 
 /**
  * The motion kill switch.
@@ -112,9 +111,8 @@ describe('the shared gsap instance', () => {
     expect(window.gsap).toBe(gsap);
   });
 
-  it('carries the token duration and ease as its defaults', () => {
-    const defaults = gsap.defaults();
-    expect(defaults.duration).toBe(DUR.base);
-    expect(defaults.ease).toBe(gsap.parseEase(EASE.standard));
+  it('sets no gsap.defaults: presets and directives read the active look per tween', () => {
+    // GSAP's own factory default (0.5 s), untouched by this module.
+    expect(gsap.defaults().duration).toBe(0.5);
   });
 });

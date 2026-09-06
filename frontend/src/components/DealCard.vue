@@ -62,12 +62,17 @@ const onMoveToBought = (id: string) => {
 };
 
 
+/**
+ * Surface per stage (tokens). The stage *accent* is not a class: it is keyed
+ * off `data-stage` in the scoped style below, because `cn()` would drop a
+ * `border-l-*` colour against the root's `border-line`.
+ */
 const stageColors = {
-  1: "border-l-4 border-l-blue-500 bg-white border border-gray-100", // New
-  2: "border-l-4 border-l-yellow-500 bg-white border border-gray-100", // Working
-  3: "border-l-4 border-l-emerald-500 bg-white border border-gray-100", // Brought
-  4: "border-l-4 border-l-purple-500 bg-white border border-gray-100", // Keep
-  5: "border-l-4 border-l-gray-400 bg-gray-50 border border-gray-100", // Dead
+  1: "bg-surface", // New
+  2: "bg-surface", // Working
+  3: "bg-surface", // Brought
+  4: "bg-surface", // Keep
+  5: "bg-surface-2", // Dead
 };
 
 const cardClass = computed(() => {
@@ -79,7 +84,7 @@ const cardClass = computed(() => {
   if (isFlip.value) {
     // Add orange tint or border style?
     // Tailwind classes can be appended
-    base += " bg-orange-50/30"; // Subtle orange tint
+    base += " bg-warning/5"; // Subtle flip tint, from the warning token
   }
   return base;
 });
@@ -94,15 +99,15 @@ const formatMoney = (val?: number) =>
     padding="md"
     :data-stage="deal.stage"
     :class="cardClass"
-    class="group relative overflow-hidden border-line border-l-4 cursor-grab active:cursor-grabbing hover:shadow-2"
+    class="group relative overflow-hidden border-ui border-line border-l-4 cursor-grab active:cursor-grabbing hover:shadow-2 hover:-translate-y-px"
   >
     <!-- Badge -->
     <UiBadge
-      :tone="isBrrr ? 'primary' : 'warning'"
+      :deal-type="isBrrr ? 'BRRRR' : 'FLIP'"
       size="sm"
       class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
     >
-      {{ isBrrr ? "🏠 BRRRR" : "💰 FLIP" }}
+      {{ isBrrr ? "BRRRR" : "FLIP" }}
     </UiBadge>
 
     <!--
@@ -180,7 +185,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Header: Address -->
     <div class="text-center mb-3 mt-6">
-      <h3 class="line-clamp-2 break-words text-sm md:text-base font-medium leading-tight text-fg">
+      <h3 class="line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
@@ -188,7 +193,7 @@ const formatMoney = (val?: number) =>
     <!-- Task Box -->
     <div
       v-if="deal.task"
-      class="bg-surface-muted rounded-ctl p-2 mb-3 text-center border border-line"
+      class="bg-surface-2 rounded-ctl p-2 mb-3 text-center border-ui border-line"
     >
       <span class="text-xs text-primary uppercase tracking-wider font-semibold"
         >Current Task</span
@@ -203,13 +208,13 @@ const formatMoney = (val?: number) =>
       <!-- Row 1: Purchase & Rehab -->
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
-        <span class="tabular text-fg font-medium">{{
+        <span class="numeric text-fg font-medium">{{
           formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0)
         }}</span>
       </div>
       <div class="flex flex-col min-w-0 text-right">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
-        <span class="tabular text-fg font-medium">{{
+        <span class="numeric text-fg font-medium">{{
           formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0)
         }}</span>
       </div>
@@ -217,7 +222,7 @@ const formatMoney = (val?: number) =>
       <!-- Row 2: Cash Needed (with and without buffer) -->
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Needed</span>
-        <span class="tabular text-warning font-medium">{{
+        <span class="numeric text-warning font-medium">{{
           formatMoney(
             isBrrr
               ? brrrDeal?.total_cash_needed_for_deal
@@ -225,7 +230,7 @@ const formatMoney = (val?: number) =>
           )
         }}</span>
         <span class="text-[9px] text-fg-muted uppercase tracking-wide mt-1">w/ Buffer</span>
-        <span class="tabular text-warning text-[11px]">{{
+        <span class="numeric text-warning text-[11px]">{{
           formatMoney(
             isBrrr
               ? brrrDeal?.total_cash_needed_for_deal_with_buffer
@@ -239,7 +244,7 @@ const formatMoney = (val?: number) =>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Out</span>
           <span
-            class="tabular font-semibold"
+            class="numeric font-semibold"
             :class="
               (brrrDeal?.cash_out || 0) >= 0
                 ? 'text-positive'
@@ -254,7 +259,7 @@ const formatMoney = (val?: number) =>
             >Cash Out Routi</span
           >
           <span
-            class="tabular font-medium"
+            class="numeric font-medium"
             :class="
               (brrrDeal?.cash_out_routi || 0) >= 0
                 ? 'text-positive'
@@ -267,7 +272,7 @@ const formatMoney = (val?: number) =>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
           <span
-            class="tabular font-medium"
+            class="numeric font-medium"
             :class="
               (brrrDeal?.cash_flow || 0) > 0
                 ? 'text-positive'
@@ -279,7 +284,7 @@ const formatMoney = (val?: number) =>
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">CoC</span>
-          <span class="tabular text-primary font-medium">{{
+          <span class="numeric text-primary font-medium">{{
             brrrDeal?.cash_on_cash
               ? brrrDeal.cash_on_cash.toFixed(1) + "%"
               : "-"
@@ -287,7 +292,7 @@ const formatMoney = (val?: number) =>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
-          <span class="tabular text-positive font-medium">{{
+          <span class="numeric text-positive font-medium">{{
             formatMoney(brrrDeal?.equity)
           }}</span>
         </div>
@@ -298,7 +303,7 @@ const formatMoney = (val?: number) =>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Net Profit</span>
           <span
-            class="tabular font-bold"
+            class="numeric font-bold"
             :class="
               (flipDeal?.net_profit || 0) > 0
                 ? 'text-positive'
@@ -310,13 +315,13 @@ const formatMoney = (val?: number) =>
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">ROI</span>
-          <span class="tabular font-semibold text-primary">
+          <span class="numeric font-semibold text-primary">
             {{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}
           </span>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Ann. ROI</span>
-          <span class="tabular text-fg font-medium">
+          <span class="numeric text-fg font-medium">
             {{
               flipDeal?.annualized_roi
                 ? flipDeal.annualized_roi.toFixed(1) + "%"
@@ -329,7 +334,7 @@ const formatMoney = (val?: number) =>
 
     <!-- Footer Stats -->
     <div
-      class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted tabular"
+      class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted numeric"
     >
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>

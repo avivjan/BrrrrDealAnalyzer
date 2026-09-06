@@ -52,28 +52,31 @@ const canonical = (value: string): string => {
 };
 
 /**
- * The `--chart-*` values `tokens.css` declares on `:root` — the light palette.
+ * The `--chart-*` values the *active look and mode* declare.
  *
- * This is what turns "something resolved" into "the palette this repository
- * ships resolved", which is the part `chartToken()`'s silent fallback would
- * otherwise hide.
+ * Since UI v2 the palette a page renders comes from `src/assets/looks/<id>.css`
+ * — the rule whose selector list starts with `[data-look="<id>"]` (light) or
+ * `[data-look="<id>"].dark` (dark) — not from `tokens.css`'s `:root`. The test
+ * reads which look and mode the page actually applied and compares against
+ * that sheet, which is what turns "something resolved" into "the palette this
+ * repository ships for this look resolved" — the part `chartToken()`'s silent
+ * fallback would otherwise hide.
  */
-const declaredOnRoot = (() => {
-  // Resolved against this file, not against the working directory: a check that
-  // only finds the stylesheet when Playwright happens to be launched from
-  // `frontend/` is a check that silently reads the wrong file — or throws —
-  // anywhere else. Gate G8 warns on `process.cwd()` reads under `e2e/` for
-  // exactly this reason.
-  const tokensCss = new URL('../../src/assets/tokens.css', import.meta.url);
-  const css = readFileSync(tokensCss, 'utf8');
-  const start = css.indexOf(':root {');
-  const block = css.slice(start, css.indexOf('\n}', start));
+function declaredByLook(look: string, dark: boolean): Record<string, string> {
+  // Resolved against this file, not the working directory: gate G8 warns on
+  // `process.cwd()` reads under `e2e/` for exactly this reason.
+  const css = readFileSync(new URL(`../../src/assets/looks/${look}.css`, import.meta.url), 'utf8');
+  const selector = dark ? `[data-look="${look}"].dark,` : `[data-look="${look}"],`;
+  const start = css.indexOf(selector);
+  if (start < 0) throw new Error(`no ${dark ? 'dark' : 'light'} rule in ${look}.css`);
+  const open = css.indexOf('{', start);
+  const block = css.slice(open, css.indexOf('\n}', open));
   const found: Record<string, string> = {};
   for (const match of block.matchAll(/--chart-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
     found[match[1]!] = match[2]!.trim();
   }
   return found;
-})();
+}
 
 test.beforeEach(({}, testInfo) => {
   test.skip(
@@ -86,12 +89,19 @@ test('every --chart-* token resolves to a colour on /liquidity', async ({ page }
   await page.goto('/liquidity');
   await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
 
-  const resolved = await page.evaluate((names) => {
-    const style = getComputedStyle(document.documentElement);
-    return Object.fromEntries(
-      names.map((name) => [name, style.getPropertyValue(`--chart-${name}`).trim()]),
-    ) as Record<string, string>;
+  const { resolved, look, dark } = await page.evaluate((names) => {
+    const html = document.documentElement;
+    const style = getComputedStyle(html);
+    return {
+      look: html.dataset.look ?? '',
+      dark: html.classList.contains('dark'),
+      resolved: Object.fromEntries(
+        names.map((name) => [name, style.getPropertyValue(`--chart-${name}`).trim()]),
+      ) as Record<string, string>,
+    };
   }, NAMES as string[]);
+  expect(look, 'the page carries an active look').not.toBe('');
+  const declared = declaredByLook(look, dark);
 
   expect(Object.keys(resolved).sort()).toEqual([...NAMES].sort());
 
@@ -104,11 +114,12 @@ test('every --chart-* token resolves to a colour on /liquidity', async ({ page }
     'chart tokens a <canvas> would silently ignore',
   ).toEqual([]);
 
-  // Every name resolves to the value `:root` declares — so the browser is
-  // answering from the stylesheet, not from `chartToken()`'s dark fallbacks.
+  // Every name resolves to the value the active look's sheet declares for this
+  // mode — so the browser is answering from the stylesheet, not from
+  // `chartToken()`'s fallbacks (which are the *default* look's dark palette).
   for (const name of NAMES) {
-    expect(canonical(resolved[name] ?? ''), `--chart-${name}`).toBe(
-      canonical(declaredOnRoot[name] ?? ''),
+    expect(canonical(resolved[name] ?? ''), `--chart-${name} (${look}, ${dark ? 'dark' : 'light'})`).toBe(
+      canonical(declared[name] ?? ''),
     );
   }
 });

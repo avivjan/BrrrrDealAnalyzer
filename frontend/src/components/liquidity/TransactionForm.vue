@@ -239,20 +239,22 @@ function formatPreviewDate(iso: string): string {
         <div data-testid="txnform.backdrop" class="absolute inset-0 bg-fg/50 md:backdrop-blur-sm" @click="$emit('close')" />
         <UiModalPanel size="sm" labelled-by="txnform-modal-title" class="modal-panel relative">
           <template #header>
-            <h2 id="txnform-modal-title" class="flex items-center gap-2 text-base font-semibold text-fg">
-              <i v-if="isRecurring" class="pi pi-refresh text-sm text-primary" aria-hidden="true"></i>
+            <h2 id="txnform-modal-title" class="flex items-center gap-2.5 font-display text-lg font-semibold tracking-display text-fg">
+              <span class="grid h-8 w-8 place-items-center rounded-ctl bg-primary/12 text-primary" aria-hidden="true">
+                <i :class="isRecurring ? 'pi pi-refresh' : 'pi pi-arrow-right-arrow-left'" class="text-xs"></i>
+              </span>
               {{ title }}
             </h2>
           </template>
 
           <!-- Recurring toggle (only for new entries; editing locks the type) -->
-          <div v-if="canToggleRecurring" class="mb-4 flex gap-2">
+          <div v-if="canToggleRecurring" role="group" aria-label="Kind" class="mb-4 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
             <UiButton
               data-testid="txnform.mode-onetime"
               variant="ghost"
               class="flex-1 gap-1.5 text-xs font-semibold"
               :aria-pressed="!isRecurring"
-              :class="!isRecurring ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
+              :class="!isRecurring ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
               @click="isRecurring = false"
             >
               <i class="pi pi-circle-fill text-[8px]" aria-hidden="true"></i> One-time
@@ -262,7 +264,7 @@ function formatPreviewDate(iso: string): string {
               variant="ghost"
               class="flex-1 gap-1.5 text-xs font-semibold"
               :aria-pressed="isRecurring"
-              :class="isRecurring ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
+              :class="isRecurring ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
               @click="isRecurring = true"
             >
               <i class="pi pi-refresh text-[10px]" aria-hidden="true"></i> Recurring
@@ -270,13 +272,13 @@ function formatPreviewDate(iso: string): string {
           </div>
 
           <!-- Direction toggle -->
-          <div class="mb-4 flex gap-2">
+          <div role="group" aria-label="Direction" class="mb-4 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
             <UiButton
               data-testid="txnform.inflow"
               variant="ghost"
               class="flex-1 text-sm font-semibold"
               :aria-pressed="!isOutflow"
-              :class="!isOutflow ? 'bg-positive/10 text-positive ring-1 ring-inset ring-positive/40' : 'bg-surface-muted text-fg-muted'"
+              :class="!isOutflow ? 'bg-positive/12 text-positive shadow-1 ring-1 ring-inset ring-positive/40' : 'text-fg-muted'"
               @click="isOutflow = false"
             >
               + Inflow
@@ -286,7 +288,7 @@ function formatPreviewDate(iso: string): string {
               variant="ghost"
               class="flex-1 text-sm font-semibold"
               :aria-pressed="isOutflow"
-              :class="isOutflow ? 'bg-negative/10 text-negative ring-1 ring-inset ring-negative/40' : 'bg-surface-muted text-fg-muted'"
+              :class="isOutflow ? 'bg-negative/12 text-negative shadow-1 ring-1 ring-inset ring-negative/40' : 'text-fg-muted'"
               @click="isOutflow = true"
             >
               − Outflow
@@ -309,7 +311,7 @@ function formatPreviewDate(iso: string): string {
                   step="0.01"
                   min="0"
                   placeholder="49.2"
-                  class="ui-input pr-8 text-lg tabular"
+                  class="ui-input numeric pr-8 text-lg"
                 />
                 <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-muted">k</span>
               </div>
@@ -376,7 +378,7 @@ function formatPreviewDate(iso: string): string {
                     type="number"
                     min="1"
                     max="365"
-                    class="ui-input tabular"
+                    class="ui-input numeric"
                   />
                 </template>
               </UiField>
@@ -384,7 +386,7 @@ function formatPreviewDate(iso: string): string {
 
             <div>
               <label class="mb-1 block text-sm font-medium text-fg">Ends</label>
-              <div class="mb-2 flex gap-1.5">
+              <div role="group" aria-label="Ends" class="mb-2 flex gap-1 rounded-ctl border-ui border-line bg-surface-2 p-1">
                 <UiButton
                   type="button"
                   data-testid="txnform.end-never"
@@ -392,7 +394,7 @@ function formatPreviewDate(iso: string): string {
                   size="sm"
                   class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
                   :aria-pressed="endMode === 'never'"
-                  :class="endMode === 'never' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
+                  :class="endMode === 'never' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
                   @click="endMode = 'never'"
                 >
                   Never
@@ -404,7 +406,7 @@ function formatPreviewDate(iso: string): string {
                   size="sm"
                   class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
                   :aria-pressed="endMode === 'on'"
-                  :class="endMode === 'on' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
+                  :class="endMode === 'on' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
                   @click="endMode = 'on'"
                 >
                   On date
@@ -416,7 +418,7 @@ function formatPreviewDate(iso: string): string {
                   size="sm"
                   class="min-h-9 touch:min-h-11 flex-1 text-[11px]"
                   :aria-pressed="endMode === 'after'"
-                  :class="endMode === 'after' ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/40' : 'bg-surface-muted text-fg-muted'"
+                  :class="endMode === 'after' ? 'bg-surface text-fg shadow-1 ring-1 ring-inset ring-line' : 'text-fg-muted'"
                   @click="endMode = 'after'"
                 >
                   After N
@@ -438,7 +440,7 @@ function formatPreviewDate(iso: string): string {
                   type="number"
                   min="1"
                   max="2000"
-                  class="ui-input pr-24 tabular"
+                  class="ui-input numeric pr-24"
                 />
                 <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-fg-muted">occurrence(s)</span>
               </div>
@@ -450,7 +452,7 @@ function formatPreviewDate(iso: string): string {
             <!-- Preview -->
             <div
               v-if="recurrencePreview"
-              class="rounded-card border border-line bg-surface-muted p-3"
+              class="rounded-card border-ui border-line bg-surface-2 p-3"
             >
               <div class="mb-1.5 flex items-center justify-between gap-2">
                 <div class="text-[10px] uppercase tracking-wider text-fg-muted">
@@ -464,7 +466,7 @@ function formatPreviewDate(iso: string): string {
                 v-for="(p, idx) in recurrencePreview.upcoming"
                 :key="idx"
                 :data-testid="`txnform.preview.${idx}`"
-                class="flex items-baseline justify-between text-[11px] tabular"
+                class="flex items-baseline justify-between text-[11px] numeric"
               >
                 <span class="text-fg-muted">{{ formatPreviewDate(p.effective_date) }}</span>
                 <span :class="p.amount_k > 0 ? 'text-positive' : 'text-negative'">

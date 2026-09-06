@@ -1,23 +1,22 @@
 /**
- * Colour lookup for the liquidity timeline `<canvas>`.
+ * Colour lookup for the liquidity timeline chart.
  *
  * Every other colour in the app is a Tailwind class backed by a CSS custom
- * property, but a canvas takes a resolved string — `ctx.fillStyle = 'red-500'`
- * is silently ignored, not an error. So the chart's palette lives in
- * `tokens.css` as `--chart-*` literals and is read out through here.
+ * property, but the chart's SVG binds resolved colour strings to `fill` and
+ * `stroke` attributes, so its palette lives in each look sheet as 32
+ * `--chart-*` literals and is read out through here — once, into a
+ * theme-reactive `computed` in `TimelineChart.vue`.
  *
  * Two properties matter to the caller:
  *
- * - **It never throws.** A bad or missing custom property returns the literal
- *   the chart used before the tokens existed, so the worst case is that the
- *   chart looks exactly like it did in Phase 0 rather than disappearing.
- * - **It reads the stylesheet once per name.** `draw()` runs on every hover,
- *   pan and resize and asks for dozens of colours each time; `getComputedStyle`
- *   forces a style recalculation, so calling it in that loop would be a
- *   per-frame cost for values that cannot change between frames.
+ * - **It never throws.** A bad or missing custom property returns the default
+ *   look's dark literal, so the worst case is a wrong colour, never a missing
+ *   plot.
+ * - **It reads the stylesheet once per name.** `getComputedStyle` forces a
+ *   style recalculation, so values are memoised until `resetChartTokenCache()`.
  *
- * `resetChartTokenCache()` exists for tests and for a future theme switch,
- * which will need to invalidate the cache before redrawing.
+ * `resetChartTokenCache()` is called by `src/design/theme.ts` on every look or
+ * mode switch, before the chart's colour `computed` re-evaluates.
  */
 
 /** Every `--chart-*` token, without the prefix. */
@@ -56,45 +55,48 @@ export type ChartTokenName =
   | "min-warning";
 
 /**
- * The literals `TimelineChart.vue` assigns today, character for character.
+ * The default look's dark chart palette (`src/assets/looks/luxury.css`,
+ * `[data-look="luxury"].dark`), character for character.
  *
- * They are duplicated from `tokens.css` on purpose: the chart must keep
- * drawing if the stylesheet has not applied yet (or at all, as in a unit test
- * or an SSR pass), and a test in this directory holds the two copies together.
+ * Duplicated on purpose: the chart must keep drawing if the stylesheet has not
+ * applied yet (or at all, as in a unit test or an SSR pass), and
+ * `chartTokens.test.ts` holds this copy to the generated sheet. When the
+ * default look changes, regenerate this table from `chartLiterals()` in
+ * `scripts/design/build-looks.mjs`.
  */
 export const CHART_FALLBACKS: Record<ChartTokenName, string> = {
-  bg: "#0f1117",
-  grid: "#1e2030",
-  "axis-text": "#5c6078",
-  "reserve-band": "rgba(239, 68, 68, 0.04)",
-  "weekend-band": "rgba(255,255,255,0.015)",
-  "today-band": "rgba(99, 102, 241, 0.08)",
-  "month-line": "#2a2f45",
-  "day-line": "#16192a",
-  "month-label": "#7c82a0",
-  "day-today": "#818cf8",
-  "day-hover": "#c7d2fe",
-  "day-active": "#94a3b8",
-  "day-idle": "#3e4460",
-  "marker-today": "#6366f1",
-  "marker-idle": "#2e3350",
-  "today-line": "#6366f1",
-  "net-positive": "#22c55e",
-  "net-negative": "#ef4444",
-  "inflow-fill-hover": "rgba(129, 140, 248, 0.55)",
-  "inflow-fill": "rgba(99, 102, 241, 0.35)",
-  "inflow-stroke-hover": "#a5b4fc",
-  "inflow-stroke": "#818cf8",
-  "outflow-fill-hover": "rgba(239, 68, 68, 0.55)",
-  "outflow-fill": "rgba(239, 68, 68, 0.35)",
-  "outflow-stroke-hover": "#fca5a5",
-  "outflow-stroke": "#ef4444",
-  "reserve-line": "#ef4444",
-  baseline: "rgba(148, 163, 184, 0.2)",
-  "balance-dot": "#818cf8",
-  "balance-dot-core": "#fff",
-  "min-negative": "#ef4444",
-  "min-warning": "#f59e0b",
+  bg: "#1b1d24",
+  grid: "#2f323d",
+  "axis-text": "#c9c5bb",
+  "reserve-band": "rgba(224, 149, 149, 0.06)",
+  "weekend-band": "rgba(236, 231, 221, 0.04)",
+  "today-band": "rgba(212, 180, 131, 0.08)",
+  "month-line": "#51535a",
+  "day-line": "#2f323d",
+  "month-label": "#c9c5bb",
+  "day-today": "#d4b483",
+  "day-hover": "#e2c99c",
+  "day-active": "#ece7dd",
+  "day-idle": "rgba(201, 197, 187, 0.7)",
+  "marker-today": "#d4b483",
+  "marker-idle": "rgba(201, 197, 187, 0.65)",
+  "today-line": "#d4b483",
+  "net-positive": "#8fbf8a",
+  "net-negative": "#e09595",
+  "inflow-fill-hover": "rgba(212, 180, 131, 0.55)",
+  "inflow-fill": "rgba(212, 180, 131, 0.35)",
+  "inflow-stroke-hover": "#e2c99c",
+  "inflow-stroke": "#d4b483",
+  "outflow-fill-hover": "rgba(224, 149, 149, 0.55)",
+  "outflow-fill": "rgba(224, 149, 149, 0.35)",
+  "outflow-stroke-hover": "#e2a5a3",
+  "outflow-stroke": "#e09595",
+  "reserve-line": "#e09595",
+  baseline: "rgba(201, 197, 187, 0.2)",
+  "balance-dot": "#d4b483",
+  "balance-dot-core": "#1b1d24",
+  "min-negative": "#e09595",
+  "min-warning": "#e0b96a",
 };
 
 /** Resolved values, keyed by token name. Only populated when a DOM exists. */

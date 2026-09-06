@@ -42,15 +42,15 @@ const stageColorClass = computed(() => {
   const stages = pipeline.value.stages;
   const currentIdx = stages.findIndex(s => s.id === props.deal.boughtStage);
   const ratio = stages.length > 1 ? currentIdx / (stages.length - 1) : 0;
-  if (ratio < 0.33) return "border-l-4 border-l-blue-500";
-  if (ratio < 0.66) return "border-l-4 border-l-emerald-500";
-  return "border-l-4 border-l-green-600";
+  if (ratio < 0.33) return "border-l-4 border-l-chart-4";
+  if (ratio < 0.66) return "border-l-4 border-l-chart-2";
+  return "border-l-4 border-l-positive";
 });
 
 const cardClass = computed(() => {
-  let base = stageColorClass.value + " bg-white border border-gray-100";
-  if (isFlip.value) base += " bg-orange-50/30";
-  if (allSubstagesComplete.value && subStages.value.length > 0) base += " ring-2 ring-emerald-300";
+  let base = stageColorClass.value + " bg-surface border-ui";
+  if (isFlip.value) base += " bg-warning/5";
+  if (allSubstagesComplete.value && subStages.value.length > 0) base += " ring-2 ring-positive/50";
   return base;
 });
 
@@ -79,15 +79,15 @@ const onToggleSubstage = (substageId: string) => {
     tone="surface"
     padding="md"
     :class="[cardClass, 'border-line', stageColorClass, 'ring-positive/40']"
-    class="group relative overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-2"
+    class="group relative overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-2 hover:-translate-y-px"
   >
     <!-- Badge -->
     <UiBadge
-      :tone="isBrrr ? 'primary' : 'warning'"
+      :deal-type="isBrrr ? 'BRRRR' : 'FLIP'"
       size="sm"
       class="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide"
     >
-      {{ isBrrr ? "🏠 BRRRR" : "💰 FLIP" }}
+      {{ isBrrr ? "BRRRR" : "FLIP" }}
     </UiBadge>
 
     <!--
@@ -140,7 +140,7 @@ const onToggleSubstage = (substageId: string) => {
 
     <!-- Header: Address -->
     <div class="text-center mb-2 mt-6">
-      <h3 class="line-clamp-2 break-words text-sm md:text-base font-medium leading-tight text-fg">
+      <h3 class="line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
         {{ deal.address || "No Address" }}
       </h3>
     </div>
@@ -153,7 +153,7 @@ const onToggleSubstage = (substageId: string) => {
     </div>
 
     <!-- Task Box -->
-    <div v-if="deal.task" class="bg-surface-muted rounded-ctl p-2 mb-3 text-center border border-line">
+    <div v-if="deal.task" class="bg-surface-2 rounded-ctl p-2 mb-3 text-center border-ui border-line">
       <span class="text-xs text-primary uppercase tracking-wider font-semibold">Current Task</span>
       <p class="text-sm text-fg font-medium mt-1 line-clamp-2">{{ deal.task }}</p>
     </div>
@@ -162,20 +162,20 @@ const onToggleSubstage = (substageId: string) => {
     <div class="grid grid-cols-2 gap-y-2 gap-x-2 text-xs text-fg-muted">
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
-        <span class="tabular text-fg font-medium">{{ formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
+        <span class="numeric text-fg font-medium">{{ formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
       </div>
       <div class="flex flex-col min-w-0 text-right">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
-        <span class="tabular text-fg font-medium">{{ formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
+        <span class="numeric text-fg font-medium">{{ formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
       </div>
 
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Needed</span>
-        <span class="tabular text-warning font-medium">{{
+        <span class="numeric text-warning font-medium">{{
           formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
         }}</span>
         <span class="text-[9px] text-fg-muted uppercase tracking-wide mt-1">w/ Buffer</span>
-        <span class="tabular text-warning text-[11px]">{{
+        <span class="numeric text-warning text-[11px]">{{
           formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal_with_buffer : flipDeal?.total_cash_needed_with_buffer)
         }}</span>
       </div>
@@ -183,34 +183,34 @@ const onToggleSubstage = (substageId: string) => {
       <template v-if="isBrrr">
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
-          <span class="tabular font-medium" :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-positive' : 'text-negative'">
+          <span class="numeric font-medium" :class="(brrrDeal?.cash_flow || 0) > 0 ? 'text-positive' : 'text-negative'">
             {{ formatMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">CoC</span>
-          <span class="tabular text-primary font-medium">{{ brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-" }}</span>
+          <span class="numeric text-primary font-medium">{{ brrrDeal?.cash_on_cash ? brrrDeal.cash_on_cash.toFixed(1) + "%" : "-" }}</span>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
-          <span class="tabular text-positive font-medium">{{ formatMoney(brrrDeal?.equity) }}</span>
+          <span class="numeric text-positive font-medium">{{ formatMoney(brrrDeal?.equity) }}</span>
         </div>
       </template>
 
       <template v-else>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Net Profit</span>
-          <span class="tabular font-bold" :class="(flipDeal?.net_profit || 0) > 0 ? 'text-positive' : 'text-negative'">
+          <span class="numeric font-bold" :class="(flipDeal?.net_profit || 0) > 0 ? 'text-positive' : 'text-negative'">
             {{ formatMoney(flipDeal?.net_profit) }}
           </span>
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">ROI</span>
-          <span class="tabular font-semibold text-primary">{{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}</span>
+          <span class="numeric font-semibold text-primary">{{ flipDeal?.roi ? flipDeal.roi.toFixed(1) + "%" : "-" }}</span>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Ann. ROI</span>
-          <span class="tabular text-fg font-medium">{{ flipDeal?.annualized_roi ? flipDeal.annualized_roi.toFixed(1) + "%" : "-" }}</span>
+          <span class="numeric text-fg font-medium">{{ flipDeal?.annualized_roi ? flipDeal.annualized_roi.toFixed(1) + "%" : "-" }}</span>
         </div>
       </template>
     </div>
@@ -221,6 +221,7 @@ const onToggleSubstage = (substageId: string) => {
         <input
           type="checkbox"
           :data-testid="`boughtcard.substage.${sub.id}.input`"
+          :aria-label="sub.label"
           :checked="deal.completedSubstages[sub.id] === true"
           @click.stop="onToggleSubstage(sub.id)"
           class="h-4 w-4 shrink-0 rounded accent-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -232,7 +233,7 @@ const onToggleSubstage = (substageId: string) => {
     </div>
 
     <!-- Footer Stats -->
-    <div class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted tabular">
+    <div class="mt-3 pt-2 border-t border-line flex justify-between text-xs font-medium text-fg-muted numeric">
       <span>{{ deal.sqft || "-" }} sqft</span>
       <span>{{ deal.bedrooms || "-" }}bd / {{ deal.bathrooms || "-" }}ba</span>
     </div>

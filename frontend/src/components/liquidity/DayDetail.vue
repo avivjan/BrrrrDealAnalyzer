@@ -19,9 +19,9 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-  <div v-if="bucket" data-testid="daydetail.root" class="rounded-card border border-line bg-surface p-4 shadow-1">
+  <div v-if="bucket" data-testid="daydetail.root" class="rounded-card border-ui border-line bg-surface p-4 shadow-1">
     <div class="mb-3 flex items-center justify-between gap-2">
-      <h3 class="min-w-0 truncate text-sm font-semibold text-fg">{{ formatDate(bucket.date) }}</h3>
+      <h3 class="min-w-0 truncate font-display text-base font-semibold tracking-display text-fg">{{ formatDate(bucket.date) }}</h3>
       <UiButton
         data-testid="daydetail.add"
         variant="ghost"
@@ -36,13 +36,13 @@ function formatDate(iso: string): string {
     <div class="mb-3 flex gap-4 text-xs">
       <div>
         <span class="text-fg-muted">Net: </span>
-        <span class="tabular font-semibold" :class="bucket.net_k > 0 ? 'text-positive' : bucket.net_k < 0 ? 'text-negative' : 'text-fg-muted'">
+        <span class="numeric font-semibold" :class="bucket.net_k > 0 ? 'text-positive' : bucket.net_k < 0 ? 'text-negative' : 'text-fg-muted'">
           {{ bucket.net_k > 0 ? '+' : '' }}{{ bucket.net_k.toFixed(2) }}k
         </span>
       </div>
       <div>
         <span class="text-fg-muted">EOD: </span>
-        <span :class="bucket.balance_k < 0 ? 'text-negative' : 'text-primary'" class="tabular font-bold">
+        <span :class="bucket.balance_k < 0 ? 'text-negative' : 'text-primary'" class="numeric font-bold">
           {{ bucket.balance_k.toFixed(2) }}k
         </span>
       </div>
@@ -57,7 +57,7 @@ function formatDate(iso: string): string {
         v-for="txn in bucket.transactions"
         :key="txn.id"
         :data-testid="`daydetail.txn.${txn.id}`"
-        class="group flex items-center gap-2 rounded-ctl bg-surface-muted px-3 py-2"
+        class="group flex items-center gap-2 rounded-ctl bg-surface-2 px-3 py-2"
         :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
       >
         <div class="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -77,7 +77,7 @@ function formatDate(iso: string): string {
             </UiBadge>
           </div>
         </div>
-        <div class="shrink-0 text-xs font-bold tabular"
+        <div class="shrink-0 text-xs font-bold numeric"
           :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'"
         >
           {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(2) }}k

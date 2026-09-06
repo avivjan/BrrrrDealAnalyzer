@@ -31,9 +31,18 @@ const twMerge = extendTailwindMerge({
     classGroups: {
       // `--radius-sm/md/lg`; Tailwind's own `rounded-sm/md/lg` are untouched.
       rounded: [{ rounded: ["ctl", "card", "panel"] }],
-      // `--shadow-1/2/3`. This is the elevation group, not `shadow-color`:
-      // `shadow-2 shadow-primary` is a tinted elevation and must survive.
-      shadow: [{ shadow: ["1", "2", "3"] }],
+      // `--shadow-1..4` and the three glows. This is the elevation group, not
+      // `shadow-color`: `shadow-2 shadow-primary` is a tinted elevation and
+      // must survive.
+      shadow: [{ shadow: ["1", "2", "3", "4", "glow-primary", "glow-accent", "glow-negative"] }],
+      // `--border-w` (`border-ui`) merges against `border-2` and friends.
+      "border-w": [{ border: ["ui"] }],
+      // `--blur-glass`.
+      "backdrop-blur": [{ "backdrop-blur": ["glass"] }],
+      // `--font-display` / `--font-mono`.
+      "font-family": [{ font: ["display", "mono"] }],
+      // `--track-display`.
+      tracking: [{ tracking: ["display"] }],
       // `--dur-fast/base/slow`.
       duration: [{ duration: ["fast", "base", "slow"] }],
       // `--ease-standard/emphasized/exit`.

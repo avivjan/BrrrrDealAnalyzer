@@ -11,15 +11,16 @@
  * motion is entrances, presses and fades; a plugin would cost bundle size for
  * behaviour nothing in the plan asks for.
  *
- * Importing this module has two side effects and no others: `gsap.defaults`,
- * and publishing the instance on `window` for the e2e guard.
+ * Importing this module has one side effect and no other: publishing the
+ * instance on `window` for the e2e guard.
  */
 import { gsap } from 'gsap';
 
 import { prefersReducedMotion } from './reducedMotion';
-import { DUR, EASE } from './tokens';
 
-gsap.defaults({ duration: DUR.base, ease: EASE.standard });
+// No `gsap.defaults()`: durations and eases are read from the active look at
+// tween time by every preset and directive, so a module-load snapshot would only
+// be wrong after a look switch.
 
 /**
  * Publish the instance for the e2e motion guard.
@@ -60,10 +61,14 @@ export const CLEAR_PROPS = 'transform,opacity,filter,willChange';
  *    Playwright functional projects run with `reducedMotion: 'reduce'`, so this
  *    is also what keeps the characterization suite deterministic.
  *  - When `window.__BW_MOTION_OFF__` is set, the manual override.
+ *  - When the in-app Motion setting is "Reduced" (`src/design/theme.ts` writes
+ *    `data-motion="reduced"` on `<html>`; read from the DOM rather than
+ *    imported, so the motion layer never depends on the design layer).
  */
 export function motionEnabled(): boolean {
   if (import.meta.env.VITEST) return false;
   if (typeof window === 'undefined') return false;
   if (window.__BW_MOTION_OFF__) return false;
+  if (typeof document !== 'undefined' && document.documentElement.dataset.motion === 'reduced') return false;
   return !prefersReducedMotion();
 }

@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   CONTRAST_PAIRS,
   checkThemes,
+  composite,
   contrastRatio,
+  lookThemes,
+  parseLook,
   parseTokens,
   relativeLuminance,
+  ruleBody,
   run,
 } from './contrast.mjs';
 
@@ -17,7 +21,7 @@ const FIXTURE = `
   --color-surface: 255 255 255;
   --color-surface-muted: 255 255 255;
   --color-fg: 0 0 0;
-  --color-fg-muted: 118 118 118;
+  --color-fg-muted: 0 0 0;
   --color-primary: 0 0 0;
   --color-primary-hover: 0 0 0;
   --color-primary-fg: 255 255 255;
@@ -25,6 +29,9 @@ const FIXTURE = `
   --color-negative: 0 0 0;
   --color-warning: 0 0 0;
   --color-ring: 0 0 0;
+  --color-surface-2: 255 255 255;
+  --color-surface-3: 255 255 255;
+  --color-accent: 0 0 0;
   --radius-sm: 6px;
   --chart-bg: #0f1117;
 }
@@ -41,6 +48,9 @@ const FIXTURE = `
   --color-negative: 255 255 255;
   --color-warning: 255 255 255;
   --color-ring: 255 255 255;
+  --color-surface-2: 0 0 0;
+  --color-surface-3: 0 0 0;
+  --color-accent: 255 255 255;
 }
 `;
 
@@ -68,7 +78,7 @@ describe('token parsing', () => {
   it('reads the --color-* triplets of :root and .dark', () => {
     const themes = parseTokens(FIXTURE);
     expect(themes.light['color-fg']).toEqual([0, 0, 0]);
-    expect(themes.light['color-fg-muted']).toEqual([118, 118, 118]);
+    expect(themes.light['color-fg-muted']).toEqual([0, 0, 0]);
     expect(themes.dark['color-fg']).toEqual([255, 255, 255]);
   });
 
@@ -119,11 +129,95 @@ describe('token parsing', () => {
 });
 
 describe('the audited pair set', () => {
-  it('holds the sixteen pairs, with 3:1 for the ring and 4.5:1 for text', () => {
-    expect(CONTRAST_PAIRS).toHaveLength(16);
+  it('holds thirty-four pairs: 3:1 for the non-text ring and primary boundary, 4.5:1 for text and for text on washes', () => {
+    expect(CONTRAST_PAIRS).toHaveLength(34);
     for (const pair of CONTRAST_PAIRS) {
-      expect(pair.min).toBe(pair.foreground === 'ring' ? 3 : 4.5);
+      const nonText = pair.foreground === 'ring' || (pair.foreground === 'primary' && pair.background === 'surface');
+      expect(pair.min, `${pair.foreground} on ${pair.background}`).toBe(nonText ? 3 : 4.5);
     }
+    expect(CONTRAST_PAIRS.filter((pair) => pair.wash)).toHaveLength(7);
+  });
+
+  it('composites a wash the way a browser does', () => {
+    // 20% of black over white is #cccccc.
+    expect(composite([0, 0, 0], [255, 255, 255], 0.2)).toEqual([204, 204, 204]);
+    // Pure alpha ends: the tone itself, or the surface itself.
+    expect(composite([10, 20, 30], [200, 200, 200], 1)).toEqual([10, 20, 30]);
+    expect(composite([10, 20, 30], [200, 200, 200], 0)).toEqual([200, 200, 200]);
+  });
+
+  it('measures text on a wash against the composited colour, not the raw tone', () => {
+    // Muted grey #767676 passes on white (4.54) but not on a 20% wash of a dark warning.
+    const themes = parseTokens(FIXTURE);
+    const washed = {
+      light: { ...themes.light, 'color-warning': [120, 80, 20], 'color-fg-muted': [118, 118, 118] },
+      dark: themes.dark,
+    };
+    const result = checkThemes(washed, ['light']);
+    const line = result.lines.find((l) => l.foreground === 'fg-muted' && l.background.startsWith('warning/33'));
+    expect(line).toBeDefined();
+    expect(line.ratio).toBeLessThan(4.54);
+    expect(line.status).toBe('FAIL');
+  });
+});
+
+describe('look sheets', () => {
+  const sheet = `
+/* generated */
+[data-look="mono"],
+[data-look="mono"][data-mode="light"],
+.dark [data-look="mono"][data-mode="light"] {
+  --color-fg: 1 1 1;
+  --color-page: 255 255 255;
+}
+[data-look="mono"].dark,
+.dark [data-look="mono"],
+[data-look="mono"][data-mode="dark"] {
+  --color-fg: 254 254 254;
+  --color-page: 5 5 5;
+}
+`;
+
+  it('names a light and a dark set per look', () => {
+    expect(lookThemes('mono')).toEqual([
+      { name: 'mono-light', selector: '[data-look="mono"]' },
+      { name: 'mono-dark', selector: '[data-look="mono"].dark' },
+    ]);
+  });
+
+  it('reads the block whose selector list starts with the selector, even with more selectors after it', () => {
+    expect(ruleBody(sheet, '[data-look="mono"]')).toContain('--color-fg: 1 1 1');
+    expect(ruleBody(sheet, '[data-look="mono"].dark')).toContain('--color-fg: 254 254 254');
+  });
+
+  it('does not mistake the dark list, which mentions the bare selector later, for the light block', () => {
+    const darkFirst = sheet.slice(sheet.indexOf('[data-look="mono"].dark'));
+    // Only the dark rule is present: the bare selector appears inside its list, not at its start.
+    expect(ruleBody(darkFirst, '[data-look="mono"]')).toBe('');
+  });
+
+  it('parses both sets of a look', () => {
+    const themes = parseLook(sheet, 'mono');
+    expect(themes['mono-light']['color-fg']).toEqual([1, 1, 1]);
+    expect(themes['mono-light']['color-page']).toEqual([255, 255, 255]);
+    expect(themes['mono-dark']['color-page']).toEqual([5, 5, 5]);
+  });
+
+  it('audits the named sets on top of the base light set', () => {
+    const base = parseTokens(FIXTURE);
+    const themes = { ...base, ...parseLook(sheet, 'mono') };
+    const result = checkThemes(themes, ['mono-light', 'mono-dark']);
+    expect(new Set(result.lines.map((line) => line.theme))).toEqual(new Set(['mono-light', 'mono-dark']));
+    // The light set only re-declares fg and page; everything else inherits the
+    // black-on-white base and passes.
+    expect(result.lines.filter((line) => line.theme === 'mono-light').every((line) => line.status === 'PASS')).toBe(true);
+    // The dark set inherits the *light* base too — that is what the browser
+    // does when a look omits a token — so its near-white fg lands on the base's
+    // white surface and fails. This is why the generator writes every token
+    // into both blocks.
+    const darkFailures = result.lines.filter((line) => line.theme === 'mono-dark' && line.status === 'FAIL');
+    expect(darkFailures.map((line) => `${line.foreground}/${line.background}`)).toContain('fg/surface');
+    expect(result.ok).toBe(false);
   });
 });
 
@@ -160,6 +254,9 @@ describe('checkThemes', () => {
       'fg-muted/page',
       'fg-muted/surface',
       'fg-muted/surface-muted',
+      'fg-muted/surface-2',
+      'fg-muted/surface-3',
+      'fg-muted/warning/33 on surface',
     ]);
   });
 
@@ -181,8 +278,8 @@ describe('checkThemes', () => {
   });
 });
 
-describe('the committed tokens.css', () => {
-  it('passes every audited pair in both themes', () => {
+describe('the committed tokens.css and look sheets', () => {
+  it('passes every audited pair in every set', () => {
     const result = run();
     expect(result.lines.filter((line) => line.status === 'FAIL')).toEqual([]);
     expect(result.ok).toBe(true);

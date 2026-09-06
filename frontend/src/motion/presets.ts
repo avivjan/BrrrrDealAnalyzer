@@ -17,8 +17,10 @@
  *     the same node for the next open, and `pointer-events` is the one thing
  *     `clearProps` is not allowed to remove — see `reviveEnter`.
  *
- * Timings come from `tokens.ts`, which mirrors `tokens.css`. Nothing here reads
- * a duration from CSS at runtime: `:css="false"` means Vue is waiting on us.
+ * Timings come from `tokens.ts`, which reads the active look's `--dur-*` and
+ * `--gsap-ease-*` off `<html>` — so they are read *when a tween starts*, never
+ * captured at module load, and a look switch changes the tempo of the next
+ * open. `:css="false"` means Vue is waiting on us for `done`.
  */
 import { CLEAR_PROPS, gsap, motionEnabled } from './gsap';
 import { DUR, EASE } from './tokens';
@@ -46,11 +48,20 @@ export interface MotionPreset {
 }
 
 /** Every preset name a template may write. */
-export type PresetName = 'page' | 'modal' | 'modalEnterOnly' | 'fade' | 'slideUp' | 'listItem';
+export type PresetName =
+  | 'page'
+  | 'modal'
+  | 'modalEnterOnly'
+  | 'fade'
+  | 'slideUp'
+  | 'listItem'
+  | 'commandPalette'
+  | 'drawer';
 
-const ENTER: GSAPTweenVars = { duration: DUR.base, ease: EASE.standard };
-const ENTER_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.standard };
-const LEAVE_FAST: GSAPTweenVars = { duration: DUR.fast, ease: EASE.exit };
+/** Read at call time: `DUR`/`EASE` are getters over the active look. */
+const ENTER = (): GSAPTweenVars => ({ duration: DUR.base, ease: EASE.standard });
+const ENTER_FAST = (): GSAPTweenVars => ({ duration: DUR.fast, ease: EASE.standard });
+const LEAVE_FAST = (): GSAPTweenVars => ({ duration: DUR.fast, ease: EASE.exit });
 
 /**
  * Stop whatever is running on `el` and hand it back to the stylesheet.
@@ -96,8 +107,8 @@ function reviveEnter(el: HTMLElement): void {
   el.style.pointerEvents = '';
 }
 
-/** Build an `enter` that tweens `el` itself from `from` to `to`. */
-function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
+/** Build an `enter` that tweens `el` itself from `from` to `to()` (read per call). */
+function enterWith(from: GSAPTweenVars, to: () => GSAPTweenVars) {
   return function enter(el: HTMLElement, done: () => void): void {
     reviveEnter(el);
     gsap.killTweensOf(el);
@@ -106,12 +117,12 @@ function enterWith(from: GSAPTweenVars, to: GSAPTweenVars) {
       done();
       return;
     }
-    gsap.fromTo(el, from, { ...to, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
+    gsap.fromTo(el, from, { ...to(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
   };
 }
 
-/** Build a `leave` that makes `el` inert, then tweens it to `to`. */
-function leaveWith(to: GSAPTweenVars) {
+/** Build a `leave` that makes `el` inert, then tweens it to `to()`. */
+function leaveWith(to: () => GSAPTweenVars) {
   return function leave(el: HTMLElement, done: () => void): void {
     el.style.pointerEvents = 'none';
     if (!motionEnabled()) {
@@ -119,7 +130,7 @@ function leaveWith(to: GSAPTweenVars) {
       return;
     }
     gsap.killTweensOf(el);
-    gsap.to(el, { ...to, overwrite: 'auto', onComplete: done });
+    gsap.to(el, { ...to(), overwrite: 'auto', onComplete: done });
   };
 }
 
@@ -143,7 +154,7 @@ function modalEnter(el: HTMLElement, done: () => void): void {
     gsap.fromTo(
       el,
       { opacity: 0, scale: 0.96 },
-      { opacity: 1, scale: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+      { opacity: 1, scale: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
     );
     return;
   }
@@ -151,15 +162,91 @@ function modalEnter(el: HTMLElement, done: () => void): void {
   gsap.fromTo(
     el,
     { opacity: 0 },
-    { opacity: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+    { opacity: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
   );
   if (panel) {
     gsap.killTweensOf(panel);
     gsap.fromTo(
       panel,
       { scale: 0.96 },
-      { scale: 1, ...ENTER, overwrite: 'auto', clearProps: CLEAR_PROPS },
+      { scale: 1, ...ENTER(), overwrite: 'auto', clearProps: CLEAR_PROPS },
     );
+  }
+}
+
+/**
+ * Complex tier: the command palette. Overlay fades; the panel drops in from
+ * 8 px above at 98% with the look's *emphasized* ease (a spring in Aurora,
+ * near-linear in Obsidian), then its rows stagger in over 20 ms each. Three
+ * tweens, `clearProps` on everything they touched; the whole thing is over
+ * inside the 500 ms entrance budget in every look.
+ */
+function commandPaletteEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
+  gsap.killTweensOf(el);
+  if (!motionEnabled()) {
+    gsap.set(el, { clearProps: CLEAR_PROPS });
+    done();
+    return;
+  }
+  // `done` rides the overlay tween: it is the one Vue is waiting on.
+  gsap.fromTo(
+    el,
+    { opacity: 0 },
+    { opacity: 1, duration: DUR.fast, ease: EASE.standard, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done },
+  );
+  const panel = modalPanel(el);
+  if (!panel) return;
+  gsap.killTweensOf(panel);
+  gsap.fromTo(
+    panel,
+    { opacity: 0, y: -8, scale: 0.98 },
+    { opacity: 1, y: 0, scale: 1, duration: DUR.base, ease: EASE.emphasized, overwrite: 'auto', clearProps: CLEAR_PROPS },
+  );
+  const rows = Array.from(panel.querySelectorAll<HTMLElement>('[role="option"]')).slice(0, 12);
+  if (rows.length === 0) return;
+  gsap.killTweensOf(rows);
+  gsap.fromTo(
+    rows,
+    { opacity: 0, y: 4 },
+    { opacity: 1, y: 0, duration: DUR.fast, ease: EASE.standard, stagger: 0.02, delay: DUR.fast * 0.5, overwrite: 'auto', clearProps: CLEAR_PROPS },
+  );
+}
+
+/**
+ * Complex tier: a side drawer. Scrim fades; the panel slides in from its own
+ * edge (`data-side` on the panel says which) and fades. Leaves are the same
+ * two motions reversed at `--dur-fast`, inert first like every leave.
+ */
+function drawerEnter(el: HTMLElement, done: () => void): void {
+  reviveEnter(el);
+  gsap.killTweensOf(el);
+  if (!motionEnabled()) {
+    gsap.set(el, { clearProps: CLEAR_PROPS });
+    done();
+    return;
+  }
+  const panel = modalPanel(el);
+  const fromX = panel?.dataset.side === 'left' ? -24 : 24;
+  gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: DUR.fast, ease: EASE.standard, overwrite: 'auto', clearProps: CLEAR_PROPS, onComplete: done });
+  if (panel) {
+    gsap.killTweensOf(panel);
+    gsap.fromTo(panel, { opacity: 0, x: fromX }, { opacity: 1, x: 0, duration: DUR.base, ease: EASE.emphasized, overwrite: 'auto', clearProps: CLEAR_PROPS });
+  }
+}
+
+function drawerLeave(el: HTMLElement, done: () => void): void {
+  el.style.pointerEvents = 'none';
+  if (!motionEnabled()) {
+    done();
+    return;
+  }
+  gsap.killTweensOf(el);
+  const panel = modalPanel(el);
+  gsap.to(el, { opacity: 0, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
+  if (panel) {
+    gsap.killTweensOf(panel);
+    gsap.to(panel, { x: panel.dataset.side === 'left' ? -16 : 16, opacity: 0, ...LEAVE_FAST(), overwrite: 'auto' });
   }
 }
 
@@ -172,13 +259,13 @@ function modalLeave(el: HTMLElement, done: () => void): void {
   gsap.killTweensOf(el);
   const panel = modalPanel(el);
   if (panel === el) {
-    gsap.to(el, { opacity: 0, scale: 0.98, ...LEAVE_FAST, overwrite: 'auto', onComplete: done });
+    gsap.to(el, { opacity: 0, scale: 0.98, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
     return;
   }
-  gsap.to(el, { opacity: 0, ...LEAVE_FAST, overwrite: 'auto', onComplete: done });
+  gsap.to(el, { opacity: 0, ...LEAVE_FAST(), overwrite: 'auto', onComplete: done });
   if (panel) {
     gsap.killTweensOf(panel);
-    gsap.to(panel, { scale: 0.98, ...LEAVE_FAST, overwrite: 'auto' });
+    gsap.to(panel, { scale: 0.98, ...LEAVE_FAST(), overwrite: 'auto' });
   }
 }
 
@@ -193,11 +280,11 @@ function modalLeave(el: HTMLElement, done: () => void): void {
 export const presets: Record<PresetName, MotionPreset> = {
   /** Route changes. Opacity only — a moving page fights the scroll position. */
   page: {
-    enter: enterWith({ opacity: 0 }, { opacity: 1, ...ENTER }),
+    enter: enterWith({ opacity: 0 }, () => ({ opacity: 1, ...ENTER() })),
     enterCancelled: cancel,
   },
 
-  /** Overlay fades, panel scales. Opens in 250 ms, closes in 150 ms. */
+  /** Overlay fades, panel scales. Opens in `--dur-base`, closes in `--dur-fast`. */
   modal: {
     enter: modalEnter,
     leave: modalLeave,
@@ -213,20 +300,36 @@ export const presets: Record<PresetName, MotionPreset> = {
 
   /** The plainest arrival there is. */
   fade: {
-    enter: enterWith({ opacity: 0 }, { opacity: 1, ...ENTER }),
+    enter: enterWith({ opacity: 0 }, () => ({ opacity: 1, ...ENTER() })),
     enterCancelled: cancel,
   },
 
   /** A panel that arrives from just below where it belongs. */
   slideUp: {
-    enter: enterWith({ opacity: 0, y: 8 }, { opacity: 1, y: 0, ...ENTER }),
+    enter: enterWith({ opacity: 0, y: 8 }, () => ({ opacity: 1, y: 0, ...ENTER() })),
     enterCancelled: cancel,
+  },
+
+  /** Complex tier: the ⌘K palette — panel drops in on the emphasized ease, rows stagger. */
+  commandPalette: {
+    enter: commandPaletteEnter,
+    leave: modalLeave,
+    enterCancelled: cancel,
+    leaveCancelled: cancelLeave,
+  },
+
+  /** Complex tier: a side drawer slides in from its edge. */
+  drawer: {
+    enter: drawerEnter,
+    leave: drawerLeave,
+    enterCancelled: cancel,
+    leaveCancelled: cancelLeave,
   },
 
   /** One row of a list, short enough that a whole list still feels instant. */
   listItem: {
-    enter: enterWith({ opacity: 0, y: 6 }, { opacity: 1, y: 0, ...ENTER_FAST }),
-    leave: leaveWith({ opacity: 0, ...LEAVE_FAST }),
+    enter: enterWith({ opacity: 0, y: 6 }, () => ({ opacity: 1, y: 0, ...ENTER_FAST() })),
+    leave: leaveWith(() => ({ opacity: 0, ...LEAVE_FAST() })),
     enterCancelled: cancel,
     leaveCancelled: cancelLeave,
   },

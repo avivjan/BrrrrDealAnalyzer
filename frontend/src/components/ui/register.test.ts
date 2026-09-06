@@ -26,6 +26,14 @@ const EXPECTED_NAMES = [
   "UiSaveStatus",
   "UiTabs",
   "UiStepper",
+  // UI v2 (only the primitives a template uses; the rest are imported explicitly)
+  "UiSurface",
+  "UiGlassPanel",
+  "UiChip",
+  "UiKpiCard",
+  "UiDrawer",
+  "UiCommandItem",
+  "UiSegmented",
 ];
 
 /** A view-shaped component: it names two primitives and imports neither. */
@@ -43,7 +51,7 @@ afterEach(() => {
 });
 
 describe("UI_COMPONENTS", () => {
-  it("holds exactly the thirteen presentational primitives", () => {
+  it("holds exactly the twenty registered presentational primitives", () => {
     expect(Object.keys(UI_COMPONENTS)).toEqual(EXPECTED_NAMES);
   });
 });

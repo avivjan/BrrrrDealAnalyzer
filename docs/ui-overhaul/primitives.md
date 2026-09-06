@@ -545,6 +545,100 @@ reveals the full text — only the view has the string.
 
 ---
 
+## UI v2 primitives (Task 1.4)
+
+Twelve more, added for the four-look shell and views. Seven are registered
+globally; `UiTooltip`, `UiSparkline`, `UiProgressRing`, `UiTimelineRail` and
+`UiDataTable` are exported from `components/ui/index.ts` and imported where
+used (no view uses them yet, so they stay out of the bundle). Same four rules as above
+— `inheritAttrs: false` with a `passthrough()` function, copy via slots (or via
+data props where the thing *is* data: a KPI, a step, a table row), tokens only,
+never a look id — and each has a sibling `*.test.ts`.
+
+### `UiSurface`
+
+A panel at one of three elevation tiers. `level: 1 | 2 | 3` (surface,
+surface-2, surface-3 with matching shadow), `as`, `interactive`, `padding`.
+The most-used shape in v2; it replaces every `bg-white rounded-lg shadow`
+chain. The look decides what "hairline" and "shadow" mean (`border-ui`,
+`shadow-N`).
+
+### `UiGlassPanel`
+
+A frosted container. `intensity: 'low' | 'high'`, `as`, `padding`. Renders the
+`.glass` utility; a look with `--blur-glass: 0px` gets an opaque surface-2
+panel from the same class. **Glass rule:** body text never sits directly on
+glass — put a `UiSurface` or `UiKpiCard` inside.
+
+### `UiChip`
+
+A compact pill: filter, tag, count, resource link. `tone`, `size`, `icon`,
+`href` (renders an `<a>` with a 44 px touch floor), `as`. Unlike `UiBadge` it
+may be interactive.
+
+### `UiTooltip`
+
+Hover/focus tooltip with an accessible fallback. `content` (required),
+`placement`. The scoped default slot hands the trigger `describedBy` for its
+`aria-describedby`. Not rendered on touch (`touch:hidden`); anything essential
+belongs in visible copy.
+
+### `UiKpiCard`
+
+A KPI tile: eyebrow `label`, large `value` in the look's display face
+(`font-display numeric`), optional `delta` coloured by `tone`, `icon`. Slots
+`label` / `value` / `delta` override the props; the default slot is the chart
+area (a `UiSparkline`), `footer` a caption. The value is never colour-coded.
+
+### `UiSparkline`
+
+Inline trend line. `points: number[]`, `tone`, `filled`. `aria-hidden` by
+contract — the number it illustrates sits beside it. Drawn to its own scale
+with an emphasised endpoint; colour is `currentColor`.
+
+### `UiProgressRing`
+
+Circular progress. `value: 0..1`, `label` (required — it is `role="img"`),
+`size`, `thickness`, `tone`. Prints the percentage in the centre unless the
+slot replaces it.
+
+### `UiTimelineRail`
+
+Pipeline steps as a rail of dots. `items: {id, label, state: done|active|todo}[]`,
+`orientation`, `compact` (labels `sr-only`). The active step carries
+`aria-current="step"`; meaning is carried by position, dot shape and state,
+never colour alone.
+
+### `UiDataTable`
+
+Presentational table. `columns: {key, label, align?, width?, sortable?, numeric?}[]`,
+`rows`, `rowKey`, `sort?`, `dense`, `caption`. Emits `update:sort` (the next
+`{key, dir}` — the **parent** sorts) and `rowClick`; rows become focusable only
+when a `rowClick` listener exists. Slots `cell-<key>` `{row, value}`,
+`header-<key>`, `empty`. Sticky header, `aria-sort`.
+
+### `UiDrawer`
+
+A side panel over the page. `open`, `side`, `labelledby?`, `size`; emits
+`close`. Teleports to `<body>`, closes on Escape and on the scrim, focuses the
+first control in its body on open and restores focus on close. Header slot
+becomes the dialog's `h2` unless `labelledby` names a heading. Body is the
+only scroller; footer has `pb-safe-b`.
+
+### `UiCommandItem`
+
+One `role="option"` row of the command palette. `id` (becomes `cmd-<id>`),
+`label`, `hint?`, `icon?`, `active` (→ `aria-selected`). Owns no behaviour;
+the palette's listeners arrive through attrs.
+
+### `UiSegmented`
+
+A segmented control with radio semantics. `options: {value, label, icon?}[]`,
+`modelValue`, `ariaLabel` (required), `size`, `block`; emits
+`update:modelValue`. Arrow keys move the choice, Home/End jump; the checked
+segment is the only tab stop. Used by Settings (Mode, Motion) and Analyze
+(strategy).
+
 ## Two things every primitive has to live with
 
 ### The 16 px floor on phones

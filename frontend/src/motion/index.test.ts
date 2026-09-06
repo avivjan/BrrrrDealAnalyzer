@@ -11,7 +11,7 @@ import type { App } from 'vue';
 import { registerMotion } from './index';
 import UiTransition from './UiTransition.vue';
 import UiTransitionGroup from './UiTransitionGroup.vue';
-import { vCountUp, vFlash, vHoverLift, vPress, vReveal } from './directives';
+import { vCountUp, vFlash, vHoverLift, vPress, vReveal, vDrawOn } from './directives';
 
 /**
  * Global registration.
@@ -36,7 +36,7 @@ describe('registerMotion', () => {
     expect(app.component).toHaveBeenCalledTimes(2);
   });
 
-  it('registers the five directives under their kebab-case names', () => {
+  it('registers the six directives under their kebab-case names', () => {
     const app = fakeApp();
     registerMotion(app);
     expect(app.directive).toHaveBeenCalledWith('reveal', vReveal);
@@ -44,7 +44,8 @@ describe('registerMotion', () => {
     expect(app.directive).toHaveBeenCalledWith('hover-lift', vHoverLift);
     expect(app.directive).toHaveBeenCalledWith('flash', vFlash);
     expect(app.directive).toHaveBeenCalledWith('count-up', vCountUp);
-    expect(app.directive).toHaveBeenCalledTimes(5);
+    expect(app.directive).toHaveBeenCalledWith('draw-on', vDrawOn);
+    expect(app.directive).toHaveBeenCalledTimes(6);
   });
 });
 

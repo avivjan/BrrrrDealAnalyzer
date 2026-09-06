@@ -177,10 +177,10 @@ describe("DealCard", () => {
 
   describe("what the card shows", () => {
     it("labels a BRRRR and a FLIP deal differently", () => {
-      expect(mountCard().text()).toContain("🏠 BRRRR");
+      expect(mountCard().text()).toContain("BRRRR");
       expect(
         mountCard({ ...brrrDeal(), deal_type: "FLIP" } as ActiveDealRes).text(),
-      ).toContain("💰 FLIP");
+      ).toContain("FLIP");
     });
 
     it("falls back to 'No Address' for an unaddressed deal", () => {

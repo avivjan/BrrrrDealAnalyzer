@@ -2,17 +2,17 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   BASELINE_TAG,
-  E2E_FROZEN_PATHS,
   G1_PATHSPEC,
   G2_FROZEN_PATHS,
   GOLDEN_POLICY_PATHS,
   PHASE_PLAYWRIGHT_PROJECTS,
-  e2eFreezeChecks,
   findGoldenPolicyViolations,
   findGoldenScopeViolations,
   gateLine,
   goldenPolicyGate,
   isGoldenPath,
+  parseArgs,
+  printAdvisoryGate,
 } from './verify-ui.mjs';
 
 describe('verify:ui pathspecs', () => {
@@ -29,12 +29,18 @@ describe('verify:ui pathspecs', () => {
     ]);
   });
 
-  it('puts every golden path — manifests, e2e goldens, allowlist, archives — under the policy', () => {
+  it('puts every golden path — manifests, e2e goldens, allowlist, archives, flows, fixtures — under the policy', () => {
+    // v2: the e2e flows and fixtures are no longer frozen by G2. They are
+    // goldens instead, so a spec edit is possible but only inside a reviewed
+    // `Golden update:` commit. `e2e/checks` stays outside on purpose: new
+    // check specs are ordinary commits.
     expect(GOLDEN_POLICY_PATHS).toEqual([
       'frontend/scripts/audit/golden',
       'frontend/e2e/golden',
       'frontend/scripts/audit/allowlist.json',
       'frontend/e2e/reports',
+      'frontend/e2e/flows',
+      'frontend/e2e/fixtures',
     ]);
   });
 
@@ -50,15 +56,44 @@ describe('verify:ui pathspecs', () => {
   });
 });
 
-describe('G2 e2e freeze (ui-p0)', () => {
-  it('adds no e2e check while the ui-p0 tag does not exist', () => {
-    expect(e2eFreezeChecks({ tagExists: () => false })).toEqual([]);
+describe('v2 gate policy', () => {
+  it('treats the e2e flows and fixtures as goldens, and the checks dir as ordinary code', () => {
+    expect(isGoldenPath('frontend/e2e/flows/landing.spec.ts')).toBe(true);
+    expect(isGoldenPath('frontend/e2e/fixtures/axe.ts')).toBe(true);
+    expect(isGoldenPath('frontend/e2e/checks/theme.spec.ts')).toBe(false);
+    expect(isGoldenPath('frontend/e2e/scripts/normalize-report.mjs')).toBe(false);
   });
 
-  it('freezes the e2e flows and fixtures once ui-p0 exists', () => {
-    expect(e2eFreezeChecks({ tagExists: (tag) => tag === 'ui-p0' })).toEqual([
-      { ref: 'ui-p0', paths: E2E_FROZEN_PATHS },
+  it('parses --fast and --phase, with --fast winning when both are given', () => {
+    expect(parseArgs([])).toEqual({ phase: false, fast: false });
+    expect(parseArgs(['--phase'])).toEqual({ phase: true, fast: false });
+    expect(parseArgs(['--fast'])).toEqual({ phase: false, fast: true });
+    // A fast run is by definition not a phase run: it skips the browser suite
+    // and the backend proofs, so asking for both is answered with the cheaper one.
+    expect(parseArgs(['--phase', '--fast'])).toEqual({ phase: false, fast: true });
+  });
+
+  it('prints an advisory gate that can never fail the run', () => {
+    const lines = [];
+    const failures = [];
+    printAdvisoryGate(
+      'G3',
+      { ok: false, lines: [{ level: 'FAIL', text: 'src/views/MyDeals.vue: 12 removed lines' }, { level: 'INFO', text: 'new file' }] },
+      failures,
+      (line) => lines.push(line),
+    );
+    expect(failures).toEqual([]);
+    expect(lines).toEqual([
+      '  FAIL src/views/MyDeals.vue: 12 removed lines',
+      '  INFO new file',
+      'ADVISORY G3 1 finding(s), advisory only',
     ]);
+  });
+
+  it('reports no drift as an advisory too, so the log shape is stable', () => {
+    const lines = [];
+    printAdvisoryGate('G4b', { ok: true, lines: [] }, [], (line) => lines.push(line));
+    expect(lines).toEqual(['ADVISORY G4b no drift']);
   });
 });
 
