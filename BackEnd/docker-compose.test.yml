@@ -1,0 +1,27 @@
+# Throwaway PostgreSQL for the backend test suite (BackEnd/tests).
+#
+#   docker compose -f BackEnd/docker-compose.test.yml up -d --wait
+#   cd BackEnd && pytest
+#   docker compose -f BackEnd/docker-compose.test.yml down
+#
+# Bound to 127.0.0.1 only, on a non-default port so it can never be confused
+# with a real server, and stored on tmpfs so nothing survives `down`.
+# `tests/conftest.py` connects to it via TEST_DATABASE_URL (default below) and
+# refuses anything that is not a loopback host with a `_test` database name.
+services:
+  postgres-test:
+    image: postgres:16
+    container_name: brrrr-postgres-test
+    environment:
+      POSTGRES_USER: brrrr_test
+      POSTGRES_PASSWORD: brrrr_test
+      POSTGRES_DB: brrrr_test
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brrrr_test -d brrrr_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
