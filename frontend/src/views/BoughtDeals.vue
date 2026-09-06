@@ -82,6 +82,39 @@ const getStageAccentColor = (stageId: string) => {
   return "border-l-positive";
 };
 
+/**
+ * UI v3 (4.0): a stage move keeps every tick. Every stage's checklist is on
+ * the card now, so a task ticked ahead of time must survive the move that
+ * reaches it — and a move back must not erase the stage just left. The store's
+ * `updateBoughtDealStage` / `advanceStage` reset `completedSubstages` (and are
+ * frozen), so moves go through the generic `updateBoughtDeal`: the same
+ * `PUT /bought-deals/{id}` autosave sends, with the map untouched. Optimistic,
+ * reverted on error, like the store action it replaces.
+ */
+const moveDealToStage = async (deal: BoughtDealRes, targetStageId: string) => {
+  const oldStage = deal.boughtStage;
+  deal.boughtStage = targetStageId;
+  try {
+    await store.updateBoughtDeal(deal);
+  } catch (err) {
+    deal.boughtStage = oldStage;
+    console.error("Failed to move bought deal stage:", err);
+  }
+};
+
+/** The card's "Advance →": one stage forward, only when its checklist is done. */
+const advanceDeal = async (deal: BoughtDealRes) => {
+  const dealType = (deal.deal_type || "BRRRR") as "FLIP" | "BRRRR";
+  const pipeline = pipelineStore.pipelineFor(dealType);
+  if (!canAdvance(pipeline, deal.boughtStage, deal.completedSubstages)) return;
+  if (isTerminalStage(pipeline, deal.boughtStage)) return;
+  const idx = pipeline.stages.findIndex((s) => s.id === deal.boughtStage);
+  const next = pipeline.stages[idx + 1];
+  if (!next) return;
+  await moveDealToStage(deal, next.id);
+  refreshColumns();
+};
+
 // Drag-and-drop
 const onDrop = async (event: any, targetStageId: string) => {
   if (!event.added) return;
@@ -117,7 +150,7 @@ const onDrop = async (event: any, targetStageId: string) => {
     }
   }
 
-  await store.updateBoughtDealStage(deal.id, targetStageId);
+  await moveDealToStage(deal, targetStageId);
   refreshColumns();
 };
 
@@ -154,7 +187,7 @@ const onAdd = async (event: any, targetStageId: string) => {
         return;
       }
 
-      await store.updateBoughtDealStage(deal.id, targetStageId);
+      await moveDealToStage(deal, targetStageId);
       refreshColumns();
     }
   }
@@ -351,8 +384,8 @@ const advanceEditingDeal = async () => {
   if (currentIdx < pipeline.stages.length - 1) {
     const nextStage = pipeline.stages[currentIdx + 1];
     if (nextStage) {
+      // Ticks are kept (UI v3 4.0): the next stage's boxes may already be ticked.
       editingDeal.value.boughtStage = nextStage.id;
-      editingDeal.value.completedSubstages = {};
       isDirty = true;
       debouncedAutoSave();
     }
