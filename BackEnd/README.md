@@ -2,7 +2,7 @@
 
 A FastAPI backend for underwriting and tracking BRRRR / Flip real-estate deals,
 plus a liquidity timeline and a REPS (Real Estate Professional Status) time
-tracker. Persistence is PostgreSQL in production (Render) and SQLite in tests.
+tracker. Persistence is PostgreSQL in production (Render) and a throwaway PostgreSQL container in tests.
 
 ### Install dependencies
 
@@ -82,13 +82,19 @@ the frontend renders travels with the code that computes the value.
 ### Tests
 
 ```bash
-cd BackEnd
+docker compose -f docker-compose.test.yml up -d --wait   # throwaway Postgres on 127.0.0.1:55432
 python3 -m pytest
+docker compose -f docker-compose.test.yml down           # when done; the data lives on tmpfs
 ```
 
-`tests/conftest.py` redirects `DATABASE_URL` to a throwaway SQLite file (and
-stubs `dotenv`) before importing the app, so the suite can never touch a real
-database -- see the module docstring there for the full isolation design.
+`tests/conftest.py` never reads `DATABASE_URL`: it overwrites it with
+`TEST_DATABASE_URL` (default: the compose container above) and stubs `dotenv`
+before importing the app, then verifies -- at import, at session start and
+before every test -- that the engine is PostgreSQL on a loopback host with a
+`_test` database, aborting otherwise. Only then is the schema dropped and
+recreated for the session. See the module docstring there for the full
+isolation design. In CI the same suite runs against the backend job's
+`postgres:16` service container.
 Neither this suite nor the frontend's runs during a Netlify build (`npm run
 build` only compiles). To gate a Render deploy on it, set the service's
 **Pre-Deploy Command** to `cd BackEnd && pytest`.
