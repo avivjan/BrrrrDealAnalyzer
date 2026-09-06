@@ -6,8 +6,9 @@ import { API_ORIGIN, APP_ORIGIN, APP_PORT } from './e2e/fixtures/env';
  *
  * This suite freezes today's user-visible behaviour and the exact HTTP
  * contract *before* any visual change, and is re-run unchanged at every later
- * phase of the UI overhaul. It runs against the real FastAPI backend on a
- * throwaway SQLite database (see `e2e/backend/serve_throwaway.py`).
+ * phase of the UI overhaul. It runs against the real FastAPI backend on the
+ * throwaway test PostgreSQL (see `e2e/backend/serve_throwaway.py` and
+ * `BackEnd/docker-compose.test.yml`).
  *
  * Motion is reduced on the four functional projects on purpose: a
  * characterization suite must assert what the app *does*, not race what it
