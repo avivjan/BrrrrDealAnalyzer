@@ -585,6 +585,7 @@ function showToast(msg: string) {
                 :global-min="store.series.globalMin"
                 :global-min-dates="store.series.globalMinDates"
                 :first-negative-date="store.series.firstNegativeDate"
+                :reserve-k="store.settings.reserve_k"
                 @select-day="onSelectDay"
               />
             </div>
