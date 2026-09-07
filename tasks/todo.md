@@ -214,8 +214,8 @@ wall-clock minutes.
 - [x] **M6** (20 min) — Local Postgres 16 → full `pytest` + `verify_regression.py verify`.
 - [x] **M7** (25 min) — Use the site through the server: uvicorn + MCP client script (analyze, save, list, duplicate, PDF, move to bought, clean up).
 - [x] **M8** (15 min) — README section; review below.
-- [ ] **M9** (10 min) — Commit, push `claude/mcp-server-website-features-j4ix18`, open the PR (owner merges).
-- [ ] **M9b** (5 min) — Generate the secret, set `MCP_PATH_SECRET` on the Render service.
+- [x] **M9** (10 min) — Commit, push `claude/mcp-server-website-features-j4ix18`, open the PR (owner merges).
+- [x] **M9b** (5 min) — Generate the secret, set `MCP_PATH_SECRET` on the Render service.
 - [ ] **M10** (10 min, after merge) — Watch the Render deploy; hand over the connector URL.
 
 ## MCP review
