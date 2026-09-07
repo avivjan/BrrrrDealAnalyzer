@@ -197,6 +197,14 @@ class McpProbe(unittest.TestCase):
         ok, reason = mcp_probe.verdict([])
         self.assertFalse(ok); self.assertIn("without calling any tool", reason)
 
+    def test_amount_matching(self):
+        import mcp_probe
+        self.assertTrue(mcp_probe.mentions_amount("you left about $26,587 in it", 26587))
+        self.assertTrue(mcp_probe.mentions_amount("roughly 26.6K of your money stays in", 26587))
+        self.assertTrue(mcp_probe.mentions_amount("27k left in the deal", 26587))
+        self.assertFalse(mcp_probe.mentions_amount("you pulled $26,587 out and left $0 in", 5520))
+        self.assertIn("$26,587", mcp_probe.number_forms(26587))
+
     def test_skips_without_secrets(self):
         import mcp_probe
         saved = {k: os.environ.pop(k, None) for k in ("MCP_PROBE_URL", "ANTHROPIC_API_KEY")}

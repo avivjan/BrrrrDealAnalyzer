@@ -55,8 +55,17 @@ def summarize(deal, board: str) -> DealSummary:
         total_cash_needed=_num(getattr(deal, "total_cash_needed_for_deal", None)
                                if is_brrr else getattr(deal, "total_cash_needed", None)),
         cash_out=_num(getattr(deal, "cash_out", None)),
+        cash_left_in_deal=_left_in(_num(getattr(deal, "cash_out", None))),
+        cash_wire_at_refi=_num(getattr(deal, "cash_out_routi", None)),
         created_at=deal.created_at, updated_at=deal.updated_at,
     )
+
+
+def _left_in(cash_out):
+    """Money still in the deal: the negative part of cash_out, never negative."""
+    if cash_out is None:
+        return None
+    return round(-cash_out, 2) if cash_out < 0 else 0.0
 
 
 def _words(q: Optional[str]) -> list[str]:
