@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="BigWhales — BRRRR Deal Analyzer">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b0f17"/>
+      <stop offset="55%" stop-color="#121826"/>
+      <stop offset="100%" stop-color="#1a1f2e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f3d9a4"/>
+      <stop offset="50%" stop-color="#d4b483"/>
+      <stop offset="100%" stop-color="#b8935a"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d4b483" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#d4b483" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#d4b483" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4b483" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d4b483" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.2" r="0.6">
+      <stop offset="0%" stop-color="#d4b483" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#d4b483" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+    <clipPath id="round"><rect width="1200" height="300" rx="20"/></clipPath>
+    <linearGradient id="fadeIn" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000"/>
+      <stop offset="25%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="curveMask"><rect x="560" y="0" width="640" height="300" fill="url(#fadeIn)"/></mask>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="1200" height="300" fill="url(#bg)"/>
+    <rect width="1200" height="300" fill="url(#grid)"/>
+    <rect width="1200" height="300" fill="url(#glow)"/>
+
+    <!-- cash-flow curve: the liquidity line, drawn as the backdrop -->
+    <g mask="url(#curveMask)">
+      <path d="M560 222 C 660 210, 740 240, 800 200 S 900 130, 960 150 S 1060 95, 1130 70 L1130 300 L560 300 Z" fill="url(#area)"/>
+      <path d="M560 222 C 660 210, 740 240, 800 200 S 900 130, 960 150 S 1060 95, 1130 70" fill="none" stroke="url(#gold)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <circle cx="960" cy="150" r="5" fill="#0b0f17" stroke="#f3d9a4" stroke-width="2.5"/>
+    <circle cx="1130" cy="70" r="5" fill="#0b0f17" stroke="#f3d9a4" stroke-width="2.5"/>
+
+    <!-- KPI tiles -->
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" letter-spacing="1.5">
+      <g transform="translate(640 40)">
+        <rect width="150" height="64" rx="10" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08"/>
+        <text x="14" y="22" fill="#9aa3b2">CASH ON CASH</text>
+        <text x="14" y="50" fill="#f3d9a4" font-size="22" letter-spacing="0">18.4%</text>
+      </g>
+      <g transform="translate(804 40)">
+        <rect width="150" height="64" rx="10" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08"/>
+        <text x="14" y="22" fill="#9aa3b2">DSCR</text>
+        <text x="14" y="50" fill="#f3d9a4" font-size="22" letter-spacing="0">1.32×</text>
+      </g>
+      <g transform="translate(968 40)">
+        <rect width="150" height="64" rx="10" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08"/>
+        <text x="14" y="22" fill="#9aa3b2">CASH LEFT IN</text>
+        <text x="14" y="50" fill="#f3d9a4" font-size="22" letter-spacing="0">$0</text>
+      </g>
+    </g>
+
+    <!-- brand mark -->
+    <g transform="translate(64 78)">
+      <rect width="52" height="52" rx="14" fill="url(#gold)"/>
+      <path d="M30 8 L14 30 H26 L22 44 L38 22 H26 Z" fill="#0b0f17"/>
+    </g>
+
+    <text x="136" y="118" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#f5f1e8" letter-spacing="-1">BigWhales</text>
+    <text x="136" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" fill="#d4b483" letter-spacing="4">BRRRR · FLIP · LIQUIDITY · REPS</text>
+    <text x="64" y="215" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="18" fill="#c7cdd8">Underwrite a rental or a flip in seconds, track it from offer to</text>
+    <text x="64" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="18" fill="#c7cdd8">refinance, and see every dollar of cash flow before it happens.</text>
+
+    <rect x="0" y="296" width="1200" height="4" fill="url(#line)"/>
+  </g>
+</svg>
