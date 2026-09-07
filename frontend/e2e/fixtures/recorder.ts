@@ -250,6 +250,9 @@ export class NetworkRecorder {
     }
     if (url.origin !== this.apiOrigin) return;
     if (payload.headers?.['x-e2e-seed'] === '1') return;
+    // Session plumbing (SECURITY_PLAN.md §3.2) is not part of any feature
+    // contract: the goldens describe what a feature asks the API for.
+    if (url.pathname.startsWith('/auth/')) return;
 
     const record: RecordedRequest = {
       method: payload.method,

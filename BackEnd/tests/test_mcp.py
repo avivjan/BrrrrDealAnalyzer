@@ -28,9 +28,12 @@ from tests.mcp_helpers import call as _call, call_json as _call_json  # noqa: E4
 class TestToolList:
     def test_every_endpoint_is_a_tool_with_a_description(self):
         app.openapi_schema = None
-        operations = sum(len(ops) for ops in app.openapi()["paths"].values())
+        operations = sum(
+            len(ops) for path, ops in app.openapi()["paths"].items() if not path.startswith(mcp_server.EXCLUDED_PREFIXES)
+        )
         tools = mcp_server.tools()
         assert len(tools) == operations
+        assert not any(spec["path"].startswith(mcp_server.EXCLUDED_PREFIXES) for spec in tools.values())
         undocumented = [n for n in tools if n not in mcp_server.DESCRIPTIONS]
         assert undocumented == [], f"add these to mcp_server.DESCRIPTIONS: {undocumented}"
         stale = [n for n in mcp_server.DESCRIPTIONS if n not in tools]

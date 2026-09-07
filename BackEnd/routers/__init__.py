@@ -12,6 +12,7 @@ from routers.liquidity import router as liquidity
 from routers.pipeline_template import router as pipeline_template
 from routers.health import router as health
 from routers.reps import router as reps
+from routers.auth import router as auth
 
 # Matches the top-to-bottom endpoint definition order in the pre-refactor
 # main.py.
@@ -25,4 +26,5 @@ ALL_ROUTERS = [
     pipeline_template,
     health,
     reps,
+    auth,
 ]

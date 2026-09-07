@@ -21,6 +21,16 @@ from DAL.data_models.liquidity.models import (
 )
 from DAL.data_models.pipelineTemplate.models import PipelineTemplate
 from DAL.data_models.audit.models import AuditLog
+from DAL.data_models.auth.models import (
+    User,
+    WebAuthnCredential,
+    Device,
+    Session,
+    EnrollmentToken,
+    AuthChallenge,
+    OAuthClient,
+    OAuthAuthorization,
+)
 from DAL.data_models.reps.models import (
     RepsPerson,
     RepsProperty,
@@ -42,6 +52,14 @@ __all__ = [
     "LiquiditySettings",
     "PipelineTemplate",
     "AuditLog",
+    "User",
+    "WebAuthnCredential",
+    "Device",
+    "Session",
+    "EnrollmentToken",
+    "AuthChallenge",
+    "OAuthClient",
+    "OAuthAuthorization",
     "RepsPerson",
     "RepsProperty",
     "RepsActivityCategory",

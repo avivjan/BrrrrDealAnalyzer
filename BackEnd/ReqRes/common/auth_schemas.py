@@ -46,3 +46,24 @@ class SessionStatusRes(BaseModel):
 class EnrollmentTokenRes(BaseModel):
     token: str
     expires_in_minutes: int
+
+
+class AuthConfigRes(BaseModel):
+    auth_mode: str
+    device_policy: str
+    rp_id: str
+
+
+class OAuthTxnRes(BaseModel):
+    txn: str
+    client_name: str
+    redirect_uri: Optional[str] = None
+    scopes: list[str]
+
+
+class OAuthApproveReq(BaseModel):
+    txn: UUID
+
+
+class OAuthApproveRes(BaseModel):
+    redirect_uri: str

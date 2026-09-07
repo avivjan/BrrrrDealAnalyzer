@@ -19,8 +19,9 @@ from fastapi.responses import JSONResponse
 
 from db import engine, SessionLocal
 import bootstrap
-from routers import ALL_ROUTERS, health as health_router
+from routers import ALL_ROUTERS, auth as auth_router, health as health_router
 from BL.auth.common.app_key import require_app_key
+from BL.auth.common.session_dependency import require_session
 from BL.common.body_limit import BodyLimitMiddleware
 from BL.common.logging_redact import install_access_log_redaction, install_secret_redaction
 import mcp_server
@@ -74,15 +75,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Phase 0 stopgap gate (SECURITY_PLAN.md §4, step 0.2): every data route requires
-# the shared key when APP_KEY_MODE is on. `/helloworld` stays public -- it is the
-# connection ping and Render's health check. The dependency declares no
-# parameter, so the OpenAPI contract is unchanged.
-for r in ALL_ROUTERS:
-    if r is health_router:
-        app.include_router(r)
-    else:
-        app.include_router(r, dependencies=[Depends(require_app_key)])
+# The gates (SECURITY_PLAN.md §3.2): every data route requires the Phase 0
+# shared key when APP_KEY_MODE is on, and a passkey session when AUTH_MODE is
+# on. `/helloworld` (the connection ping and Render's health check) and
+# `/auth/*` stay public. Neither dependency declares a parameter, so the
+# OpenAPI contract of the existing operations is unchanged.
+PUBLIC_ROUTERS = (health_router, auth_router)
+
+
+def install_routers(target: FastAPI) -> None:
+    for r in ALL_ROUTERS:
+        if r in PUBLIC_ROUTERS:
+            target.include_router(r)
+        else:
+            target.include_router(r, dependencies=[Depends(require_app_key), Depends(require_session())])
+
+
+install_routers(app)
 
 install_access_log_redaction()
 install_secret_redaction()

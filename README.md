@@ -423,6 +423,15 @@ the full authentication roadmap is in `SECURITY_PLAN.md`.
 - **Claude Code**: `claude mcp add --transport http brrrr https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`
 - **Locally**: start the backend and point a client at `http://127.0.0.1:8000/mcp`.
 
+**OAuth mode** (`MCP_AUTH_MODE=oauth`, `SECURITY_PLAN.md` §3.6) replaces the path secret with
+OAuth 2.1 + PKCE, served by the MCP SDK on the same host (`/.well-known/oauth-authorization-server`,
+`/authorize`, `/token`, `/register`, `/revoke`). Add the connector with the plain
+`https://brrrrdealanalyzer.onrender.com/mcp` URL and choose OAuth: the browser lands on the
+site's `/connect` page, a signed-in owner approves, and the connector becomes a device of its
+own (`manage.py list-devices` shows it as `mcp`; `revoke-device` ends all its tokens). Every
+tool call then runs as that owner, through the same session gate as the browser. Set
+`MCP_ISSUER_URL` if the API is served from another host.
+
 ## 🧮 The calculation engine
 
 `BackEnd/BL/analyze/` is the core of the product. `analyzeBRRR.py` and `analyzeFlip.py`
@@ -560,6 +569,26 @@ A Playwright spec that skips on some projects must add or bump its reason in
 Neither test suite runs inside a Netlify build. A new frontend origin must be added to the
 CORS allow-list in `BackEnd/main.py`.
 
+### Passkeys (Face ID / Touch ID sign-in)
+
+`SECURITY_PLAN.md` §3.2. Off by default (`AUTH_MODE=off`): nothing changes until it is turned on.
+
+1. Enrol the two owners from the Render shell (or locally):
+   `python manage.py enroll aviv --reps-user Aviv2026 --display-name "Aviv"` prints a one-time
+   link (15 minutes). Open it on the device to enrol; the browser creates a passkey (synced by
+   iCloud Keychain across that person's Apple devices) and signs in.
+2. Set `AUTH_MODE=shadow` for a day or two and watch the logs for "auth shadow: would reject".
+3. Set `AUTH_MODE=enforce`. Every data route now needs the session cookies; the SPA shows
+   `/login` (passkey) when it has none, refreshes an expired session silently, and the claude.ai
+   connector keeps working through its own trusted device (`mcp-connector`).
+4. Same-origin cookies: set `VITE_API_URL=/api` in Netlify so the browser calls
+   `bigwhales.netlify.app/api/...` (rewritten to Render by `frontend/public/_redirects`);
+   Safari drops cross-site cookies otherwise. In development `vite` proxies `/api` the same way.
+
+Other commands: `manage.py list-devices`, `approve-device <id>`, `revoke-device <id>`,
+`revoke-sessions [--user <name>]`. A signed-in owner can also issue an enrollment link for their
+other devices from the app (`POST /auth/enrollment-tokens`, after a fresh passkey prompt).
+
 ### Environment variables
 
 | Variable | Used by | Notes |
@@ -578,6 +607,10 @@ CORS allow-list in `BackEnd/main.py`.
 | `APP_KEY_MODE`, `APP_KEY` | `BackEnd/BL/auth/common/app_key.py` | Phase 0 shared-key gate on every route except `/helloworld`: `off` (default), `shadow` (log only), `enforce` (401 without the `X-App-Key` header). The browser asks for the key once and keeps it in `localStorage`. Replaced by passkeys in Phase 2 of `SECURITY_PLAN.md` |
 | `REPS_OBJECT_ACL_PUBLIC` | REPS | Default `true`: with `REPS_LINK_STYLE=public`, also flip each object's legacy ACL. Set `false` once the bucket grants `allUsers` read at the bucket level |
 | `MCP_SCOPES` | `BackEnd/mcp_server.py` | Comma-separated tool names the connector may see and call; `*` (default) = all 45 |
+| `AUTH_MODE` | `BackEnd/BL/auth/common/session_dependency.py` | Passkey sessions on every route except `/helloworld` and `/auth/*`: `off` (default), `shadow` (log only), `enforce` (401 without a session). See *Passkeys* below |
+| `AUTH_RP_ID`, `AUTH_ORIGINS`, `AUTH_COOKIE_SECURE`, `AUTH_ACCESS_MINUTES`, `AUTH_REFRESH_DAYS`, `AUTH_ENROLL_MINUTES`, `AUTH_REAUTH_SECONDS` | `BackEnd/BL/auth/common/settings.py` | WebAuthn relying-party id and origins (defaults: `bigwhales.netlify.app` in production, `localhost` in development), cookie flags and lifetimes |
+| `MCP_AUTH_MODE`, `MCP_ISSUER_URL`, `AUTH_MCP_ACCESS_MINUTES` | `BackEnd/BL/auth/oauth.py` | `path` (default: the secret URL above) or `oauth` (OAuth 2.1 + PKCE; the connector is approved on `/connect` and holds a revocable device session). Issuer defaults to the Render host; access tokens last 60 minutes and refresh silently |
+| `DEVICE_POLICY` | `BackEnd/BL/auth/device.py` | `off` (default: every browser is trusted on first sign-in), `log`, `enforce` (a new browser waits for approval from a trusted one) |
 | `SEND_OFFER_PER_HOUR` | `/send-offer` | Offers per hour per caller before a 429 (default 30) |
 | `MERCURY_CACHE_SECONDS` | `/liquidity/mercury-balance` | How long a fetched balance summary is reused (default 60; 0 disables) |
 | `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |

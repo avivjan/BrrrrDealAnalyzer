@@ -33,7 +33,7 @@ def concrete(path: str) -> str:
 
 
 OPERATIONS = operations()
-PROTECTED = [op for op in OPERATIONS if op[1] != "/helloworld"]
+PROTECTED = [op for op in OPERATIONS if op[1] != "/helloworld" and not op[1].startswith("/auth")]
 
 
 @pytest.fixture

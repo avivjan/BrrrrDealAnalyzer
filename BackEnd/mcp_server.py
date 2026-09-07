@@ -164,6 +164,10 @@ DESCRIPTIONS: dict[str, str] = {
 
 BODY_ARG = "body"
 
+# Authentication plumbing never becomes a tool: an LLM must not enroll a
+# passkey, approve a device or mint a session.
+EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials")
+
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
@@ -287,7 +291,7 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
     tools: dict[str, dict[str, Any]] = {}
 
     for route in _api_routes(app.routes):
-        if not route.include_in_schema:
+        if not route.include_in_schema or route.path.startswith(EXCLUDED_PREFIXES):
             continue
         for method in route.methods:
             op = spec["paths"][route.path][method.lower()]
@@ -405,17 +409,23 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
     # The MCP endpoint is itself protected (path secret today, OAuth in Phase 2),
     # so the in-process request presents the shared app key on the caller's
     # behalf; the routers' `require_app_key` dependency then applies as usual.
-    headers = {}
+    headers = {"X-Requested-With": "mcp"}
     app_key = os.getenv("APP_KEY", "").strip()
     if app_key:
         headers["X-App-Key"] = app_key
+    # When passkey sessions are on, the connector acts as its own device: the
+    # same `require_session` gate applies to tools. Under MCP_AUTH_MODE=oauth
+    # the bearer token IS that device's session (BL.auth.oauth); under the
+    # path secret it is the shared connector session (BL.auth.service).
+    cookies, user_id = _caller_cookies()
+
     transport = httpx.ASGITransport(app=_app, raise_app_exceptions=False)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://mcp.internal", headers=headers
+        transport=transport, base_url="http://mcp.internal", headers=headers, cookies=cookies
     ) as client:
         response = await client.request(spec["method"], path, params=params, **request_kwargs)
 
-    _audit_tool_call(name, response.status_code)
+    _audit_tool_call(name, response.status_code, user_id=user_id)
     if response.status_code >= 400:
         raise RuntimeError(f"HTTP {response.status_code} from {spec['method']} {path}: {response.text}")
 
@@ -441,11 +451,25 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
     return [t.TextContent(type="text", text=response.text)]
 
 
-def _audit_tool_call(name: str, status: int) -> None:
+def _caller_cookies() -> tuple[dict[str, str], Any]:
+    """The session cookie the in-process request carries, and whose it is."""
+    from mcp.server.auth.middleware.auth_context import get_access_token
+
+    from BL.auth import session as sessions
+    from BL.auth.common import settings
+    from BL.auth.service import service_cookies
+
+    token = get_access_token()
+    if token is None:
+        return service_cookies(), None
+    return {settings.cookie_name(sessions.ACCESS_COOKIE): token.token}, token.subject
+
+
+def _audit_tool_call(name: str, status: int, *, user_id: Any = None) -> None:
     try:
         from BL.auth.common.audit import record
 
-        record("mcp_tool_call", None, detail={"tool": name, "status": status})
+        record("mcp_tool_call", None, detail={"tool": name, "status": status}, user_id=user_id)
     except Exception:  # noqa: BLE001 -- auditing never breaks a tool call
         logger.exception("mcp: audit failed for %s", name)
 
@@ -520,12 +544,49 @@ async def lifespan(app: FastAPI):
     _session_manager = None
 
 
+def _oauth_protected(app: FastAPI, path: str):
+    """MCP_AUTH_MODE=oauth (SECURITY_PLAN.md §3.6): the SDK's OAuth 2.1 +
+    PKCE authorization-server routes go on `app`, and the MCP endpoint only
+    answers a bearer token minted for an approved connector device."""
+    from mcp.server.auth.middleware.auth_context import AuthContextMiddleware
+    from mcp.server.auth.middleware.bearer_auth import BearerAuthBackend, RequireAuthMiddleware
+    from mcp.server.auth.routes import build_resource_metadata_url, create_auth_routes, create_protected_resource_routes
+    from mcp.server.auth.settings import ClientRegistrationOptions, RevocationOptions
+    from pydantic import AnyHttpUrl
+    from starlette.middleware.authentication import AuthenticationMiddleware
+
+    from BL.auth import oauth
+
+    provider = oauth.BigWhalesOAuthProvider()
+    issuer = AnyHttpUrl(oauth.issuer_url())
+    resource = AnyHttpUrl(f"{oauth.issuer_url()}{path}")
+    app.router.routes.extend(
+        create_auth_routes(
+            provider,
+            issuer_url=issuer,
+            client_registration_options=ClientRegistrationOptions(enabled=True, valid_scopes=[oauth.SCOPE], default_scopes=[oauth.SCOPE]),
+            revocation_options=RevocationOptions(enabled=True),
+        )
+        + create_protected_resource_routes(
+            resource_url=resource, authorization_servers=[issuer], scopes_supported=[oauth.SCOPE], resource_name="Big Whales"
+        )
+    )
+    protected = RequireAuthMiddleware(_Endpoint(), required_scopes=[oauth.SCOPE], resource_metadata_url=build_resource_metadata_url(resource))
+    return AuthenticationMiddleware(AuthContextMiddleware(protected), backend=BearerAuthBackend(provider))
+
+
 def mount(app: FastAPI) -> str:
     """Register the MCP endpoint on `app`; returns the path it is served at."""
     global _app, _tools
     _app = app
     _tools = None
     path = mcp_path()
-    check_secret_policy(path)
-    app.add_route(path, _Endpoint(), methods=["GET", "POST", "DELETE"], include_in_schema=False)
+    from BL.auth.oauth import mcp_auth_mode
+
+    if mcp_auth_mode() == "oauth":
+        endpoint = _oauth_protected(app, path)
+    else:
+        check_secret_policy(path)
+        endpoint = _Endpoint()
+    app.add_route(path, endpoint, methods=["GET", "POST", "DELETE"], include_in_schema=False)
     return path

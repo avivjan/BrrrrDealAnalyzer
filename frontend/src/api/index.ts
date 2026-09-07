@@ -26,10 +26,43 @@ import type {
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
+  // Sessions are HttpOnly cookies (SECURITY_PLAN.md §3.2); the custom header
+  // is one of the CSRF layers the API requires on unsafe methods.
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
+
+// A 401 from a data route means the access cookie expired: refresh once and
+// retry; if the refresh fails too, the auth store sends the user to /login.
+// The auth routes themselves are excluded so a failed login never loops.
+let refreshing: Promise<boolean> | null = null;
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error?.config;
+    const url: string = config?.url || '';
+    if (error?.response?.status === 401 && config && !config.__retried && !url.startsWith('/auth/')) {
+      const { useAuthStore } = await import('../stores/authStore');
+      const auth = useAuthStore();
+      if (auth.enforced) {
+        refreshing = refreshing || auth.tryRefresh().finally(() => { refreshing = null; });
+        const ok = await refreshing;
+        if (ok) {
+          config.__retried = true;
+          return apiClient.request(config);
+        }
+        const { default: router } = await import('../router');
+        if (router.currentRoute.value.name !== 'login') {
+          router.push({ name: 'login', query: { next: router.currentRoute.value.fullPath } });
+        }
+      }
+    }
+    return Promise.reject(error);
+  },
+);
 
 // Phase 0 stopgap (SECURITY_PLAN.md §4, step 0.2): the backend may require a
 // shared key on every data route. The key is typed once by the user, kept in

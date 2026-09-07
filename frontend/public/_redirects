@@ -1,3 +1,10 @@
-# Netlify: the SPA fallback (vue-router history mode). Previously configured
-# only in the Netlify UI; kept in the repo so it is reviewable and restorable.
-/*    /index.html   200
+# Netlify rewrites (SECURITY_PLAN.md §3.1).
+#
+# 1. Same-origin API: with VITE_API_URL=/api the browser talks to
+#    bigwhales.netlify.app/api/... and Netlify proxies to the Render service, so
+#    the session cookies are first-party (Safari drops cross-site cookies).
+#    Adjust the host if the Render service is renamed.
+/api/*  https://brrrrdealanalyzer.onrender.com/:splat  200
+# 2. The SPA fallback (vue-router history mode). Previously configured only in
+#    the Netlify UI; kept in the repo so it is reviewable and restorable.
+/*      /index.html   200
