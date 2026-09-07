@@ -15,6 +15,22 @@ def fmt_minutes(ms: float) -> str:
     return f"{ms / 1000 / 60:.1f} min"
 
 
+SUITE_NAMES = {"playwright": "Playwright", "backend": "Backend (pytest)", "frontend": "Frontend (vitest)"}
+
+
+def _suite_parts_line(parts: dict) -> str:
+    """'Playwright 420 · Backend (pytest) 118 · Frontend (vitest) 1368', a missing suite says so."""
+    bits = []
+    for key, name in SUITE_NAMES.items():
+        part = parts.get(key) or {}
+        if part.get("available"):
+            bits.append(f'{e(name)} <b style="color:{T.INK};">{part["total"]}</b>'
+                        + (f' <span style="color:{T.NEGATIVE};">({part["failed"]} failed)</span>' if part["failed"] else ""))
+        else:
+            bits.append(f"{e(name)} no report")
+    return "Tests by suite: " + " · ".join(bits)
+
+
 def _delta_lines(deltas: dict | None, up_is_good: bool | None) -> list[tuple[str, str]]:
     """Tile delta lines: (text, tone). Tone = direction × whether up is good; None → neutral."""
     if not deltas:
@@ -57,15 +73,17 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
     )
 
     # --- tiles -----------------------------------------------------------------
+    totals = ctx["totals"]
     tiles = "".join([
-        T.tile("Passed", s["passed"], _delta_lines(deltas.get("passed"), True)),
-        T.tile("Failed", s["failed"], _delta_lines(deltas.get("failed"), False)),
-        T.tile("Skipped", s["skipped"], _delta_lines(deltas.get("skipped"), None)),
-        T.tile("Total test calls", s["total_calls"], _delta_lines(deltas.get("total_calls"), None)),
+        T.tile("Passed", totals["passed"], _delta_lines(deltas.get("passed"), True)),
+        T.tile("Failed", totals["failed"], _delta_lines(deltas.get("failed"), False)),
+        T.tile("Skipped", totals["skipped"], _delta_lines(deltas.get("skipped"), None)),
+        T.tile("Tests, all suites", totals["total"], _delta_lines(deltas.get("total"), None)),
     ])
     tiles_row = (
-        f'<tr><td style="padding:14px 26px 6px 26px;">'
+        f'<tr><td style="padding:14px 26px 0 26px;">'
         f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>{tiles}</tr></table></td></tr>'
+        f'<tr><td style="padding:8px 32px 6px 32px;">{T.note(_suite_parts_line(totals["parts"]))}</td></tr>'
     )
 
     # --- anomalies -------------------------------------------------------------
@@ -113,7 +131,7 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
     ]
     if duration_line:
         session_rows.append((T.mono(e(duration_line), colour=T.MUTED), T.pill("slow", "warning") if a["wall"] and a["wall"]["slow"] else ""))
-    session_block = T.section("Test session report", T.table("".join(
+    session_block = T.section("Playwright session report", T.table("".join(
         T.row(l, r, last=(i == len(session_rows) - 1)) for i, (l, r) in enumerate(session_rows))))
 
     # --- jobs ---------------------------------------------------------------------

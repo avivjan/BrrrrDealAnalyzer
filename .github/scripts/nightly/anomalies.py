@@ -30,18 +30,52 @@ def delta(current: float | int | None, baseline: float | int | None) -> dict | N
     return {"diff": diff, "word": word}
 
 
+SUITES = ("playwright", "backend", "frontend")
+
+
+def suite_totals(record: dict) -> dict:
+    """Passed / failed / skipped / total across every suite in a record, plus the per-suite parts.
+
+    Playwright counts come from its stats (a flaky test passed on retry, so it counts as passed);
+    pytest and vitest from their JUnit summaries. A suite whose report is missing contributes
+    nothing and is marked ``available: False`` in ``parts``.
+    """
+    parts: dict[str, dict] = {}
+    pw = record.get("playwright") or {}
+    stats = pw.get("stats") or {}
+    if pw.get("available", bool(stats)):
+        passed = stats.get("expected", 0) + stats.get("flaky", 0)
+        parts["playwright"] = {"available": True, "passed": passed, "failed": stats.get("unexpected", 0),
+                               "skipped": stats.get("skipped", 0)}
+    else:
+        parts["playwright"] = {"available": False}
+    for name in ("backend", "frontend"):
+        j = ((record.get("junit") or {}).get(name)) or {}
+        if j.get("available"):
+            failed = j.get("failures", 0) + j.get("errors", 0)
+            parts[name] = {"available": True, "passed": j.get("tests", 0) - failed - j.get("skipped", 0),
+                           "failed": failed, "skipped": j.get("skipped", 0)}
+        else:
+            parts[name] = {"available": False}
+    for part in parts.values():
+        if part["available"]:
+            part["total"] = part["passed"] + part["failed"] + part["skipped"]
+    totals = {k: sum(p[k] for p in parts.values() if p["available"]) for k in ("passed", "failed", "skipped", "total")}
+    totals["parts"] = parts
+    return totals
+
+
 def tile_deltas(record: dict, prev: dict | None, week: dict | None) -> dict:
-    stats = (record.get("playwright") or {}).get("stats") or {}
+    """Tile deltas over the combined totals of every suite (see ``suite_totals``)."""
+    cur = suite_totals(record)
+    prev_t = suite_totals(prev) if prev else None
+    week_t = suite_totals(week) if week else None
     out = {}
-    for tile, key in (("passed", "expected"), ("failed", "unexpected"), ("skipped", "skipped")):
-        cur = stats.get(key)
+    for tile in ("passed", "failed", "skipped", "total"):
         out[tile] = {
-            "vs_prev": delta(cur, ((prev or {}).get("playwright") or {}).get("stats", {}).get(key)) if prev else None,
-            "vs_week": delta(cur, ((week or {}).get("playwright") or {}).get("stats", {}).get(key)) if week else None,
+            "vs_prev": delta(cur[tile], prev_t[tile]) if prev_t else None,
+            "vs_week": delta(cur[tile], week_t[tile]) if week_t else None,
         }
-    cur_calls = sum(sum(v.values()) for v in ((record.get("playwright") or {}).get("projects") or {}).values())
-    prev_calls = sum(sum(v.values()) for v in (((prev or {}).get("playwright") or {}).get("projects") or {}).values()) if prev else None
-    out["total_calls"] = {"vs_prev": delta(cur_calls, prev_calls) if prev else None, "vs_week": None}
     return out
 
 
