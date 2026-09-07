@@ -349,10 +349,9 @@ const closeModal = async () => {
   showDetailModal.value = false;
 };
 
+// Currency never decodes the -1/-2 sentinels: -$1 and -$2 are real amounts.
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -360,10 +359,11 @@ const formatCurrency = (value: number | undefined) => {
   }).format(value);
 };
 
+// The calculators encode ±∞ on cash_on_cash / roi / annualized_roi as -1 / -2.
 const formatPercent = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
+  if (value === -1) return "∞%";
+  if (value === -2) return "-∞%";
   return `${value.toFixed(2)}%`;
 };
 
@@ -376,11 +376,16 @@ const getCashFlowColor = (value: number | undefined) => {
 
 const getPerformanceColor = (value: number | undefined) => {
   if (value === undefined || value === null) return "text-fg";
-  if (value === -1) return "text-positive"; // Infinity
-  if (value === -2) return "text-negative"; // -Infinity
   if (value > 0) return "text-positive";
   if (value < 0) return "text-negative";
   return "text-fg-muted";
+};
+
+/** Tone for a percent metric: -1 (∞) is positive, -2 (-∞) is negative. */
+const getPercentColor = (value: number | undefined) => {
+  if (value === -1) return "text-positive";
+  if (value === -2) return "text-negative";
+  return getPerformanceColor(value);
 };
 
 const getDSCRColor = (value: number | undefined) => {
@@ -1024,7 +1029,7 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>CoC</template>
-                              <div v-flash data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
                           </UiStatTile>
                            <UiStatTile tone="neutral" class="bg-surface">
                                <template #label>DSCR</template>
@@ -1036,7 +1041,7 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
@@ -1058,11 +1063,11 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Annualized ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed</template>

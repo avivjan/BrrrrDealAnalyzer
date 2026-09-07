@@ -35,17 +35,23 @@ export const useDealStore = defineStore('deals', () => {
     const numDoors = broughtBrrr.length;
     let totalValue = 0;
     let totalDebt = 0;
+    // Cash escrowed at refi is recoverable, so per-deal equity is
+    // ARV × (1 − LTV) + reserve (see brrrSteps/equity_and_net_profit.py);
+    // the portfolio total counts it the same way.
+    let totalReserve = 0;
     for (const deal of broughtBrrr) {
       const arv = Number((deal as any).arv_in_thousands) || 0;
       const ltv = Number((deal as any).ltv_as_precent) || 0;
+      const reserveK = Number((deal as any).cashReserve) || 0;
       totalValue += arv * 1000;
       totalDebt += arv * 1000 * (ltv / 100);
+      totalReserve += reserveK * 1000;
     }
     return {
       numDoors,
       totalValue,
       totalDebt,
-      equity: totalValue - totalDebt,
+      equity: totalValue - totalDebt + totalReserve,
     };
   });
 

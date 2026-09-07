@@ -98,7 +98,7 @@ describe("DealInputsForm", () => {
       expect(rendered).toContain("LTV");
       expect(rendered).toContain("Days until Refi");
       expect(rendered).toContain("Refi Points");
-      expect(rendered).toContain("Cash Reserve (paydown at refi)");
+      expect(rendered).toContain("Cash Reserve (escrowed at refi)");
       expect(rendered).toContain("Monthly Rent");
       expect(rendered).toContain("Vacancy");
       expect(rendered).toContain("Prop. Mgmt");
@@ -245,7 +245,7 @@ describe("DealInputsForm", () => {
 
     it("keeps a real zero rather than falling back", () => {
       expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Monthly HOA")).toBe(0);
-      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Cash Reserve (paydown at refi)")).toBe(0);
+      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Cash Reserve (escrowed at refi)")).toBe(0);
     });
 
     it("leaves a genuinely absent field blank", () => {
@@ -297,7 +297,7 @@ describe("DealInputsForm", () => {
       const wrapper = mountForm(deal, "BRRRR");
 
       await emitFrom(wrapper, "Refi Points", null);
-      await emitFrom(wrapper, "Cash Reserve (paydown at refi)", null);
+      await emitFrom(wrapper, "Cash Reserve (escrowed at refi)", null);
       await emitFrom(wrapper, "LTV", null);
       await emitFrom(wrapper, "Long Term Interest Rate", null);
 

@@ -76,6 +76,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
     total_cash_needed_without_buffer, total_cash_needed_with_buffer = total_cash_needed_step(
         payload, breakdown, purchase_price, down_payment_cash, closing_costs_buy,
         HML_points_in_cash, rehab_cost, HML_interest_in_cash, holding_cost_until_refi, hml_payoff,
+        cash_out_routi,
     )
 
     return analyzeBRRRRes(

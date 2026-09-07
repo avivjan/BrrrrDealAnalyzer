@@ -223,3 +223,33 @@ re-rendered (fixtures: 440 passed / 181 skipped / 621 total on the PASS mail).
 - [x] **H6** (20 min) — First line in words: `anomalies.plain_verdict` gives "All good tonight." / "All tests passed, a few things are worth a look." / "Something failed tonight." with a one-sentence detail; it heads the HTML, the text body and the subject. Numbers moved to the line under it.
 
 ---
+
+
+---
+
+# Audit fixes F1–F10 (2026-09-07) — branch `claude/audit-fixes-f1-f10` from `main@17fcd33`
+
+Scope is strictly the ten audit findings; BRRRR ROI definition (N1) untouched. Estimates are agent wall-clock minutes.
+
+- [x] **X.1** (15 min) — F2: `get_total_cash_needed_for_deal` takes a `refi_shortfall` (= `max(0, −cash_out_routi)`), added to both totals; BRRRR step adds the breakdown line when a shortfall exists. Flip passes 0.
+- [x] **X.2** (5 min) — F3: Flip ROI / annualized ROI on zero cash invested → `-1` (profit), `-2` (loss), `0` (break-even).
+- [x] **X.3** (5 min) — F4: 0 % long-term rate → `loan / n` instead of HTTP 400.
+- [x] **X.4** (10 min) — F6: Flip validator (backend + `validateDealInputs`) mirrors the BRRRR non-negative and 0–100 checks.
+- [x] **X.5** (10 min) — F1: "Rehab float buffer (10% of rehab)" breakdown line in both models; fix the "rehab × 1.5" comment.
+- [x] **X.6** (10 min) — F9: PDF breakdown table formats ROI / Annualized ROI / Cash on Cash as %, DSCR as ratio, everything else as money.
+- [x] **X.7** (20 min) — F5: sentinel decoding restricted to percent formatters in `DealCard.vue`, `dealUtils.ts`, `MyDeals.vue`, `BoughtDeals.vue`; hero ring treats −1 as ∞ (full, positive); 0 renders "0.0%"; currency −$1/−$2 never decoded.
+- [x] **X.8** (5 min) — F8: portfolio equity adds `cashReserve × 1000` per deal.
+- [x] **X.9** (5 min) — F10: reserve wording → "escrowed at refi, returned at exit" in form label, Pydantic description, TS doc, step comment.
+- [x] **X.10** (20 min) — Tests: refi shortfall raises Total Cash Needed; 0 % amortization; zero-invested flip ±∞; Flip validator rejects bad input. Run `pytest BackEnd/tests`, `vitest`, `vue-tsc -b`.
+
+## Review — audit fixes F1–F10
+
+**What changed (backend).** `get_total_cash_needed_for_deal` takes a `refi_shortfall` that is added to both totals; the BRRRR step computes it as `max(0, −cash_out_routi)` and registers a "Refi Shortfall (cash to refi table)" breakdown line only when it is positive (F2). Flip ROI / annualized ROI on zero cash invested return the engine's `-1` / `-2` sentinels by profit sign, `0` at break-even (F3). `calc_mortgage_payment` returns `loan / n` at 0 % (F4). The Flip validator now rejects negative buy closing, taxes, insurance, HOA, utilities and out-of-range HML rate / capital-gains rate (F6). Both buffered breakdowns list the "Rehab float buffer (10% of rehab)" line and the misleading "rehab × 1.5" / "doubling" comments are corrected (F1). The PDF breakdown table formats ROI / Annualized ROI / Cash on Cash as percentages and DSCR as a ratio (`1.36x`) by step label (F9). Cash-reserve wording now says escrowed at refi and returned at exit, not a principal paydown (F10).
+
+**What changed (frontend).** `DealCard.vue` decodes −1 / −2 to "∞%" / "-∞%" in `formatPercent`, renders a genuine 0 as "0.0%", and maps the sentinels to ±Infinity in `heroPercent` so ∞ fills the ring with the positive tone (F5). `MyDeals.vue` / `BoughtDeals.vue` no longer decode sentinels inside `formatCurrency`; a new `getPercentColor` carries the sentinel tone for the CoC / ROI / Annualized ROI tiles only (F5). `dealUtils.ts` clipboard `formatPercent` decodes sentinels; `validateDealInputs` mirrors the new bounds (F5, F6). Portfolio equity adds `cashReserve × 1000` per deal (F8). Form label is "Cash Reserve (escrowed at refi)" (F10).
+
+**Tests.** `BackEnd/tests/test_analyze.py::TestAuditFixes` (16 cases): refi shortfall raises both totals and equals `−cash_out`; buffered breakdown components sum to the total for both models; 0 % amortization at unit and endpoint level; zero-invested flip → −1 / −2; nine Flip validator rejections. `frontend/src/utils/dealUtils.test.ts`: sentinel decode on percent only, "0.00%" rendering, Flip validation. `DealInputsForm.test.ts` updated for the new label. `tests/_regression_snapshots/openapi.json` refreshed: the only change is the `cashReserve` description.
+
+**Verification.** `pytest` (local Postgres 16): 264 passed. `vitest run`: 85 files / 1372 tests passed. `npm run build` (`vue-tsc -b && vite build`): clean.
+
+**Not done / notes.** `verify_regression.py` calculation snapshots (`tests/_regression_snapshots/calculations.json`) are not run in CI and were left untouched; the `zero_interest_refi` and zero-invested flip cases there now differ by design. The refi shortfall is added unbuffered to the buffered total (open question N2). Nightly e2e goldens do not reference the old label or the "∞" text. N1 (BRRRR ROI definition) untouched as instructed.

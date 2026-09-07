@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import pytest
 
-from BL.analyze.common.deal_math import calc_holding_costs
+from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment
 
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
@@ -265,6 +265,115 @@ class TestAnalyzeFlip:
         ],
     )
     def test_validation_rejects_bad_input(
+        self, client, flip_payload, field, value, message
+    ):
+        response = client.post("/analyze/flip", json={**flip_payload, field: value})
+        assert response.status_code == 400
+        assert message.lower() in response.json()["detail"].lower()
+
+
+class TestAuditFixes:
+    """Regression tests for the financial-accuracy audit fixes (F1, F2, F3, F4, F6)."""
+
+    # F2 -- a refi shortfall is part of the lifetime cash requirement.
+    def test_refi_shortfall_raises_total_cash_needed(self, client, brrrr_payload):
+        base = client.post("/analyze/brrr", json=brrrr_payload).json()
+        assert base["cash_out_routi"] > 0  # the fixture refis clean: nothing to add
+        short = client.post(
+            "/analyze/brrr",
+            json={**brrrr_payload, "arv_in_thousands": 250, "ltv_as_precent": 70, "cashReserve": 30},
+        ).json()
+        shortfall = -short["cash_out_routi"]
+        assert shortfall > 0
+        # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole
+        # increase is the shortfall the investor wires at the refi table...
+        assert short["total_cash_needed_for_deal"] == pytest.approx(
+            base["total_cash_needed_for_deal"] + shortfall, abs=1e-6
+        )
+        assert short["total_cash_needed_for_deal_with_buffer"] == pytest.approx(
+            base["total_cash_needed_for_deal_with_buffer"] + shortfall, abs=1e-6
+        )
+        # ...which makes lifetime cash needed equal to the cash left in the deal.
+        assert short["total_cash_needed_for_deal"] == pytest.approx(-short["cash_out"], abs=1e-6)
+        labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
+        assert "Refi Shortfall (cash to refi table)" in labels
+        assert "Refi Shortfall (cash to refi table)" not in [
+            s["label"] for s in base["breakdowns"]["total_cash_needed_for_deal"]
+        ]
+
+    # F1 -- the buffered breakdown now lists every component it sums.
+    @pytest.mark.parametrize(
+        ("path", "key"),
+        [("/analyze/brrr", "total_cash_needed_for_deal_with_buffer"),
+         ("/analyze/flip", "total_cash_needed_with_buffer")],
+    )
+    def test_buffered_breakdown_components_sum_to_total(
+        self, client, brrrr_payload, flip_payload, path, key
+    ):
+        payload = brrrr_payload if path.endswith("brrr") else flip_payload
+        steps = client.post(path, json=payload).json()["breakdowns"][key]
+        total = next(s for s in steps if s["label"] == "Total Cash Needed (Buffered)")
+        # The unbuffered closing line is superseded by its x1.1 line.
+        components = [
+            s["value"] for s in steps
+            if s is not total and s["label"] != "Closing Costs (Buy)"
+        ]
+        assert "Rehab float buffer (10% of rehab)" in [s["label"] for s in steps]
+        assert sum(components) == pytest.approx(total["value"], abs=1e-6)
+
+    # F4 -- a 0% loan amortizes as straight-line principal.
+    def test_zero_interest_mortgage_is_loan_over_term(self):
+        payment = calc_mortgage_payment(Decimal("320000"), Decimal("0.75"), Decimal("0"), 30)
+        assert payment == Decimal("320000") * Decimal("0.75") / 360
+
+    def test_zero_interest_refi_is_accepted_by_the_endpoint(self, client, brrrr_payload):
+        response = client.post("/analyze/brrr", json={**brrrr_payload, "interestRate": 0})
+        assert response.status_code == 200, response.text
+        result = response.json()
+        loan = brrrr_payload["arv_in_thousands"] * 1000 * brrrr_payload["ltv_as_precent"] / 100
+        expected_payment = loan / (brrrr_payload["loanTermYears"] * 12)
+        mortgage = next(
+            s for s in result["breakdowns"]["cash_flow"] if s["label"] == "Monthly Mortgage Payment"
+        )
+        assert mortgage["value"] == pytest.approx(expected_payment, abs=1e-6)
+
+    # F3 -- zero cash invested is an unbounded return, signed by the profit.
+    ZERO_INVESTED = {
+        "down_payment": 0, "closingCostsBuy": 0, "hmlPoints": 0, "HMLInterestRate": 0,
+        "use_HM_for_rehab": True, "annual_property_taxes": 0, "annual_insurance": 0,
+        "montly_hoa": 0, "monthly_utilities": 0,
+    }
+
+    def test_zero_invested_flip_with_profit_is_infinite(self, client, flip_payload):
+        result = client.post("/analyze/flip", json={**flip_payload, **self.ZERO_INVESTED}).json()
+        assert result["net_profit"] > 0
+        assert result["roi"] == -1
+        assert result["annualized_roi"] == -1
+
+    def test_zero_invested_flip_with_loss_is_negative_infinite(self, client, flip_payload):
+        result = client.post(
+            "/analyze/flip", json={**flip_payload, **self.ZERO_INVESTED, "salePrice": 150}
+        ).json()
+        assert result["net_profit"] < 0
+        assert result["roi"] == -2
+        assert result["annualized_roi"] == -2
+
+    # F6 -- the Flip validator now mirrors the BRRRR bounds.
+    @pytest.mark.parametrize(
+        ("field", "value", "message"),
+        [
+            ("closingCostsBuy", -1, "Closing costs (buy)"),
+            ("annual_property_taxes", -1, "property taxes"),
+            ("annual_insurance", -1, "insurance"),
+            ("montly_hoa", -1, "HOA"),
+            ("monthly_utilities", -1, "utilities"),
+            ("HMLInterestRate", -5, "HML interest rate"),
+            ("HMLInterestRate", 101, "HML interest rate"),
+            ("capitalGainsTax", 150, "Capital gains"),
+            ("capitalGainsTax", -1, "Capital gains"),
+        ],
+    )
+    def test_flip_validation_rejects_negative_costs_and_out_of_range_rates(
         self, client, flip_payload, field, value, message
     ):
         response = client.post("/analyze/flip", json={**flip_payload, field: value})
