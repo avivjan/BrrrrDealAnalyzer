@@ -164,6 +164,44 @@ DESCRIPTIONS: dict[str, str] = {
 
 BODY_ARG = "body"
 
+# Tools whose call has a side effect beyond this app's own database, or that
+# an LLM should never run without a human confirming: annotated so a client
+# can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
+# site's own data; GET tools are read-only.
+OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch"}
+DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
+DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template"}
+
+
+def tool_annotations(name: str, method: str) -> t.ToolAnnotations:
+    read_only = method.upper() == "GET"
+    destructive = name in DESTRUCTIVE_TOOLS or name.startswith(DESTRUCTIVE_PREFIXES)
+    return t.ToolAnnotations(
+        readOnlyHint=read_only,
+        destructiveHint=(not read_only) and destructive,
+        idempotentHint=read_only or method.upper() in {"PUT", "DELETE"},
+        openWorldHint=name in OPEN_WORLD_TOOLS,
+    )
+
+
+def allowed_scopes() -> set[str] | None:
+    """`MCP_SCOPES`: comma-separated tool names the connector may see and call.
+
+    Unset or `*` means every tool (the default -- nothing changes for the
+    owner). Anything else hides the other tools from `tools/list` and refuses
+    them in `tools/call`.
+    """
+
+    raw = (os.getenv("MCP_SCOPES") or "*").strip()
+    if raw in {"", "*"}:
+        return None
+    return {name.strip() for name in raw.split(",") if name.strip()}
+
+
+def tool_allowed(name: str) -> bool:
+    scopes = allowed_scopes()
+    return scopes is None or name in scopes
+
 server: Server = Server("brrrr-deal-analyzer", instructions=INSTRUCTIONS)
 
 _app: FastAPI | None = None
@@ -213,7 +251,32 @@ def _file_field_schema() -> dict[str, Any]:
 
 
 def _is_binary(schema: dict[str, Any]) -> bool:
-    return schema.get("type") == "string" and schema.get("format") == "binary"
+    # Starlette < 1.0 wrote `format: binary`; newer versions write
+    # `contentMediaType: application/octet-stream` for upload fields.
+    return schema.get("type") == "string" and (
+        schema.get("format") == "binary" or "contentMediaType" in schema
+    )
+
+
+def _api_routes(routes) -> list[APIRoute]:
+    """Every `APIRoute`, depth-first.
+
+    FastAPI >= 0.13x keeps an included router as a nested entry in `app.routes`
+    instead of flattening its operations, so the walk has to recurse.
+    """
+
+    found: list[APIRoute] = []
+    for route in routes:
+        if isinstance(route, APIRoute):
+            found.append(route)
+            continue
+        # FastAPI's `_IncludedRouter` keeps the router it was built from; the
+        # routers here are unprefixed, so the original paths are the served ones.
+        inner = getattr(route, "original_router", None) or route
+        nested = getattr(inner, "routes", None)
+        if nested and nested is not routes:
+            found.extend(_api_routes(nested))
+    return found
 
 
 def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
@@ -223,8 +286,8 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
     defs = spec.get("components", {}).get("schemas", {})
     tools: dict[str, dict[str, Any]] = {}
 
-    for route in app.routes:
-        if not isinstance(route, APIRoute) or not route.include_in_schema:
+    for route in _api_routes(app.routes):
+        if not route.include_in_schema:
             continue
         for method in route.methods:
             op = spec["paths"][route.path][method.lower()]
@@ -286,6 +349,7 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
                     name=name,
                     description=DESCRIPTIONS.get(name) or op.get("summary") or name,
                     inputSchema=input_schema,
+                    annotations=tool_annotations(name, method),
                 ),
             }
     return tools
@@ -306,7 +370,7 @@ def tools() -> dict[str, dict[str, Any]]:
 
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.ContentBlock]:
     spec = tools().get(name)
-    if spec is None:
+    if spec is None or not tool_allowed(name):
         raise ValueError(f"Unknown tool: {name}")
     args = dict(arguments or {})
 
@@ -351,6 +415,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
     ) as client:
         response = await client.request(spec["method"], path, params=params, **request_kwargs)
 
+    _audit_tool_call(name, response.status_code)
     if response.status_code >= 400:
         raise RuntimeError(f"HTTP {response.status_code} from {spec['method']} {path}: {response.text}")
 
@@ -376,9 +441,18 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
     return [t.TextContent(type="text", text=response.text)]
 
 
+def _audit_tool_call(name: str, status: int) -> None:
+    try:
+        from BL.auth.common.audit import record
+
+        record("mcp_tool_call", None, detail={"tool": name, "status": status})
+    except Exception:  # noqa: BLE001 -- auditing never breaks a tool call
+        logger.exception("mcp: audit failed for %s", name)
+
+
 @server.list_tools()
 async def list_tools() -> list[t.Tool]:
-    return [spec["tool"] for spec in tools().values()]
+    return [spec["tool"] for name, spec in tools().items() if tool_allowed(name)]
 
 
 @server.call_tool()

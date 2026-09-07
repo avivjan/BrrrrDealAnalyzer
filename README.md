@@ -514,7 +514,7 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
 
 ### CI and the nightly
 
-- **`ci.yml`** runs on every pull request and every push to `main`: **Backend tests**
+- **`ci.yml`** runs on every pull request and every push to `main`: **Security checks** (`pip-audit` on the pinned requirements, Bandit, `npm audit` on production dependencies, Gitleaks), **Backend tests**
   (pytest on a `postgres:16` service, a migration smoke that boots the app twice against a
   fresh database, the nightly package's unit tests; pytest discovers every
   `tests/test_*.py`, the MCP server files included, so a new test file needs no workflow
@@ -564,7 +564,7 @@ CORS allow-list in `BackEnd/main.py`.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | `BackEnd/db.py` | **Required.** `postgresql://…` in production |
+| `DATABASE_URL` | `BackEnd/db.py` | **Required.** `postgresql://…` in production; TLS (`sslmode=require`) is added automatically in production unless the URL sets `sslmode` itself |
 | `VITE_API_URL` | `frontend/src/api/index.ts` | Build-time. Defaults to `http://localhost:8000` |
 | `EMAIL_PASSWORD` | `/send-offer` | Gmail app password for the sending account; unset → `{success: false}` |
 | `MERCURY_API_TOKEN`, `MERCURY_API_TOKEN_<LABEL>` | `/liquidity/mercury-balance` | One per workspace; the suffix is the label |
@@ -577,6 +577,10 @@ CORS allow-list in `BackEnd/main.py`.
 | `APP_ENV` | `BackEnd/main.py` | `production` or `development`. Defaults to `production` on Render (`RENDER=true`), `development` elsewhere. Production serves no `/docs`, `/redoc` or `/openapi.json` |
 | `APP_KEY_MODE`, `APP_KEY` | `BackEnd/BL/auth/common/app_key.py` | Phase 0 shared-key gate on every route except `/helloworld`: `off` (default), `shadow` (log only), `enforce` (401 without the `X-App-Key` header). The browser asks for the key once and keeps it in `localStorage`. Replaced by passkeys in Phase 2 of `SECURITY_PLAN.md` |
 | `REPS_OBJECT_ACL_PUBLIC` | REPS | Default `true`: with `REPS_LINK_STYLE=public`, also flip each object's legacy ACL. Set `false` once the bucket grants `allUsers` read at the bucket level |
+| `MCP_SCOPES` | `BackEnd/mcp_server.py` | Comma-separated tool names the connector may see and call; `*` (default) = all 45 |
+| `SEND_OFFER_PER_HOUR` | `/send-offer` | Offers per hour per caller before a 429 (default 30) |
+| `MERCURY_CACHE_SECONDS` | `/liquidity/mercury-balance` | How long a fetched balance summary is reused (default 60; 0 disables) |
+| `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
 
@@ -695,7 +699,6 @@ run by module name.
 
 ### Known gaps
 
-- `POST /reps/people` with a duplicate name returns the driver's raw error text.
 - Deployment config (Netlify redirect, Render service) is not in version control.
 - The two CI checks are not yet required status checks on `main`.
 - The REPS prospect endpoints never expose a prospect id (create and list return name +

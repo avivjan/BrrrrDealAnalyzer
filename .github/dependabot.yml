@@ -1,0 +1,18 @@
+# Weekly dependency update proposals (SECURITY_PLAN.md F-16). CI's pip-audit,
+# npm audit and the test suites decide whether a proposal is safe to merge.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /BackEnd
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def send_offer_email(details: SendOfferReq):
-    logger.info(f"Starting email send process for property: {details.property_address}")
-    logger.info(f"Recipient: {details.agent_email} (Agent: {details.agent_name})")
+    logger.info("Starting offer e-mail send")
 
     sender_email = "BigWhalesLLC@gmail.com"
     sender_password = os.getenv("EMAIL_PASSWORD")
@@ -25,7 +24,6 @@ def send_offer_email(details: SendOfferReq):
     sender_password = sender_password.strip()
 
     subject = f"Cash Offer for {details.property_address}"
-    logger.info(f"Email subject: {subject}")
 
     # The body is HTML, so every client-supplied value is escaped before it is
     # interpolated. Real names and addresses render exactly as before; only
@@ -198,22 +196,20 @@ def send_offer_email(details: SendOfferReq):
         server.login(sender_email, sender_password)
         logger.info("SMTP login successful")
 
-        logger.info(f"Sending email to {details.agent_email}")
         server.send_message(msg)
         logger.info("Email sent successfully")
 
         server.quit()
         logger.info("SMTP connection closed")
         return True, "Email sent successfully"
+    # The SMTP server's own text (which names the account and Google's error
+    # page) stays in the log; the client gets a fixed message (F-09).
     except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP Authentication Error: {e}")
-        logger.error(f"Error code: {e.smtp_code}, Error message: {e.smtp_error}")
-        return False, f"Authentication failed: {str(e)}"
+        logger.error("SMTP authentication error: code=%s", e.smtp_code)
+        return False, "Authentication failed"
     except smtplib.SMTPException as e:
-        logger.error(f"SMTP Error: {e}")
-        return False, f"SMTP error: {str(e)}"
+        logger.error("SMTP error: %s", type(e).__name__)
+        return False, "SMTP error"
     except Exception as e:
-        logger.error(f"Unexpected error sending email: {type(e).__name__}: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return False, f"Error sending email: {str(e)}"
+        logger.exception("Unexpected error sending email: %s", type(e).__name__)
+        return False, "Error sending email"

@@ -16,7 +16,7 @@
           },
           "files": {
             "items": {
-              "format": "binary",
+              "contentMediaType": "application/octet-stream",
               "type": "string"
             },
             "title": "Files",
@@ -59,7 +59,7 @@
       "Body_reps_upload_route_reps_upload_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           },
@@ -96,6 +96,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -187,6 +188,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -279,6 +281,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -290,6 +293,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -428,6 +432,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -439,6 +444,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -450,6 +456,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -461,6 +468,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -573,6 +581,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -599,6 +608,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -650,6 +660,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -690,6 +701,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -726,6 +738,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -805,6 +818,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -939,6 +953,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -955,6 +970,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1127,6 +1143,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1138,6 +1155,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -1149,6 +1167,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1160,6 +1179,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1254,6 +1274,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1291,6 +1312,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1339,6 +1361,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1403,6 +1426,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1446,6 +1470,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -1520,6 +1545,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -1590,6 +1616,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1601,6 +1628,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1685,6 +1713,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1696,6 +1725,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -1707,6 +1737,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1718,6 +1749,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1782,6 +1814,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1860,6 +1893,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1911,6 +1945,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1935,6 +1970,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1972,6 +2008,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -2041,6 +2078,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -2111,6 +2149,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2127,6 +2166,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2218,6 +2258,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2229,6 +2270,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -2240,6 +2282,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2251,6 +2294,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2306,6 +2350,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2367,6 +2412,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2415,6 +2461,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2460,6 +2507,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2510,6 +2558,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -2666,6 +2715,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2677,6 +2727,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2815,6 +2866,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2826,6 +2878,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -2837,6 +2890,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2848,6 +2902,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2960,6 +3015,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2986,6 +3042,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3025,6 +3082,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3065,6 +3123,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3101,6 +3160,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -3287,6 +3347,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3303,6 +3364,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3475,6 +3537,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3486,6 +3549,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -3497,6 +3561,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3508,6 +3573,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3602,6 +3668,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3639,6 +3706,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3675,6 +3743,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3739,6 +3808,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3834,6 +3904,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -3951,6 +4022,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3962,6 +4034,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4046,6 +4119,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4057,6 +4131,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -4068,6 +4143,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4079,6 +4155,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4143,6 +4220,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4221,6 +4299,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4260,6 +4339,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4284,6 +4364,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4321,6 +4402,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -4433,6 +4515,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4449,6 +4532,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4540,6 +4624,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4551,6 +4636,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -4562,6 +4648,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4573,6 +4660,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4628,6 +4716,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4689,6 +4778,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4725,6 +4815,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4770,6 +4861,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5587,6 +5679,7 @@
           "time_on_market": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -5598,6 +5691,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5627,6 +5721,7 @@
           "time_on_market": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -5638,6 +5733,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5894,6 +5990,7 @@
             "items": {
               "$ref": "#/components/schemas/EvidenceItem"
             },
+            "maxItems": 100,
             "title": "Evidence Items",
             "type": "array"
           },
@@ -5913,6 +6010,7 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 100,
             "title": "Evidence Links",
             "type": "array"
           },
@@ -5932,6 +6030,7 @@
             "items": {
               "$ref": "#/components/schemas/LocationSnapshot"
             },
+            "maxItems": 2000,
             "title": "Location Snapshots",
             "type": "array"
           },
@@ -5944,6 +6043,7 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 100,
             "title": "People Involved",
             "type": "array"
           },
@@ -6063,6 +6163,7 @@
             "items": {
               "$ref": "#/components/schemas/LocationSnapshot"
             },
+            "maxItems": 2000,
             "title": "Location Snapshots",
             "type": "array"
           },
@@ -6536,6 +6637,7 @@
           "how_long_ago": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -6547,6 +6649,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -6576,6 +6679,7 @@
           "how_long_ago": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -6587,6 +6691,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -6601,6 +6706,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -8032,7 +8144,7 @@
     },
     "/liquidity/mercury-balance": {
       "get": {
-        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load.",
+        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
         "operationId": "get_mercury_balance_liquidity_mercury_balance_get",
         "responses": {
           "200": {

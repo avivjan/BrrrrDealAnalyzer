@@ -48,11 +48,9 @@ from __future__ import annotations
 
 import io
 import logging
-import mimetypes
 import os
 import re
 import secrets
-import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -227,7 +225,28 @@ def sanitize_filename(name: str) -> str:
     return name[:120] or "evidence"
 
 
-def validate_evidence_file(filename: str, content_type: Optional[str]) -> None:
+# What the first bytes of each allowed type look like. Video containers are
+# checked leniently: a QuickTime/MP4 file starts with a box whose type sits at
+# bytes 4-8 and is one of a handful of names.
+_MAGIC = {
+    ".pdf": (b"%PDF",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+}
+_VIDEO_BOXES = {b"ftyp", b"moov", b"mdat", b"wide", b"free", b"skip", b"pnot"}
+
+CONTENT_TYPE_BY_EXT = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",
+}
+
+
+def validate_evidence_file(filename: str, content_type: Optional[str], head: Optional[bytes] = None) -> None:
     ext = os.path.splitext(filename or "")[1].lower()
     if ext not in ALLOWED_EVIDENCE_EXTS:
         raise RepsValidationError(
@@ -239,6 +258,25 @@ def validate_evidence_file(filename: str, content_type: Optional[str]) -> None:
         # Don't hard-fail (browsers report .mov as application/octet-stream
         # sometimes); just log.
         logger.warning("REPS upload: unexpected mime %r for %s", content_type, filename)
+    if head is not None and not _magic_ok(ext, head):
+        raise RepsValidationError(f"The file does not look like a {ext} file.")
+
+
+def _magic_ok(ext: str, head: bytes) -> bool:
+    if ext in _MAGIC:
+        return any(head.startswith(sig) for sig in _MAGIC[ext])
+    if ext in {".mov", ".mp4"}:
+        return len(head) >= 8 and head[4:8] in _VIDEO_BOXES
+    return True
+
+
+def content_type_for(filename: str) -> str:
+    """The stored Content-Type comes from the allow-listed extension, never
+    from the client (a `.pdf` served as `text/html` would be a stored page on
+    the storage origin)."""
+
+    ext = os.path.splitext(filename or "")[1].lower()
+    return CONTENT_TYPE_BY_EXT.get(ext, "application/octet-stream")
 
 
 # --- Google clients (lazy import) ---------------------------------------- #
@@ -252,10 +290,15 @@ def _get_credentials(cfg: RepsConfig):
     from google.oauth2 import service_account
     import google.auth
 
+    # Least privilege (F-13): Sheets plus the one storage scope the code needs.
+    # `full_control` is required only for the legacy per-object ACL flip
+    # (`make_public()`), which REPS_OBJECT_ACL_PUBLIC=false turns off.
+    acl_flip = (os.getenv("REPS_OBJECT_ACL_PUBLIC") or "true").strip().lower() != "false"
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/cloud-platform",
-        "https://www.googleapis.com/auth/devstorage.read_write",
+        "https://www.googleapis.com/auth/devstorage.full_control"
+        if acl_flip
+        else "https://www.googleapis.com/auth/devstorage.read_write",
     ]
     if cfg.creds_path and os.path.exists(cfg.creds_path):
         return service_account.Credentials.from_service_account_file(
@@ -347,8 +390,7 @@ def _resolve_worksheet_title(spreadsheet_id: str, requested_tab: str) -> str:
             return t
 
     raise RepsValidationError(
-        f"Worksheet [{rq}] not found in spreadsheet …{spreadsheet_id[-12:]}. "
-        f"Existing tab names: {titles!r}. "
+        f"Worksheet [{rq}] not found in the spreadsheet. "
         'Rename a tab to match or set REPS_SHEET_TAB (often "Sheet1" on new files).'
     )
 
@@ -597,7 +639,8 @@ def upload_evidence(
     if user not in USER_FOLDER_MAP:
         raise RepsValidationError(f"Unknown REPS user: {user!r}")
 
-    validate_evidence_file(original_filename, content_type)
+    validate_evidence_file(original_filename, content_type, file_bytes[:16])
+    content_type = content_type_for(original_filename)
 
     cfg = get_config()
     client = get_storage_client()
@@ -609,9 +652,6 @@ def upload_evidence(
         f"{datetime.utcnow():%Y%m%dT%H%M%S}_{secrets.token_hex(8)}_{safe_name}"
     )
     blob = bucket.blob(object_name)
-
-    if not content_type:
-        content_type = mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
 
     blob.upload_from_file(io.BytesIO(file_bytes), content_type=content_type, rewind=True)
     return _make_url_for_blob(blob, cfg, object_name)
@@ -772,9 +812,8 @@ def upload_evidence_batch(
     uploaded: List[UploadedAsset] = []
 
     for idx, (orig_name, content_type, file_bytes) in enumerate(items):
-        validate_evidence_file(orig_name, content_type)
-        if not content_type:
-            content_type = mimetypes.guess_type(orig_name)[0] or "application/octet-stream"
+        validate_evidence_file(orig_name, content_type, file_bytes[:16])
+        content_type = content_type_for(orig_name)
 
         new_name = _audit_filename(property_name, activity_category, log_dt, orig_name, idx)
         # Belt-and-suspenders: re-sanitize after the construction.

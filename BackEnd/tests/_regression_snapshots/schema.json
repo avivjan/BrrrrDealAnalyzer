@@ -620,6 +620,165 @@
       "id"
     ]
   },
+  "audit_log": {
+    "columns": [
+      {
+        "autoincrement": "True",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "int",
+        "server_default": null,
+        "type": "BIGINT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "event",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "user_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "session_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "device_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "ip",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "user_agent",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(512)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "detail",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "at"
+        ],
+        "name": "ix_audit_log_at",
+        "unique": false
+      },
+      {
+        "columns": [
+          "event"
+        ],
+        "name": "ix_audit_log_event",
+        "unique": false
+      },
+      {
+        "columns": [
+          "ip"
+        ],
+        "name": "ix_audit_log_ip",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
   "bought_brrrr_deals": {
     "columns": [
       {

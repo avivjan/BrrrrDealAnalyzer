@@ -8,17 +8,21 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logger = logging.getLogger("main")
 
 import os
+import uuid
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from db import engine, SessionLocal
 import bootstrap
 from routers import ALL_ROUTERS, health as health_router
 from BL.auth.common.app_key import require_app_key
-from BL.common.logging_redact import install_access_log_redaction
+from BL.common.body_limit import BodyLimitMiddleware
+from BL.common.logging_redact import install_access_log_redaction, install_secret_redaction
 import mcp_server
 
 
@@ -40,6 +44,23 @@ app = FastAPI(
 )
 
 bootstrap.run(engine, SessionLocal)
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
+    """An unexpected error never reaches the client as exception text.
+
+    The traceback is logged under a reference id; the client gets the id so a
+    log line can be found from a screenshot. Deliberate `HTTPException`s are
+    not affected -- FastAPI handles those before this handler.
+    """
+    ref = uuid.uuid4().hex[:12]
+    logger.exception("unhandled error ref=%s %s %s", ref, request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "internal error", "ref": ref})
+
+
+# Outermost: a request body over MAX_BODY_BYTES is refused before it is read.
+app.add_middleware(BodyLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,6 +85,7 @@ for r in ALL_ROUTERS:
         app.include_router(r, dependencies=[Depends(require_app_key)])
 
 install_access_log_redaction()
+install_secret_redaction()
 
 # One MCP tool per endpoint above, served at /mcp[/<MCP_PATH_SECRET>].
 mcp_server.mount(app)

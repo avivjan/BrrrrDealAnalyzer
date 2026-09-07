@@ -20,6 +20,7 @@ from DAL.data_models.liquidity.models import (
     LiquiditySettings,
 )
 from DAL.data_models.pipelineTemplate.models import PipelineTemplate
+from DAL.data_models.audit.models import AuditLog
 from DAL.data_models.reps.models import (
     RepsPerson,
     RepsProperty,
@@ -40,6 +41,7 @@ __all__ = [
     "LiquidityRecurringTransaction",
     "LiquiditySettings",
     "PipelineTemplate",
+    "AuditLog",
     "RepsPerson",
     "RepsProperty",
     "RepsActivityCategory",
