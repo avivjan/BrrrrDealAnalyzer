@@ -116,7 +116,7 @@ unavailable here)
 - New backend tests: `test_auth_gate.py` (every operation in the OpenAPI snapshot: 401 without
   the key, never 401 with it; `/helloworld` public; off/shadow never reject),
   `test_email_hardening.py`, `test_sheet_values.py`, `test_mcp_mount.py` — all green.
-- Full backend suite (existing 206 + new): green, exit code 0; `verify_regression.py verify`:
+- Full backend suite: 340 passed (the 88 MCP tests included), 0 failed; `verify_regression.py verify`:
   all snapshots identical after the deliberate re-record.
 - Frontend: `npm test` 86 files / 1370 tests green; `npm run build` (vue-tsc + vite) green;
   `dist/` contains `_headers`, `_redirects`, `theme-init.js`.
@@ -124,8 +124,9 @@ unavailable here)
   ui-baseline is missing" (this clone has no tags; identical on `main`); G8's five FAIL lines are
   the pre-existing runner-home paths in `.github/scripts/nightly/*` (none in this change);
   G3/G4 are advisory.
-- Playwright chromium project against the real backend: see the line below the table in the
-  next section.
+- Playwright chromium project against the real backend (`serve_throwaway.py` on the same
+  PostgreSQL): 101 passed, 3 skipped (the allow-listed skips), 0 failed, 3.1 min; no golden or
+  report file changed.
 
 **Behaviour unchanged, by construction**: every new flag defaults to today's behaviour
 (`APP_KEY_MODE=off`, `REPS_OBJECT_ACL_PUBLIC=true`, CSP report-only, `APP_ENV=development`
