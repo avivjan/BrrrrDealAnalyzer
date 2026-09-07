@@ -1,5 +1,5 @@
 1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo/<NameOfTask>.md.
-2. Everytime you start a new task with no branch, create new from latest main, when you done push and create PR. 
+2. Everytime you start a new task create new branch from latest main (if not already exist for this task) named <NameOfTask>, when you done push and create PR. 
 3. For each feature/code you add,change or delete you should have the needed tests to make sure we covered - unit, integration, E2E tests in the tasks/todo/<NameOfTask>.md
 4. Each new feature or endpoint you add - you should add task to support it in the MCP server.
 5. The plan should have a list of todo items that you can check off as you complete them - EACH ITEM SHOULD HAVE A TIME ESTIMATE YOU THINK IT WILL TAKE YOU TO DO.
