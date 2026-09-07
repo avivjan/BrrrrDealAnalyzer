@@ -240,6 +240,34 @@ class Anomalies(unittest.TestCase):
         prev["playwright"]["stats"]["expected"] = 8
         self.assertEqual(anomalies.tile_deltas(tonight, prev, None)["passed"]["vs_prev"]["word"], "up 2")
 
+    def test_plain_verdict_reads_in_words(self):
+        totals = {"total": 1906, "failed": 0}
+        ok = anomalies.plain_verdict("PASS", totals, [], [("Playwright", "success")], 5)
+        self.assertEqual(ok["title"], "All good tonight.")
+        self.assertIn("1906 tests passed", ok["detail"])
+        warn = anomalies.plain_verdict("PASS", totals, [{"severity": "warning", "title": "Flaky test"}], [], 0)
+        self.assertIn("worth a look", warn["title"])
+        bad = anomalies.plain_verdict("FAIL", {"total": 1906, "failed": 3},
+                                      [{"severity": "critical", "title": "First-time failure"}],
+                                      [("Playwright", "failure"), ("Backend", "success")], 0)
+        self.assertEqual(bad["title"], "Something failed tonight.")
+        self.assertIn("3 failed test(s)", bad["detail"]); self.assertIn("red: Playwright", bad["detail"])
+
+    def test_suite_totals_add_every_suite(self):
+        rec = self._rec(8, {"a": 1000}, failed=["b"], flaky=["c"])
+        rec["playwright"]["stats"].update({"flaky": 1, "skipped": 181})
+        rec["junit"] = {"backend": {"available": True, "tests": 118, "failures": 1, "errors": 0, "skipped": 2},
+                        "frontend": {"available": False}}
+        t = anomalies.suite_totals(rec)
+        self.assertEqual((t["passed"], t["failed"], t["skipped"]), (10 + 1 + 115, 1 + 1, 181 + 2))
+        self.assertEqual(t["total"], t["passed"] + t["failed"] + t["skipped"])
+        self.assertEqual(t["parts"]["playwright"]["total"], 193)
+        self.assertEqual(t["parts"]["backend"]["total"], 118)
+        self.assertFalse(t["parts"]["frontend"]["available"])
+        # Deltas compare the combined numbers: a backend suite that grew shows up in the tile.
+        prev = json.loads(json.dumps(rec)); prev["junit"]["backend"]["tests"] = 100
+        self.assertEqual(anomalies.tile_deltas(rec, prev, None)["total"]["vs_prev"]["word"], "up 18")
+
 
 class EndToEnd(unittest.TestCase):
     """The CLI renders the preview fixtures; every legacy line is present; the HTML stays under budget."""
@@ -277,7 +305,7 @@ class EndToEnd(unittest.TestCase):
 
     def test_legacy_lines_present(self):
         text = self.text.read_text()
-        for line in ("Test Session Report", "Session finished with exit code 1 (Failures present)", "Total test calls (run): ",
+        for line in ("Playwright Session Report", "Session finished with exit code 1 (Failures present)", "Total test calls (run): ",
                      "Test Outcomes:", "  Passed: ", "  Failed: 2", "  Skipped: ", "test(s) were rerun (1 flaky).",
                      "Results by browser:", "Failed tests (2):", "Longest-Running Tests:", "Some checks failed.",
                      "Run and HTML report artifact: https://example.test/run/1"):
@@ -289,6 +317,12 @@ class EndToEnd(unittest.TestCase):
                      "UNKNOWN REASON", "NO SKIP ANNOTATION", "[first seen]", "[recurring,", "SHOULD NEVER FIRE",
                      "slower than usual"):
             self.assertIn(line, text, line)
+        # The headline adds every suite, the Playwright-only figure stays in its own section.
+        totals = anomalies.suite_totals(json.loads(self.record.read_text()))
+        self.assertGreater(totals["total"], totals["parts"]["playwright"]["total"])
+        self.assertIn(f"{totals['passed']} passed, {totals['failed']} failed, {totals['skipped']} skipped", text)
+        self.assertIn("Tests by suite: Playwright ", text)
+        self.assertTrue(text.splitlines()[1].startswith("Something failed tonight."), text.splitlines()[:3])
         record = json.loads(self.record.read_text())
         self.assertEqual(record["v"], 1)
         self.assertEqual(record["playwright"]["stats"]["unexpected"], 2)
