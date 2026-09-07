@@ -9,6 +9,10 @@ reportlab==5.0.1
 python-multipart==0.0.32
 requests==2.34.2
 email-validator==2.3.0
+# Passkeys (SECURITY_PLAN.md §3.2): py_webauthn and its CBOR/TLS helpers.
+webauthn==3.0.0
+cbor2==6.1.4
+pyOpenSSL==26.4.0
 python-dotenv==1.2.3
 
 google-api-python-client==2.200.0
