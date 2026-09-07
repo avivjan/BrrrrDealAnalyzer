@@ -108,6 +108,13 @@ def require_recent_auth(request: Request, db: DbSession = Depends(get_db)) -> Pr
     principal = current_principal(request) or resolve_principal(request, db)
     if principal is None:
         raise HTTPException(status_code=401, detail="unauthenticated")
+    if principal.session.kind != "web" or principal.user.role != "owner":
+        # An MCP connector's token is a session row too; it never counts as a
+        # person at the keyboard (no passkey behind it).
+        raise HTTPException(status_code=403, detail="web_session_required")
+    problem = _csrf_problem(request)
+    if problem is not None:
+        raise HTTPException(status_code=403, detail=f"csrf: {problem}")
     if not sessions.is_recently_authenticated(principal.session):
         raise HTTPException(status_code=403, detail="reauth_required")
     return principal

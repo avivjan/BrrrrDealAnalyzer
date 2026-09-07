@@ -87,3 +87,9 @@ def install_secret_redaction() -> None:
     for handler in root.handlers:
         if not any(isinstance(f, SecretRedactFilter) for f in handler.filters):
             handler.addFilter(SecretRedactFilter())
+    # uvicorn's own loggers do not propagate to the root; their handlers need
+    # the filter too or an "Exception in ASGI application" line escapes it.
+    for name in ("uvicorn", "uvicorn.error"):
+        for handler in logging.getLogger(name).handlers:
+            if not any(isinstance(f, SecretRedactFilter) for f in handler.filters):
+                handler.addFilter(SecretRedactFilter())

@@ -55,10 +55,20 @@ def _status(user, session, device) -> SessionStatusRes:
     )
 
 
+def _csrf(request: Request) -> None:
+    problem = _csrf_problem(request)
+    if problem is not None:
+        raise HTTPException(status_code=403, detail=f"csrf: {problem}")
+
+
 def _principal_or_401(request: Request, db: DbSession) -> Principal:
     principal = resolve_principal(request, db)
     if principal is None:
         raise HTTPException(status_code=401, detail="unauthenticated")
+    if principal.session.kind != "web":
+        # OAuth connector tokens are sessions too, but only the in-process
+        # tool path may use them; presented as a browser cookie they are refused.
+        raise HTTPException(status_code=403, detail="web_session_required")
     return principal
 
 
@@ -129,18 +139,21 @@ def auth_login_verify(payload: LoginVerifyReq, request: Request, response: Respo
 
 @router.post("/auth/refresh", response_model=SessionStatusRes)
 def auth_refresh(request: Request, response: Response, db: DbSession = Depends(get_db)):
+    _csrf(request)
     rotated = sessions.refresh_session(db, sessions.read_cookie(request, sessions.REFRESH_COOKIE))
     db.commit()
     if rotated is None:
         sessions.clear_session_cookies(response)
         raise HTTPException(status_code=401, detail="unauthenticated")
     session, access, refresh = rotated
-    sessions.set_session_cookies(response, access, refresh)
     user = crud.get_user(db, session.user_id)
     device = crud.get_device(db, session.device_id)
-    if user is None or device is None or device.status == "revoked":
+    if user is None or user.disabled_at is not None or device is None or device.status == "revoked":
+        sessions.revoke(session)
+        db.commit()
         sessions.clear_session_cookies(response)
         raise HTTPException(status_code=401, detail="unauthenticated")
+    sessions.set_session_cookies(response, access, refresh)
     return _status(user, session, device)
 
 
@@ -153,6 +166,7 @@ def auth_me(request: Request, db: DbSession = Depends(get_db)):
 
 @router.delete("/auth/session", status_code=204)
 def auth_logout(request: Request, response: Response, db: DbSession = Depends(get_db)):
+    _csrf(request)
     principal = resolve_principal(request, db)
     if principal is not None:
         sessions.revoke(principal.session)
@@ -164,6 +178,7 @@ def auth_logout(request: Request, response: Response, db: DbSession = Depends(ge
 
 @router.post("/auth/reauth/options", response_model=CeremonyOptionsRes)
 def auth_reauth_options(request: Request, db: DbSession = Depends(get_db)):
+    _csrf(request)
     principal = _principal_or_401(request, db)
     result = login_bl.begin_login(db, kind="reauth", user_id=principal.user.id)
     db.commit()
@@ -172,6 +187,7 @@ def auth_reauth_options(request: Request, db: DbSession = Depends(get_db)):
 
 @router.post("/auth/reauth/verify", response_model=SessionStatusRes)
 def auth_reauth_verify(payload: LoginVerifyReq, request: Request, db: DbSession = Depends(get_db)):
+    _csrf(request)
     principal = _principal_or_401(request, db)
     try:
         login_bl.finish_reauth(db, session=principal.session, challenge_id=payload.challenge_id, credential=payload.credential, request=request)
@@ -213,11 +229,8 @@ def auth_oauth_txn(txn: UUID, request: Request, db: DbSession = Depends(get_db))
 def auth_oauth_approve(payload: OAuthApproveReq, request: Request, principal: Principal = Depends(require_recent_auth), db: DbSession = Depends(get_db)):
     """Step-up protected: creates the connector's `mcp` device and the code."""
 
-    if principal.session.kind != "web" or devices.effective_status(principal.device) != "trusted":
+    if devices.effective_status(principal.device) != "trusted":
         raise HTTPException(status_code=403, detail="device_pending")
-    problem = _csrf_problem(request)
-    if problem is not None:
-        raise HTTPException(status_code=403, detail=f"csrf: {problem}")
     try:
         redirect = oauth.approve_authorization(db, txn_id=payload.txn, user=principal.user, request=request)
     except oauth.AuthorizeError:

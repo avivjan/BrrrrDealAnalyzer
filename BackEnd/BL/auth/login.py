@@ -22,6 +22,7 @@ from DAL.crud import auth as crud
 from DAL.data_models.auth.models import Session, User, WebAuthnCredential
 
 LOGIN_FAILURES_PER_WINDOW = 10
+LOGIN_FAILURES_GLOBAL_PER_WINDOW = 50
 LOGIN_WINDOW_MINUTES = 15
 
 
@@ -42,8 +43,12 @@ def begin_login(db: DbSession, *, kind: str = "login", user_id: Optional[UUID] =
 
 
 def _too_many_failures(request: Optional[Request]) -> bool:
+    # Per address, plus a global cap so a forged address cannot switch the
+    # limit off (two owners never produce this many genuine failures).
     ip = client_ip(request)
-    return count_recent("login_failed", LOGIN_WINDOW_MINUTES, ip=ip) >= LOGIN_FAILURES_PER_WINDOW
+    if count_recent("login_failed", LOGIN_WINDOW_MINUTES, ip=ip) >= LOGIN_FAILURES_PER_WINDOW:
+        return True
+    return count_recent("login_failed", LOGIN_WINDOW_MINUTES) >= LOGIN_FAILURES_GLOBAL_PER_WINDOW
 
 
 def _verify_assertion(
@@ -61,7 +66,10 @@ def _verify_assertion(
     if challenge is None:
         raise AuthError("login challenge is invalid or has expired", 400)
     raw_id = credential.get("rawId") or credential.get("id") if isinstance(credential, dict) else None
-    cred = crud.get_credential_by_id(db, base64url_to_bytes(raw_id)) if raw_id else None
+    try:
+        cred = crud.get_credential_by_id(db, base64url_to_bytes(raw_id)) if isinstance(raw_id, str) and raw_id else None
+    except (ValueError, TypeError):
+        cred = None
     if cred is None or (expected_user_id is not None and cred.user_id != expected_user_id):
         audit("login_failed", request, detail={"reason": "unknown_credential"})
         raise AuthError("passkey could not be verified")

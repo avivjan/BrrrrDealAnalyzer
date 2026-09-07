@@ -214,3 +214,73 @@ class TestPathModeUnchanged:
         assert client.post("/register", json={"redirect_uris": [REDIRECT]}).status_code == 404
         assert client.get("/.well-known/oauth-authorization-server").status_code == 404
         assert client.get("/auth/oauth/txn/00000000-0000-4000-8000-000000000000").status_code == 401
+
+
+class TestConnectorTokensAreNotBrowserSessions:
+    """A bearer token is a session row; presented as a browser cookie it must be
+    inert on every human-only flow (enrolment links, step-up, refresh, me)."""
+
+    def _as_cookie(self, client: TestClient, access: str) -> None:
+        client.cookies.clear()
+        client.cookies.set(settings.cookie_name("bw_at"), access)
+
+    def test_bearer_as_cookie_cannot_mint_enrollment_links_or_reach_the_dashboard(self, oauth_app):
+        pk = SoftPasskey(settings.rp_id(), ORIGIN)
+        enroll(oauth_app, pk)
+        _, access, _ = connect(oauth_app)
+        self._as_cookie(oauth_app, access)
+        assert oauth_app.post("/auth/enrollment-tokens", headers=XRW).status_code == 403
+        assert oauth_app.get("/auth/me").status_code == 403
+        assert oauth_app.post("/auth/reauth/options", headers=XRW).status_code == 403
+        assert oauth_app.get("/devices").status_code == 403
+        assert oauth_app.get("/credentials").status_code == 403
+        # ...while the same token still drives tools
+        assert _rpc(oauth_app, access, LIST_TOOLS).status_code == 200
+
+    def test_connector_refresh_token_is_inert_on_the_cookie_endpoint(self, oauth_app):
+        pk = SoftPasskey(settings.rp_id(), ORIGIN)
+        enroll(oauth_app, pk)
+        client_id, access, refresh = connect(oauth_app)
+        oauth_app.cookies.clear()
+        oauth_app.cookies.set(settings.cookie_name("bw_rt"), refresh)
+        assert oauth_app.post("/auth/refresh", headers=XRW).status_code == 401
+        # the rightful client can still refresh: the probe did not rotate or revoke it
+        oauth_app.cookies.clear()
+        rotated = oauth_app.post("/token", data={"grant_type": "refresh_token", "refresh_token": refresh, "client_id": client_id})
+        assert rotated.status_code == 200, rotated.text
+
+    def test_browser_refresh_token_is_inert_on_the_token_endpoint(self, oauth_app):
+        pk = SoftPasskey(settings.rp_id(), ORIGIN)
+        enroll(oauth_app, pk)
+        web_refresh = oauth_app.cookies.get(settings.cookie_name("bw_rt"))
+        client_id, *_ = connect(oauth_app)
+        r = oauth_app.post("/token", data={"grant_type": "refresh_token", "refresh_token": web_refresh, "client_id": client_id})
+        assert r.status_code == 400
+        assert oauth_app.post("/auth/refresh", headers=XRW).status_code == 200  # still good for the browser
+
+
+class TestToolPathArgumentsStayOnTheirRoute:
+    """A path argument is one id, never a route: httpx normalises `..`, so a
+    deal id of `../auth/me` would otherwise reach the excluded auth surface."""
+
+    @pytest.mark.parametrize("bad", ["../auth/me", "..", "x/y", "a%2Fb", "1?x=1", "1#frag", ""])
+    def test_separators_are_refused(self, bad):
+        import mcp_server
+        from tests.mcp_helpers import call
+
+        with pytest.raises(ValueError, match="Invalid value"):
+            call("get_deal", deal_id=bad)
+        assert "auth" not in str(mcp_server.tools().keys())
+
+    def test_a_normal_id_still_works(self, client):
+        from tests.mcp_helpers import call
+
+        with pytest.raises(RuntimeError, match="HTTP 404"):
+            call("get_deal", deal_id="00000000-0000-4000-8000-000000000000")
+
+    def test_dcr_refuses_non_web_redirects(self, oauth_app):
+        for uri in ("javascript:alert(1)//", "data:text/html,hi", "file:///etc/passwd"):
+            r = oauth_app.post("/register", json={"redirect_uris": [uri], "client_name": "x", "token_endpoint_auth_method": "none"})
+            assert r.status_code == 400, (uri, r.text)
+            assert r.json()["error"] == "invalid_redirect_uri"
+        assert oauth_app.post("/register", json={"redirect_uris": ["http://localhost:9999/cb"], "token_endpoint_auth_method": "none"}).status_code == 201

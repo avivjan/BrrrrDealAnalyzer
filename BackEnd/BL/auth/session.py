@@ -79,11 +79,14 @@ def verify_access(db: DbSession, access: Optional[str]) -> Optional[Session]:
     return session
 
 
-def refresh_session(db: DbSession, refresh: Optional[str]) -> Optional[tuple[Session, str, str]]:
+def refresh_session(db: DbSession, refresh: Optional[str], *, kind: str = "web") -> Optional[tuple[Session, str, str]]:
     """Rotate: a valid refresh token yields a new access + refresh pair.
 
     A refresh token that was already rotated away is a replay: every session
-    in its family is revoked and None is returned.
+    in its family is revoked and None is returned. `kind` pins the caller: the
+    cookie endpoint only rotates browser sessions and the OAuth token endpoint
+    only connector sessions, so a token from one path is inert on the other
+    (and is left untouched, not rotated away from its rightful holder).
     """
 
     if not refresh:
@@ -97,7 +100,7 @@ def refresh_session(db: DbSession, refresh: Optional[str]) -> Optional[tuple[Ses
                 revoke(member)
         return None
     now = crud.now()
-    if session.status == "revoked" or session.expires_at < now:
+    if session.status == "revoked" or session.expires_at < now or session.kind != kind:
         return None
     access, new_refresh = new_token(), new_token()
     session.prev_refresh_hash = session.refresh_hash
@@ -151,9 +154,16 @@ def set_device_cookie(response: Response, device_key: str) -> None:
 
 
 def clear_session_cookies(response: Response) -> None:
+    # A `__Host-` cookie is only deleted by a Set-Cookie that carries the same
+    # Secure/Path attributes; a bare delete_cookie() is ignored by browsers.
     for base in (ACCESS_COOKIE, REFRESH_COOKIE):
-        response.delete_cookie(key=settings.cookie_name(base), path="/")
+        response.delete_cookie(key=settings.cookie_name(base), path="/", secure=settings.cookie_secure(), httponly=True, samesite="lax")
 
 
 def read_cookie(request: Request, base: str) -> Optional[str]:
-    return request.cookies.get(settings.cookie_name(base)) or request.cookies.get(base)
+    """Over https only the `__Host-` name counts: that prefix is what proves
+    the cookie was set by this host; the bare name is for plain-http dev."""
+    name = settings.cookie_name(base)
+    if name == base:
+        return request.cookies.get(base)
+    return request.cookies.get(name)

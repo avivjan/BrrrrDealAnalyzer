@@ -21,6 +21,7 @@ import base64
 import json
 import logging
 import os
+from urllib.parse import quote
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -486,6 +487,17 @@ def tools() -> dict[str, dict[str, Any]]:
 # Tool execution: the real HTTP request, in-process
 # --------------------------------------------------------------------------- #
 
+def _path_segment(name: str, value: Any) -> str:
+    """One URL path segment from a tool argument (an id). httpx normalises
+    dot segments before the app sees the path, so `../auth/me` in a deal id
+    would escape the tool's route and reach an excluded one; a segment may
+    therefore hold no separators at all, and is percent-encoded besides."""
+    text = str(value)
+    if not text or any(c in text for c in "/\\?#%") or text in {".", ".."}:
+        raise ValueError(f"Invalid value for {name}")
+    return quote(text, safe="")
+
+
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.ContentBlock]:
     """Run a tool; the content blocks only (JSON as text, PDFs as a blob resource)."""
     blocks, _ = await call_tool_structured(name, arguments)
@@ -505,7 +517,11 @@ async def call_tool_structured(
     missing = [p for p in spec["path_params"] if p not in args]
     if missing:
         raise ValueError(f"Missing required argument(s): {', '.join(missing)}")
-    path = spec["path"].format(**{p: args[p] for p in spec["path_params"]})
+    path = spec["path"].format(**{p: _path_segment(p, args[p]) for p in spec["path_params"]})
+    # Belt and braces: whatever the segments were, the final path must still be
+    # the tool's own route, never one of the excluded auth surfaces.
+    if path.startswith(EXCLUDED_PREFIXES) or "/../" in f"{path}/":
+        raise ValueError("Invalid path argument")
     params = {q: args[q] for q in spec["query_params"] if args.get(q) is not None}
 
     request_kwargs: dict[str, Any] = {}

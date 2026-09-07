@@ -32,6 +32,7 @@ from mcp.server.auth.provider import (
     AuthorizeError,
     OAuthAuthorizationServerProvider,
     RefreshToken,
+    RegistrationError,
     TokenError,
 )
 from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
@@ -84,6 +85,11 @@ class BigWhalesOAuthProvider(OAuthAuthorizationServerProvider[AuthorizationCode,
             return OAuthClientInformationFull.model_validate(row.metadata_json)
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
+        # The SPA follows the redirect after consent, so only web URLs may be
+        # registered (the SDK's AnyUrl would accept javascript: or data:).
+        for uri in client_info.redirect_uris or []:
+            if not str(uri).lower().startswith(("http://", "https://")):
+                raise RegistrationError("invalid_redirect_uri", "redirect_uris must be http(s)")
         data = client_info.model_dump(mode="json")
         with SessionLocal() as db:
             db.add(
@@ -161,7 +167,7 @@ class BigWhalesOAuthProvider(OAuthAuthorizationServerProvider[AuthorizationCode,
 
     async def exchange_refresh_token(self, client: OAuthClientInformationFull, refresh_token: RefreshToken, scopes: list[str]) -> OAuthToken:
         with SessionLocal() as db:
-            rotated = sessions.refresh_session(db, refresh_token.token)
+            rotated = sessions.refresh_session(db, refresh_token.token, kind="mcp")
             if rotated is None:
                 db.commit()
                 raise TokenError("invalid_grant", "refresh token is invalid")
@@ -270,4 +276,7 @@ def approve_authorization(db, *, txn_id: UUID, user: User, request) -> str:
     audit("oauth_approved", request, user_id=user.id, device_id=device.id, detail={"client_id": row.client_id})
     from mcp.server.auth.provider import construct_redirect_uri
 
-    return construct_redirect_uri(row.params["redirect_uri"], code=code, state=row.params.get("state"))
+    redirect_uri = str(row.params["redirect_uri"])
+    if not redirect_uri.lower().startswith(("http://", "https://")):
+        raise AuthorizeError("invalid_request", "redirect_uri must be http(s)")
+    return construct_redirect_uri(redirect_uri, code=code, state=row.params.get("state"))

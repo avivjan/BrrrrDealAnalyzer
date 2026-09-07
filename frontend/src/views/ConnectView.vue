@@ -20,6 +20,16 @@ const error = ref<string | null>(null);
 const busy = ref(false);
 const done = ref(false);
 
+/** Where the connector will be sent with its code: shown so a look-alike name cannot hide an unfamiliar destination. */
+function redirectHost(uri: string | null): string {
+  if (!uri) return "";
+  try {
+    return new URL(uri).host;
+  } catch {
+    return uri;
+  }
+}
+
 function describe(e: any): string {
   return e?.response?.data?.detail || e?.message || "Something went wrong";
 }
@@ -36,6 +46,7 @@ async function approve() {
       await auth.reauth(); // step-up: confirm with the passkey, then retry
       result = await authApi.oauthApprove(txn);
     }
+    if (!/^https?:\/\//i.test(result.redirect_uri)) throw new Error("The connector's return address is not a web URL");
     done.value = true;
     window.location.assign(result.redirect_uri);
   } catch (e) {
@@ -74,6 +85,9 @@ onMounted(async () => {
       <p class="text-sm text-fg" data-testid="connect.client">
         <strong>{{ info.client_name }}</strong> wants to use the Big Whales tools as
         <strong>{{ auth.user?.display_name }}</strong>: deals, liquidity, the REPS log and sending offers.
+      </p>
+      <p class="text-xs text-fg-muted" data-testid="connect.redirect">
+        After you allow, the browser goes back to <code>{{ redirectHost(info.redirect_uri) }}</code>. If that is not the app you started from, cancel.
       </p>
       <p class="text-xs text-fg-muted">
         It becomes a device on your account. You can revoke it at any time; it never sees your bank tokens.

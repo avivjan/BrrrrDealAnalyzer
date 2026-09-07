@@ -5,10 +5,11 @@ import { API_ORIGIN } from '../fixtures/env';
 
 /**
  * The production Content-Security-Policy (frontend/public/_headers, applied by
- * Netlify) is replayed on every document the built app serves, and every
- * route is walked with a real backend: one violation fails the check. The
- * policy names the production API host and localhost:8000; the e2e backend
- * listens elsewhere, so only that origin is substituted.
+ * Netlify) is what `vite preview` serves too (vite.config.ts), so the whole
+ * browser suite already runs under it. This check pins that: the header the
+ * preview sends is the file's policy (with the e2e API origin in the place of
+ * localhost:8000), and every route plus the one blob: frame (the PDF preview)
+ * renders without a single violation.
  */
 
 const HEADERS = fileURLToPath(new URL('../../public/_headers', import.meta.url));
@@ -33,13 +34,7 @@ const ROUTES: [path: string, ready: string][] = [
   ['/reps', 'reps.manual-entry'],
 ];
 
-test('every route renders under the production CSP without a violation', async ({ page }) => {
-  const csp = policy();
-  await page.route('**/*', async (route) => {
-    if (route.request().resourceType() !== 'document') return route.continue();
-    const response = await route.fetch();
-    await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': csp } });
-  });
+async function watchViolations(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
     (window as any).__csp = [];
     document.addEventListener('securitypolicyviolation', (e) => {
@@ -50,12 +45,34 @@ test('every route renders under the production CSP without a violation', async (
   page.on('console', (m) => {
     if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) consoleErrors.push(m.text());
   });
+  const violations = async () => (await page.evaluate(() => (window as any).__csp)) as string[];
+  return { violations, consoleErrors };
+}
 
+test('the app is served under the production CSP', async ({ page }) => {
+  const response = await page.goto('/');
+  expect(response?.headers()['content-security-policy']).toBe(policy());
+});
+
+test('every route renders under the production CSP without a violation', async ({ page }) => {
+  const { violations, consoleErrors } = await watchViolations(page);
   for (const [path, ready] of ROUTES) {
     await page.goto(path);
     await expect(page.getByTestId(ready)).toBeVisible();
-    const violations: string[] = await page.evaluate(() => (window as any).__csp);
-    expect(violations, `${path} violated the CSP`).toEqual([]);
+    expect(await violations(), `${path} violated the CSP`).toEqual([]);
   }
+  expect(consoleErrors).toEqual([]);
+});
+
+test('the PDF preview (the one blob: frame) renders under the production CSP', async ({ page, seed }) => {
+  const { violations, consoleErrors } = await watchViolations(page);
+  const deal = await seed.seedActiveDeal('BRRRR', { section: 1 });
+  await page.goto('/my-deals');
+  await page.getByTestId(`mydeals.card.${deal.id}`).click();
+  await expect(page.getByTestId('mydeals.modal')).toBeVisible();
+  await page.getByTestId('mydeals.modal.view-report').click();
+  await expect(page.getByTestId('mydeals.pdf-modal.iframe')).toHaveAttribute('src', /^blob:/);
+  await page.waitForTimeout(500);
+  expect(await violations(), 'the PDF preview violated the CSP').toEqual([]);
   expect(consoleErrors).toEqual([]);
 });

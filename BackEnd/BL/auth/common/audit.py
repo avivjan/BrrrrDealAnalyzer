@@ -23,10 +23,12 @@ logger = logging.getLogger(__name__)
 def client_ip(request: Optional[Request]) -> Optional[str]:
     if request is None:
         return None
-    # Render terminates TLS in front of uvicorn and sets X-Forwarded-For.
+    # Render terminates TLS in front of uvicorn and *appends* the peer it saw
+    # to X-Forwarded-For. The last value is therefore the one hop we trust;
+    # anything before it was supplied by the client and is not believed.
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()[:64]
+        return forwarded.rsplit(",", 1)[-1].strip()[:64]
     return (request.client.host if request.client else None)
 
 

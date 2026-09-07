@@ -120,3 +120,36 @@ calculation breakdown gained main's new "Rehab float buffer (10% of rehab)" step
 the calculator without re-recording `frontend/e2e/golden`). Not this branch's change and not
 touched here: the goldens follow the repo's "Golden update:" commit convention, for the owner
 to re-record once PR #46's numbers are confirmed as intended.
+## Independent review before merge
+
+Four adversarial reviewers (a general sweep plus deep dives on sessions/devices, the MCP and
+OAuth path, and the frontend/CSP/data hardening) read the branch at `1b4ca30` with main frozen.
+Everything they found was verified against the code and fixed on the branch; nothing was left
+as a follow-up.
+
+| # | Finding | Severity | Fix |
+|---|---|---|---|
+| R1 | A tool path argument such as `../auth/me` is normalised by httpx before the app sees it, so an in-process tool call could reach the routes excluded from the tool list (`/auth/*`, `/devices/*`). | High | `mcp_server._path_segment`: a path argument is one id — no `/ \ ? # %`, not `.`/`..`, percent-encoded — and the final path is re-checked against the excluded prefixes. Tests. |
+| R2 | An OAuth connector token is a session row; two browser-only endpoints accepted it as a cookie: `POST /auth/enrollment-tokens` (mint an owner passkey link for 10 minutes after issue) and `POST /auth/refresh` (rotate a connector refresh token into browser cookies, also invalidating the connector). | High | `require_recent_auth` and the auth router's principal helper refuse non-`web` sessions; `refresh_session(kind=…)` refuses a token of the other kind *before* rotating, so a probe cannot revoke the rightful holder. Tests both directions. |
+| R3 | Dynamic client registration accepted `javascript:`/`data:` redirect URIs (the SDK types them as `AnyUrl`); `/connect` follows the redirect with `location.assign`. Blocked by the enforcing CSP, but the principle was wrong. | Medium | Registration and approval refuse non-http(s) redirect URIs; the SPA follows only web URLs. Tests. |
+| R4 | The consent page named only the client (attacker-chosen under open registration). | Medium | `/connect` now shows the host the code will be sent to and says to cancel if it is unfamiliar. |
+| R5 | `client_ip` trusted the *first* `X-Forwarded-For` value (client-supplied), so the login-failure limit was bypassable and forgeable IPs landed in the audit log and the dashboard. | Medium | The last value (the hop Render appends) is used; a global 50-per-15-minute login-failure cap that no forged address can evade. |
+| R6 | `delete_cookie` without `Secure` cannot delete a `__Host-` cookie, so logout left dead cookies in production; `/auth/refresh` set cookies before checking the device. | Low | Matching attributes on delete; the refresh decides (and revokes) before it sets cookies; disabled users refused. |
+| R7 | The un-prefixed cookie name was honoured over https, weakening `__Host-` pinning. | Low | Only the `__Host-` name counts when cookies are Secure. |
+| R8 | Step-up routes did not check the user's role, and several auth mutations (refresh, reauth, logout) skipped the CSRF headers the SPA already sends. | Low | `require_recent_auth` requires an `owner` on a web session and the CSRF headers; refresh/reauth/logout check them too. |
+| R9 | A malformed passkey credential id raised a 500 instead of a counted login failure. | Low | Treated as an unknown credential. |
+| R10 | uvicorn's own loggers do not propagate to the root, so the secret-redaction filter missed "Exception in ASGI application" lines. | Low | Filter attached to `uvicorn` and `uvicorn.error` handlers. |
+| R11 | The enforcing CSP had no `frame-src`, so `default-src 'self'` would have blocked the PDF preview's `blob:` iframe in production — the one place the CSP was tighter than the app. | Functional | `frame-src 'self' blob:`. `vite preview` now serves the production CSP (vite.config.ts reads `_headers`), so the **whole browser suite runs under it** and a dedicated check pins the header and the PDF frame. |
+
+Noted, not changed (low impact or deliberately out of scope): the REPS evidence link URL is not
+restricted to the bucket host (Sheets refuses `javascript:` links; the SPA re-reads through
+`safeHref`); `/register` and `/authorize` are unauthenticated writers in OAuth mode (rate-limit
+later if it ever matters); refresh-replay detection remembers one generation; the Phase 0 app
+key in `localStorage` is retired by setting `APP_KEY_MODE=off` once passkeys are enforced; MCP
+sessions stay exempt from step-up on `/send-offer` (the device approval is the human in the
+loop, and the owner may drop `send_offer` from `MCP_SCOPES`).
+
+**Verification after the fixes.** Backend 525 passed; `verify_regression.py verify` identical;
+vitest 87 files / 1383 tests; `npm run build`; Playwright chromium 97 passed / 3 skipped **under
+the production CSP** — the same 9 golden failures as before, all from PR #46's calculator
+change on `main`, none from this branch.
