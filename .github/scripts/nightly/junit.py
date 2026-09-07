@@ -21,6 +21,34 @@ def _case_status(case: ET.Element) -> tuple[str, str]:
     return "passed", ""
 
 
+MCP_MODULE_PREFIX = "tests.test_mcp"
+
+
+def subset(suite: dict, prefix: str = MCP_MODULE_PREFIX) -> dict:
+    """The part of a parsed suite whose cases live in modules starting with `prefix`.
+
+    Used to break the MCP server tests (tests/test_mcp*.py) out of the single backend
+    JUnit file; any future test_mcp_*.py module is included by construction.
+    """
+    if not suite.get("available"):
+        return dict(suite)
+    cases = [c for c in suite["cases"] if c["classname"].startswith(prefix)]
+    failed = [c for c in cases if c["status"] in ("failed", "error")]
+    return {
+        "available": True, "error": "",
+        "tests": len(cases),
+        "failures": sum(1 for c in cases if c["status"] == "failed"),
+        "errors": sum(1 for c in cases if c["status"] == "error"),
+        "skipped": sum(1 for c in cases if c["status"] == "skipped"),
+        "passed": sum(1 for c in cases if c["status"] == "passed"),
+        "time_s": round(sum(c["time_s"] for c in cases), 3),
+        "cases": cases,
+        "failed": failed,
+        "slowest": sorted(cases, key=lambda c: c["time_s"], reverse=True)[:10],
+        "by_file": {k: v for k, v in suite["by_file"].items() if k.startswith(prefix)},
+    }
+
+
 def parse(path: pathlib.Path | str | None) -> dict:
     """Return a SuiteSummary dict. ``available`` is False when nothing usable was read."""
     empty = {
