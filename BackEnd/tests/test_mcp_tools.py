@@ -237,3 +237,28 @@ class TestSendOffer:
         assert result == {"message": "Offer sent", "success": True}
         assert captured["payload"].property_address == "5 Offer Ln"
         assert float(captured["payload"].purchase_price) == 250000
+
+
+class TestCompactDealTools:
+    """The tools a chat should reach for first: small, searchable, then detail on demand."""
+
+    def test_list_search_portfolio_and_detail(self, client, brrrr_payload, flip_payload):
+        brrr = call_json("add_active_deal", body={**brrrr_payload, "stage": 3, "notes": "duplex by the beach"})
+        flip = call_json("add_active_deal", body=flip_payload)
+        bought = call_json("move_to_bought", deal_id=brrr["id"], deal_type="BRRRR")
+
+        rows = call_json("list_deals")
+        assert {r["id"] for r in rows} == {brrr["id"], flip["id"], bought["id"]}
+        assert all("breakdowns" not in r for r in rows)
+        assert [r["id"] for r in call_json("list_deals", board="bought")] == [bought["id"]]
+        assert [r["id"] for r in call_json("search_deals", q="duplex beach")] == sorted(
+            [brrr["id"], bought["id"]], key=lambda i: [r["id"] for r in call_json("search_deals", q="duplex beach")].index(i))
+
+        summary = call_json("portfolio_summary")
+        assert (summary["active_count"], summary["bought_count"]) == (2, 1)
+        assert summary["top_bought_by_equity"][0]["id"] == bought["id"]
+
+        detail = call_json("get_deal", deal_id=bought["id"])
+        assert detail["board"] == "bought" and "breakdowns" in detail["deal"]
+        with pytest.raises(RuntimeError, match="HTTP 404"):
+            call("get_deal", deal_id=str(__import__("uuid").uuid4()))

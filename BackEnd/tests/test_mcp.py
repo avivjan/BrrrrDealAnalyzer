@@ -221,3 +221,76 @@ class TestConcurrency:
         assert results[0::2] == [results[0]] * 5
         assert results[1::2] == [results[1]] * 5
         assert results[1] < results[0]
+
+
+# --------------------------------------------------------------------------- #
+# Guards against the two ways a chat failed to use the connector: tools it could
+# not find by the words a user uses, and responses too large to read.
+# --------------------------------------------------------------------------- #
+
+USER_PHRASES = [
+    "best deal", "worst deal", "deal history", "portfolio", "properties we bought", "closed deals",
+    "what did we buy", "search deals", "find a deal", "deal details", "calculation breakdown",
+    "bank balance", "cash balance", "log hours", "logged hours", "send an offer", "pdf report",
+    "analyze a flip", "brrrr calculator", "liquidity timeline", "recurring cash flow",
+    "pipeline stages", "delete a deal", "mark as bought", "duplicate a deal",
+]
+STOP_WORDS = {"a", "an", "the", "we", "of", "our", "as", "to", "did"}
+
+
+def _stems(phrase: str) -> list[str]:
+    return [w[:5] for w in phrase.lower().split() if w not in STOP_WORDS and len(w) >= 3]
+
+
+class TestFindability:
+    @pytest.mark.parametrize("phrase", USER_PHRASES)
+    def test_a_user_phrase_finds_a_tool(self, phrase):
+        stems = _stems(phrase)
+        for spec in mcp_server.tools().values():
+            text = f"{spec['tool'].name} {spec['tool'].description}".lower().replace("_", " ")
+            if all(stem in text for stem in stems):
+                return
+        pytest.fail(f"no tool name/description matches every word of {phrase!r}; add the words a user would use")
+
+    def test_instructions_route_deal_questions_to_the_compact_tools(self):
+        for name in ("portfolio_summary", "list_deals", "search_deals", "get_deal"):
+            assert name in mcp_server.INSTRUCTIONS
+        assert "large" in mcp_server.INSTRUCTIONS.lower()
+
+    def test_annotations_follow_the_http_method(self):
+        for spec in mcp_server.tools().values():
+            a = spec["tool"].annotations
+            assert a.readOnlyHint == (spec["method"] == "GET"), spec["tool"].name
+            assert a.destructiveHint == (spec["method"] == "DELETE"), spec["tool"].name
+        big = mcp_server.tools()
+        assert "large" in big["get_active_deals"]["tool"].description.lower()
+        assert "large" in big["get_bought_deals"]["tool"].description.lower()
+
+
+class TestResponseBudgets:
+    """A chat has to be able to read what the compact tools return."""
+
+    @pytest.fixture
+    def sixty_deals(self, client, brrrr_payload, flip_payload):
+        ids = []
+        for i in range(60):
+            payload = brrrr_payload if i % 2 else flip_payload
+            deal = _call_json("add_active_deal", body={**payload, "address": f"{i} Budget St, Jacksonville", "stage": 3})
+            ids.append(deal["id"])
+        for deal_id in ids[:10]:
+            _call_json("move_to_bought", deal_id=deal_id, deal_type="FLIP" if ids.index(deal_id) % 2 == 0 else "BRRRR")
+        return ids
+
+    def test_compact_tools_stay_small(self, client, sixty_deals):
+        rows = _call("list_deals", limit=500)[0].text
+        assert len(rows) < 50_000, f"list_deals is {len(rows)} bytes for 70 deals"
+        assert "breakdowns" not in rows
+        assert len(_call("search_deals", q="budget")[0].text) < 50_000
+        assert len(_call("portfolio_summary")[0].text) < 10_000
+        detail = _call("get_deal", deal_id=sixty_deals[0])[0].text
+        assert len(detail) < 100_000
+
+    def test_the_full_dumps_are_the_large_ones(self, client, sixty_deals):
+        # Documents why the compact tools exist: the same 70 deals in full.
+        full = _call("get_active_deals")[0].text
+        assert len(full) > 50_000

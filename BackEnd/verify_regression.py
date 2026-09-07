@@ -1180,6 +1180,16 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     brrr_id, flip_id = brrr["id"], flip["id"]
 
     r.get("active_deals/list", "/active-deals")
+
+    # -- compact cross-board views (/deals) --------------------------------
+    r.get("deals/list", "/deals")
+    r.get("deals/list_flip_only", "/deals", params={"deal_type": "FLIP"})
+    r.get("deals/search", "/deals/search", params={"q": "shared form"})
+    r.get("deals/search_no_hit", "/deals/search", params={"q": "nowhere"})
+    r.get("deals/portfolio", "/deals/portfolio")
+    r.get("deals/detail_flip", f"/deals/{flip_id}")
+    r.get("deals/detail_missing", f"/deals/{MISSING_ID}")
+    r.get("deals/bad_board", "/deals", params={"board": "sold"})
     r.put("active_deals/update_brrr", f"/active-deals/{brrr_id}",
           json={**brrr, "purchasePrice": 210, "rent": 2750})
     r.put("active_deals/update_flip", f"/active-deals/{flip_id}",
