@@ -16,10 +16,12 @@ failed. Prints a one-line verdict for the workflow log; never prints the URL.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 
-QUESTION = "What's the best deal we did so far, in your opinion? Use the Big Whales tools to check the real data."
+QUESTION = ("What's the best deal we did so far, in your opinion, and how much of our own money is still left "
+            "in that deal? Use the Big Whales tools to check the real data and quote the exact dollar amounts.")
 COMPACT_TOOLS = {"portfolio_summary", "list_deals", "search_deals", "get_deal"}
 SERVER_NAME = "big-whales"
 
@@ -46,6 +48,32 @@ def verdict(names: list[str]) -> tuple[bool, str]:
     if used:
         return False, f"FAIL: used only {sorted(used)}; a compact deal tool was expected first"
     return False, "FAIL: Claude answered without calling any tool"
+
+
+def number_forms(amount: float) -> list[str]:
+    """The ways a dollar amount is usually written: 26587, 26,587, $26,587, 26.6k, 27k."""
+    whole = int(round(amount))
+    forms = {str(whole), f"{whole:,}", f"${whole:,}", f"{amount / 1000:.1f}k", f"{round(amount / 1000)}k"}
+    return sorted(forms)
+
+
+def mentions_amount(text: str, amount: float) -> bool:
+    """True if the answer quotes the amount in any usual form (case-insensitive, 'K' or 'k')."""
+    haystack = text.lower().replace("\u2009", "").replace(" ", "")
+    return any(form.lower() in haystack for form in number_forms(amount))
+
+
+def left_in_by_deal(mcp_url: str) -> dict[str, float]:
+    """cash_left_in_deal per bought deal (address -> dollars, only deals with money left in),
+    from the site's own compact endpoint on the same host as the connector."""
+    import urllib.parse
+    import urllib.request
+
+    parts = urllib.parse.urlsplit(mcp_url)
+    with urllib.request.urlopen(f"{parts.scheme}://{parts.netloc}/deals?board=bought&limit=500", timeout=60) as resp:
+        rows = json.load(resp)
+    return {r["address"]: float(r["cash_left_in_deal"]) for r in rows
+            if r.get("cash_left_in_deal") and float(r["cash_left_in_deal"]) > 0}
 
 
 def ask(url: str, model: str):
@@ -81,6 +109,20 @@ def main() -> int:
     text = " ".join(getattr(b, "text", "") for b in message.content if getattr(b, "type", "") == "text")
     print(reason)
     print("answer (first 400 chars):", text[:400].replace("\n", " "))
+    if ok:
+        try:
+            amounts = left_in_by_deal(url)
+        except Exception as exc:  # noqa: BLE001
+            print(f"WARN: could not fetch the money-left-in amounts: {type(exc).__name__}")
+            amounts = {}
+        if amounts:
+            hit = next((a for a, v in amounts.items() if mentions_amount(text, v)), None)
+            if hit:
+                print(f"OK: the answer quotes the money left in {hit} ({amounts[hit]:,.0f})")
+            else:
+                print("FAIL: the answer quotes none of the money-left-in amounts of the bought deals "
+                      f"({', '.join(f'{v:,.0f}' for v in amounts.values())}); it probably misread cash_out")
+                ok = False
     return 0 if ok else 1
 
 

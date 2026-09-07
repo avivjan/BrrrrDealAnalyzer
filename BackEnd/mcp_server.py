@@ -52,8 +52,16 @@ INSTRUCTIONS = (
     "Active deals: stage 1 New, 2 Working, 3 Brought, 4 Keep in Mind, 5 Dead; section "
     "1 Wholesale, 2 Market, 3 Off Market. Where a tool takes deal_type it must match the "
     "deal ('BRRRR' or 'FLIP'). Update tools replace the whole record: read it first, edit, "
-    "send it back. A cash_on_cash or roi of -1 means infinite (no cash left in the deal) and "
-    "-2 means not applicable."
+    "send it back. "
+    "GLOSSARY (every output field also carries its own description in the tool's output "
+    "schema): cash_out = total cash received from a BRRRR deal (the refinance wire) minus total "
+    "cash put in; NEGATIVE cash_out means that much of your own money is still left in the deal "
+    "(compact rows also give cash_left_in_deal, never negative). cash_out_routi / "
+    "cash_wire_at_refi ('routi') = the cash wire received at the refinance closing table, "
+    "before subtracting what was invested. equity = ARV minus the new loan. net_profit = equity "
+    "plus cash out. cash_flow = monthly, after the refinance. cash_on_cash and roi are percents; "
+    "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
+    "_in_thousands or _k are thousands of dollars; every other money field is plain dollars."
 )
 
 # One line per tool, keyed by tool name (the route's function name without a
@@ -325,6 +333,66 @@ def _api_routes(routes) -> list[APIRoute]:
     return found
 
 
+ITEMS = "items"
+
+
+# Tools that return full deal records. Their output schema is kept loose so tools/list stays
+# small; `get_deal` publishes the complete, described schema of a deal record once.
+LOOSE_OUTPUT = {
+    "get_active_deals", "get_bought_deals", "add_active_deal", "update_deal", "duplicate_deal",
+    "move_to_bought", "add_bought_deal", "update_bought_deal",
+}
+LOOSE_DESCRIPTION = (
+    "A full deal record: every input (camelCase aliases, money in thousands), notes, comps, all "
+    "metrics and the calculation breakdowns. The complete field-by-field schema, with each "
+    "metric's meaning and sign convention, is the output schema of get_deal."
+)
+
+
+def _strip_titles(node: Any) -> Any:
+    """Drop pydantic's per-field `title` keys: no information, a fifth of the bytes."""
+    if isinstance(node, dict):
+        return {k: _strip_titles(v) for k, v in node.items() if k != "title"}
+    if isinstance(node, list):
+        return [_strip_titles(v) for v in node]
+    return node
+
+
+def _output_schema(name: str, op: dict[str, Any], defs: dict[str, Any]) -> tuple[dict[str, Any] | None, bool]:
+    """The tool's outputSchema from the endpoint's 200 JSON response, and whether the
+    result has to be wrapped as {"items": [...]} (MCP output schemas must be objects).
+    Field descriptions from the response models travel with it. None for non-JSON
+    (PDF) responses."""
+    responses = op.get("responses") or {}
+    content: dict[str, Any] = {}
+    for status, spec in sorted(responses.items()):        # first 2xx with a JSON body (200, 201, ...)
+        if str(status).startswith("2") and "application/json" in (spec.get("content") or {}):
+            content = spec["content"]
+            break
+    if not content:
+        return None, False
+    schema = dict(content["application/json"].get("schema") or {})
+    if not schema:                                   # no response model (plain dicts, PDFs): unknown shape
+        return None, False
+    if name in LOOSE_OUTPUT:                         # full deal records: get_deal carries the canonical schema
+        loose = {"type": "object", "additionalProperties": True, "description": LOOSE_DESCRIPTION}
+        if schema.get("type") == "array":
+            return {"type": "object", "properties": {ITEMS: {"type": "array", "items": loose}}, "required": [ITEMS]}, True
+        return loose, False
+    wrap = False
+    if schema.get("type") == "array":
+        schema = {"type": "object", "properties": {ITEMS: schema}, "required": [ITEMS]}
+        wrap = True
+    elif "$ref" in schema and len(schema) == 1:
+        schema = dict(defs[schema["$ref"][len("#/$defs/"):]])
+    elif "type" not in schema:                      # untyped dict responses, unions
+        schema = {"type": "object", **schema}
+    used = _referenced_defs(schema, defs)
+    if used:
+        schema["$defs"] = used
+    return _strip_titles(schema), wrap
+
+
 def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
     spec = json.loads(
         json.dumps(app.openapi()).replace("#/components/schemas/", "#/$defs/")
@@ -383,6 +451,8 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
                 input_schema["$defs"] = used
 
             name = _tool_name(route)
+            output_schema, wrap_items = _output_schema(name, op, defs)
+
             tools[name] = {
                 "method": method,
                 "path": route.path,
@@ -391,10 +461,12 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
                 "form_fields": form_fields,
                 "file_fields": file_fields,
                 "json_body": has_json_body,
+                "wrap_items": wrap_items,
                 "tool": t.Tool(
                     name=name,
                     description=DESCRIPTIONS.get(name) or op.get("summary") or name,
                     inputSchema=input_schema,
+                    outputSchema=output_schema,
                     annotations=tool_annotations(name, method),
                 ),
             }
@@ -415,6 +487,16 @@ def tools() -> dict[str, dict[str, Any]]:
 # --------------------------------------------------------------------------- #
 
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.ContentBlock]:
+    """Run a tool; the content blocks only (JSON as text, PDFs as a blob resource)."""
+    blocks, _ = await call_tool_structured(name, arguments)
+    return blocks
+
+
+async def call_tool_structured(
+    name: str, arguments: dict[str, Any] | None,
+) -> tuple[list[t.ContentBlock], dict[str, Any] | None]:
+    """Run a tool; the content blocks plus the structured result that matches the tool's
+    outputSchema (list responses wrapped as {"items": [...]}), or None for non-JSON."""
     spec = tools().get(name)
     if spec is None or not tool_allowed(name):
         raise ValueError(f"Unknown tool: {name}")
@@ -487,10 +569,15 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
                     blob=base64.b64encode(response.content).decode("ascii"),
                 ),
             ),
-        ]
+        ], None
     if content_type.startswith("application/json"):
-        return [t.TextContent(type="text", text=json.dumps(response.json(), indent=2))]
-    return [t.TextContent(type="text", text=response.text)]
+        data = response.json()
+        structured = {ITEMS: data} if spec["wrap_items"] else (data if isinstance(data, dict) else {"value": data})
+        # Lists are serialised compactly (a third fewer bytes for a chat to read); single
+        # objects keep the indentation that makes a breakdown readable.
+        text = json.dumps(data, separators=(",", ":")) if spec["wrap_items"] else json.dumps(data, indent=2)
+        return [t.TextContent(type="text", text=text)], structured
+    return [t.TextContent(type="text", text=response.text)], None
 
 
 def _caller_cookies() -> tuple[dict[str, str], Any]:
@@ -522,8 +609,9 @@ async def list_tools() -> list[t.Tool]:
 
 
 @server.call_tool()
-async def _call_tool_handler(name: str, arguments: dict[str, Any] | None) -> list[t.ContentBlock]:
-    return await call_tool(name, arguments)
+async def _call_tool_handler(name: str, arguments: dict[str, Any] | None):
+    blocks, structured = await call_tool_structured(name, arguments)
+    return (blocks, structured) if structured is not None else blocks
 
 
 # --------------------------------------------------------------------------- #

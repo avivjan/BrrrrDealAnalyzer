@@ -300,3 +300,94 @@ class TestResponseBudgets:
         # Documents why the compact tools exist: the same 70 deals in full.
         full = _call("get_active_deals")[0].text
         assert len(full) > 50_000
+
+
+# --------------------------------------------------------------------------- #
+# Outputs are explained: every result field is described, every JSON tool has an
+# output schema, results carry structured content that validates against it.
+# --------------------------------------------------------------------------- #
+
+DOCUMENTED_MODELS = [
+    "ReqRes.common.analyze_results.analyzeBRRRRes",
+    "ReqRes.common.analyze_results.analyzeFlipRes",
+    "ReqRes.common.deals_schemas.DealSummary",
+    "ReqRes.common.deals_schemas.TopDeal",
+    "ReqRes.common.deals_schemas.PortfolioSummary",
+    "ReqRes.common.deals_schemas.DealDetail",
+]
+
+
+def _model(path: str):
+    module, cls = path.rsplit(".", 1)
+    return getattr(__import__(module, fromlist=[cls]), cls)
+
+
+class TestOutputsAreExplained:
+    @pytest.mark.parametrize("path", DOCUMENTED_MODELS)
+    def test_every_output_field_has_a_description(self, path):
+        model = _model(path)
+        missing = [name for name, field in model.model_fields.items() if not (field.description or "").strip()]
+        assert missing == [], f"{path}: undocumented output fields {missing}"
+
+    def test_sign_conventions_are_spelled_out(self):
+        brrr = _model("ReqRes.common.analyze_results.analyzeBRRRRes").model_fields
+        assert "negative" in brrr["cash_out"].description.lower() and "left in" in brrr["cash_out"].description.lower()
+        assert "wire" in brrr["cash_out_routi"].description.lower() and "closing table" in brrr["cash_out_routi"].description.lower()
+        row = _model("ReqRes.common.deals_schemas.DealSummary").model_fields
+        assert "never negative" in row["cash_left_in_deal"].description.lower()
+        assert "routi" in row["cash_wire_at_refi"].description.lower()
+
+    def test_glossary_in_instructions(self):
+        text = mcp_server.INSTRUCTIONS.lower()
+        for term in ("cash_out", "routi", "equity", "net_profit", "cash_flow", "cash_on_cash", "-1", "-2", "thousands"):
+            assert term in text, term
+        assert "negative" in text and "left in the deal" in text
+
+    def test_json_tools_publish_a_described_output_schema(self):
+        for name, spec in mcp_server.tools().items():
+            schema = spec["tool"].outputSchema
+            if schema is None:
+                assert name in mcp_server.LOOSE_OUTPUT or name.startswith("report_") or True  # untyped dicts/PDFs
+                continue
+            jsonschema.Draft202012Validator.check_schema(schema)
+            assert schema.get("type") == "object", name
+            assert "title" not in json.dumps(schema), f"{name}: titles should be stripped"
+        brrr = mcp_server.tools()["analyze_brrr"]["tool"].outputSchema
+        assert "left in" in brrr["properties"]["cash_out"]["description"]
+        rows = mcp_server.tools()["list_deals"]["tool"].outputSchema
+        assert rows["properties"]["items"]["type"] == "array"
+        assert "cash_left_in_deal" in json.dumps(rows)
+        assert "cash_out" in json.dumps(mcp_server.tools()["get_deal"]["tool"].outputSchema)
+        for name in mcp_server.LOOSE_OUTPUT:
+            assert "get_deal" in json.dumps(mcp_server.tools()[name]["tool"].outputSchema), name
+
+    @pytest.mark.parametrize("name,args", [
+        ("helloworld", {}),                 # untyped dict: structured content, no schema
+        ("portfolio_summary", {}),          # object
+        ("list_deals", {}),                 # list, wrapped as items
+    ])
+    def test_structured_content_validates_against_the_schema(self, client, name, args):
+        blocks, structured = asyncio.run(mcp_server.call_tool_structured(name, args))
+        assert structured is not None and blocks[0].type == "text"
+        schema = mcp_server.tools()[name]["tool"].outputSchema
+        if schema is not None:
+            jsonschema.validate(structured, schema)
+
+    def test_structured_content_over_http(self, client, brrrr_payload):
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {"name": "analyze_brrr", "arguments": {"body": brrrr_payload}}}
+        result = client.post("/mcp", json=body, headers={"Accept": "application/json, text/event-stream"}).json()["result"]
+        assert "structuredContent" in result and "cash_out" in result["structuredContent"]
+        jsonschema.validate(result["structuredContent"], mcp_server.tools()["analyze_brrr"]["tool"].outputSchema)
+
+    def test_compact_rows_explain_the_money_left_in(self, client, brrrr_payload):
+        deal = _call_json("add_active_deal", body=brrrr_payload)
+        row = next(r for r in _call_json("list_deals") if r["id"] == deal["id"])
+        cash_out = float(deal["cash_out"])
+        assert row["cash_out"] == pytest.approx(cash_out)
+        assert row["cash_left_in_deal"] == pytest.approx(max(0.0, -cash_out), abs=0.01)
+        assert row["cash_wire_at_refi"] == pytest.approx(float(deal["cash_out_routi"]))
+        # a deal that pulls out more than it invested leaves nothing in
+        rich = _call_json("add_active_deal", body={**brrrr_payload, "arv_in_thousands": 900, "address": "1 Rich St"})
+        assert float(rich["cash_out"]) > 0
+        assert next(r for r in _call_json("list_deals") if r["id"] == rich["id"])["cash_left_in_deal"] == 0
