@@ -5,6 +5,7 @@ psycopg2-binary>=2.9.9
 reportlab>=4.0
 python-multipart>=0.0.9
 requests>=2.32.0
+email-validator>=2.0   # pydantic EmailStr (SendOfferReq.agent_email)
 
 google-api-python-client>=2.140.0
 google-auth>=2.34.0

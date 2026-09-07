@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { APP_KEY_DETAIL, APP_KEY_HEADER, appKeyRequired, readAppKey } from '../auth/appKey';
 import type {
   AnalyzeDealReq,
   AnalyzeDealRes,
@@ -29,6 +30,25 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Phase 0 stopgap (SECURITY_PLAN.md §4, step 0.2): the backend may require a
+// shared key on every data route. The key is typed once by the user, kept in
+// this browser only, and sent as `X-App-Key`. When the backend answers 401
+// `app_key_required` the gate asks for it; nothing else about a request changes.
+apiClient.interceptors.request.use((config) => {
+  const key = readAppKey();
+  if (key) config.headers.set(APP_KEY_HEADER, key);
+  return config;
+});
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && error.response.data?.detail === APP_KEY_DETAIL) {
+      appKeyRequired.value = true;
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default {
   // Analyze Deal Calculator

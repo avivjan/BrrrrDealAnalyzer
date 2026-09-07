@@ -338,8 +338,17 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.Conte
                 ))
         request_kwargs["files"] = files
 
+    # The MCP endpoint is itself protected (path secret today, OAuth in Phase 2),
+    # so the in-process request presents the shared app key on the caller's
+    # behalf; the routers' `require_app_key` dependency then applies as usual.
+    headers = {}
+    app_key = os.getenv("APP_KEY", "").strip()
+    if app_key:
+        headers["X-App-Key"] = app_key
     transport = httpx.ASGITransport(app=_app, raise_app_exceptions=False)
-    async with httpx.AsyncClient(transport=transport, base_url="http://mcp.internal") as client:
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://mcp.internal", headers=headers
+    ) as client:
         response = await client.request(spec["method"], path, params=params, **request_kwargs)
 
     if response.status_code >= 400:
@@ -381,9 +390,42 @@ async def _call_tool_handler(name: str, arguments: dict[str, Any] | None) -> lis
 # Wiring into the FastAPI app
 # --------------------------------------------------------------------------- #
 
+MIN_SECRET_LENGTH = 32
+
+
 def mcp_path() -> str:
     secret = os.getenv("MCP_PATH_SECRET", "").strip()
     return f"/mcp/{secret}" if secret else "/mcp"
+
+
+def _is_production() -> bool:
+    env = (os.getenv("APP_ENV") or ("production" if os.getenv("RENDER") else "development")).strip().lower()
+    return env == "production"
+
+
+def check_secret_policy(path: str, *, production: bool | None = None) -> None:
+    """Refuse an unprotected endpoint in production; warn about a weak secret.
+
+    The unsuffixed `/mcp` exposes every tool (bank balance, e-mail, the REPS
+    audit sheet) to anyone who finds the host, so outside development it is a
+    startup error rather than a warning.
+    """
+
+    production = _is_production() if production is None else production
+    if path == "/mcp":
+        if production:
+            raise RuntimeError(
+                "MCP_PATH_SECRET is not set: refusing to serve the MCP endpoint "
+                "unprotected at /mcp in production. Set MCP_PATH_SECRET (32+ random "
+                "characters) on the service, or APP_ENV=development locally."
+            )
+        logger.warning("MCP_PATH_SECRET is not set: the MCP endpoint is served unprotected at /mcp")
+        return
+    if len(path) - len("/mcp/") < MIN_SECRET_LENGTH:
+        logger.warning(
+            "MCP_PATH_SECRET is shorter than %d characters; rotate it to a longer random value",
+            MIN_SECRET_LENGTH,
+        )
 
 
 class _Endpoint:
@@ -410,7 +452,6 @@ def mount(app: FastAPI) -> str:
     _app = app
     _tools = None
     path = mcp_path()
-    if path == "/mcp":
-        logger.warning("MCP_PATH_SECRET is not set: the MCP endpoint is served unprotected at /mcp")
+    check_secret_policy(path)
     app.add_route(path, _Endpoint(), methods=["GET", "POST", "DELETE"], include_in_schema=False)
     return path

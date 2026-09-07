@@ -1,0 +1,3 @@
+# Netlify: the SPA fallback (vue-router history mode). Previously configured
+# only in the Netlify UI; kept in the repo so it is reviewable and restorable.
+/*    /index.html   200

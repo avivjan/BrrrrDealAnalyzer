@@ -5,6 +5,7 @@ import { useDealStore } from "./stores/dealStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
 import AppShell from "./components/shell/AppShell.vue";
+import AppKeyGate from "./components/shell/AppKeyGate.vue";
 
 const connectionStore = useConnectionStore();
 const dealStore = useDealStore();
@@ -59,4 +60,5 @@ onMounted(() => {
   <AppShell>
     <RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>
   </AppShell>
+  <AppKeyGate />
 </template>

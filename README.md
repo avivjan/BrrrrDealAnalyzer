@@ -412,9 +412,11 @@ app in-process, so nothing is duplicated and a new endpoint becomes a tool autom
 give it a line in `DESCRIPTIONS` there, or `tests/test_mcp.py` fails.
 
 The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
-`/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (any long random string) on the Render
-service; without it the endpoint is served unprotected at `/mcp`, which is only meant for
-local development. The API itself has no authentication, so keep the URL private.
+`/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (32+ random characters) on the Render
+service; in production the app refuses to start without it, and in development the endpoint
+is served unprotected at `/mcp`. The path secret never appears in the uvicorn access log. The
+API's own gate (`APP_KEY_MODE`) is honoured by tool calls automatically. Keep the URL private;
+the full authentication roadmap is in `SECURITY_PLAN.md`.
 
 - **claude.ai**: Settings → Connectors → *Add custom connector* → URL
   `https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`, no OAuth.
@@ -551,7 +553,7 @@ A Playwright spec that skips on some projects must add or bump its reason in
 
 | Piece | Where | How |
 | --- | --- | --- |
-| Frontend | **Netlify** → <https://bigwhales.netlify.app> | Build `npm run build` in `frontend/`; set `VITE_API_URL` to the backend URL. The router uses history mode, so deep links need the SPA redirect (`/* → /index.html 200`) configured in the Netlify UI. There is no `netlify.toml` in the repo. |
+| Frontend | **Netlify** → <https://bigwhales.netlify.app> | Build `npm run build` in `frontend/`; set `VITE_API_URL` to the backend URL. The router uses history mode; the SPA redirect (`/* → /index.html 200`) and the security headers (HSTS, nosniff, a report-only CSP) ship from `frontend/public/_redirects` and `frontend/public/_headers`. There is no `netlify.toml` in the repo. |
 | Backend | **Render** web service | Python from `runtime.txt`, `pip install -r BackEnd/requirements.txt`, a `uvicorn main:app` start command from `BackEnd/`. Set **Pre-Deploy Command** to `cd BackEnd && pytest` to gate a deploy on the suite (that is why `pytest` and `httpx` are in `requirements.txt`, and why `pytest.ini` disables the cache for the read-only filesystem). No `render.yaml` in the repo. |
 | Database | Render PostgreSQL | `DATABASE_URL`; schema is created and migrated at boot |
 
@@ -571,7 +573,10 @@ CORS allow-list in `BackEnd/main.py`.
 | `REPS_SHEET_TAB` | REPS | Default `Log` |
 | `REPS_LINK_STYLE` | REPS | `public` (default) · `auth` · `signed` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | REPS | Path to the service-account JSON |
-| `MCP_PATH_SECRET` | `BackEnd/mcp_server.py` | Secret path segment of the MCP endpoint (`/mcp/<secret>`); unset → unprotected `/mcp` with a startup warning |
+| `MCP_PATH_SECRET` | `BackEnd/mcp_server.py` | Secret path segment of the MCP endpoint (`/mcp/<secret>`); **required in production** (the app refuses to start without it on Render), unset → unprotected `/mcp` in development with a startup warning |
+| `APP_ENV` | `BackEnd/main.py` | `production` or `development`. Defaults to `production` on Render (`RENDER=true`), `development` elsewhere. Production serves no `/docs`, `/redoc` or `/openapi.json` |
+| `APP_KEY_MODE`, `APP_KEY` | `BackEnd/BL/auth/common/app_key.py` | Phase 0 shared-key gate on every route except `/helloworld`: `off` (default), `shadow` (log only), `enforce` (401 without the `X-App-Key` header). The browser asks for the key once and keeps it in `localStorage`. Replaced by passkeys in Phase 2 of `SECURITY_PLAN.md` |
+| `REPS_OBJECT_ACL_PUBLIC` | REPS | Default `true`: with `REPS_LINK_STYLE=public`, also flip each object's legacy ACL. Set `false` once the bucket grants `allUsers` read at the bucket level |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
 

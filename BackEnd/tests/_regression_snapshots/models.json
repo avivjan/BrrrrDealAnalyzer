@@ -4233,7 +4233,7 @@
       "fields": {
         "agent_email": {
           "alias": null,
-          "annotation": "<class 'str'>",
+          "annotation": "<class 'EmailStr'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -17391,18 +17391,26 @@
     "SendOfferReq": {
       "properties": {
         "agent_email": {
+          "format": "email",
+          "maxLength": 254,
           "title": "Agent Email",
           "type": "string"
         },
         "agent_name": {
+          "maxLength": 200,
+          "minLength": 1,
           "title": "Agent Name",
           "type": "string"
         },
         "inspection_period_days": {
+          "maximum": 365,
+          "minimum": 0,
           "title": "Inspection Period Days",
           "type": "integer"
         },
         "property_address": {
+          "maxLength": 500,
+          "minLength": 1,
           "title": "Property Address",
           "type": "string"
         },

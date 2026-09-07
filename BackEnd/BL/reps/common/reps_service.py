@@ -17,18 +17,23 @@ Configuration (env vars):
                                               link. Viewer must be signed in
                                               with a Google account that has
                                               read access (you / your CPA).
-                                              **DEFAULT** — best for audit.
                                     "public"  Permanent
                                               `https://storage.googleapis.com/...`
-                                              link. Bucket must be configured
-                                              for public read access (grant
-                                              `roles/storage.objectViewer` to
-                                              `allUsers` at the bucket level
-                                              when UBLA is on).
+                                              link. **DEFAULT.** Bucket must be
+                                              configured for public read access
+                                              (grant `roles/storage.legacyObjectReader`
+                                              -- get, no list -- to `allUsers` at
+                                              the bucket level when UBLA is on).
                                     "signed"  7-day expiring v4 signed URL.
                                               NOT recommended (links rot).
 - REPS_PUBLIC_OBJECTS             (Deprecated; kept for backward compat)
                                   "true" implies REPS_LINK_STYLE="public".
+- REPS_OBJECT_ACL_PUBLIC          (Optional, default "true") With
+                                  REPS_LINK_STYLE="public", also flip the
+                                  legacy per-object ACL via `make_public()`.
+                                  Set "false" once the bucket-level IAM
+                                  binding is in place (UBLA buckets ignore
+                                  the per-object ACL anyway).
 
 Design notes:
 - We use `.append()` exclusively (USER_ENTERED) so historical rows are never
@@ -46,6 +51,7 @@ import logging
 import mimetypes
 import os
 import re
+import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -190,6 +196,24 @@ def now_utc_iso() -> Tuple[datetime, str]:
     """Single source of truth for the contemporaneous fingerprint."""
     now = datetime.now(timezone.utc)
     return now, now.isoformat()
+
+
+# --- Sheet cell hygiene --------------------------------------------------- #
+
+_FORMULA_LEADERS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def neutralize_formula(value: str) -> str:
+    """Make a free-text cell inert under `valueInputOption=USER_ENTERED`.
+
+    Sheets parses a cell that starts with `=`, `+`, `-` or `@` as a formula,
+    so an appended description such as `=IMPORTXML(...)` would execute when
+    the auditor opens the sheet. A leading apostrophe forces text and is not
+    displayed, so ordinary rows look exactly as before.
+    """
+
+    text = value if isinstance(value, str) else str(value or "")
+    return "'" + text if text.startswith(_FORMULA_LEADERS) else text
 
 
 # --- File-name sanitization ---------------------------------------------- #
@@ -367,6 +391,46 @@ def _col_letter(n: int) -> str:
     return out
 
 
+def build_log_row(
+    *,
+    user: str,
+    created_at_iso: str,
+    property_name: Optional[str],
+    activity_category: Optional[str],
+    description: str,
+    start_iso: str,
+    end_iso: str,
+    total_hours: float,
+    evidence_text: str,
+    location: Optional[str],
+    material_participation_rentals: bool,
+    people_involved: Iterable[str],
+) -> list:
+    """The values of one appended row, in `SHEET_COLUMNS` order.
+
+    Free-text cells go through `neutralize_formula`; the numeric hours, the
+    TRUE/FALSE flag and the ISO timestamps are passed exactly as before so the
+    sheet's typed cells do not change.
+    """
+
+    # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
+    # column so the auditor's eye lands on the human-entered fields first.
+    return [
+        neutralize_formula(user),
+        neutralize_formula(property_name or ""),
+        neutralize_formula(activity_category or ""),
+        neutralize_formula(description),
+        start_iso,
+        end_iso,
+        total_hours,
+        neutralize_formula(evidence_text),
+        neutralize_formula(location or ""),
+        "TRUE" if material_participation_rentals else "FALSE",
+        neutralize_formula(", ".join(sorted({p.strip() for p in people_involved if p and p.strip()}))),
+        created_at_iso,
+    ]
+
+
 def append_log_row(
     user: str,
     created_at_iso: str,
@@ -398,24 +462,20 @@ def append_log_row(
     _ensure_header(sid, tab)
 
     items = normalize_evidence_items(evidence_items)
-    evidence_text = evidence_cell_text(items)
-
-    # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
-    # column so the auditor's eye lands on the human-entered fields first.
-    row = [
-        user,
-        property_name or "",
-        activity_category or "",
-        description,
-        start_iso,
-        end_iso,
-        total_hours,
-        evidence_text,
-        location or "",
-        "TRUE" if material_participation_rentals else "FALSE",
-        ", ".join(sorted({p.strip() for p in people_involved if p and p.strip()})),
-        created_at_iso,
-    ]
+    row = build_log_row(
+        user=user,
+        created_at_iso=created_at_iso,
+        property_name=property_name,
+        activity_category=activity_category,
+        description=description,
+        start_iso=start_iso,
+        end_iso=end_iso,
+        total_hours=total_hours,
+        evidence_text=evidence_cell_text(items),
+        location=location,
+        material_participation_rentals=material_participation_rentals,
+        people_involved=people_involved,
+    )
     svc = get_sheets_client()
     last_col = _col_letter(len(SHEET_COLUMNS))
     rng = _a1_range(sid, tab, f"A:{last_col}")
@@ -546,7 +606,7 @@ def upload_evidence(
     safe_name = sanitize_filename(original_filename)
     object_name = (
         f"{cfg.base_prefix}/{USER_FOLDER_MAP[user]}/"
-        f"{datetime.utcnow():%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:8]}_{safe_name}"
+        f"{datetime.utcnow():%Y%m%dT%H%M%S}_{secrets.token_hex(8)}_{safe_name}"
     )
     blob = bucket.blob(object_name)
 
@@ -599,16 +659,15 @@ def _audit_filename(
 ) -> str:
     """`<Property>_<Activity>_<YYYY-MM-DD_HHMMSS>_<rand>[_<idx>].<ext>`.
 
-    HHMMSS + a 4-char random suffix make the name unique enough to keep
-    every file in the property's flat folder without collisions, even
-    when the user uploads two photos at the same minute.
+    `rand` is 16 hex characters (64 bits) from `secrets`, so a public object
+    URL cannot be guessed from the timestamp: the name is a capability.
     """
 
     ext = os.path.splitext(original_filename or "")[1].lower() or ".bin"
     prop = _slugify(property_name, _DEFAULT_SLUG_PROPERTY).title().replace("-", "")
     act = _slugify(activity_category, _DEFAULT_SLUG_ACTIVITY).title().replace("-", "")
     stamp = log_dt.astimezone(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
-    rand = uuid.uuid4().hex[:4]
+    rand = secrets.token_hex(8)
     suffix = f"_{index}" if index > 0 else ""
     return f"{prop}_{act}_{stamp}_{rand}{suffix}{ext}"
 
@@ -631,14 +690,15 @@ def _make_url_for_blob(blob, cfg: "RepsConfig", object_name: str) -> str:
     style = cfg.link_style
 
     if style == "public":
-        try:
-            blob.make_public()
-        except Exception as exc:  # pragma: no cover
-            logger.info(
-                "REPS upload: make_public no-op (bucket likely has UBLA); "
-                "assuming bucket-level IAM grants allUsers:objectViewer. (%s)",
-                exc,
-            )
+        if (os.getenv("REPS_OBJECT_ACL_PUBLIC") or "true").strip().lower() != "false":
+            try:
+                blob.make_public()
+            except Exception as exc:  # pragma: no cover
+                logger.info(
+                    "REPS upload: make_public no-op (bucket likely has UBLA); "
+                    "assuming bucket-level IAM grants allUsers read. (%s)",
+                    exc,
+                )
         return f"https://storage.googleapis.com/{cfg.bucket_name}/{object_name}"
 
     if style == "signed":

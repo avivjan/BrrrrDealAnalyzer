@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { safeHref } from "../utils/safeHref";
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
@@ -904,8 +905,9 @@ console.groupEnd();
                   <a
                     v-if="editingDeal.zillow_link"
                     data-testid="mydeals.modal.zillow-open"
-                    :href="editingDeal.zillow_link"
+                    :href="safeHref(editingDeal.zillow_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -924,8 +926,9 @@ console.groupEnd();
                   <a
                     v-if="editingDeal.pics_link"
                     data-testid="mydeals.modal.pics-open"
-                    :href="editingDeal.pics_link"
+                    :href="safeHref(editingDeal.pics_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -1160,8 +1163,9 @@ console.groupEnd();
                       <a
                         v-if="comp.url"
                         :data-testid="`mydeals.sold-comp.${index}.open`"
-                        :href="comp.url"
+                        :href="safeHref(comp.url)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="text-xs text-primary hover:underline flex-none"
                         ><i class="pi pi-external-link" aria-hidden="true"></i
                       ></a>
@@ -1239,7 +1243,7 @@ console.groupEnd();
                         </UiIconButton>
                         <div class="flex items-center gap-2 mb-1">
                           <input :data-testid="`mydeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
-                          <a v-if="comp.url" :data-testid="`mydeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
+                          <a v-if="comp.url" :data-testid="`mydeals.sale-comp.${index}.open`" :href="safeHref(comp.url)" target="_blank" rel="noopener noreferrer" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                         </div>
                         <div class="flex gap-2">
                           <input :data-testid="`mydeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1282,8 +1286,9 @@ console.groupEnd();
                       <a
                         v-if="comp.url"
                         :data-testid="`mydeals.rent-comp.${index}.open`"
-                        :href="comp.url"
+                        :href="safeHref(comp.url)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="text-xs text-primary hover:underline flex-none"
                         ><i class="pi pi-external-link" aria-hidden="true"></i
                       ></a>

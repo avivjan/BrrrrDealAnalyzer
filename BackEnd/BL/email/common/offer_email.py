@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import smtplib
@@ -23,14 +24,14 @@ def send_offer_email(details: SendOfferReq):
     # Strip any whitespace (common issue when copying/pasting)
     sender_password = sender_password.strip()
 
-    if len(sender_password) != 16:
-        logger.warning(f"Email password length is {len(sender_password)} (expected 16 for Gmail App Password)")
-
-    logger.info(f"Email password found (length: {len(sender_password)})")
-    logger.info(f"Email password starts with: {sender_password[:2]}... (masked for security)")
-
     subject = f"Cash Offer for {details.property_address}"
     logger.info(f"Email subject: {subject}")
+
+    # The body is HTML, so every client-supplied value is escaped before it is
+    # interpolated. Real names and addresses render exactly as before; only
+    # markup characters change (`<` -> `&lt;`).
+    agent_name = html.escape(details.agent_name)
+    property_address = html.escape(details.property_address)
 
     body = f"""
 <html>
@@ -152,8 +153,8 @@ def send_offer_email(details: SendOfferReq):
   </head>
   <body>
     <div class="container">
-      <p class="greeting">Hi {details.agent_name},</p>
-      <p class="intro">I’m writing to you regarding the property at <strong>{details.property_address}</strong></p>
+      <p class="greeting">Hi {agent_name},</p>
+      <p class="intro">I’m writing to you regarding the property at <strong>{property_address}</strong></p>
       <p class="intro">We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/file/d/1HxskELeQFfljFngV5OFvjuhDeUbQ1Dyx/view">LLC Formation</a>)</p>
 
       <p class="intro">I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
