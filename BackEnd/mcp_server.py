@@ -34,16 +34,26 @@ from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = (
-    "Tools for the Big Whales real-estate site (BrrrrDealAnalyzer). Conventions: "
-    "every field whose name ends in _in_thousands, or whose alias is purchasePrice, "
-    "rehabCost, closingCostsBuy, closingCostsRefi, cashReserve, salePrice, "
+    "Tools for the Big Whales real-estate site (BrrrrDealAnalyzer): the deal portfolio "
+    "(properties analysed, under contract, bought, refinanced or sold), the BRRRR and flip "
+    "calculators, PDF reports, the liquidity (cash) timeline, the Mercury bank balance, the "
+    "REPS hours log and the send-offer e-mail. "
+    "START HERE for any question about deals, the portfolio, deal history, the best or worst "
+    "deal, or a specific property: portfolio_summary (headline numbers and top deals), "
+    "list_deals (compact rows, filters) and search_deals (words in address, notes, task, "
+    "niche, contact); then get_deal for one deal's full inputs, metrics and calculation "
+    "breakdown. get_active_deals and get_bought_deals return every deal with its full "
+    "breakdown and are very large; use them only when you truly need everything. "
+    "Conventions: every field whose name ends in _in_thousands or _k, or whose alias is "
+    "purchasePrice, rehabCost, closingCostsBuy, closingCostsRefi, cashReserve, salePrice, "
     "sellingClosingCosts or arv_in_thousands, is in THOUSANDS of dollars (250 = $250k); "
     "rent, taxes, insurance, HOA and utilities are plain dollars; rates and fees are "
     "percentages (75 = 75%). Deal bodies use the camelCase aliases shown in each schema. "
     "Active deals: stage 1 New, 2 Working, 3 Brought, 4 Keep in Mind, 5 Dead; section "
     "1 Wholesale, 2 Market, 3 Off Market. Where a tool takes deal_type it must match the "
     "deal ('BRRRR' or 'FLIP'). Update tools replace the whole record: read it first, edit, "
-    "send it back."
+    "send it back. A cash_on_cash or roi of -1 means infinite (no cash left in the deal) and "
+    "-2 means not applicable."
 )
 
 # One line per tool, keyed by tool name (the route's function name without a
@@ -71,8 +81,10 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     # --- My Deals (active pipeline) ---
     "get_active_deals": (
-        "List every deal on the My Deals board (BRRRR and FLIP): saved inputs, address, "
-        "stage/section, notes, comps and freshly computed analysis metrics."
+        "Every deal on the My Deals board (deals being analysed or worked, not yet bought): all "
+        "inputs, notes, comps, metrics AND the full calculation breakdown of each. Very large; "
+        "for questions about deals, history, the portfolio or a property use portfolio_summary, "
+        "list_deals, search_deals or get_deal instead."
     ),
     "add_active_deal": (
         "Create a deal on the My Deals board (what 'Analyze & Save' does on the site). "
@@ -84,10 +96,37 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "delete_deal": "Delete an active deal. deal_type ('BRRRR'/'FLIP') must match the deal.",
     "duplicate_deal": "Copy an active deal into a new deal with the same inputs and a new id.",
+    # --- Compact cross-board views (start here for deal questions) ---
+    "list_deals": (
+        "Compact list of deals across both boards: the portfolio of properties we analysed, "
+        "worked, bought, refinanced or sold, one small row each (address, stage, purchase, "
+        "rehab, ARV or sale price, rent, cash flow, cash-on-cash, ROI, equity, net profit, "
+        "cash needed, cash out). Filter by board (active/bought), deal_type, stage, or words "
+        "with q. Deal history and 'what did we buy' questions start here."
+    ),
+    "search_deals": (
+        "Find deals by words: search the address, notes, task, niche and contact of every deal "
+        "on both boards (e.g. 'Jacksonville', 'duplex', a street name, a person). Returns the "
+        "same compact rows as list_deals."
+    ),
+    "portfolio_summary": (
+        "Portfolio overview in one small call: how many deals are active and bought, by type "
+        "and stage; totals of equity, monthly cash flow, cash invested and net profit across "
+        "the properties we bought; and the top deals by equity, cash flow and cash-on-cash. "
+        "The right tool for 'best deal', 'worst deal', 'how are we doing' and history "
+        "questions; follow up with get_deal for details."
+    ),
+    "get_deal": (
+        "One deal in full by id, whichever board it is on: every input, notes, comps, all "
+        "metrics and the step-by-step calculation breakdown (formulas). Use after list_deals, "
+        "search_deals or portfolio_summary when the details of a specific property are wanted."
+    ),
     # --- Bought Deals ---
     "get_bought_deals": (
-        "List purchased deals on the Bought Deals board, with boughtStage (pipeline stage id) "
-        "and the completedSubstages checklist, plus analysis metrics."
+        "Every property we bought (closed deals on the Bought Deals board) with the purchase "
+        "pipeline stage, checklist, metrics AND the full calculation breakdown of each. Large; "
+        "for 'which deals did we buy', 'best deal', history or portfolio questions prefer "
+        "portfolio_summary or list_deals with board=bought."
     ),
     "add_bought_deal": "Create a bought deal directly (normally use move_to_bought instead).",
     "update_bought_deal": (
@@ -96,8 +135,9 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "delete_bought_deal": "Delete a bought deal. deal_type must match the deal.",
     "move_to_bought": (
-        "Copy an active deal onto the Bought Deals board (the site allows this for stage 3 "
-        "'Brought' deals). The active deal is kept. deal_type must match the deal."
+        "Mark a deal as bought: copy an active deal onto the Bought Deals board (the site "
+        "allows this for stage 3 'Brought' deals). The active deal is kept. deal_type must "
+        "match the deal."
     ),
     # --- Dashboard: Send Market Offer ---
     "send_offer": (
@@ -122,8 +162,9 @@ DESCRIPTIONS: dict[str, str] = {
     "get_liquidity_settings": "Read the Liquidity settings: opening balance (k), its date and the reserve (k).",
     "update_liquidity_settings": "Change the opening balance, its date and/or the reserve.",
     "get_mercury_balance": (
-        "Live total balance across the Mercury bank accounts in $k, used to re-anchor the "
-        "timeline to today (503 if MERCURY_API_TOKEN is not configured on the server)."
+        "Live bank balance: the total cash across the Mercury bank accounts in $k, used to "
+        "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
+        "on the server)."
     ),
     # --- Bought Deals pipeline templates ---
     "list_pipeline_templates": (
@@ -139,11 +180,12 @@ DESCRIPTIONS: dict[str, str] = {
     "helloworld": "Health check; the site's connection indicator pings this.",
     # --- REPS tracker ---
     "reps_log": (
-        "Log a REPS (Real Estate Professional Status) activity to the user's Google Sheet: "
-        "user (Aviv2026 or Yarden2026), description of at least 20 characters, start_time and "
-        "end_time as ISO datetimes, optional property, category, evidence items and people."
+        "Log hours: record a REPS (Real Estate Professional Status) activity to the user's "
+        "Google Sheet: user (Aviv2026 or Yarden2026), description of at least 20 characters, "
+        "start_time and end_time as ISO datetimes, optional property, category, evidence items "
+        "and people."
     ),
-    "reps_entries": "All REPS entries of a user plus year-to-date stats (750 h and 500 h material-participation progress).",
+    "reps_entries": "All logged REPS hours of a user plus year-to-date stats (750 h and 500 h material-participation progress).",
     "reps_upload_batch": (
         "Upload evidence files (base64) into a per-log REPS folder; returns the folder and "
         "file URLs to pass in reps_log evidence_items."

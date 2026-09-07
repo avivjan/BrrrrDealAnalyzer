@@ -185,6 +185,29 @@ class JUnitSubset(unittest.TestCase):
         self.assertFalse(junit.subset(junit.parse(None))["available"])
 
 
+class McpProbe(unittest.TestCase):
+    def test_verdict_needs_a_compact_tool(self):
+        import mcp_probe
+        blocks = [{"type": "text", "text": "hi"}, {"type": "mcp_tool_use", "name": "portfolio_summary"},
+                  {"type": "mcp_tool_result"}, {"type": "mcp_tool_use", "name": "get_deal"}]
+        self.assertEqual(mcp_probe.tools_used(blocks), ["portfolio_summary", "get_deal"])
+        self.assertTrue(mcp_probe.verdict(["portfolio_summary", "get_deal"])[0])
+        ok, reason = mcp_probe.verdict(["get_active_deals"])
+        self.assertFalse(ok); self.assertIn("used only", reason)
+        ok, reason = mcp_probe.verdict([])
+        self.assertFalse(ok); self.assertIn("without calling any tool", reason)
+
+    def test_skips_without_secrets(self):
+        import mcp_probe
+        saved = {k: os.environ.pop(k, None) for k in ("MCP_PROBE_URL", "ANTHROPIC_API_KEY")}
+        try:
+            self.assertEqual(mcp_probe.main(), 0)
+        finally:
+            for k, v in saved.items():
+                if v is not None:
+                    os.environ[k] = v
+
+
 class Coverage(unittest.TestCase):
     def test_parsers_and_status(self):
         with tempfile.TemporaryDirectory() as d:

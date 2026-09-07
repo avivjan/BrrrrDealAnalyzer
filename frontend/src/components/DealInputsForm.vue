@@ -342,7 +342,7 @@ const subHeading = computed(() => "h4" as const);
         data-testid="form.field.cashReserve"
         :model-value="get('cashReserve')"
         @update:model-value="(v: number | null) => set('cashReserve', v)"
-        label="Cash Reserve (paydown at refi)"
+        label="Cash Reserve (escrowed at refi)"
         :inThousands="true"
       />
 

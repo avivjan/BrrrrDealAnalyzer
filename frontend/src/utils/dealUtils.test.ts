@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDealForClipboard, toNumber } from "./dealUtils";
+import {
+  createEmptyDealForm,
+  formatDealForClipboard,
+  toNumber,
+  validateDealInputs,
+} from "./dealUtils";
 import type { ActiveDealRes } from "../types";
 
 describe("toNumber", () => {
@@ -74,5 +79,65 @@ describe("formatDealForClipboard", () => {
   it("still works when the deal already holds real numbers", () => {
     const typed = { ...savedFlip, purchasePrice: 200, salePrice: 320 } as ActiveDealRes;
     expect(() => formatDealForClipboard(typed)).not.toThrow();
+  });
+});
+
+describe("audit fixes: sentinel decoding and Flip validation", () => {
+  const savedBrrrr = () =>
+    ({
+      id: "b1",
+      deal_type: "BRRRR",
+      address: "1 Main St",
+      stage: 2,
+      section: 1,
+      purchasePrice: "200.00",
+      rehabCost: "50.00",
+      arv_in_thousands: "320.00",
+      rent: "2600.00",
+      cash_on_cash: -1,
+      roi: -2,
+      cash_out: -1,
+      dscr: 1.36,
+    }) as unknown as ActiveDealRes;
+
+  it("decodes -1 / -2 only on percent fields, never on money", () => {
+    const text = formatDealForClipboard(savedBrrrr());
+    expect(text).toContain("CoC Return: ∞%");
+    expect(text).toContain("ROI: -∞%");
+    // A cash_out of exactly -$1 is a real dollar amount, not the ∞ sentinel.
+    expect(text).toContain("Cash Out: $-1");
+  });
+
+  it("renders a genuine 0% as 0.00%, not '-'", () => {
+    const text = formatDealForClipboard({ ...savedBrrrr(), cash_on_cash: 0 } as ActiveDealRes);
+    expect(text).toContain("CoC Return: 0.00%");
+  });
+
+  it("rejects negative Flip costs and out-of-range rates", () => {
+    const flip = {
+      ...createEmptyDealForm("FLIP"),
+      purchasePrice: 200,
+      salePrice: 320,
+      closingCostsBuy: -5,
+      annual_property_taxes: -1,
+      monthly_utilities: -1,
+      HMLInterestRate: 150,
+      capitalGainsTax: 101,
+    };
+    const errors = validateDealInputs(flip, "FLIP");
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        "HML interest rate must be between 0% and 100%.",
+        "Closing costs (buy) cannot be negative.",
+        "Annual property taxes cannot be negative.",
+        "Monthly utilities cannot be negative.",
+        "Capital gains tax rate must be between 0% and 100%.",
+      ]),
+    );
+  });
+
+  it("still accepts a valid Flip", () => {
+    const flip = { ...createEmptyDealForm("FLIP"), purchasePrice: 200, salePrice: 320 };
+    expect(validateDealInputs(flip, "FLIP")).toEqual([]);
   });
 });

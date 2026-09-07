@@ -103,3 +103,20 @@ the OAuth switch. Deferred: F-20 (above).
 
 **Rollout for this phase.** Nothing to flip for the dashboard; `DEVICE_POLICY=log` for a
 while, then `enforce` once both owners' browsers show as trusted. Rollback = the env flip.
+
+
+## Merge with `main` (after Phase 3)
+
+`main` gained PR #45 (compact MCP deal tools, `routers/deals.py`) and PR #46 (calculator audit
+fixes F1–F10) while this branch was in flight. Merged, three conflicts resolved: the router
+registry keeps `deals` (before `auth`/`devices`, so main's OpenAPI order holds), `mcp_server.py`
+keeps the plan's `tool_annotations` (main's inline annotations were a subset; main's new
+`test_annotations_follow_the_http_method` now also accepts the F-24 irreversible set as
+destructive), and the OpenAPI snapshot was re-recorded. The new `/deals/*` routes sit behind the
+same gates as every other data router. Backend 499 passed, vitest 1383, build green.
+
+Playwright on the merged tree: 95 passed, 9 failed — all nine are network goldens whose
+calculation breakdown gained main's new "Rehab float buffer (10% of rehab)" step (PR #46 changed
+the calculator without re-recording `frontend/e2e/golden`). Not this branch's change and not
+touched here: the goldens follow the repo's "Golden update:" commit convention, for the owner
+to re-record once PR #46's numbers are confirmed as intended.

@@ -447,10 +447,9 @@ const advanceEditingDeal = async () => {
   }
 };
 
+// Currency never decodes the -1/-2 sentinels: -$1 and -$2 are real amounts.
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "\u221E";
-  if (value === -2) return "-\u221E";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -458,10 +457,11 @@ const formatCurrency = (value: number | undefined) => {
   }).format(value);
 };
 
+// The calculators encode ±∞ on cash_on_cash / roi / annualized_roi as -1 / -2.
 const formatPercent = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "\u221E";
-  if (value === -2) return "-\u221E";
+  if (value === -1) return "\u221E%";
+  if (value === -2) return "-\u221E%";
   return `${value.toFixed(2)}%`;
 };
 
@@ -474,11 +474,16 @@ const getCashFlowColor = (value: number | undefined) => {
 
 const getPerformanceColor = (value: number | undefined) => {
   if (value === undefined || value === null) return "text-fg";
-  if (value === -1) return "text-positive";
-  if (value === -2) return "text-negative";
   if (value > 0) return "text-positive";
   if (value < 0) return "text-negative";
   return "text-fg-muted";
+};
+
+/** Tone for a percent metric: -1 (∞) is positive, -2 (-∞) is negative. */
+const getPercentColor = (value: number | undefined) => {
+  if (value === -1) return "text-positive";
+  if (value === -2) return "text-negative";
+  return getPerformanceColor(value);
 };
 
 const getDSCRColor = (value: number | undefined) => {
@@ -1087,7 +1092,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.cash_on_cash"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)"
+                        :class="getPercentColor((currentAnalysis as any).cash_on_cash)"
                       >
                         {{ formatPercent( (currentAnalysis as any).cash_on_cash ) }}
                       </div>
@@ -1113,7 +1118,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).roi)"
+                        :class="getPercentColor((currentAnalysis as any).roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
@@ -1161,7 +1166,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).roi)"
+                        :class="getPercentColor((currentAnalysis as any).roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
@@ -1171,7 +1176,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.annualized_roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).annualized_roi)"
+                        :class="getPercentColor((currentAnalysis as any).annualized_roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).annualized_roi ) }}
                       </div>

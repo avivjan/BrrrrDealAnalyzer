@@ -402,6 +402,17 @@ curl -s http://127.0.0.1:8000/analyze/brrr -H 'content-type: application/json' -
 (Values rounded here; the API returns full-precision floats. A negative `cash_out` means
 cash is left in the deal after the refinance.)
 
+<details open>
+<summary><b>Compact deal views (both boards)</b></summary>
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/deals` | Compact rows across the My Deals and Bought Deals boards, no breakdowns. Query: `board=all\|active\|bought`, `deal_type`, `stage`, `q` (words in address, notes, task, niche, contact), `limit` |
+| `GET` | `/deals/search` | Same rows, `q` required |
+| `GET` | `/deals/portfolio` | Counts by board/type/stage, totals over bought deals, top deals by equity, cash flow and cash-on-cash |
+| `GET` | `/deals/{deal_id}` | One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on |
+</details>
+
 ### MCP server (Claude connector)
 
 Every route above is also an **MCP tool**, so Claude can use the site directly: analyze
@@ -410,6 +421,17 @@ timeline and pipeline templates, log REPS hours, send offers. `BackEnd/mcp_serve
 builds the tool list from the app's own OpenAPI document and executes each call against the
 app in-process, so nothing is duplicated and a new endpoint becomes a tool automatically —
 give it a line in `DESCRIPTIONS` there, or `tests/test_mcp.py` fails.
+
+For deal questions a chat should start with the compact tools (`portfolio_summary`,
+`list_deals`, `search_deals`) and use `get_deal` for one deal's breakdown; the full board
+dumps (`get_active_deals`, `get_bought_deals`) are megabytes. Tests keep this true:
+`tests/test_mcp.py` checks that a table of user phrases ("best deal", "properties we
+bought", "log hours", ...) each match a tool's name or description, that the compact
+tools stay under a size budget with 70 deals seeded, and that every tool carries the
+right read-only / destructive annotation. The nightly's **MCP connector probe** job asks
+Claude the real question through the API with the connector attached and fails unless a
+compact tool was used (needs the `ANTHROPIC_API_KEY` and `MCP_PROBE_URL` secrets; it
+skips without them).
 
 The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
 `/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (32+ random characters) on the Render
@@ -530,7 +552,8 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
   edit) and **Frontend tests + build**. Make those two checks required under
   *Settings → Branches → main* to block red merges.
 - **`e2e-nightly.yml`** runs at midnight Israel time (two crons, a gate job picks the one
-  that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs plus the full Playwright matrix.
+  that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs, the full Playwright matrix
+  and the MCP connector probe (see the MCP section above).
   When every job has finished, a styled HTML report is e-mailed over Gmail SMTP, pass or
   fail. It needs the repository secrets `NIGHTLY_MAIL_USERNAME` and `NIGHTLY_MAIL_PASSWORD`
   (a Gmail app password). The report explains every skipped test against
@@ -626,6 +649,7 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
+| `ANTHROPIC_API_KEY`, `MCP_PROBE_URL` | GitHub Actions secrets | Nightly MCP connector probe (optional; the job skips without them) |
 
 The full Google Cloud walk-through for the REPS tracker (project, service account, bucket,
 sheets, smoke test) is [`REPS_README.md`](REPS_README.md).

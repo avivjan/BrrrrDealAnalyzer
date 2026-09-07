@@ -12,6 +12,7 @@ from routers.liquidity import router as liquidity
 from routers.pipeline_template import router as pipeline_template
 from routers.health import router as health
 from routers.reps import router as reps
+from routers.deals import router as deals
 from routers.auth import router as auth
 from routers.devices import router as devices
 
@@ -27,6 +28,7 @@ ALL_ROUTERS = [
     pipeline_template,
     health,
     reps,
+    deals,   # compact cross-board views, added after the others so the OpenAPI order above is unchanged
     auth,
     devices,
 ]

@@ -103,6 +103,21 @@ def validate_flip_inputs(payload: analyzeFlipReq):
 
     if payload.HML_points < 0 or payload.HML_points > 100:
         validation_errors.append("HML points must be between 0% and 100%.")
+    if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
+        validation_errors.append("HML interest rate must be between 0% and 100%.")
+    if payload.capital_gains_tax_rate < 0 or payload.capital_gains_tax_rate > 100:
+        validation_errors.append("Capital gains tax rate must be between 0% and 100%.")
+
+    if payload.closing_costs_buy_in_thousands < 0:
+        validation_errors.append("Closing costs (buy) cannot be negative.")
+    if payload.annual_property_taxes < 0:
+        validation_errors.append("Annual property taxes cannot be negative.")
+    if payload.annual_insurance < 0:
+        validation_errors.append("Annual insurance cannot be negative.")
+    if payload.montly_hoa < 0:
+        validation_errors.append("HOA dues cannot be negative.")
+    if payload.monthly_utilities < 0:
+        validation_errors.append("Monthly utilities cannot be negative.")
 
     if payload.buyer_agent_selling_fee < 0 or payload.buyer_agent_selling_fee > 100:
         validation_errors.append("Buyer agent fee must be between 0% and 100%.")

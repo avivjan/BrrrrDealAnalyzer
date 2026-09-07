@@ -17731,7 +17731,7 @@
             }
           ],
           "default": "0.0",
-          "description": "Cash deposited toward the DSCR loan principal at refi (in thousands)",
+          "description": "Cash escrowed at refi and returned at exit/sale (in thousands). Not a principal paydown: the DSCR loan and its payment stay on the full ARV x LTV; the reserve reduces cash out and adds to equity 1:1.",
           "title": "Cashreserve"
         },
         "closingCostsBuy": {
