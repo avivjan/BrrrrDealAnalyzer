@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
@@ -67,3 +68,44 @@ class OAuthApproveReq(BaseModel):
 
 class OAuthApproveRes(BaseModel):
     redirect_uri: str
+
+
+# --- devices, sessions, passkeys (SECURITY_PLAN.md §3.4) --------------------- #
+
+class DeviceRes(BaseModel):
+    id: str
+    user_id: str
+    user_display_name: str
+    kind: str
+    label: str
+    platform: Optional[str]
+    status: str
+    first_seen_at: datetime
+    last_seen_at: datetime
+    last_ip: Optional[str]
+    approved_at: Optional[datetime]
+    is_current: bool
+
+
+class DeviceRenameReq(BaseModel):
+    label: str = Field(..., min_length=1, max_length=200)
+
+
+class SessionRes(BaseModel):
+    id: str
+    device_id: str
+    device_label: str
+    kind: str
+    created_at: datetime
+    last_seen_at: datetime
+    ip: Optional[str]
+    is_current: bool
+
+
+class CredentialRes(BaseModel):
+    id: str
+    label: str
+    created_at: datetime
+    last_used_at: Optional[datetime]
+    backup_state: bool
+    transports: Optional[str]

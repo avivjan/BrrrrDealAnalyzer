@@ -38,12 +38,24 @@ export const apiClient = axios.create({
 // A 401 from a data route means the access cookie expired: refresh once and
 // retry; if the refresh fails too, the auth store sends the user to /login.
 // The auth routes themselves are excluded so a failed login never loops.
+// A 403 `reauth_required` is a step-up (send an offer, approve a device):
+// one passkey prompt, then the same request again.
 let refreshing: Promise<boolean> | null = null;
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error?.config;
     const url: string = config?.url || '';
+    if (error?.response?.status === 403 && error.response.data?.detail === 'reauth_required' && config && !config.__reauthed) {
+      const { useAuthStore } = await import('../stores/authStore');
+      try {
+        await useAuthStore().reauth();
+      } catch {
+        return Promise.reject(error);
+      }
+      config.__reauthed = true;
+      return apiClient.request(config);
+    }
     if (error?.response?.status === 401 && config && !config.__retried && !url.startsWith('/auth/')) {
       const { useAuthStore } = await import('../stores/authStore');
       const auth = useAuthStore();

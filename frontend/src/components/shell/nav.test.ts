@@ -5,10 +5,10 @@ import { NAV_ITEMS, navItemForPath } from "./nav";
 
 /** The frozen router, read as text: its `path`/`name` pairs are the truth this file mirrors. */
 const routerSource = readFileSync(new URL("../../router/index.ts", import.meta.url), "utf8");
-const AUTH_ROUTES = new Set(["login", "enroll", "pending", "connect"]);
+const AUTH_ROUTES = new Set(["login", "enroll", "pending", "connect", "devices"]);
 const routes = [...routerSource.matchAll(/path:\s*['"]([^'"]+)['"],\s*name:\s*['"]([^'"]+)['"]/g)]
   .map((m) => ({ path: m[1]!, name: m[2]! }))
-  // The auth routes (login, enroll, pending, connect) are not navigation.
+  // The auth routes (login, enroll, pending, connect, devices) are not navigation.
   .filter((r) => !AUTH_ROUTES.has(r.name));
 
 describe("the primary navigation", () => {

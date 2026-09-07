@@ -36,6 +36,41 @@ export interface OAuthTxn {
   scopes: string[];
 }
 
+export interface DeviceInfo {
+  id: string;
+  user_id: string;
+  user_display_name: string;
+  kind: 'browser' | 'mcp' | string;
+  label: string;
+  platform: string | null;
+  status: 'pending' | 'trusted' | 'revoked' | string;
+  first_seen_at: string;
+  last_seen_at: string;
+  last_ip: string | null;
+  approved_at: string | null;
+  is_current: boolean;
+}
+
+export interface SessionInfo {
+  id: string;
+  device_id: string;
+  device_label: string;
+  kind: string;
+  created_at: string;
+  last_seen_at: string;
+  ip: string | null;
+  is_current: boolean;
+}
+
+export interface CredentialInfo {
+  id: string;
+  label: string;
+  created_at: string;
+  last_used_at: string | null;
+  backup_state: boolean;
+  transports: string | null;
+}
+
 export interface CeremonyOptions {
   challenge_id: string;
   options: string;
@@ -89,5 +124,33 @@ export const authApi = {
   },
   async oauthApprove(txn: string): Promise<{ redirect_uri: string }> {
     return (await apiClient.post<{ redirect_uri: string }>('/auth/oauth/approve', { txn })).data;
+  },
+  /** Trusted devices, sessions and passkeys (SECURITY_PLAN.md §3.4). */
+  async devices(): Promise<DeviceInfo[]> {
+    return (await apiClient.get<DeviceInfo[]>('/devices')).data;
+  },
+  async renameDevice(id: string, label: string): Promise<DeviceInfo> {
+    return (await apiClient.patch<DeviceInfo>(`/devices/${encodeURIComponent(id)}`, { label })).data;
+  },
+  async approveDevice(id: string): Promise<DeviceInfo> {
+    return (await apiClient.post<DeviceInfo>(`/devices/${encodeURIComponent(id)}/approve`)).data;
+  },
+  async revokeDevice(id: string): Promise<DeviceInfo> {
+    return (await apiClient.post<DeviceInfo>(`/devices/${encodeURIComponent(id)}/revoke`)).data;
+  },
+  async sessions(): Promise<SessionInfo[]> {
+    return (await apiClient.get<SessionInfo[]>('/sessions')).data;
+  },
+  async endSession(id: string): Promise<void> {
+    await apiClient.delete(`/sessions/${encodeURIComponent(id)}`);
+  },
+  async endOtherSessions(): Promise<void> {
+    await apiClient.post('/sessions/end-others');
+  },
+  async credentials(): Promise<CredentialInfo[]> {
+    return (await apiClient.get<CredentialInfo[]>('/credentials')).data;
+  },
+  async deleteCredential(id: string): Promise<void> {
+    await apiClient.delete(`/credentials/${encodeURIComponent(id)}`);
   },
 };

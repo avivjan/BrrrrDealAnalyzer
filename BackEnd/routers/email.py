@@ -4,12 +4,13 @@ import logging
 import os
 import uuid
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ReqRes.email.sendOffer.sendOfferReq import SendOfferReq
 from ReqRes.email.sendOffer.sendOfferRes import SendOfferRes
 from BL.email.sendOffer import send_offer_email
 from BL.auth.common.audit import client_ip, count_recent, record as audit
+from BL.auth.common.session_dependency import require_step_up
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,10 @@ def send_offer_limit() -> int:
         return DEFAULT_SEND_OFFER_PER_HOUR
 
 
-@router.post("/send-offer", response_model=SendOfferRes)
+# A real e-mail is a deliberate act: with sessions enforced it asks for a fresh
+# passkey prompt (SECURITY_PLAN.md §3.2 step-up). No parameter is declared, so
+# the operation's OpenAPI contract is unchanged.
+@router.post("/send-offer", response_model=SendOfferRes, dependencies=[Depends(require_step_up)])
 def send_offer_route(payload: SendOfferReq, request: Request):
     # A real e-mail leaves the LLC's own mailbox, so every attempt is audited
     # (never the recipient's address) and capped per hour per caller.

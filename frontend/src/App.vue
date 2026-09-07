@@ -6,6 +6,7 @@ import { onMounted } from "vue";
 import { apiClient } from "./api";
 import AppShell from "./components/shell/AppShell.vue";
 import AppKeyGate from "./components/shell/AppKeyGate.vue";
+import SecurityBar from "./components/shell/SecurityBar.vue";
 
 const connectionStore = useConnectionStore();
 const dealStore = useDealStore();
@@ -58,6 +59,7 @@ onMounted(() => {
     positioned relative to a transformed ancestor.
   -->
   <AppShell>
+    <SecurityBar />
     <RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>
   </AppShell>
   <AppKeyGate />

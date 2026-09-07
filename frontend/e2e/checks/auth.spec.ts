@@ -59,6 +59,28 @@ test.describe('passkeys', () => {
 
     await page.reload();
     expect((await page.request.get(`${API_ORIGIN}/auth/me`)).ok()).toBe(true);
+
+    // The security bar and the devices dashboard (Phase 3).
+    await page.goto('/');
+    await expect(page.getByTestId('security.bar')).toContainText('Signed in as E2E');
+    await page.getByTestId('security.devices-link').click();
+    await expect(page.getByTestId('devices.page')).toBeVisible();
+    await expect(page.getByTestId('devices.row')).toHaveCount(1);
+    await expect(page.getByTestId('devices.row').first()).toContainText('This device');
+    await page.getByTestId('devices.rename').click();
+    await page.getByTestId('devices.rename-input').fill('Playwright laptop');
+    await page.getByTestId('devices.rename-save').click();
+    await expect(page.getByTestId('devices.label')).toHaveText('Playwright laptop');
+    await expect(page.getByTestId('sessions.row')).toHaveCount(1);
+    await expect(page.getByTestId('passkeys.row')).toHaveCount(1);
+    await expect(page.getByTestId('passkeys.row')).toContainText('Playwright');
+    await expect(page.getByTestId('passkeys.delete')).toBeDisabled(); // the last passkey stays
+    await page.getByTestId('passkeys.add-link').click();
+    await expect(page.getByTestId('passkeys.link')).toContainText('/enroll?token=');
+    // signing out from the dashboard ends the session
+    await page.getByTestId('sessions.end').click();
+    await expect(page.getByTestId('login.page')).toBeVisible();
+    expect((await page.request.get(`${API_ORIGIN}/auth/me`)).status()).toBe(401);
   });
 
   test('a used enrollment link is refused', async ({ page, context }) => {

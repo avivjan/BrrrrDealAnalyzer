@@ -9,10 +9,11 @@ import LoginView from '../views/LoginView.vue'
 import EnrollView from '../views/EnrollView.vue'
 import PendingApproval from '../views/PendingApproval.vue'
 import ConnectView from '../views/ConnectView.vue'
+import SettingsDevices from '../views/SettingsDevices.vue'
 import { useAuthStore } from '../stores/authStore'
 
 /** Routes that never require a session, and are not in the primary nav. */
-export const AUTH_ROUTE_NAMES = ['login', 'enroll', 'pending', 'connect'] as const
+export const AUTH_ROUTE_NAMES = ['login', 'enroll', 'pending', 'connect', 'devices'] as const
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,7 +53,8 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView, meta: { auth: true } },
     { path: '/enroll', name: 'enroll', component: EnrollView, meta: { auth: true } },
     { path: '/pending', name: 'pending', component: PendingApproval, meta: { auth: true } },
-    { path: '/connect', name: 'connect', component: ConnectView, meta: { auth: true } }
+    { path: '/connect', name: 'connect', component: ConnectView, meta: { auth: true } },
+    { path: '/settings/devices', name: 'devices', component: SettingsDevices, meta: { auth: true } }
   ]
 })
 

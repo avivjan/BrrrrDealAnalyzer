@@ -111,3 +111,18 @@ def require_recent_auth(request: Request, db: DbSession = Depends(get_db)) -> Pr
     if not sessions.is_recently_authenticated(principal.session):
         raise HTTPException(status_code=403, detail="reauth_required")
     return principal
+
+
+async def require_step_up(request: Request, db: DbSession = Depends(get_db)) -> Optional[Principal]:
+    """Step-up on a deliberate action (send an offer), only once sessions are
+    enforced -- `off` and `shadow` change nothing. MCP sessions are exempt:
+    approving the connector device was the human in the loop."""
+
+    if settings.auth_mode() != "enforce":
+        return None
+    principal = current_principal(request) or resolve_principal(request, db)
+    if principal is None:
+        raise HTTPException(status_code=401, detail="unauthenticated")
+    if principal.session.kind != "mcp" and not sessions.is_recently_authenticated(principal.session):
+        raise HTTPException(status_code=403, detail="reauth_required")
+    return principal

@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from db import engine, SessionLocal
 import bootstrap
-from routers import ALL_ROUTERS, auth as auth_router, health as health_router
+from routers import ALL_ROUTERS, auth as auth_router, devices as devices_router, health as health_router
 from BL.auth.common.app_key import require_app_key
 from BL.auth.common.session_dependency import require_session
 from BL.common.body_limit import BodyLimitMiddleware
@@ -80,7 +80,9 @@ app.add_middleware(
 # on. `/helloworld` (the connection ping and Render's health check) and
 # `/auth/*` stay public. Neither dependency declares a parameter, so the
 # OpenAPI contract of the existing operations is unchanged.
-PUBLIC_ROUTERS = (health_router, auth_router)
+# `devices` gates itself: every call needs a real session whatever AUTH_MODE
+# says, and `GET /devices/me` must answer a pending device.
+PUBLIC_ROUTERS = (health_router, auth_router, devices_router)
 
 
 def install_routers(target: FastAPI) -> None:

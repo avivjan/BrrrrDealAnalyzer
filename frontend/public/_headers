@@ -1,13 +1,13 @@
 # Netlify response headers for the SPA (SECURITY_PLAN.md §3.5, Phase 0 step 0.7).
 #
-# The CSP starts in Report-Only so a missing source shows up in the browser
-# console instead of breaking the page; Phase 3 switches it to enforcing once
-# a nightly cycle has run clean. `connect-src` must name the API origin the
-# bundle was built with (VITE_API_URL); adjust the host if it changes.
+# The CSP is enforcing (Phase 3). `e2e/checks/csp.spec.ts` replays this exact
+# header on every page of the built app and fails on any violation, so a new
+# external source must be added here first. `connect-src` must name the API
+# origin the bundle was built with (VITE_API_URL); adjust the host if it changes.
 /*
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), geolocation=(self), microphone=(), payment=(), usb=()
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://storage.googleapis.com https://storage.cloud.google.com; font-src 'self' data:; connect-src 'self' https://brrrrdealanalyzer.onrender.com http://localhost:8000; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://storage.googleapis.com https://storage.cloud.google.com; font-src 'self' data:; connect-src 'self' https://brrrrdealanalyzer.onrender.com http://localhost:8000; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'

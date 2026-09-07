@@ -589,6 +589,16 @@ Other commands: `manage.py list-devices`, `approve-device <id>`, `revoke-device 
 `revoke-sessions [--user <name>]`. A signed-in owner can also issue an enrollment link for their
 other devices from the app (`POST /auth/enrollment-tokens`, after a fresh passkey prompt).
 
+**Devices & passkeys** (`/settings/devices`, linked from the strip above every page while a
+session exists): every browser and Claude connector on the account with approve / revoke /
+rename, the owner's sessions (end one, end all others) and passkeys (add one on another device,
+remove one — never the last). With `DEVICE_POLICY=enforce` a new browser signs in but waits on
+`/pending` until a trusted device approves it here. Approving, revoking, removing a passkey and
+sending an offer ask for a fresh passkey prompt (`AUTH_REAUTH_SECONDS`, default 600) when
+`AUTH_MODE=enforce`; the SPA answers the API's `reauth_required` with one prompt and retries.
+The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
+`e2e/checks/csp.spec.ts` replays it on every route.
+
 ### Environment variables
 
 | Variable | Used by | Notes |
