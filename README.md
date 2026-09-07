@@ -430,8 +430,16 @@ bought", "log hours", ...) each match a tool's name or description, that the com
 tools stay under a size budget with 70 deals seeded, and that every tool carries the
 right read-only / destructive annotation. The nightly's **MCP connector probe** job asks
 Claude the real question through the API with the connector attached and fails unless a
-compact tool was used (needs the `ANTHROPIC_API_KEY` and `MCP_PROBE_URL` secrets; it
-skips without them).
+compact tool was used and the answer quotes the money left in a bought deal correctly
+(needs the `ANTHROPIC_API_KEY` and `MCP_PROBE_URL` secrets; it skips without them).
+
+Every output is explained, not just every input: each result field carries a description
+with its unit and sign convention (for example `cash_out` negative = money still left in
+the deal; `cash_out_routi` = the cash wire received at the refinance closing table), every
+JSON tool publishes an output schema built from those descriptions and returns structured
+content that validates against it, and the server instructions carry a glossary. The
+compact rows add `cash_left_in_deal` and `cash_wire_at_refi` so the common questions need no
+sign reading at all. A test fails on any undocumented output field.
 
 The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
 `/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (any long random string) on the Render

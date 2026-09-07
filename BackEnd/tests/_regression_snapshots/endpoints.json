@@ -212,7 +212,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 76637.5
           }
@@ -434,7 +439,12 @@
             "value": 5850.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 78887.5
           }
@@ -758,7 +768,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 71137.5
           }
@@ -1036,7 +1051,12 @@
               "value": 3600.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 76637.5
             }
@@ -1255,7 +1275,12 @@
               "value": 5850.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 78887.5
             }
@@ -1558,7 +1583,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($42,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,460) + Rehab Cash ($0) + HML Interest\u00d71.5 ($18,397.50) + Holding\u00d71.5 ($3,600) = $79,457.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($42,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,460) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($18,397.50) + Holding\u00d71.5 ($3,600) = $79,457.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 79457.5
           }
@@ -1829,7 +1859,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 71137.5
           }
@@ -2052,7 +2087,12 @@
             "value": 5850.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 78887.5
           }
@@ -2357,7 +2397,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 76637.5
           }
@@ -2659,7 +2704,12 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 71137.5
           }
@@ -2884,7 +2934,12 @@
             "value": 5850.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+            "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 5500.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
             "label": "Total Cash Needed (Buffered)",
             "value": 78887.5
           }
@@ -3198,7 +3253,12 @@
               "value": 3600.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 71137.5
             }
@@ -3420,7 +3480,12 @@
               "value": 5850.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 78887.5
             }
@@ -3684,9 +3749,14 @@
             "value": 2400.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest ($12,732.50) + Holding ($2,400) = $59,762.50",
+            "formula": "Refi wire ($-1,100) is negative \u2192 investor brings $1,100 at refi closing",
+            "label": "Refi Shortfall (cash to refi table)",
+            "value": 1100.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest ($12,732.50) + Holding ($2,400) + Refi Shortfall ($1,100) = $60,862.50",
             "label": "Total Cash Needed",
-            "value": 59762.5
+            "value": 60862.5
           }
         ],
         "total_cash_needed_for_deal_with_buffer": [
@@ -3711,6 +3781,11 @@
             "value": 0.0
           },
           {
+            "formula": "Refi wire ($-1,100) is negative \u2192 investor brings $1,100 at refi closing",
+            "label": "Refi Shortfall (cash to refi table)",
+            "value": 1100.0
+          },
+          {
             "formula": "Closing ($0) \u00d7 1.1 = $0",
             "label": "Closing \u00d7 1.1 buffer",
             "value": 0.0
@@ -3726,9 +3801,14 @@
             "value": 3600.0
           },
           {
-            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest\u00d71.5 ($19,098.75) + Holding\u00d71.5 ($3,600) = $74,478.75",
+            "formula": "10% \u00d7 Rehab ($71,500) = $7,150 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+            "label": "Rehab float buffer (10% of rehab)",
+            "value": 7150.0
+          },
+          {
+            "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,630) + Rehab Cash ($0) + Rehab Float ($7,150) + HML Interest\u00d71.5 ($19,098.75) + Holding\u00d71.5 ($3,600) + Refi Shortfall ($1,100) = $75,578.75",
             "label": "Total Cash Needed (Buffered)",
-            "value": 74478.75
+            "value": 75578.75
           }
         ]
       },
@@ -3778,8 +3858,8 @@
       "sqft": null,
       "stage": 2,
       "task": null,
-      "total_cash_needed_for_deal": 59762.5,
-      "total_cash_needed_for_deal_with_buffer": 74478.75,
+      "total_cash_needed_for_deal": 60862.5,
+      "total_cash_needed_for_deal_with_buffer": 75578.75,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
       "vacancyPercent": "5.00",
@@ -3969,7 +4049,12 @@
               "value": 5850.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 78887.5
             }
@@ -4069,8 +4154,10 @@
         "board": "active",
         "bought_stage": null,
         "cash_flow_monthly": 85.03674361688704,
+        "cash_left_in_deal": 48125.0,
         "cash_on_cash_pct": 2.120396723953547,
         "cash_out": -48125.0,
+        "cash_wire_at_refi": 15400.0,
         "created_at": "<created_at>",
         "deal_type": "BRRRR",
         "equity": 80000.0,
@@ -4092,8 +4179,10 @@
         "board": "active",
         "bought_stage": null,
         "cash_flow_monthly": null,
+        "cash_left_in_deal": null,
         "cash_on_cash_pct": null,
         "cash_out": null,
+        "cash_wire_at_refi": null,
         "created_at": "<created_at>",
         "deal_type": "FLIP",
         "equity": null,
@@ -4121,8 +4210,10 @@
         "board": "active",
         "bought_stage": null,
         "cash_flow_monthly": null,
+        "cash_left_in_deal": null,
         "cash_on_cash_pct": null,
         "cash_out": null,
+        "cash_wire_at_refi": null,
         "created_at": "<created_at>",
         "deal_type": "FLIP",
         "equity": null,
@@ -4183,8 +4274,10 @@
         "board": "active",
         "bought_stage": null,
         "cash_flow_monthly": 85.03674361688704,
+        "cash_left_in_deal": 48125.0,
         "cash_on_cash_pct": 2.120396723953547,
         "cash_out": -48125.0,
+        "cash_wire_at_refi": 15400.0,
         "created_at": "<created_at>",
         "deal_type": "BRRRR",
         "equity": 80000.0,
@@ -4206,8 +4299,10 @@
         "board": "active",
         "bought_stage": null,
         "cash_flow_monthly": null,
+        "cash_left_in_deal": null,
         "cash_on_cash_pct": null,
         "cash_out": null,
+        "cash_wire_at_refi": null,
         "created_at": "<created_at>",
         "deal_type": "FLIP",
         "equity": null,
@@ -4505,7 +4600,12 @@
               "value": 3600.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $71,137.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 71137.5
             }
@@ -4724,7 +4824,12 @@
               "value": 5850.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Operating\u00d71.5 ($5,850) = $78,887.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 78887.5
             }
@@ -4982,9 +5087,14 @@
               "value": 2400.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest ($12,732.50) + Holding ($2,400) = $59,762.50",
+              "formula": "Refi wire ($-1,100) is negative \u2192 investor brings $1,100 at refi closing",
+              "label": "Refi Shortfall (cash to refi table)",
+              "value": 1100.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest ($12,732.50) + Holding ($2,400) + Refi Shortfall ($1,100) = $60,862.50",
               "label": "Total Cash Needed",
-              "value": 59762.5
+              "value": 60862.5
             }
           ],
           "total_cash_needed_for_deal_with_buffer": [
@@ -5009,6 +5119,11 @@
               "value": 0.0
             },
             {
+              "formula": "Refi wire ($-1,100) is negative \u2192 investor brings $1,100 at refi closing",
+              "label": "Refi Shortfall (cash to refi table)",
+              "value": 1100.0
+            },
+            {
               "formula": "Closing ($0) \u00d7 1.1 = $0",
               "label": "Closing \u00d7 1.1 buffer",
               "value": 0.0
@@ -5024,9 +5139,14 @@
               "value": 3600.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,630) + Rehab Cash ($0) + HML Interest\u00d71.5 ($19,098.75) + Holding\u00d71.5 ($3,600) = $74,478.75",
+              "formula": "10% \u00d7 Rehab ($71,500) = $7,150 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 7150.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($0) + HML Points ($4,630) + Rehab Cash ($0) + Rehab Float ($7,150) + HML Interest\u00d71.5 ($19,098.75) + Holding\u00d71.5 ($3,600) + Refi Shortfall ($1,100) = $75,578.75",
               "label": "Total Cash Needed (Buffered)",
-              "value": 74478.75
+              "value": 75578.75
             }
           ]
         },
@@ -5076,8 +5196,8 @@
         "sqft": null,
         "stage": 2,
         "task": null,
-        "total_cash_needed_for_deal": 59762.5,
-        "total_cash_needed_for_deal_with_buffer": 74478.75,
+        "total_cash_needed_for_deal": 60862.5,
+        "total_cash_needed_for_deal_with_buffer": 75578.75,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
         "vacancyPercent": "5.00",
@@ -5296,7 +5416,12 @@
               "value": 3600.0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
+              "formula": "10% \u00d7 Rehab ($55,000) = $5,500 \u2014 kept on hand for draws/deposits even when HM funds the rehab",
+              "label": "Rehab float buffer (10% of rehab)",
+              "value": 5500.0
+            },
+            {
+              "formula": "Down Payment ($40,000) + Closing\u00d71.1 ($5,500) + HML Points ($4,300) + Rehab Cash ($0) + Rehab Float ($5,500) + HML Interest\u00d71.5 ($17,737.50) + Holding\u00d71.5 ($3,600) = $76,637.50",
               "label": "Total Cash Needed (Buffered)",
               "value": 76637.5
             }

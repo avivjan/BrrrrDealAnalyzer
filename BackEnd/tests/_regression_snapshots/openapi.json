@@ -829,6 +829,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "capexPercent": {
@@ -858,6 +859,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -870,6 +872,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -881,6 +884,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -892,6 +896,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "closingCostsBuy": {
@@ -1003,6 +1008,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -1014,6 +1020,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -1097,6 +1104,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "montly_hoa": {
@@ -1122,6 +1130,7 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "niche": {
@@ -1271,6 +1280,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "section": {
@@ -1356,6 +1366,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -1367,6 +1378,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           },
           "updated_at": {
@@ -2010,6 +2022,7 @@
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -2065,6 +2078,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "buyerAgentSellingFee": {
@@ -2189,6 +2203,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "monthly_utilities": {
@@ -2212,6 +2227,7 @@
             "title": "Montly Hoa"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
@@ -2315,6 +2331,7 @@
             "title": "Rent Comps"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
@@ -2424,18 +2441,22 @@
             "title": "Task"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           },
@@ -3192,6 +3213,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "capexPercent": {
@@ -3221,6 +3243,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -3233,6 +3256,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -3244,6 +3268,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -3255,6 +3280,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "closingCostsBuy": {
@@ -3351,6 +3377,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -3362,6 +3389,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -3445,6 +3473,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "montly_hoa": {
@@ -3470,6 +3499,7 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "niche": {
@@ -3619,6 +3649,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "section": {
@@ -3692,6 +3723,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -3703,6 +3735,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           },
           "updated_at": {
@@ -3789,6 +3822,7 @@
         "description": "One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on.",
         "properties": {
           "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
             "enum": [
               "active",
               "bought"
@@ -3811,6 +3845,7 @@
                 "$ref": "#/components/schemas/BoughtFlipDealRes"
               }
             ],
+            "description": "The full record: every input (camelCase aliases, money in thousands), notes, comps, all metrics and the calculation breakdowns.",
             "title": "Deal"
           }
         },
@@ -3822,9 +3857,10 @@
         "type": "object"
       },
       "DealSummary": {
-        "description": "One row of the compact deal list. Money in thousands where the name says so.",
+        "description": "One row of the compact deal list. Money in thousands where the name ends in _k, else plain dollars.",
         "properties": {
           "address": {
+            "description": "Property address as typed on the site.",
             "title": "Address",
             "type": "string"
           },
@@ -3837,9 +3873,11 @@
                 "type": "null"
               }
             ],
+            "description": "BRRRR: after-repair value; FLIP: projected sale price. Thousands of dollars.",
             "title": "Arv Or Sale Price K"
           },
           "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
             "enum": [
               "active",
               "bought"
@@ -3856,6 +3894,7 @@
                 "type": "null"
               }
             ],
+            "description": "Bought deals only: the purchase pipeline stage id (e.g. purchase, closed, rehab, refinanced, sold).",
             "title": "Bought Stage"
           },
           "cash_flow_monthly": {
@@ -3867,7 +3906,20 @@
                 "type": "null"
               }
             ],
+            "description": "Monthly cash flow after the refinance in dollars (BRRRR); negative = costs money each month.",
             "title": "Cash Flow Monthly"
+          },
+          "cash_left_in_deal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your own money still in the deal after the refinance, in dollars (never negative): -cash_out when cash_out is negative, else 0. The number to quote for 'how much did we leave in'.",
+            "title": "Cash Left In Deal"
           },
           "cash_on_cash_pct": {
             "anyOf": [
@@ -3878,6 +3930,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent. -1 = infinite (no cash left in the deal), -2 = not applicable.",
             "title": "Cash On Cash Pct"
           },
           "cash_out": {
@@ -3889,7 +3942,20 @@
                 "type": "null"
               }
             ],
+            "description": "BRRRR cash out in dollars: total received from the deal (the refinance wire) minus total put in. NEGATIVE = that much of your own money is still left in the deal. See cash_left_in_deal.",
             "title": "Cash Out"
+          },
+          "cash_wire_at_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars (new loan minus hard-money payoff, refinance costs, points and reserve), before subtracting what was invested.",
+            "title": "Cash Wire At Refi"
           },
           "created_at": {
             "anyOf": [
@@ -3901,9 +3967,11 @@
                 "type": "null"
               }
             ],
+            "description": "When the deal was created on the site.",
             "title": "Created At"
           },
           "deal_type": {
+            "description": "BRRRR (buy, rehab, rent, refinance) or FLIP (buy, rehab, sell).",
             "enum": [
               "BRRRR",
               "FLIP"
@@ -3920,9 +3988,11 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance in dollars (ARV minus the new loan).",
             "title": "Equity"
           },
           "id": {
+            "description": "Deal id; pass it to get_deal for the full record.",
             "format": "uuid",
             "title": "Id",
             "type": "string"
@@ -3936,6 +4006,7 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit in dollars: BRRRR = equity plus cash out; FLIP = sale minus all costs.",
             "title": "Net Profit"
           },
           "purchase_price_k": {
@@ -3947,6 +4018,7 @@
                 "type": "null"
               }
             ],
+            "description": "Purchase price in thousands of dollars (140 = $140,000).",
             "title": "Purchase Price K"
           },
           "rehab_cost_k": {
@@ -3958,6 +4030,7 @@
                 "type": "null"
               }
             ],
+            "description": "Rehab budget in thousands of dollars.",
             "title": "Rehab Cost K"
           },
           "rent_monthly": {
@@ -3969,6 +4042,7 @@
                 "type": "null"
               }
             ],
+            "description": "Monthly rent in dollars (BRRRR).",
             "title": "Rent Monthly"
           },
           "roi_pct": {
@@ -3980,6 +4054,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent. -1 = infinite, -2 = not applicable.",
             "title": "Roi Pct"
           },
           "section": {
@@ -3991,6 +4066,7 @@
                 "type": "null"
               }
             ],
+            "description": "Active deals only: 1 Wholesale, 2 Market, 3 Off Market.",
             "title": "Section"
           },
           "stage": {
@@ -4002,6 +4078,7 @@
                 "type": "null"
               }
             ],
+            "description": "Active deals only: 1 New, 2 Working, 3 Brought (under contract), 4 Keep in Mind, 5 Dead.",
             "title": "Stage"
           },
           "task": {
@@ -4013,6 +4090,7 @@
                 "type": "null"
               }
             ],
+            "description": "Current task or status note for the deal.",
             "title": "Task"
           },
           "total_cash_needed": {
@@ -4024,6 +4102,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars.",
             "title": "Total Cash Needed"
           },
           "updated_at": {
@@ -4036,6 +4115,7 @@
                 "type": "null"
               }
             ],
+            "description": "Last edit on the site.",
             "title": "Updated At"
           }
         },
@@ -4622,6 +4702,7 @@
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -4665,6 +4746,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "buyerAgentSellingFee": {
@@ -4774,6 +4856,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "monthly_utilities": {
@@ -4797,6 +4880,7 @@
             "title": "Montly Hoa"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
@@ -4900,6 +4984,7 @@
             "title": "Rent Comps"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
@@ -4997,18 +5082,22 @@
             "title": "Task"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           },
@@ -5837,6 +5926,7 @@
             "additionalProperties": {
               "type": "integer"
             },
+            "description": "Active deals per stage: 1 New, 2 Working, 3 Brought, 4 Keep in Mind, 5 Dead.",
             "title": "Active By Stage",
             "type": "object"
           },
@@ -5844,10 +5934,12 @@
             "additionalProperties": {
               "type": "integer"
             },
+            "description": "Active deals per deal type (BRRRR / FLIP).",
             "title": "Active By Type",
             "type": "object"
           },
           "active_count": {
+            "description": "Deals on the My Deals board (being analysed or worked).",
             "title": "Active Count",
             "type": "integer"
           },
@@ -5855,6 +5947,7 @@
             "additionalProperties": {
               "type": "integer"
             },
+            "description": "Bought deals per purchase pipeline stage id.",
             "title": "Bought By Stage",
             "type": "object"
           },
@@ -5862,34 +5955,41 @@
             "additionalProperties": {
               "type": "integer"
             },
+            "description": "Bought deals per deal type.",
             "title": "Bought By Type",
             "type": "object"
           },
           "bought_count": {
+            "description": "Properties we bought (Bought Deals board).",
             "title": "Bought Count",
             "type": "integer"
           },
           "bought_total_cash_flow_monthly": {
             "default": 0.0,
+            "description": "Sum of monthly cash flow over the bought deals, in dollars.",
             "title": "Bought Total Cash Flow Monthly",
             "type": "number"
           },
           "bought_total_cash_invested": {
             "default": 0.0,
+            "description": "Sum of total cash needed over the bought deals, in dollars.",
             "title": "Bought Total Cash Invested",
             "type": "number"
           },
           "bought_total_equity": {
             "default": 0.0,
+            "description": "Sum of equity over the bought deals, in dollars.",
             "title": "Bought Total Equity",
             "type": "number"
           },
           "bought_total_net_profit": {
             "default": 0.0,
+            "description": "Sum of net profit over the bought deals, in dollars.",
             "title": "Bought Total Net Profit",
             "type": "number"
           },
           "top_active_by_cash_on_cash": {
+            "description": "Top 3 active deals by cash-on-cash (percent).",
             "items": {
               "$ref": "#/components/schemas/TopDeal"
             },
@@ -5897,6 +5997,7 @@
             "type": "array"
           },
           "top_bought_by_cash_flow": {
+            "description": "Top 3 bought deals by monthly cash flow (dollars).",
             "items": {
               "$ref": "#/components/schemas/TopDeal"
             },
@@ -5904,6 +6005,7 @@
             "type": "array"
           },
           "top_bought_by_cash_on_cash": {
+            "description": "Top 3 bought deals by cash-on-cash (percent; infinite/-1 excluded).",
             "items": {
               "$ref": "#/components/schemas/TopDeal"
             },
@@ -5911,6 +6013,7 @@
             "type": "array"
           },
           "top_bought_by_equity": {
+            "description": "Top 3 bought deals by equity (dollars).",
             "items": {
               "$ref": "#/components/schemas/TopDeal"
             },
@@ -6950,12 +7053,15 @@
         "type": "object"
       },
       "TopDeal": {
+        "description": "A deal ranked by one metric.",
         "properties": {
           "address": {
+            "description": "Property address.",
             "title": "Address",
             "type": "string"
           },
           "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
             "enum": [
               "active",
               "bought"
@@ -6964,15 +7070,18 @@
             "type": "string"
           },
           "deal_type": {
+            "description": "BRRRR or FLIP.",
             "title": "Deal Type",
             "type": "string"
           },
           "id": {
+            "description": "Deal id; pass it to get_deal for the full record.",
             "format": "uuid",
             "title": "Id",
             "type": "string"
           },
           "value": {
+            "description": "The metric this list is ranked by (dollars for equity / cash flow, percent for cash-on-cash).",
             "title": "Value",
             "type": "number"
           }
@@ -7341,7 +7450,7 @@
         "type": "object"
       },
       "analyzeBRRRRes": {
-        "description": "Represents the result of the cash flow calculation.",
+        "description": "Result of the BRRRR (buy, rehab, rent, refinance, repeat) calculation. All money in plain dollars.",
         "properties": {
           "breakdowns": {
             "anyOf": [
@@ -7358,9 +7467,11 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -7373,6 +7484,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -7384,6 +7496,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -7395,6 +7508,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "dscr": {
@@ -7406,6 +7520,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -7417,6 +7532,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "messages": {
@@ -7431,6 +7547,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "net_profit": {
@@ -7442,6 +7559,7 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "roi": {
@@ -7453,6 +7571,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "total_cash_needed_for_deal": {
@@ -7464,6 +7583,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -7475,6 +7595,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           }
         },
@@ -7730,9 +7851,10 @@
         "type": "object"
       },
       "analyzeFlipRes": {
-        "description": "Represents the result of the Flip calculation.",
+        "description": "Result of the fix-and-flip calculation. All money in plain dollars.",
         "properties": {
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -7751,6 +7873,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "messages": {
@@ -7765,29 +7888,36 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           }
