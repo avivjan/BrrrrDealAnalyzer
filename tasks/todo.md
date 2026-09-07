@@ -343,7 +343,7 @@ its own CI check and its own row in the nightly email.
 - README: CI paragraph names the three checks to require; nightly paragraphs mention the job.
 
 **Verified locally.** CI-style run `pytest tests/test_mcp.py tests/test_mcp_tools.py
-tests/test_mcp_e2e.py`: 88 passed in ~6 s. Full backend suite: .
+tests/test_mcp_e2e.py`: 88 passed in ~6 s. Full backend suite: 134 passed (131 before this change, so 75 net new; the 13 original MCP tests were extended in place).
 `verify_regression.py verify`: all five goldens identical. Nightly package unit tests: 23 OK
 (21 + 2). Both workflow files parse as YAML.
 
