@@ -39,7 +39,7 @@ class analyzeBRRRReq(BaseModel):
 
     refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Refi lender points as a percentage of the refi loan amount")] = Decimal("2")
 
-    cash_reserve_in_thousands: Annotated[Decimal, Field(alias="cashReserve", description="Cash deposited toward the DSCR loan principal at refi (in thousands)")] = Decimal("0.0")
+    cash_reserve_in_thousands: Annotated[Decimal, Field(alias="cashReserve", description="Cash escrowed at refi and returned at exit/sale (in thousands). Not a principal paydown: the DSCR loan and its payment stay on the full ARV x LTV; the reserve reduces cash out and adds to equity 1:1.")] = Decimal("0.0")
 
     loan_term_years: Annotated[int, Field(alias="loanTermYears")] = 30
 

@@ -175,6 +175,18 @@ export function validateDealInputs(
     errors.push("Contingency must be between 0% and 100%.");
   if (num(deal.down_payment) < 0 || num(deal.down_payment) > 100)
     errors.push("Down payment percentage must be between 0% and 100%.");
+  if (num(deal.hmlPoints) < 0 || num(deal.hmlPoints) > 100)
+    errors.push("HML points must be between 0% and 100%.");
+  if (num(deal.HMLInterestRate) < 0 || num(deal.HMLInterestRate) > 100)
+    errors.push("HML interest rate must be between 0% and 100%.");
+  if (num(deal.closingCostsBuy) < 0)
+    errors.push("Closing costs (buy) cannot be negative.");
+  if (num(deal.annual_property_taxes) < 0)
+    errors.push("Annual property taxes cannot be negative.");
+  if (num(deal.annual_insurance) < 0)
+    errors.push("Annual insurance cannot be negative.");
+  if (num(deal.montly_hoa) < 0)
+    errors.push("HOA dues cannot be negative.");
 
   if (dealType === "BRRRR") {
     if (!deal.arv_in_thousands || num(deal.arv_in_thousands) <= 0)
@@ -205,6 +217,10 @@ export function validateDealInputs(
       errors.push("Seller agent fee must be between 0% and 100%.");
     if (num(deal.sellingClosingCosts) < 0)
       errors.push("Closing costs cannot be negative.");
+    if (num(deal.monthly_utilities) < 0)
+      errors.push("Monthly utilities cannot be negative.");
+    if (num(deal.capitalGainsTax) < 0 || num(deal.capitalGainsTax) > 100)
+      errors.push("Capital gains tax rate must be between 0% and 100%.");
   }
 
   return errors;
@@ -228,9 +244,15 @@ export const formatDealForClipboard = (deal: ActiveDealRes): string => {
     const n = toNumber(val);
     return n !== undefined ? `$${n.toLocaleString()}` : "-";
   };
+  // -1 / -2 are the calculators' ±∞ sentinels on cash_on_cash / roi /
+  // annualized_roi; decode them here only (never in formatMoney, where -$1 is
+  // a real dollar amount). A genuine 0 renders "0.00%".
   const formatPercent = (val?: number) => {
     const n = toNumber(val);
-    return n !== undefined ? `${n.toFixed(2)}%` : "-";
+    if (n === undefined) return "-";
+    if (n === -1) return "∞%";
+    if (n === -2) return "-∞%";
+    return `${n.toFixed(2)}%`;
   };
 
   const isBrrr = !deal.deal_type || deal.deal_type === 'BRRRR';

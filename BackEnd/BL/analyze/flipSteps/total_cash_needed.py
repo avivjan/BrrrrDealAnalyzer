@@ -62,10 +62,12 @@ def total_cash_needed_step(
         f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(hml_points_cash)}) + Rehab Cash ({fmt_money(rehab_cash)}) + HML Interest ({fmt_money(total_hml_interest)}) + Operating ({fmt_money(total_operating)}) = {fmt_money(total_cash_needed_without_buffer)}",
     )
     # Buffered version mirrors `get_total_cash_needed_for_deal` internals:
-    # operating × 1.5, interest × 1.5, closing × 1.1.
+    # operating × 1.5, interest × 1.5, closing × 1.1, plus a 10% rehab float
+    # buffer (0.1 × rehab, charged even when hard money funds the rehab).
     _flip_buffered_closing = closing_costs_buy * Decimal("1.1")
     _flip_buffered_interest = total_hml_interest * Decimal("1.5")
     _flip_buffered_operating = total_operating * Decimal("1.5")
+    _flip_rehab_float = Decimal("0.1") * rehab_cost
     breakdown.add(
         "total_cash_needed_with_buffer",
         "Closing × 1.1 buffer",
@@ -86,8 +88,14 @@ def total_cash_needed_step(
     )
     breakdown.add(
         "total_cash_needed_with_buffer",
+        "Rehab float buffer (10% of rehab)",
+        _flip_rehab_float,
+        f"10% × Rehab ({fmt_money(rehab_cost)}) = {fmt_money(_flip_rehab_float)} — kept on hand for draws/deposits even when HM funds the rehab",
+    )
+    breakdown.add(
+        "total_cash_needed_with_buffer",
         "Total Cash Needed (Buffered)",
         total_cash_needed_with_buffer,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing×1.1 ({fmt_money(_flip_buffered_closing)}) + HML Points ({fmt_money(hml_points_cash)}) + Rehab Cash ({fmt_money(rehab_cash)}) + HML Interest×1.5 ({fmt_money(_flip_buffered_interest)}) + Operating×1.5 ({fmt_money(_flip_buffered_operating)}) = {fmt_money(total_cash_needed_with_buffer)}",
+        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing×1.1 ({fmt_money(_flip_buffered_closing)}) + HML Points ({fmt_money(hml_points_cash)}) + Rehab Cash ({fmt_money(rehab_cash)}) + Rehab Float ({fmt_money(_flip_rehab_float)}) + HML Interest×1.5 ({fmt_money(_flip_buffered_interest)}) + Operating×1.5 ({fmt_money(_flip_buffered_operating)}) = {fmt_money(total_cash_needed_with_buffer)}",
     )
     return total_cash_needed_without_buffer, total_cash_needed_with_buffer, down_payment_cash, rehab_cash

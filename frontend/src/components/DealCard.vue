@@ -92,7 +92,19 @@ const cardClass = computed(() => {
 const formatMoney = (val?: number) =>
   val ? `$${Math.round(val).toLocaleString()}` : "-";
 
-const formatPercent = (val?: number) => (val ? `${val.toFixed(1)}%` : "-");
+/**
+ * Percent formatter, sentinel-aware. The calculators encode an unbounded
+ * return as -1 (+∞: no cash left in the deal) and -2 (-∞: undefined) on
+ * cash_on_cash / roi / annualized_roi; decode those here and only here — a
+ * currency value of -$1 must never be read as ∞. A genuine 0 is "0.0%".
+ */
+const formatPercent = (val?: number) => {
+  if (val == null) return "-";
+  if (val === -1 || val === Infinity) return "∞%";
+  if (val === -2 || val === -Infinity) return "-∞%";
+  if (!Number.isFinite(val)) return "-";
+  return `${val.toFixed(1)}%`;
+};
 
 /**
  * The verdict. A BRRRR is judged on cash-on-cash against a 10 % target, a FLIP
@@ -103,6 +115,10 @@ const heroTarget = computed(() => (isBrrr.value ? 10 : 20));
 
 const heroPercent = computed(() => {
   const value = isBrrr.value ? brrrDeal.value?.cash_on_cash : flipDeal.value?.roi;
+  // -1 / -2 are the calculators' ±∞ sentinels: ∞ fills the ring (positive),
+  // -∞ empties it (negative), instead of both reading as "-1%" / "-2%".
+  if (value === -1) return Infinity;
+  if (value === -2) return -Infinity;
   return Number.isFinite(value) ? (value as number) : 0;
 });
 

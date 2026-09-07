@@ -12,8 +12,13 @@ from BL.analyze.common.deal_math import get_total_cash_needed_for_deal
 def total_cash_needed_step(
     payload, breakdown, purchase_price, down_payment_cash, closing_costs_buy,
     HML_points_in_cash, rehab_cost, HML_interest_in_cash, holding_cost_until_refi, hml_payoff,
+    cash_out_routi,
 ):
-    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab)
+    # Lifetime cash requirement: if the refi wire (`cash_out_routi`, already net
+    # of the cash reserve) is negative, the investor brings that shortfall to
+    # the refi closing table, so it counts toward the cash the deal needs.
+    refi_shortfall = max(Decimal("0"), -cash_out_routi)
+    total_cash_needed_without_buffer, total_cash_needed_with_buffer = get_total_cash_needed_for_deal(payload.down_payment, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, payload.use_HM_for_rehab, refi_shortfall)
     # Surface the same components the helper sums internally so the user can
     # follow each dollar that goes into the unbuffered total.
     _brrr_rehab_cash_needed = rehab_cost * (1 - int(payload.use_HM_for_rehab))
@@ -55,17 +60,27 @@ def total_cash_needed_step(
         holding_cost_until_refi,
         f"Taxes + Insurance + HOA accrued over {payload.days_until_refi} days = {fmt_money(holding_cost_until_refi)}",
     )
+    if refi_shortfall > 0:
+        breakdown.add(
+            ["total_cash_needed_for_deal", "total_cash_needed_for_deal_with_buffer"],
+            "Refi Shortfall (cash to refi table)",
+            refi_shortfall,
+            f"Refi wire ({fmt_money(cash_out_routi)}) is negative → investor brings {fmt_money(refi_shortfall)} at refi closing",
+        )
+    _shortfall_text = f" + Refi Shortfall ({fmt_money(refi_shortfall)})" if refi_shortfall > 0 else ""
     breakdown.add(
         "total_cash_needed_for_deal",
         "Total Cash Needed",
         total_cash_needed_without_buffer,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + HML Interest ({fmt_money(HML_interest_in_cash)}) + Holding ({fmt_money(holding_cost_until_refi)}) = {fmt_money(total_cash_needed_without_buffer)}",
+        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing ({fmt_money(closing_costs_buy)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + HML Interest ({fmt_money(HML_interest_in_cash)}) + Holding ({fmt_money(holding_cost_until_refi)}){_shortfall_text} = {fmt_money(total_cash_needed_without_buffer)}",
     )
     # Buffered version applies the same multipliers the helper uses internally
-    # (closing × 1.1, holding × 1.5, HML interest × 1.5, rehab × 1.5).
+    # (closing × 1.1, holding × 1.5, HML interest × 1.5) plus a 10% rehab float
+    # buffer (0.1 × rehab, charged even when hard money funds the rehab).
     _brrr_buffered_closing = closing_costs_buy * Decimal("1.1")
     _brrr_buffered_holding = holding_cost_until_refi * Decimal("1.5")
     _brrr_buffered_interest = HML_interest_in_cash * Decimal("1.5")
+    _brrr_rehab_float = Decimal("0.1") * rehab_cost
     breakdown.add(
         "total_cash_needed_for_deal_with_buffer",
         "Closing × 1.1 buffer",
@@ -86,8 +101,14 @@ def total_cash_needed_step(
     )
     breakdown.add(
         "total_cash_needed_for_deal_with_buffer",
+        "Rehab float buffer (10% of rehab)",
+        _brrr_rehab_float,
+        f"10% × Rehab ({fmt_money(rehab_cost)}) = {fmt_money(_brrr_rehab_float)} — kept on hand for draws/deposits even when HM funds the rehab",
+    )
+    breakdown.add(
+        "total_cash_needed_for_deal_with_buffer",
         "Total Cash Needed (Buffered)",
         total_cash_needed_with_buffer,
-        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing×1.1 ({fmt_money(_brrr_buffered_closing)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + HML Interest×1.5 ({fmt_money(_brrr_buffered_interest)}) + Holding×1.5 ({fmt_money(_brrr_buffered_holding)}) = {fmt_money(total_cash_needed_with_buffer)}",
+        f"Down Payment ({fmt_money(down_payment_cash)}) + Closing×1.1 ({fmt_money(_brrr_buffered_closing)}) + HML Points ({fmt_money(HML_points_in_cash)}) + Rehab Cash ({fmt_money(_brrr_rehab_cash_needed)}) + Rehab Float ({fmt_money(_brrr_rehab_float)}) + HML Interest×1.5 ({fmt_money(_brrr_buffered_interest)}) + Holding×1.5 ({fmt_money(_brrr_buffered_holding)}){_shortfall_text} = {fmt_money(total_cash_needed_with_buffer)}",
     )
     return total_cash_needed_without_buffer, total_cash_needed_with_buffer
