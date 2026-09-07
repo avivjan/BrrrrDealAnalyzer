@@ -4233,7 +4233,7 @@
       "fields": {
         "agent_email": {
           "alias": null,
-          "annotation": "<class 'str'>",
+          "annotation": "<class 'EmailStr'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
@@ -8484,6 +8484,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -8496,6 +8497,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -8530,6 +8532,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -8542,6 +8545,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -8577,6 +8581,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -8670,6 +8675,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8682,6 +8688,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8745,6 +8752,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8757,6 +8765,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -8769,6 +8778,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8781,6 +8791,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8847,6 +8858,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -8874,6 +8886,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -8915,6 +8928,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8940,6 +8954,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -8981,6 +8996,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -8993,6 +9009,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -9027,6 +9044,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -9039,6 +9057,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -9074,6 +9093,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -9167,6 +9187,7 @@
         "boughtStage": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -9259,6 +9280,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9271,6 +9293,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9412,6 +9435,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9424,6 +9448,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -9436,6 +9461,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9448,6 +9474,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9563,6 +9590,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -9590,6 +9618,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -9644,6 +9673,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9685,6 +9715,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -9751,6 +9782,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -9763,6 +9795,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -9797,6 +9830,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -9809,6 +9843,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -9844,6 +9879,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -9937,6 +9973,7 @@
         "boughtStage": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -10092,6 +10129,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10109,6 +10147,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10310,6 +10349,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10322,6 +10362,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -10334,6 +10375,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10346,6 +10388,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10461,6 +10504,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -10501,6 +10545,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -10555,6 +10600,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10627,6 +10673,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10673,6 +10720,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -10685,6 +10733,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -10719,6 +10768,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -10731,6 +10781,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -10766,6 +10817,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -10842,6 +10894,7 @@
         "boughtStage": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -10912,6 +10965,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -10924,6 +10978,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11010,6 +11065,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11022,6 +11078,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -11034,6 +11091,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11046,6 +11104,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11112,6 +11171,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -11192,6 +11252,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -11246,6 +11307,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11271,6 +11333,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11338,6 +11401,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -11350,6 +11414,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -11384,6 +11449,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -11396,6 +11462,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -11431,6 +11498,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -11512,6 +11580,7 @@
         "boughtStage": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -11601,6 +11670,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11618,6 +11688,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11730,6 +11801,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11742,6 +11814,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -11754,6 +11827,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11766,6 +11840,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -11832,6 +11907,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -11917,6 +11993,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -11971,6 +12048,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12021,6 +12099,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12074,6 +12153,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -12086,6 +12166,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -12120,6 +12201,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -12132,6 +12214,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -12167,6 +12250,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -12325,6 +12409,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12337,6 +12422,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12478,6 +12564,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12490,6 +12577,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -12502,6 +12590,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12514,6 +12603,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12629,6 +12719,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -12656,6 +12747,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -12697,6 +12789,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12738,6 +12831,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -12804,6 +12898,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -12816,6 +12911,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -12850,6 +12946,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -12862,6 +12959,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -12897,6 +12995,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -13118,6 +13217,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13135,6 +13235,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13336,6 +13437,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13348,6 +13450,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -13360,6 +13463,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13372,6 +13476,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13487,6 +13592,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -13527,6 +13633,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -13568,6 +13675,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13640,6 +13748,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13739,6 +13848,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -13751,6 +13861,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -13785,6 +13896,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -13797,6 +13909,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -13832,6 +13945,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -13951,6 +14065,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -13963,6 +14078,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14049,6 +14165,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14061,6 +14178,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -14073,6 +14191,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14085,6 +14204,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14151,6 +14271,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -14231,6 +14352,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -14272,6 +14394,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14297,6 +14420,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14364,6 +14488,7 @@
             "time_on_market": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -14376,6 +14501,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -14410,6 +14536,7 @@
             "how_long_ago": {
               "anyOf": [
                 {
+                  "maxLength": 200,
                   "type": "string"
                 },
                 {
@@ -14422,6 +14549,7 @@
             "url": {
               "anyOf": [
                 {
+                  "maxLength": 2000,
                   "type": "string"
                 },
                 {
@@ -14457,6 +14585,7 @@
         "address": {
           "anyOf": [
             {
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -14600,6 +14729,7 @@
         "contact": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14617,6 +14747,7 @@
         "crime_rate": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14729,6 +14860,7 @@
         "niche": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14741,6 +14873,7 @@
         "notes": {
           "anyOf": [
             {
+              "maxLength": 20000,
               "type": "string"
             },
             {
@@ -14753,6 +14886,7 @@
         "overall_design": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14765,6 +14899,7 @@
         "pics_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -14831,6 +14966,7 @@
               "items": {
                 "$ref": "#/$defs/RentComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -14916,6 +15052,7 @@
               "items": {
                 "$ref": "#/$defs/SoldComp"
               },
+              "maxItems": 200,
               "type": "array"
             },
             {
@@ -14957,6 +15094,7 @@
         "task": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -15007,6 +15145,7 @@
         "zillow_link": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -16040,6 +16179,7 @@
         "time_on_market": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -16052,6 +16192,7 @@
         "url": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {
@@ -16709,6 +16850,7 @@
           "items": {
             "$ref": "#/$defs/EvidenceItem"
           },
+          "maxItems": 100,
           "title": "Evidence Items",
           "type": "array"
         },
@@ -16729,6 +16871,7 @@
           "items": {
             "type": "string"
           },
+          "maxItems": 100,
           "title": "Evidence Links",
           "type": "array"
         },
@@ -16749,6 +16892,7 @@
           "items": {
             "$ref": "#/$defs/LocationSnapshot"
           },
+          "maxItems": 2000,
           "title": "Location Snapshots",
           "type": "array"
         },
@@ -16761,6 +16905,7 @@
           "items": {
             "type": "string"
           },
+          "maxItems": 100,
           "title": "People Involved",
           "type": "array"
         },
@@ -16998,6 +17143,7 @@
           "items": {
             "$ref": "#/$defs/LocationSnapshot"
           },
+          "maxItems": 2000,
           "title": "Location Snapshots",
           "type": "array"
         },
@@ -17433,18 +17579,26 @@
     "SendOfferReq": {
       "properties": {
         "agent_email": {
+          "format": "email",
+          "maxLength": 254,
           "title": "Agent Email",
           "type": "string"
         },
         "agent_name": {
+          "maxLength": 200,
+          "minLength": 1,
           "title": "Agent Name",
           "type": "string"
         },
         "inspection_period_days": {
+          "maximum": 365,
+          "minimum": 0,
           "title": "Inspection Period Days",
           "type": "integer"
         },
         "property_address": {
+          "maxLength": 500,
+          "minLength": 1,
           "title": "Property Address",
           "type": "string"
         },
@@ -17510,6 +17664,7 @@
         "how_long_ago": {
           "anyOf": [
             {
+              "maxLength": 200,
               "type": "string"
             },
             {
@@ -17522,6 +17677,7 @@
         "url": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "type": "string"
             },
             {

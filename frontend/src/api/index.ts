@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { APP_KEY_DETAIL, APP_KEY_HEADER, appKeyRequired, readAppKey } from '../auth/appKey';
 import type {
   AnalyzeDealReq,
   AnalyzeDealRes,
@@ -25,10 +26,74 @@ import type {
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
+  // Sessions are HttpOnly cookies (SECURITY_PLAN.md §3.2); the custom header
+  // is one of the CSRF layers the API requires on unsafe methods.
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
+
+// A 401 from a data route means the access cookie expired: refresh once and
+// retry; if the refresh fails too, the auth store sends the user to /login.
+// The auth routes themselves are excluded so a failed login never loops.
+// A 403 `reauth_required` is a step-up (send an offer, approve a device):
+// one passkey prompt, then the same request again.
+let refreshing: Promise<boolean> | null = null;
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error?.config;
+    const url: string = config?.url || '';
+    if (error?.response?.status === 403 && error.response.data?.detail === 'reauth_required' && config && !config.__reauthed) {
+      const { useAuthStore } = await import('../stores/authStore');
+      try {
+        await useAuthStore().reauth();
+      } catch {
+        return Promise.reject(error);
+      }
+      config.__reauthed = true;
+      return apiClient.request(config);
+    }
+    if (error?.response?.status === 401 && config && !config.__retried && !url.startsWith('/auth/')) {
+      const { useAuthStore } = await import('../stores/authStore');
+      const auth = useAuthStore();
+      if (auth.enforced) {
+        refreshing = refreshing || auth.tryRefresh().finally(() => { refreshing = null; });
+        const ok = await refreshing;
+        if (ok) {
+          config.__retried = true;
+          return apiClient.request(config);
+        }
+        const { default: router } = await import('../router');
+        if (router.currentRoute.value.name !== 'login') {
+          router.push({ name: 'login', query: { next: router.currentRoute.value.fullPath } });
+        }
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+// Phase 0 stopgap (SECURITY_PLAN.md §4, step 0.2): the backend may require a
+// shared key on every data route. The key is typed once by the user, kept in
+// this browser only, and sent as `X-App-Key`. When the backend answers 401
+// `app_key_required` the gate asks for it; nothing else about a request changes.
+apiClient.interceptors.request.use((config) => {
+  const key = readAppKey();
+  if (key) config.headers.set(APP_KEY_HEADER, key);
+  return config;
+});
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && error.response.data?.detail === APP_KEY_DETAIL) {
+      appKeyRequired.value = true;
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default {
   // Analyze Deal Calculator

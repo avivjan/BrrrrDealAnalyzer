@@ -1,6 +1,7 @@
 """/reps/* -- REPS (Real Estate Professional Status) tracker."""
 
 import logging
+import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -42,13 +43,45 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# Upload caps (SECURITY_PLAN.md F-04 / F-08): the Netlify proxy in front of
+# the API allows 25 MB per request, so the batch is bounded to fit under it.
+MAX_UPLOAD_FILES = 10
+MAX_UPLOAD_BYTES_PER_FILE = 25 * 1024 * 1024
+MAX_UPLOAD_BYTES_TOTAL = 25 * 1024 * 1024
+
+
 def _require_reps_user(user: str) -> str:
     if user not in VALID_REPS_USERS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"user must be one of {sorted(VALID_REPS_USERS)}",
-        )
+        # The valid ids are not listed back: an unknown caller learns nothing.
+        raise HTTPException(status_code=400, detail="unknown REPS user")
     return user
+
+
+def _internal_error(what: str) -> HTTPException:
+    """A 500 with a reference id instead of the exception text (F-09)."""
+    ref = uuid.uuid4().hex[:12]
+    logger.exception("%s ref=%s", what, ref)
+    return HTTPException(status_code=500, detail=f"{what} (ref {ref})")
+
+
+async def _read_uploads(files: List[UploadFile]) -> List[tuple[str, Optional[str], bytes]]:
+    """Read the uploads with the caps enforced before anything is buffered."""
+    if len(files) > MAX_UPLOAD_FILES:
+        raise HTTPException(status_code=400, detail=f"At most {MAX_UPLOAD_FILES} files per upload.")
+    items: List[tuple[str, Optional[str], bytes]] = []
+    total = 0
+    for f in files:
+        declared = getattr(f, "size", None)
+        if declared is not None and declared > MAX_UPLOAD_BYTES_PER_FILE:
+            raise HTTPException(status_code=413, detail="A file exceeds the 25 MB limit.")
+        contents = await f.read(MAX_UPLOAD_BYTES_PER_FILE + 1)
+        if len(contents) > MAX_UPLOAD_BYTES_PER_FILE:
+            raise HTTPException(status_code=413, detail="A file exceeds the 25 MB limit.")
+        total += len(contents)
+        if total > MAX_UPLOAD_BYTES_TOTAL:
+            raise HTTPException(status_code=413, detail="The upload exceeds the 25 MB limit.")
+        items.append((f.filename or "evidence", f.content_type, contents))
+    return items
 
 
 @router.post("/reps/log", response_model=RepsLogRes, status_code=201)
@@ -73,9 +106,8 @@ def reps_log_route(payload: RepsLogCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=503, detail=str(exc))
     except reps_service.RepsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        logger.exception("Failed to append REPS log row")
-        raise HTTPException(status_code=500, detail=f"Sheet append failed: {exc}")
+    except Exception:
+        raise _internal_error("Sheet append failed")
 
 
 @router.get("/reps/entries", response_model=RepsEntriesEnvelope)
@@ -88,9 +120,8 @@ def reps_entries_route(user: str = Query(...)):
         raise HTTPException(status_code=503, detail=str(exc))
     except reps_service.RepsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        logger.exception("Failed to read REPS sheet")
-        raise HTTPException(status_code=500, detail=f"Sheet read failed: {exc}")
+    except Exception:
+        raise _internal_error("Sheet read failed")
 
 
 @router.post("/reps/upload-batch", response_model=RepsUploadBatchRes)
@@ -121,10 +152,7 @@ async def reps_upload_batch_route(
                 status_code=400, detail="log_timestamp must be ISO-8601."
             )
 
-    items: List[tuple[str, Optional[str], bytes]] = []
-    for f in files:
-        contents = await f.read()
-        items.append((f.filename or "evidence", f.content_type, contents))
+    items = await _read_uploads(files)
 
     try:
         return upload_batch_bl(
@@ -138,9 +166,8 @@ async def reps_upload_batch_route(
         raise HTTPException(status_code=503, detail=str(exc))
     except reps_service.RepsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        logger.exception("REPS batch upload failed")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {exc}")
+    except Exception:
+        raise _internal_error("Upload failed")
 
 
 @router.post("/reps/upload")
@@ -154,23 +181,22 @@ async def reps_upload_route(
     """
 
     _require_reps_user(user)
+    (filename, content_type, contents), = await _read_uploads([file])
     try:
-        contents = await file.read()
         url = upload_single_bl(
             user=user,
             file_bytes=contents,
-            filename=file.filename or "evidence",
-            content_type=file.content_type,
+            filename=filename,
+            content_type=content_type,
         )
     except reps_service.RepsConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except reps_service.RepsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        logger.exception("REPS evidence upload failed")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {exc}")
+    except Exception:
+        raise _internal_error("Upload failed")
 
-    return {"url": url, "filename": file.filename}
+    return {"url": url, "filename": filename}
 
 
 @router.get("/reps/properties", response_model=List[RepsPropertyOption])
@@ -203,9 +229,10 @@ def reps_list_people_route(db: Session = Depends(get_db)):
 def reps_create_person_route(payload: RepsPersonCreate, db: Session = Depends(get_db)):
     try:
         return create_person_bl(db, payload)
-    except Exception as exc:
-        # most likely a UNIQUE-name collision
-        raise HTTPException(status_code=400, detail=f"Could not add person: {exc}")
+    except Exception:
+        # most likely a UNIQUE-name collision; the driver's text stays in the log
+        logger.warning("Could not add REPS person %r", payload.name, exc_info=True)
+        raise HTTPException(status_code=400, detail="Could not add person: a person with that name may already exist")
 
 
 @router.put("/reps/people/{person_id}", response_model=RepsPersonRes)
@@ -238,8 +265,9 @@ def reps_create_activity_category_route(
         return create_activity_category_bl(db, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not add category: {exc}")
+    except Exception:
+        logger.warning("Could not add REPS category %r", payload.name, exc_info=True)
+        raise HTTPException(status_code=400, detail="Could not add category: a category with that name may already exist")
 
 
 @router.delete("/reps/activity-categories/{cat_id}")

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { safeHref } from "../../utils/safeHref";
 import { computed, ref } from 'vue';
 import type { RepsEntryRow } from '../../types/reps';
 
@@ -164,8 +165,9 @@ function fmtTimeRange(start: string | null, end: string | null) {
                   v-for="(it, i) in e.evidence_items"
                   :key="i + (it.url || '')"
                   :data-testid="`repsentries.entry.${idx}.evidence.${i}`"
-                  :href="it.url"
+                  :href="safeHref(it.url)"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="rounded-ctl font-medium text-primary underline-offset-2 hover:underline"
                 >
                   <i class="pi pi-paperclip mr-1 text-[10px]" aria-hidden="true"></i>{{ it.label || `Evidence ${i + 1}` }}
@@ -175,8 +177,9 @@ function fmtTimeRange(start: string | null, end: string | null) {
               <a
                 v-else-if="e.evidence_link && /^https?:\/\//.test(e.evidence_link)"
                 :data-testid="`repsentries.entry.${idx}.evidence-legacy`"
-                :href="e.evidence_link"
+                :href="safeHref(e.evidence_link)"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="rounded-ctl font-medium text-primary underline-offset-2 hover:underline"
               >
                 <i class="pi pi-paperclip mr-1 text-[10px]" aria-hidden="true"></i>Evidence

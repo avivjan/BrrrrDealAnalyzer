@@ -28,9 +28,12 @@ from tests.mcp_helpers import call as _call, call_json as _call_json  # noqa: E4
 class TestToolList:
     def test_every_endpoint_is_a_tool_with_a_description(self):
         app.openapi_schema = None
-        operations = sum(len(ops) for ops in app.openapi()["paths"].values())
+        operations = sum(
+            len(ops) for path, ops in app.openapi()["paths"].items() if not path.startswith(mcp_server.EXCLUDED_PREFIXES)
+        )
         tools = mcp_server.tools()
         assert len(tools) == operations
+        assert not any(spec["path"].startswith(mcp_server.EXCLUDED_PREFIXES) for spec in tools.values())
         undocumented = [n for n in tools if n not in mcp_server.DESCRIPTIONS]
         assert undocumented == [], f"add these to mcp_server.DESCRIPTIONS: {undocumented}"
         stale = [n for n in mcp_server.DESCRIPTIONS if n not in tools]
@@ -260,8 +263,11 @@ class TestFindability:
     def test_annotations_follow_the_http_method(self):
         for spec in mcp_server.tools().values():
             a = spec["tool"].annotations
-            assert a.readOnlyHint == (spec["method"] == "GET"), spec["tool"].name
-            assert a.destructiveHint == (spec["method"] == "DELETE"), spec["tool"].name
+            name = spec["tool"].name
+            assert a.readOnlyHint == (spec["method"] == "GET"), name
+            # DELETE, plus the irreversible side effects SECURITY_PLAN.md F-24 names
+            # (an e-mail leaves the LLC's mailbox, a REPS row lands in the tax log).
+            assert a.destructiveHint == (spec["method"] == "DELETE" or name in mcp_server.DESTRUCTIVE_TOOLS), name
         big = mcp_server.tools()
         assert "large" in big["get_active_deals"]["tool"].description.lower()
         assert "large" in big["get_bought_deals"]["tool"].description.lower()

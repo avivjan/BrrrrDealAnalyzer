@@ -206,7 +206,7 @@ describe("applying", () => {
 });
 
 describe("the pre-paint script and the stylesheet agree with this module", () => {
-  const indexHtml = read("../../index.html");
+  const indexHtml = read("../../public/theme-init.js");
 
   it("uses the same storage keys, look ids and default look", () => {
     expect(indexHtml).toContain(`'${THEME_STORAGE_KEY}'`);
