@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { safeHref } from "../utils/safeHref";
 import { ref, watch, onMounted, computed, nextTick } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
@@ -446,10 +447,9 @@ const advanceEditingDeal = async () => {
   }
 };
 
+// Currency never decodes the -1/-2 sentinels: -$1 and -$2 are real amounts.
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "\u221E";
-  if (value === -2) return "-\u221E";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -457,10 +457,11 @@ const formatCurrency = (value: number | undefined) => {
   }).format(value);
 };
 
+// The calculators encode ±∞ on cash_on_cash / roi / annualized_roi as -1 / -2.
 const formatPercent = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "\u221E";
-  if (value === -2) return "-\u221E";
+  if (value === -1) return "\u221E%";
+  if (value === -2) return "-\u221E%";
   return `${value.toFixed(2)}%`;
 };
 
@@ -473,11 +474,16 @@ const getCashFlowColor = (value: number | undefined) => {
 
 const getPerformanceColor = (value: number | undefined) => {
   if (value === undefined || value === null) return "text-fg";
-  if (value === -1) return "text-positive";
-  if (value === -2) return "text-negative";
   if (value > 0) return "text-positive";
   if (value < 0) return "text-negative";
   return "text-fg-muted";
+};
+
+/** Tone for a percent metric: -1 (∞) is positive, -2 (-∞) is negative. */
+const getPercentColor = (value: number | undefined) => {
+  if (value === -1) return "text-positive";
+  if (value === -2) return "text-negative";
+  return getPerformanceColor(value);
 };
 
 const getDSCRColor = (value: number | undefined) => {
@@ -930,8 +936,9 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <a
                     v-if="editingDeal.zillow_link"
                     data-testid="boughtdeals.modal.zillow-open"
-                    :href="editingDeal.zillow_link"
+                    :href="safeHref(editingDeal.zillow_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -950,8 +957,9 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   <a
                     v-if="editingDeal.pics_link"
                     data-testid="boughtdeals.modal.pics-open"
-                    :href="editingDeal.pics_link"
+                    :href="safeHref(editingDeal.pics_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -1084,7 +1092,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.cash_on_cash"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)"
+                        :class="getPercentColor((currentAnalysis as any).cash_on_cash)"
                       >
                         {{ formatPercent( (currentAnalysis as any).cash_on_cash ) }}
                       </div>
@@ -1110,7 +1118,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).roi)"
+                        :class="getPercentColor((currentAnalysis as any).roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
@@ -1158,7 +1166,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).roi)"
+                        :class="getPercentColor((currentAnalysis as any).roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
@@ -1168,7 +1176,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <div
                         data-testid="boughtdeals.modal.result.annualized_roi"
                         class="font-bold"
-                        :class="getPerformanceColor((currentAnalysis as any).annualized_roi)"
+                        :class="getPercentColor((currentAnalysis as any).annualized_roi)"
                       >
                         {{ formatPercent( (currentAnalysis as any).annualized_roi ) }}
                       </div>
@@ -1242,7 +1250,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     <UiIconButton :data-testid="`boughtdeals.sold-comp.${index}.delete`" @click="editingDeal.sold_comps!.splice(index, 1)" label="Remove sold comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                     <div class="flex items-center gap-2 mb-1">
                       <input :data-testid="`boughtdeals.sold-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
-                      <a v-if="comp.url" :data-testid="`boughtdeals.sold-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
+                      <a v-if="comp.url" :data-testid="`boughtdeals.sold-comp.${index}.open`" :href="safeHref(comp.url)" target="_blank" rel="noopener noreferrer" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                     </div>
                     <div class="flex gap-2">
                       <input :data-testid="`boughtdeals.sold-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="ARV" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1277,7 +1285,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <UiIconButton :data-testid="`boughtdeals.sale-comp.${index}.delete`" @click="(editingDeal as any).sale_comps!.splice(index, 1)" label="Remove sale comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
-                        <a v-if="comp.url" :data-testid="`boughtdeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
+                        <a v-if="comp.url" :data-testid="`boughtdeals.sale-comp.${index}.open`" :href="safeHref(comp.url)" target="_blank" rel="noopener noreferrer" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                       </div>
                       <div class="flex gap-2">
                         <input :data-testid="`boughtdeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1295,7 +1303,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       <UiIconButton :data-testid="`boughtdeals.rent-comp.${index}.delete`" @click="editingDeal.rent_comps!.splice(index, 1)" label="Remove rent comp" class="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-negative text-primary-fg text-xs opacity-0 transition-opacity before:-inset-2 hover:bg-negative/90 hover:text-primary-fg group-hover:opacity-100 touch:opacity-100">x</UiIconButton>
                       <div class="flex items-center gap-2 mb-1">
                         <input :data-testid="`boughtdeals.rent-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
-                        <a v-if="comp.url" :data-testid="`boughtdeals.rent-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
+                        <a v-if="comp.url" :data-testid="`boughtdeals.rent-comp.${index}.open`" :href="safeHref(comp.url)" target="_blank" rel="noopener noreferrer" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                       </div>
                       <div class="flex gap-2">
                         <input :data-testid="`boughtdeals.rent-comp.${index}.rent`" v-model="comp.rent" type="number" placeholder="Rent" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />

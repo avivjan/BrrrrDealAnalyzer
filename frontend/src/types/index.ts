@@ -58,9 +58,10 @@ export interface BrrrAnalyzeReq {
   /** % of refi loan amount; omit on request to use server default (1.5). */
   refiPoints?: number;
   /**
-   * Cash deposited toward the DSCR loan principal at refi (in thousands).
-   * Omit on request to use server default (0). Reduces cash_out 1:1 and
-   * boosts equity 1:1 (net_profit unchanged, CoC and ROI drop).
+   * Cash escrowed at refi and returned at exit/sale (in thousands). Not a
+   * principal paydown: the DSCR loan and its monthly payment stay on the full
+   * ARV × LTV. Omit on request to use server default (0). Reduces cash_out
+   * 1:1 and boosts equity 1:1 (net_profit unchanged, CoC and ROI drop).
    */
   cashReserve?: number;
   loanTermYears: number; 

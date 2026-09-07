@@ -1,6 +1,29 @@
 {
   "components": {
     "schemas": {
+      "AuthConfigRes": {
+        "properties": {
+          "auth_mode": {
+            "title": "Auth Mode",
+            "type": "string"
+          },
+          "device_policy": {
+            "title": "Device Policy",
+            "type": "string"
+          },
+          "rp_id": {
+            "title": "Rp Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "auth_mode",
+          "device_policy",
+          "rp_id"
+        ],
+        "title": "AuthConfigRes",
+        "type": "object"
+      },
       "Body_reps_upload_batch_route_reps_upload_batch_post": {
         "properties": {
           "activity_category": {
@@ -16,7 +39,7 @@
           },
           "files": {
             "items": {
-              "format": "binary",
+              "contentMediaType": "application/octet-stream",
               "type": "string"
             },
             "title": "Files",
@@ -59,7 +82,7 @@
       "Body_reps_upload_route_reps_upload_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           },
@@ -96,6 +119,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -187,6 +211,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -279,6 +304,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -290,6 +316,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -428,6 +455,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -439,6 +467,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -450,6 +479,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -461,6 +491,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -573,6 +604,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -599,6 +631,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -650,6 +683,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -690,6 +724,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -726,6 +761,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -805,6 +841,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -829,6 +866,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "capexPercent": {
@@ -858,6 +896,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -870,6 +909,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -881,6 +921,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -892,6 +933,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "closingCostsBuy": {
@@ -939,6 +981,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -955,6 +998,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1003,6 +1047,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -1014,6 +1059,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -1097,6 +1143,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "montly_hoa": {
@@ -1122,11 +1169,13 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1138,6 +1187,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -1149,6 +1199,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1160,6 +1211,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1254,6 +1306,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1271,6 +1324,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "section": {
@@ -1291,6 +1345,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1339,6 +1394,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1356,6 +1412,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -1367,6 +1424,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           },
           "updated_at": {
@@ -1403,6 +1461,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1446,6 +1505,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -1520,6 +1580,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -1590,6 +1651,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1601,6 +1663,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1685,6 +1748,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1696,6 +1760,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -1707,6 +1772,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1718,6 +1784,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1782,6 +1849,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1860,6 +1928,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -1911,6 +1980,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1935,6 +2005,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -1972,6 +2043,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -2010,6 +2082,7 @@
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -2041,6 +2114,7 @@
           "boughtStage": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -2065,6 +2139,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "buyerAgentSellingFee": {
@@ -2111,6 +2186,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2127,6 +2203,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2189,6 +2266,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "monthly_utilities": {
@@ -2212,12 +2290,14 @@
             "title": "Montly Hoa"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2229,6 +2309,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -2240,6 +2321,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2251,6 +2333,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2306,6 +2389,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2315,6 +2399,7 @@
             "title": "Rent Comps"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
@@ -2367,6 +2452,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2415,6 +2501,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2424,18 +2511,22 @@
             "title": "Task"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           },
@@ -2460,6 +2551,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2510,6 +2602,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -2666,6 +2759,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2677,6 +2771,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2815,6 +2910,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2826,6 +2922,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -2837,6 +2934,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2848,6 +2946,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -2960,6 +3059,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -2986,6 +3086,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3025,6 +3126,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3065,6 +3167,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3101,6 +3204,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -3192,6 +3296,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "capexPercent": {
@@ -3221,6 +3326,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -3233,6 +3339,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -3244,6 +3351,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -3255,6 +3363,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "closingCostsBuy": {
@@ -3287,6 +3396,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3303,6 +3413,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3351,6 +3462,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -3362,6 +3474,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -3445,6 +3558,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "montly_hoa": {
@@ -3470,11 +3584,13 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3486,6 +3602,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -3497,6 +3614,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3508,6 +3626,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3602,6 +3721,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3619,6 +3739,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "section": {
@@ -3639,6 +3760,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -3675,6 +3797,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3692,6 +3815,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -3703,6 +3827,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           },
           "updated_at": {
@@ -3739,6 +3864,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3783,6 +3909,524 @@
           "formula"
         ],
         "title": "CalcStep",
+        "type": "object"
+      },
+      "CeremonyOptionsRes": {
+        "properties": {
+          "challenge_id": {
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "options": {
+            "title": "Options",
+            "type": "string"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "options"
+        ],
+        "title": "CeremonyOptionsRes",
+        "type": "object"
+      },
+      "CredentialRes": {
+        "properties": {
+          "backup_state": {
+            "title": "Backup State",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "transports": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transports"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "created_at",
+          "last_used_at",
+          "backup_state",
+          "transports"
+        ],
+        "title": "CredentialRes",
+        "type": "object"
+      },
+      "DealDetail": {
+        "description": "One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on.",
+        "properties": {
+          "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "deal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrrrActiveDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/FlipActiveDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/BoughtBrrrDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/BoughtFlipDealRes"
+              }
+            ],
+            "description": "The full record: every input (camelCase aliases, money in thousands), notes, comps, all metrics and the calculation breakdowns.",
+            "title": "Deal"
+          }
+        },
+        "required": [
+          "board",
+          "deal"
+        ],
+        "title": "DealDetail",
+        "type": "object"
+      },
+      "DealSummary": {
+        "description": "One row of the compact deal list. Money in thousands where the name ends in _k, else plain dollars.",
+        "properties": {
+          "address": {
+            "description": "Property address as typed on the site.",
+            "title": "Address",
+            "type": "string"
+          },
+          "arv_or_sale_price_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "BRRRR: after-repair value; FLIP: projected sale price. Thousands of dollars.",
+            "title": "Arv Or Sale Price K"
+          },
+          "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "bought_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bought deals only: the purchase pipeline stage id (e.g. purchase, closed, rehab, refinanced, sold).",
+            "title": "Bought Stage"
+          },
+          "cash_flow_monthly": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly cash flow after the refinance in dollars (BRRRR); negative = costs money each month.",
+            "title": "Cash Flow Monthly"
+          },
+          "cash_left_in_deal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your own money still in the deal after the refinance, in dollars (never negative): -cash_out when cash_out is negative, else 0. The number to quote for 'how much did we leave in'.",
+            "title": "Cash Left In Deal"
+          },
+          "cash_on_cash_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash-on-cash return in percent. -1 = infinite (no cash left in the deal), -2 = not applicable.",
+            "title": "Cash On Cash Pct"
+          },
+          "cash_out": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "BRRRR cash out in dollars: total received from the deal (the refinance wire) minus total put in. NEGATIVE = that much of your own money is still left in the deal. See cash_left_in_deal.",
+            "title": "Cash Out"
+          },
+          "cash_wire_at_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars (new loan minus hard-money payoff, refinance costs, points and reserve), before subtracting what was invested.",
+            "title": "Cash Wire At Refi"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the deal was created on the site.",
+            "title": "Created At"
+          },
+          "deal_type": {
+            "description": "BRRRR (buy, rehab, rent, refinance) or FLIP (buy, rehab, sell).",
+            "enum": [
+              "BRRRR",
+              "FLIP"
+            ],
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "equity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Equity after the refinance in dollars (ARV minus the new loan).",
+            "title": "Equity"
+          },
+          "id": {
+            "description": "Deal id; pass it to get_deal for the full record.",
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "net_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Net profit in dollars: BRRRR = equity plus cash out; FLIP = sale minus all costs.",
+            "title": "Net Profit"
+          },
+          "purchase_price_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price in thousands of dollars (140 = $140,000).",
+            "title": "Purchase Price K"
+          },
+          "rehab_cost_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rehab budget in thousands of dollars.",
+            "title": "Rehab Cost K"
+          },
+          "rent_monthly": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly rent in dollars (BRRRR).",
+            "title": "Rent Monthly"
+          },
+          "roi_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Return on investment in percent. -1 = infinite, -2 = not applicable.",
+            "title": "Roi Pct"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Active deals only: 1 Wholesale, 2 Market, 3 Off Market.",
+            "title": "Section"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Active deals only: 1 New, 2 Working, 3 Brought (under contract), 4 Keep in Mind, 5 Dead.",
+            "title": "Stage"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Current task or status note for the deal.",
+            "title": "Task"
+          },
+          "total_cash_needed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total cash needed to do the deal, in dollars.",
+            "title": "Total Cash Needed"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Last edit on the site.",
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "deal_type",
+          "address"
+        ],
+        "title": "DealSummary",
+        "type": "object"
+      },
+      "DeviceRenameReq": {
+        "properties": {
+          "label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "DeviceRenameReq",
+        "type": "object"
+      },
+      "DeviceRes": {
+        "properties": {
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ip"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "user_display_name",
+          "kind",
+          "label",
+          "platform",
+          "status",
+          "first_seen_at",
+          "last_seen_at",
+          "last_ip",
+          "approved_at",
+          "is_current"
+        ],
+        "title": "DeviceRes",
+        "type": "object"
+      },
+      "EnrollmentTokenRes": {
+        "properties": {
+          "expires_in_minutes": {
+            "title": "Expires In Minutes",
+            "type": "integer"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expires_in_minutes"
+        ],
+        "title": "EnrollmentTokenRes",
         "type": "object"
       },
       "EvidenceItem": {
@@ -3834,6 +4478,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -3951,6 +4596,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -3962,6 +4608,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4046,6 +4693,7 @@
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4057,6 +4705,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -4068,6 +4717,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4079,6 +4729,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4143,6 +4794,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4221,6 +4873,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Input"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4260,6 +4913,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4284,6 +4938,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4321,6 +4976,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 500,
                 "type": "string"
               },
               {
@@ -4359,6 +5015,7 @@
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -4402,6 +5059,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "buyerAgentSellingFee": {
@@ -4433,6 +5091,7 @@
           "contact": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4449,6 +5108,7 @@
           "crime_rate": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4511,6 +5171,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "monthly_utilities": {
@@ -4534,12 +5195,14 @@
             "title": "Montly Hoa"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
           "niche": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4551,6 +5214,7 @@
           "notes": {
             "anyOf": [
               {
+                "maxLength": 20000,
                 "type": "string"
               },
               {
@@ -4562,6 +5226,7 @@
           "overall_design": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4573,6 +5238,7 @@
           "pics_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4628,6 +5294,7 @@
                 "items": {
                   "$ref": "#/components/schemas/RentComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4637,6 +5304,7 @@
             "title": "Rent Comps"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
@@ -4689,6 +5357,7 @@
                 "items": {
                   "$ref": "#/components/schemas/SoldComp-Output"
                 },
+                "maxItems": 200,
                 "type": "array"
               },
               {
@@ -4725,6 +5394,7 @@
           "task": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -4734,18 +5404,22 @@
             "title": "Task"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           },
@@ -4770,6 +5444,7 @@
           "zillow_link": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5386,6 +6061,90 @@
         "title": "LocationSnapshot",
         "type": "object"
       },
+      "LoginVerifyReq": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "LoginVerifyReq",
+        "type": "object"
+      },
+      "OAuthApproveReq": {
+        "properties": {
+          "txn": {
+            "format": "uuid",
+            "title": "Txn",
+            "type": "string"
+          }
+        },
+        "required": [
+          "txn"
+        ],
+        "title": "OAuthApproveReq",
+        "type": "object"
+      },
+      "OAuthApproveRes": {
+        "properties": {
+          "redirect_uri": {
+            "title": "Redirect Uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "redirect_uri"
+        ],
+        "title": "OAuthApproveRes",
+        "type": "object"
+      },
+      "OAuthTxnRes": {
+        "properties": {
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Uri"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "txn": {
+            "title": "Txn",
+            "type": "string"
+          }
+        },
+        "required": [
+          "txn",
+          "client_name",
+          "scopes"
+        ],
+        "title": "OAuthTxnRes",
+        "type": "object"
+      },
       "PipelineStage": {
         "description": "Stage in a bought-deal pipeline template.",
         "properties": {
@@ -5567,6 +6326,169 @@
         "title": "PipelineTemplateUpsert",
         "type": "object"
       },
+      "PortfolioSummary": {
+        "description": "Headline numbers across both boards, plus the top deals by the usual metrics.",
+        "properties": {
+          "active_by_stage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active deals per stage: 1 New, 2 Working, 3 Brought, 4 Keep in Mind, 5 Dead.",
+            "title": "Active By Stage",
+            "type": "object"
+          },
+          "active_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active deals per deal type (BRRRR / FLIP).",
+            "title": "Active By Type",
+            "type": "object"
+          },
+          "active_count": {
+            "description": "Deals on the My Deals board (being analysed or worked).",
+            "title": "Active Count",
+            "type": "integer"
+          },
+          "bought_by_stage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Bought deals per purchase pipeline stage id.",
+            "title": "Bought By Stage",
+            "type": "object"
+          },
+          "bought_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Bought deals per deal type.",
+            "title": "Bought By Type",
+            "type": "object"
+          },
+          "bought_count": {
+            "description": "Properties we bought (Bought Deals board).",
+            "title": "Bought Count",
+            "type": "integer"
+          },
+          "bought_total_cash_flow_monthly": {
+            "default": 0.0,
+            "description": "Sum of monthly cash flow over the bought deals, in dollars.",
+            "title": "Bought Total Cash Flow Monthly",
+            "type": "number"
+          },
+          "bought_total_cash_invested": {
+            "default": 0.0,
+            "description": "Sum of total cash needed over the bought deals, in dollars.",
+            "title": "Bought Total Cash Invested",
+            "type": "number"
+          },
+          "bought_total_equity": {
+            "default": 0.0,
+            "description": "Sum of equity over the bought deals, in dollars.",
+            "title": "Bought Total Equity",
+            "type": "number"
+          },
+          "bought_total_net_profit": {
+            "default": 0.0,
+            "description": "Sum of net profit over the bought deals, in dollars.",
+            "title": "Bought Total Net Profit",
+            "type": "number"
+          },
+          "top_active_by_cash_on_cash": {
+            "description": "Top 3 active deals by cash-on-cash (percent).",
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Active By Cash On Cash",
+            "type": "array"
+          },
+          "top_bought_by_cash_flow": {
+            "description": "Top 3 bought deals by monthly cash flow (dollars).",
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Cash Flow",
+            "type": "array"
+          },
+          "top_bought_by_cash_on_cash": {
+            "description": "Top 3 bought deals by cash-on-cash (percent; infinite/-1 excluded).",
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Cash On Cash",
+            "type": "array"
+          },
+          "top_bought_by_equity": {
+            "description": "Top 3 bought deals by equity (dollars).",
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Equity",
+            "type": "array"
+          }
+        },
+        "required": [
+          "active_count",
+          "bought_count"
+        ],
+        "title": "PortfolioSummary",
+        "type": "object"
+      },
+      "RegisterOptionsReq": {
+        "properties": {
+          "token": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "RegisterOptionsReq",
+        "type": "object"
+      },
+      "RegisterVerifyReq": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "token": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "challenge_id",
+          "credential"
+        ],
+        "title": "RegisterVerifyReq",
+        "type": "object"
+      },
       "RentComp-Input": {
         "properties": {
           "rent": {
@@ -5587,6 +6509,7 @@
           "time_on_market": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -5598,6 +6521,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5627,6 +6551,7 @@
           "time_on_market": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -5638,6 +6563,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -5894,6 +6820,7 @@
             "items": {
               "$ref": "#/components/schemas/EvidenceItem"
             },
+            "maxItems": 100,
             "title": "Evidence Items",
             "type": "array"
           },
@@ -5913,6 +6840,7 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 100,
             "title": "Evidence Links",
             "type": "array"
           },
@@ -5932,6 +6860,7 @@
             "items": {
               "$ref": "#/components/schemas/LocationSnapshot"
             },
+            "maxItems": 2000,
             "title": "Location Snapshots",
             "type": "array"
           },
@@ -5944,6 +6873,7 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 100,
             "title": "People Involved",
             "type": "array"
           },
@@ -6063,6 +6993,7 @@
             "items": {
               "$ref": "#/components/schemas/LocationSnapshot"
             },
+            "maxItems": 2000,
             "title": "Location Snapshots",
             "type": "array"
           },
@@ -6452,18 +7383,26 @@
       "SendOfferReq": {
         "properties": {
           "agent_email": {
+            "format": "email",
+            "maxLength": 254,
             "title": "Agent Email",
             "type": "string"
           },
           "agent_name": {
+            "maxLength": 200,
+            "minLength": 1,
             "title": "Agent Name",
             "type": "string"
           },
           "inspection_period_days": {
+            "maximum": 365.0,
+            "minimum": 0.0,
             "title": "Inspection Period Days",
             "type": "integer"
           },
           "property_address": {
+            "maxLength": 500,
+            "minLength": 1,
             "title": "Property Address",
             "type": "string"
           },
@@ -6508,6 +7447,100 @@
         "title": "SendOfferRes",
         "type": "object"
       },
+      "SessionRes": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "device_id": {
+            "title": "Device Id",
+            "type": "string"
+          },
+          "device_label": {
+            "title": "Device Label",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "device_id",
+          "device_label",
+          "kind",
+          "created_at",
+          "last_seen_at",
+          "ip",
+          "is_current"
+        ],
+        "title": "SessionRes",
+        "type": "object"
+      },
+      "SessionStatusRes": {
+        "properties": {
+          "auth_mode": {
+            "title": "Auth Mode",
+            "type": "string"
+          },
+          "device_id": {
+            "title": "Device Id",
+            "type": "string"
+          },
+          "device_policy": {
+            "title": "Device Policy",
+            "type": "string"
+          },
+          "device_status": {
+            "title": "Device Status",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserRes"
+          }
+        },
+        "required": [
+          "status",
+          "user",
+          "device_id",
+          "device_status",
+          "auth_mode",
+          "device_policy"
+        ],
+        "title": "SessionStatusRes",
+        "type": "object"
+      },
       "SoldComp-Input": {
         "properties": {
           "arv": {
@@ -6528,6 +7561,7 @@
           "how_long_ago": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -6539,6 +7573,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -6568,6 +7603,7 @@
           "how_long_ago": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -6579,6 +7615,7 @@
           "url": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -6591,8 +7628,99 @@
         "title": "SoldComp",
         "type": "object"
       },
+      "TopDeal": {
+        "description": "A deal ranked by one metric.",
+        "properties": {
+          "address": {
+            "description": "Property address.",
+            "title": "Address",
+            "type": "string"
+          },
+          "board": {
+            "description": "'active' = My Deals board (being analysed or worked); 'bought' = Bought Deals board (properties we bought).",
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "deal_type": {
+            "description": "BRRRR or FLIP.",
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "id": {
+            "description": "Deal id; pass it to get_deal for the full record.",
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "value": {
+            "description": "The metric this list is ranked by (dollars for equity / cash flow, percent for cash-on-cash).",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "deal_type",
+          "address",
+          "value"
+        ],
+        "title": "TopDeal",
+        "type": "object"
+      },
+      "UserRes": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "reps_user": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reps User"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "display_name",
+          "reps_user",
+          "role"
+        ],
+        "title": "UserRes",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -6706,7 +7834,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Cash deposited toward the DSCR loan principal at refi (in thousands)",
+            "description": "Cash escrowed at refi and returned at exit/sale (in thousands). Not a principal paydown: the DSCR loan and its payment stay on the full ARV x LTV; the reserve reduces cash out and adds to equity 1:1.",
             "title": "Cashreserve"
           },
           "closingCostsBuy": {
@@ -6945,7 +8073,7 @@
         "type": "object"
       },
       "analyzeBRRRRes": {
-        "description": "Represents the result of the cash flow calculation.",
+        "description": "Result of the BRRRR (buy, rehab, rent, refinance, repeat) calculation. All money in plain dollars.",
         "properties": {
           "breakdowns": {
             "anyOf": [
@@ -6962,9 +8090,11 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "cash_flow": {
+            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -6977,6 +8107,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Cash On Cash"
           },
           "cash_out": {
@@ -6988,6 +8119,7 @@
                 "type": "null"
               }
             ],
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -6999,6 +8131,7 @@
                 "type": "null"
               }
             ],
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
             "title": "Cash Out Routi"
           },
           "dscr": {
@@ -7010,6 +8143,7 @@
                 "type": "null"
               }
             ],
+            "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
           "equity": {
@@ -7021,6 +8155,7 @@
                 "type": "null"
               }
             ],
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
             "title": "Equity"
           },
           "messages": {
@@ -7035,6 +8170,7 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "net_profit": {
@@ -7046,6 +8182,7 @@
                 "type": "null"
               }
             ],
+            "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
           "roi": {
@@ -7057,6 +8194,7 @@
                 "type": "null"
               }
             ],
+            "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
           "total_cash_needed_for_deal": {
@@ -7068,6 +8206,7 @@
                 "type": "null"
               }
             ],
+            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
             "title": "Total Cash Needed For Deal"
           },
           "total_cash_needed_for_deal_with_buffer": {
@@ -7079,6 +8218,7 @@
                 "type": "null"
               }
             ],
+            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed For Deal With Buffer"
           }
         },
@@ -7334,9 +8474,10 @@
         "type": "object"
       },
       "analyzeFlipRes": {
-        "description": "Represents the result of the Flip calculation.",
+        "description": "Result of the fix-and-flip calculation. All money in plain dollars.",
         "properties": {
           "annualized_roi": {
+            "description": "roi scaled to a year by the holding time in months (roi x 12 / holding months), in percent.",
             "title": "Annualized Roi",
             "type": "number"
           },
@@ -7355,6 +8496,7 @@
                 "type": "null"
               }
             ],
+            "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
           "messages": {
@@ -7369,29 +8511,36 @@
                 "type": "null"
               }
             ],
+            "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
           },
           "net_profit": {
+            "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
             "title": "Net Profit",
             "type": "number"
           },
           "roi": {
+            "description": "Return on investment in percent: net profit divided by the total cash needed. -1 means infinite (no cash needed); -2 means not applicable.",
             "title": "Roi",
             "type": "number"
           },
           "total_cash_needed": {
+            "description": "Total cash needed to do the flip, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs.",
             "title": "Total Cash Needed",
             "type": "number"
           },
           "total_cash_needed_with_buffer": {
+            "description": "total_cash_needed plus the rehab contingency buffer, in dollars.",
             "title": "Total Cash Needed With Buffer",
             "type": "number"
           },
           "total_hml_interest": {
+            "description": "Hard-money loan interest over the holding time, in dollars.",
             "title": "Total Hml Interest",
             "type": "number"
           },
           "total_holding_costs": {
+            "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
             "title": "Total Holding Costs",
             "type": "number"
           }
@@ -7747,6 +8896,359 @@
         "summary": "Analyze Flip"
       }
     },
+    "/auth/config": {
+      "get": {
+        "description": "Public: tells the SPA whether a session is required (AUTH_MODE) so an\n`off` deployment keeps working exactly as before, with no login screen.",
+        "operationId": "auth_config_auth_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Config"
+      }
+    },
+    "/auth/enrollment-tokens": {
+      "post": {
+        "description": "A link to add a passkey on another device, for the same person.",
+        "operationId": "auth_enrollment_token_auth_enrollment_tokens_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentTokenRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Enrollment Token"
+      }
+    },
+    "/auth/login/options": {
+      "post": {
+        "operationId": "auth_login_options_auth_login_options_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CeremonyOptionsRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Login Options"
+      }
+    },
+    "/auth/login/verify": {
+      "post": {
+        "operationId": "auth_login_verify_auth_login_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginVerifyReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Login Verify"
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "auth_me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Me"
+      }
+    },
+    "/auth/oauth/approve": {
+      "post": {
+        "description": "Step-up protected: creates the connector's `mcp` device and the code.",
+        "operationId": "auth_oauth_approve_auth_oauth_approve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthApproveReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthApproveRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Oauth Approve"
+      }
+    },
+    "/auth/oauth/txn/{txn}": {
+      "get": {
+        "description": "What the SPA's /connect page shows before the owner approves a connector.",
+        "operationId": "auth_oauth_txn_auth_oauth_txn__txn__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Txn",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTxnRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Oauth Txn"
+      }
+    },
+    "/auth/reauth/options": {
+      "post": {
+        "operationId": "auth_reauth_options_auth_reauth_options_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CeremonyOptionsRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Reauth Options"
+      }
+    },
+    "/auth/reauth/verify": {
+      "post": {
+        "operationId": "auth_reauth_verify_auth_reauth_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginVerifyReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Reauth Verify"
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "auth_refresh_auth_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Refresh"
+      }
+    },
+    "/auth/register/options": {
+      "post": {
+        "operationId": "auth_register_options_auth_register_options_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterOptionsReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CeremonyOptionsRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Register Options"
+      }
+    },
+    "/auth/register/verify": {
+      "post": {
+        "operationId": "auth_register_verify_auth_register_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterVerifyReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Register Verify"
+      }
+    },
+    "/auth/session": {
+      "delete": {
+        "operationId": "auth_logout_auth_session_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Logout"
+      }
+    },
     "/bought-deals": {
       "get": {
         "operationId": "get_bought_deals_bought_deals_get",
@@ -8002,6 +9504,472 @@
         "summary": "Update Bought Deal"
       }
     },
+    "/credentials": {
+      "get": {
+        "operationId": "credentials_list_credentials_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialRes"
+                  },
+                  "title": "Response Credentials List Credentials Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Credentials List"
+      }
+    },
+    "/credentials/{credential_id}": {
+      "delete": {
+        "description": "Step-up protected; the last passkey can never be removed (lock-out).",
+        "operationId": "credentials_delete_credentials__credential_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Credential Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Credentials Delete"
+      }
+    },
+    "/deals": {
+      "get": {
+        "operationId": "list_deals_deals_get",
+        "parameters": [
+          {
+            "description": "all | active (My Deals board) | bought (Bought Deals board)",
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "description": "all | active (My Deals board) | bought (Bought Deals board)",
+              "title": "Board",
+              "type": "string"
+            }
+          },
+          {
+            "description": "BRRRR or FLIP",
+            "in": "query",
+            "name": "deal_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "BRRRR or FLIP",
+              "title": "Deal Type"
+            }
+          },
+          {
+            "description": "active stage number 1-5, or a bought pipeline stage id",
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "active stage number 1-5, or a bought pipeline stage id",
+              "title": "Stage"
+            }
+          },
+          {
+            "description": "words to find in address, notes, task, niche or contact (all must match)",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "words to find in address, notes, task, niche or contact (all must match)",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DealSummary"
+                  },
+                  "title": "Response List Deals Deals Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Deals"
+      }
+    },
+    "/deals/portfolio": {
+      "get": {
+        "operationId": "portfolio_summary_deals_portfolio_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Portfolio Summary"
+      }
+    },
+    "/deals/search": {
+      "get": {
+        "operationId": "search_deals_deals_search_get",
+        "parameters": [
+          {
+            "description": "words to find in address, notes, task, niche or contact",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "description": "words to find in address, notes, task, niche or contact",
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DealSummary"
+                  },
+                  "title": "Response Search Deals Deals Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Deals"
+      }
+    },
+    "/deals/{deal_id}": {
+      "get": {
+        "operationId": "get_deal_deals__deal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Deal"
+      }
+    },
+    "/devices": {
+      "get": {
+        "operationId": "devices_list_devices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceRes"
+                  },
+                  "title": "Response Devices List Devices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Devices List"
+      }
+    },
+    "/devices/me": {
+      "get": {
+        "description": "The caller's own device; answers a pending one so /pending can poll.",
+        "operationId": "devices_me_devices_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Devices Me"
+      }
+    },
+    "/devices/{device_id}": {
+      "patch": {
+        "operationId": "devices_rename_devices__device_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRenameReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Devices Rename"
+      }
+    },
+    "/devices/{device_id}/approve": {
+      "post": {
+        "description": "Step-up protected: a pending device becomes trusted and its sessions follow.",
+        "operationId": "devices_approve_devices__device_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Devices Approve"
+      }
+    },
+    "/devices/{device_id}/revoke": {
+      "post": {
+        "description": "Step-up protected: the device and every session it holds stop at once.",
+        "operationId": "devices_revoke_devices__device_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Devices Revoke"
+      }
+    },
     "/helloworld": {
       "get": {
         "operationId": "helloworld_helloworld_get",
@@ -8024,7 +9992,7 @@
     },
     "/liquidity/mercury-balance": {
       "get": {
-        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load.",
+        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
         "operationId": "get_mercury_balance_liquidity_mercury_balance_get",
         "responses": {
           "200": {
@@ -9144,6 +11112,74 @@
           }
         },
         "summary": "Send Offer Route"
+      }
+    },
+    "/sessions": {
+      "get": {
+        "operationId": "sessions_list_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionRes"
+                  },
+                  "title": "Response Sessions List Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sessions List"
+      }
+    },
+    "/sessions/end-others": {
+      "post": {
+        "description": "End every other session of the caller (a lost phone, a shared computer).",
+        "operationId": "sessions_end_others_sessions_end_others_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sessions End Others"
+      }
+    },
+    "/sessions/{session_id}": {
+      "delete": {
+        "description": "End one of the caller's sessions (the current one included: that is a logout).",
+        "operationId": "sessions_end_sessions__session_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sessions End"
       }
     }
   }

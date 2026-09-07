@@ -165,6 +165,57 @@ class JUnit(unittest.TestCase):
         self.assertFalse(junit.parse(None)["available"])
 
 
+class JUnitSubset(unittest.TestCase):
+    def test_subset_by_module_prefix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = pathlib.Path(tmp) / "b.xml"
+            p.write_text('<testsuites><testsuite name="pytest">'
+                         '<testcase classname="tests.test_analyze" name="a" time="0.1"/>'
+                         '<testcase classname="tests.test_mcp" name="b" time="0.2"/>'
+                         '<testcase classname="tests.test_mcp_tools" name="c" time="0.3"><failure message="x">x</failure></testcase>'
+                         '<testcase classname="tests.test_mcp_future" name="d" time="0.4"><skipped message="s"/></testcase>'
+                         '</testsuite></testsuites>')
+            whole = junit.parse(p)
+        sub = junit.subset(whole)
+        self.assertEqual((sub["tests"], sub["passed"], sub["failures"], sub["skipped"]), (4 - 1, 1, 1, 1))
+        self.assertEqual([c["name"] for c in sub["failed"]], ["c"])
+        self.assertEqual(sub["slowest"][0]["name"], "d")
+        self.assertEqual(set(sub["by_file"]), {"tests.test_mcp", "tests.test_mcp_tools", "tests.test_mcp_future"})
+        self.assertAlmostEqual(sub["time_s"], 0.9)
+        self.assertFalse(junit.subset(junit.parse(None))["available"])
+
+
+class McpProbe(unittest.TestCase):
+    def test_verdict_needs_a_compact_tool(self):
+        import mcp_probe
+        blocks = [{"type": "text", "text": "hi"}, {"type": "mcp_tool_use", "name": "portfolio_summary"},
+                  {"type": "mcp_tool_result"}, {"type": "mcp_tool_use", "name": "get_deal"}]
+        self.assertEqual(mcp_probe.tools_used(blocks), ["portfolio_summary", "get_deal"])
+        self.assertTrue(mcp_probe.verdict(["portfolio_summary", "get_deal"])[0])
+        ok, reason = mcp_probe.verdict(["get_active_deals"])
+        self.assertFalse(ok); self.assertIn("used only", reason)
+        ok, reason = mcp_probe.verdict([])
+        self.assertFalse(ok); self.assertIn("without calling any tool", reason)
+
+    def test_amount_matching(self):
+        import mcp_probe
+        self.assertTrue(mcp_probe.mentions_amount("you left about $26,587 in it", 26587))
+        self.assertTrue(mcp_probe.mentions_amount("roughly 26.6K of your money stays in", 26587))
+        self.assertTrue(mcp_probe.mentions_amount("27k left in the deal", 26587))
+        self.assertFalse(mcp_probe.mentions_amount("you pulled $26,587 out and left $0 in", 5520))
+        self.assertIn("$26,587", mcp_probe.number_forms(26587))
+
+    def test_skips_without_secrets(self):
+        import mcp_probe
+        saved = {k: os.environ.pop(k, None) for k in ("MCP_PROBE_URL", "ANTHROPIC_API_KEY")}
+        try:
+            self.assertEqual(mcp_probe.main(), 0)
+        finally:
+            for k, v in saved.items():
+                if v is not None:
+                    os.environ[k] = v
+
+
 class Coverage(unittest.TestCase):
     def test_parsers_and_status(self):
         with tempfile.TemporaryDirectory() as d:
@@ -276,7 +327,7 @@ class EndToEnd(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
         env = {**os.environ, "CI_OUTCOME": "success", "BACKEND_OUTCOME": "success", "FRONTEND_OUTCOME": "success",
-               "MCP_OUTCOME": "success", "E2E_OUTCOME": "failure", "E2E_EXIT_CODE": "1", "RUN_URL": "https://example.test/run/1"}
+               "E2E_OUTCOME": "failure", "E2E_EXIT_CODE": "1", "RUN_URL": "https://example.test/run/1"}
         script = HERE.parents[1] / "nightly_e2e_email.py"
         subprocess.run([sys.executable, str(HERE.parent / "make_preview_fixtures.py")], check=True, capture_output=True,
                        env={**env, "PYTHONDONTWRITEBYTECODE": "1"})
@@ -287,7 +338,6 @@ class EndToEnd(unittest.TestCase):
         result = subprocess.run([
             sys.executable, str(script), "--playwright", str(cls.out / "report.json"),
             "--backend-junit", str(cls.out / "backend-junit.xml"), "--frontend-junit", str(cls.out / "frontend-junit.xml"),
-            "--mcp-junit", str(cls.out / "mcp-junit.xml"),
             "--backend-coverage", str(cls.out / "backend-coverage.json"),
             "--frontend-coverage", str(cls.out / "frontend-coverage" / "coverage-summary.json"),
             "--history", str(cls.out / "history.jsonl"), "--write-record", str(cls.record),
@@ -329,24 +379,12 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(record["playwright"]["stats"]["unexpected"], 2)
         self.assertNotIn("/home/", json.dumps(record))
 
-    def test_mcp_suite_and_job_are_reported(self):
+    def test_mcp_column_is_derived_from_the_backend_junit(self):
         text = self.text.read_text()
         self.assertIn("MCP server (pytest): 88 passed, 0 failed, 0 skipped, 88 total", text)
-        self.assertIn("MCP server tests (pytest, real uvicorn + MCP client)", text)
-        self.assertIn("MCP server · pytest, Streamable HTTP", self.html.read_text())
-
-    def test_missing_mcp_artifact_is_reported_not_fatal(self):
-        script = HERE.parents[1] / "nightly_e2e_email.py"
-        with tempfile.TemporaryDirectory() as tmp:
-            text_path = pathlib.Path(tmp) / "mail.txt"
-            result = subprocess.run([
-                sys.executable, str(script), "--playwright", str(self.out / "report.json"),
-                "--backend-junit", str(self.out / "backend-junit.xml"),
-                "--mcp-junit", str(pathlib.Path(tmp) / "absent.xml"),
-                "--write-text", str(text_path), "--no-send", "--charts", "off", "--now", "2026-09-06T21:05:00Z",
-            ], capture_output=True, text=True, env={**os.environ, "MCP_OUTCOME": "failure"})
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("MCP server (pytest): artifact missing", text_path.read_text())
+        self.assertIn("Backend (pytest): 205 passed, 1 failed, 0 skipped, 206 total", text)
+        self.assertNotIn("MCP server tests (pytest", text)   # no separate job any more
+        self.assertIn("MCP server · tests/test_mcp*, from the backend run", self.html.read_text())
 
     def test_html_budget_and_tokens(self):
         html = self.html.read_text()

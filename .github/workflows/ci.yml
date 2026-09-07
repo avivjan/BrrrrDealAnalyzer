@@ -18,8 +18,8 @@ on:
         value: ${{ jobs.backend.result }}
       frontend_result:
         value: ${{ jobs.frontend.result }}
-      mcp_result:
-        value: ${{ jobs.mcp.result }}
+      security_result:
+        value: ${{ jobs.security.result }}
 
 # Cancel superseded runs on the same PR branch; never cancel a run on main.
 concurrency:
@@ -30,7 +30,6 @@ permissions:
   contents: read
 
 env:
-  # Two .pyc files are tracked by mistake; don't let CI rewrite them either.
   PYTHONDONTWRITEBYTECODE: "1"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
@@ -90,6 +89,10 @@ jobs:
       # tests/conftest.py only reads TEST_DATABASE_URL (never DATABASE_URL),
       # verifies it is PostgreSQL on a loopback host with a `_test` database,
       # and drops/recreates the schema before the suite runs.
+      # Plain `pytest` discovers every tests/test_*.py, the MCP server files
+      # (test_mcp*.py, one of which boots a real uvicorn) included; a new test
+      # file never needs an edit here. The nightly email breaks the MCP tests
+      # out of this one JUnit file by module name.
       # JUnit XML + coverage JSON go to the runner's temp dir (never the checkout);
       # the nightly workflow uploads them for its email.
       - name: Run pytest
@@ -116,34 +119,17 @@ jobs:
           overwrite: true
           retention-days: 14
 
-  # The MCP server (BackEnd/mcp_server.py) as its own check. These files also run
-  # inside "Backend tests"; here they get a separate result and JUnit artifact so
-  # a broken tool shows up by name in the checks and in the nightly email.
-  # tests/test_mcp_e2e.py boots a real uvicorn and drives it with the official
-  # MCP client over Streamable HTTP, secret path included.
-  mcp:
-    name: MCP server tests
+  # Supply-chain and static checks (SECURITY_PLAN.md F-16): known advisories in
+  # the pinned Python and production npm dependencies, Bandit at medium
+  # severity and confidence, and a secret scan of the history.
+  security:
+    name: Security checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: BackEnd
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: brrrr_test
-          POSTGRES_PASSWORD: brrrr_test
-          POSTGRES_DB: brrrr_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U brrrr_test -d brrrr_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -151,26 +137,30 @@ jobs:
           cache: pip
           cache-dependency-path: BackEnd/requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install dependencies and scanners
+        run: pip install -r BackEnd/requirements.txt pip-audit bandit
 
-      - name: Run the MCP server tests
-        env:
-          TEST_DATABASE_URL: postgresql+psycopg2://brrrr_test:brrrr_test@localhost:5432/brrrr_test
-        run: |
-          mkdir -p "$RUNNER_TEMP/reports"
-          pytest -ra tests/test_mcp.py tests/test_mcp_tools.py tests/test_mcp_e2e.py \
-            --junitxml="$RUNNER_TEMP/reports/mcp-junit.xml"
+      - name: pip-audit (pinned requirements)
+        run: pip-audit -r BackEnd/requirements.txt --progress-spinner off
 
-      - name: Upload MCP reports
-        if: always() && inputs.upload_reports
-        uses: actions/upload-artifact@v4
+      - name: Bandit
+        working-directory: BackEnd
+        run: bandit -q -r . -x ./tests,./verify_regression.py -ll -ii
+
+      - uses: actions/setup-node@v4
         with:
-          name: junit-mcp-${{ github.run_number }}
-          path: ${{ runner.temp }}/reports/
-          if-no-files-found: ignore
-          overwrite: true
-          retention-days: 14
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm audit (production dependencies)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
     name: Frontend tests + build

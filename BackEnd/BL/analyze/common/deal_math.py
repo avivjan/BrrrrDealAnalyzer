@@ -64,6 +64,11 @@ def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
     loan_amount = arv * ltv
     monthly_interest_rate = (interest_rate / Decimal("100.0")) / Decimal("12.0")
     total_payments = loan_term_years * 12
+    if total_payments <= 0:
+        raise HTTPException(status_code=400, detail="Unable to calculate mortgage payment.")
+    if monthly_interest_rate == 0:
+        # A 0% loan is a straight-line principal repayment: no amortization factor.
+        return loan_amount / total_payments
     factor = (1 + monthly_interest_rate) ** total_payments
     denominator = factor - 1
     if denominator == 0:
@@ -102,10 +107,14 @@ def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, 
     HML_amount = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
     return HML_amount * HML_interest_rate * days_until_refi / DAYS_PER_YEAR / Decimal("100.0")
 
-def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab):
+def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding_cost_until_refi, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab, refi_shortfall=Decimal("0")):
+    # `refi_shortfall` is the cash the investor must bring to the refi closing
+    # table when the refi loan does not cover the HML payoff + refi costs +
+    # reserve (i.e. `max(0, -cash_out_routi)`). It is part of the lifetime cash
+    # requirement, so it is added to both totals. Flip passes 0.
     down_payment_in_cash = (down_payment_precent/Decimal("100")) * purchase_price
     rehab_cash = rehab_cost if not use_HM_for_rehab else Decimal("0")
-    total_cash_needed_without_buffer = down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash
+    total_cash_needed_without_buffer = down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash + refi_shortfall
 
     # 1. Direct Rehab Cash (if not funded) + Float Buffer (for draws)
     # Even if HML pays, we need 10% on hand to start work/pay deposits
@@ -114,11 +123,11 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
     total_rehab_cash_needed = rehab_out_of_pocket + rehab_float_buffer
 
     # 2. Time Contingency (The "Safety Multiplier")
-    # Doubling these accounts for delays in permits, rehab, or tenant placement
+    # The x1.5 accounts for delays in permits, rehab, or tenant placement
     total_holding_cash = holding_cost_until_refi * Decimal("1.5")
     total_interest_cash = HML_interest_in_cash * Decimal("1.5")
 
     # 3. Closing Buffer
     total_closing_buy = closing_costs_buy * Decimal("1.1")
-    total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash
+    total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash + refi_shortfall
     return (total_cash_needed_without_buffer, total_cash_needed_with_buffer)

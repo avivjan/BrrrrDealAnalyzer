@@ -17,18 +17,23 @@ Configuration (env vars):
                                               link. Viewer must be signed in
                                               with a Google account that has
                                               read access (you / your CPA).
-                                              **DEFAULT** — best for audit.
                                     "public"  Permanent
                                               `https://storage.googleapis.com/...`
-                                              link. Bucket must be configured
-                                              for public read access (grant
-                                              `roles/storage.objectViewer` to
-                                              `allUsers` at the bucket level
-                                              when UBLA is on).
+                                              link. **DEFAULT.** Bucket must be
+                                              configured for public read access
+                                              (grant `roles/storage.legacyObjectReader`
+                                              -- get, no list -- to `allUsers` at
+                                              the bucket level when UBLA is on).
                                     "signed"  7-day expiring v4 signed URL.
                                               NOT recommended (links rot).
 - REPS_PUBLIC_OBJECTS             (Deprecated; kept for backward compat)
                                   "true" implies REPS_LINK_STYLE="public".
+- REPS_OBJECT_ACL_PUBLIC          (Optional, default "true") With
+                                  REPS_LINK_STYLE="public", also flip the
+                                  legacy per-object ACL via `make_public()`.
+                                  Set "false" once the bucket-level IAM
+                                  binding is in place (UBLA buckets ignore
+                                  the per-object ACL anyway).
 
 Design notes:
 - We use `.append()` exclusively (USER_ENTERED) so historical rows are never
@@ -43,10 +48,9 @@ from __future__ import annotations
 
 import io
 import logging
-import mimetypes
 import os
 import re
-import uuid
+import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -192,6 +196,24 @@ def now_utc_iso() -> Tuple[datetime, str]:
     return now, now.isoformat()
 
 
+# --- Sheet cell hygiene --------------------------------------------------- #
+
+_FORMULA_LEADERS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def neutralize_formula(value: str) -> str:
+    """Make a free-text cell inert under `valueInputOption=USER_ENTERED`.
+
+    Sheets parses a cell that starts with `=`, `+`, `-` or `@` as a formula,
+    so an appended description such as `=IMPORTXML(...)` would execute when
+    the auditor opens the sheet. A leading apostrophe forces text and is not
+    displayed, so ordinary rows look exactly as before.
+    """
+
+    text = value if isinstance(value, str) else str(value or "")
+    return "'" + text if text.startswith(_FORMULA_LEADERS) else text
+
+
 # --- File-name sanitization ---------------------------------------------- #
 
 _SAFE_FILENAME = re.compile(r"[^A-Za-z0-9._-]+")
@@ -203,7 +225,28 @@ def sanitize_filename(name: str) -> str:
     return name[:120] or "evidence"
 
 
-def validate_evidence_file(filename: str, content_type: Optional[str]) -> None:
+# What the first bytes of each allowed type look like. Video containers are
+# checked leniently: a QuickTime/MP4 file starts with a box whose type sits at
+# bytes 4-8 and is one of a handful of names.
+_MAGIC = {
+    ".pdf": (b"%PDF",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+}
+_VIDEO_BOXES = {b"ftyp", b"moov", b"mdat", b"wide", b"free", b"skip", b"pnot"}
+
+CONTENT_TYPE_BY_EXT = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",
+}
+
+
+def validate_evidence_file(filename: str, content_type: Optional[str], head: Optional[bytes] = None) -> None:
     ext = os.path.splitext(filename or "")[1].lower()
     if ext not in ALLOWED_EVIDENCE_EXTS:
         raise RepsValidationError(
@@ -215,6 +258,25 @@ def validate_evidence_file(filename: str, content_type: Optional[str]) -> None:
         # Don't hard-fail (browsers report .mov as application/octet-stream
         # sometimes); just log.
         logger.warning("REPS upload: unexpected mime %r for %s", content_type, filename)
+    if head is not None and not _magic_ok(ext, head):
+        raise RepsValidationError(f"The file does not look like a {ext} file.")
+
+
+def _magic_ok(ext: str, head: bytes) -> bool:
+    if ext in _MAGIC:
+        return any(head.startswith(sig) for sig in _MAGIC[ext])
+    if ext in {".mov", ".mp4"}:
+        return len(head) >= 8 and head[4:8] in _VIDEO_BOXES
+    return True
+
+
+def content_type_for(filename: str) -> str:
+    """The stored Content-Type comes from the allow-listed extension, never
+    from the client (a `.pdf` served as `text/html` would be a stored page on
+    the storage origin)."""
+
+    ext = os.path.splitext(filename or "")[1].lower()
+    return CONTENT_TYPE_BY_EXT.get(ext, "application/octet-stream")
 
 
 # --- Google clients (lazy import) ---------------------------------------- #
@@ -228,10 +290,15 @@ def _get_credentials(cfg: RepsConfig):
     from google.oauth2 import service_account
     import google.auth
 
+    # Least privilege (F-13): Sheets plus the one storage scope the code needs.
+    # `full_control` is required only for the legacy per-object ACL flip
+    # (`make_public()`), which REPS_OBJECT_ACL_PUBLIC=false turns off.
+    acl_flip = (os.getenv("REPS_OBJECT_ACL_PUBLIC") or "true").strip().lower() != "false"
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/cloud-platform",
-        "https://www.googleapis.com/auth/devstorage.read_write",
+        "https://www.googleapis.com/auth/devstorage.full_control"
+        if acl_flip
+        else "https://www.googleapis.com/auth/devstorage.read_write",
     ]
     if cfg.creds_path and os.path.exists(cfg.creds_path):
         return service_account.Credentials.from_service_account_file(
@@ -323,8 +390,7 @@ def _resolve_worksheet_title(spreadsheet_id: str, requested_tab: str) -> str:
             return t
 
     raise RepsValidationError(
-        f"Worksheet [{rq}] not found in spreadsheet …{spreadsheet_id[-12:]}. "
-        f"Existing tab names: {titles!r}. "
+        f"Worksheet [{rq}] not found in the spreadsheet. "
         'Rename a tab to match or set REPS_SHEET_TAB (often "Sheet1" on new files).'
     )
 
@@ -367,6 +433,46 @@ def _col_letter(n: int) -> str:
     return out
 
 
+def build_log_row(
+    *,
+    user: str,
+    created_at_iso: str,
+    property_name: Optional[str],
+    activity_category: Optional[str],
+    description: str,
+    start_iso: str,
+    end_iso: str,
+    total_hours: float,
+    evidence_text: str,
+    location: Optional[str],
+    material_participation_rentals: bool,
+    people_involved: Iterable[str],
+) -> list:
+    """The values of one appended row, in `SHEET_COLUMNS` order.
+
+    Free-text cells go through `neutralize_formula`; the numeric hours, the
+    TRUE/FALSE flag and the ISO timestamps are passed exactly as before so the
+    sheet's typed cells do not change.
+    """
+
+    # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
+    # column so the auditor's eye lands on the human-entered fields first.
+    return [
+        neutralize_formula(user),
+        neutralize_formula(property_name or ""),
+        neutralize_formula(activity_category or ""),
+        neutralize_formula(description),
+        start_iso,
+        end_iso,
+        total_hours,
+        neutralize_formula(evidence_text),
+        neutralize_formula(location or ""),
+        "TRUE" if material_participation_rentals else "FALSE",
+        neutralize_formula(", ".join(sorted({p.strip() for p in people_involved if p and p.strip()}))),
+        created_at_iso,
+    ]
+
+
 def append_log_row(
     user: str,
     created_at_iso: str,
@@ -398,24 +504,20 @@ def append_log_row(
     _ensure_header(sid, tab)
 
     items = normalize_evidence_items(evidence_items)
-    evidence_text = evidence_cell_text(items)
-
-    # Order MUST match SHEET_COLUMNS exactly. created_at moved to the last
-    # column so the auditor's eye lands on the human-entered fields first.
-    row = [
-        user,
-        property_name or "",
-        activity_category or "",
-        description,
-        start_iso,
-        end_iso,
-        total_hours,
-        evidence_text,
-        location or "",
-        "TRUE" if material_participation_rentals else "FALSE",
-        ", ".join(sorted({p.strip() for p in people_involved if p and p.strip()})),
-        created_at_iso,
-    ]
+    row = build_log_row(
+        user=user,
+        created_at_iso=created_at_iso,
+        property_name=property_name,
+        activity_category=activity_category,
+        description=description,
+        start_iso=start_iso,
+        end_iso=end_iso,
+        total_hours=total_hours,
+        evidence_text=evidence_cell_text(items),
+        location=location,
+        material_participation_rentals=material_participation_rentals,
+        people_involved=people_involved,
+    )
     svc = get_sheets_client()
     last_col = _col_letter(len(SHEET_COLUMNS))
     rng = _a1_range(sid, tab, f"A:{last_col}")
@@ -537,7 +639,8 @@ def upload_evidence(
     if user not in USER_FOLDER_MAP:
         raise RepsValidationError(f"Unknown REPS user: {user!r}")
 
-    validate_evidence_file(original_filename, content_type)
+    validate_evidence_file(original_filename, content_type, file_bytes[:16])
+    content_type = content_type_for(original_filename)
 
     cfg = get_config()
     client = get_storage_client()
@@ -546,12 +649,9 @@ def upload_evidence(
     safe_name = sanitize_filename(original_filename)
     object_name = (
         f"{cfg.base_prefix}/{USER_FOLDER_MAP[user]}/"
-        f"{datetime.utcnow():%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:8]}_{safe_name}"
+        f"{datetime.utcnow():%Y%m%dT%H%M%S}_{secrets.token_hex(8)}_{safe_name}"
     )
     blob = bucket.blob(object_name)
-
-    if not content_type:
-        content_type = mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
 
     blob.upload_from_file(io.BytesIO(file_bytes), content_type=content_type, rewind=True)
     return _make_url_for_blob(blob, cfg, object_name)
@@ -599,16 +699,15 @@ def _audit_filename(
 ) -> str:
     """`<Property>_<Activity>_<YYYY-MM-DD_HHMMSS>_<rand>[_<idx>].<ext>`.
 
-    HHMMSS + a 4-char random suffix make the name unique enough to keep
-    every file in the property's flat folder without collisions, even
-    when the user uploads two photos at the same minute.
+    `rand` is 16 hex characters (64 bits) from `secrets`, so a public object
+    URL cannot be guessed from the timestamp: the name is a capability.
     """
 
     ext = os.path.splitext(original_filename or "")[1].lower() or ".bin"
     prop = _slugify(property_name, _DEFAULT_SLUG_PROPERTY).title().replace("-", "")
     act = _slugify(activity_category, _DEFAULT_SLUG_ACTIVITY).title().replace("-", "")
     stamp = log_dt.astimezone(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
-    rand = uuid.uuid4().hex[:4]
+    rand = secrets.token_hex(8)
     suffix = f"_{index}" if index > 0 else ""
     return f"{prop}_{act}_{stamp}_{rand}{suffix}{ext}"
 
@@ -631,14 +730,15 @@ def _make_url_for_blob(blob, cfg: "RepsConfig", object_name: str) -> str:
     style = cfg.link_style
 
     if style == "public":
-        try:
-            blob.make_public()
-        except Exception as exc:  # pragma: no cover
-            logger.info(
-                "REPS upload: make_public no-op (bucket likely has UBLA); "
-                "assuming bucket-level IAM grants allUsers:objectViewer. (%s)",
-                exc,
-            )
+        if (os.getenv("REPS_OBJECT_ACL_PUBLIC") or "true").strip().lower() != "false":
+            try:
+                blob.make_public()
+            except Exception as exc:  # pragma: no cover
+                logger.info(
+                    "REPS upload: make_public no-op (bucket likely has UBLA); "
+                    "assuming bucket-level IAM grants allUsers read. (%s)",
+                    exc,
+                )
         return f"https://storage.googleapis.com/{cfg.bucket_name}/{object_name}"
 
     if style == "signed":
@@ -712,9 +812,8 @@ def upload_evidence_batch(
     uploaded: List[UploadedAsset] = []
 
     for idx, (orig_name, content_type, file_bytes) in enumerate(items):
-        validate_evidence_file(orig_name, content_type)
-        if not content_type:
-            content_type = mimetypes.guess_type(orig_name)[0] or "application/octet-stream"
+        validate_evidence_file(orig_name, content_type, file_bytes[:16])
+        content_type = content_type_for(orig_name)
 
         new_name = _audit_filename(property_name, activity_category, log_dt, orig_name, idx)
         # Belt-and-suspenders: re-sanitize after the construction.

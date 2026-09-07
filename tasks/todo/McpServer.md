@@ -16,7 +16,7 @@ wall-clock minutes.
 - [x] **M9** (10 min) — Commit, push `claude/mcp-server-website-features-j4ix18`, open the PR (owner merges).
 - [x] **M9b** (5 min) — Generate the secret, set `MCP_PATH_SECRET` on the Render service.
 - [x] **M11** (5 min) — Standing rule in `.claude/CLAUDE.md` + README step 13: every future endpoint/feature is supported over MCP without being asked (backend on Render, frontend on Netlify recorded there too).
-- [ ] **M10** (10 min, after merge) — Watch the Render deploy; hand over the connector URL.
+- [x] **M10** (10 min, after merge) — Watch the Render deploy; hand over the connector URL. (PR #37 merged 09:48 UTC; Render deploy dep-daf8gn15efls73ai5lf0 live at 09:49 with a clean startup and no missing-secret warning; connector URL handed over privately.)
 
 ## MCP review
 

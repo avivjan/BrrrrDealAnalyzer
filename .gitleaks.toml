@@ -1,0 +1,12 @@
+# Gitleaks (CI "Security checks" job). The default rules stay on; the only
+# allowance is the placeholder key the Phase 0 test suite sets in APP_KEY,
+# which the generic-api-key rule flags on entropy. Real values never belong
+# in the tree -- see SECURITY_PLAN.md.
+title = "BigWhales"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-suite placeholders, never real credentials"
+regexes = ['''phase0-test-key-0123456789abcdef''', '''test-app-key-not-a-secret-[a-z0-9-]+''']

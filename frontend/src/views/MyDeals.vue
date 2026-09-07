@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { safeHref } from "../utils/safeHref";
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
@@ -349,10 +350,9 @@ const closeModal = async () => {
   showDetailModal.value = false;
 };
 
+// Currency never decodes the -1/-2 sentinels: -$1 and -$2 are real amounts.
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -360,10 +360,11 @@ const formatCurrency = (value: number | undefined) => {
   }).format(value);
 };
 
+// The calculators encode ±∞ on cash_on_cash / roi / annualized_roi as -1 / -2.
 const formatPercent = (value: number | undefined) => {
   if (value === undefined || value === null) return "-";
-  if (value === -1) return "∞";
-  if (value === -2) return "-∞";
+  if (value === -1) return "∞%";
+  if (value === -2) return "-∞%";
   return `${value.toFixed(2)}%`;
 };
 
@@ -376,11 +377,16 @@ const getCashFlowColor = (value: number | undefined) => {
 
 const getPerformanceColor = (value: number | undefined) => {
   if (value === undefined || value === null) return "text-fg";
-  if (value === -1) return "text-positive"; // Infinity
-  if (value === -2) return "text-negative"; // -Infinity
   if (value > 0) return "text-positive";
   if (value < 0) return "text-negative";
   return "text-fg-muted";
+};
+
+/** Tone for a percent metric: -1 (∞) is positive, -2 (-∞) is negative. */
+const getPercentColor = (value: number | undefined) => {
+  if (value === -1) return "text-positive";
+  if (value === -2) return "text-negative";
+  return getPerformanceColor(value);
 };
 
 const getDSCRColor = (value: number | undefined) => {
@@ -904,8 +910,9 @@ console.groupEnd();
                   <a
                     v-if="editingDeal.zillow_link"
                     data-testid="mydeals.modal.zillow-open"
-                    :href="editingDeal.zillow_link"
+                    :href="safeHref(editingDeal.zillow_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -924,8 +931,9 @@ console.groupEnd();
                   <a
                     v-if="editingDeal.pics_link"
                     data-testid="mydeals.modal.pics-open"
-                    :href="editingDeal.pics_link"
+                    :href="safeHref(editingDeal.pics_link)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
@@ -1024,7 +1032,7 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>CoC</template>
-                              <div v-flash data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.cash_on_cash" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).cash_on_cash)">{{ formatPercent((currentAnalysis as any).cash_on_cash) }}</div>
                           </UiStatTile>
                            <UiStatTile tone="neutral" class="bg-surface">
                                <template #label>DSCR</template>
@@ -1036,7 +1044,7 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Net Profit</template>
@@ -1058,11 +1066,11 @@ console.groupEnd();
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).roi)">{{ formatPercent((currentAnalysis as any).roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Annualized ROI</template>
-                              <div v-flash data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
+                              <div v-flash data-testid="mydeals.modal.result.annualized_roi" class="numeric font-display text-lg font-bold tracking-display" :class="getPercentColor((currentAnalysis as any).annualized_roi)">{{ formatPercent((currentAnalysis as any).annualized_roi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
                               <template #label>Cash Needed</template>
@@ -1160,8 +1168,9 @@ console.groupEnd();
                       <a
                         v-if="comp.url"
                         :data-testid="`mydeals.sold-comp.${index}.open`"
-                        :href="comp.url"
+                        :href="safeHref(comp.url)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="text-xs text-primary hover:underline flex-none"
                         ><i class="pi pi-external-link" aria-hidden="true"></i
                       ></a>
@@ -1239,7 +1248,7 @@ console.groupEnd();
                         </UiIconButton>
                         <div class="flex items-center gap-2 mb-1">
                           <input :data-testid="`mydeals.sale-comp.${index}.url`" v-model="comp.url" placeholder="URL" class="flex-1 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
-                          <a v-if="comp.url" :data-testid="`mydeals.sale-comp.${index}.open`" :href="comp.url" target="_blank" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
+                          <a v-if="comp.url" :data-testid="`mydeals.sale-comp.${index}.open`" :href="safeHref(comp.url)" target="_blank" rel="noopener noreferrer" class="text-xs text-primary hover:underline flex-none"><i class="pi pi-external-link" aria-hidden="true"></i></a>
                         </div>
                         <div class="flex gap-2">
                           <input :data-testid="`mydeals.sale-comp.${index}.arv`" v-model="comp.arv" type="number" placeholder="List Price" class="w-1/2 bg-transparent border-b border-line text-xs focus:border-primary outline-none text-fg" />
@@ -1282,8 +1291,9 @@ console.groupEnd();
                       <a
                         v-if="comp.url"
                         :data-testid="`mydeals.rent-comp.${index}.open`"
-                        :href="comp.url"
+                        :href="safeHref(comp.url)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="text-xs text-primary hover:underline flex-none"
                         ><i class="pi pi-external-link" aria-hidden="true"></i
                       ></a>

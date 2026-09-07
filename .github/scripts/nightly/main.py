@@ -7,7 +7,7 @@ Backward-compatible forms (the v1 script's interface):
 
 Full form:
 
-    nightly_e2e_email.py [--playwright P] [--backend-junit P] [--frontend-junit P] [--mcp-junit P]
+    nightly_e2e_email.py [--playwright P] [--backend-junit P] [--frontend-junit P]
                          [--backend-coverage P] [--frontend-coverage P]
                          [--history P] [--append-history] [--write-record P] [--window N]
                          [--known-skips P] [--charts auto|png|table|off]
@@ -47,7 +47,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--playwright")
     p.add_argument("--backend-junit")
     p.add_argument("--frontend-junit")
-    p.add_argument("--mcp-junit")
     p.add_argument("--backend-coverage")
     p.add_argument("--frontend-coverage")
     p.add_argument("--history")
@@ -89,8 +88,8 @@ def build_context(args: argparse.Namespace) -> dict:
         jobs.append(("Backend tests (pytest + Postgres migration smoke)", env("BACKEND_OUTCOME", "")))
     if env("FRONTEND_OUTCOME"):
         jobs.append(("Frontend tests + build (vitest, vue-tsc, vite)", env("FRONTEND_OUTCOME", "")))
-    if env("MCP_OUTCOME"):
-        jobs.append(("MCP server tests (pytest, real uvicorn + MCP client)", env("MCP_OUTCOME", "")))
+    if env("MCP_PROBE_OUTCOME") in ("success", "failure"):   # "skipped" = secrets not configured
+        jobs.append(("MCP connector probe (Claude answered with the compact deal tools)", env("MCP_PROBE_OUTCOME", "")))
     if not jobs and ci_outcome:
         jobs.append(("Backend + frontend CI suites", ci_outcome))
     jobs.append(("Playwright, all browser projects", e2e_outcome))
@@ -100,7 +99,7 @@ def build_context(args: argparse.Namespace) -> dict:
     summary = summarise(load_report(args.playwright))
     backend = junit.parse(args.backend_junit)
     frontend = junit.parse(args.frontend_junit)
-    mcp = junit.parse(args.mcp_junit)
+    mcp = junit.subset(backend)   # the MCP server tests, broken out of the backend JUnit by module
     cov_backend = coverage.parse_pytest_cov_json(args.backend_coverage)
     cov_frontend = coverage.parse_vitest_summary(args.frontend_coverage)
     allowlist, allowlist_error = skips.load_allowlist(args.known_skips)

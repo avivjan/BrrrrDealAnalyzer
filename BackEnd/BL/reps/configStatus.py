@@ -7,11 +7,11 @@ from BL.reps.common import reps_service
 def get_config_status() -> dict:
     try:
         cfg = reps_service.get_config()
+        # The bucket name and prefix are not returned (F-12): together they
+        # are the URL of every evidence object. The UI only needs `configured`.
         return {
             "configured": True,
             "sheet_tab": cfg.sheet_tab,
-            "bucket_name": cfg.bucket_name,
-            "base_prefix": cfg.base_prefix,
             "min_description_length": MIN_DESCRIPTION_LEN,
         }
     except reps_service.RepsConfigError as exc:

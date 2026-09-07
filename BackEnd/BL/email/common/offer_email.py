@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import smtplib
@@ -10,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def send_offer_email(details: SendOfferReq):
-    logger.info(f"Starting email send process for property: {details.property_address}")
-    logger.info(f"Recipient: {details.agent_email} (Agent: {details.agent_name})")
+    logger.info("Starting offer e-mail send")
 
     sender_email = "BigWhalesLLC@gmail.com"
     sender_password = os.getenv("EMAIL_PASSWORD")
@@ -23,14 +23,13 @@ def send_offer_email(details: SendOfferReq):
     # Strip any whitespace (common issue when copying/pasting)
     sender_password = sender_password.strip()
 
-    if len(sender_password) != 16:
-        logger.warning(f"Email password length is {len(sender_password)} (expected 16 for Gmail App Password)")
-
-    logger.info(f"Email password found (length: {len(sender_password)})")
-    logger.info(f"Email password starts with: {sender_password[:2]}... (masked for security)")
-
     subject = f"Cash Offer for {details.property_address}"
-    logger.info(f"Email subject: {subject}")
+
+    # The body is HTML, so every client-supplied value is escaped before it is
+    # interpolated. Real names and addresses render exactly as before; only
+    # markup characters change (`<` -> `&lt;`).
+    agent_name = html.escape(details.agent_name)
+    property_address = html.escape(details.property_address)
 
     body = f"""
 <html>
@@ -152,8 +151,8 @@ def send_offer_email(details: SendOfferReq):
   </head>
   <body>
     <div class="container">
-      <p class="greeting">Hi {details.agent_name},</p>
-      <p class="intro">I’m writing to you regarding the property at <strong>{details.property_address}</strong></p>
+      <p class="greeting">Hi {agent_name},</p>
+      <p class="intro">I’m writing to you regarding the property at <strong>{property_address}</strong></p>
       <p class="intro">We are local investors purchasing under our entity, Big Whales AY LLC. (<a href="https://drive.google.com/file/d/1HxskELeQFfljFngV5OFvjuhDeUbQ1Dyx/view">LLC Formation</a>)</p>
 
       <p class="intro">I have structured an offer to eliminate risks for the seller. I am offering a clean, fast closing:</p>
@@ -197,22 +196,20 @@ def send_offer_email(details: SendOfferReq):
         server.login(sender_email, sender_password)
         logger.info("SMTP login successful")
 
-        logger.info(f"Sending email to {details.agent_email}")
         server.send_message(msg)
         logger.info("Email sent successfully")
 
         server.quit()
         logger.info("SMTP connection closed")
         return True, "Email sent successfully"
+    # The SMTP server's own text (which names the account and Google's error
+    # page) stays in the log; the client gets a fixed message (F-09).
     except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP Authentication Error: {e}")
-        logger.error(f"Error code: {e.smtp_code}, Error message: {e.smtp_error}")
-        return False, f"Authentication failed: {str(e)}"
+        logger.error("SMTP authentication error: code=%s", e.smtp_code)
+        return False, "Authentication failed"
     except smtplib.SMTPException as e:
-        logger.error(f"SMTP Error: {e}")
-        return False, f"SMTP error: {str(e)}"
+        logger.error("SMTP error: %s", type(e).__name__)
+        return False, "SMTP error"
     except Exception as e:
-        logger.error(f"Unexpected error sending email: {type(e).__name__}: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return False, f"Error sending email: {str(e)}"
+        logger.exception("Unexpected error sending email: %s", type(e).__name__)
+        return False, "Error sending email"

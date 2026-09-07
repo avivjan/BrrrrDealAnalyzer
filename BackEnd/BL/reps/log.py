@@ -100,6 +100,7 @@ def create_log(db: Session, payload: RepsLogCreate) -> RepsLogRes:
         location_snapshots=payload.location_snapshots,
         material_participation_rentals=payload.material_participation_rentals,
         people_involved=payload.people_involved,
-        spreadsheet_id=sid,
+        # Masked (F-12): enough to recognise which sheet, not enough to open it.
+        spreadsheet_id=("…" + sid[-4:]) if sid else "",
         appended_range=updated_range,
     )

@@ -101,7 +101,9 @@ export default defineConfig({
       // `BackEnd/main.py` only allows localhost:5173 / :3000 through CORS, so
       // the suite runs the production bundle behind `vite preview` on 5173
       // rather than the dev server on a random port.
-      command: `VITE_API_URL=${API_ORIGIN} npm run build && npx vite preview --port ${APP_PORT} --strictPort`,
+      // VITE_API_URL is read by the build (the bundle's API origin) and again by the
+      // preview (vite.config.ts puts that origin into the production CSP it serves).
+      command: `VITE_API_URL=${API_ORIGIN} npm run build && VITE_API_URL=${API_ORIGIN} npx vite preview --port ${APP_PORT} --strictPort`,
       url: APP_ORIGIN,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',

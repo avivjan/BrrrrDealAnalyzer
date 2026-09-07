@@ -2,7 +2,7 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -24,6 +24,7 @@ from BL.liquidity.getSettings import get_settings as get_settings_bl
 from BL.liquidity.updateSettings import update_settings as update_settings_bl
 from BL.liquidity.mercuryBalance import get_mercury_balance as get_mercury_balance_bl
 from BL.liquidity.common.mercury_client import MercuryApiError, MercuryConfigError
+from BL.auth.common.audit import record as audit
 
 router = APIRouter()
 
@@ -107,16 +108,28 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
 
 
 @router.get("/liquidity/mercury-balance")
-def get_mercury_balance():
+def get_mercury_balance(request: Request):
     """
     Fetch the live sum of all active Mercury account balances, in $k.
 
     The frontend uses this to re-anchor the liquidity timeline's opening
-    balance to today on page load.
+    balance to today on page load. Every call leaves an audit row (who, from
+    where, which workspaces answered) -- never a token.
     """
     try:
-        return get_mercury_balance_bl()
+        result = get_mercury_balance_bl()
     except MercuryConfigError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except MercuryApiError as e:
+        audit("mercury_fetch", request, detail={"ok": False, "error": str(e)})
         raise HTTPException(status_code=502, detail=str(e))
+    audit(
+        "mercury_fetch",
+        request,
+        detail={
+            "ok": True,
+            "workspaces": [w.get("workspace") for w in result.get("workspaces", [])],
+            "failed": [e.get("workspace") for e in result.get("workspace_errors", [])],
+        },
+    )
+    return result

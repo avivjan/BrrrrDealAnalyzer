@@ -402,6 +402,17 @@ curl -s http://127.0.0.1:8000/analyze/brrr -H 'content-type: application/json' -
 (Values rounded here; the API returns full-precision floats. A negative `cash_out` means
 cash is left in the deal after the refinance.)
 
+<details open>
+<summary><b>Compact deal views (both boards)</b></summary>
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/deals` | Compact rows across the My Deals and Bought Deals boards, no breakdowns. Query: `board=all\|active\|bought`, `deal_type`, `stage`, `q` (words in address, notes, task, niche, contact), `limit` |
+| `GET` | `/deals/search` | Same rows, `q` required |
+| `GET` | `/deals/portfolio` | Counts by board/type/stage, totals over bought deals, top deals by equity, cash flow and cash-on-cash |
+| `GET` | `/deals/{deal_id}` | One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on |
+</details>
+
 ### MCP server (Claude connector)
 
 Every route above is also an **MCP tool**, so Claude can use the site directly: analyze
@@ -411,15 +422,45 @@ builds the tool list from the app's own OpenAPI document and executes each call 
 app in-process, so nothing is duplicated and a new endpoint becomes a tool automatically —
 give it a line in `DESCRIPTIONS` there, or `tests/test_mcp.py` fails.
 
+For deal questions a chat should start with the compact tools (`portfolio_summary`,
+`list_deals`, `search_deals`) and use `get_deal` for one deal's breakdown; the full board
+dumps (`get_active_deals`, `get_bought_deals`) are megabytes. Tests keep this true:
+`tests/test_mcp.py` checks that a table of user phrases ("best deal", "properties we
+bought", "log hours", ...) each match a tool's name or description, that the compact
+tools stay under a size budget with 70 deals seeded, and that every tool carries the
+right read-only / destructive annotation. The nightly's **MCP connector probe** job asks
+Claude the real question through the API with the connector attached and fails unless a
+compact tool was used and the answer quotes the money left in a bought deal correctly
+(needs the `ANTHROPIC_API_KEY` and `MCP_PROBE_URL` secrets; it skips without them).
+
+Every output is explained, not just every input: each result field carries a description
+with its unit and sign convention (for example `cash_out` negative = money still left in
+the deal; `cash_out_routi` = the cash wire received at the refinance closing table), every
+JSON tool publishes an output schema built from those descriptions and returns structured
+content that validates against it, and the server instructions carry a glossary. The
+compact rows add `cash_left_in_deal` and `cash_wire_at_refi` so the common questions need no
+sign reading at all. A test fails on any undocumented output field.
+
 The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
-`/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (any long random string) on the Render
-service; without it the endpoint is served unprotected at `/mcp`, which is only meant for
-local development. The API itself has no authentication, so keep the URL private.
+`/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (32+ random characters) on the Render
+service; in production the app refuses to start without it, and in development the endpoint
+is served unprotected at `/mcp`. The path secret never appears in the uvicorn access log. The
+API's own gate (`APP_KEY_MODE`) is honoured by tool calls automatically. Keep the URL private;
+the full authentication roadmap is in `SECURITY_PLAN.md`.
 
 - **claude.ai**: Settings → Connectors → *Add custom connector* → URL
   `https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`, no OAuth.
 - **Claude Code**: `claude mcp add --transport http brrrr https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`
 - **Locally**: start the backend and point a client at `http://127.0.0.1:8000/mcp`.
+
+**OAuth mode** (`MCP_AUTH_MODE=oauth`, `SECURITY_PLAN.md` §3.6) replaces the path secret with
+OAuth 2.1 + PKCE, served by the MCP SDK on the same host (`/.well-known/oauth-authorization-server`,
+`/authorize`, `/token`, `/register`, `/revoke`). Add the connector with the plain
+`https://brrrrdealanalyzer.onrender.com/mcp` URL and choose OAuth: the browser lands on the
+site's `/connect` page, a signed-in owner approves, and the connector becomes a device of its
+own (`manage.py list-devices` shows it as `mcp`; `revoke-device` ends all its tokens). Every
+tool call then runs as that owner, through the same session gate as the browser. Set
+`MCP_ISSUER_URL` if the API is served from another host.
 
 ## 🧮 The calculation engine
 
@@ -489,7 +530,7 @@ looks, the motion rules a change must not break, and the gate set.
 | Layer | Command | What it proves |
 | --- | --- | --- |
 | Backend unit + API | `cd BackEnd && pytest` | `/analyze/*` results pinned to reference values, deal CRUD, duplicate/delete, move-to-bought, autosave, PDF reports, the DB isolation guard itself |
-| MCP server | `cd BackEnd && pytest tests/test_mcp.py tests/test_mcp_tools.py tests/test_mcp_e2e.py` | All 45 tools exist with valid schemas, every feature area works through its tool, and a real `uvicorn` with a path secret answers the official MCP client over Streamable HTTP |
+| MCP server | part of `cd BackEnd && pytest` (`tests/test_mcp*.py`, discovered like any other file) | All 45 tools exist with valid schemas, every feature area works through its tool, and a real `uvicorn` with a path secret answers the official MCP client over Streamable HTTP |
 | Backend contract | `python3 verify_regression.py verify` | OpenAPI, every ORM column, every Pydantic model, every metric across ~40 payloads and a scripted pass through all 45 endpoints — bit-for-bit against `tests/_regression_snapshots/` |
 | Frontend unit | `cd frontend && npm test` | Vitest: component contracts, stores, engines, the e2e **hook inventory** |
 | Frontend build | `npm run build` | `vue-tsc` type-check + Vite production bundle (what Netlify runs) |
@@ -512,14 +553,15 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
 
 ### CI and the nightly
 
-- **`ci.yml`** runs on every pull request and every push to `main`: **Backend tests**
+- **`ci.yml`** runs on every pull request and every push to `main`: **Security checks** (`pip-audit` on the pinned requirements, Bandit, `npm audit` on production dependencies, Gitleaks), **Backend tests**
   (pytest on a `postgres:16` service, a migration smoke that boots the app twice against a
-  fresh database, the nightly package's unit tests), **MCP server tests** (the three
-  `test_mcp*.py` files on their own, with their own JUnit artifact) and **Frontend tests +
-  build**. Make those three checks required under *Settings → Branches → main* to block red
-  merges.
+  fresh database, the nightly package's unit tests; pytest discovers every
+  `tests/test_*.py`, the MCP server files included, so a new test file needs no workflow
+  edit) and **Frontend tests + build**. Make those two checks required under
+  *Settings → Branches → main* to block red merges.
 - **`e2e-nightly.yml`** runs at midnight Israel time (two crons, a gate job picks the one
-  that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs plus the full Playwright matrix.
+  that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs, the full Playwright matrix
+  and the MCP connector probe (see the MCP section above).
   When every job has finished, a styled HTML report is e-mailed over Gmail SMTP, pass or
   fail. It needs the repository secrets `NIGHTLY_MAIL_USERNAME` and `NIGHTLY_MAIL_PASSWORD`
   (a Gmail app password). The report explains every skipped test against
@@ -551,18 +593,48 @@ A Playwright spec that skips on some projects must add or bump its reason in
 
 | Piece | Where | How |
 | --- | --- | --- |
-| Frontend | **Netlify** → <https://bigwhales.netlify.app> | Build `npm run build` in `frontend/`; set `VITE_API_URL` to the backend URL. The router uses history mode, so deep links need the SPA redirect (`/* → /index.html 200`) configured in the Netlify UI. There is no `netlify.toml` in the repo. |
+| Frontend | **Netlify** → <https://bigwhales.netlify.app> | Build `npm run build` in `frontend/`; set `VITE_API_URL` to the backend URL. The router uses history mode; the SPA redirect (`/* → /index.html 200`) and the security headers (HSTS, nosniff, a report-only CSP) ship from `frontend/public/_redirects` and `frontend/public/_headers`. There is no `netlify.toml` in the repo. |
 | Backend | **Render** web service | Python from `runtime.txt`, `pip install -r BackEnd/requirements.txt`, a `uvicorn main:app` start command from `BackEnd/`. Set **Pre-Deploy Command** to `cd BackEnd && pytest` to gate a deploy on the suite (that is why `pytest` and `httpx` are in `requirements.txt`, and why `pytest.ini` disables the cache for the read-only filesystem). No `render.yaml` in the repo. |
 | Database | Render PostgreSQL | `DATABASE_URL`; schema is created and migrated at boot |
 
 Neither test suite runs inside a Netlify build. A new frontend origin must be added to the
 CORS allow-list in `BackEnd/main.py`.
 
+### Passkeys (Face ID / Touch ID sign-in)
+
+`SECURITY_PLAN.md` §3.2. Off by default (`AUTH_MODE=off`): nothing changes until it is turned on.
+
+1. Enrol the two owners from the Render shell (or locally):
+   `python manage.py enroll aviv --reps-user Aviv2026 --display-name "Aviv"` prints a one-time
+   link (15 minutes). Open it on the device to enrol; the browser creates a passkey (synced by
+   iCloud Keychain across that person's Apple devices) and signs in.
+2. Set `AUTH_MODE=shadow` for a day or two and watch the logs for "auth shadow: would reject".
+3. Set `AUTH_MODE=enforce`. Every data route now needs the session cookies; the SPA shows
+   `/login` (passkey) when it has none, refreshes an expired session silently, and the claude.ai
+   connector keeps working through its own trusted device (`mcp-connector`).
+4. Same-origin cookies: set `VITE_API_URL=/api` in Netlify so the browser calls
+   `bigwhales.netlify.app/api/...` (rewritten to Render by `frontend/public/_redirects`);
+   Safari drops cross-site cookies otherwise. In development `vite` proxies `/api` the same way.
+
+Other commands: `manage.py list-devices`, `approve-device <id>`, `revoke-device <id>`,
+`revoke-sessions [--user <name>]`. A signed-in owner can also issue an enrollment link for their
+other devices from the app (`POST /auth/enrollment-tokens`, after a fresh passkey prompt).
+
+**Devices & passkeys** (`/settings/devices`, linked from the strip above every page while a
+session exists): every browser and Claude connector on the account with approve / revoke /
+rename, the owner's sessions (end one, end all others) and passkeys (add one on another device,
+remove one — never the last). With `DEVICE_POLICY=enforce` a new browser signs in but waits on
+`/pending` until a trusted device approves it here. Approving, revoking, removing a passkey and
+sending an offer ask for a fresh passkey prompt (`AUTH_REAUTH_SECONDS`, default 600) when
+`AUTH_MODE=enforce`; the SPA answers the API's `reauth_required` with one prompt and retries.
+The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
+`e2e/checks/csp.spec.ts` replays it on every route.
+
 ### Environment variables
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | `BackEnd/db.py` | **Required.** `postgresql://…` in production |
+| `DATABASE_URL` | `BackEnd/db.py` | **Required.** `postgresql://…` in production; TLS (`sslmode=require`) is added automatically in production unless the URL sets `sslmode` itself |
 | `VITE_API_URL` | `frontend/src/api/index.ts` | Build-time. Defaults to `http://localhost:8000` |
 | `EMAIL_PASSWORD` | `/send-offer` | Gmail app password for the sending account; unset → `{success: false}` |
 | `MERCURY_API_TOKEN`, `MERCURY_API_TOKEN_<LABEL>` | `/liquidity/mercury-balance` | One per workspace; the suffix is the label |
@@ -571,9 +643,21 @@ CORS allow-list in `BackEnd/main.py`.
 | `REPS_SHEET_TAB` | REPS | Default `Log` |
 | `REPS_LINK_STYLE` | REPS | `public` (default) · `auth` · `signed` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | REPS | Path to the service-account JSON |
-| `MCP_PATH_SECRET` | `BackEnd/mcp_server.py` | Secret path segment of the MCP endpoint (`/mcp/<secret>`); unset → unprotected `/mcp` with a startup warning |
+| `MCP_PATH_SECRET` | `BackEnd/mcp_server.py` | Secret path segment of the MCP endpoint (`/mcp/<secret>`); **required in production** (the app refuses to start without it on Render), unset → unprotected `/mcp` in development with a startup warning |
+| `APP_ENV` | `BackEnd/main.py` | `production` or `development`. Defaults to `production` on Render (`RENDER=true`), `development` elsewhere. Production serves no `/docs`, `/redoc` or `/openapi.json` |
+| `APP_KEY_MODE`, `APP_KEY` | `BackEnd/BL/auth/common/app_key.py` | Phase 0 shared-key gate on every route except `/helloworld`: `off` (default), `shadow` (log only), `enforce` (401 without the `X-App-Key` header). The browser asks for the key once and keeps it in `localStorage`. Replaced by passkeys in Phase 2 of `SECURITY_PLAN.md` |
+| `REPS_OBJECT_ACL_PUBLIC` | REPS | Default `true`: with `REPS_LINK_STYLE=public`, also flip each object's legacy ACL. Set `false` once the bucket grants `allUsers` read at the bucket level |
+| `MCP_SCOPES` | `BackEnd/mcp_server.py` | Comma-separated tool names the connector may see and call; `*` (default) = all 45 |
+| `AUTH_MODE` | `BackEnd/BL/auth/common/session_dependency.py` | Passkey sessions on every route except `/helloworld` and `/auth/*`: `off` (default), `shadow` (log only), `enforce` (401 without a session). See *Passkeys* below |
+| `AUTH_RP_ID`, `AUTH_ORIGINS`, `AUTH_COOKIE_SECURE`, `AUTH_ACCESS_MINUTES`, `AUTH_REFRESH_DAYS`, `AUTH_ENROLL_MINUTES`, `AUTH_REAUTH_SECONDS` | `BackEnd/BL/auth/common/settings.py` | WebAuthn relying-party id and origins (defaults: `bigwhales.netlify.app` in production, `localhost` in development), cookie flags and lifetimes |
+| `MCP_AUTH_MODE`, `MCP_ISSUER_URL`, `AUTH_MCP_ACCESS_MINUTES` | `BackEnd/BL/auth/oauth.py` | `path` (default: the secret URL above) or `oauth` (OAuth 2.1 + PKCE; the connector is approved on `/connect` and holds a revocable device session). Issuer defaults to the Render host; access tokens last 60 minutes and refresh silently |
+| `DEVICE_POLICY` | `BackEnd/BL/auth/device.py` | `off` (default: every browser is trusted on first sign-in), `log`, `enforce` (a new browser waits for approval from a trusted one) |
+| `SEND_OFFER_PER_HOUR` | `/send-offer` | Offers per hour per caller before a 429 (default 30) |
+| `MERCURY_CACHE_SECONDS` | `/liquidity/mercury-balance` | How long a fetched balance summary is reused (default 60; 0 disables) |
+| `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
+| `ANTHROPIC_API_KEY`, `MCP_PROBE_URL` | GitHub Actions secrets | Nightly MCP connector probe (optional; the job skips without them) |
 
 The full Google Cloud walk-through for the REPS tracker (project, service account, bucket,
 sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
@@ -684,14 +768,14 @@ cd frontend && npm run verify:ui -- --fast                        # every static
 cd frontend && npm run verify:ui -- --phase                       # the full proof, including Playwright and the backend
 ```
 
-CI runs the first two lines and the build on every pull request, plus the MCP suite as
-its own check; the nightly runs the same jobs and the Playwright matrix.
+CI runs the first two lines and the build on every pull request; the nightly runs the
+same jobs and the Playwright matrix, and its e-mail breaks the MCP tests out of the backend
+run by module name.
 
 ### Known gaps
 
-- `POST /reps/people` with a duplicate name returns the driver's raw error text.
 - Deployment config (Netlify redirect, Render service) is not in version control.
-- The three CI checks are not yet required status checks on `main`.
+- The two CI checks are not yet required status checks on `main`.
 - The REPS prospect endpoints never expose a prospect id (create and list return name +
   source only), so the delete route can only be driven from the database.
 
@@ -767,7 +851,6 @@ must run after the build step that installs it, and must `cd BackEnd` first.
    re-record is its own `Golden update: <what>` commit that changes nothing else.
 2. Keep the change small; write the plan in `tasks/todo/<Task>.md` first.
 3. Run the [proof commands](#prove-a-change-before-you-push) that apply.
-4. Open a pull request. CI must be green: **Backend tests**, **MCP server tests** and
-   **Frontend tests + build**.
+4. Open a pull request. CI must be green: **Backend tests** and **Frontend tests + build**.
 
 <p align="center"><sub>Built for Big Whales LLC · FastAPI + Vue · tested every night on five browsers</sub></p>

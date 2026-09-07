@@ -78,21 +78,28 @@ class RepsLogCreate(BaseModel):
     # NEW (v3): per-file labels. Each entry is `{url, label}` and the Sheet
     # renders each label as a clickable hyperlink so the cell shows the
     # auditor the readable name, not the URL.
-    evidence_items: List[EvidenceItem] = Field(default_factory=list)
+    evidence_items: List[EvidenceItem] = Field(default_factory=list, max_length=100)
     # Legacy fields (v2): kept so older clients still work. If `evidence_items`
     # is empty, the server constructs items from `evidence_links` with no
     # custom labels (it'll display the filename derived from the URL).
-    evidence_links: List[str] = Field(default_factory=list)
+    evidence_links: List[str] = Field(default_factory=list, max_length=100)
     evidence_folder: Optional[str] = Field(None, max_length=2000)  # ignored
     evidence_link: Optional[str] = Field(None, max_length=2000)
     # NEW: device-GPS breadcrumbs across the session. The backend formats
     # these into a single human-readable string for the Sheet's Location col.
-    location_snapshots: List[LocationSnapshot] = Field(default_factory=list)
+    location_snapshots: List[LocationSnapshot] = Field(default_factory=list, max_length=2_000)
     # Legacy free-text field — accepted as a single fallback "note" if no
     # snapshots are sent.
     location: Optional[str] = Field(None, max_length=2000)
     material_participation_rentals: bool = False
-    people_involved: List[str] = Field(default_factory=list)
+    people_involved: List[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("people_involved")
+    @classmethod
+    def _people_names_bounded(cls, v: List[str]) -> List[str]:
+        if any(len(name) > 200 for name in v):
+            raise ValueError("each person name must be at most 200 characters")
+        return v
 
     @field_validator("end_time")
     @classmethod
@@ -130,7 +137,7 @@ class RepsLogRes(BaseModel):
     evidence_links: List[str] = Field(default_factory=list)
     evidence_folder: Optional[str] = None  # always None since v3
     location: Optional[str]
-    location_snapshots: List[LocationSnapshot] = Field(default_factory=list)
+    location_snapshots: List[LocationSnapshot] = Field(default_factory=list, max_length=2_000)
     material_participation_rentals: bool
     people_involved: List[str]
     spreadsheet_id: str

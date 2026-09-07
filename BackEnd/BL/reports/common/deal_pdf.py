@@ -180,6 +180,22 @@ def _summary_rows(result: dict, deal_type: str) -> list[list[str]]:
     return rows
 
 
+# Breakdown steps are money unless their label says otherwise: the calc steps
+# register ROI / CoC as percentages and DSCR as a ratio (see brrrSteps/roi.py,
+# cash_on_cash.py, dscr.py and flipSteps/roi.py).
+_BREAKDOWN_PCT_LABELS = {"ROI", "Annualized ROI", "Cash on Cash"}
+_BREAKDOWN_RATIO_LABELS = {"DSCR"}
+
+
+def _breakdown_value(label: str, value: Any) -> str:
+    if label in _BREAKDOWN_PCT_LABELS:
+        return _pct(value)
+    if label in _BREAKDOWN_RATIO_LABELS:
+        text = _num(value)
+        return text if text == "-" else f"{text}x"
+    return _money(value)
+
+
 def _breakdown_table(steps: Iterable[dict], styles: dict[str, ParagraphStyle]) -> Table:
     rows: list[list[Any]] = [[
         Paragraph("<b>Step</b>", styles["body"]),
@@ -193,7 +209,7 @@ def _breakdown_table(steps: Iterable[dict], styles: dict[str, ParagraphStyle]) -
         rows.append([
             Paragraph(label, styles["body"]),
             Paragraph(formula, styles["body"]),
-            Paragraph(f"<b>{_money(value)}</b>", styles["body"]),
+            Paragraph(f"<b>{_breakdown_value(label, value)}</b>", styles["body"]),
         ])
     table = Table(rows, colWidths=[1.6 * inch, 4.0 * inch, 1.1 * inch], repeatRows=1)
     table.setStyle(TableStyle([

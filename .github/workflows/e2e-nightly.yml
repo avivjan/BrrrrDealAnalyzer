@@ -132,12 +132,46 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # Behavioural probe of the MCP connector: asks Claude, through the Anthropic API
+  # with the connector attached, the question a regular chat once failed on, and
+  # checks that the compact deal tools were used. Skips cleanly (result=skipped)
+  # unless the ANTHROPIC_API_KEY and MCP_PROBE_URL repository secrets exist.
+  mcp-probe:
+    name: MCP connector probe
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      result: ${{ steps.probe.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the Anthropic SDK
+        run: pip install "anthropic>=1,<3"
+      - name: Ask Claude through the connector
+        id: probe
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MCP_PROBE_URL: ${{ secrets.MCP_PROBE_URL }}
+        run: |
+          set +e
+          out=$(python3 .github/scripts/mcp_probe.py 2>&1); code=$?
+          echo "$out"
+          if printf '%s' "$out" | grep -q '^SKIP'; then
+            echo "result=skipped" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$code" -eq 0 ]; then echo "result=success" >> "$GITHUB_OUTPUT"; else echo "result=failure" >> "$GITHUB_OUTPUT"; fi
+          exit "$code"
+
   # Sent from the runner over Gmail SMTP once every job above has finished,
   # pass or fail. Needs two repository secrets: NIGHTLY_MAIL_USERNAME (the
   # Gmail address) and NIGHTLY_MAIL_PASSWORD (a Gmail app password for it).
   notify:
     name: Email the result
-    needs: [gate, ci, playwright]
+    needs: [gate, ci, playwright, mcp-probe]
     if: always() && needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -166,12 +200,6 @@ jobs:
         with:
           name: junit-frontend-${{ github.run_number }}
           path: artifact/frontend
-      - name: Download MCP server reports
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: junit-mcp-${{ github.run_number }}
-          path: artifact/mcp
 
       # One JSON record per run lives on the orphan branch `nightly-history`.
       - name: Check out nightly-history (or start it)
@@ -202,7 +230,7 @@ jobs:
           CI_OUTCOME: ${{ needs.ci.result }}
           BACKEND_OUTCOME: ${{ needs.ci.outputs.backend_result }}
           FRONTEND_OUTCOME: ${{ needs.ci.outputs.frontend_result }}
-          MCP_OUTCOME: ${{ needs.ci.outputs.mcp_result }}
+          MCP_PROBE_OUTCOME: ${{ needs.mcp-probe.outputs.result }}
           E2E_OUTCOME: ${{ needs.playwright.result }}
           E2E_EXIT_CODE: ${{ needs.playwright.outputs.exit_code }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -218,7 +246,6 @@ jobs:
             --playwright artifact/e2e/reports/last-run.json \
             --backend-junit artifact/backend/backend-junit.xml \
             --frontend-junit artifact/frontend/frontend-junit.xml \
-            --mcp-junit artifact/mcp/mcp-junit.xml \
             --backend-coverage artifact/backend/backend-coverage.json \
             --frontend-coverage artifact/frontend/frontend-coverage/coverage-summary.json \
             --history history/history.jsonl --append-history --write-record record.json

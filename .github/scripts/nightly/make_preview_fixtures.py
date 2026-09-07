@@ -164,11 +164,12 @@ def build_report(rng: random.Random, started: dt.datetime, *, failures: set[tupl
 
 
 def junit_backend(failing: bool, rng: random.Random) -> str:
-    files = {"tests.test_analyze": 29, "tests.test_deal_crud": 58, "tests.test_db_isolation": 14, "tests.test_refi_timing": 17}
+    files = {"tests.test_analyze": 29, "tests.test_deal_crud": 58, "tests.test_db_isolation": 14, "tests.test_refi_timing": 17,
+             "tests.test_mcp": 65, "tests.test_mcp_tools": 20, "tests.test_mcp_e2e": 3}
     cases = []
     for cls, n in files.items():
         for i in range(n):
-            t = rng.uniform(0.005, 0.4) if "analyze" not in cls else rng.uniform(0.01, 1.2)
+            t = rng.uniform(0.5, 4.0) if "e2e" in cls else rng.uniform(0.005, 0.4) if "analyze" not in cls else rng.uniform(0.01, 1.2)
             name = f"test_{cls.split('_', 1)[1]}_{i:02d}"
             body = ""
             if failing and cls == "tests.test_deal_crud" and i == 7:
@@ -177,18 +178,6 @@ def junit_backend(failing: bool, rng: random.Random) -> str:
     total = sum(files.values())
     return (f'<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="{1 if failing else 0}" '
             f'skipped="0" tests="{total}" time="{rng.uniform(4, 7):.3f}">{"".join(cases)}</testsuite></testsuites>')
-
-
-def junit_mcp(rng: random.Random) -> str:
-    files = {"tests.test_mcp": 65, "tests.test_mcp_tools": 20, "tests.test_mcp_e2e": 3}
-    cases = []
-    for cls, n in files.items():
-        for i in range(n):
-            t = rng.uniform(0.005, 0.3) if "e2e" not in cls else rng.uniform(0.5, 4.0)
-            cases.append(f'<testcase classname="{cls}" name="test_{cls.split("_", 1)[1]}_{i:02d}" time="{t:.3f}"></testcase>')
-    total = sum(files.values())
-    return (f'<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" '
-            f'skipped="0" tests="{total}" time="{rng.uniform(8, 12):.3f}">{"".join(cases)}</testsuite></testsuites>')
 
 
 def junit_frontend(rng: random.Random) -> str:
@@ -275,7 +264,6 @@ def main() -> int:
             _write(out / "backend-junit.xml", junit_backend(True, rng))
         _write_json(out / "report.json", report)
         _write(out / "frontend-junit.xml", junit_frontend(rng))
-        _write(out / "mcp-junit.xml", junit_mcp(rng))
         _write_json(out / "backend-coverage.json", coverage_backend(rng))
         (out / "frontend-coverage").mkdir(exist_ok=True)
         _write_json(out / "frontend-coverage" / "coverage-summary.json", coverage_frontend(rng))
