@@ -88,6 +88,8 @@ def build_context(args: argparse.Namespace) -> dict:
         jobs.append(("Backend tests (pytest + Postgres migration smoke)", env("BACKEND_OUTCOME", "")))
     if env("FRONTEND_OUTCOME"):
         jobs.append(("Frontend tests + build (vitest, vue-tsc, vite)", env("FRONTEND_OUTCOME", "")))
+    if env("MCP_PROBE_OUTCOME") in ("success", "failure"):   # "skipped" = secrets not configured
+        jobs.append(("MCP connector probe (Claude answered with the compact deal tools)", env("MCP_PROBE_OUTCOME", "")))
     if not jobs and ci_outcome:
         jobs.append(("Backend + frontend CI suites", ci_outcome))
     jobs.append(("Playwright, all browser projects", e2e_outcome))

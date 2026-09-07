@@ -3785,6 +3785,269 @@
         "title": "CalcStep",
         "type": "object"
       },
+      "DealDetail": {
+        "description": "One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on.",
+        "properties": {
+          "board": {
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "deal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrrrActiveDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/FlipActiveDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/BoughtBrrrDealRes"
+              },
+              {
+                "$ref": "#/components/schemas/BoughtFlipDealRes"
+              }
+            ],
+            "title": "Deal"
+          }
+        },
+        "required": [
+          "board",
+          "deal"
+        ],
+        "title": "DealDetail",
+        "type": "object"
+      },
+      "DealSummary": {
+        "description": "One row of the compact deal list. Money in thousands where the name says so.",
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "arv_or_sale_price_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arv Or Sale Price K"
+          },
+          "board": {
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "bought_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bought Stage"
+          },
+          "cash_flow_monthly": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash Flow Monthly"
+          },
+          "cash_on_cash_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash On Cash Pct"
+          },
+          "cash_out": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash Out"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "deal_type": {
+            "enum": [
+              "BRRRR",
+              "FLIP"
+            ],
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "equity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equity"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "net_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Profit"
+          },
+          "purchase_price_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Price K"
+          },
+          "rehab_cost_k": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rehab Cost K"
+          },
+          "rent_monthly": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rent Monthly"
+          },
+          "roi_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roi Pct"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          },
+          "total_cash_needed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cash Needed"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "deal_type",
+          "address"
+        ],
+        "title": "DealSummary",
+        "type": "object"
+      },
       "EvidenceItem": {
         "description": "One uploaded file paired with the user-provided display label.\n\nThe Sheet renders each item as a clickable named link (rich text), so\nthe auditor sees `Closing meeting` instead of a 240-char GCS URL.\n`label` is optional; the backend falls back to the URL's filename when\nthe user didn't bother typing one.",
         "properties": {
@@ -5567,6 +5830,101 @@
         "title": "PipelineTemplateUpsert",
         "type": "object"
       },
+      "PortfolioSummary": {
+        "description": "Headline numbers across both boards, plus the top deals by the usual metrics.",
+        "properties": {
+          "active_by_stage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Active By Stage",
+            "type": "object"
+          },
+          "active_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Active By Type",
+            "type": "object"
+          },
+          "active_count": {
+            "title": "Active Count",
+            "type": "integer"
+          },
+          "bought_by_stage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Bought By Stage",
+            "type": "object"
+          },
+          "bought_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Bought By Type",
+            "type": "object"
+          },
+          "bought_count": {
+            "title": "Bought Count",
+            "type": "integer"
+          },
+          "bought_total_cash_flow_monthly": {
+            "default": 0.0,
+            "title": "Bought Total Cash Flow Monthly",
+            "type": "number"
+          },
+          "bought_total_cash_invested": {
+            "default": 0.0,
+            "title": "Bought Total Cash Invested",
+            "type": "number"
+          },
+          "bought_total_equity": {
+            "default": 0.0,
+            "title": "Bought Total Equity",
+            "type": "number"
+          },
+          "bought_total_net_profit": {
+            "default": 0.0,
+            "title": "Bought Total Net Profit",
+            "type": "number"
+          },
+          "top_active_by_cash_on_cash": {
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Active By Cash On Cash",
+            "type": "array"
+          },
+          "top_bought_by_cash_flow": {
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Cash Flow",
+            "type": "array"
+          },
+          "top_bought_by_cash_on_cash": {
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Cash On Cash",
+            "type": "array"
+          },
+          "top_bought_by_equity": {
+            "items": {
+              "$ref": "#/components/schemas/TopDeal"
+            },
+            "title": "Top Bought By Equity",
+            "type": "array"
+          }
+        },
+        "required": [
+          "active_count",
+          "bought_count"
+        ],
+        "title": "PortfolioSummary",
+        "type": "object"
+      },
       "RentComp-Input": {
         "properties": {
           "rent": {
@@ -6589,6 +6947,44 @@
           }
         },
         "title": "SoldComp",
+        "type": "object"
+      },
+      "TopDeal": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "board": {
+            "enum": [
+              "active",
+              "bought"
+            ],
+            "title": "Board",
+            "type": "string"
+          },
+          "deal_type": {
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "deal_type",
+          "address",
+          "value"
+        ],
+        "title": "TopDeal",
         "type": "object"
       },
       "ValidationError": {
@@ -8000,6 +8396,243 @@
           }
         },
         "summary": "Update Bought Deal"
+      }
+    },
+    "/deals": {
+      "get": {
+        "operationId": "list_deals_deals_get",
+        "parameters": [
+          {
+            "description": "all | active (My Deals board) | bought (Bought Deals board)",
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "description": "all | active (My Deals board) | bought (Bought Deals board)",
+              "title": "Board",
+              "type": "string"
+            }
+          },
+          {
+            "description": "BRRRR or FLIP",
+            "in": "query",
+            "name": "deal_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "BRRRR or FLIP",
+              "title": "Deal Type"
+            }
+          },
+          {
+            "description": "active stage number 1-5, or a bought pipeline stage id",
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "active stage number 1-5, or a bought pipeline stage id",
+              "title": "Stage"
+            }
+          },
+          {
+            "description": "words to find in address, notes, task, niche or contact (all must match)",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "words to find in address, notes, task, niche or contact (all must match)",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DealSummary"
+                  },
+                  "title": "Response List Deals Deals Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Deals"
+      }
+    },
+    "/deals/portfolio": {
+      "get": {
+        "operationId": "portfolio_summary_deals_portfolio_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Portfolio Summary"
+      }
+    },
+    "/deals/search": {
+      "get": {
+        "operationId": "search_deals_deals_search_get",
+        "parameters": [
+          {
+            "description": "words to find in address, notes, task, niche or contact",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "description": "words to find in address, notes, task, niche or contact",
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DealSummary"
+                  },
+                  "title": "Response Search Deals Deals Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Deals"
+      }
+    },
+    "/deals/{deal_id}": {
+      "get": {
+        "operationId": "get_deal_deals__deal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Deal"
       }
     },
     "/helloworld": {
