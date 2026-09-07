@@ -7,7 +7,7 @@ Backward-compatible forms (the v1 script's interface):
 
 Full form:
 
-    nightly_e2e_email.py [--playwright P] [--backend-junit P] [--frontend-junit P]
+    nightly_e2e_email.py [--playwright P] [--backend-junit P] [--frontend-junit P] [--mcp-junit P]
                          [--backend-coverage P] [--frontend-coverage P]
                          [--history P] [--append-history] [--write-record P] [--window N]
                          [--known-skips P] [--charts auto|png|table|off]
@@ -47,6 +47,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--playwright")
     p.add_argument("--backend-junit")
     p.add_argument("--frontend-junit")
+    p.add_argument("--mcp-junit")
     p.add_argument("--backend-coverage")
     p.add_argument("--frontend-coverage")
     p.add_argument("--history")
@@ -88,6 +89,8 @@ def build_context(args: argparse.Namespace) -> dict:
         jobs.append(("Backend tests (pytest + Postgres migration smoke)", env("BACKEND_OUTCOME", "")))
     if env("FRONTEND_OUTCOME"):
         jobs.append(("Frontend tests + build (vitest, vue-tsc, vite)", env("FRONTEND_OUTCOME", "")))
+    if env("MCP_OUTCOME"):
+        jobs.append(("MCP server tests (pytest, real uvicorn + MCP client)", env("MCP_OUTCOME", "")))
     if not jobs and ci_outcome:
         jobs.append(("Backend + frontend CI suites", ci_outcome))
     jobs.append(("Playwright, all browser projects", e2e_outcome))
@@ -97,6 +100,7 @@ def build_context(args: argparse.Namespace) -> dict:
     summary = summarise(load_report(args.playwright))
     backend = junit.parse(args.backend_junit)
     frontend = junit.parse(args.frontend_junit)
+    mcp = junit.parse(args.mcp_junit)
     cov_backend = coverage.parse_pytest_cov_json(args.backend_coverage)
     cov_frontend = coverage.parse_vitest_summary(args.frontend_coverage)
     allowlist, allowlist_error = skips.load_allowlist(args.known_skips)
@@ -141,7 +145,7 @@ def build_context(args: argparse.Namespace) -> dict:
         "verdict": verdict, "headline": headline, "bottom_line": bottom_line, "when": when_in_israel(now), "now": now,
         "jobs": jobs, "e2e_outcome": e2e_outcome, "exit_code": exit_code, "run_url": env("RUN_URL", ""),
         "summary": summary, "totals": totals,
-        "junit": {"backend": backend, "frontend": frontend},
+        "junit": {"backend": backend, "frontend": frontend, "mcp": mcp},
         "coverage": {"backend": cov_backend, "frontend": cov_frontend,
                      "status": coverage.status(cov_backend, cov_frontend), "steps": coverage.NOT_WIRED_STEPS},
         "skips": {"groups": groups, "allowlist": allowlist},

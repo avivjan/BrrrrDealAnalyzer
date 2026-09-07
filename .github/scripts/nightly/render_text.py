@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from . import junit
+
 from .playwright_report import STATUS_LABELS, test_label
 
 
@@ -80,8 +82,10 @@ def render_text(ctx: dict) -> str:
         lines.append(f"No Playwright JSON report was produced (job result: {ctx['e2e_outcome']}, exit code {ctx['exit_code']}).")
 
     # --- suites -------------------------------------------------------------
-    lines += ["", "Backend and frontend suites", "-" * 44]
-    for name, suite in (("Backend (pytest)", ctx["junit"]["backend"]), ("Frontend (vitest)", ctx["junit"]["frontend"])):
+    lines += ["", "Backend, MCP and frontend suites", "-" * 44]
+    for name, suite in (("Backend (pytest)", ctx["junit"]["backend"]),
+                        ("MCP server (pytest)", ctx["junit"].get("mcp", junit.parse(None))),
+                        ("Frontend (vitest)", ctx["junit"]["frontend"])):
         if not suite["available"]:
             lines.append(f"  {name}: {suite['error'] or 'no report'}")
             continue

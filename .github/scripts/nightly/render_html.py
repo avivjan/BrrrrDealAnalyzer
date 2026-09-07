@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from . import theme as T
+from . import theme as T, junit
 from .playwright_report import test_label
 from .render_text import fmt_secs
 
@@ -176,7 +176,7 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
         failed_block = T.section(f"Failed tests ({len(s['failed_tests'])})", T.table(rows) + more)
 
     # --- backend & frontend suites ----------------------------------------------------------
-    suites_block = T.section("Backend and frontend suites", _suites_html(ctx))
+    suites_block = T.section("Backend, MCP and frontend suites", _suites_html(ctx))
 
     # --- skipped by reason ---------------------------------------------------------------------
     skips_block = T.section("Skipped by reason", _skips_html(ctx),
@@ -256,6 +256,7 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
 def _suites_html(ctx: dict) -> str:
     cols = ""
     for name, sub, suite in (("Backend", "pytest + Postgres", ctx["junit"]["backend"]),
+                             ("MCP server", "pytest, Streamable HTTP", ctx["junit"].get("mcp", junit.parse(None))),
                              ("Frontend", "vitest", ctx["junit"]["frontend"])):
         inner = T.label(f"{name} · {sub}")
         if not suite["available"]:
@@ -279,7 +280,7 @@ def _suites_html(ctx: dict) -> str:
                 f'<span style="color:{T.MUTED};">{c["time_s"]:.2f}s</span> {e(c["name"])}'
                 f'<span style="color:{T.MUTED};"> · {e(c["classname"].split("/")[-1][:40])}</span></div>'
                 for c in suite["slowest"][:5]) + "</div>"
-        cols += f'<td width="50%" valign="top" style="padding:0 8px 0 0;">{inner}</td>'
+        cols += f'<td width="33%" valign="top" style="padding:0 8px 0 0;">{inner}</td>'
     return f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>{cols}</tr></table>'
 
 
@@ -374,5 +375,5 @@ def _coverage_html(ctx: dict) -> str:
                           f'<table role="presentation" cellpadding="0" cellspacing="0"><tr><td>{T.bar(int(v), "accent2", 120)}</td>'
                           f'<td style="padding-left:8px;">{T.mono(f"{v:.0f}%", 11, T.MUTED)}</td></tr></table></div>')
             inner += "</div>"
-        cols += f'<td width="50%" valign="top" style="padding:0 8px 0 0;">{inner}</td>'
+        cols += f'<td width="33%" valign="top" style="padding:0 8px 0 0;">{inner}</td>'
     return f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>{cols}</tr></table>'

@@ -12,7 +12,9 @@ import json
 import pathlib
 import uuid
 
+import jsonschema
 import pytest
+from fastapi import FastAPI
 
 import mcp_server
 from main import app
@@ -20,15 +22,7 @@ from main import app
 GOLDEN_OPENAPI = pathlib.Path(__file__).parent / "_regression_snapshots" / "openapi.json"
 
 
-def _call(name: str, **arguments):
-    """Call a tool and return its content blocks."""
-    return asyncio.run(mcp_server.call_tool(name, arguments))
-
-
-def _call_json(name: str, **arguments):
-    blocks = _call(name, **arguments)
-    assert len(blocks) == 1 and blocks[0].type == "text"
-    return json.loads(blocks[0].text)
+from tests.mcp_helpers import call as _call, call_json as _call_json  # noqa: E402
 
 
 class TestToolList:
@@ -136,3 +130,94 @@ class TestStreamableHttp:
 
     def test_other_paths_are_not_mcp(self, client):
         assert client.post("/mcp/wrong", json={}, headers=self.HEADERS).status_code == 404
+
+
+class TestEveryToolSchema:
+    """One check per tool, so a regression names the tool."""
+
+    @pytest.mark.parametrize("name", sorted(mcp_server.tools()))
+    def test_schema_is_valid_and_complete(self, name):
+        spec = mcp_server.tools()[name]
+        tool = spec["tool"]
+        jsonschema.Draft202012Validator.check_schema(tool.inputSchema)
+
+        properties = set(tool.inputSchema["properties"])
+        expected = set(spec["path_params"] + spec["query_params"] + spec["form_fields"] + spec["file_fields"])
+        if spec["json_body"]:
+            expected.add(mcp_server.BODY_ARG)
+        assert properties == expected
+
+        required = set(tool.inputSchema.get("required", []))
+        assert set(spec["path_params"]) <= required, "path params must be required"
+
+        assert tool.description and tool.description == tool.description.strip()
+        assert len(tool.description) <= 400
+        assert not name.endswith("_route")
+
+    def test_body_is_required_exactly_when_openapi_says_so(self):
+        app.openapi_schema = None
+        paths = app.openapi()["paths"]
+        for name, spec in mcp_server.tools().items():
+            if not spec["json_body"]:
+                continue
+            op = paths[spec["path"]][spec["method"].lower()]
+            required = mcp_server.BODY_ARG in spec["tool"].inputSchema.get("required", [])
+            assert required == bool(op["requestBody"].get("required")), name
+
+    def test_tools_list_payload_stays_within_budget(self):
+        payload = json.dumps([spec["tool"].model_dump(exclude_none=True) for spec in mcp_server.tools().values()])
+        assert len(payload) < 200_000, f"tools/list is {len(payload)} bytes"
+
+
+class TestTransportEdges:
+    HEADERS = {"Accept": "application/json, text/event-stream"}
+
+    def test_get_without_event_stream_accept_is_rejected(self, client):
+        assert client.get("/mcp", headers={"Accept": "application/json"}).status_code == 406
+
+    def test_wrong_accept_header_is_a_client_error(self, client):
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+        assert client.post("/mcp", json=body, headers={"Accept": "text/plain"}).status_code == 406
+
+    def test_unknown_tool_is_flagged_not_raised(self, client):
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {"name": "no_such_tool", "arguments": {}}}
+        result = client.post("/mcp", json=body, headers=self.HEADERS).json()["result"]
+        assert result["isError"] is True
+        assert "Unknown tool" in result["content"][0]["text"]
+
+    def test_pdf_over_http_is_an_embedded_resource(self, client, flip_payload):
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {"name": "report_flip_pdf", "arguments": {"address": "2 Shared Form Ave", "body": flip_payload}}}
+        result = client.post("/mcp", json=body, headers=self.HEADERS).json()["result"]
+        assert not result.get("isError")
+        assert [c["type"] for c in result["content"]] == ["text", "resource"]
+        resource = result["content"][1]["resource"]
+        assert resource["mimeType"] == "application/pdf"
+        assert base64.b64decode(resource["blob"]).startswith(b"%PDF")
+
+
+class TestSecretMount:
+    def test_mount_registers_only_the_secret_path(self, monkeypatch):
+        monkeypatch.setenv("MCP_PATH_SECRET", "s3cret")
+        saved = (mcp_server._app, mcp_server._tools)
+        try:
+            scratch = FastAPI()
+            assert mcp_server.mount(scratch) == "/mcp/s3cret"
+            assert [r.path for r in scratch.routes if r.path.startswith("/mcp")] == ["/mcp/s3cret"]
+        finally:
+            mcp_server._app, mcp_server._tools = saved
+
+
+class TestConcurrency:
+    def test_parallel_calls_do_not_cross_talk(self, client, brrrr_payload):
+        low_rent = {**brrrr_payload, "rent": 1000}
+
+        async def run():
+            calls = [mcp_server.call_tool("analyze_brrr", {"body": p}) for p in [brrrr_payload, low_rent] * 5]
+            return await asyncio.gather(*calls)
+
+        results = [json.loads(blocks[0].text)["cash_flow"] for blocks in asyncio.run(run())]
+        assert results[0::2] == [results[0]] * 5
+        assert results[1::2] == [results[1]] * 5
+        assert results[1] < results[0]

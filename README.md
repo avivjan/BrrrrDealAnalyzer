@@ -114,19 +114,22 @@ a Render deploy on the backend suite, set the service's **Pre-Deploy Command** t
 plain `pytest` with nothing installed will fail with `command not found`.
 
 **CI.** `.github/workflows/ci.yml` runs on every pull request into `main` and every
-push to `main`: `cd BackEnd && pytest` (SQLite, as above), a Postgres migration
-smoke that imports the app twice against a fresh `postgres:16` service container
-(so `create_all`, the migrations in `BackEnd/migrations/` and the seeding are
-exercised on real Postgres), and `cd frontend && npm ci && npm test && npm run build`.
-To make a red run block the merge, require the two checks — **Backend tests** and
-**Frontend tests + build** — under *Settings → Branches → main*.
+push to `main`: `cd BackEnd && pytest` (on the throwaway Postgres, as above), a Postgres
+migration smoke that imports the app twice against a fresh `postgres:16` service
+container (so `create_all`, the migrations in `BackEnd/migrations/` and the seeding
+are exercised on real Postgres), the MCP server suite on its own
+(`pytest tests/test_mcp.py tests/test_mcp_tools.py tests/test_mcp_e2e.py`, the last
+of which boots a real `uvicorn` with a path secret and drives it with the official
+MCP client), and `cd frontend && npm ci && npm test && npm run build`.
+To make a red run block the merge, require the three checks — **Backend tests**,
+**MCP server tests** and **Frontend tests + build** — under *Settings → Branches → main*.
 
 **Nightly.** `.github/workflows/e2e-nightly.yml` runs at midnight Israel time
 every day (both 21:00 and 22:00 UTC are scheduled and a first job lets only the
 one that is 00:xx in Asia/Jerusalem continue, so summer and winter time both
-work), and on demand from the Actions tab: the same backend + frontend jobs as
-the CI workflow above, plus the full Playwright suite (all five browser
-projects). The Playwright HTML report and traces are uploaded as a run artifact,
+work), and on demand from the Actions tab: the same backend, MCP server and
+frontend jobs as the CI workflow above, plus the full Playwright suite (all five
+browser projects). The Playwright HTML report and traces are uploaded as a run artifact,
 and once every job has finished a styled HTML session report is emailed from the
 runner over Gmail SMTP, pass or fail. That step needs
 two repository secrets under *Settings → Secrets and variables → Actions*:
@@ -134,8 +137,8 @@ two repository secrets under *Settings → Secrets and variables → Actions*:
 (a Gmail app password for it). Without them the job fails with a clear message.
 
 The report is built by the `.github/scripts/nightly/` package from the Playwright
-JSON report plus the backend and frontend JUnit XML and coverage files the CI jobs
-upload when called from the nightly. Besides the session summary it explains
+JSON report plus the backend, MCP server and frontend JUnit XML and the coverage
+files the CI jobs upload when called from the nightly. Besides the session summary it explains
 every skipped test against the allow-list in `.github/nightly/known_skips.json`
 (a skip reason that is not listed, a skipped test without a `test.skip(...)`
 reason, or a count above the expected one is flagged at the top under

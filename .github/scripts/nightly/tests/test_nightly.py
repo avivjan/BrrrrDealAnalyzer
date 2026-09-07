@@ -276,7 +276,7 @@ class EndToEnd(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
         env = {**os.environ, "CI_OUTCOME": "success", "BACKEND_OUTCOME": "success", "FRONTEND_OUTCOME": "success",
-               "E2E_OUTCOME": "failure", "E2E_EXIT_CODE": "1", "RUN_URL": "https://example.test/run/1"}
+               "MCP_OUTCOME": "success", "E2E_OUTCOME": "failure", "E2E_EXIT_CODE": "1", "RUN_URL": "https://example.test/run/1"}
         script = HERE.parents[1] / "nightly_e2e_email.py"
         subprocess.run([sys.executable, str(HERE.parent / "make_preview_fixtures.py")], check=True, capture_output=True,
                        env={**env, "PYTHONDONTWRITEBYTECODE": "1"})
@@ -287,6 +287,7 @@ class EndToEnd(unittest.TestCase):
         result = subprocess.run([
             sys.executable, str(script), "--playwright", str(cls.out / "report.json"),
             "--backend-junit", str(cls.out / "backend-junit.xml"), "--frontend-junit", str(cls.out / "frontend-junit.xml"),
+            "--mcp-junit", str(cls.out / "mcp-junit.xml"),
             "--backend-coverage", str(cls.out / "backend-coverage.json"),
             "--frontend-coverage", str(cls.out / "frontend-coverage" / "coverage-summary.json"),
             "--history", str(cls.out / "history.jsonl"), "--write-record", str(cls.record),
@@ -313,7 +314,7 @@ class EndToEnd(unittest.TestCase):
 
     def test_new_sections_and_anomalies(self):
         text = self.text.read_text()
-        for line in ("Anomalies:", "Skipped by reason", "Backend and frontend suites", "Trends", "Coverage gaps",
+        for line in ("Anomalies:", "Skipped by reason", "Backend, MCP and frontend suites", "Trends", "Coverage gaps",
                      "UNKNOWN REASON", "NO SKIP ANNOTATION", "[first seen]", "[recurring,", "SHOULD NEVER FIRE",
                      "slower than usual"):
             self.assertIn(line, text, line)
@@ -327,6 +328,25 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(record["v"], 1)
         self.assertEqual(record["playwright"]["stats"]["unexpected"], 2)
         self.assertNotIn("/home/", json.dumps(record))
+
+    def test_mcp_suite_and_job_are_reported(self):
+        text = self.text.read_text()
+        self.assertIn("MCP server (pytest): 88 passed, 0 failed, 0 skipped, 88 total", text)
+        self.assertIn("MCP server tests (pytest, real uvicorn + MCP client)", text)
+        self.assertIn("MCP server · pytest, Streamable HTTP", self.html.read_text())
+
+    def test_missing_mcp_artifact_is_reported_not_fatal(self):
+        script = HERE.parents[1] / "nightly_e2e_email.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            text_path = pathlib.Path(tmp) / "mail.txt"
+            result = subprocess.run([
+                sys.executable, str(script), "--playwright", str(self.out / "report.json"),
+                "--backend-junit", str(self.out / "backend-junit.xml"),
+                "--mcp-junit", str(pathlib.Path(tmp) / "absent.xml"),
+                "--write-text", str(text_path), "--no-send", "--charts", "off", "--now", "2026-09-06T21:05:00Z",
+            ], capture_output=True, text=True, env={**os.environ, "MCP_OUTCOME": "failure"})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("MCP server (pytest): artifact missing", text_path.read_text())
 
     def test_html_budget_and_tokens(self):
         html = self.html.read_text()
