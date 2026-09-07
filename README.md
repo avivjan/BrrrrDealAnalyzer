@@ -402,6 +402,25 @@ curl -s http://127.0.0.1:8000/analyze/brrr -H 'content-type: application/json' -
 (Values rounded here; the API returns full-precision floats. A negative `cash_out` means
 cash is left in the deal after the refinance.)
 
+### MCP server (Claude connector)
+
+Every route above is also an **MCP tool**, so Claude can use the site directly: analyze
+and save deals, move them across the boards, render the PDF reports, manage the liquidity
+timeline and pipeline templates, log REPS hours, send offers. `BackEnd/mcp_server.py`
+builds the tool list from the app's own OpenAPI document and executes each call against the
+app in-process, so nothing is duplicated and a new endpoint becomes a tool automatically —
+give it a line in `DESCRIPTIONS` there, or `tests/test_mcp.py` fails.
+
+The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
+`/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (any long random string) on the Render
+service; without it the endpoint is served unprotected at `/mcp`, which is only meant for
+local development. The API itself has no authentication, so keep the URL private.
+
+- **claude.ai**: Settings → Connectors → *Add custom connector* → URL
+  `https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`, no OAuth.
+- **Claude Code**: `claude mcp add --transport http brrrr https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`
+- **Locally**: start the backend and point a client at `http://127.0.0.1:8000/mcp`.
+
 ## 🧮 The calculation engine
 
 `BackEnd/BL/analyze/` is the core of the product. `analyzeBRRR.py` and `analyzeFlip.py`
@@ -470,6 +489,7 @@ looks, the motion rules a change must not break, and the gate set.
 | Layer | Command | What it proves |
 | --- | --- | --- |
 | Backend unit + API | `cd BackEnd && pytest` | `/analyze/*` results pinned to reference values, deal CRUD, duplicate/delete, move-to-bought, autosave, PDF reports, the DB isolation guard itself |
+| MCP server | `cd BackEnd && pytest tests/test_mcp.py tests/test_mcp_tools.py tests/test_mcp_e2e.py` | All 45 tools exist with valid schemas, every feature area works through its tool, and a real `uvicorn` with a path secret answers the official MCP client over Streamable HTTP |
 | Backend contract | `python3 verify_regression.py verify` | OpenAPI, every ORM column, every Pydantic model, every metric across ~40 payloads and a scripted pass through all 45 endpoints — bit-for-bit against `tests/_regression_snapshots/` |
 | Frontend unit | `cd frontend && npm test` | Vitest: component contracts, stores, engines, the e2e **hook inventory** |
 | Frontend build | `npm run build` | `vue-tsc` type-check + Vite production bundle (what Netlify runs) |
@@ -494,8 +514,10 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
 
 - **`ci.yml`** runs on every pull request and every push to `main`: **Backend tests**
   (pytest on a `postgres:16` service, a migration smoke that boots the app twice against a
-  fresh database, the nightly package's unit tests) and **Frontend tests + build**. Make
-  those two checks required under *Settings → Branches → main* to block red merges.
+  fresh database, the nightly package's unit tests), **MCP server tests** (the three
+  `test_mcp*.py` files on their own, with their own JUnit artifact) and **Frontend tests +
+  build**. Make those three checks required under *Settings → Branches → main* to block red
+  merges.
 - **`e2e-nightly.yml`** runs at midnight Israel time (two crons, a gate job picks the one
   that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs plus the full Playwright matrix.
   When every job has finished, a styled HTML report is e-mailed over Gmail SMTP, pass or
@@ -549,6 +571,7 @@ CORS allow-list in `BackEnd/main.py`.
 | `REPS_SHEET_TAB` | REPS | Default `Log` |
 | `REPS_LINK_STYLE` | REPS | `public` (default) · `auth` · `signed` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | REPS | Path to the service-account JSON |
+| `MCP_PATH_SECRET` | `BackEnd/mcp_server.py` | Secret path segment of the MCP endpoint (`/mcp/<secret>`); unset → unprotected `/mcp` with a startup warning |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
 
@@ -600,6 +623,9 @@ sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
 12. Extend `components/DealInputsForm.test.ts`, run `npm test` and `npm run build`, update
     the regression snapshots (`python3 verify_regression.py snapshot`, review the diff),
     and smoke-test all three pages.
+13. **MCP.** The field reaches Claude automatically through the tools generated from
+    OpenAPI (`BackEnd/mcp_server.py`). If you added or renamed an *endpoint*, give it a
+    line in `DESCRIPTIONS` there; `tests/test_mcp.py` fails otherwise.
 </details>
 
 ## 🤖 For AI agents and new contributors
@@ -658,16 +684,16 @@ cd frontend && npm run verify:ui -- --fast                        # every static
 cd frontend && npm run verify:ui -- --phase                       # the full proof, including Playwright and the backend
 ```
 
-CI runs the first two lines and the build on every pull request; the nightly runs the
-Playwright matrix.
+CI runs the first two lines and the build on every pull request, plus the MCP suite as
+its own check; the nightly runs the same jobs and the Playwright matrix.
 
 ### Known gaps
 
 - `POST /reps/people` with a duplicate name returns the driver's raw error text.
 - Deployment config (Netlify redirect, Render service) is not in version control.
-- The two CI checks are not yet required status checks on `main`.
-- `.claude/CLAUDE.md` asks for an MCP task per new endpoint; no MCP server exists in the
-  repo yet, so record the intent in the task file until one does.
+- The three CI checks are not yet required status checks on `main`.
+- The REPS prospect endpoints never expose a prospect id (create and list return name +
+  source only), so the delete route can only be driven from the database.
 
 ## 📚 Documentation index
 
@@ -685,6 +711,7 @@ Playwright matrix.
 | [`docs/plans/`](docs/plans/) | The UI v2 and v3 plans and progress logs |
 | [`design-system/brrrr-deal-analyzer/MASTER.md`](design-system/brrrr-deal-analyzer/MASTER.md) | The design-system reference the tokens came from (the "Approved overrides" section wins) |
 | [`tasks/todo.md`](tasks/todo.md) | The running work log: UI v3, CI, Postgres-everywhere, the nightly report |
+| [`tasks/todo/McpServer.md`](tasks/todo/McpServer.md) | The MCP server: plan, tests, CI/nightly wiring and reviews |
 
 ## 🔧 Troubleshooting
 
@@ -740,6 +767,7 @@ must run after the build step that installs it, and must `cd BackEnd` first.
    re-record is its own `Golden update: <what>` commit that changes nothing else.
 2. Keep the change small; write the plan in `tasks/todo/<Task>.md` first.
 3. Run the [proof commands](#prove-a-change-before-you-push) that apply.
-4. Open a pull request. CI must be green: **Backend tests** and **Frontend tests + build**.
+4. Open a pull request. CI must be green: **Backend tests**, **MCP server tests** and
+   **Frontend tests + build**.
 
 <p align="center"><sub>Built for Big Whales LLC · FastAPI + Vue · tested every night on five browsers</sub></p>
