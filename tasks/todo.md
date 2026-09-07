@@ -196,3 +196,69 @@ files; PASS and FAIL previews rendered with 22 synthetic history records and scr
 flaky in ≥3 of 14 runs; history rotation past ~365 records; bootstrapping history from the
 four archived reports; trends for the custom perf annotations already in the Playwright
 report; a repository ruleset keeping the Actions token off `main`.
+
+---
+
+# MCP server for every website feature, hosted as a Claude connector
+
+Plan approved in plan mode (`/root/.claude/plans/star-on-a-new-indexed-wren.md`). One tool per
+backend endpoint, generated from the app's own OpenAPI and executed in-process, served over
+Streamable HTTP at `/mcp/<MCP_PATH_SECRET>` on the existing Render backend. Estimates are agent
+wall-clock minutes.
+
+- [x] **M1** (5 min) — This checklist.
+- [x] **M2** (40 min) — `BackEnd/requirements.txt` pin `mcp>=1.13,<2`; `BackEnd/mcp_server.py` (tool list from `app.openapi()`, in-process call via `httpx.ASGITransport`, PDF blob + multipart handling, stateless Streamable HTTP, `lifespan`, `mount`, `MCP_PATH_SECRET`).
+- [x] **M3** (10 min) — Wire `BackEnd/main.py` (lifespan + `mcp_server.mount(app)`); confirm `app.openapi()` is unchanged.
+- [x] **M4** (20 min) — Hand-written one-line descriptions for all 45 tools.
+- [x] **M5** (30 min) — `BackEnd/tests/test_mcp.py`.
+- [x] **M6** (20 min) — Local Postgres 16 → full `pytest` + `verify_regression.py verify`.
+- [x] **M7** (25 min) — Use the site through the server: uvicorn + MCP client script (analyze, save, list, duplicate, PDF, move to bought, clean up).
+- [x] **M8** (15 min) — README section; review below.
+- [ ] **M9** (10 min) — Commit, push `claude/mcp-server-website-features-j4ix18`, open the PR (owner merges).
+- [ ] **M9b** (5 min) — Generate the secret, set `MCP_PATH_SECRET` on the Render service.
+- [ ] **M10** (10 min, after merge) — Watch the Render deploy; hand over the connector URL.
+
+## MCP review
+
+**What changed.** One new module, `BackEnd/mcp_server.py` (~330 lines, half of it the
+per-tool descriptions), one dependency (`mcp>=1.13,<2`), three lines in `BackEnd/main.py`
+(`lifespan=` and `mcp_server.mount(app)`), a new test file `BackEnd/tests/test_mcp.py`
+(13 tests), a README section and this checklist. No router, schema, BL or DAL file was
+touched.
+
+**How it works.** The tool list is built from `app.openapi()` plus `app.routes` (tool name =
+the route's function name, minus a `_route` suffix; input schema = path + query params, the
+JSON body under `body`, or the flattened multipart form with files as
+`{filename, content_type, content_base64}`; `#/components/schemas` refs rewritten to a pruned
+`$defs`). A call performs the real request against the same app in-process through
+`httpx.ASGITransport`, so every tool behaves exactly like the website's own call: 45 tools
+for 45 operations. JSON comes back as text, PDFs as an embedded `application/pdf` blob, any
+4xx/5xx as an `isError` tool result carrying the endpoint's `detail`. Transport is stateless
+Streamable HTTP with JSON responses at `/mcp/<MCP_PATH_SECRET>` (plain `/mcp`, with a startup
+warning, when the variable is unset); every other `/mcp/...` path is a 404. The session
+manager is created inside the FastAPI lifespan, so `with TestClient(app)` blocks can be opened
+repeatedly.
+
+**Kept.** `app.openapi()` is byte-identical to the golden (`verify_regression.py verify`: all
+five snapshots identical), because the MCP route is a plain Starlette route with
+`include_in_schema=False`.
+
+**Verified locally** (Postgres 16 started from `/usr/lib/postgresql/16/bin`, Docker daemon
+unavailable here): `pytest` 131 passed (118 existing + 13 new); `verify_regression.py verify`
+clean; and a real `uvicorn` with `MCP_PATH_SECRET=localdemo` driven by the official MCP client
+over Streamable HTTP: initialize → 45 tools → helloworld → analyze_brrr → analyze_flip →
+add_active_deal → get_active_deals → duplicate_deal → report_brrr_pdf (10.9 kB, `%PDF-`) →
+move_to_bought → get_bought_deals → list_pipeline_templates → get_liquidity_settings → a
+deliberate bad call (schema error surfaced as a tool error) → delete_bought_deal → 2×
+delete_deal. `/mcp` and `/mcp/wrong` both 404 while the secret is set.
+
+**Not done, on purpose.** "Copy Summary for AI", the appearance settings and the command
+palette are client-side only; the JSON a tool returns is a superset of the copied summary.
+No OAuth: claude.ai custom connectors accept a plain URL, so the secret lives in the path.
+The production endpoint could not be exercised from this sandbox (egress to `*.onrender.com`
+is blocked); the deploy is verified through the Render API after the merge, and the first
+production call happens from claude.ai once the connector is added.
+
+**Pre-existing, not mine.** pydantic `UnsupportedFieldAttributeWarning` lines for the
+`Field(alias=...)` members of the `PUT` union bodies appear in the existing suite and in
+`verify_regression.py` as well.

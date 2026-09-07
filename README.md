@@ -52,7 +52,7 @@ including the follow-ups that were deliberately left for a later pass — are in
 
 ## Workflow
 
-- Start the backend first so the acquisition calculator can reach the `/CalcPrecentageOfARVRes` endpoint.
+- Start the backend first so the deal screens can reach the `/analyze/brrr` and `/analyze/flip` endpoints.
 - The frontend hot-reloads on save; restart `uvicorn` (or rely on `--reload`) after backend changes.
 
 ## Tests
@@ -155,6 +155,27 @@ python3 -m unittest discover -s .github/scripts/nightly/tests -t .github/scripts
 Adding a Playwright spec that skips on some projects means adding (or bumping)
 its reason in `known_skips.json` in the same PR, otherwise the next nightly
 flags it.
+
+## MCP server (Claude connector)
+
+Every backend endpoint is also an MCP tool, so Claude can use the site directly:
+analyze and save deals, move them through the boards, render the PDF reports,
+manage the liquidity timeline and pipeline templates, log REPS hours, and so on.
+`BackEnd/mcp_server.py` builds the tool list from the app's own OpenAPI document
+and executes each call against the app in-process, so nothing is duplicated and
+a new endpoint becomes a tool automatically (give it a line in `DESCRIPTIONS`;
+`tests/test_mcp.py` fails otherwise).
+
+The transport is stateless Streamable HTTP, served by the same `uvicorn` process
+at `/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (any long random string) on
+the Render service; without it the endpoint is served unprotected at `/mcp`,
+which is only meant for local development. The API itself has no
+authentication, so keep the URL private.
+
+- **claude.ai**: Settings → Connectors → *Add custom connector* → URL
+  `https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`, no OAuth.
+- **Claude Code**: `claude mcp add --transport http brrrr https://brrrrdealanalyzer.onrender.com/mcp/<MCP_PATH_SECRET>`
+- **Locally**: start the backend as above and point a client at `http://127.0.0.1:8000/mcp`.
 
 ## Adding an input to the deal form
 
