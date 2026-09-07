@@ -245,6 +245,10 @@ backend; the same checklist is repeated in the header comment of
 
 12. Extend `components/DealInputsForm.test.ts`, run `npm test` and
     `npm run build` (the latter runs `vue-tsc`), and smoke-test all three pages.
+13. **MCP.** The field reaches Claude automatically through the tools generated
+    from OpenAPI (`BackEnd/mcp_server.py`). If you added or renamed an
+    *endpoint*, give it a line in `DESCRIPTIONS` there; `tests/test_mcp.py`
+    fails otherwise. Every new feature must be usable over MCP.
 
 > `DealInputsForm` mutates the deal object it is given **in place**. The card
 > modals drive auto-save and re-analyze from a deep `watch` on that object, so
