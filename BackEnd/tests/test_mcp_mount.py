@@ -75,7 +75,7 @@ class TestAccessLogRedaction:
 class TestToolsCarryTheAppKey:
     def test_tools_keep_working_when_the_gate_is_enforced(self, client, monkeypatch):
         monkeypatch.setenv("APP_KEY_MODE", "enforce")
-        monkeypatch.setenv("APP_KEY", "phase0-test-key-0123456789abcdef")
+        monkeypatch.setenv("APP_KEY", "test-app-key-not-a-secret-0000000")
         assert _call_json("get_active_deals") == []
         assert _call_json("helloworld")["message"]
 

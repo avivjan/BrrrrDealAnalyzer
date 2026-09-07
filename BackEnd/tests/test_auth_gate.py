@@ -18,7 +18,7 @@ import pytest
 from BL.auth.common.app_key import DETAIL, HEADER
 
 GOLDEN_OPENAPI = pathlib.Path(__file__).parent / "_regression_snapshots" / "openapi.json"
-KEY = "phase0-test-key-0123456789abcdef"
+KEY = "test-app-key-not-a-secret-0000000"
 
 
 def operations() -> list[tuple[str, str]]:

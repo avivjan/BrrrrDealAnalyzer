@@ -64,10 +64,10 @@ class TestSecretRedaction:
         assert text.count("[REDACTED]") == 3
 
     def test_the_filter_rewrites_records(self, monkeypatch):
-        monkeypatch.setenv("APP_KEY", "phase0-test-key-0123456789abcdef")
-        record = logging.LogRecord("x", logging.INFO, __file__, 1, "key is %s", ("phase0-test-key-0123456789abcdef",), None)
+        monkeypatch.setenv("APP_KEY", "test-app-key-not-a-secret-0000000")
+        record = logging.LogRecord("x", logging.INFO, __file__, 1, "key is %s", ("test-app-key-not-a-secret-0000000",), None)
         assert SecretRedactFilter().filter(record) is True
-        assert "phase0-test-key" not in record.getMessage()
+        assert "test-app-key" not in record.getMessage()
 
     def test_the_root_logger_has_the_filter(self):
         root = logging.getLogger()
