@@ -166,12 +166,6 @@ jobs:
         with:
           name: junit-frontend-${{ github.run_number }}
           path: artifact/frontend
-      - name: Download MCP server reports
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: junit-mcp-${{ github.run_number }}
-          path: artifact/mcp
 
       # One JSON record per run lives on the orphan branch `nightly-history`.
       - name: Check out nightly-history (or start it)
@@ -202,7 +196,6 @@ jobs:
           CI_OUTCOME: ${{ needs.ci.result }}
           BACKEND_OUTCOME: ${{ needs.ci.outputs.backend_result }}
           FRONTEND_OUTCOME: ${{ needs.ci.outputs.frontend_result }}
-          MCP_OUTCOME: ${{ needs.ci.outputs.mcp_result }}
           E2E_OUTCOME: ${{ needs.playwright.result }}
           E2E_EXIT_CODE: ${{ needs.playwright.outputs.exit_code }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -218,7 +211,6 @@ jobs:
             --playwright artifact/e2e/reports/last-run.json \
             --backend-junit artifact/backend/backend-junit.xml \
             --frontend-junit artifact/frontend/frontend-junit.xml \
-            --mcp-junit artifact/mcp/mcp-junit.xml \
             --backend-coverage artifact/backend/backend-coverage.json \
             --frontend-coverage artifact/frontend/frontend-coverage/coverage-summary.json \
             --history history/history.jsonl --append-history --write-record record.json

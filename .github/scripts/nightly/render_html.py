@@ -256,7 +256,7 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
 def _suites_html(ctx: dict) -> str:
     cols = ""
     for name, sub, suite in (("Backend", "pytest + Postgres", ctx["junit"]["backend"]),
-                             ("MCP server", "pytest, Streamable HTTP", ctx["junit"].get("mcp", junit.parse(None))),
+                             ("MCP server", "tests/test_mcp*, from the backend run", ctx["junit"].get("mcp", junit.parse(None))),
                              ("Frontend", "vitest", ctx["junit"]["frontend"])):
         inner = T.label(f"{name} · {sub}")
         if not suite["available"]:

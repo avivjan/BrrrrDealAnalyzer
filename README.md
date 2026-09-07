@@ -489,7 +489,7 @@ looks, the motion rules a change must not break, and the gate set.
 | Layer | Command | What it proves |
 | --- | --- | --- |
 | Backend unit + API | `cd BackEnd && pytest` | `/analyze/*` results pinned to reference values, deal CRUD, duplicate/delete, move-to-bought, autosave, PDF reports, the DB isolation guard itself |
-| MCP server | `cd BackEnd && pytest tests/test_mcp.py tests/test_mcp_tools.py tests/test_mcp_e2e.py` | All 45 tools exist with valid schemas, every feature area works through its tool, and a real `uvicorn` with a path secret answers the official MCP client over Streamable HTTP |
+| MCP server | part of `cd BackEnd && pytest` (`tests/test_mcp*.py`, discovered like any other file) | All 45 tools exist with valid schemas, every feature area works through its tool, and a real `uvicorn` with a path secret answers the official MCP client over Streamable HTTP |
 | Backend contract | `python3 verify_regression.py verify` | OpenAPI, every ORM column, every Pydantic model, every metric across ~40 payloads and a scripted pass through all 45 endpoints — bit-for-bit against `tests/_regression_snapshots/` |
 | Frontend unit | `cd frontend && npm test` | Vitest: component contracts, stores, engines, the e2e **hook inventory** |
 | Frontend build | `npm run build` | `vue-tsc` type-check + Vite production bundle (what Netlify runs) |
@@ -514,10 +514,10 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
 
 - **`ci.yml`** runs on every pull request and every push to `main`: **Backend tests**
   (pytest on a `postgres:16` service, a migration smoke that boots the app twice against a
-  fresh database, the nightly package's unit tests), **MCP server tests** (the three
-  `test_mcp*.py` files on their own, with their own JUnit artifact) and **Frontend tests +
-  build**. Make those three checks required under *Settings → Branches → main* to block red
-  merges.
+  fresh database, the nightly package's unit tests; pytest discovers every
+  `tests/test_*.py`, the MCP server files included, so a new test file needs no workflow
+  edit) and **Frontend tests + build**. Make those two checks required under
+  *Settings → Branches → main* to block red merges.
 - **`e2e-nightly.yml`** runs at midnight Israel time (two crons, a gate job picks the one
   that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs plus the full Playwright matrix.
   When every job has finished, a styled HTML report is e-mailed over Gmail SMTP, pass or
@@ -684,14 +684,15 @@ cd frontend && npm run verify:ui -- --fast                        # every static
 cd frontend && npm run verify:ui -- --phase                       # the full proof, including Playwright and the backend
 ```
 
-CI runs the first two lines and the build on every pull request, plus the MCP suite as
-its own check; the nightly runs the same jobs and the Playwright matrix.
+CI runs the first two lines and the build on every pull request; the nightly runs the
+same jobs and the Playwright matrix, and its e-mail breaks the MCP tests out of the backend
+run by module name.
 
 ### Known gaps
 
 - `POST /reps/people` with a duplicate name returns the driver's raw error text.
 - Deployment config (Netlify redirect, Render service) is not in version control.
-- The three CI checks are not yet required status checks on `main`.
+- The two CI checks are not yet required status checks on `main`.
 - The REPS prospect endpoints never expose a prospect id (create and list return name +
   source only), so the delete route can only be driven from the database.
 
@@ -767,7 +768,6 @@ must run after the build step that installs it, and must `cd BackEnd` first.
    re-record is its own `Golden update: <what>` commit that changes nothing else.
 2. Keep the change small; write the plan in `tasks/todo/<Task>.md` first.
 3. Run the [proof commands](#prove-a-change-before-you-push) that apply.
-4. Open a pull request. CI must be green: **Backend tests**, **MCP server tests** and
-   **Frontend tests + build**.
+4. Open a pull request. CI must be green: **Backend tests** and **Frontend tests + build**.
 
 <p align="center"><sub>Built for Big Whales LLC · FastAPI + Vue · tested every night on five browsers</sub></p>
