@@ -14,6 +14,9 @@ def render_text(ctx: dict) -> str:
     a = ctx["analysis"]
     lines = [
         "=" * 44,
+        ctx["bottom_line"]["title"],
+        ctx["bottom_line"]["detail"],
+        "",
         f"BrrrrDealAnalyzer nightly test session: {ctx['verdict']} - {ctx['headline']}",
         ctx["when"],
         "=" * 44,

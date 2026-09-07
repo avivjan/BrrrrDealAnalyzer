@@ -240,6 +240,19 @@ class Anomalies(unittest.TestCase):
         prev["playwright"]["stats"]["expected"] = 8
         self.assertEqual(anomalies.tile_deltas(tonight, prev, None)["passed"]["vs_prev"]["word"], "up 2")
 
+    def test_plain_verdict_reads_in_words(self):
+        totals = {"total": 1906, "failed": 0}
+        ok = anomalies.plain_verdict("PASS", totals, [], [("Playwright", "success")], 5)
+        self.assertEqual(ok["title"], "All good tonight.")
+        self.assertIn("1906 tests passed", ok["detail"])
+        warn = anomalies.plain_verdict("PASS", totals, [{"severity": "warning", "title": "Flaky test"}], [], 0)
+        self.assertIn("worth a look", warn["title"])
+        bad = anomalies.plain_verdict("FAIL", {"total": 1906, "failed": 3},
+                                      [{"severity": "critical", "title": "First-time failure"}],
+                                      [("Playwright", "failure"), ("Backend", "success")], 0)
+        self.assertEqual(bad["title"], "Something failed tonight.")
+        self.assertIn("3 failed test(s)", bad["detail"]); self.assertIn("red: Playwright", bad["detail"])
+
     def test_suite_totals_add_every_suite(self):
         rec = self._rec(8, {"a": 1000}, failed=["b"], flaky=["c"])
         rec["playwright"]["stats"].update({"flaky": 1, "skipped": 181})
@@ -309,6 +322,7 @@ class EndToEnd(unittest.TestCase):
         self.assertGreater(totals["total"], totals["parts"]["playwright"]["total"])
         self.assertIn(f"{totals['passed']} passed, {totals['failed']} failed, {totals['skipped']} skipped", text)
         self.assertIn("Tests by suite: Playwright ", text)
+        self.assertTrue(text.splitlines()[1].startswith("Something failed tonight."), text.splitlines()[:3])
         record = json.loads(self.record.read_text())
         self.assertEqual(record["v"], 1)
         self.assertEqual(record["playwright"]["stats"]["unexpected"], 2)

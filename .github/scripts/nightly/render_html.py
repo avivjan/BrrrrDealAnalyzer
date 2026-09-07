@@ -66,9 +66,10 @@ def render_html(ctx: dict, image_cids: dict[str, str]) -> str:
         f'<tr><td style="padding:30px 32px 8px 32px;">'
         f'{T.eyebrow("BrrrrDealAnalyzer · Nightly test session")}'
         f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
-        f'<td style="padding-top:10px;">{T.display(e(ctx["headline"]), 28, 600)}</td>'
+        f'<td style="padding-top:10px;">{T.display(e(ctx["bottom_line"]["title"]), 28, 600)}</td>'
         f'<td align="right" valign="top" style="padding-top:12px;">{verdict_pill}</td></tr></table>'
-        f'{T.body_text(e(ctx["when"]), 13, T.MUTED)}'
+        f'<div style="margin-top:8px;">{T.body_text(e(ctx["bottom_line"]["detail"]), 15)}</div>'
+        f'<div style="margin-top:6px;">{T.body_text(e(ctx["headline"]) + " · " + e(ctx["when"]), 13, T.MUTED)}</div>'
         f'</td></tr>'
     )
 

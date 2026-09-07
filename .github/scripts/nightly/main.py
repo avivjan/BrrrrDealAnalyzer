@@ -133,10 +133,12 @@ def build_context(args: argparse.Namespace) -> dict:
                                  cov_backend, cov_frontend, "", malformed, allowlist_error)
     analysis["deltas"] = anomalies.tile_deltas(record, prev, week)
 
+    bottom_line = anomalies.plain_verdict(verdict, totals, analysis["findings"], jobs, len(comparable))
+
     chart_records = comparable + [record]
     slow_keys = [t["key"] for t in summary["top"][:5]]
     return {
-        "verdict": verdict, "headline": headline, "when": when_in_israel(now), "now": now,
+        "verdict": verdict, "headline": headline, "bottom_line": bottom_line, "when": when_in_israel(now), "now": now,
         "jobs": jobs, "e2e_outcome": e2e_outcome, "exit_code": exit_code, "run_url": env("RUN_URL", ""),
         "summary": summary, "totals": totals,
         "junit": {"backend": backend, "frontend": frontend},
@@ -219,7 +221,8 @@ def main(argv: list[str]) -> int:
 
     today = ctx["now"].strftime("%Y-%m-%d")
     message = EmailMessage()
-    message["Subject"] = f"[BrrrrDealAnalyzer] Nightly {ctx['verdict']} · {ctx['headline']} · {today}"
+    message["Subject"] = (f"[BrrrrDealAnalyzer] Nightly {ctx['verdict']}: {ctx['bottom_line']['title'].rstrip('.')} · "
+                          f"{ctx['headline']} · {today}")
     message["From"] = username
     message["To"] = os.environ.get("MAIL_TO", username)
     message.set_content(text_body)

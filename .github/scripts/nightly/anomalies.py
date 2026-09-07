@@ -65,6 +65,33 @@ def suite_totals(record: dict) -> dict:
     return totals
 
 
+def plain_verdict(verdict: str, totals: dict, findings: list[dict], jobs: list[tuple[str, str]],
+                  history_count: int) -> dict:
+    """The first line of the mail, in words: what happened tonight and whether anything needs a look."""
+    critical = [f for f in findings if f["severity"] == "critical"]
+    if verdict == "PASS" and not findings:
+        title = "All good tonight."
+        detail = (f"Every one of the {totals['total']} tests passed or was skipped for a known reason"
+                  + (f", and nothing moved against the last {history_count} run(s)." if history_count else "."))
+    elif verdict == "PASS":
+        title = "All tests passed, a few things are worth a look."
+        titles = "; ".join(f["title"] for f in findings[:3]) + (" …" if len(findings) > 3 else "")
+        detail = f"{len(findings)} note(s) under Anomalies: {titles}"
+    else:
+        failed_jobs = [label for label, outcome in jobs if outcome != "success"]
+        title = "Something failed tonight."
+        bits = []
+        if totals["failed"]:
+            bits.append(f"{totals['failed']} failed test(s)")
+        if failed_jobs:
+            bits.append("red: " + ", ".join(failed_jobs))
+        if critical:
+            bits.append(f"{len(critical)} critical finding(s): " + "; ".join(f["title"] for f in critical[:3])
+                        + (" …" if len(critical) > 3 else ""))
+        detail = " · ".join(bits) or "A job failed before it produced a report; see Jobs below."
+    return {"title": title, "detail": detail}
+
+
 def tile_deltas(record: dict, prev: dict | None, week: dict | None) -> dict:
     """Tile deltas over the combined totals of every suite (see ``suite_totals``)."""
     cur = suite_totals(record)

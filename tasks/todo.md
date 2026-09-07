@@ -219,3 +219,5 @@ fields). The subject, headline and four tiles use the combined totals; a "Tests 
 the tiles shows the split; the Playwright-only section is titled "Playwright session report" and its
 "Total test calls (run)" line is unchanged. 20 unit tests pass; previews and `docs/nightly` screenshots
 re-rendered (fixtures: 440 passed / 181 skipped / 621 total on the PASS mail).
+
+- [x] **H6** (20 min) — First line in words: `anomalies.plain_verdict` gives "All good tonight." / "All tests passed, a few things are worth a look." / "Something failed tonight." with a one-sentence detail; it heads the HTML, the text body and the subject. Numbers moved to the line under it.
