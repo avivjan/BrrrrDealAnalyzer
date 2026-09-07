@@ -196,3 +196,28 @@ files; PASS and FAIL previews rendered with 22 synthetic history records and scr
 flaky in ≥3 of 14 runs; history rotation past ~365 records; bootstrapping history from the
 four archived reports; trends for the custom perf annotations already in the Playwright
 report; a repository ruleset keeping the Actions token off `main`.
+
+# Nightly headline counts every suite
+
+Problem: the mail's subject, headline and the four tiles count Playwright only
+(239 + 181 = 420 "test calls"), while pytest (118) and vitest (1368) appear only
+in the suites section further down. Fix: the headline numbers add all three suites;
+the Playwright-only lines stay where they are, labelled as Playwright's.
+
+- [x] **H1** (15 min) — `anomalies.suite_totals(record)`: passed / failed / skipped / total across Playwright + backend + frontend from a history record, with per-suite parts; `tile_deltas` compares those, so deltas keep working across runs.
+- [x] **H2** (10 min) — `main.py`: headline (and so the subject) from the combined totals; `ctx["totals"]`.
+- [x] **H3** (15 min) — `render_html.py` / `render_text.py`: tiles show the combined numbers with a "Playwright · Backend · Frontend" line under them; the Playwright session section is titled as Playwright's, its "Total test calls (run)" line unchanged.
+- [x] **H4** (10 min) — Unit test for `suite_totals` (missing suite, totals add up); previews re-rendered.
+- [x] **H5** (10 min) — Commit, push, PR for review.
+
+## Nightly headline review
+
+`anomalies.suite_totals(record)` adds Playwright (stats; a flaky test counts as passed), pytest and
+vitest (JUnit) into passed / failed / skipped / total with per-suite parts, and `tile_deltas` now
+compares those combined numbers, so deltas keep working across runs (old records have the same
+fields). The subject, headline and four tiles use the combined totals; a "Tests by suite" line under
+the tiles shows the split; the Playwright-only section is titled "Playwright session report" and its
+"Total test calls (run)" line is unchanged. 20 unit tests pass; previews and `docs/nightly` screenshots
+re-rendered (fixtures: 440 passed / 181 skipped / 621 total on the PASS mail).
+
+- [x] **H6** (20 min) — First line in words: `anomalies.plain_verdict` gives "All good tonight." / "All tests passed, a few things are worth a look." / "Something failed tonight." with a one-sentence detail; it heads the HTML, the text body and the subject. Numbers moved to the line under it.

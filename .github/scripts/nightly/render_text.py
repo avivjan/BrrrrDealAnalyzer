@@ -14,9 +14,19 @@ def render_text(ctx: dict) -> str:
     a = ctx["analysis"]
     lines = [
         "=" * 44,
+        ctx["bottom_line"]["title"],
+        ctx["bottom_line"]["detail"],
+        "",
         f"BrrrrDealAnalyzer nightly test session: {ctx['verdict']} - {ctx['headline']}",
         ctx["when"],
         "=" * 44,
+        "",
+        "Tests by suite: " + " | ".join(
+            f"{name} {part['total']}" + (f" ({part['failed']} failed)" if part["failed"] else "")
+            if part.get("available") else f"{name} no report"
+            for name, part in (("Playwright", ctx["totals"]["parts"]["playwright"]),
+                               ("Backend (pytest)", ctx["totals"]["parts"]["backend"]),
+                               ("Frontend (vitest)", ctx["totals"]["parts"]["frontend"]))),
         "",
         "Jobs:",
         *[f"  {label}: {outcome}" for label, outcome in ctx["jobs"]],
@@ -31,7 +41,7 @@ def render_text(ctx: dict) -> str:
         lines += [f"  none against the allow-list or the last {ctx['history']['count']} run(s)."]
     lines += [""]
 
-    lines += ["Test Session Report", "-" * 44]
+    lines += ["Playwright Session Report", "-" * 44]
     if s["available"]:
         lines += [
             f"Session finished with exit code {ctx['exit_code']} "
