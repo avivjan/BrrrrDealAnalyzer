@@ -21,7 +21,7 @@ google-auth-httplib2==0.4.2
 google-cloud-storage==3.13.1
 
 # MCP server (mcp_server.py): exposes every endpoint as a tool for Claude connectors.
-mcp==1.29.1
+mcp==2.1.1
 
 # Test suite (BackEnd/tests). Kept in the main requirements file because the
 # Render build installs from it before running pytest in the pre-deploy step.
