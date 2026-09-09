@@ -191,19 +191,19 @@ jobs:
 
       # Absent when a job died before producing anything; the email says so instead.
       - name: Download the Playwright JSON report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: playwright-report-${{ github.run_number }}
           path: artifact
       - name: Download backend reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: junit-backend-${{ github.run_number }}
           path: artifact/backend
       - name: Download frontend reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: junit-frontend-${{ github.run_number }}
