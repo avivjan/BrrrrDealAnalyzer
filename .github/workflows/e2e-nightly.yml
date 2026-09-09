@@ -3,11 +3,13 @@ name: Nightly e2e
 on:
   schedule:
     # Midnight in Israel. GitHub cron is UTC-only and cannot follow DST, so
-    # both candidate hours are scheduled (21:00 UTC in summer, 22:00 UTC in
-    # winter) and the `gate` job lets only the one that is 00:xx in
-    # Asia/Jerusalem continue; the other is skipped.
-    - cron: "0 21 * * *"
-    - cron: "0 22 * * *"
+    # both candidate hours are scheduled (21:xx UTC in summer, 22:xx UTC in
+    # winter) and the `gate` job lets only the one that matches Israel's
+    # current UTC offset continue; the other is skipped. Minute 7 rather than
+    # 0 because the top of the hour is GitHub's most contended slot and runs
+    # scheduled there start an hour or two late.
+    - cron: "7 21 * * *"
+    - cron: "7 22 * * *"
   workflow_dispatch:
 
 permissions:
@@ -32,14 +34,20 @@ jobs:
             echo "run=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          hour=$(TZ=Asia/Jerusalem date +%H)
-          echo "Israel time now: $(TZ=Asia/Jerusalem date) (hour=$hour)"
-          if [ "$hour" = "00" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Not midnight in Israel; the other scheduled hour will run."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
+          # GitHub starts scheduled runs late, often by 1-2 hours, so the wall
+          # clock cannot tell us which cron this is. The event does: pick the
+          # cron that is midnight for Israel's current UTC offset.
+          schedule="${{ github.event.schedule }}"
+          offset=$(TZ=Asia/Jerusalem date +%z)   # +0300 in summer, +0200 in winter
+          echo "schedule=$schedule offset=$offset israel=$(TZ=Asia/Jerusalem date)"
+          case "$schedule/$offset" in
+            "7 21 * * */+0300"|"7 22 * * */+0200")
+              echo "This cron is midnight in Israel: proceeding."
+              echo "run=true" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "Not this cron: the other scheduled hour is midnight in Israel."
+              echo "run=false" >> "$GITHUB_OUTPUT" ;;
+          esac
 
   # The same backend + frontend jobs that gate every PR (.github/workflows/ci.yml).
   ci:
