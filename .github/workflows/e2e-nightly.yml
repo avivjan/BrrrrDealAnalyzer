@@ -91,7 +91,7 @@ jobs:
       # The suite's webServer starts the real FastAPI app against the job's
       # throwaway PostgreSQL service (e2e/backend/serve_throwaway.py), so the
       # backend deps have to be installed on the runner too.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -154,7 +154,7 @@ jobs:
       result: ${{ steps.probe.outputs.result }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install the Anthropic SDK
@@ -224,7 +224,7 @@ jobs:
           touch history/history.jsonl
           echo "history has $(wc -l < history/history.jsonl) record(s)"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
