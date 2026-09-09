@@ -559,9 +559,12 @@ with reduced motion, plus `chromium-motion` for the `@motion` specs.
   `tests/test_*.py`, the MCP server files included, so a new test file needs no workflow
   edit) and **Frontend tests + build**. Make those two checks required under
   *Settings → Branches → main* to block red merges.
-- **`e2e-nightly.yml`** runs at midnight Israel time (two crons, a gate job picks the one
-  that is 00:xx in Asia/Jerusalem) and on demand: the CI jobs, the full Playwright matrix
-  and the MCP connector probe (see the MCP section above).
+- **`e2e-nightly.yml`** runs at midnight Israel time (crons at 21:07 and 22:07 UTC; a gate
+  job keeps the one that is midnight for Israel's current UTC offset, so summer and winter
+  time both work) and on demand: the CI jobs, the full Playwright matrix and the MCP
+  connector probe (see the MCP section above). GitHub often starts scheduled runs an hour
+  or two late, so the mail can land well after midnight; the gate keys on which cron fired,
+  not on the clock, so a late start still runs.
   When every job has finished, a styled HTML report is e-mailed over Gmail SMTP, pass or
   fail. It needs the repository secrets `NIGHTLY_MAIL_USERNAME` and `NIGHTLY_MAIL_PASSWORD`
   (a Gmail app password). The report explains every skipped test against

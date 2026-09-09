@@ -253,3 +253,20 @@ Scope is strictly the ten audit findings; BRRRR ROI definition (N1) untouched. E
 **Verification.** `pytest` (local Postgres 16): 264 passed. `vitest run`: 85 files / 1372 tests passed. `npm run build` (`vue-tsc -b && vite build`): clean.
 
 **Not done / notes.** `verify_regression.py` calculation snapshots (`tests/_regression_snapshots/calculations.json`) are not run in CI and were left untouched; the `zero_interest_refi` and zero-invested flip cases there now differ by design. The refi shortfall is added unbuffered to the buffered total (open question N2). Nightly e2e goldens do not reference the old label or the "∞" text. N1 (BRRRR ROI definition) untouched as instructed.
+
+# Nightly gate: run even when GitHub fires the cron late
+
+Every scheduled run so far (six of them) reached the gate 1-2 hours late, saw an
+Israel hour other than 00 and skipped everything. Fix: key the gate on which cron
+fired (`github.event.schedule`) and Israel's UTC offset, not on the clock.
+
+- [x] **G1** (10 min) — `e2e-nightly.yml`: crons at :07, gate keyed on schedule + offset, facts printed in the log.
+- [x] **G2** (10 min) — Gate step body run locally for summer/winter × both crons + dispatch: exactly one cron passes per season.
+- [x] **G3** (5 min) — README sentence about the late start.
+- [x] **G4** (10 min) — Branch, commit, push, PR.
+
+## Nightly gate review
+
+One file of logic changed (`.github/workflows/e2e-nightly.yml`, schedule + gate step), plus a
+README sentence. No job, test or script changed. After merge the next scheduled run should
+execute the suites and send the mail; if it is late, that is GitHub's cron delay, not a skip.
