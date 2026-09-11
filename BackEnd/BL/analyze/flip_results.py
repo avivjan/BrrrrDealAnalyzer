@@ -1,6 +1,6 @@
-"""`FlipCalc` -- every number the fix-and-flip calculation produces, in one frozen record.
+"""`FlipResultsWithIntermediates` -- every number the fix-and-flip calculation produces, in one frozen record.
 
-Built by `compute_flip` in `BL/analyze/analyzeFlip.py`. Holds computed values
+Built by `compute_flip_with_intermediates` in `BL/analyze/analyzeFlip.py`. Holds computed values
 only (inputs stay on the request payload). The explanation layer
 (`BL/analyze/explain/flip.py`) reads from this record and never recomputes;
 `tests/test_explain.py` fails if a field is added here and not explained there.
@@ -15,7 +15,7 @@ from decimal import Decimal
 
 
 @dataclass(frozen=True)
-class FlipCalc:
+class FlipResultsWithIntermediates:
     # -- dollar basis ---------------------------------------------------------
     purchase_price: Decimal
     sale_price: Decimal

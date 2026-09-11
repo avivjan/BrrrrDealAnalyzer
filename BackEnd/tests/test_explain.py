@@ -2,11 +2,11 @@
 
 Three guarantees, each with a test that fails the moment it is broken:
 
-* every field of `BrrrCalc` / `FlipCalc` is read by its explain function (add
+* every field of `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` is read by its explain function (add
   an intermediate to the engine and forget to explain it -> red);
-* every step's value is a field of the calc record (the explain layer never
+* every step's value is a field of the results record (the explain layer never
   computes a number of its own) and every sum-type step's terms add up to it;
-* the runtime guards fire: a calc record whose numbers no longer satisfy the
+* the runtime guards fire: a results record whose numbers no longer satisfy the
   stated equation raises `CalcExplainMismatch` instead of rendering.
 
 Plus the presentation contract: every step carries a unit, and the PDF renders
@@ -21,13 +21,13 @@ import re
 import pypdf
 import pytest
 
-from BL.analyze.analyzeBRRR import compute_brrr
-from BL.analyze.analyzeFlip import compute_flip
-from BL.analyze.brrr_calc import BrrrCalc
+from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
+from BL.analyze.analyzeFlip import compute_flip_with_intermediates
+from BL.analyze.brrr_results import BrrrResultsWithIntermediates
 from BL.analyze.common.calc_breakdown import CalcExplainMismatch
 from BL.analyze.explain.brrr import BRRR_SECTIONS, explain_brrr
 from BL.analyze.explain.flip import FLIP_SECTIONS, explain_flip
-from BL.analyze.flip_calc import FlipCalc
+from BL.analyze.flip_results import FlipResultsWithIntermediates
 from ReqRes.common.analyze_inputs import analyzeBRRRReq, analyzeFlipReq
 
 # Every conditional branch of the two explain functions is reached by at least
@@ -63,10 +63,10 @@ RATIO_STEPS = {"DSCR"}
 
 
 class _RecordReads:
-    """Wraps a calc record and remembers every field the explain layer touched."""
+    """Wraps a results record and remembers every field the explain layer touched."""
 
-    def __init__(self, calc):
-        object.__setattr__(self, "_calc", calc)
+    def __init__(self, results):
+        object.__setattr__(self, "_calc", results)
         object.__setattr__(self, "reads", set())
 
     def __getattr__(self, name):
@@ -76,12 +76,12 @@ class _RecordReads:
 
 def _brrr(payload: dict, overrides: dict):
     req = analyzeBRRRReq(**{**payload, **overrides})
-    return req, compute_brrr(req)
+    return req, compute_brrr_with_intermediates(req)
 
 
 def _flip(payload: dict, overrides: dict):
     req = analyzeFlipReq(**{**payload, **overrides})
-    return req, compute_flip(req)
+    return req, compute_flip_with_intermediates(req)
 
 
 def _steps(breakdowns: dict) -> list[dict]:
@@ -92,48 +92,48 @@ class TestEveryFieldIsExplained:
     def test_brrr(self, brrrr_payload):
         reads: set[str] = set()
         for overrides in BRRRR_SCENARIOS.values():
-            req, calc = _brrr(brrrr_payload, overrides)
-            proxy = _RecordReads(calc)
+            req, results = _brrr(brrrr_payload, overrides)
+            proxy = _RecordReads(results)
             explain_brrr(req, proxy)
             reads |= proxy.reads
-        fields = {f.name for f in dataclasses.fields(BrrrCalc)}
-        assert fields - reads == set(), f"BrrrCalc fields never explained: {sorted(fields - reads)}"
+        fields = {f.name for f in dataclasses.fields(BrrrResultsWithIntermediates)}
+        assert fields - reads == set(), f"BrrrResultsWithIntermediates fields never explained: {sorted(fields - reads)}"
 
     def test_flip(self, flip_payload):
         reads: set[str] = set()
         for overrides in FLIP_SCENARIOS.values():
-            req, calc = _flip(flip_payload, overrides)
-            proxy = _RecordReads(calc)
+            req, results = _flip(flip_payload, overrides)
+            proxy = _RecordReads(results)
             explain_flip(req, proxy)
             reads |= proxy.reads
-        fields = {f.name for f in dataclasses.fields(FlipCalc)}
-        assert fields - reads == set(), f"FlipCalc fields never explained: {sorted(fields - reads)}"
+        fields = {f.name for f in dataclasses.fields(FlipResultsWithIntermediates)}
+        assert fields - reads == set(), f"FlipResultsWithIntermediates fields never explained: {sorted(fields - reads)}"
 
 
 class TestStepsComeFromTheCalcRecord:
     @pytest.mark.parametrize("scenario", list(BRRRR_SCENARIOS))
     def test_brrr_step_values_are_fields(self, brrrr_payload, scenario):
-        req, calc = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
-        field_values = {float(getattr(calc, f.name)) for f in dataclasses.fields(calc)}
-        for step in _steps(explain_brrr(req, calc)):
-            assert step["value"] in field_values, f"{step['label']} is not a BrrrCalc field"
+        req, results = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
+        field_values = {float(getattr(results, f.name)) for f in dataclasses.fields(results)}
+        for step in _steps(explain_brrr(req, results)):
+            assert step["value"] in field_values, f"{step['label']} is not a BrrrResultsWithIntermediates field"
 
     @pytest.mark.parametrize("scenario", list(FLIP_SCENARIOS))
     def test_flip_step_values_are_fields(self, flip_payload, scenario):
-        req, calc = _flip(flip_payload, FLIP_SCENARIOS[scenario])
-        field_values = {float(getattr(calc, f.name)) for f in dataclasses.fields(calc)}
-        for step in _steps(explain_flip(req, calc)):
-            assert step["value"] in field_values, f"{step['label']} is not a FlipCalc field"
+        req, results = _flip(flip_payload, FLIP_SCENARIOS[scenario])
+        field_values = {float(getattr(results, f.name)) for f in dataclasses.fields(results)}
+        for step in _steps(explain_flip(req, results)):
+            assert step["value"] in field_values, f"{step['label']} is not a FlipResultsWithIntermediates field"
 
     @pytest.mark.parametrize("scenario", list(BRRRR_SCENARIOS))
     def test_brrr_terms_add_up(self, brrrr_payload, scenario):
-        req, calc = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
-        _assert_terms_add_up(_steps(explain_brrr(req, calc)))
+        req, results = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
+        _assert_terms_add_up(_steps(explain_brrr(req, results)))
 
     @pytest.mark.parametrize("scenario", list(FLIP_SCENARIOS))
     def test_flip_terms_add_up(self, flip_payload, scenario):
-        req, calc = _flip(flip_payload, FLIP_SCENARIOS[scenario])
-        _assert_terms_add_up(_steps(explain_flip(req, calc)))
+        req, results = _flip(flip_payload, FLIP_SCENARIOS[scenario])
+        _assert_terms_add_up(_steps(explain_flip(req, results)))
 
 
 def _assert_terms_add_up(steps: list[dict]) -> None:
@@ -148,20 +148,20 @@ def _assert_terms_add_up(steps: list[dict]) -> None:
 
 class TestGuardsFire:
     def test_brrr_mismatch_raises(self, brrrr_payload):
-        req, calc = _brrr(brrrr_payload, {})
-        drifted = dataclasses.replace(calc, net_operating_income=calc.net_operating_income + 1)
+        req, results = _brrr(brrrr_payload, {})
+        drifted = dataclasses.replace(results, net_operating_income=results.net_operating_income + 1)
         with pytest.raises(CalcExplainMismatch, match="Net Operating Income"):
             explain_brrr(req, drifted)
 
     def test_flip_mismatch_raises(self, flip_payload):
-        req, calc = _flip(flip_payload, {})
-        drifted = dataclasses.replace(calc, gross_profit=calc.gross_profit + 1)
+        req, results = _flip(flip_payload, {})
+        drifted = dataclasses.replace(results, gross_profit=results.gross_profit + 1)
         with pytest.raises(CalcExplainMismatch, match="Gross Profit"):
             explain_flip(req, drifted)
 
     def test_message_names_the_step_only(self, brrrr_payload):
-        req, calc = _brrr(brrrr_payload, {})
-        drifted = dataclasses.replace(calc, cash_flow=calc.cash_flow + 1)
+        req, results = _brrr(brrrr_payload, {})
+        drifted = dataclasses.replace(results, cash_flow=results.cash_flow + 1)
         with pytest.raises(CalcExplainMismatch) as info:
             explain_brrr(req, drifted)
         assert not re.search(r"\d", str(info.value)), "guard errors must not carry deal numbers"
@@ -169,13 +169,13 @@ class TestGuardsFire:
 
 class TestUnits:
     def test_brrr(self, brrrr_payload):
-        req, calc = _brrr(brrrr_payload, {})
-        _assert_units(_steps(explain_brrr(req, calc)))
+        req, results = _brrr(brrrr_payload, {})
+        _assert_units(_steps(explain_brrr(req, results)))
         assert {u for _, _, u in BRRR_SECTIONS} == {"money", "pct", "ratio"}
 
     def test_flip(self, flip_payload):
-        req, calc = _flip(flip_payload, {})
-        _assert_units(_steps(explain_flip(req, calc)))
+        req, results = _flip(flip_payload, {})
+        _assert_units(_steps(explain_flip(req, results)))
         assert dict((k, u) for k, _, u in FLIP_SECTIONS)["roi"] == "pct"
 
 

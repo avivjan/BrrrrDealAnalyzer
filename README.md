@@ -255,7 +255,7 @@ every deal type (BRRRR / FLIP) has its own template.
 │   ├── bootstrap.py             create_all → migrations → seed templates & REPS categories, at import
 │   ├── migrations/              hand-rolled, idempotent schema migrations (no Alembic)
 │   ├── routers/                 one file per division, one-line handlers
-│   ├── BL/                      business logic; BL/analyze/ is the calc engine
+│   ├── BL/                      business logic; BL/analyze/ is the results engine
 │   │   └── analyze/{brrrSteps,flipSteps}/   one file per calculation subject
 │   ├── DAL/{data_models,crud}/  SQLAlchemy tables and query functions
 │   ├── ReqRes/common/           every Pydantic model, defined once
@@ -472,8 +472,8 @@ tool call then runs as that owner, through the same session gate as the browser.
 `BackEnd/BL/analyze/` is the core of the product, split in two so the math stays clean and the
 explanation cannot drift from it:
 
-* **The engine.** `compute_brrr(payload)` / `compute_flip(payload)` run the calculation and return a
-  frozen `BrrrCalc` / `FlipCalc` record (`brrr_calc.py`, `flip_calc.py`) holding every number the
+* **The engine.** `compute_brrr_with_intermediates(payload)` / `compute_flip_with_intermediates(payload)` run the calculation and return a
+  frozen `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` record (`brrr_results.py`, `flip_results.py`) holding every number the
   calculation produces: dollar basis, intermediates and headline metrics, as unrounded `Decimal`s.
   The orchestrator reads top-to-bottom as the calculation itself; each line calls one pure step
   from `brrrSteps/` / `flipSteps/`, and the shared primitives live in `common/deal_math.py`. No
@@ -751,7 +751,7 @@ and simple as possible; finish with a **Review** section in the same file.
 
 | I want to… | Start at |
 | --- | --- |
-| change a formula or add a metric | `BackEnd/BL/analyze/{brrrSteps,flipSteps}/<subject>.py` and the `BrrrCalc`/`FlipCalc` record, its step in `BL/analyze/explain/`, then `tests/test_analyze.py`, `tests/test_explain.py` and the regression snapshots |
+| change a formula or add a metric | `BackEnd/BL/analyze/{brrrSteps,flipSteps}/<subject>.py` and the `BrrrResultsWithIntermediates`/`FlipResultsWithIntermediates` record, its step in `BL/analyze/explain/`, then `tests/test_analyze.py`, `tests/test_explain.py` and the regression snapshots |
 | add a field to the deal form | the [twelve-step checklist](#-adding-an-input-to-the-deal-form) above |
 | add or change an endpoint | `routers/<division>.py` → `BL/<division>/<endpoint>.py` → `DAL/crud/<division>.py` → `ReqRes/common/`; then `verify_regression.py snapshot` |
 | change what a page does | `frontend/src/views/<Page>.vue` and its store in `src/stores/`; re-record the network golden with `npm run e2e:record` in a separate `Golden update:` commit |

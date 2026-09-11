@@ -46,11 +46,11 @@ BL/                 # Framework-agnostic business logic. Takes/returns plain
   <division>/         # Python types, Pydantic models, or a DB Session -- never
     <endpoint>.py     # a FastAPI Request/Response. One flat module per
     common/           # endpoint, plus common/ for what that division shares.
-  analyze/            # The calc engine -- the core of the product:
-    analyzeBRRR.py    #   analyze_brrr() + calculate_brrr_results() + compute_brrr()
-    analyzeFlip.py    #   analyze_flip() + calculate_flip_results() + compute_flip()
-    brrr_calc.py      #   BrrrCalc / FlipCalc: the frozen record of every number
-    flip_calc.py      #   the calculation produces
+  analyze/            # The results engine -- the core of the product:
+    analyzeBRRR.py    #   analyze_brrr() + calculate_brrr_results() + compute_brrr_with_intermediates()
+    analyzeFlip.py    #   analyze_flip() + calculate_flip_results() + compute_flip_with_intermediates()
+    brrr_results.py      #   BrrrResultsWithIntermediates / FlipResultsWithIntermediates: the frozen record of every number
+    flip_results.py      #   the calculation produces
     brrrSteps/        #   one pure step per calculation subject (cash_flow, dscr,
     flipSteps/        #   roi, total_cash_needed, ...)
     explain/          #   the breakdown narrative, built from the record and
@@ -76,10 +76,10 @@ across that division's endpoints. `ReqRes/` still nests one folder per endpoint
 (`ReqRes/liquidity/createRecurring/`), holding the two thin re-export modules.
 
 `BL/analyze/` is the exception worth knowing: it holds the whole BRRRR/Flip
-calculation, in two layers. `compute_brrr()` / `compute_flip()` are the pure
+calculation, in two layers. `compute_brrr_with_intermediates()` / `compute_flip_with_intermediates()` are the pure
 engine: the orchestrator reads top-to-bottom as the calculation itself, each
 line calls one pure `*_step` from `brrrSteps/` / `flipSteps/`, and the result
-is a frozen `BrrrCalc` / `FlipCalc` record of every number produced. The
+is a frozen `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` record of every number produced. The
 narrative behind those numbers lives in `explain/`, which reads the record,
 never recomputes, and guards every equation it states (`check` / `add_sum`),
 so a math change that is not mirrored in the text raises instead of printing

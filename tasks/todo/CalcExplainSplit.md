@@ -1,4 +1,4 @@
-# CalcExplainSplit: pure calc engine + companion explain layer + readable PDF breakdown
+# CalcExplainSplit: pure results engine + companion explain layer + readable PDF breakdown
 
 Branch: `claude/pdf-calculation-refactor-rhv25b` (harness-designated). Plan file on the branch:
 `tasks/todo/CalcExplainSplit.md`.
@@ -17,7 +17,7 @@ functions, each writing 200-450 character f-strings, and several steps **re-impl
 
 Nothing enforces that the copies stay in sync. `CalcStep` has no unit, so the PDF guesses money vs
 percent vs ratio from label text (`deal_pdf.py:183-196`), and the key/label section tables are
-duplicated between the calc and the PDF. The PDF is the only renderer of `breakdowns`; MCP and the
+duplicated between the results and the PDF. The PDF is the only renderer of `breakdowns`; MCP and the
 deal endpoints pass it through as JSON; no Vue component reads it.
 
 **Owner decisions:** (1) pragmatic middle ground: pure math engine returning a frozen dataclass; an
@@ -32,11 +32,11 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
 
 ## Design
 
-### 1. Pure engine: `compute_brrr(payload) -> BrrrCalc`, `compute_flip(payload) -> FlipCalc`
+### 1. Pure engine: `compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates`, `compute_flip_with_intermediates(payload) -> FlipResultsWithIntermediates`
 
-- New `BackEnd/BL/analyze/brrr_calc.py`, `flip_calc.py`: `@dataclass(frozen=True)` of every
+- New `BackEnd/BL/analyze/brrr_results.py`, `flip_results.py`: `@dataclass(frozen=True)` of every
   **computed** value (dollar basis, intermediates, headline metrics). Inputs stay on `payload`;
-  explain receives `(payload, calc)`. Deviation from the minimal example (which copies inputs into the
+  explain receives `(payload, results)`. Deviation from the minimal example (which copies inputs into the
   dataclass): the payload has 30+ inputs that cannot drift; copying them adds noise to the dataclass
   and to the coverage test.
 - Step files under `brrrSteps/` and `flipSteps/` keep their names and order (README table stays valid)
@@ -55,12 +55,12 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
     `rehab_cash + rehab_float`; keep it).
 - `calculate_brrr_results(payload)` keeps signature and return type (callers in
   `BL/common/deal_response.py`, `BL/reports/reportBrrrPdf.py`, `routers/analyze.py` untouched):
-  `calc = compute_brrr(payload); return analyzeBRRRRes(..., breakdowns=explain_brrr(payload, calc))`.
+  `results = compute_brrr_with_intermediates(payload); return analyzeBRRRRes(..., breakdowns=explain_brrr(payload, results))`.
 
 ### 2. Companion explain layer: `BackEnd/BL/analyze/explain/brrr.py`, `explain/flip.py`
 
-- `explain_brrr(payload, calc) -> dict[str, list[dict]]`, reusing `CalcBreakdown` and
-  `fmt_money/fmt_pct/fmt_num` from `common/calc_breakdown.py`. Reads only from `calc.` and `payload.`;
+- `explain_brrr(payload, results) -> dict[str, list[dict]]`, reusing `CalcBreakdown` and
+  `fmt_money/fmt_pct/fmt_num` from `common/calc_breakdown.py`. Reads only from `results.` and `payload.`;
   holds no arithmetic except guards.
 - **Drift guards.** A `_check(cond, name)` raising `CalcExplainMismatch(ValueError)` (not `assert`,
   which `python -O` strips). Sum-type steps go through one helper that is guard + text + structure at
@@ -110,7 +110,7 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
   A second, per-scenario assertion checks that every step **emitted** in that scenario reads its
   value from a field (no explain-side arithmetic), which is branch-safe.
 - **Every step value is a dataclass field** (no value computed in explain).
-- **Guards fire:** `dataclasses.replace(calc, net_operating_income=+1)` raises `CalcExplainMismatch`.
+- **Guards fire:** `dataclasses.replace(results, net_operating_income=+1)` raises `CalcExplainMismatch`.
 - **Units:** every step has a unit; ROI/CoC/Annualized ROI are `pct`, DSCR is `ratio`, rest `money`;
   `_breakdown_value` formats by unit. **Terms** sum to the step value for every sum-type step.
 - **PDF content:** `pypdf` added to the test block of `requirements.txt`; one test per deal type
@@ -124,7 +124,7 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
 1. `assert` is stripped under `python -O`: explicit raise instead.
 2. Quantization: `deal_math.py` never rounds or quantizes; every value is a raw 28-digit Decimal until
    `CalcBreakdown.add` converts to `float` and the formatters round for display. So the guards run on
-   the dataclass Decimals **before** any float conversion, with operands in the calc's order
+   the dataclass Decimals **before** any float conversion, with operands in the results's order
    (`sum()` of Decimals from int 0 is exact), and use plain `==` with no tolerance. The only float-side
    comparison is the test that JSON `terms` add up to the JSON `value`, which uses `pytest.approx`
    because both sides are already floats. If a guard ever "needs" tolerance, the guard's expression
@@ -148,7 +148,7 @@ Modify: `BackEnd/BL/analyze/common/deal_math.py`; `brrrSteps/*.py` (12), `flipSt
 `sum_step`, `_check`); `ReqRes/common/calc_step.py`; `BL/reports/common/deal_pdf.py`;
 `frontend/src/types/index.ts`; `BackEnd/requirements.txt` (pypdf, test block); `README.md`
 §"The calculation engine", `BackEnd/README.md:78-79`; `mcp_server.py` glossary (one line on `unit`).
-Create: `BackEnd/BL/analyze/brrr_calc.py`, `flip_calc.py`, `explain/__init__.py`, `explain/brrr.py`,
+Create: `BackEnd/BL/analyze/brrr_results.py`, `flip_results.py`, `explain/__init__.py`, `explain/brrr.py`,
 `explain/flip.py`, `BackEnd/tests/test_explain.py`, `tasks/todo/CalcExplainSplit.md`.
 Re-record (commit 2 only): `BackEnd/tests/_regression_snapshots/*`, `frontend/e2e/golden/pdf-report.json`.
 
@@ -158,9 +158,9 @@ Restructure (commit 1; `pytest tests/test_analyze.py` green throughout, goldens 
 - [x] **C1** (10 min) — Plan file `tasks/todo/CalcExplainSplit.md` on the branch.
 - [x] **C2** (20 min) — `deal_math.py`: `calc_total_cash_invested`, `calc_pitia`,
   `TotalCashNeeded` NamedTuple.
-- [x] **C3** (35 min) — BRRRR engine: `BrrrCalc`, 12 pure steps, `compute_brrr`.
-- [x] **C4** (30 min) — `explain/brrr.py`: moved `add` calls reading from `calc`, `_check` guards.
-- [x] **C5** (25 min) — Flip engine: `FlipCalc`, 8 pure steps, `compute_flip`.
+- [x] **C3** (35 min) — BRRRR engine: `BrrrResultsWithIntermediates`, 12 pure steps, `compute_brrr_with_intermediates`.
+- [x] **C4** (30 min) — `explain/brrr.py`: moved `add` calls reading from `results`, `_check` guards.
+- [x] **C5** (25 min) — Flip engine: `FlipResultsWithIntermediates`, 8 pure steps, `compute_flip_with_intermediates`.
 - [x] **C6** (25 min) — `explain/flip.py` with guards.
 
 Wording + layout (commit 2):
@@ -199,9 +199,9 @@ Wording + layout (commit 2):
 
 ## Review
 
-**What changed.** The calculator is now two layers. `compute_brrr` / `compute_flip`
-(`BL/analyze/analyzeBRRR.py`, `analyzeFlip.py`) run pure steps and return a frozen `BrrrCalc` /
-`FlipCalc` record of every number produced (`brrr_calc.py`, `flip_calc.py`); the 20 step files
+**What changed.** The calculator is now two layers. `compute_brrr_with_intermediates` / `compute_flip_with_intermediates`
+(`BL/analyze/analyzeBRRR.py`, `analyzeFlip.py`) run pure steps and return a frozen `BrrrResultsWithIntermediates` /
+`FlipResultsWithIntermediates` record of every number produced (`brrr_results.py`, `flip_results.py`); the 20 step files
 lost the `breakdown` parameter, every `breakdown.add`, the `_brrr_`/`_flip_` narrative locals and
 all string formatting. `deal_math.py` exposes what it used to hide (`calc_pitia`,
 `calc_total_cash_invested`, `OperatingExpenses` and `TotalCashNeeded` NamedTuples), so no
@@ -229,7 +229,7 @@ heading, keeps headings with their table, and escapes the address (a `<` in an a
 break the report). The table header text was invisible on the navy band (Paragraph ignores the
 row TEXTCOLOR); fixed.
 
-**Tests (rule 3).** `tests/test_explain.py` (+40): every `BrrrCalc` / `FlipCalc` field is read by
+**Tests (rule 3).** `tests/test_explain.py` (+40): every `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` field is read by
 its explain function across a scenario matrix (hard money vs cash rehab, refi surplus vs
 shortfall, positive vs negative cash flow, positive vs negative cash out, 0% loan, PITIA 0, cash
 reserve; flip profit vs loss, no cash in with profit / loss / break-even, zero holding time),

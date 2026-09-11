@@ -1,6 +1,6 @@
-"""`BrrrCalc` -- every number the BRRRR calculation produces, in one frozen record.
+"""`BrrrResultsWithIntermediates` -- every number the BRRRR calculation produces, in one frozen record.
 
-Built by `compute_brrr` in `BL/analyze/analyzeBRRR.py`. Holds computed values
+Built by `compute_brrr_with_intermediates` in `BL/analyze/analyzeBRRR.py`. Holds computed values
 only (inputs stay on the request payload). The explanation layer
 (`BL/analyze/explain/brrr.py`) reads from this record and never recomputes;
 `tests/test_explain.py` fails if a field is added here and not explained there.
@@ -15,7 +15,7 @@ from decimal import Decimal
 
 
 @dataclass(frozen=True)
-class BrrrCalc:
+class BrrrResultsWithIntermediates:
     # -- dollar basis ---------------------------------------------------------
     arv: Decimal
     purchase_price: Decimal
