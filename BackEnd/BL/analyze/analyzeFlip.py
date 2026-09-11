@@ -23,7 +23,7 @@ companion module `BL/analyze/explain/flip.py`, which reads the finished
 from ReqRes.common.analyze_inputs import analyzeFlipReq
 from ReqRes.common.analyze_results import analyzeFlipRes
 from BL.analyze.common.validation import validate_flip_inputs
-from BL.analyze.flip_results import FlipResultsWithIntermediates
+from BL.analyze.flip_results_with_intermediates import FlipResultsWithIntermediates
 from BL.analyze.explain.flip import explain_flip
 from BL.analyze.flipSteps.dollar_basis import dollar_basis_and_rehab_cost_step
 from BL.analyze.flipSteps.hml_costs import hml_costs_step
@@ -42,19 +42,19 @@ def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
 
 def calculate_flip_results(payload) -> analyzeFlipRes:
     """Numbers plus their explanation, as the API response model."""
-    results = compute_flip_with_intermediates(payload)
+    results_w_intermediates = compute_flip_with_intermediates(payload)
     return analyzeFlipRes(
-        net_profit=results.net_profit, roi=results.roi, annualized_roi=results.annualized_roi,
-        total_cash_needed=results.total_cash_needed,
-        total_cash_needed_with_buffer=results.total_cash_needed_with_buffer,
-        total_holding_costs=results.total_holding_costs,
-        total_hml_interest=results.total_hml_interest, messages=[],
-        breakdowns=explain_flip(payload, results),
+        net_profit=results_w_intermediates.net_profit, roi=results_w_intermediates.roi, annualized_roi=results_w_intermediates.annualized_roi,
+        total_cash_needed=results_w_intermediates.total_cash_needed,
+        total_cash_needed_with_buffer=results_w_intermediates.total_cash_needed_with_buffer,
+        total_holding_costs=results_w_intermediates.total_holding_costs,
+        total_hml_interest=results_w_intermediates.total_hml_interest, messages=[],
+        breakdowns=explain_flip(payload, results_w_intermediates),
     )
 
 
 def compute_flip_with_intermediates(payload) -> FlipResultsWithIntermediates:
-    """Run every Flip results step in order. Reading top to bottom is reading the calculation."""
+    """Run every Flip results_w_intermediates step in order. Reading top to bottom is reading the calculation."""
     purchase_price, sale_price, closing_costs_buy, rehab_cost_base, rehab_contingency, rehab_cost = (
         dollar_basis_and_rehab_cost_step(payload)
     )

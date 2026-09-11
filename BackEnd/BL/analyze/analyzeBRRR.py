@@ -23,7 +23,7 @@ companion module `BL/analyze/explain/brrr.py`, which reads the finished
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 from ReqRes.common.analyze_results import analyzeBRRRRes
 from BL.analyze.common.validation import validate_brrr_inputs
-from BL.analyze.brrr_results import BrrrResultsWithIntermediates
+from BL.analyze.brrr_results_with_intermediates import BrrrResultsWithIntermediates
 from BL.analyze.explain.brrr import explain_brrr
 from BL.analyze.brrrSteps.dollar_basis import dollar_basis_step
 from BL.analyze.brrrSteps.hml_and_holding_costs import upfront_hml_and_holding_costs_step
@@ -46,20 +46,20 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     """Numbers plus their explanation, as the API response model."""
-    results = compute_brrr_with_intermediates(payload)
+    results_w_intermediates = compute_brrr_with_intermediates(payload)
     return analyzeBRRRRes(
-        cash_flow=results.cash_flow, dscr=results.dscr, cash_out=results.cash_out,
-        cash_out_routi=results.cash_out_routi, cash_on_cash=results.cash_on_cash,
-        roi=results.roi, equity=results.equity, net_profit=results.net_profit,
-        total_cash_needed_for_deal=results.total_cash_needed,
-        total_cash_needed_for_deal_with_buffer=results.total_cash_needed_with_buffer,
+        cash_flow=results_w_intermediates.cash_flow, dscr=results_w_intermediates.dscr, cash_out=results_w_intermediates.cash_out,
+        cash_out_routi=results_w_intermediates.cash_out_routi, cash_on_cash=results_w_intermediates.cash_on_cash,
+        roi=results_w_intermediates.roi, equity=results_w_intermediates.equity, net_profit=results_w_intermediates.net_profit,
+        total_cash_needed_for_deal=results_w_intermediates.total_cash_needed,
+        total_cash_needed_for_deal_with_buffer=results_w_intermediates.total_cash_needed_with_buffer,
         messages=None,
-        breakdowns=explain_brrr(payload, results),
+        breakdowns=explain_brrr(payload, results_w_intermediates),
     )
 
 
 def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
-    """Run every BRRRR results step in order. Reading top to bottom is reading the calculation."""
+    """Run every BRRRR results_w_intermediates step in order. Reading top to bottom is reading the calculation."""
     arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost = dollar_basis_step(payload)
     hml_amount, hml_interest, hml_points, holding_costs = upfront_hml_and_holding_costs_step(
         payload, purchase_price, rehab_cost

@@ -473,7 +473,7 @@ tool call then runs as that owner, through the same session gate as the browser.
 explanation cannot drift from it:
 
 * **The engine.** `compute_brrr_with_intermediates(payload)` / `compute_flip_with_intermediates(payload)` run the calculation and return a
-  frozen `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` record (`brrr_results.py`, `flip_results.py`) holding every number the
+  frozen `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` record (`brrr_results_with_intermediates.py`, `flip_results_with_intermediates.py`) holding every number the
   calculation produces: dollar basis, intermediates and headline metrics, as unrounded `Decimal`s.
   The orchestrator reads top-to-bottom as the calculation itself; each line calls one pure step
   from `brrrSteps/` / `flipSteps/`, and the shared primitives live in `common/deal_math.py`. No

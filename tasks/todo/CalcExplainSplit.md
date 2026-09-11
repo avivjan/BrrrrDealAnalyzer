@@ -34,7 +34,7 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
 
 ### 1. Pure engine: `compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates`, `compute_flip_with_intermediates(payload) -> FlipResultsWithIntermediates`
 
-- New `BackEnd/BL/analyze/brrr_results.py`, `flip_results.py`: `@dataclass(frozen=True)` of every
+- New `BackEnd/BL/analyze/brrr_results_with_intermediates.py`, `flip_results_with_intermediates.py`: `@dataclass(frozen=True)` of every
   **computed** value (dollar basis, intermediates, headline metrics). Inputs stay on `payload`;
   explain receives `(payload, results)`. Deviation from the minimal example (which copies inputs into the
   dataclass): the payload has 30+ inputs that cannot drift; copying them adds noise to the dataclass
@@ -60,7 +60,7 @@ pins the reference numbers, and a one-off diff of the old vs re-recorded `calcul
 ### 2. Companion explain layer: `BackEnd/BL/analyze/explain/brrr.py`, `explain/flip.py`
 
 - `explain_brrr(payload, results) -> dict[str, list[dict]]`, reusing `CalcBreakdown` and
-  `fmt_money/fmt_pct/fmt_num` from `common/calc_breakdown.py`. Reads only from `results.` and `payload.`;
+  `fmt_money/fmt_pct/fmt_num` from `common/calc_breakdown.py`. Reads only from `results_w_intermediates.` and `payload.`;
   holds no arithmetic except guards.
 - **Drift guards.** A `_check(cond, name)` raising `CalcExplainMismatch(ValueError)` (not `assert`,
   which `python -O` strips). Sum-type steps go through one helper that is guard + text + structure at
@@ -148,7 +148,7 @@ Modify: `BackEnd/BL/analyze/common/deal_math.py`; `brrrSteps/*.py` (12), `flipSt
 `sum_step`, `_check`); `ReqRes/common/calc_step.py`; `BL/reports/common/deal_pdf.py`;
 `frontend/src/types/index.ts`; `BackEnd/requirements.txt` (pypdf, test block); `README.md`
 §"The calculation engine", `BackEnd/README.md:78-79`; `mcp_server.py` glossary (one line on `unit`).
-Create: `BackEnd/BL/analyze/brrr_results.py`, `flip_results.py`, `explain/__init__.py`, `explain/brrr.py`,
+Create: `BackEnd/BL/analyze/brrr_results_with_intermediates.py`, `flip_results_with_intermediates.py`, `explain/__init__.py`, `explain/brrr.py`,
 `explain/flip.py`, `BackEnd/tests/test_explain.py`, `tasks/todo/CalcExplainSplit.md`.
 Re-record (commit 2 only): `BackEnd/tests/_regression_snapshots/*`, `frontend/e2e/golden/pdf-report.json`.
 
@@ -201,7 +201,7 @@ Wording + layout (commit 2):
 
 **What changed.** The calculator is now two layers. `compute_brrr_with_intermediates` / `compute_flip_with_intermediates`
 (`BL/analyze/analyzeBRRR.py`, `analyzeFlip.py`) run pure steps and return a frozen `BrrrResultsWithIntermediates` /
-`FlipResultsWithIntermediates` record of every number produced (`brrr_results.py`, `flip_results.py`); the 20 step files
+`FlipResultsWithIntermediates` record of every number produced (`brrr_results_with_intermediates.py`, `flip_results_with_intermediates.py`); the 20 step files
 lost the `breakdown` parameter, every `breakdown.add`, the `_brrr_`/`_flip_` narrative locals and
 all string formatting. `deal_math.py` exposes what it used to hide (`calc_pitia`,
 `calc_total_cash_invested`, `OperatingExpenses` and `TotalCashNeeded` NamedTuples), so no

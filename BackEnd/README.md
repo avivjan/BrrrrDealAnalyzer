@@ -49,8 +49,8 @@ BL/                 # Framework-agnostic business logic. Takes/returns plain
   analyze/            # The results engine -- the core of the product:
     analyzeBRRR.py    #   analyze_brrr() + calculate_brrr_results() + compute_brrr_with_intermediates()
     analyzeFlip.py    #   analyze_flip() + calculate_flip_results() + compute_flip_with_intermediates()
-    brrr_results.py      #   BrrrResultsWithIntermediates / FlipResultsWithIntermediates: the frozen record of every number
-    flip_results.py      #   the calculation produces
+    brrr_results_with_intermediates.py      #   BrrrResultsWithIntermediates / FlipResultsWithIntermediates: the frozen record of every number
+    flip_results_with_intermediates.py      #   the calculation produces
     brrrSteps/        #   one pure step per calculation subject (cash_flow, dscr,
     flipSteps/        #   roi, total_cash_needed, ...)
     explain/          #   the breakdown narrative, built from the record and
