@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { safeHref } from "../../utils/safeHref";
 import { computed, ref, watch } from 'vue';
 import api from '../../api';
 import { useRepsStore, captureGeoSnapshot } from '../../stores/repsStore';
@@ -698,8 +699,9 @@ function close() {
                   <a
                     v-if="snapshotMapHref(s)"
                     :data-testid="`repsmodal.snapshot.${idx}.map`"
-                    :href="snapshotMapHref(s)!"
+                    :href="safeHref(snapshotMapHref(s)!)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="ml-1 font-medium text-primary underline-offset-2 hover:underline"
                   >map</a>
                 </span>
