@@ -1,11 +1,11 @@
-"""Calculation breakdown primitives.
+"""Calculation breakdown primitives, used by the explain layer (`BL/analyze/explain/`).
 
-These types let calculation functions document themselves "between the lines":
-each intermediate variable can register a `CalcStep` next to where it is
-computed, grouped under one or more high-level metric keys (e.g. `cash_flow`,
-`roi`, `net_profit`). The final response carries a `breakdowns` dict keyed by
-metric so the frontend can render hover/PDF explanations without recomputing
-anything.
+`CalcBreakdown` accumulates `CalcStep`s under one or more high-level metric
+keys (e.g. `cash_flow`, `roi`, `net_profit`); the final response carries the
+resulting `breakdowns` dict, which the PDF report renders and the API / MCP
+pass through. `check` is the drift guard: the explain layer states each
+equation it is about to narrate, and a mismatch with the calculated record
+raises `CalcExplainMismatch` instead of printing a wrong explanation.
 """
 
 from __future__ import annotations
@@ -34,6 +34,20 @@ def fmt_pct(value: Number, decimals: int = 2) -> str:
 def fmt_num(value: Number, decimals: int = 2) -> str:
     """Render a plain number (e.g. DSCR ratio)."""
     return f"{float(value):.{decimals}f}"
+
+
+class CalcExplainMismatch(ValueError):
+    """The explanation's equation no longer matches what the calculator computed."""
+
+
+def check(condition: bool, step: str) -> None:
+    """Drift guard. An explicit raise, not `assert`: it must survive `python -O`.
+
+    The message names the step only, never the numbers, so a failure that
+    surfaces as an HTTP 500 carries no deal data.
+    """
+    if not condition:
+        raise CalcExplainMismatch(f"explanation out of sync with the calculation at step: {step}")
 
 
 class CalcBreakdown:

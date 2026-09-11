@@ -1,30 +1,30 @@
 """The BRRRR analysis -- the core of the product.
 
-Two public entry points:
+Three public entry points:
 
 * `analyze_brrr` -- validate, then calculate. What `POST /analyze/brrr` calls.
-* `calculate_brrr_results` -- the calculation itself, without validation. Also
-  called by `BL.common.deal_response.create_deal_response` and by
-  `BL.reports.reportBrrrPdf`.
+* `calculate_brrr_results` -- the calculation plus its explanation, without
+  validation. Also called by `BL.common.deal_response.create_deal_response`
+  and by `BL.reports.reportBrrrPdf`.
+* `compute_brrr` -- the numbers only, as a `BrrrCalc` record. No strings, no
+  formatting; the thing to call for batch or high-frequency use.
 
-`calculate_brrr_results` accepts either the Pydantic request model
-(`analyzeBRRRReq`) or an ORM deal row -- everything downstream is duck-typed
-attribute access, which is what lets `create_deal_response` pass a
-`BrrrActiveDeal` straight in.
+`compute_brrr` accepts either the Pydantic request model (`analyzeBRRRReq`)
+or an ORM deal row -- everything downstream is duck-typed attribute access,
+which is what lets `create_deal_response` pass a `BrrrActiveDeal` straight in.
 
 The calculation is broken into named steps under `brrrSteps/`, one file per
-subject, mirroring the `breakdowns` dict's own metric groupings. Every step
-function follows the same contract: it takes only the already-computed values
-it needs, does its slice of `calc_*` calls *and* its slice of
-`breakdown.add(...)` calls (so the self-documenting step registered next to a
-value travels with the code that computes it), and returns only the new
-value(s) later steps or the final response need.
+subject. Every step is pure: it takes the already-computed values it needs
+and returns only the new ones. The narrative behind each number lives in the
+companion module `BL/analyze/explain/brrr.py`, which reads the finished
+`BrrrCalc` and never recomputes anything.
 """
 
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 from ReqRes.common.analyze_results import analyzeBRRRRes
 from BL.analyze.common.validation import validate_brrr_inputs
-from BL.analyze.common.calc_breakdown import CalcBreakdown
+from BL.analyze.brrr_calc import BrrrCalc
+from BL.analyze.explain.brrr import explain_brrr
 from BL.analyze.brrrSteps.dollar_basis import dollar_basis_step
 from BL.analyze.brrrSteps.hml_and_holding_costs import upfront_hml_and_holding_costs_step
 from BL.analyze.brrrSteps.operating_expenses import operating_expenses_step
@@ -45,45 +45,57 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
-    """Run every BRRRR calc step in order and assemble the response.
+    """Numbers plus their explanation, as the API response model."""
+    calc = compute_brrr(payload)
+    return analyzeBRRRRes(
+        cash_flow=calc.cash_flow, dscr=calc.dscr, cash_out=calc.cash_out,
+        cash_out_routi=calc.cash_out_routi, cash_on_cash=calc.cash_on_cash,
+        roi=calc.roi, equity=calc.equity, net_profit=calc.net_profit,
+        total_cash_needed_for_deal=calc.total_cash_needed,
+        total_cash_needed_for_deal_with_buffer=calc.total_cash_needed_with_buffer,
+        messages=None,
+        breakdowns=explain_brrr(payload, calc),
+    )
 
-    Each step below is one self-contained piece of the calculation -- see the
-    module docstring for the contract every step function follows. Reading
-    top to bottom is reading the calculation itself; the metric keys threaded
-    into `breakdown.add()` inside each step are what group these into the
-    `breakdowns` dict the frontend/PDF render.
-    """
-    breakdown = CalcBreakdown()
 
-    arv, purchase_price, rehab_cost = dollar_basis_step(payload)
-    HML_interest_in_cash, HML_points_in_cash, holding_cost_until_refi = upfront_hml_and_holding_costs_step(
+def compute_brrr(payload) -> BrrrCalc:
+    """Run every BRRRR calc step in order. Reading top to bottom is reading the calculation."""
+    arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost = dollar_basis_step(payload)
+    hml_amount, hml_interest, hml_points, holding_costs = upfront_hml_and_holding_costs_step(
         payload, purchase_price, rehab_cost
     )
-    operating_expenses = operating_expenses_step(payload, breakdown)
-    closing_costs_buy, closing_cost_refi, ltv, refi_points_in_cash, cash_reserve_in_cash = refi_terms_step(payload, arv)
+    operating_expenses = operating_expenses_step(payload)
+    closing_costs_buy, closing_costs_refi, ltv, refi_points, cash_reserve = refi_terms_step(payload, arv)
 
-    cash_out_from_deal, cash_out_routi, loan_amount, hml_payoff, down_payment_cash = cash_out_at_refi_step(
-        payload, breakdown, arv, ltv, purchase_price, rehab_cost, closing_costs_buy,
-        HML_points_in_cash, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash,
-        cash_reserve_in_cash, holding_cost_until_refi,
+    loan_amount, down_payment_cash, total_cash_invested, cash_out_routi, cash_out = cash_out_at_refi_step(
+        payload, arv, ltv, purchase_price, rehab_cost, closing_costs_buy,
+        hml_points, hml_interest, closing_costs_refi, refi_points, cash_reserve, holding_costs,
     )
-    mortgage_payment = mortgage_payment_step(payload, breakdown, arv, ltv, loan_amount)
-    cash_flow = cash_flow_step(payload, breakdown, operating_expenses, mortgage_payment)
-    dscr = dscr_step(payload, breakdown, mortgage_payment)
-    cash_on_cash = cash_on_cash_step(breakdown, cash_out_from_deal, cash_flow)
-    equity, net_profit = equity_and_net_profit_step(payload, breakdown, arv, ltv, cash_reserve_in_cash, cash_out_from_deal)
-    roi = roi_step(breakdown, cash_out_from_deal, cash_flow, net_profit)
-    total_cash_needed_without_buffer, total_cash_needed_with_buffer = total_cash_needed_step(
-        payload, breakdown, purchase_price, down_payment_cash, closing_costs_buy,
-        HML_points_in_cash, rehab_cost, HML_interest_in_cash, holding_cost_until_refi, hml_payoff,
-        cash_out_routi,
+    mortgage_payment = mortgage_payment_step(payload, arv, ltv)
+    net_operating_income, cash_flow = cash_flow_step(payload, operating_expenses, mortgage_payment)
+    pitia, dscr = dscr_step(payload, mortgage_payment)
+    cash_on_cash = cash_on_cash_step(cash_out, cash_flow)
+    equity, net_profit = equity_and_net_profit_step(arv, ltv, cash_reserve, cash_out)
+    roi = roi_step(cash_out, cash_flow, net_profit)
+    refi_shortfall, cash_needed = total_cash_needed_step(
+        payload, purchase_price, closing_costs_buy, hml_points, rehab_cost, hml_interest,
+        holding_costs, cash_out_routi,
     )
 
-    return analyzeBRRRRes(
-        cash_flow=cash_flow, dscr=dscr, cash_out=cash_out_from_deal, cash_out_routi=cash_out_routi, cash_on_cash=cash_on_cash,
-        roi=roi, equity=equity, net_profit=net_profit,
-        total_cash_needed_for_deal=total_cash_needed_without_buffer,
-        total_cash_needed_for_deal_with_buffer=total_cash_needed_with_buffer,
-        messages=None,
-        breakdowns=breakdown.to_dict(),
+    return BrrrCalc(
+        arv=arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
+        rehab_contingency=rehab_contingency, rehab_cost=rehab_cost,
+        hml_amount=hml_amount, hml_points=hml_points, hml_interest=hml_interest, holding_costs=holding_costs,
+        closing_costs_buy=closing_costs_buy, closing_costs_refi=closing_costs_refi, ltv=ltv,
+        refi_points=refi_points, cash_reserve=cash_reserve,
+        loan_amount=loan_amount, down_payment_cash=down_payment_cash, rehab_cash=cash_needed.rehab_cash,
+        total_cash_invested=total_cash_invested, cash_out_routi=cash_out_routi, cash_out=cash_out,
+        operating_expenses=operating_expenses, mortgage_payment=mortgage_payment,
+        net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
+        cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
+        refi_shortfall=refi_shortfall,
+        total_cash_needed=cash_needed.without_buffer,
+        total_cash_needed_with_buffer=cash_needed.with_buffer,
+        rehab_float=cash_needed.rehab_float, buffered_closing=cash_needed.buffered_closing,
+        buffered_holding=cash_needed.buffered_holding, buffered_interest=cash_needed.buffered_interest,
     )

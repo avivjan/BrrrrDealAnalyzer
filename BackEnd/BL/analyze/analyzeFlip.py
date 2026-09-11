@@ -1,29 +1,30 @@
 """The Flip analysis -- the core of the product.
 
-Two public entry points:
+Three public entry points:
 
 * `analyze_flip` -- validate, then calculate. What `POST /analyze/flip` calls.
-* `calculate_flip_results` -- the calculation itself, without validation. Also
-  called by `BL.common.deal_response.create_deal_response` and by
-  `BL.reports.reportFlipPdf`.
+* `calculate_flip_results` -- the calculation plus its explanation, without
+  validation. Also called by `BL.common.deal_response.create_deal_response`
+  and by `BL.reports.reportFlipPdf`.
+* `compute_flip` -- the numbers only, as a `FlipCalc` record. No strings, no
+  formatting; the thing to call for batch or high-frequency use.
 
-`calculate_flip_results` accepts either the Pydantic request model
-(`analyzeFlipReq`) or an ORM deal row -- everything downstream is duck-typed
-attribute access, which is what lets `create_deal_response` pass a
-`FlipActiveDeal` straight in.
+`compute_flip` accepts either the Pydantic request model (`analyzeFlipReq`)
+or an ORM deal row -- everything downstream is duck-typed attribute access,
+which is what lets `create_deal_response` pass a `FlipActiveDeal` straight in.
 
 The calculation is broken into named steps under `flipSteps/`, one file per
-subject, mirroring the `breakdowns` dict's own metric groupings. Every step
-function follows the same contract: it takes only the already-computed values
-it needs, does its slice of `calc_*` calls *and* its slice of
-`breakdown.add(...)` calls, and returns only the new value(s) later steps or
-the final response need.
+subject. Every step is pure: it takes the already-computed values it needs
+and returns only the new ones. The narrative behind each number lives in the
+companion module `BL/analyze/explain/flip.py`, which reads the finished
+`FlipCalc` and never recomputes anything.
 """
 
 from ReqRes.common.analyze_inputs import analyzeFlipReq
 from ReqRes.common.analyze_results import analyzeFlipRes
 from BL.analyze.common.validation import validate_flip_inputs
-from BL.analyze.common.calc_breakdown import CalcBreakdown
+from BL.analyze.flip_calc import FlipCalc
+from BL.analyze.explain.flip import explain_flip
 from BL.analyze.flipSteps.dollar_basis import dollar_basis_and_rehab_cost_step
 from BL.analyze.flipSteps.hml_costs import hml_costs_step
 from BL.analyze.flipSteps.holding_costs import operating_and_holding_costs_step
@@ -40,37 +41,52 @@ def analyze_flip(payload: analyzeFlipReq) -> analyzeFlipRes:
 
 
 def calculate_flip_results(payload) -> analyzeFlipRes:
-    """Run every Flip calc step in order and assemble the response.
-
-    Each step below is one self-contained piece of the calculation -- see the
-    module docstring for the contract every step function follows. Reading
-    top to bottom is reading the calculation itself; the metric keys threaded
-    into `breakdown.add()` inside each step are what group these into the
-    `breakdowns` dict the frontend/PDF render.
-    """
-    breakdown = CalcBreakdown()
-
-    purchase_price, sale_price, closing_costs_buy, rehab_cost = dollar_basis_and_rehab_cost_step(payload, breakdown)
-    hml_amount, hml_points_cash, total_hml_interest = hml_costs_step(payload, breakdown, purchase_price, rehab_cost)
-    total_operating, total_holding_costs = operating_and_holding_costs_step(payload, breakdown, total_hml_interest)
-    selling_costs = selling_costs_step(payload, breakdown, sale_price)
-
-    total_cash_needed_without_buffer, total_cash_needed_with_buffer, down_payment_cash, rehab_cash = total_cash_needed_step(
-        payload, breakdown, purchase_price, closing_costs_buy, hml_amount, hml_points_cash, rehab_cost,
-        total_operating, total_hml_interest,
-    )
-    total_cash_invested, gross_profit = cash_invested_and_cost_basis_step(
-        payload, breakdown, purchase_price, rehab_cost, closing_costs_buy, total_holding_costs,
-        selling_costs, hml_points_cash, down_payment_cash, rehab_cash, sale_price,
-    )
-    net_profit = net_profit_after_tax_step(payload, breakdown, gross_profit)
-    roi, annualized_roi = roi_and_annualized_step(payload, breakdown, net_profit, total_cash_invested)
-
+    """Numbers plus their explanation, as the API response model."""
+    calc = compute_flip(payload)
     return analyzeFlipRes(
-        net_profit=net_profit, roi=roi, annualized_roi=annualized_roi,
-        total_cash_needed=total_cash_needed_without_buffer,
-        total_cash_needed_with_buffer=total_cash_needed_with_buffer,
-        total_holding_costs=total_holding_costs,
-        total_hml_interest=total_hml_interest, messages=[],
-        breakdowns=breakdown.to_dict(),
+        net_profit=calc.net_profit, roi=calc.roi, annualized_roi=calc.annualized_roi,
+        total_cash_needed=calc.total_cash_needed,
+        total_cash_needed_with_buffer=calc.total_cash_needed_with_buffer,
+        total_holding_costs=calc.total_holding_costs,
+        total_hml_interest=calc.total_hml_interest, messages=[],
+        breakdowns=explain_flip(payload, calc),
+    )
+
+
+def compute_flip(payload) -> FlipCalc:
+    """Run every Flip calc step in order. Reading top to bottom is reading the calculation."""
+    purchase_price, sale_price, closing_costs_buy, rehab_cost_base, rehab_contingency, rehab_cost = (
+        dollar_basis_and_rehab_cost_step(payload)
+    )
+    hml_amount, hml_points, monthly_hml_interest, total_hml_interest = hml_costs_step(payload, purchase_price, rehab_cost)
+    monthly_taxes, monthly_insurance, monthly_operating, total_operating, total_holding_costs = (
+        operating_and_holding_costs_step(payload, total_hml_interest)
+    )
+    agent_fees_percent, selling_closing_costs, selling_costs = selling_costs_step(payload, sale_price)
+
+    down_payment_cash, cash_needed = total_cash_needed_step(
+        payload, purchase_price, closing_costs_buy, hml_points, rehab_cost, total_operating, total_hml_interest,
+    )
+    total_cash_invested, total_cost_basis, gross_profit = cash_invested_and_cost_basis_step(
+        purchase_price, rehab_cost, closing_costs_buy, total_holding_costs,
+        selling_costs, hml_points, down_payment_cash, cash_needed.rehab_cash, sale_price,
+    )
+    capital_gains_tax, net_profit = net_profit_after_tax_step(payload, gross_profit)
+    holding_years, roi, annualized_roi = roi_and_annualized_step(payload, net_profit, total_cash_invested)
+
+    return FlipCalc(
+        purchase_price=purchase_price, sale_price=sale_price, closing_costs_buy=closing_costs_buy,
+        rehab_cost_base=rehab_cost_base, rehab_contingency=rehab_contingency, rehab_cost=rehab_cost,
+        hml_amount=hml_amount, hml_points=hml_points, monthly_hml_interest=monthly_hml_interest,
+        total_hml_interest=total_hml_interest,
+        monthly_taxes=monthly_taxes, monthly_insurance=monthly_insurance, monthly_operating=monthly_operating,
+        total_operating=total_operating, total_holding_costs=total_holding_costs,
+        agent_fees_percent=agent_fees_percent, selling_closing_costs=selling_closing_costs, selling_costs=selling_costs,
+        down_payment_cash=down_payment_cash, rehab_cash=cash_needed.rehab_cash,
+        total_cash_needed=cash_needed.without_buffer, total_cash_needed_with_buffer=cash_needed.with_buffer,
+        rehab_float=cash_needed.rehab_float, buffered_closing=cash_needed.buffered_closing,
+        buffered_operating=cash_needed.buffered_holding, buffered_interest=cash_needed.buffered_interest,
+        total_cash_invested=total_cash_invested, total_cost_basis=total_cost_basis, gross_profit=gross_profit,
+        capital_gains_tax=capital_gains_tax, net_profit=net_profit,
+        holding_years=holding_years, roi=roi, annualized_roi=annualized_roi,
     )
