@@ -383,16 +383,21 @@ curl -s http://127.0.0.1:8000/analyze/brrr -H 'content-type: application/json' -
   "cash_on_cash": 2.12, "roi": 68.35, "equity": 80000.0, "net_profit": 31875.0,
   "total_cash_needed_for_deal": 63525.0, "total_cash_needed_for_deal_with_buffer": 76637.5,
   "messages": null,
-  "breakdowns": {                       // one list of CalcStep per metric; the UI and the PDF render these
+  "breakdowns": {                       // one list of CalcStep per metric; the PDF renders these
     "cash_flow": [
       { "label": "Monthly Operating Expenses", "value": 998.0,
-        "formula": "Rent ($2,600) × (Vacancy 5.00% + Mgmt 8.00% + Maint 5.00% + CapEx 5.00%) + Taxes ($3,600)/12 + Insurance ($1,200)/12 + HOA ($0) = $998" },
+        "unit": "money",
+        "formula": "Vacancy 5% of rent ($130) + Management 8% of rent ($208) + Maintenance 5% of rent ($130) + CapEx 5% of rent ($130) + Taxes ÷ 12 ($300) + Insurance ÷ 12 ($100) + HOA ($0) = $998",
+        "terms": [ { "label": "Vacancy 5% of rent", "value": 130, "sign": "+" }, "..." ] },
       { "label": "Monthly Mortgage Payment", "value": 1516.96,
-        "formula": "Amortize Loan ($240,000 = ARV $320,000 × LTV 75.00%) at 6.50%/yr over 30 years = $1,516.96" },
+        "unit": "money",
+        "formula": "Refi Loan ($240,000) amortized at 6.5%/yr over 30 years = $1,516.96" },
       { "label": "Net Operating Income (NOI)", "value": 1602.0,
-        "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602" },
+        "unit": "money", "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602",
+        "terms": [ { "label": "Rent", "value": 2600, "sign": "+" }, { "label": "Operating Expenses", "value": 998, "sign": "-" } ] },
       { "label": "Monthly Cash Flow", "value": 85.04,
-        "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04" }
+        "unit": "money", "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+        "terms": [ { "label": "NOI", "value": 1602, "sign": "+" }, { "label": "Mortgage", "value": 1516.96, "sign": "-" } ] }
     ],
     "dscr": [ /* … */ ], "cash_out": [ /* … */ ], "roi": [ /* … */ ]
   }
@@ -453,34 +458,51 @@ local development. The API itself has no authentication, so keep the URL private
 
 ## 🧮 The calculation engine
 
-`BackEnd/BL/analyze/` is the core of the product. `analyzeBRRR.py` and `analyzeFlip.py`
-each expose `analyze_*` (validate, then calculate — what the route calls) and
-`calculate_*_results` (calculation only — also used when a saved deal is re-read and by the
-PDF reports; it accepts the request model **or** an ORM row). The orchestrator reads
-top-to-bottom as the calculation itself: each line calls one step, and each step does its
-slice of the math **and** registers its own `breakdown.add(...)` lines, so the explanation
-the UI renders travels with the code that computes the number.
+`BackEnd/BL/analyze/` is the core of the product, split in two so the math stays clean and the
+explanation cannot drift from it:
+
+* **The engine.** `compute_brrr(payload)` / `compute_flip(payload)` run the calculation and return a
+  frozen `BrrrCalc` / `FlipCalc` record (`brrr_calc.py`, `flip_calc.py`) holding every number the
+  calculation produces: dollar basis, intermediates and headline metrics, as unrounded `Decimal`s.
+  The orchestrator reads top-to-bottom as the calculation itself; each line calls one pure step
+  from `brrrSteps/` / `flipSteps/`, and the shared primitives live in `common/deal_math.py`. No
+  strings, no formatting, nothing about the PDF.
+* **The explanation.** `explain/brrr.py` / `explain/flip.py` read the finished record and build the
+  `breakdowns` the PDF renders and the API and MCP pass through. Every value comes from the record;
+  every equation a step narrates is first checked against it (`check`, or the fold inside
+  `add_sum`), so a change to the math that is not mirrored in the text raises
+  `CalcExplainMismatch` instead of printing a stale formula. `tests/test_explain.py` also fails if a
+  record field is added and never explained.
+* **`analyze_*`** (validate, then calculate; what the route calls) and **`calculate_*_results`**
+  (calculation plus explanation, no validation; used when a saved deal is re-read and by the PDF
+  reports) sit on top. Both accept the request model **or** an ORM row.
 
 | # | BRRRR step (`brrrSteps/`) | Produces | | # | Flip step (`flipSteps/`) | Produces |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `dollar_basis` | dollar basis, rehab with contingency | | 1 | `dollar_basis` | dollar basis, rehab with contingency |
-| 2 | `hml_and_holding_costs` | hard-money interest & points, pre-refi holding costs | | 2 | `hml_costs` | HML amount, points, interest over the hold |
-| 3 | `operating_expenses` | monthly operating expenses | | 3 | `holding_costs` | `total_holding_costs` |
+| 2 | `hml_and_holding_costs` | hard-money amount, interest & points, pre-refi holding costs | | 2 | `hml_costs` | HML amount, points, interest over the hold |
+| 3 | `operating_expenses` | monthly operating expenses and their components | | 3 | `holding_costs` | monthly operating, `total_holding_costs` |
 | 4 | `refi_terms` | refi closing costs, points, LTV, reserve | | 4 | `selling_costs` | agent fees, selling closing costs |
-| 5 | `cash_out` | `cash_out`, `cash_out_routi`, refi loan, HML payoff | | 5 | `total_cash_needed` | `total_cash_needed(_with_buffer)` |
+| 5 | `cash_out` | `cash_out`, `cash_out_routi`, refi loan, total cash invested | | 5 | `total_cash_needed` | `total_cash_needed(_with_buffer)` and the buffer components |
 | 6 | `mortgage_payment` | monthly DSCR-loan payment | | 6 | `cost_basis` | cash invested, cost basis, gross profit |
 | 7 | `cash_flow` | NOI, **`cash_flow`** | | 7 | `net_profit` | capital-gains tax, **`net_profit`** |
-| 8 | `dscr` | **`dscr`** | | 8 | `roi` | **`roi`**, `annualized_roi` |
+| 8 | `dscr` | PITIA, **`dscr`** | | 8 | `roi` | **`roi`**, `annualized_roi` |
 | 9 | `cash_on_cash` | **`cash_on_cash`** | | | | |
 | 10 | `equity_and_net_profit` | `equity`, `net_profit` | | | | |
 | 11 | `roi` | **`roi`** | | | | |
-| 12 | `total_cash_needed` | `total_cash_needed_for_deal(_with_buffer)` | | | | |
+| 12 | `total_cash_needed` | `total_cash_needed_for_deal(_with_buffer)` and the buffer components | | | | |
 
-Shared pieces live in `BL/analyze/common/`: `deal_math.py` (pure `Decimal` primitives),
-`calc_breakdown.py` (`CalcBreakdown` and the money / percent formatters) and
-`validation.py` (range and sign checks; the one BL module allowed to raise
-`HTTPException` directly). Sentinel values `-1` and `-2` render as `∞` and `-∞`.
+Each breakdown step carries a `unit` (`money`, `pct` or `ratio`), the `formula` with the numbers
+filled in, an optional `note`, and, on sum-type steps, the `terms` that add up to its value, which
+the PDF stacks one operand per line. Sum-type totals in `deal_math.py` are flat left-to-right sums
+in the order the explanation lists the terms; that is what lets the guard use exact equality on
+unrounded Decimals. Sentinel values `-1` and `-2` render as `∞` and `-∞`.
 `tests/test_analyze.py` pins the reference results, so a formula change fails loudly.
+
+**To add a metric or an intermediate:** compute it in the engine and add a field to the record;
+`tests/test_explain.py` then tells you it is unexplained; add its step in `explain/` (an `add_sum`
+with the terms in the engine's order, or an `add` with a `check`); add it to `*_SECTIONS` if it is a
+headline metric, and the PDF summary and sections follow.
 
 ## 🎨 Frontend
 
@@ -674,7 +696,7 @@ and simple as possible; finish with a **Review** section in the same file.
 
 | I want to… | Start at |
 | --- | --- |
-| change a formula or add a metric | `BackEnd/BL/analyze/{brrrSteps,flipSteps}/<subject>.py`, then `tests/test_analyze.py` and the regression snapshots |
+| change a formula or add a metric | `BackEnd/BL/analyze/{brrrSteps,flipSteps}/<subject>.py` and the `BrrrCalc`/`FlipCalc` record, its step in `BL/analyze/explain/`, then `tests/test_analyze.py`, `tests/test_explain.py` and the regression snapshots |
 | add a field to the deal form | the [twelve-step checklist](#-adding-an-input-to-the-deal-form) above |
 | add or change an endpoint | `routers/<division>.py` → `BL/<division>/<endpoint>.py` → `DAL/crud/<division>.py` → `ReqRes/common/`; then `verify_regression.py snapshot` |
 | change what a page does | `frontend/src/views/<Page>.vue` and its store in `src/stores/`; re-record the network golden with `npm run e2e:record` in a separate `Golden update:` commit |

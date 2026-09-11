@@ -64,7 +64,7 @@ def compute_brrr(payload) -> BrrrCalc:
     hml_amount, hml_interest, hml_points, holding_costs = upfront_hml_and_holding_costs_step(
         payload, purchase_price, rehab_cost
     )
-    operating_expenses = operating_expenses_step(payload)
+    opex = operating_expenses_step(payload)
     closing_costs_buy, closing_costs_refi, ltv, refi_points, cash_reserve = refi_terms_step(payload, arv)
 
     loan_amount, down_payment_cash, total_cash_invested, cash_out_routi, cash_out = cash_out_at_refi_step(
@@ -72,7 +72,7 @@ def compute_brrr(payload) -> BrrrCalc:
         hml_points, hml_interest, closing_costs_refi, refi_points, cash_reserve, holding_costs,
     )
     mortgage_payment = mortgage_payment_step(payload, arv, ltv)
-    net_operating_income, cash_flow = cash_flow_step(payload, operating_expenses, mortgage_payment)
+    net_operating_income, cash_flow = cash_flow_step(payload, opex.total, mortgage_payment)
     pitia, dscr = dscr_step(payload, mortgage_payment)
     cash_on_cash = cash_on_cash_step(cash_out, cash_flow)
     equity, net_profit = equity_and_net_profit_step(arv, ltv, cash_reserve, cash_out)
@@ -90,7 +90,9 @@ def compute_brrr(payload) -> BrrrCalc:
         refi_points=refi_points, cash_reserve=cash_reserve,
         loan_amount=loan_amount, down_payment_cash=down_payment_cash, rehab_cash=cash_needed.rehab_cash,
         total_cash_invested=total_cash_invested, cash_out_routi=cash_out_routi, cash_out=cash_out,
-        operating_expenses=operating_expenses, mortgage_payment=mortgage_payment,
+        vacancy=opex.vacancy, management_fee=opex.management, maintenance=opex.maintenance, capex=opex.capex,
+        monthly_taxes=opex.monthly_taxes, monthly_insurance=opex.monthly_insurance,
+        operating_expenses=opex.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
         refi_shortfall=refi_shortfall,

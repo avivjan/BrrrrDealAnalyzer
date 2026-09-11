@@ -1,4 +1,4 @@
-"""BRRRR step: monthly operating expenses."""
+"""BRRRR step: monthly operating expenses, with their components."""
 
 from BL.analyze.common.deal_math import calc_montly_operating_expenses
 

@@ -61,7 +61,10 @@ INSTRUCTIONS = (
     "before subtracting what was invested. equity = ARV minus the new loan. net_profit = equity "
     "plus cash out. cash_flow = monthly, after the refinance. cash_on_cash and roi are percents; "
     "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
-    "_in_thousands or _k are thousands of dollars; every other money field is plain dollars."
+    "_in_thousands or _k are thousands of dollars; every other money field is plain dollars. "
+    "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
+    "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
+    "sum-type steps the terms (label, value, sign) that add up to its value."
 )
 
 # One line per tool, keyed by tool name (the route's function name without a

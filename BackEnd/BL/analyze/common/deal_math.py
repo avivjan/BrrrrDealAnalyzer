@@ -27,15 +27,26 @@ def get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_
     return purchase_price * (1 - down_payment_precent / Decimal("100.0")) + rehab_cost * int(use_HM_for_rehab)
 
 
-def calc_montly_operating_expenses(payload):
-    property_management_fee = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
+class OperatingExpenses(NamedTuple):
+    """Monthly operating expenses of a rental, with the components spelled out."""
+    total: Decimal
+    vacancy: Decimal
+    management: Decimal
+    maintenance: Decimal
+    capex: Decimal
+    monthly_taxes: Decimal
+    monthly_insurance: Decimal
+
+
+def calc_montly_operating_expenses(payload) -> OperatingExpenses:
+    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
+    management = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
     maintenance = payload.rent * (payload.maintenance_percent / Decimal("100.0"))
     capex = payload.rent * (payload.capex_percent_of_rent / Decimal("100.0"))
-    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
     monthly_taxes = payload.annual_property_taxes / Decimal("12.0")
     monthly_insurance = payload.annual_insurance / Decimal("12.0")
-    hoa = payload.montly_hoa
-    return monthly_taxes + monthly_insurance + property_management_fee + hoa + maintenance + capex + vacancy
+    total = vacancy + management + maintenance + capex + monthly_taxes + monthly_insurance + payload.montly_hoa
+    return OperatingExpenses(total, vacancy, management, maintenance, capex, monthly_taxes, monthly_insurance)
 
 def calc_pitia(mortgage_payment, taxes, insurance, hoa):
     """Monthly principal + interest + taxes + insurance + association dues."""
@@ -145,12 +156,11 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
     # requirement, so it is added to both totals. Flip passes 0.
     down_payment_in_cash = calc_down_payment_in_cash(down_payment_precent, purchase_price)
     rehab_cash = calc_rehab_out_of_pocket(rehab_cost, use_HM_for_rehab)
-    total_cash_needed_without_buffer = down_payment_in_cash + holding_cost_until_refi + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash + refi_shortfall
+    total_cash_needed_without_buffer = down_payment_in_cash + closing_costs_buy + HML_points_in_cash + rehab_cash + HML_interest_in_cash + holding_cost_until_refi + refi_shortfall
 
     # 1. Direct Rehab Cash (if not funded) + Float Buffer (for draws)
     # Even if HML pays, we need 10% on hand to start work/pay deposits
     rehab_float_buffer = Decimal("0.1") * rehab_cost
-    total_rehab_cash_needed = rehab_cash + rehab_float_buffer
 
     # 2. Time Contingency (The "Safety Multiplier")
     # The x1.5 accounts for delays in permits, rehab, or tenant placement
@@ -159,7 +169,9 @@ def get_total_cash_needed_for_deal(down_payment_precent, purchase_price, holding
 
     # 3. Closing Buffer
     total_closing_buy = closing_costs_buy * Decimal("1.1")
-    total_cash_needed_with_buffer = down_payment_in_cash + total_holding_cash + total_closing_buy + HML_points_in_cash + total_rehab_cash_needed + total_interest_cash + refi_shortfall
+    # Flat, left-to-right sums in the order the explanation lists the terms
+    # (BL/analyze/explain), so its guard folds them identically.
+    total_cash_needed_with_buffer = down_payment_in_cash + total_closing_buy + HML_points_in_cash + rehab_cash + rehab_float_buffer + total_interest_cash + total_holding_cash + refi_shortfall
     return TotalCashNeeded(
         without_buffer=total_cash_needed_without_buffer,
         with_buffer=total_cash_needed_with_buffer,

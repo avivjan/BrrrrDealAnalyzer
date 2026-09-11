@@ -45,7 +45,13 @@ class BrrrCalc:
     cash_out: Decimal               # cash_out_routi minus total_cash_invested
 
     # -- monthly, after the refinance -----------------------------------------
-    operating_expenses: Decimal
+    vacancy: Decimal                # rent x vacancy %
+    management_fee: Decimal         # rent x property management %
+    maintenance: Decimal            # rent x maintenance %
+    capex: Decimal                  # rent x capex %
+    monthly_taxes: Decimal
+    monthly_insurance: Decimal
+    operating_expenses: Decimal     # the six above + HOA
     mortgage_payment: Decimal
     net_operating_income: Decimal   # rent minus operating expenses
     cash_flow: Decimal              # NOI minus mortgage payment

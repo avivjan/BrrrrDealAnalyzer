@@ -164,25 +164,25 @@ Restructure (commit 1; `pytest tests/test_analyze.py` green throughout, goldens 
 - [x] **C6** (25 min) — `explain/flip.py` with guards.
 
 Wording + layout (commit 2):
-- [ ] **C7** (30 min) — `CalcStep` fields with descriptions, `sum_step` (guard + text + terms),
+- [x] **C7** (30 min) — `CalcStep` fields with descriptions, `sum_step` (guard + text + terms),
   explain modules rewritten onto it, notes split out, `*_SECTIONS` tables; frontend types.
-- [ ] **C8** (30 min) — `deal_pdf.py`: unit-driven values, stacked terms, notes, headline in section
+- [x] **C8** (30 min) — `deal_pdf.py`: unit-driven values, stacked terms, notes, headline in section
   heading, sections derived from `*_SECTIONS`; render both PDFs locally and eyeball them.
-- [ ] **C9** (35 min) — `tests/test_explain.py` (coverage proxy, value-is-a-field, guard fires, units,
+- [x] **C9** (35 min) — `tests/test_explain.py` (coverage proxy, value-is-a-field, guard fires, units,
   terms reconcile) and the two pypdf content tests (rule 3: unit + integration; E2E golden re-recorded).
-- [ ] **C10** (20 min) — Re-record goldens; one-off script diffs old vs new `calculations.json` and
+- [x] **C10** (20 min) — Re-record goldens; one-off script diffs old vs new `calculations.json` and
   `pdf-report.json` and asserts only `formula`/`unit`/`note`/`terms` keys changed; measure one
   `get_deal` JSON size before/after for the PR description.
-- [ ] **C11** (10 min) — MCP (rule 4): no new endpoint; `outputSchema` gains the new `CalcStep` fields
+- [x] **C11** (10 min) — MCP (rule 4): no new endpoint; `outputSchema` gains the new `CalcStep` fields
   automatically; add the `unit` line to the glossary; `test_mcp*.py` green.
-- [ ] **C12** (10 min) — READMEs and docstrings: engine vs explain layer; how to add a metric (engine
+- [x] **C12** (10 min) — READMEs and docstrings: engine vs explain layer; how to add a metric (engine
   field, explain step, the coverage test tells you if you forgot).
-- [ ] **C13** (5 min) — Security task (`.claude/security.md`): "Please check through all the code you
+- [x] **C13** (5 min) — Security task (`.claude/security.md`): "Please check through all the code you
   just wrote and make sure it follows security best practices. make sure there are no sensitive
   information in the frontend and there are no vulnerabilities that can be exploited throughout all the
   code in this repo." Expected: no new inputs or endpoints, no secrets; guard errors never echo payload
   data; `pypdf` is test-only.
-- [ ] **C14** (15 min) — Full `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`;
+- [x] **C14** (15 min) — Full `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`;
   commit, push, PR.
 
 ## Verification
@@ -199,4 +199,61 @@ Wording + layout (commit 2):
 
 ## Review
 
-_(filled in when the work is done)_
+**What changed.** The calculator is now two layers. `compute_brrr` / `compute_flip`
+(`BL/analyze/analyzeBRRR.py`, `analyzeFlip.py`) run pure steps and return a frozen `BrrrCalc` /
+`FlipCalc` record of every number produced (`brrr_calc.py`, `flip_calc.py`); the 20 step files
+lost the `breakdown` parameter, every `breakdown.add`, the `_brrr_`/`_flip_` narrative locals and
+all string formatting. `deal_math.py` exposes what it used to hide (`calc_pitia`,
+`calc_total_cash_invested`, `OperatingExpenses` and `TotalCashNeeded` NamedTuples), so no
+intermediate is re-derived for the text. The narrative lives in `BL/analyze/explain/brrr.py` and
+`flip.py`: they read the record and the payload, never compute a number, and guard every equation
+they state with `check(...)` or the left-to-right fold inside `add_sum(...)`, which raises
+`CalcExplainMismatch` (an explicit raise, not `assert`, so it survives `python -O`; the message
+names the step only). Sum-type totals in `deal_math.py` are flat left-to-right sums in the order
+the explanation lists the terms, which is what lets the guards use exact `==` on unrounded
+Decimals with no tolerance.
+
+**Schema (additive).** `CalcStep` gained `unit` (`money` / `pct` / `ratio`), `note`, and, on
+sum-type steps, `terms` (`CalcTerm`: label, value, sign); every field is described, so the MCP
+output schemas carry them. Labels are unchanged. Three steps were added (BRRRR "Rehab Cost (with
+contingency)" and "PITIA", Flip "Monthly Operating Costs") and two sections reordered to read in
+calculation order (NOI before the mortgage; cash flow before cash out). A one-off diff against a
+12-scenario baseline captured from `main` showed every headline value identical and every old
+(label, value) pair still present.
+
+**PDF.** `deal_pdf.py` formats every value by the step's unit (the label-based guessing and the
+duplicated key/label tables are gone; `BRRR_SECTIONS` / `FLIP_SECTIONS` in the explain modules
+drive both the summary table and the section order), stacks sum-type steps one operand per line
+with the total in bold, prints notes under the formula, shows the headline value in each section
+heading, keeps headings with their table, and escapes the address (a `<` in an address used to
+break the report). The table header text was invisible on the navy band (Paragraph ignores the
+row TEXTCOLOR); fixed.
+
+**Tests (rule 3).** `tests/test_explain.py` (+40): every `BrrrCalc` / `FlipCalc` field is read by
+its explain function across a scenario matrix (hard money vs cash rehab, refi surplus vs
+shortfall, positive vs negative cash flow, positive vs negative cash out, 0% loan, PITIA 0, cash
+reserve; flip profit vs loss, no cash in with profit / loss / break-even, zero holding time),
+asserted on the union of reads so branch-only fields never false-fail; every emitted step value is
+a record field; every sum step's terms add up; guards fire on a drifted record and the error
+carries no numbers; units are right; the PDF text (read back with `pypdf`) contains the headline
+values, a stacked term, a subtracted term, a note and the escaped address. Existing suites
+unchanged: backend 317 passed, frontend 1372 passed, `vue-tsc` build green. Backend goldens
+re-recorded (`verify_regression.py verify` green); the frontend network-contract goldens that
+embed breakdowns were re-recorded with `npm run e2e:record` on chromium.
+
+**Payload growth (owner's watch item).** A single BRRRR analysis response grows from 6.0 kB to
+12.0 kB, a Flip one from 5.2 kB to 9.0 kB, all of it `terms` on the 12-14 sum-type steps. Compact
+`/deals` rows are unaffected; `get_active_deals` / `get_bought_deals` grow by that much per deal.
+
+**MCP (rule 4).** No new endpoint. `outputSchema` picks up the new `CalcStep` fields from OpenAPI;
+the glossary in `mcp_server.py` explains `unit` and `terms`. `tools/list` stays under its 200 kB
+budget (`tests/test_mcp.py`).
+
+**Security task (C13).** No new inputs or endpoints; the report recomputes breakdowns from the
+validated body and never renders request-supplied breakdown text; the address is now escaped
+before reportlab's mini-HTML parser sees it; guard errors never echo deal numbers; `pypdf` is a
+test-only dependency; no secrets in the diff (scanned).
+
+**Follow-up worth considering.** With the narrative gone, several step files are one-line
+wrappers around `deal_math` helpers; folding them into the orchestrators would remove a layer of
+indirection. Left as is here to keep the diff to the plan.
