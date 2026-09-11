@@ -29,3 +29,5 @@ mcp==1.29.1
 pytest==9.1.1
 pytest-cov==7.1.0
 httpx==0.28.1
+# pypdf reads the text back out of the generated reports (tests/test_explain.py).
+pypdf==6.18.0

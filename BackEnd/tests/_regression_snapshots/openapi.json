@@ -3888,17 +3888,58 @@
         "type": "object"
       },
       "CalcStep": {
-        "description": "A single self-documenting line in a calculation.\n\n`label`   - human-readable name of the variable (\"Operating Expenses\").\n`value`   - the numeric result of the step (always a float for JSON).\n`formula` - the literal expression evaluated, with concrete values\n            substituted (e.g. \"$2000 - $800 - $1000 = $200\").",
+        "description": "A single self-documenting line in a calculation.\n\n`label`   - human-readable name of the variable (\"Operating Expenses\").\n`value`   - the numeric result of the step (always a float for JSON).\n`unit`    - how to read `value`: dollars, a percentage or a plain ratio.\n`formula` - the literal expression evaluated, with concrete values\n            substituted (e.g. \"$2000 - $800 - $1000 = $200\").\n`terms`   - for a sum-type step, the same expression as structured operands\n            (they add up to `value`), so a renderer can stack them.\n`note`    - an optional aside explaining a convention or a special case.",
         "properties": {
           "formula": {
+            "description": "The expression evaluated, with the concrete numbers filled in.",
             "title": "Formula",
             "type": "string"
           },
           "label": {
+            "description": "Human-readable name of the step, e.g. 'Net Operating Income (NOI)'.",
             "title": "Label",
             "type": "string"
           },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional aside: a convention or special case behind this step.",
+            "title": "Note"
+          },
+          "terms": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CalcTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a sum-type step: the operands of `formula`, in order; they add up to `value`. Absent on other steps.",
+            "title": "Terms"
+          },
+          "unit": {
+            "default": "money",
+            "description": "How to read `value`: 'money' = dollars, 'pct' = percent (12.5 = 12.5%), 'ratio' = a plain multiple (1.2 = 1.2x).",
+            "enum": [
+              "money",
+              "pct",
+              "ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
           "value": {
+            "description": "The step's result. Read it with `unit`; -1 and -2 are the infinite / undefined sentinels on percentage steps.",
             "title": "Value",
             "type": "number"
           }
@@ -3909,6 +3950,37 @@
           "formula"
         ],
         "title": "CalcStep",
+        "type": "object"
+      },
+      "CalcTerm": {
+        "description": "One operand of a sum-type calculation step, in dollars.",
+        "properties": {
+          "label": {
+            "description": "Name of the operand, e.g. 'Down Payment'.",
+            "title": "Label",
+            "type": "string"
+          },
+          "sign": {
+            "default": "+",
+            "description": "Whether the operand is added or subtracted.",
+            "enum": [
+              "+",
+              "-"
+            ],
+            "title": "Sign",
+            "type": "string"
+          },
+          "value": {
+            "description": "The operand's value in dollars.",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "CalcTerm",
         "type": "object"
       },
       "CeremonyOptionsRes": {
