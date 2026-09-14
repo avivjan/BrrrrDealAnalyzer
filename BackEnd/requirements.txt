@@ -16,7 +16,7 @@ pyOpenSSL==26.4.0
 python-dotenv==1.2.3
 
 google-api-python-client==2.200.0
-google-auth==2.57.1
+google-auth==2.58.0
 google-auth-httplib2==0.4.2
 google-cloud-storage==3.13.1
 
