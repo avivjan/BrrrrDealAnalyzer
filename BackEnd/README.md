@@ -46,11 +46,15 @@ BL/                 # Framework-agnostic business logic. Takes/returns plain
   <division>/         # Python types, Pydantic models, or a DB Session -- never
     <endpoint>.py     # a FastAPI Request/Response. One flat module per
     common/           # endpoint, plus common/ for what that division shares.
-  analyze/            # The calc engine -- the core of the product:
-    analyzeBRRR.py    #   analyze_brrr()  + calculate_brrr_results()
-    analyzeFlip.py    #   analyze_flip()  + calculate_flip_results()
-    brrrSteps/        #   one file per calculation subject (cash_flow, dscr,
+  analyze/            # The results engine -- the core of the product:
+    analyzeBRRR.py    #   analyze_brrr() + calculate_brrr_results() + compute_brrr_with_intermediates()
+    analyzeFlip.py    #   analyze_flip() + calculate_flip_results() + compute_flip_with_intermediates()
+    brrr_results_with_intermediates.py      #   BrrrResultsWithIntermediates / FlipResultsWithIntermediates: the frozen record of every number
+    flip_results_with_intermediates.py      #   the calculation produces
+    brrrSteps/        #   one pure step per calculation subject (cash_flow, dscr,
     flipSteps/        #   roi, total_cash_needed, ...)
+    explain/          #   the breakdown narrative, built from the record and
+                      #   guarded against it (brrr.py, flip.py)
     common/           #   deal_math, calc_breakdown, validation
   common/             # deal_response: ORM row -> *Res, shared by the
                      # activeDeal and boughtDeal divisions.
@@ -72,12 +76,16 @@ across that division's endpoints. `ReqRes/` still nests one folder per endpoint
 (`ReqRes/liquidity/createRecurring/`), holding the two thin re-export modules.
 
 `BL/analyze/` is the exception worth knowing: it holds the whole BRRRR/Flip
-calculation. `analyzeBRRR.py` and `analyzeFlip.py` each carry both the
-validate-then-calculate entry point and the orchestrator underneath it, and the
-orchestrator reads top-to-bottom as the calculation itself -- each line calls
-one `*_step` from `brrrSteps/` / `flipSteps/`, where a step does its slice of
-the math *and* registers its own `breakdown.add()` lines, so the explanation
-the frontend renders travels with the code that computes the value.
+calculation, in two layers. `compute_brrr_with_intermediates()` / `compute_flip_with_intermediates()` are the pure
+engine: the orchestrator reads top-to-bottom as the calculation itself, each
+line calls one pure `*_step` from `brrrSteps/` / `flipSteps/`, and the result
+is a frozen `BrrrResultsWithIntermediates` / `FlipResultsWithIntermediates` record of every number produced. The
+narrative behind those numbers lives in `explain/`, which reads the record,
+never recomputes, and guards every equation it states (`check` / `add_sum`),
+so a math change that is not mirrored in the text raises instead of printing
+a stale formula; `tests/test_explain.py` fails if a record field is never
+explained. `calculate_*_results()` is engine + explanation as the response
+model, and `analyze_*()` validates first.
 
 ### Tests
 

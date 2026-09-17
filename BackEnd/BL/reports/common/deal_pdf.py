@@ -3,8 +3,10 @@
 Renders a one-shot, professional report with:
   1. Property header (address + deal type badge)
   2. High-level results summary table
-  3. "Calculation Breakdown" - the self-documenting CalcSteps emitted by
-     `calculate_brrr_results` / `calculate_flip_results`, grouped per metric.
+  3. "Calculation Breakdown" - the CalcSteps the explain layer
+     (`BL/analyze/explain/`) derives from the calculation, grouped per metric:
+     sum-type steps are stacked one operand per line, every value is formatted
+     by the unit the step carries, notes appear under the formula.
   4. Branded footer + disclaimer on every page.
 
 The renderer is intentionally tolerant of unknown shapes: it accepts a plain
@@ -16,6 +18,7 @@ from __future__ import annotations
 
 import io
 from datetime import datetime
+from xml.sax.saxutils import escape
 from typing import Any, Iterable
 
 from reportlab.lib import colors
@@ -30,6 +33,9 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+from BL.analyze.explain.brrr import BRRR_SECTIONS
+from BL.analyze.explain.flip import FLIP_SECTIONS
 
 
 # Big Whales brand palette.
@@ -71,13 +77,22 @@ def _pct(v: Any, decimals: int = 2) -> str:
     return f"{f:.{decimals}f}%"
 
 
-def _num(v: Any, decimals: int = 2) -> str:
+def _ratio(v: Any, decimals: int = 2) -> str:
     if v is None:
         return "-"
     try:
-        return f"{float(v):.{decimals}f}"
+        return f"{float(v):.{decimals}f}x"
     except (TypeError, ValueError):
         return "-"
+
+
+# How a value reads, by the `unit` the explain layer stamps on every step and
+# section: dollars, a percentage, or a plain multiple (DSCR).
+_FORMAT = {"money": _money, "pct": _pct, "ratio": _ratio}
+
+
+def _fmt(unit: str, v: Any) -> str:
+    return _FORMAT.get(unit, _money)(v)
 
 
 def _styles() -> dict[str, ParagraphStyle]:
@@ -102,6 +117,7 @@ def _styles() -> dict[str, ParagraphStyle]:
             "BWH3", parent=base["Heading3"],
             fontName="Helvetica-Bold", fontSize=12,
             textColor=BRAND_BLUE, spaceBefore=10, spaceAfter=4,
+            keepWithNext=1,
         ),
         "body": ParagraphStyle(
             "BWBody", parent=base["Normal"],
@@ -113,6 +129,16 @@ def _styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica", fontSize=8,
             textColor=BRAND_MUTED, leading=11, alignment=TA_CENTER,
         ),
+        "term": ParagraphStyle(
+            "BWTerm", parent=base["Normal"],
+            fontName="Helvetica", fontSize=9.5,
+            textColor=BRAND_INK, leading=13,
+        ),
+        "note": ParagraphStyle(
+            "BWNote", parent=base["Normal"],
+            fontName="Helvetica-Oblique", fontSize=8.5,
+            textColor=BRAND_MUTED, leading=11, spaceBefore=2,
+        ),
         "badge": ParagraphStyle(
             "BWBadge", parent=base["Normal"],
             fontName="Helvetica-Bold", fontSize=9,
@@ -121,95 +147,59 @@ def _styles() -> dict[str, ParagraphStyle]:
     }
 
 
-# Order of (key, label) tuples used to render the high-level summary tables
-# at the top of the report. Anything missing from `result` is skipped.
-_BRRR_SUMMARY = [
-    ("cash_flow", "Monthly Cash Flow", _money),
-    ("dscr", "DSCR", _num),
-    ("cash_on_cash", "Cash on Cash", _pct),
-    ("roi", "ROI", _pct),
-    ("net_profit", "Net Profit", _money),
-    ("equity", "Equity (post-refi)", _money),
-    ("cash_out", "Cash Out from Deal", _money),
-    ("total_cash_needed_for_deal", "Total Cash Needed", _money),
-    ("total_cash_needed_for_deal_with_buffer", "Cash Needed (Buffered)", _money),
-]
-
-_FLIP_SUMMARY = [
-    ("net_profit", "Net Profit", _money),
-    ("roi", "ROI", _pct),
-    ("annualized_roi", "Annualized ROI", _pct),
-    ("total_holding_costs", "Total Holding Costs", _money),
-    ("total_hml_interest", "Total HML Interest", _money),
-    ("total_cash_needed", "Total Cash Needed", _money),
-    ("total_cash_needed_with_buffer", "Cash Needed (Buffered)", _money),
-]
-
-# Order in which to render the breakdown sections. Keys not present are skipped.
-# Mirrors the order of the high-level Summary tables above so the reader can
-# scan top-to-bottom and find the explanation for each headline number.
-_BRRR_BREAKDOWN_ORDER = [
-    ("cash_flow", "Cash Flow"),
-    ("dscr", "DSCR"),
-    ("cash_on_cash", "Cash on Cash"),
-    ("roi", "ROI"),
-    ("net_profit", "Net Profit"),
-    ("equity", "Equity (post-refi)"),
-    ("cash_out", "Cash Out from Deal"),
-    ("total_cash_needed_for_deal", "Total Cash Needed"),
-    ("total_cash_needed_for_deal_with_buffer", "Cash Needed (Buffered)"),
-]
-
-_FLIP_BREAKDOWN_ORDER = [
-    ("net_profit", "Net Profit"),
-    ("roi", "ROI"),
-    ("annualized_roi", "Annualized ROI"),
-    ("total_holding_costs", "Total Holding Costs"),
-    ("total_hml_interest", "Total HML Interest"),
-    ("total_cash_needed", "Total Cash Needed"),
-    ("total_cash_needed_with_buffer", "Cash Needed (Buffered)"),
-]
+# The headline metrics come from the explain layer, one list per deal type:
+# (result field, label, unit). The same list drives the summary table at the
+# top of the report and the order of the breakdown sections below it.
+def _sections(deal_type: str) -> list[tuple[str, str, str]]:
+    return BRRR_SECTIONS if deal_type == "BRRRR" else FLIP_SECTIONS
 
 
 def _summary_rows(result: dict, deal_type: str) -> list[list[str]]:
-    schema = _BRRR_SUMMARY if deal_type == "BRRRR" else _FLIP_SUMMARY
     rows = [["Metric", "Value"]]
-    for key, label, fmt in schema:
+    for key, label, unit in _sections(deal_type):
         if key in result and result.get(key) is not None:
-            rows.append([label, fmt(result[key])])
+            rows.append([label, _fmt(unit, result[key])])
     return rows
 
 
-# Breakdown steps are money unless their label says otherwise: the calc steps
-# register ROI / CoC as percentages and DSCR as a ratio (see brrrSteps/roi.py,
-# cash_on_cash.py, dscr.py and flipSteps/roi.py).
-_BREAKDOWN_PCT_LABELS = {"ROI", "Annualized ROI", "Cash on Cash"}
-_BREAKDOWN_RATIO_LABELS = {"DSCR"}
+def _formula_cell(step: dict, styles: dict[str, ParagraphStyle]) -> list[Any]:
+    """The middle column of a breakdown row.
 
-
-def _breakdown_value(label: str, value: Any) -> str:
-    if label in _BREAKDOWN_PCT_LABELS:
-        return _pct(value)
-    if label in _BREAKDOWN_RATIO_LABELS:
-        text = _num(value)
-        return text if text == "-" else f"{text}x"
-    return _money(value)
+    A sum-type step (one carrying `terms`) is stacked one operand per line with
+    its sign in front and the total on a final bold line, instead of a single
+    wrapped sentence. Any other step shows its `formula` text. A `note`, when
+    present, follows in small muted type.
+    """
+    cell: list[Any] = []
+    terms = step.get("terms") or []
+    if terms:
+        for i, term in enumerate(terms):
+            sign = "" if i == 0 else ("+ " if term.get("sign", "+") == "+" else "\u2212 ")
+            cell.append(Paragraph(
+                f"{sign}{term.get('label', '')} <font color='#6B7280'>{_money(term.get('value'))}</font>",
+                styles["term"],
+            ))
+        cell.append(Paragraph(f"= <b>{_fmt(step.get('unit', 'money'), step.get('value'))}</b>", styles["term"]))
+    else:
+        cell.append(Paragraph(step.get("formula", ""), styles["body"]))
+    if step.get("note"):
+        cell.append(Paragraph(step["note"], styles["note"]))
+    return cell
 
 
 def _breakdown_table(steps: Iterable[dict], styles: dict[str, ParagraphStyle]) -> Table:
+    # Header cells are Paragraphs, which ignore the table's TEXTCOLOR, so the
+    # white is set inline.
     rows: list[list[Any]] = [[
-        Paragraph("<b>Step</b>", styles["body"]),
-        Paragraph("<b>Formula</b>", styles["body"]),
-        Paragraph("<b>Value</b>", styles["body"]),
+        Paragraph("<font color='white'><b>Step</b></font>", styles["body"]),
+        Paragraph("<font color='white'><b>Formula</b></font>", styles["body"]),
+        Paragraph("<font color='white'><b>Value</b></font>", styles["body"]),
     ]]
     for step in steps:
-        label = step.get("label", "")
-        formula = step.get("formula", "")
-        value = step.get("value")
         rows.append([
-            Paragraph(label, styles["body"]),
-            Paragraph(formula, styles["body"]),
-            Paragraph(f"<b>{_breakdown_value(label, value)}</b>", styles["body"]),
+            Paragraph(step.get("label", ""), styles["body"]),
+            _formula_cell(step, styles),
+            Paragraph(f"<b>{_fmt(step.get('unit', 'money'), step.get('value'))}</b>", styles["body"]),
         ])
     table = Table(rows, colWidths=[1.6 * inch, 4.0 * inch, 1.1 * inch], repeatRows=1)
     table.setStyle(TableStyle([
@@ -263,7 +253,8 @@ def _header_block(address: str, deal_type: str, styles: dict[str, ParagraphStyle
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
-    title = Paragraph(f"<b>{address or 'Property'}</b>", styles["title"])
+    # The address is user text and Paragraph speaks a mini-HTML: escape it.
+    title = Paragraph(f"<b>{escape(address or 'Property')}</b>", styles["title"])
     sub = Paragraph(
         f"Deal Report &middot; Generated {datetime.now().strftime('%b %d, %Y')}",
         styles["subtitle"],
@@ -356,12 +347,12 @@ def build_deal_pdf(
         styles["body"],
     ))
 
-    order = _BRRR_BREAKDOWN_ORDER if deal_type == "BRRRR" else _FLIP_BREAKDOWN_ORDER
-    for key, label in order:
+    for key, label, unit in _sections(deal_type):
         steps = breakdowns.get(key)
         if not steps:
             continue
-        flow.append(Paragraph(label, styles["h3"]))
+        headline = f" &middot; {_fmt(unit, result[key])}" if result.get(key) is not None else ""
+        flow.append(Paragraph(f"{label}{headline}", styles["h3"]))
         flow.append(_breakdown_table(steps, styles))
         flow.append(Spacer(1, 0.1 * inch))
 

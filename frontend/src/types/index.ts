@@ -74,14 +74,27 @@ export interface BrrrAnalyzeReq {
   capexPercent: number;
 }
 
+/** One operand of a sum-type calculation step, in dollars. */
+export interface CalcTerm {
+  label: string;
+  value: number;
+  sign: '+' | '-';
+}
+
 /**
- * One self-documenting line in a calculation, emitted by the backend next to
- * the source variable. Frontend uses these to render hover/PDF explanations.
+ * One self-documenting line in a calculation, emitted by the backend's
+ * explain layer. Rendered by the PDF report; passed through by the API.
  */
 export interface CalcStep {
   label: string;
   value: number;
+  /** How to read `value`: dollars, percent (12.5 = 12.5%) or a plain ratio. */
+  unit?: 'money' | 'pct' | 'ratio';
   formula: string;
+  /** Sum-type steps only: the operands of `formula`, adding up to `value`. */
+  terms?: CalcTerm[];
+  /** Optional aside: a convention or special case behind this step. */
+  note?: string;
 }
 
 /**
