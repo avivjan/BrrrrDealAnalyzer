@@ -11,10 +11,13 @@
  * ADDING A NEW INPUT FIELD — the full checklist
  * ---------------------------------------------------------------------------
  * Frontend
- *  1. This file — add the <MoneyInput> / <NumberInput> / <SliderField> to the
- *     right section. Read with `get(...)`, write with `set(...)`. Money fields
- *     stored in thousands pass `:inThousands` — the input then shows real
- *     dollars and scales on the way in and out.
+ *  1. BRRRR: the lifecycle section that owns the input, under
+ *     `components/deal/brrr/` (Buy, Rehab, RentHolding, Refinance). Read with
+ *     `f.get(...)`, write with `f.set(...)` (`useDealField`); a "null = formula
+ *     default" field uses `AutoDefaultMoneyInput` + `f.getNullable/setNullable`.
+ *     Give it `:info="impactText('<field>')"` and add the field to
+ *     `config/brrrInputImpacts.ts`; an inline figure goes in `utils/brrrAutoCalc.ts`.
+ *     FLIP: this file. Money fields stored in thousands pass `:inThousands`.
  *  2. `types/index.ts` — add the field to `BaseDealReq` (shared by both deal
  *     types) or `BrrrAnalyzeReq` / `FlipAnalyzeReq` (type-specific).
  *     `DealInputModel`, `*DealCreate` and `AnalyzeDealReq` pick it up for free.
@@ -25,25 +28,25 @@
  *  4. `utils/dealUtils.ts` — add bounds checks to `validateDealInputs`.
  *
  * Backend
- *  5. `ReqRes/analyzeBRRR/analyzeBRRRReq.py` and/or
- *     `ReqRes/analyzeFlip/analyzeFlipReq.py`  (the /analyze/* endpoints), and
- *     `ReqRes/activeDeal/activeDealReq.py`    (BaseDealReq / *ActiveDealCreate).
- *     `ReqRes/boughtDeal/boughtDealReq.py` inherits — verify, don't duplicate.
+ *  5. BRRRR lifecycle input: `ReqRes/common/brrr_lifecycle_inputs.py` (one
+ *     declaration, inherited by the calculator request and the saved-deal
+ *     models). Shared or FLIP input: `ReqRes/common/analyze_inputs.py` and
+ *     `ReqRes/common/base_deal.py` / `active_deal_schemas.py`.
  *     The Pydantic `alias=` MUST equal the field name used here.
- *  6. `ReqRes/analyzeBRRRRes.py` / `analyzeFlipRes.py` — only for computed
- *     *output* metrics, not raw inputs.
- *  7. `models.py` — add the Column to the `BaseDeal` mixin (shared) or to ALL
- *     FOUR of BrrrActiveDeal / FlipActiveDeal / BoughtBrrrDeal / BoughtFlipDeal.
- *  8. `main.py` `_run_migrations()` — call `_add_column_if_missing` for every
- *     affected existing table. The migration DEFAULT must match the model
- *     `default=` and the Pydantic default, because `update_*_deal` dumps every
- *     field (no `exclude_unset`) on each PUT.
- *  9. `main.py` — wire it into `calculate_brrr_results` / `calculate_flip_results`
- *     and `validate_*_inputs`; register a CalcStep if it feeds a headline metric.
- * 10. `crud_active_deal.py` / `crud_bought_deal.py` — no change expected (they
- *     iterate `__table__.columns` dynamically). Just confirm.
- * 11. `deal_pdf.py` — only if it's a headline metric.
- * 12. Extend `DealInputsForm.test.ts` and any backend calc test.
+ *  6. `ReqRes/common/analyze_results.py` — only for computed *output* metrics.
+ *  7. `DAL/data_models/common/brrr_lifecycle.py` (BRRRR, both tables at once),
+ *     `common/base_deal.py` (shared) or the Flip classes in `activeDeal/` +
+ *     `boughtDeal/deals.py`.
+ *  8. `migrations/steps/brrr_lifecycle_columns.py` (BRRRR) or
+ *     `migrations/runner.py`. The DDL DEFAULT must match the model `default=`
+ *     and the Pydantic default, because `update_*_deal` dumps every field on PUT.
+ *  9. `BL/analyze/brrrSteps/` — use it in the step that owns the subject, add
+ *     any intermediate to `brrr_results_with_intermediates.py`, explain it in
+ *     `BL/analyze/explain/brrr.py`, bound it in `BL/analyze/common/validation.py`.
+ * 10. `DAL/crud/` — no change expected (they iterate `__table__.columns`).
+ * 11. `BRRR_SECTIONS` in `explain/brrr.py` — only if it's a headline metric.
+ * 12. Extend `DealInputsForm.test.ts`, `brrrAutoCalc.test.ts`,
+ *     `tests/test_brrr_lifecycle.py`; re-record the backend goldens.
  *
  * ---------------------------------------------------------------------------
  * IMPORTANT: this component mutates `props.deal` IN PLACE.
@@ -55,10 +58,12 @@
  * emitting a new one — exactly what the three inlined copies of this form did
  * before they were merged here.
  */
-import DaysUntilRefiField from "./ui/DaysUntilRefiField.vue";
+import BuySection from "./deal/brrr/BuySection.vue";
+import RehabSection from "./deal/brrr/RehabSection.vue";
+import RentHoldingSection from "./deal/brrr/RentHoldingSection.vue";
+import RefinanceSection from "./deal/brrr/RefinanceSection.vue";
 import MoneyInput from "./ui/MoneyInput.vue";
 import NumberInput from "./ui/NumberInput.vue";
-import SliderField from "./ui/SliderField.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import { computed } from "vue";
 import { useId } from "vue";
@@ -170,7 +175,20 @@ const subHeading = computed(() => "h4" as const);
     :data-surface="surface"
     class="group data-[surface=card]:space-y-8 data-[surface=panel]:space-y-6"
   >
-  <!-- Group 1: Buy & Rehab (shared by BRRRR + FLIP) -->
+  <!--
+    BRRRR follows the deal's lifecycle: Buy, Rehab, Rent & Holding, Refinance
+    (`components/deal/brrr/`). Each section reads and writes `deal` in place through
+    `useDealField` and shows its auto-calculated figures beside the inputs.
+  -->
+  <template v-if="isBrrr">
+    <BuySection :deal="deal" :surface="surface" />
+    <RehabSection :deal="deal" :surface="surface" />
+    <RentHoldingSection :deal="deal" :surface="surface" />
+    <RefinanceSection :deal="deal" :surface="surface" />
+  </template>
+
+  <template v-else>
+  <!-- FLIP: Buy & Rehab -->
   <!--
     `v-reveal` (no `.stagger`) on each section: the four groups are the form's
     own boxes, so the directive animates the element itself. Mount-time only,
@@ -279,99 +297,8 @@ const subHeading = computed(() => "h4" as const);
     </div>
   </section>
 
-  <!-- Group 2a: Refinance (BRRRR only) -->
-  <section
-    v-if="isBrrr"
-    v-reveal
-    :data-surface="surface"
-    class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
-           data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
-  >
-    <UiSectionHeader :as="sectionHeading" class="mb-4">
-      <span class="flex items-center gap-2">
-        <span class="grid h-7 w-7 place-items-center rounded-ctl bg-primary/12 text-primary" aria-hidden="true"><i class="pi pi-refresh text-xs"></i></span> Refinance (BRRRR)
-      </span>
-    </UiSectionHeader>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <MoneyInput
-        data-testid="form.field.arv_in_thousands"
-        :model-value="get('arv_in_thousands')"
-        @update:model-value="(v: number | null) => set('arv_in_thousands', v)"
-        label="ARV"
-        :inThousands="true"
-        :required="true"
-      />
-      <SliderField
-        data-testid="form.field.ltv_as_precent"
-        :model-value="get('ltv_as_precent')"
-        @update:model-value="(v: number | null) => set('ltv_as_precent', v)"
-        label="LTV"
-        :min="0"
-        :max="100"
-        :sliderMin="1"
-        :sliderMax="100"
-        :step="0.1"
-        suffix="%"
-        :required="true"
-      />
-
-      <DaysUntilRefiField
-        data-testid="form.field.daysUntilRefi"
-        :model-value="get('daysUntilRefi')"
-        @update:model-value="(v: number | null) => set('daysUntilRefi', v)"
-        label="Days until Refi"
-        :required="true"
-      />
-      <MoneyInput
-        data-testid="form.field.closingCostsRefi"
-        :model-value="get('closingCostsRefi')"
-        @update:model-value="(v: number | null) => set('closingCostsRefi', v)"
-        label="Refi Closing Costs"
-        :inThousands="true"
-      />
-      <NumberInput
-        data-testid="form.field.refiPoints"
-        :model-value="get('refiPoints')"
-        @update:model-value="(v: number | null) => set('refiPoints', v)"
-        label="Refi Points"
-        suffix=" pts"
-        :min="0"
-        :max="100"
-      />
-      <MoneyInput
-        data-testid="form.field.cashReserve"
-        :model-value="get('cashReserve')"
-        @update:model-value="(v: number | null) => set('cashReserve', v)"
-        label="Cash Reserve (escrowed at refi)"
-        :inThousands="true"
-      />
-
-      <SliderField
-        data-testid="form.field.interestRate"
-        :model-value="get('interestRate')"
-        @update:model-value="(v: number | null) => set('interestRate', v)"
-        label="Long Term Interest Rate"
-        :min="0"
-        :max="100"
-        :sliderMin="3"
-        :sliderMax="12"
-        :step="0.05"
-        suffix="%"
-        :required="true"
-      />
-      <NumberInput
-        data-testid="form.field.loanTermYears"
-        :model-value="get('loanTermYears')"
-        @update:model-value="(v: number | null) => set('loanTermYears', v)"
-        label="Loan Term"
-        suffix=" Years"
-      />
-    </div>
-  </section>
-
   <!-- Group 2b: Flip Strategy (FLIP only) -->
   <section
-    v-else
     v-reveal
     :data-surface="surface"
     class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
@@ -557,5 +484,6 @@ const subHeading = computed(() => "h4" as const);
     </div>
   </section>
 
+  </template>
   </div>
 </template>

@@ -15,6 +15,7 @@
  *   decimals as you like.
  */
 import InputNumber from "primevue/inputnumber";
+import InputInfo from "./InputInfo.vue";
 import { useId } from "vue";
 
 defineProps<{
@@ -27,6 +28,10 @@ defineProps<{
   max?: number;
   step?: number;
   required?: boolean;
+  /** Tooltip text for the (i) beside the label (what this input affects). */
+  info?: string;
+  /** A derived reading shown at the right of the label row ("= $4,300"). */
+  note?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -49,16 +54,20 @@ const inputId = useId();
   <div class="flex flex-col gap-1.5">
     <!--
       The id of the `<input>` PrimeVue renders is `inputId` unless the caller
-      names one through `data-input-id`. `DaysUntilRefiField` does: it draws the
+      names one through `data-input-id`. `DaysOrDateField` does: it draws the
       visible label itself, and an attribute handed to this component would
       otherwise settle on the wrapper `<div>` rather than reach the field.
     -->
     <div v-if="label" data-part="label-row" class="flex h-5 items-center justify-between gap-2">
-      <label
-        :for="($attrs['data-input-id'] as string | undefined) ?? inputId"
-        data-part="label"
-        class="text-sm font-medium leading-5 text-fg"
-      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+      <span class="inline-flex min-w-0 items-center gap-1">
+        <label
+          :for="($attrs['data-input-id'] as string | undefined) ?? inputId"
+          data-part="label"
+          class="truncate text-sm font-medium leading-5 text-fg"
+        >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+        <InputInfo v-if="info" :content="info" :field-label="label" />
+      </span>
+      <span v-if="note" data-part="note" class="numeric shrink-0 truncate text-xs font-medium leading-5 text-fg-muted">{{ note }}</span>
     </div>
     <InputNumber
       data-part="input"

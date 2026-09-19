@@ -54,15 +54,11 @@ export interface BrrrAnalyzeReq {
    * under that convention, which is how existing deals were migrated.
    */
   daysUntilRefi: number;
-  closingCostsRefi: number;
-  /** % of refi loan amount; omit on request to use server default (1.5). */
+  /** @deprecated ignored by the BRRRR engine; replaced by the granular refi closing-cost fields. */
+  closingCostsRefi?: number;
+  /** Broker points at refi, % of the refi loan; omit on request to use server default. */
   refiPoints?: number;
-  /**
-   * Cash escrowed at refi and returned at exit/sale (in thousands). Not a
-   * principal paydown: the DSCR loan and its monthly payment stay on the full
-   * ARV × LTV. Omit on request to use server default (0). Reduces cash_out
-   * 1:1 and boosts equity 1:1 (net_profit unchanged, CoC and ROI drop).
-   */
+  /** @deprecated ignored by the BRRRR engine; replaced by the three reserves. */
   cashReserve?: number;
   loanTermYears: number; 
   ltv_as_precent: number; 
@@ -72,7 +68,55 @@ export interface BrrrAnalyzeReq {
   property_managment_fee_precentages_from_rent: number;
   maintenancePercent: number; 
   capexPercent: number;
+
+  // ---- Lifecycle inputs (Buy → Rehab → Rent/Holding → Refinance) -------------
+  // Plain dollars unless noted. `null` on a formula-defaulted field means "use
+  // the formula"; the backend reports the value it used as `*_effective`.
+
+  // Buy
+  /** ISO date of the purchase closing; null = unknown (date-driven figures left out). */
+  buyClosingDate?: string | null;
+  earnestMoneyDeposit?: number;
+  loanChargesBuy?: number;
+  /** null → 0.55% × purchase loan + $250 */
+  recordingTransferBuy?: number | null;
+  titleModeBuy?: TitleModeBuy;
+  /** null → $1,000 standard, or the we-pay-all tier by price */
+  titleEscrowBuy?: number | null;
+  onlineNotaryBuy?: boolean;
+  otherClosingCostsBuy?: number;
+  /** null → auto: true only for a December closing */
+  sellerPaidCurrentYearTaxes?: boolean | null;
+  // Rehab
+  /** In thousands. 0 = cash rehab. */
+  constructionLoanBudget?: number;
+  rehabCushion?: number;
+  // Rent & holding
+  daysUntilRented?: number;
+  monthlyUtilitiesUntilRented?: number;
+  maintenanceBeforeRefi?: number;
+  appliances?: number;
+  // Refinance
+  loanChargesRefi?: number;
+  /** null → 0.55% × refi loan + $250 */
+  recordingTransferRefi?: number | null;
+  /** null → $800 + 0.45% × refi loan */
+  titleEscrowRefi?: number | null;
+  onlineNotaryRefi?: boolean;
+  appraisalFee?: number;
+  surveyFee?: number;
+  refiUnderwritingFee?: number;
+  brokerProcessingFeeRefi?: number;
+  otherClosingCostsRefi?: number;
+  maintenanceReserve?: number;
+  /** null → one month of rent */
+  vacancyReserve?: number | null;
+  capexReserve?: number;
+  /** In thousands. null → 90% of ARV. Never changes the baseline ARV. */
+  lowestArv?: number | null;
 }
+
+export type TitleModeBuy = "standard" | "we_pay_all";
 
 /** One operand of a sum-type calculation step, in dollars. */
 export interface CalcTerm {
@@ -112,8 +156,33 @@ export interface BrrrAnalyzeRes {
   roi?: number;
   equity?: number;
   net_profit?: number;
+  /** Cash Needed: total_cash_invested + rehab cushion + refi shortfall. */
   total_cash_needed_for_deal?: number;
-  total_cash_needed_for_deal_with_buffer?: number;
+  cash_needed_conservative?: number;
+  total_cash_invested?: number;
+  cash_to_close_buy?: number;
+  purchase_loan_amount?: number;
+  hml_amount?: number;
+  hml_payoff?: number;
+  total_hard_money_cost?: number;
+  prepaid_interest_buy?: number;
+  seller_tax_credit?: number;
+  closing_costs_buy_total?: number;
+  stolen_money?: number;
+  pre_refi_rental_income?: number;
+  closing_costs_refi_total?: number;
+  prepaid_interest_refi?: number;
+  reserves_total?: number;
+  cash_out_routi_conservative?: number;
+  cash_to_refi_table_conservative?: number;
+  refi_closing_date?: string | null;
+  tenant_occupied_date?: string | null;
+  recording_transfer_buy_effective?: number;
+  title_escrow_buy_effective?: number;
+  recording_transfer_refi_effective?: number;
+  title_escrow_refi_effective?: number;
+  vacancy_reserve_effective?: number;
+  lowest_arv_effective?: number;
   messages?: string[];
   breakdowns?: CalcBreakdowns;
 }

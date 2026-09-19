@@ -17,6 +17,7 @@
  */
 import InputNumber from "primevue/inputnumber";
 import Slider from "primevue/slider";
+import InputInfo from "./InputInfo.vue";
 import { useId } from "vue";
 import { computed } from "vue";
 
@@ -32,6 +33,10 @@ const props = defineProps<{
   step?: number;
   suffix?: string;
   required?: boolean;
+  /** Tooltip text for the (i) beside the label (what this input affects). */
+  info?: string;
+  /** A derived reading shown at the right of the label row ("refi loan $240,000"). */
+  note?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -55,11 +60,15 @@ const inputId = useId();
 <template>
   <div class="flex flex-col gap-1.5">
     <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
-      <label
-        :for="inputId"
-        data-part="label"
-        class="text-sm font-medium leading-5 text-fg"
-      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+      <span class="inline-flex min-w-0 items-center gap-1">
+        <label
+          :for="inputId"
+          data-part="label"
+          class="truncate text-sm font-medium leading-5 text-fg"
+        >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+        <InputInfo v-if="info" :content="info" :field-label="label" />
+      </span>
+      <span v-if="note" data-part="note" class="numeric shrink-0 truncate text-xs font-medium leading-5 text-fg-muted">{{ note }}</span>
     </div>
     <!--
       Slider and number box share one control row, the same 42px row every

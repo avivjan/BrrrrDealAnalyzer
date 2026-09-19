@@ -271,12 +271,12 @@ describe("AnalyzeDeal", () => {
   describe("the deal type switch", () => {
     it("swaps the form's fields", async () => {
       const wrapper = mountView();
-      expect(wrapper.text()).toContain("Refinance (BRRRR)");
+      expect(wrapper.text()).toContain("Rent & Holding");
 
       await wrapper.find('[data-testid="analyze.type-flip"]').trigger("click");
 
       expect(wrapper.text()).toContain("Flip Strategy");
-      expect(wrapper.text()).not.toContain("Refinance (BRRRR)");
+      expect(wrapper.text()).not.toContain("Rent & Holding");
     });
 
     it("keeps ARV and Sale Price in step, whichever side is typed", async () => {

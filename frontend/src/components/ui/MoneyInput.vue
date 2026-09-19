@@ -17,6 +17,7 @@
 import { computed, ref, watch } from "vue";
 import { useId } from "vue";
 import { formatMoney, parseMoney, toEditableText } from "../../utils/money";
+import InputInfo from "./InputInfo.vue";
 
 const props = defineProps<{
   /** In *thousands* when `inThousands`, otherwise in dollars. */
@@ -32,6 +33,10 @@ const props = defineProps<{
    * on the "a bare number under 1,000 means thousands" typing shortcut.
    */
   inThousands?: boolean;
+  /** Tooltip text for the (i) beside the label (what this input affects). */
+  info?: string;
+  /** A derived reading shown at the right of the label row while not typing ("= $126,000"). */
+  note?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -123,16 +128,24 @@ const inputId = useId();
       field's accessible name.
     -->
     <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
-      <label
-        :for="inputId"
-        data-part="label"
-        class="text-sm font-medium leading-5 text-fg"
-      >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+      <span class="inline-flex min-w-0 items-center gap-1">
+        <label
+          :for="inputId"
+          data-part="label"
+          class="truncate text-sm font-medium leading-5 text-fg"
+        >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
+        <InputInfo v-if="info" :content="info" :field-label="label" />
+      </span>
       <span
         v-if="hint"
         data-part="hint"
-        class="numeric text-xs font-medium leading-5 text-primary"
+        class="numeric shrink-0 text-xs font-medium leading-5 text-primary"
       >{{ hint }}</span>
+      <span
+        v-else-if="note"
+        data-part="note"
+        class="numeric shrink-0 truncate text-xs font-medium leading-5 text-fg-muted"
+      >{{ note }}</span>
     </div>
     <input
       :id="inputId"

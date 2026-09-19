@@ -3,6 +3,8 @@ import { computed, ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { createEmptyDealForm, validateDealInputs } from "../utils/dealUtils";
+import { brrrAutoCalc } from "../utils/brrrAutoCalc";
+import { formatMoney } from "../utils/money";
 import DealInputsForm from "../components/DealInputsForm.vue";
 
 console.group("View: AnalyzeDeal");
@@ -53,6 +55,21 @@ const summary = computed(() => [
     ? { label: "ARV", value: fmtK(form.value.arv_in_thousands) }
     : { label: "Sale price", value: fmtK(form.value.salePrice) },
 ]);
+
+/**
+ * The two wires a BRRRR is judged by, computed client-side from the inputs so far
+ * (the page never calls the API before save). Empty until their inputs exist.
+ */
+const wires = computed(() => {
+  if (selectedType.value !== "BRRRR") return [];
+  const calc = brrrAutoCalc(form.value);
+  const fmt = (v: number | null) => (v == null ? "—" : formatMoney(v));
+  return [
+    { label: "Cash to close", value: fmt(calc.cashToCloseBuy) },
+    { label: "Refi wire", value: fmt(calc.cashOutWire) },
+    { label: "Wire (low ARV)", value: fmt(calc.cashOutWireConservative) },
+  ];
+});
 
 const onAnalyzeAndSaveClick = () => {
   const errors = validateDealInputs(form.value, selectedType.value);
@@ -172,6 +189,12 @@ const saveDeal = async () => {
             <div v-for="row in summary" :key="row.label" class="min-w-0">
               <dt class="truncate text-[11px] uppercase tracking-[0.1em] text-fg-muted">{{ row.label }}</dt>
               <dd v-count-up class="numeric mt-1 truncate text-lg font-semibold text-fg">{{ row.value }}</dd>
+            </div>
+          </dl>
+          <dl v-if="wires.length" data-testid="analyze.wires" class="grid grid-cols-3 gap-3 border-t border-line pt-4">
+            <div v-for="row in wires" :key="row.label" class="min-w-0">
+              <dt class="truncate text-[11px] uppercase tracking-[0.1em] text-fg-muted">{{ row.label }}</dt>
+              <dd class="numeric mt-1 truncate text-base font-semibold text-fg">{{ row.value }}</dd>
             </div>
           </dl>
 
