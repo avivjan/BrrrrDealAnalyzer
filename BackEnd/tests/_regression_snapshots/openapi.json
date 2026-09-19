@@ -163,6 +163,34 @@
             "description": "Annual property taxes",
             "title": "Annual Property Taxes"
           },
+          "appliances": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "630",
+            "description": "Appliances bought for the tenant, in dollars.",
+            "title": "Appliances"
+          },
+          "appraisalFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "700",
+            "description": "Refi appraisal, in dollars.",
+            "title": "Appraisalfee"
+          },
           "arv_in_thousands": {
             "anyOf": [
               {
@@ -221,6 +249,33 @@
             "default": "purchase",
             "title": "Boughtstage"
           },
+          "brokerProcessingFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "395",
+            "description": "Broker processing fee at refi, in dollars ($395 typical, $0 possible).",
+            "title": "Brokerprocessingfeerefi"
+          },
+          "buyClosingDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
+            "title": "Buyclosingdate"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -236,6 +291,20 @@
             ],
             "default": "0.0",
             "title": "Capexpercent"
+          },
+          "capexReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2500",
+            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "title": "Capexreserve"
           },
           "cashReserve": {
             "anyOf": [
@@ -301,6 +370,20 @@
             "default": {},
             "title": "Completedsubstages"
           },
+          "constructionLoanBudget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
+            "title": "Constructionloanbudget"
+          },
           "contact": {
             "anyOf": [
               {
@@ -337,6 +420,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRented": {
+            "default": 90,
+            "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
+            "title": "Daysuntilrented",
+            "type": "integer"
+          },
           "deal_type": {
             "const": "BRRRR",
             "default": "BRRRR",
@@ -358,6 +447,20 @@
             ],
             "description": "Down payment percentage (0-100)",
             "title": "Down Payment"
+          },
+          "earnestMoneyDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy).",
+            "title": "Earnestmoneydeposit"
           },
           "hmlPoints": {
             "anyOf": [
@@ -391,6 +494,34 @@
             ],
             "title": "Interestrate"
           },
+          "loanChargesBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "900",
+            "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
+            "title": "Loanchargesbuy"
+          },
+          "loanChargesRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "200",
+            "description": "Refi lender charges, in dollars.",
+            "title": "Loanchargesrefi"
+          },
           "loanTermYears": {
             "anyOf": [
               {
@@ -402,6 +533,22 @@
             ],
             "default": 30,
             "title": "Loantermyears"
+          },
+          "lowestArv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stress-test appraisal, in thousands. None = formula: 90% of ARV. Drives the conservative cash-out wire; never changes the baseline ARV.",
+            "title": "Lowestarv"
           },
           "ltv_as_precent": {
             "anyOf": [
@@ -419,6 +566,20 @@
             "description": "LTV for Refi",
             "title": "Ltv As Precent"
           },
+          "maintenanceBeforeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "500",
+            "description": "Post-rehab punch list, cleanings and repairs before the refi, in dollars.",
+            "title": "Maintenancebeforerefi"
+          },
           "maintenancePercent": {
             "anyOf": [
               {
@@ -434,6 +595,34 @@
             ],
             "default": "0.0",
             "title": "Maintenancepercent"
+          },
+          "maintenanceReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "1500",
+            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "title": "Maintenancereserve"
+          },
+          "monthlyUtilitiesUntilRented": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "80",
+            "description": "Electric, water and lawn per month while vacant, in dollars.",
+            "title": "Monthlyutilitiesuntilrented"
           },
           "montly_hoa": {
             "anyOf": [
@@ -475,6 +664,46 @@
               }
             ],
             "title": "Notes"
+          },
+          "onlineNotaryBuy": {
+            "default": true,
+            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "title": "Onlinenotarybuy",
+            "type": "boolean"
+          },
+          "onlineNotaryRefi": {
+            "default": true,
+            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "title": "Onlinenotaryrefi",
+            "type": "boolean"
+          },
+          "otherClosingCostsBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
+            "title": "Otherclosingcostsbuy"
+          },
+          "otherClosingCostsRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other refi settlement lines, in dollars.",
+            "title": "Otherclosingcostsrefi"
           },
           "overall_design": {
             "anyOf": [
@@ -532,6 +761,38 @@
             "description": "Acquisition price for the property",
             "title": "Purchaseprice"
           },
+          "recordingTransferBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "title": "Recordingtransferbuy"
+          },
+          "recordingTransferRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at refi, in dollars. None = formula: 0.55% of the refi loan + $250.",
+            "title": "Recordingtransferrefi"
+          },
           "refiPoints": {
             "anyOf": [
               {
@@ -547,6 +808,20 @@
             ],
             "default": "2",
             "title": "Refipoints"
+          },
+          "refiUnderwritingFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2000",
+            "description": "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195).",
+            "title": "Refiunderwritingfee"
           },
           "rehabContingency": {
             "anyOf": [
@@ -581,6 +856,20 @@
             "default": "0.0",
             "description": "Estimated rehab costs included in the deal",
             "title": "Rehabcost"
+          },
+          "rehabCushion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Cash kept on hand for first draws, permits and surprises, in dollars. Counted in Cash Needed, not spent.",
+            "title": "Rehabcushion"
           },
           "rent": {
             "anyOf": [
@@ -624,6 +913,18 @@
             ],
             "description": "Section number",
             "title": "Section"
+          },
+          "sellerPaidCurrentYearTaxes": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "title": "Sellerpaidcurrentyeartaxes"
           },
           "sold_comps": {
             "anyOf": [
@@ -680,6 +981,20 @@
             "description": "Stage number",
             "title": "Stage"
           },
+          "surveyFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "385",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "title": "Surveyfee"
+          },
           "task": {
             "anyOf": [
               {
@@ -691,6 +1006,48 @@
               }
             ],
             "title": "Task"
+          },
+          "titleEscrowBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "title": "Titleescrowbuy"
+          },
+          "titleEscrowRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan.",
+            "title": "Titleescrowrefi"
+          },
+          "titleModeBuy": {
+            "default": "standard",
+            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "enum": [
+              "standard",
+              "we_pay_all"
+            ],
+            "title": "Titlemodebuy",
+            "type": "string"
           },
           "use_HM_for_rehab": {
             "anyOf": [
@@ -720,6 +1077,22 @@
             ],
             "default": "0.0",
             "title": "Vacancypercent"
+          },
+          "vacancyReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "title": "Vacancyreserve"
           },
           "zillow_link": {
             "anyOf": [
@@ -799,6 +1172,20 @@
             "description": "Annual property taxes",
             "title": "Annual Property Taxes"
           },
+          "appliances": {
+            "default": "630",
+            "description": "Appliances bought for the tenant, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Appliances",
+            "type": "string"
+          },
+          "appraisalFee": {
+            "default": "700",
+            "description": "Refi appraisal, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Appraisalfee",
+            "type": "string"
+          },
           "arv_in_thousands": {
             "anyOf": [
               {
@@ -869,6 +1256,26 @@
             "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
+          "brokerProcessingFeeRefi": {
+            "default": "395",
+            "description": "Broker processing fee at refi, in dollars ($395 typical, $0 possible).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Brokerprocessingfeerefi",
+            "type": "string"
+          },
+          "buyClosingDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
+            "title": "Buyclosingdate"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -881,6 +1288,13 @@
             ],
             "default": "0.0",
             "title": "Capexpercent"
+          },
+          "capexReserve": {
+            "default": "2500",
+            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Capexreserve",
+            "type": "string"
           },
           "cashReserve": {
             "anyOf": [
@@ -899,6 +1313,18 @@
             "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
+          },
+          "cash_needed_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
+            "title": "Cash Needed Conservative"
           },
           "cash_on_cash": {
             "anyOf": [
@@ -921,7 +1347,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -933,8 +1359,44 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
+          },
+          "cash_out_routi_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The refinance wire recomputed with the lowest ARV (stress test), in dollars: loan-dependent fees and prepaid interest follow the lower loan. Negative = cash to bring to the refi table.",
+            "title": "Cash Out Routi Conservative"
+          },
+          "cash_to_close_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "title": "Cash To Close Buy"
+          },
+          "cash_to_refi_table_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash to bring to the refi closing under the lowest ARV, in dollars: max(0, -cash_out_routi_conservative).",
+            "title": "Cash To Refi Table Conservative"
           },
           "closingCostsBuy": {
             "anyOf": [
@@ -963,6 +1425,30 @@
             "default": "0.0",
             "title": "Closingcostsrefi"
           },
+          "closing_costs_buy_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "title": "Closing Costs Buy Total"
+          },
+          "closing_costs_refi_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "title": "Closing Costs Refi Total"
+          },
           "completedSubstages": {
             "anyOf": [
               {
@@ -977,6 +1463,13 @@
             ],
             "default": {},
             "title": "Completedsubstages"
+          },
+          "constructionLoanBudget": {
+            "default": "0",
+            "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Constructionloanbudget",
+            "type": "string"
           },
           "contact": {
             "anyOf": [
@@ -1019,6 +1512,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRented": {
+            "default": 90,
+            "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
+            "title": "Daysuntilrented",
+            "type": "integer"
+          },
           "deal_type": {
             "const": "BRRRR",
             "default": "BRRRR",
@@ -1050,6 +1549,13 @@
             "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
+          "earnestMoneyDeposit": {
+            "default": "5000",
+            "description": "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Earnestmoneydeposit",
+            "type": "string"
+          },
           "equity": {
             "anyOf": [
               {
@@ -1059,7 +1565,7 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -1075,6 +1581,30 @@
             "default": "0.0",
             "description": "Hard money lender points (percentage)",
             "title": "Hmlpoints"
+          },
+          "hml_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total hard-money principal, in dollars: purchase loan + construction loan budget.",
+            "title": "Hml Amount"
+          },
+          "hml_payoff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
+            "title": "Hml Payoff"
           },
           "id": {
             "format": "uuid",
@@ -1093,6 +1623,20 @@
             ],
             "title": "Interestrate"
           },
+          "loanChargesBuy": {
+            "default": "900",
+            "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Loanchargesbuy",
+            "type": "string"
+          },
+          "loanChargesRefi": {
+            "default": "200",
+            "description": "Refi lender charges, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Loanchargesrefi",
+            "type": "string"
+          },
           "loanTermYears": {
             "anyOf": [
               {
@@ -1104,6 +1648,31 @@
             ],
             "default": 30,
             "title": "Loantermyears"
+          },
+          "lowestArv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stress-test appraisal, in thousands. None = formula: 90% of ARV. Drives the conservative cash-out wire; never changes the baseline ARV.",
+            "title": "Lowestarv"
+          },
+          "lowest_arv_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lowest ARV actually used, in dollars: the input, or 90% of ARV when null.",
+            "title": "Lowest Arv Effective"
           },
           "ltv_as_precent": {
             "anyOf": [
@@ -1118,6 +1687,13 @@
             "description": "LTV for Refi",
             "title": "Ltv As Precent"
           },
+          "maintenanceBeforeRefi": {
+            "default": "500",
+            "description": "Post-rehab punch list, cleanings and repairs before the refi, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Maintenancebeforerefi",
+            "type": "string"
+          },
           "maintenancePercent": {
             "anyOf": [
               {
@@ -1130,6 +1706,13 @@
             ],
             "default": "0.0",
             "title": "Maintenancepercent"
+          },
+          "maintenanceReserve": {
+            "default": "1500",
+            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Maintenancereserve",
+            "type": "string"
           },
           "messages": {
             "anyOf": [
@@ -1145,6 +1728,13 @@
             ],
             "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
+          },
+          "monthlyUtilitiesUntilRented": {
+            "default": "80",
+            "description": "Electric, water and lawn per month while vacant, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthlyutilitiesuntilrented",
+            "type": "string"
           },
           "montly_hoa": {
             "anyOf": [
@@ -1196,6 +1786,32 @@
             ],
             "title": "Notes"
           },
+          "onlineNotaryBuy": {
+            "default": true,
+            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "title": "Onlinenotarybuy",
+            "type": "boolean"
+          },
+          "onlineNotaryRefi": {
+            "default": true,
+            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "title": "Onlinenotaryrefi",
+            "type": "boolean"
+          },
+          "otherClosingCostsBuy": {
+            "default": "0",
+            "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Otherclosingcostsbuy",
+            "type": "string"
+          },
+          "otherClosingCostsRefi": {
+            "default": "0",
+            "description": "Any other refi settlement lines, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Otherclosingcostsrefi",
+            "type": "string"
+          },
           "overall_design": {
             "anyOf": [
               {
@@ -1219,6 +1835,42 @@
               }
             ],
             "title": "Pics Link"
+          },
+          "pre_refi_rental_income": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rent collected between tenant placement and the refi, in dollars (30-day months); offsets holding costs.",
+            "title": "Pre Refi Rental Income"
+          },
+          "prepaid_interest_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money per-diem interest collected at the purchase closing from the closing date through the end of that month, in dollars. 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Buy"
+          },
+          "prepaid_interest_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Refi"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -1246,6 +1898,68 @@
             "description": "Acquisition price for the property",
             "title": "Purchaseprice"
           },
+          "purchase_loan_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "title": "Purchase Loan Amount"
+          },
+          "recordingTransferBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "title": "Recordingtransferbuy"
+          },
+          "recordingTransferRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at refi, in dollars. None = formula: 0.55% of the refi loan + $250.",
+            "title": "Recordingtransferrefi"
+          },
+          "recording_transfer_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Buy Effective"
+          },
+          "recording_transfer_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Refi Effective"
+          },
           "refiPoints": {
             "anyOf": [
               {
@@ -1258,6 +1972,26 @@
             ],
             "default": "2",
             "title": "Refipoints"
+          },
+          "refiUnderwritingFee": {
+            "default": "2000",
+            "description": "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Refiunderwritingfee",
+            "type": "string"
+          },
+          "refi_closing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
+            "title": "Refi Closing Date"
           },
           "rehabContingency": {
             "anyOf": [
@@ -1287,6 +2021,13 @@
             "description": "Estimated rehab costs included in the deal",
             "title": "Rehabcost"
           },
+          "rehabCushion": {
+            "default": "5000",
+            "description": "Cash kept on hand for first draws, permits and surprises, in dollars. Counted in Cash Needed, not spent.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rehabcushion",
+            "type": "string"
+          },
           "rent": {
             "anyOf": [
               {
@@ -1315,6 +2056,18 @@
             ],
             "title": "Rent Comps"
           },
+          "reserves_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "title": "Reserves Total"
+          },
           "roi": {
             "anyOf": [
               {
@@ -1338,6 +2091,30 @@
             ],
             "description": "Section number",
             "title": "Section"
+          },
+          "sellerPaidCurrentYearTaxes": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "seller_tax_credit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+            "title": "Seller Tax Credit"
           },
           "sold_comps": {
             "anyOf": [
@@ -1391,6 +2168,25 @@
             "description": "Stage number",
             "title": "Stage"
           },
+          "stolen_money": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lender draw spread, in dollars: construction loan budget minus actual rehab (with contingency). Positive = capital pulled out through draws before the refi; negative = extra out-of-pocket rehab.",
+            "title": "Stolen Money"
+          },
+          "surveyFee": {
+            "default": "385",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Surveyfee",
+            "type": "string"
+          },
           "task": {
             "anyOf": [
               {
@@ -1403,6 +2199,91 @@
             ],
             "title": "Task"
           },
+          "tenant_occupied_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
+            "title": "Tenant Occupied Date"
+          },
+          "titleEscrowBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "title": "Titleescrowbuy"
+          },
+          "titleEscrowRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan.",
+            "title": "Titleescrowrefi"
+          },
+          "titleModeBuy": {
+            "default": "standard",
+            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "enum": [
+              "standard",
+              "we_pay_all"
+            ],
+            "title": "Titlemodebuy",
+            "type": "string"
+          },
+          "title_escrow_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Buy Effective"
+          },
+          "title_escrow_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Refi Effective"
+          },
+          "total_cash_invested": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "title": "Total Cash Invested"
+          },
           "total_cash_needed_for_deal": {
             "anyOf": [
               {
@@ -1412,10 +2293,10 @@
                 "type": "null"
               }
             ],
-            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
             "title": "Total Cash Needed For Deal"
           },
-          "total_cash_needed_for_deal_with_buffer": {
+          "total_hard_money_cost": {
             "anyOf": [
               {
                 "type": "number"
@@ -1424,8 +2305,8 @@
                 "type": "null"
               }
             ],
-            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
-            "title": "Total Cash Needed For Deal With Buffer"
+            "description": "All the cost of the hard-money loan, in dollars: points + interest until the refi + loan charges (buy).",
+            "title": "Total Hard Money Cost"
           },
           "updated_at": {
             "format": "date-time",
@@ -1457,6 +2338,31 @@
             ],
             "default": "0.0",
             "title": "Vacancypercent"
+          },
+          "vacancyReserve": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "title": "Vacancyreserve"
+          },
+          "vacancy_reserve_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve actually used, in dollars: the input, or one month of rent when null.",
+            "title": "Vacancy Reserve Effective"
           },
           "zillow_link": {
             "anyOf": [
@@ -2646,6 +3552,34 @@
             "description": "Annual property taxes",
             "title": "Annual Property Taxes"
           },
+          "appliances": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "630",
+            "description": "Appliances bought for the tenant, in dollars.",
+            "title": "Appliances"
+          },
+          "appraisalFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "700",
+            "description": "Refi appraisal, in dollars.",
+            "title": "Appraisalfee"
+          },
           "arv_in_thousands": {
             "anyOf": [
               {
@@ -2691,6 +3625,33 @@
             "description": "Number of bedrooms",
             "title": "Bedrooms"
           },
+          "brokerProcessingFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "395",
+            "description": "Broker processing fee at refi, in dollars ($395 typical, $0 possible).",
+            "title": "Brokerprocessingfeerefi"
+          },
+          "buyClosingDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
+            "title": "Buyclosingdate"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -2706,6 +3667,20 @@
             ],
             "default": "0.0",
             "title": "Capexpercent"
+          },
+          "capexReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2500",
+            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "title": "Capexreserve"
           },
           "cashReserve": {
             "anyOf": [
@@ -2756,6 +3731,20 @@
             "default": "0.0",
             "title": "Closingcostsrefi"
           },
+          "constructionLoanBudget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
+            "title": "Constructionloanbudget"
+          },
           "contact": {
             "anyOf": [
               {
@@ -2792,6 +3781,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRented": {
+            "default": 90,
+            "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
+            "title": "Daysuntilrented",
+            "type": "integer"
+          },
           "deal_type": {
             "const": "BRRRR",
             "default": "BRRRR",
@@ -2813,6 +3808,20 @@
             ],
             "description": "Down payment percentage (0-100)",
             "title": "Down Payment"
+          },
+          "earnestMoneyDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy).",
+            "title": "Earnestmoneydeposit"
           },
           "hmlPoints": {
             "anyOf": [
@@ -2846,6 +3855,34 @@
             ],
             "title": "Interestrate"
           },
+          "loanChargesBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "900",
+            "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
+            "title": "Loanchargesbuy"
+          },
+          "loanChargesRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "200",
+            "description": "Refi lender charges, in dollars.",
+            "title": "Loanchargesrefi"
+          },
           "loanTermYears": {
             "anyOf": [
               {
@@ -2857,6 +3894,22 @@
             ],
             "default": 30,
             "title": "Loantermyears"
+          },
+          "lowestArv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stress-test appraisal, in thousands. None = formula: 90% of ARV. Drives the conservative cash-out wire; never changes the baseline ARV.",
+            "title": "Lowestarv"
           },
           "ltv_as_precent": {
             "anyOf": [
@@ -2874,6 +3927,20 @@
             "description": "LTV for Refi",
             "title": "Ltv As Precent"
           },
+          "maintenanceBeforeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "500",
+            "description": "Post-rehab punch list, cleanings and repairs before the refi, in dollars.",
+            "title": "Maintenancebeforerefi"
+          },
           "maintenancePercent": {
             "anyOf": [
               {
@@ -2889,6 +3956,34 @@
             ],
             "default": "0.0",
             "title": "Maintenancepercent"
+          },
+          "maintenanceReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "1500",
+            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "title": "Maintenancereserve"
+          },
+          "monthlyUtilitiesUntilRented": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "80",
+            "description": "Electric, water and lawn per month while vacant, in dollars.",
+            "title": "Monthlyutilitiesuntilrented"
           },
           "montly_hoa": {
             "anyOf": [
@@ -2930,6 +4025,46 @@
               }
             ],
             "title": "Notes"
+          },
+          "onlineNotaryBuy": {
+            "default": true,
+            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "title": "Onlinenotarybuy",
+            "type": "boolean"
+          },
+          "onlineNotaryRefi": {
+            "default": true,
+            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "title": "Onlinenotaryrefi",
+            "type": "boolean"
+          },
+          "otherClosingCostsBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
+            "title": "Otherclosingcostsbuy"
+          },
+          "otherClosingCostsRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other refi settlement lines, in dollars.",
+            "title": "Otherclosingcostsrefi"
           },
           "overall_design": {
             "anyOf": [
@@ -2987,6 +4122,38 @@
             "description": "Acquisition price for the property",
             "title": "Purchaseprice"
           },
+          "recordingTransferBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "title": "Recordingtransferbuy"
+          },
+          "recordingTransferRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at refi, in dollars. None = formula: 0.55% of the refi loan + $250.",
+            "title": "Recordingtransferrefi"
+          },
           "refiPoints": {
             "anyOf": [
               {
@@ -3002,6 +4169,20 @@
             ],
             "default": "2",
             "title": "Refipoints"
+          },
+          "refiUnderwritingFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2000",
+            "description": "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195).",
+            "title": "Refiunderwritingfee"
           },
           "rehabContingency": {
             "anyOf": [
@@ -3036,6 +4217,20 @@
             "default": "0.0",
             "description": "Estimated rehab costs included in the deal",
             "title": "Rehabcost"
+          },
+          "rehabCushion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Cash kept on hand for first draws, permits and surprises, in dollars. Counted in Cash Needed, not spent.",
+            "title": "Rehabcushion"
           },
           "rent": {
             "anyOf": [
@@ -3080,6 +4275,18 @@
             "description": "Section number",
             "title": "Section"
           },
+          "sellerPaidCurrentYearTaxes": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "title": "Sellerpaidcurrentyeartaxes"
+          },
           "sold_comps": {
             "anyOf": [
               {
@@ -3123,6 +4330,20 @@
             "description": "Stage number",
             "title": "Stage"
           },
+          "surveyFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "385",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "title": "Surveyfee"
+          },
           "task": {
             "anyOf": [
               {
@@ -3134,6 +4355,48 @@
               }
             ],
             "title": "Task"
+          },
+          "titleEscrowBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "title": "Titleescrowbuy"
+          },
+          "titleEscrowRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan.",
+            "title": "Titleescrowrefi"
+          },
+          "titleModeBuy": {
+            "default": "standard",
+            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "enum": [
+              "standard",
+              "we_pay_all"
+            ],
+            "title": "Titlemodebuy",
+            "type": "string"
           },
           "use_HM_for_rehab": {
             "anyOf": [
@@ -3163,6 +4426,22 @@
             ],
             "default": "0.0",
             "title": "Vacancypercent"
+          },
+          "vacancyReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "title": "Vacancyreserve"
           },
           "zillow_link": {
             "anyOf": [
@@ -3242,6 +4521,20 @@
             "description": "Annual property taxes",
             "title": "Annual Property Taxes"
           },
+          "appliances": {
+            "default": "630",
+            "description": "Appliances bought for the tenant, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Appliances",
+            "type": "string"
+          },
+          "appraisalFee": {
+            "default": "700",
+            "description": "Refi appraisal, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Appraisalfee",
+            "type": "string"
+          },
           "arv_in_thousands": {
             "anyOf": [
               {
@@ -3299,6 +4592,26 @@
             "description": "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', 'cash_out'): each step has a label, a value and the formula with the numbers filled in.",
             "title": "Breakdowns"
           },
+          "brokerProcessingFeeRefi": {
+            "default": "395",
+            "description": "Broker processing fee at refi, in dollars ($395 typical, $0 possible).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Brokerprocessingfeerefi",
+            "type": "string"
+          },
+          "buyClosingDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
+            "title": "Buyclosingdate"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -3311,6 +4624,13 @@
             ],
             "default": "0.0",
             "title": "Capexpercent"
+          },
+          "capexReserve": {
+            "default": "2500",
+            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Capexreserve",
+            "type": "string"
           },
           "cashReserve": {
             "anyOf": [
@@ -3329,6 +4649,18 @@
             "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
+          },
+          "cash_needed_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
+            "title": "Cash Needed Conservative"
           },
           "cash_on_cash": {
             "anyOf": [
@@ -3351,7 +4683,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -3363,8 +4695,44 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
+          },
+          "cash_out_routi_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The refinance wire recomputed with the lowest ARV (stress test), in dollars: loan-dependent fees and prepaid interest follow the lower loan. Negative = cash to bring to the refi table.",
+            "title": "Cash Out Routi Conservative"
+          },
+          "cash_to_close_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "title": "Cash To Close Buy"
+          },
+          "cash_to_refi_table_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash to bring to the refi closing under the lowest ARV, in dollars: max(0, -cash_out_routi_conservative).",
+            "title": "Cash To Refi Table Conservative"
           },
           "closingCostsBuy": {
             "anyOf": [
@@ -3392,6 +4760,37 @@
             ],
             "default": "0.0",
             "title": "Closingcostsrefi"
+          },
+          "closing_costs_buy_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "title": "Closing Costs Buy Total"
+          },
+          "closing_costs_refi_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "title": "Closing Costs Refi Total"
+          },
+          "constructionLoanBudget": {
+            "default": "0",
+            "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Constructionloanbudget",
+            "type": "string"
           },
           "contact": {
             "anyOf": [
@@ -3434,6 +4833,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRented": {
+            "default": 90,
+            "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
+            "title": "Daysuntilrented",
+            "type": "integer"
+          },
           "deal_type": {
             "const": "BRRRR",
             "default": "BRRRR",
@@ -3465,6 +4870,13 @@
             "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
             "title": "Dscr"
           },
+          "earnestMoneyDeposit": {
+            "default": "5000",
+            "description": "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Earnestmoneydeposit",
+            "type": "string"
+          },
           "equity": {
             "anyOf": [
               {
@@ -3474,7 +4886,7 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
             "title": "Equity"
           },
           "hmlPoints": {
@@ -3490,6 +4902,30 @@
             "default": "0.0",
             "description": "Hard money lender points (percentage)",
             "title": "Hmlpoints"
+          },
+          "hml_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total hard-money principal, in dollars: purchase loan + construction loan budget.",
+            "title": "Hml Amount"
+          },
+          "hml_payoff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
+            "title": "Hml Payoff"
           },
           "id": {
             "format": "uuid",
@@ -3508,6 +4944,20 @@
             ],
             "title": "Interestrate"
           },
+          "loanChargesBuy": {
+            "default": "900",
+            "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Loanchargesbuy",
+            "type": "string"
+          },
+          "loanChargesRefi": {
+            "default": "200",
+            "description": "Refi lender charges, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Loanchargesrefi",
+            "type": "string"
+          },
           "loanTermYears": {
             "anyOf": [
               {
@@ -3519,6 +4969,31 @@
             ],
             "default": 30,
             "title": "Loantermyears"
+          },
+          "lowestArv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stress-test appraisal, in thousands. None = formula: 90% of ARV. Drives the conservative cash-out wire; never changes the baseline ARV.",
+            "title": "Lowestarv"
+          },
+          "lowest_arv_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lowest ARV actually used, in dollars: the input, or 90% of ARV when null.",
+            "title": "Lowest Arv Effective"
           },
           "ltv_as_precent": {
             "anyOf": [
@@ -3533,6 +5008,13 @@
             "description": "LTV for Refi",
             "title": "Ltv As Precent"
           },
+          "maintenanceBeforeRefi": {
+            "default": "500",
+            "description": "Post-rehab punch list, cleanings and repairs before the refi, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Maintenancebeforerefi",
+            "type": "string"
+          },
           "maintenancePercent": {
             "anyOf": [
               {
@@ -3545,6 +5027,13 @@
             ],
             "default": "0.0",
             "title": "Maintenancepercent"
+          },
+          "maintenanceReserve": {
+            "default": "1500",
+            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Maintenancereserve",
+            "type": "string"
           },
           "messages": {
             "anyOf": [
@@ -3560,6 +5049,13 @@
             ],
             "description": "Warnings from input validation (e.g. an unusual rate), if any.",
             "title": "Messages"
+          },
+          "monthlyUtilitiesUntilRented": {
+            "default": "80",
+            "description": "Electric, water and lawn per month while vacant, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthlyutilitiesuntilrented",
+            "type": "string"
           },
           "montly_hoa": {
             "anyOf": [
@@ -3611,6 +5107,32 @@
             ],
             "title": "Notes"
           },
+          "onlineNotaryBuy": {
+            "default": true,
+            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "title": "Onlinenotarybuy",
+            "type": "boolean"
+          },
+          "onlineNotaryRefi": {
+            "default": true,
+            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "title": "Onlinenotaryrefi",
+            "type": "boolean"
+          },
+          "otherClosingCostsBuy": {
+            "default": "0",
+            "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Otherclosingcostsbuy",
+            "type": "string"
+          },
+          "otherClosingCostsRefi": {
+            "default": "0",
+            "description": "Any other refi settlement lines, in dollars.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Otherclosingcostsrefi",
+            "type": "string"
+          },
           "overall_design": {
             "anyOf": [
               {
@@ -3634,6 +5156,42 @@
               }
             ],
             "title": "Pics Link"
+          },
+          "pre_refi_rental_income": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rent collected between tenant placement and the refi, in dollars (30-day months); offsets holding costs.",
+            "title": "Pre Refi Rental Income"
+          },
+          "prepaid_interest_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money per-diem interest collected at the purchase closing from the closing date through the end of that month, in dollars. 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Buy"
+          },
+          "prepaid_interest_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Refi"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -3661,6 +5219,68 @@
             "description": "Acquisition price for the property",
             "title": "Purchaseprice"
           },
+          "purchase_loan_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "title": "Purchase Loan Amount"
+          },
+          "recordingTransferBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "title": "Recordingtransferbuy"
+          },
+          "recordingTransferRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at refi, in dollars. None = formula: 0.55% of the refi loan + $250.",
+            "title": "Recordingtransferrefi"
+          },
+          "recording_transfer_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Buy Effective"
+          },
+          "recording_transfer_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Refi Effective"
+          },
           "refiPoints": {
             "anyOf": [
               {
@@ -3673,6 +5293,26 @@
             ],
             "default": "2",
             "title": "Refipoints"
+          },
+          "refiUnderwritingFee": {
+            "default": "2000",
+            "description": "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Refiunderwritingfee",
+            "type": "string"
+          },
+          "refi_closing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
+            "title": "Refi Closing Date"
           },
           "rehabContingency": {
             "anyOf": [
@@ -3702,6 +5342,13 @@
             "description": "Estimated rehab costs included in the deal",
             "title": "Rehabcost"
           },
+          "rehabCushion": {
+            "default": "5000",
+            "description": "Cash kept on hand for first draws, permits and surprises, in dollars. Counted in Cash Needed, not spent.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rehabcushion",
+            "type": "string"
+          },
           "rent": {
             "anyOf": [
               {
@@ -3730,6 +5377,18 @@
             ],
             "title": "Rent Comps"
           },
+          "reserves_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "title": "Reserves Total"
+          },
           "roi": {
             "anyOf": [
               {
@@ -3753,6 +5412,30 @@
             ],
             "description": "Section number",
             "title": "Section"
+          },
+          "sellerPaidCurrentYearTaxes": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "seller_tax_credit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+            "title": "Seller Tax Credit"
           },
           "sold_comps": {
             "anyOf": [
@@ -3794,6 +5477,25 @@
             "description": "Stage number",
             "title": "Stage"
           },
+          "stolen_money": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lender draw spread, in dollars: construction loan budget minus actual rehab (with contingency). Positive = capital pulled out through draws before the refi; negative = extra out-of-pocket rehab.",
+            "title": "Stolen Money"
+          },
+          "surveyFee": {
+            "default": "385",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Surveyfee",
+            "type": "string"
+          },
           "task": {
             "anyOf": [
               {
@@ -3806,6 +5508,91 @@
             ],
             "title": "Task"
           },
+          "tenant_occupied_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
+            "title": "Tenant Occupied Date"
+          },
+          "titleEscrowBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "title": "Titleescrowbuy"
+          },
+          "titleEscrowRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan.",
+            "title": "Titleescrowrefi"
+          },
+          "titleModeBuy": {
+            "default": "standard",
+            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "enum": [
+              "standard",
+              "we_pay_all"
+            ],
+            "title": "Titlemodebuy",
+            "type": "string"
+          },
+          "title_escrow_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Buy Effective"
+          },
+          "title_escrow_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Refi Effective"
+          },
+          "total_cash_invested": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "title": "Total Cash Invested"
+          },
           "total_cash_needed_for_deal": {
             "anyOf": [
               {
@@ -3815,10 +5602,10 @@
                 "type": "null"
               }
             ],
-            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
             "title": "Total Cash Needed For Deal"
           },
-          "total_cash_needed_for_deal_with_buffer": {
+          "total_hard_money_cost": {
             "anyOf": [
               {
                 "type": "number"
@@ -3827,8 +5614,8 @@
                 "type": "null"
               }
             ],
-            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
-            "title": "Total Cash Needed For Deal With Buffer"
+            "description": "All the cost of the hard-money loan, in dollars: points + interest until the refi + loan charges (buy).",
+            "title": "Total Hard Money Cost"
           },
           "updated_at": {
             "format": "date-time",
@@ -3860,6 +5647,31 @@
             ],
             "default": "0.0",
             "title": "Vacancypercent"
+          },
+          "vacancyReserve": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "title": "Vacancyreserve"
+          },
+          "vacancy_reserve_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve actually used, in dollars: the input, or one month of rent when null.",
+            "title": "Vacancy Reserve Effective"
           },
           "zillow_link": {
             "anyOf": [
@@ -4193,6 +6005,18 @@
             "description": "BRRRR cash out in dollars: total received from the deal (the refinance wire) minus total put in. NEGATIVE = that much of your own money is still left in the deal. See cash_left_in_deal.",
             "title": "Cash Out"
           },
+          "cash_to_close_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "BRRRR: cash wired to the title company on purchase day, in dollars (down payment + closing costs + points + prepaid interest - seller tax credit - earnest money).",
+            "title": "Cash To Close Buy"
+          },
           "cash_wire_at_refi": {
             "anyOf": [
               {
@@ -4202,8 +6026,20 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars (new loan minus hard-money payoff, refinance costs, points and reserve), before subtracting what was invested.",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars (new loan minus hard-money payoff, refinance costs, prepaid interest and reserves), before subtracting what was invested.",
             "title": "Cash Wire At Refi"
+          },
+          "cash_wire_at_refi_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "BRRRR: the refinance wire if the appraisal comes in at the lowest ARV (90% of ARV unless set), in dollars. Negative = cash to bring to the refi table.",
+            "title": "Cash Wire At Refi Conservative"
           },
           "created_at": {
             "anyOf": [
@@ -4328,6 +6164,18 @@
             ],
             "description": "Active deals only: 1 New, 2 Working, 3 Brought (under contract), 4 Keep in Mind, 5 Dead.",
             "title": "Stage"
+          },
+          "stolen_money": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "BRRRR: construction loan budget minus actual rehab, in dollars. Positive = capital pulled out through lender draws before the refi; negative = extra out-of-pocket rehab.",
+            "title": "Stolen Money"
           },
           "task": {
             "anyOf": [
@@ -7825,7 +9673,7 @@
         "type": "object"
       },
       "analyzeBRRRReq": {
-        "description": "Captures inputs required to calculate rental cash flow and DSCR.",
+        "description": "Captures inputs required to calculate rental cash flow and DSCR.\n\nThe lifecycle inputs (dates, granular closing costs, construction budget, holding\nitems, reserves, lowest ARV) come from `BrrrLifecycleInputs`.",
         "properties": {
           "HMLInterestRate": {
             "anyOf": [
@@ -7868,6 +9716,34 @@
             "description": "Annual property taxes",
             "title": "Annual Property Taxes"
           },
+          "appliances": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "630",
+            "description": "Appliances bought for the tenant, in dollars.",
+            "title": "Appliances"
+          },
+          "appraisalFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "700",
+            "description": "Refi appraisal, in dollars.",
+            "title": "Appraisalfee"
+          },
           "arv_in_thousands": {
             "anyOf": [
               {
@@ -7880,6 +9756,33 @@
             ],
             "description": "After repair value (ARV) of the property in thousands",
             "title": "Arv In Thousands"
+          },
+          "brokerProcessingFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "395",
+            "description": "Broker processing fee at refi, in dollars ($395 typical, $0 possible).",
+            "title": "Brokerprocessingfeerefi"
+          },
+          "buyClosingDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
+            "title": "Buyclosingdate"
           },
           "capexPercent": {
             "anyOf": [
@@ -7895,6 +9798,20 @@
             "description": "Capital expenditures reserve as a percentage of rent",
             "title": "Capexpercent"
           },
+          "capexReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2500",
+            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "title": "Capexreserve"
+          },
           "cashReserve": {
             "anyOf": [
               {
@@ -7906,7 +9823,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Cash escrowed at refi and returned at exit/sale (in thousands). Not a principal paydown: the DSCR loan and its payment stay on the full ARV x LTV; the reserve reduces cash out and adds to equity 1:1.",
+            "description": "Deprecated for BRRRR (ignored): replaced by maintenanceReserve, vacancyReserve and capexReserve",
             "title": "Cashreserve"
           },
           "closingCostsBuy": {
@@ -7920,7 +9837,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Closing costs when purchasing with hard money",
+            "description": "Deprecated for BRRRR (ignored): replaced by the granular buy closing-cost fields",
             "title": "Closingcostsbuy"
           },
           "closingCostsRefi": {
@@ -7934,13 +9851,33 @@
               }
             ],
             "default": "0.0",
-            "description": "Closing costs during the refinance stage",
+            "description": "Deprecated for BRRRR (ignored): replaced by the granular refi closing-cost fields",
             "title": "Closingcostsrefi"
+          },
+          "constructionLoanBudget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
+            "title": "Constructionloanbudget"
           },
           "daysUntilRefi": {
             "default": 180,
             "description": "whole days from purchase close to refi close",
             "title": "Daysuntilrefi",
+            "type": "integer"
+          },
+          "daysUntilRented": {
+            "default": 90,
+            "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
+            "title": "Daysuntilrented",
             "type": "integer"
           },
           "down_payment": {
@@ -7955,6 +9892,20 @@
             ],
             "description": "Down payment percentage for hard money purchase (0-100)",
             "title": "Down Payment"
+          },
+          "earnestMoneyDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy).",
+            "title": "Earnestmoneydeposit"
           },
           "hmlPoints": {
             "anyOf": [
@@ -7983,10 +9934,54 @@
             "description": "Annual mortgage interest rate (percent)",
             "title": "Interestrate"
           },
+          "loanChargesBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "900",
+            "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
+            "title": "Loanchargesbuy"
+          },
+          "loanChargesRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "200",
+            "description": "Refi lender charges, in dollars.",
+            "title": "Loanchargesrefi"
+          },
           "loanTermYears": {
             "default": 30,
             "title": "Loantermyears",
             "type": "integer"
+          },
+          "lowestArv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stress-test appraisal, in thousands. None = formula: 90% of ARV. Drives the conservative cash-out wire; never changes the baseline ARV.",
+            "title": "Lowestarv"
           },
           "ltv_as_precent": {
             "anyOf": [
@@ -8000,6 +9995,20 @@
             ],
             "description": "LTV as a percent for the DSCR refinance loan (e.g., 75 for 75%)",
             "title": "Ltv As Precent"
+          },
+          "maintenanceBeforeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "500",
+            "description": "Post-rehab punch list, cleanings and repairs before the refi, in dollars.",
+            "title": "Maintenancebeforerefi"
           },
           "maintenancePercent": {
             "anyOf": [
@@ -8015,6 +10024,34 @@
             "description": "Maintenance reserve as a percentage of rent",
             "title": "Maintenancepercent"
           },
+          "maintenanceReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "1500",
+            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "title": "Maintenancereserve"
+          },
+          "monthlyUtilitiesUntilRented": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "80",
+            "description": "Electric, water and lawn per month while vacant, in dollars.",
+            "title": "Monthlyutilitiesuntilrented"
+          },
           "montly_hoa": {
             "anyOf": [
               {
@@ -8028,6 +10065,46 @@
             "default": "0.0",
             "description": "Monthly HOA dues",
             "title": "Montly Hoa"
+          },
+          "onlineNotaryBuy": {
+            "default": true,
+            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "title": "Onlinenotarybuy",
+            "type": "boolean"
+          },
+          "onlineNotaryRefi": {
+            "default": true,
+            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "title": "Onlinenotaryrefi",
+            "type": "boolean"
+          },
+          "otherClosingCostsBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
+            "title": "Otherclosingcostsbuy"
+          },
+          "otherClosingCostsRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Any other refi settlement lines, in dollars.",
+            "title": "Otherclosingcostsrefi"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -8056,6 +10133,38 @@
             "description": "Acquisition price for the property",
             "title": "Purchaseprice"
           },
+          "recordingTransferBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "title": "Recordingtransferbuy"
+          },
+          "recordingTransferRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Government recording and transfer charges at refi, in dollars. None = formula: 0.55% of the refi loan + $250.",
+            "title": "Recordingtransferrefi"
+          },
           "refiPoints": {
             "anyOf": [
               {
@@ -8067,8 +10176,22 @@
               }
             ],
             "default": "2",
-            "description": "Refi lender points as a percentage of the refi loan amount",
+            "description": "Broker points at refi as a percentage of the refi loan amount",
             "title": "Refipoints"
+          },
+          "refiUnderwritingFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "2000",
+            "description": "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195).",
+            "title": "Refiunderwritingfee"
           },
           "rehabContingency": {
             "anyOf": [
@@ -8095,8 +10218,22 @@
               }
             ],
             "default": "0.0",
-            "description": "Estimated rehab costs included in the deal",
+            "description": "Actual rehab cost (contractor and materials), in thousands",
             "title": "Rehabcost"
+          },
+          "rehabCushion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5000",
+            "description": "Cash kept on hand for first draws, permits and surprises, in dollars. Counted in Cash Needed, not spent.",
+            "title": "Rehabcushion"
           },
           "rent": {
             "anyOf": [
@@ -8111,9 +10248,77 @@
             "description": "Expected monthly rent",
             "title": "Rent"
           },
+          "sellerPaidCurrentYearTaxes": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "surveyFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "385",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "title": "Surveyfee"
+          },
+          "titleEscrowBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "title": "Titleescrowbuy"
+          },
+          "titleEscrowRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan.",
+            "title": "Titleescrowrefi"
+          },
+          "titleModeBuy": {
+            "default": "standard",
+            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "enum": [
+              "standard",
+              "we_pay_all"
+            ],
+            "title": "Titlemodebuy",
+            "type": "string"
+          },
           "use_HM_for_rehab": {
             "default": false,
-            "description": "",
+            "description": "Deprecated for BRRRR (ignored): replaced by constructionLoanBudget",
             "title": "Use Hm For Rehab",
             "type": "boolean"
           },
@@ -8130,6 +10335,22 @@
             "default": "0.0",
             "description": "Percentage of rent reserved for vacancy",
             "title": "Vacancypercent"
+          },
+          "vacancyReserve": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "title": "Vacancyreserve"
           }
         },
         "required": [
@@ -8170,6 +10391,18 @@
             "title": "Cash Flow",
             "type": "number"
           },
+          "cash_needed_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
+            "title": "Cash Needed Conservative"
+          },
           "cash_on_cash": {
             "anyOf": [
               {
@@ -8191,7 +10424,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (down payment, closing costs, points, out-of-pocket rehab, hard-money interest, holding costs). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -8203,8 +10436,68 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refinance closing costs, refinance points and the cash reserve. Gross, before subtracting what was invested (that subtraction is cash_out).",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
+          },
+          "cash_out_routi_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The refinance wire recomputed with the lowest ARV (stress test), in dollars: loan-dependent fees and prepaid interest follow the lower loan. Negative = cash to bring to the refi table.",
+            "title": "Cash Out Routi Conservative"
+          },
+          "cash_to_close_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "title": "Cash To Close Buy"
+          },
+          "cash_to_refi_table_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cash to bring to the refi closing under the lowest ARV, in dollars: max(0, -cash_out_routi_conservative).",
+            "title": "Cash To Refi Table Conservative"
+          },
+          "closing_costs_buy_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "title": "Closing Costs Buy Total"
+          },
+          "closing_costs_refi_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "title": "Closing Costs Refi Total"
           },
           "dscr": {
             "anyOf": [
@@ -8227,8 +10520,44 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
             "title": "Equity"
+          },
+          "hml_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total hard-money principal, in dollars: purchase loan + construction loan budget.",
+            "title": "Hml Amount"
+          },
+          "hml_payoff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
+            "title": "Hml Payoff"
+          },
+          "lowest_arv_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lowest ARV actually used, in dollars: the input, or 90% of ARV when null.",
+            "title": "Lowest Arv Effective"
           },
           "messages": {
             "anyOf": [
@@ -8257,6 +10586,103 @@
             "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
           },
+          "pre_refi_rental_income": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rent collected between tenant placement and the refi, in dollars (30-day months); offsets holding costs.",
+            "title": "Pre Refi Rental Income"
+          },
+          "prepaid_interest_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money per-diem interest collected at the purchase closing from the closing date through the end of that month, in dollars. 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Buy"
+          },
+          "prepaid_interest_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "title": "Prepaid Interest Refi"
+          },
+          "purchase_loan_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "title": "Purchase Loan Amount"
+          },
+          "recording_transfer_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Buy Effective"
+          },
+          "recording_transfer_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recording/transfer charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Recording Transfer Refi Effective"
+          },
+          "refi_closing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
+            "title": "Refi Closing Date"
+          },
+          "reserves_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "title": "Reserves Total"
+          },
           "roi": {
             "anyOf": [
               {
@@ -8269,6 +10695,79 @@
             "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
             "title": "Roi"
           },
+          "seller_tax_credit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+            "title": "Seller Tax Credit"
+          },
+          "stolen_money": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lender draw spread, in dollars: construction loan budget minus actual rehab (with contingency). Positive = capital pulled out through draws before the refi; negative = extra out-of-pocket rehab.",
+            "title": "Stolen Money"
+          },
+          "tenant_occupied_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
+            "title": "Tenant Occupied Date"
+          },
+          "title_escrow_buy_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Buy Effective"
+          },
+          "title_escrow_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
+            "title": "Title Escrow Refi Effective"
+          },
+          "total_cash_invested": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "title": "Total Cash Invested"
+          },
           "total_cash_needed_for_deal": {
             "anyOf": [
               {
@@ -8278,10 +10777,10 @@
                 "type": "null"
               }
             ],
-            "description": "Total cash needed to do the deal, in dollars: down payment, buy closing costs, points, out-of-pocket rehab, hard-money interest and holding costs until the refinance.",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
             "title": "Total Cash Needed For Deal"
           },
-          "total_cash_needed_for_deal_with_buffer": {
+          "total_hard_money_cost": {
             "anyOf": [
               {
                 "type": "number"
@@ -8290,8 +10789,20 @@
                 "type": "null"
               }
             ],
-            "description": "total_cash_needed_for_deal plus the rehab contingency buffer, in dollars.",
-            "title": "Total Cash Needed For Deal With Buffer"
+            "description": "All the cost of the hard-money loan, in dollars: points + interest until the refi + loan charges (buy).",
+            "title": "Total Hard Money Cost"
+          },
+          "vacancy_reserve_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vacancy reserve actually used, in dollars: the input, or one month of rent when null.",
+            "title": "Vacancy Reserve Effective"
           }
         },
         "required": [

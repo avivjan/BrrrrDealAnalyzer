@@ -9,15 +9,22 @@ from ReqRes.common.analyze_results import analyzeBRRRRes, analyzeFlipRes
 from ReqRes.common.base_deal import BaseDealReq
 from ReqRes.common.comps import SoldComp
 from ReqRes.common.refi_timing import days_from_legacy_months
+from ReqRes.common.brrr_legacy_inputs import construction_budget_from_legacy_hm_flag
+from ReqRes.common.brrr_lifecycle_inputs import BrrrLifecycleInputs
 
 
-class BrrrActiveDealCreate(BaseDealReq):
+class BrrrActiveDealCreate(BaseDealReq, BrrrLifecycleInputs):
     deal_type: Literal["BRRRR"] = "BRRRR"
 
     @model_validator(mode="before")
     @classmethod
     def _accept_legacy_months_until_refi(cls, data: Any) -> Any:
         return days_from_legacy_months(data)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_hm_for_rehab_flag(cls, data: Any) -> Any:
+        return construction_budget_from_legacy_hm_flag(data)
 
     arv_in_thousands: Optional[Decimal] = Field(Decimal("0"), description="ARV in thousands")
     days_until_refi: Annotated[Optional[int], Field(alias="daysUntilRefi")] = 180

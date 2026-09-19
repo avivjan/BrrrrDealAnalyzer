@@ -2,9 +2,10 @@ from sqlalchemy import Column, Integer, JSON, Numeric
 
 from db import Base
 from DAL.data_models.common.base_deal import BaseDeal
+from DAL.data_models.common.brrr_lifecycle import BrrrLifecycleColumns
 
 
-class BrrrActiveDeal(Base, BaseDeal):
+class BrrrActiveDeal(Base, BaseDeal, BrrrLifecycleColumns):
     __tablename__ = "active_deals"
 
     # BRRRR Specific

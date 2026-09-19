@@ -36,6 +36,10 @@ class TestList:
         assert row["deal_type"] == "BRRRR" and row["stage"] == 3 and row["section"] == 2
         assert row["purchase_price_k"] == 200 and row["arv_or_sale_price_k"] == 320
         assert row["cash_flow_monthly"] == pytest.approx(float(seeded["brrr"]["cash_flow"]))
+        # the three lifecycle figures a reader asks for most, straight on the compact row
+        assert row["cash_to_close_buy"] == pytest.approx(float(seeded["brrr"]["cash_to_close_buy"]))
+        assert row["cash_wire_at_refi_conservative"] == pytest.approx(float(seeded["brrr"]["cash_out_routi_conservative"]))
+        assert row["stolen_money"] == pytest.approx(float(seeded["brrr"]["stolen_money"]))
 
     def test_filters(self, client, seeded):
         assert {r["board"] for r in client.get("/deals", params={"board": "bought"}).json()} == {"bought"}

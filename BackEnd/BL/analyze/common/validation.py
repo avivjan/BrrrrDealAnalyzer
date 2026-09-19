@@ -16,6 +16,31 @@ from fastapi import HTTPException
 from ReqRes.common.analyze_inputs import analyzeBRRRReq, analyzeFlipReq
 
 
+# (field, label) of every dollar line item of the BRRRR lifecycle; `None` = formula default, so skipped.
+_BRRR_NON_NEGATIVE_DOLLARS = [
+    ("earnest_money_deposit", "Earnest money deposit"),
+    ("loan_charges_buy", "Loan charges (buy)"),
+    ("recording_transfer_buy", "Recording and transfer charges (buy)"),
+    ("title_escrow_buy", "Title and escrow charges (buy)"),
+    ("other_closing_costs_buy", "Other closing costs (buy)"),
+    ("rehab_cushion", "Rehab cushion"),
+    ("monthly_utilities_until_rented", "Monthly utilities until rented"),
+    ("maintenance_before_refi", "Maintenance before refi"),
+    ("appliances", "Appliances"),
+    ("loan_charges_refi", "Loan charges (refi)"),
+    ("recording_transfer_refi", "Recording and transfer charges (refi)"),
+    ("title_escrow_refi", "Title and escrow charges (refi)"),
+    ("appraisal_fee", "Appraisal fee"),
+    ("survey_fee", "Survey fee"),
+    ("refi_underwriting_fee", "Refi underwriting fee"),
+    ("broker_processing_fee_refi", "Broker processing fee (refi)"),
+    ("other_closing_costs_refi", "Other closing costs (refi)"),
+    ("maintenance_reserve", "Maintenance reserve"),
+    ("vacancy_reserve", "Vacancy reserve"),
+    ("capex_reserve", "CapEx reserve"),
+]
+
+
 def validate_brrr_inputs(payload: analyzeBRRRReq):
     validation_errors = []
 
@@ -32,14 +57,21 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
         validation_errors.append("Rehab cost cannot be negative.")
     if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
         validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
-    if payload.closing_costs_buy_in_thousands < 0:
-        validation_errors.append("Closing costs (buy) cannot be negative.")
-    if payload.closing_cost_refi_in_thousands < 0:
-        validation_errors.append("Refi closing costs cannot be negative.")
     if payload.refi_points < 0 or payload.refi_points > 100:
-        validation_errors.append("Refi points must be between 0% and 100%.")
-    if payload.cash_reserve_in_thousands < 0:
-        validation_errors.append("Cash reserve cannot be negative.")
+        validation_errors.append("Broker points must be between 0% and 100%.")
+    for field, label in _BRRR_NON_NEGATIVE_DOLLARS:
+        value = getattr(payload, field)
+        if value is not None and value < 0:
+            validation_errors.append(f"{label} cannot be negative.")
+    if payload.construction_loan_budget_in_thousands < 0:
+        validation_errors.append("Construction loan budget cannot be negative.")
+    if payload.days_until_rented < 0:
+        validation_errors.append("Days until rented cannot be negative.")
+    if payload.lowest_arv_in_thousands is not None:
+        if payload.lowest_arv_in_thousands <= 0:
+            validation_errors.append("Lowest ARV must be greater than 0.")
+        elif payload.lowest_arv_in_thousands > payload.arv_in_thousands:
+            validation_errors.append("Lowest ARV cannot exceed ARV.")
     if payload.annual_property_taxes < 0:
         validation_errors.append("Annual property taxes cannot be negative.")
     if payload.annual_insurance < 0:

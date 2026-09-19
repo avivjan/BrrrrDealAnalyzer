@@ -5,8 +5,10 @@ The one exception is `calc_mortgage_payment`, which keeps its
 for why: it is the zero-risk choice for a pure structural refactor).
 """
 
+import calendar
+from datetime import date
 from decimal import Decimal
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from fastapi import HTTPException
 
@@ -18,6 +20,25 @@ from fastapi import HTTPException
 DAYS_PER_YEAR = Decimal("360")
 DAYS_PER_MONTH = Decimal("30")
 MONTHS_PER_YEAR = Decimal("12")
+
+# The DSCR (refinance) loan quotes per-diem interest on a calendar year, as the
+# Closing Disclosure does; hard money keeps the 360-day banking year above.
+DSCR_DAYS_PER_YEAR = Decimal("365")
+
+# Fixed fees and formula defaults of the BRRRR settlement lines. A `None` input on
+# the matching field means "use the formula"; see ReqRes/common/brrr_lifecycle_inputs.py.
+ONLINE_NOTARY_FEE = Decimal("250")
+RECORDING_TRANSFER_RATE = Decimal("0.0055")   # of the loan recorded
+RECORDING_TRANSFER_FLAT = Decimal("250")
+TITLE_ESCROW_BUY_STANDARD = Decimal("1000")   # lender's policy + endorsements + settlement/search
+TITLE_ESCROW_BUY_WE_PAY_ALL = (               # (upper price bound, flat fee) when the buyer pays all title charges
+    (Decimal("150000"), Decimal("2050")),
+    (Decimal("200000"), Decimal("2200")),
+)
+TITLE_ESCROW_BUY_WE_PAY_ALL_TOP = Decimal("2400")
+TITLE_ESCROW_REFI_FLAT = Decimal("800")
+TITLE_ESCROW_REFI_RATE = Decimal("0.0045")
+LOWEST_ARV_FACTOR = Decimal("0.90")
 
 
 def thousands_to_dollars(value: Decimal) -> Decimal:
@@ -66,26 +87,6 @@ def calc_rehab_out_of_pocket(rehab_cost, use_HM_for_rehab):
     """Rehab dollars the investor pays in cash (0 when hard money funds it)."""
     return rehab_cost * (1-int(use_HM_for_rehab))
 
-def calc_total_cash_invested(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab, holding_costs_until_refi):
-    """Every dollar the investor has put in before the refinance."""
-    down_payment_in_cash = calc_down_payment_in_cash(down_payment_precent, purchase_price)
-    return down_payment_in_cash + closing_costs_buy + HML_points_in_cash + calc_rehab_out_of_pocket(rehab_cost, use_HM_for_rehab) + HML_interest_in_cash + holding_costs_until_refi
-
-def calc_cash_out_from_deal(arv, ltv, down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, holding_costs_until_refi, cash_reserve_in_cash=Decimal("0")):
-    # `cash_reserve_in_cash` is committed at refi (paydown to DSCR principal),
-    # so it reduces what the investor walks away with.
-    cash_out_routi = calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, cash_reserve_in_cash)
-    total_cash_invested = calc_total_cash_invested(down_payment_precent, purchase_price, closing_costs_buy, HML_points_in_cash, rehab_cost, HML_interest_in_cash, use_HM_for_rehab, holding_costs_until_refi)
-    return cash_out_routi - total_cash_invested
-
-
-def calc_cash_out_routi(arv, ltv, down_payment_precent, purchase_price, rehab_cost, closing_cost_refi, refi_points_in_cash, use_HM_for_rehab, cash_reserve_in_cash=Decimal("0")):
-    loan_amount = arv * ltv
-    HML_payoff = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return loan_amount - HML_payoff - closing_cost_refi - refi_points_in_cash - cash_reserve_in_cash
-
-
-
 def calc_mortgage_payment(arv, ltv, interest_rate, loan_term_years):
     loan_amount = arv * ltv
     monthly_interest_rate = (interest_rate / Decimal("100.0")) / Decimal("12.0")
@@ -127,11 +128,68 @@ def calc_holding_costs(annual_taxes, annual_insurance, monthly_hoa, days):
     annual_holding = annual_taxes + annual_insurance + (monthly_hoa * MONTHS_PER_YEAR)
     return annual_holding * days / DAYS_PER_YEAR
 
-def calc_HML_interest_in_cash(purchase_price, down_payment_precent, rehab_cost, days_until_refi, HML_interest_rate, use_HM_for_rehab):
-    # Hard money accrues per diem: loan amount * annual rate / 360. Divide last,
-    # for the same reason as above.
-    HML_amount = get_HML_amount(purchase_price, down_payment_precent, rehab_cost, use_HM_for_rehab)
-    return HML_amount * HML_interest_rate * days_until_refi / DAYS_PER_YEAR / Decimal("100.0")
+def calc_hml_interest(hml_amount, HML_interest_rate, days):
+    """Hard-money interest over `days`: amount x annual rate / 360, per diem. Divide last (see above)."""
+    return hml_amount * HML_interest_rate * Decimal(days) / DAYS_PER_YEAR / Decimal("100.0")
+
+def calc_prepaid_interest_refi(loan_amount, interest_rate, days):
+    """DSCR-loan per-diem interest over `days` on a 365-day year. Divide last."""
+    return loan_amount * interest_rate * Decimal(days) / DSCR_DAYS_PER_YEAR / Decimal("100.0")
+
+
+# -- settlement-line helpers (BRRRR lifecycle) ----------------------------------
+
+def effective(value, default):
+    """The user's value, or the formula default when the field was left `None`."""
+    return default if value is None else value
+
+def days_in_month(d: date) -> int:
+    return calendar.monthrange(d.year, d.month)[1]
+
+def days_in_year(d: date) -> int:
+    return 366 if calendar.isleap(d.year) else 365
+
+def days_through_month_end(d: date) -> int:
+    """Days from `d` through the last day of its month, both inclusive (the prepaid-interest window)."""
+    return days_in_month(d) - d.day + 1
+
+def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_paid_current_year: bool):
+    """Property-tax proration on the purchase settlement, positive = credit to the buyer.
+
+    Taxes are billed in November for the calendar year. Until then the seller owes the
+    buyer for the days they owned (Jan 1 to the day before closing), because the buyer will
+    pay the whole bill. Once the seller has paid the bill (a December closing by default)
+    it reverses: the buyer owes the seller for closing day through Dec 31.
+    Calendar-day proration on the closing year's 365 or 366 days, divide last.
+    """
+    year_days = days_in_year(closing_date)
+    day_of_year = closing_date.timetuple().tm_yday
+    if seller_paid_current_year:
+        return -annual_taxes * Decimal(year_days - day_of_year + 1) / Decimal(year_days)
+    return annual_taxes * Decimal(day_of_year - 1) / Decimal(year_days)
+
+def recording_transfer_default(loan_amount):
+    """Government recording & transfer charges: 0.55% of the loan recorded + $250."""
+    return RECORDING_TRANSFER_RATE * loan_amount + RECORDING_TRANSFER_FLAT
+
+def title_escrow_buy_default(title_mode: str, purchase_price):
+    """Title/escrow/settlement at purchase: $1,000 standard, or the we-pay-all tier by price
+    ($2,050 under $150k, $2,200 from $150k to $200k inclusive, $2,400 above)."""
+    if title_mode != "we_pay_all":
+        return TITLE_ESCROW_BUY_STANDARD
+    for upper_bound, fee in TITLE_ESCROW_BUY_WE_PAY_ALL:
+        if purchase_price < upper_bound:
+            return fee
+    if purchase_price == TITLE_ESCROW_BUY_WE_PAY_ALL[-1][0]:
+        return TITLE_ESCROW_BUY_WE_PAY_ALL[-1][1]
+    return TITLE_ESCROW_BUY_WE_PAY_ALL_TOP
+
+def title_escrow_refi_default(loan_amount):
+    """Title/escrow/settlement at refi: $800 + 0.45% of the refi loan."""
+    return TITLE_ESCROW_REFI_FLAT + TITLE_ESCROW_REFI_RATE * loan_amount
+
+def lowest_arv_default(arv):
+    return LOWEST_ARV_FACTOR * arv
 
 class TotalCashNeeded(NamedTuple):
     """Lifetime cash requirement of a deal, with the buffer components spelled out.

@@ -184,10 +184,59 @@ def brrrr_payload() -> dict:
         "property_managment_fee_precentages_from_rent": 8,
         "maintenancePercent": 5,
         "capexPercent": 5,
+        # BRRRR lifecycle inputs, as the form emits them (None = "use the formula default").
+        "buyClosingDate": "2026-01-10",
+        "earnestMoneyDeposit": 5000,
+        "loanChargesBuy": 900,
+        "recordingTransferBuy": None,
+        "titleModeBuy": "standard",
+        "titleEscrowBuy": None,
+        "onlineNotaryBuy": True,
+        "otherClosingCostsBuy": 0,
+        "sellerPaidCurrentYearTaxes": None,
+        "constructionLoanBudget": 55,
+        "rehabCushion": 5000,
+        "daysUntilRented": 90,
+        "monthlyUtilitiesUntilRented": 80,
+        "maintenanceBeforeRefi": 500,
+        "appliances": 630,
+        "loanChargesRefi": 200,
+        "recordingTransferRefi": None,
+        "titleEscrowRefi": None,
+        "onlineNotaryRefi": True,
+        "appraisalFee": 700,
+        "surveyFee": 385,
+        "refiUnderwritingFee": 2000,
+        "brokerProcessingFeeRefi": 395,
+        "otherClosingCostsRefi": 0,
+        "maintenanceReserve": 1500,
+        "vacancyReserve": None,
+        "capexReserve": 2500,
+        "lowestArv": None,
         "address": "1 Shared Form St",
         "section": 2,
         "stage": 2,
     }
+
+
+# The lifecycle inputs neutralised so the engine reduces to the pre-lifecycle one: no
+# dates, the legacy lumps as the only settlement lines, no holding items, no rent offset,
+# no cushion, no reserves, and the budget = the hard-money-funded rehab (50k x 1.10).
+LEGACY_EQUIVALENT_OVERRIDES = {
+    "buyClosingDate": None, "earnestMoneyDeposit": 0, "loanChargesBuy": 0, "recordingTransferBuy": 0,
+    "titleEscrowBuy": 0, "onlineNotaryBuy": False, "otherClosingCostsBuy": 5000, "rehabCushion": 0,
+    "daysUntilRented": 180, "monthlyUtilitiesUntilRented": 0, "maintenanceBeforeRefi": 0, "appliances": 0,
+    "loanChargesRefi": 0, "recordingTransferRefi": 0, "titleEscrowRefi": 0, "onlineNotaryRefi": False,
+    "appraisalFee": 0, "surveyFee": 0, "refiUnderwritingFee": 0, "brokerProcessingFeeRefi": 0,
+    "otherClosingCostsRefi": 6000, "maintenanceReserve": 0, "vacancyReserve": 0, "capexReserve": 0,
+    "constructionLoanBudget": 55,
+}
+
+
+@pytest.fixture
+def legacy_brrrr_payload(brrrr_payload: dict) -> dict:
+    """`brrrr_payload` with the lifecycle inputs neutralised; reproduces the pre-lifecycle figures."""
+    return {**brrrr_payload, **LEGACY_EQUIVALENT_OVERRIDES}
 
 
 @pytest.fixture

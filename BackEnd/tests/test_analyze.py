@@ -19,10 +19,10 @@ EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
 EXPECTED_FLIP_NET_PROFIT = 12620.0
 # Verified identical under the old month-based formulas at 6 months and the
 # per-diem ones at 180 days — the two agree to the last digit, which is what
-# `monthsUntilRefi` -> `daysUntilRefi` was designed to guarantee. This is the
-# metric the switch could plausibly have moved, so it is pinned alongside cash
-# flow (which never depended on the holding period at all).
-EXPECTED_BRRRR_CASH_NEEDED = 63525.0
+# `monthsUntilRefi` -> `daysUntilRefi` was designed to guarantee. Pinned for the
+# `legacy_brrrr_payload` fixture (the lifecycle inputs neutralised): the lifecycle
+# engine must still reproduce it, which proves the core math survived the refactor.
+EXPECTED_LEGACY_BRRRR_CASH_NEEDED = 63525.0
 
 BRRRR_METRIC_KEYS = {
     "cash_flow",
@@ -34,7 +34,17 @@ BRRRR_METRIC_KEYS = {
     "equity",
     "net_profit",
     "total_cash_needed_for_deal",
-    "total_cash_needed_for_deal_with_buffer",
+    "cash_needed_conservative",
+    "total_cash_invested",
+    "cash_to_close_buy",
+    "cash_out_routi_conservative",
+    "cash_to_refi_table_conservative",
+    "total_hard_money_cost",
+    "stolen_money",
+    "seller_tax_credit",
+    "prepaid_interest_buy",
+    "prepaid_interest_refi",
+    "pre_refi_rental_income",
 }
 FLIP_METRIC_KEYS = {
     "net_profit",
@@ -139,15 +149,15 @@ class TestRefiTiming:
     the migration (`days = months * 30`) leave every saved deal's numbers alone.
     """
 
-    def test_180_days_reproduces_the_old_6_month_result(self, client, brrrr_payload):
+    def test_180_days_reproduces_the_old_6_month_result(self, client, legacy_brrrr_payload):
         # The fixture is the pre-rename payload translated by that same *30, so
         # this asserting the pinned cash-flow *and* the cash figures below is
         # the proof the per-diem switch changed nothing for existing deals.
-        result = client.post("/analyze/brrr", json=brrrr_payload).json()
+        result = client.post("/analyze/brrr", json=legacy_brrrr_payload).json()
         assert result["cash_flow"] == pytest.approx(EXPECTED_BRRRR_CASH_FLOW, abs=1e-9)
         # 6 months of HML interest + holding costs, priced per diem.
         assert result["total_cash_needed_for_deal"] == pytest.approx(
-            EXPECTED_BRRRR_CASH_NEEDED, abs=1e-9
+            EXPECTED_LEGACY_BRRRR_CASH_NEEDED, abs=1e-9
         )
 
     def test_a_legacy_months_payload_is_converted_not_read_as_days(
@@ -170,8 +180,10 @@ class TestRefiTiming:
         long = client.post(
             "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 360}
         ).json()
-        # Longer hold => more HML interest and holding cost => more cash in.
-        assert long["total_cash_needed_for_deal"] > short["total_cash_needed_for_deal"]
+        # Longer hold => more HML interest (and more holding cost; the tenant's rent
+        # offsets part of it, so the hard-money cost is the clean monotone figure).
+        assert long["total_hard_money_cost"] > short["total_hard_money_cost"]
+        assert long["pre_refi_rental_income"] > short["pre_refi_rental_income"]
         # ...but the stabilised rental does not care how long the rehab took.
         assert long["cash_flow"] == pytest.approx(short["cash_flow"], abs=1e-9)
 
@@ -181,7 +193,7 @@ class TestRefiTiming:
         one_more = client.post(
             "/analyze/brrr", json={**brrrr_payload, "daysUntilRefi": 181}
         ).json()
-        assert one_more["total_cash_needed_for_deal"] > base["total_cash_needed_for_deal"]
+        assert one_more["total_hard_money_cost"] > base["total_hard_money_cost"]
 
 
 class TestHoldingCosts:
@@ -281,7 +293,7 @@ class TestAuditFixes:
         assert base["cash_out_routi"] > 0  # the fixture refis clean: nothing to add
         short = client.post(
             "/analyze/brrr",
-            json={**brrrr_payload, "arv_in_thousands": 250, "ltv_as_precent": 70, "cashReserve": 30},
+            json={**brrrr_payload, "arv_in_thousands": 250, "ltv_as_precent": 70, "maintenanceReserve": 30000},
         ).json()
         shortfall = -short["cash_out_routi"]
         assert shortfall > 0
@@ -290,22 +302,22 @@ class TestAuditFixes:
         assert short["total_cash_needed_for_deal"] == pytest.approx(
             base["total_cash_needed_for_deal"] + shortfall, abs=1e-6
         )
-        assert short["total_cash_needed_for_deal_with_buffer"] == pytest.approx(
-            base["total_cash_needed_for_deal_with_buffer"] + shortfall, abs=1e-6
+        # ...which makes lifetime cash needed equal to the cash left in the deal,
+        # plus the cushion that is held rather than spent.
+        assert short["total_cash_needed_for_deal"] == pytest.approx(
+            -short["cash_out"] + brrrr_payload["rehabCushion"], abs=1e-6
         )
-        # ...which makes lifetime cash needed equal to the cash left in the deal.
-        assert short["total_cash_needed_for_deal"] == pytest.approx(-short["cash_out"], abs=1e-6)
         labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
         assert "Refi Shortfall (cash to refi table)" in labels
         assert "Refi Shortfall (cash to refi table)" not in [
             s["label"] for s in base["breakdowns"]["total_cash_needed_for_deal"]
         ]
 
-    # F1 -- the buffered breakdown now lists every component it sums.
+    # F1 -- the buffered breakdown now lists every component it sums (Flip only:
+    # the BRRRR engine replaced the buffer with the rehab cushion).
     @pytest.mark.parametrize(
         ("path", "key"),
-        [("/analyze/brrr", "total_cash_needed_for_deal_with_buffer"),
-         ("/analyze/flip", "total_cash_needed_with_buffer")],
+        [("/analyze/flip", "total_cash_needed_with_buffer")],
     )
     def test_buffered_breakdown_components_sum_to_total(
         self, client, brrrr_payload, flip_payload, path, key

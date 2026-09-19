@@ -38,6 +38,25 @@ BRRRR_ONLY_FIELDS = [
     "property_managment_fee_precentages_from_rent",
     "maintenancePercent",
     "capexPercent",
+    # lifecycle line items (numeric; the date, enum, booleans and formula-default
+    # nullables round-trip in TestLifecycleFieldsRoundTrip)
+    "earnestMoneyDeposit",
+    "loanChargesBuy",
+    "otherClosingCostsBuy",
+    "constructionLoanBudget",
+    "rehabCushion",
+    "daysUntilRented",
+    "monthlyUtilitiesUntilRented",
+    "maintenanceBeforeRefi",
+    "appliances",
+    "loanChargesRefi",
+    "appraisalFee",
+    "surveyFee",
+    "refiUnderwritingFee",
+    "brokerProcessingFeeRefi",
+    "otherClosingCostsRefi",
+    "maintenanceReserve",
+    "capexReserve",
 ]
 FLIP_ONLY_FIELDS = [
     "salePrice",
@@ -85,6 +104,49 @@ class TestCreateAndRoundTrip:
     def test_use_hm_for_rehab_boolean_survives(self, client, brrrr_payload):
         assert _create(client, {**brrrr_payload, "use_HM_for_rehab": True})["use_HM_for_rehab"] is True
         assert _create(client, {**brrrr_payload, "use_HM_for_rehab": False})["use_HM_for_rehab"] is False
+
+
+class TestLifecycleFieldsRoundTrip:
+    """The non-numeric lifecycle inputs: an ISO date, a title-mode enum, two checkboxes and the
+    'None = formula default' nullables, through create, update and the board load."""
+
+    def test_date_enum_and_checkboxes_survive(self, client, brrrr_payload):
+        deal = _create(client, {**brrrr_payload, "buyClosingDate": "2026-03-05", "titleModeBuy": "we_pay_all",
+                                "onlineNotaryBuy": False, "onlineNotaryRefi": True, "sellerPaidCurrentYearTaxes": True})
+        assert deal["buyClosingDate"] == "2026-03-05"
+        assert deal["titleModeBuy"] == "we_pay_all"
+        assert deal["onlineNotaryBuy"] is False and deal["onlineNotaryRefi"] is True
+        assert deal["sellerPaidCurrentYearTaxes"] is True
+        assert deal["refi_closing_date"] == "2026-09-01"  # + 180 days
+        assert deal["tenant_occupied_date"] == "2026-06-03"  # + 90 days
+
+    def test_formula_defaults_stay_null_until_typed(self, client, brrrr_payload):
+        deal = _create(client, brrrr_payload)
+        for field in ("recordingTransferBuy", "titleEscrowBuy", "recordingTransferRefi", "titleEscrowRefi",
+                      "vacancyReserve", "lowestArv", "buyClosingDate"):
+            if field != "buyClosingDate":
+                assert deal[field] is None, field
+        assert float(deal["vacancy_reserve_effective"]) == pytest.approx(float(brrrr_payload["rent"]))
+        assert float(deal["lowest_arv_effective"]) == pytest.approx(0.9 * brrrr_payload["arv_in_thousands"] * 1000)
+        typed = client.put(f"/active-deals/{deal['id']}", json={**deal, "recordingTransferBuy": 1234.5, "lowestArv": 300}).json()
+        assert float(typed["recordingTransferBuy"]) == pytest.approx(1234.5)
+        assert float(typed["recording_transfer_buy_effective"]) == pytest.approx(1234.5)
+        assert float(typed["lowest_arv_effective"]) == pytest.approx(300000)
+        reset = client.put(f"/active-deals/{deal['id']}", json={**typed, "recordingTransferBuy": None}).json()
+        assert reset["recordingTransferBuy"] is None
+        assert float(reset["recording_transfer_buy_effective"]) != pytest.approx(1234.5)
+
+    def test_no_date_leaves_the_date_driven_figures_out(self, client, brrrr_payload):
+        deal = _create(client, {**brrrr_payload, "buyClosingDate": None})
+        assert deal["buyClosingDate"] is None and deal["refi_closing_date"] is None
+        assert deal["prepaid_interest_buy"] == 0 and deal["seller_tax_credit"] == 0 and deal["prepaid_interest_refi"] == 0
+
+    def test_a_stale_client_sending_the_hm_flag_gets_a_construction_budget(self, client, brrrr_payload):
+        legacy = {k: v for k, v in brrrr_payload.items() if k != "constructionLoanBudget"}
+        deal = _create(client, {**legacy, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
+        assert float(deal["constructionLoanBudget"]) == pytest.approx(55)
+        cash = _create(client, {**legacy, "use_HM_for_rehab": False})
+        assert float(cash["constructionLoanBudget"]) == 0
 
 
 class TestBoardLoad:

@@ -57,6 +57,9 @@ def summarize(deal, board: str) -> DealSummary:
         cash_out=_num(getattr(deal, "cash_out", None)),
         cash_left_in_deal=_left_in(_num(getattr(deal, "cash_out", None))),
         cash_wire_at_refi=_num(getattr(deal, "cash_out_routi", None)),
+        cash_wire_at_refi_conservative=_num(getattr(deal, "cash_out_routi_conservative", None)),
+        cash_to_close_buy=_num(getattr(deal, "cash_to_close_buy", None)),
+        stolen_money=_num(getattr(deal, "stolen_money", None)),
         created_at=deal.created_at, updated_at=deal.updated_at,
     )
 

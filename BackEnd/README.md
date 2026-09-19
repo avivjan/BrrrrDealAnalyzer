@@ -87,6 +87,18 @@ a stale formula; `tests/test_explain.py` fails if a record field is never
 explained. `calculate_*_results()` is engine + explanation as the response
 model, and `analyze_*()` validates first.
 
+The BRRRR steps follow the deal's lifecycle (Buy → Rehab → Rent/Holding →
+Refinance): `timeline` derives the refi and tenant dates and the prepaid /
+monthly / accrued split of the hard-money interest from the buy closing date,
+`closing_costs_buy` and `refi_terms` build the two settlements line by line
+(with "None = formula" defaults resolved to `*_effective` values), `rehab_draw`
+is the construction-budget spread, and `cash_out` / `total_cash_needed` end in
+the cash-out wire (at ARV and at the lowest ARV) and the single Cash Needed.
+The lifecycle inputs are declared once in `ReqRes/common/brrr_lifecycle_inputs.py`
+and stored through the `DAL/data_models/common/brrr_lifecycle.py` mixin; the
+migration that adds them to existing tables is
+`migrations/steps/brrr_lifecycle_columns.py`, covered by `tests/test_migrations.py`.
+
 ### Tests
 
 ```bash
