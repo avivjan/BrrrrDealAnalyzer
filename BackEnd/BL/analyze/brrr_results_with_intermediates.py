@@ -38,19 +38,19 @@ class BrrrResultsWithIntermediates:
     buy_closing_date: Optional[date]
     refi_closing_date: Optional[date]
     tenant_occupied_date: Optional[date]
-    prepaid_days_buy: int
-    monthly_interest_days: int
-    accrued_days_at_payoff: int
-    prepaid_days_refi: int
-    days_rented_before_refi: int
+    hml_interest_days_prepaid_at_purchase_closing: int
+    hml_interest_days_paid_monthly: int
+    hml_interest_days_accrued_into_refi_payoff: int
+    dscr_interest_days_prepaid_at_refi_closing: int
+    days_tenant_occupied_before_refi: int
 
     # -- hard money and holding, until the refinance --------------------------
     hml_points: Decimal             # points paid in cash on hml_amount
     hml_per_diem: Decimal
     hml_interest: Decimal           # total per-diem interest until the refi
     prepaid_interest_buy: Decimal   # collected at the buy closing (closing day -> month end)
-    hml_monthly_interest_paid: Decimal
-    hml_accrued_interest_at_payoff: Decimal   # 1st of the refi month -> day before payoff
+    hml_interest_paid_monthly: Decimal
+    hml_interest_accrued_into_refi_payoff: Decimal   # 1st of the refi month -> day before payoff
     holding_costs: Decimal          # taxes + insurance + HOA accrued until the refi
     utilities_until_rented: Decimal
     pre_refi_rental_income: Decimal # rent from tenant placement to the refi
@@ -67,7 +67,7 @@ class BrrrResultsWithIntermediates:
 
     # -- rehab draws --------------------------------------------------------------
     stolen_money: Decimal           # construction budget - rehab cost (signed)
-    rehab_cash: Decimal             # rehab cost - construction budget (signed; the invested term)
+    rehab_paid_cash_out_of_pocket: Decimal             # rehab cost - construction budget (signed; the invested term)
 
     # -- refinance terms ------------------------------------------------------
     ltv: Decimal                    # as a fraction (0.75)

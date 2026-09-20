@@ -19,27 +19,27 @@ import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
 const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
-const f = useDealField(props.deal);
-const calc = computed(() => brrrAutoCalc(props.deal));
+const field = useDealField(props.deal);
+const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
-const mirrored = ref(false);
-const empty = (v: number | null) => !v;
+const mirroredOnce = ref(false);
+const isEmptyAmount = (amount: number | null) => !amount;
 
-const setRehab = (v: number | null) => {
-  const bothEmpty = empty(f.get("rehabCost")) && empty(f.get("constructionLoanBudget"));
-  f.set("rehabCost", v);
-  if (!mirrored.value && bothEmpty && v != null) f.set("constructionLoanBudget", v);
-  mirrored.value = true;
+const setActualRehabCost = (newRehabCostThousands: number | null) => {
+  const bothAmountsEmpty = isEmptyAmount(field.get("rehabCost")) && isEmptyAmount(field.get("constructionLoanBudget"));
+  field.set("rehabCost", newRehabCostThousands);
+  if (!mirroredOnce.value && bothAmountsEmpty && newRehabCostThousands != null) field.set("constructionLoanBudget", newRehabCostThousands);
+  mirroredOnce.value = true;
 };
-const setBudget = (v: number | null) => {
-  const bothEmpty = empty(f.get("rehabCost")) && empty(f.get("constructionLoanBudget"));
-  f.set("constructionLoanBudget", v);
-  if (!mirrored.value && bothEmpty && v != null) f.set("rehabCost", v);
-  mirrored.value = true;
+const setConstructionLoanBudget = (newBudgetThousands: number | null) => {
+  const bothAmountsEmpty = isEmptyAmount(field.get("rehabCost")) && isEmptyAmount(field.get("constructionLoanBudget"));
+  field.set("constructionLoanBudget", newBudgetThousands);
+  if (!mirroredOnce.value && bothAmountsEmpty && newBudgetThousands != null) field.set("rehabCost", newBudgetThousands);
+  mirroredOnce.value = true;
 };
 
 const stolenLabel = computed(() =>
-  calc.value.stolenMoney != null && calc.value.stolenMoney < 0 ? "Extra out of pocket (rehab beyond budget)" : "Stolen Money (draw spread)",
+  autoCalc.value.stolenMoney != null && autoCalc.value.stolenMoney < 0 ? "Extra out of pocket (rehab beyond budget)" : "Stolen Money (draw spread)",
 );
 </script>
 
@@ -48,42 +48,42 @@ const stolenLabel = computed(() =>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <MoneyInput
         data-testid="form.field.rehabCost"
-        :model-value="f.get('rehabCost')"
-        @update:model-value="setRehab"
+        :model-value="field.get('rehabCost')"
+        @update:model-value="setActualRehabCost"
         label="Actual Rehab Cost"
         :inThousands="true"
         :info="impactText('rehabCost')"
       />
       <MoneyInput
         data-testid="form.field.constructionLoanBudget"
-        :model-value="f.get('constructionLoanBudget')"
-        @update:model-value="setBudget"
+        :model-value="field.get('constructionLoanBudget')"
+        @update:model-value="setConstructionLoanBudget"
         label="Construction Loan Budget"
         :inThousands="true"
         :info="impactText('constructionLoanBudget')"
-        :note="calc.hmlAmount == null ? undefined : `HML total ${formatMoney(calc.hmlAmount)}`"
+        :note="autoCalc.hmlAmount == null ? undefined : `HML total ${formatMoney(autoCalc.hmlAmount)}`"
       />
       <NumberInput
         data-testid="form.field.rehabContingency"
-        :model-value="f.get('rehabContingency')"
-        @update:model-value="(v: number | null) => f.set('rehabContingency', v)"
+        :model-value="field.get('rehabContingency')"
+        @update:model-value="(v: number | null) => field.set('rehabContingency', v)"
         label="Contingency"
         suffix="%"
         :min="0"
         :max="100"
         :info="impactText('rehabContingency')"
-        :note="calc.rehabCostWithContingency == null ? undefined : `rehab ${formatMoney(calc.rehabCostWithContingency)}`"
+        :note="autoCalc.rehabCostWithContingency == null ? undefined : `rehab ${formatMoney(autoCalc.rehabCostWithContingency)}`"
       />
       <MoneyInput
         data-testid="form.field.rehabCushion"
-        :model-value="f.get('rehabCushion')"
-        @update:model-value="(v: number | null) => f.set('rehabCushion', v)"
+        :model-value="field.get('rehabCushion')"
+        @update:model-value="(v: number | null) => field.set('rehabCushion', v)"
         label="Rehab Cushion"
         :info="impactText('rehabCushion')"
       />
     </div>
     <template #footer>
-      <AutoFigure data-testid="form.auto.stolenMoney" :label="stolenLabel" :value="calc.stolenMoney" hint="construction budget − actual rehab (with contingency)" signed />
+      <AutoFigure data-testid="form.auto.stolenMoney" :label="stolenLabel" :value="autoCalc.stolenMoney" hint="construction budget − actual rehab (with contingency)" signed />
     </template>
   </LifecycleSection>
 </template>

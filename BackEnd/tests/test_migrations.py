@@ -27,7 +27,7 @@ def _drop_lifecycle_columns() -> None:
                 conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS {column}"))
 
 
-def _columns(table: str) -> set[str]:
+def _column_names_of(table: str) -> set[str]:
     with app_db.engine.connect() as conn:
         rows = conn.execute(text(
             "SELECT column_name FROM information_schema.columns WHERE table_name = :t"
@@ -35,7 +35,7 @@ def _columns(table: str) -> set[str]:
         return {r[0] for r in rows}
 
 
-def _row(table: str, address: str) -> dict:
+def _row_by_address(table: str, address: str) -> dict:
     with app_db.engine.connect() as conn:
         result = conn.execute(text(f"SELECT * FROM {table} WHERE address = :a"), {"a": address})
         return dict(result.mappings().one())
@@ -45,14 +45,14 @@ def _row(table: str, address: str) -> dict:
 def legacy_rows(client, brrrr_payload):
     """Two active BRRRR deals (hard-money rehab and cash rehab) and one bought copy, saved
     with today's schema and then stripped of the lifecycle columns."""
-    hm = client.post("/active-deals", json={**brrrr_payload, "address": "HM Rehab", "use_HM_for_rehab": True}).json()
+    hard_money_rehab_deal = client.post("/active-deals", json={**brrrr_payload, "address": "HM Rehab", "use_HM_for_rehab": True}).json()
     client.post("/active-deals", json={**brrrr_payload, "address": "Cash Rehab", "use_HM_for_rehab": False,
                                           "constructionLoanBudget": 0}).json()
-    moved = client.post(f"/bought-deals/from-active/{hm['id']}", params={"deal_type": "BRRRR"})
-    assert moved.status_code == 200, moved.text
+    move_to_bought_response = client.post(f"/bought-deals/from-active/{hard_money_rehab_deal['id']}", params={"deal_type": "BRRRR"})
+    assert move_to_bought_response.status_code == 200, move_to_bought_response.text
     _drop_lifecycle_columns()
     for table in BRRR_TABLES:
-        assert not (_columns(table) & set(NEW_COLUMNS))
+        assert not (_column_names_of(table) & set(NEW_COLUMNS))
     yield
 
 
@@ -60,57 +60,57 @@ class TestBrrrLifecycleMigration:
     def test_adds_every_column_to_both_tables_and_is_idempotent(self, legacy_rows):
         run_migrations(app_db.engine)
         for table in BRRR_TABLES:
-            assert set(NEW_COLUMNS) <= _columns(table), table
+            assert set(NEW_COLUMNS) <= _column_names_of(table), table
         run_migrations(app_db.engine)  # second boot: nothing left to do, nothing to crash on
         for table in BRRR_TABLES:
-            assert set(NEW_COLUMNS) <= _columns(table), table
+            assert set(NEW_COLUMNS) <= _column_names_of(table), table
 
     def test_backfills_the_new_defaults(self, legacy_rows):
         run_migrations(app_db.engine)
         for table in BRRR_TABLES:
-            row = _row(table, "HM Rehab")
-            assert row["earnest_money_deposit"] == Decimal("5000")
-            assert row["loan_charges_buy"] == Decimal("900")
-            assert row["title_mode_buy"] == "standard"
-            assert row["online_notary_buy"] is True and row["online_notary_refi"] is True
-            assert row["rehab_cushion"] == Decimal("5000")
-            assert row["days_until_rented"] == 90
-            assert row["monthly_utilities_until_rented"] == Decimal("80")
-            assert row["maintenance_before_refi"] == Decimal("500")
-            assert row["appliances"] == Decimal("630")
-            assert row["loan_charges_refi"] == Decimal("200")
-            assert row["appraisal_fee"] == Decimal("700")
-            assert row["survey_fee"] == Decimal("385")
-            assert row["refi_underwriting_fee"] == Decimal("2000")
-            assert row["broker_processing_fee_refi"] == Decimal("395")
-            assert row["maintenance_reserve"] == Decimal("1500")
-            assert row["capex_reserve"] == Decimal("2500")
-            assert row["other_closing_costs_buy"] == 0 and row["other_closing_costs_refi"] == 0
+            migrated_row = _row_by_address(table, "HM Rehab")
+            assert migrated_row["earnest_money_deposit"] == Decimal("5000")
+            assert migrated_row["loan_charges_buy"] == Decimal("900")
+            assert migrated_row["title_mode_buy"] == "standard"
+            assert migrated_row["online_notary_buy"] is True and migrated_row["online_notary_refi"] is True
+            assert migrated_row["rehab_cushion"] == Decimal("5000")
+            assert migrated_row["days_until_rented"] == 90
+            assert migrated_row["monthly_utilities_until_rented"] == Decimal("80")
+            assert migrated_row["maintenance_before_refi"] == Decimal("500")
+            assert migrated_row["appliances"] == Decimal("630")
+            assert migrated_row["loan_charges_refi"] == Decimal("200")
+            assert migrated_row["appraisal_fee"] == Decimal("700")
+            assert migrated_row["survey_fee"] == Decimal("385")
+            assert migrated_row["refi_underwriting_fee"] == Decimal("2000")
+            assert migrated_row["broker_processing_fee_refi"] == Decimal("395")
+            assert migrated_row["maintenance_reserve"] == Decimal("1500")
+            assert migrated_row["capex_reserve"] == Decimal("2500")
+            assert migrated_row["other_closing_costs_buy"] == 0 and migrated_row["other_closing_costs_refi"] == 0
 
     def test_formula_defaults_stay_null_and_the_date_stays_unknown(self, legacy_rows):
         run_migrations(app_db.engine)
-        row = _row("active_deals", "HM Rehab")
+        migrated_row = _row_by_address("active_deals", "HM Rehab")
         for column in ("buy_closing_date", "recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
                        "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands"):
-            assert row[column] is None, column
+            assert migrated_row[column] is None, column
 
     def test_construction_budget_mirrors_the_legacy_hard_money_flag(self, legacy_rows, brrrr_payload):
         run_migrations(app_db.engine)
-        financed = Decimal(brrrr_payload["rehabCost"]) * (1 + Decimal(brrrr_payload["rehabContingency"]) / 100)
-        assert _row("active_deals", "HM Rehab")["construction_loan_budget_in_thousands"] == financed
-        assert _row("bought_brrrr_deals", "HM Rehab")["construction_loan_budget_in_thousands"] == financed
-        assert _row("active_deals", "Cash Rehab")["construction_loan_budget_in_thousands"] == 0
+        financed_rehab_in_thousands = Decimal(brrrr_payload["rehabCost"]) * (1 + Decimal(brrrr_payload["rehabContingency"]) / 100)
+        assert _row_by_address("active_deals", "HM Rehab")["construction_loan_budget_in_thousands"] == financed_rehab_in_thousands
+        assert _row_by_address("bought_brrrr_deals", "HM Rehab")["construction_loan_budget_in_thousands"] == financed_rehab_in_thousands
+        assert _row_by_address("active_deals", "Cash Rehab")["construction_loan_budget_in_thousands"] == 0
 
     def test_migrated_rows_serve_through_the_api(self, legacy_rows, client):
         run_migrations(app_db.engine)
         active = client.get("/active-deals")
         assert active.status_code == 200, active.text
         by_address = {d["address"]: d for d in active.json()}
-        hm = by_address["HM Rehab"]
-        assert float(hm["constructionLoanBudget"]) == pytest.approx(55.0)
-        assert float(hm["earnestMoneyDeposit"]) == pytest.approx(5000.0)
-        assert hm["buyClosingDate"] is None and hm["prepaid_interest_buy"] == 0
-        assert hm["total_cash_needed_for_deal"] is not None
+        hard_money_rehab_deal = by_address["HM Rehab"]
+        assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55.0)
+        assert float(hard_money_rehab_deal["earnestMoneyDeposit"]) == pytest.approx(5000.0)
+        assert hard_money_rehab_deal["buyClosingDate"] is None and hard_money_rehab_deal["prepaid_interest_buy"] == 0
+        assert hard_money_rehab_deal["total_cash_needed_for_deal"] is not None
         bought = client.get("/bought-deals")
         assert bought.status_code == 200, bought.text
         assert any(d["address"] == "HM Rehab" for d in bought.json())

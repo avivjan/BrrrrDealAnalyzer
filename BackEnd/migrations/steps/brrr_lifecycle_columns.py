@@ -3,7 +3,7 @@
 Purely additive and idempotent: each column is added (with its DDL default) and backfilled
 in one transaction via `add_column_if_missing`, under the runner's advisory lock. Old
 processes ignore columns they do not map; new processes never read a NULL where the model
-expects a value, because the backfill runs before the first request. Fresh databases get
+expects a value, because the backfill runs column_names_before_migration the first request. Fresh databases get
 the columns from `create_all` and this becomes a no-op.
 
 Owner's decision: existing deals take the NEW defaults (an old deal re-analyzes under the new
@@ -71,10 +71,10 @@ def add_brrr_lifecycle_columns(engine, inspector) -> None:
     for table_name in BRRR_TABLES:
         if table_name not in inspector.get_table_names():
             continue
-        before = {col["name"] for col in inspector.get_columns(table_name)}
+        column_names_before_migration = {col["name"] for col in inspector.get_columns(table_name)}
         for column_name, column_ddl, backfill_value in BRRR_LIFECYCLE_COLUMNS:
             add_column_if_missing(engine, inspector, table_name, column_name, column_ddl, backfill_value)
-        if "construction_loan_budget_in_thousands" not in before:
+        if "construction_loan_budget_in_thousands" not in column_names_before_migration:
             with engine.begin() as conn:
                 conn.execute(text(
                     f"ALTER TABLE {table_name} ALTER COLUMN construction_loan_budget_in_thousands SET DEFAULT 0"

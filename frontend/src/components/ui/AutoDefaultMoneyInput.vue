@@ -23,29 +23,29 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-const isAuto = computed(() => props.modelValue == null);
+const usesFormulaDefault = computed(() => props.modelValue == null);
 /** What the box displays: the override, or the formula's current value. */
-const shown = computed(() => (isAuto.value ? props.computedDefault : props.modelValue));
+const displayedValue = computed(() => (usesFormulaDefault.value ? props.computedDefault : props.modelValue));
 
-const onUpdate = (value: number | null) => {
+const onAmountUpdate = (value: number | null) => {
   // Clearing the box returns to the formula, exactly like pressing ↺.
   emit("update:modelValue", value);
 };
 </script>
 
 <template>
-  <div data-ui="auto-default-money" :data-auto="isAuto" class="relative">
+  <div data-ui="auto-default-money" :data-auto="usesFormulaDefault" class="relative">
     <MoneyInput
-      :model-value="shown"
+      :model-value="displayedValue"
       :label="label"
       :in-thousands="inThousands"
       :required="required"
       :info="info"
-      :class="isAuto ? '[&_input]:text-fg-muted' : ''"
-      @update:model-value="onUpdate"
+      :class="usesFormulaDefault ? '[&_input]:text-fg-muted' : ''"
+      @update:model-value="onAmountUpdate"
     />
     <span
-      v-if="isAuto"
+      v-if="usesFormulaDefault"
       data-part="auto"
       class="pointer-events-none absolute right-2 top-0 inline-flex h-5 items-center rounded-ctl bg-surface-3 px-1.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted"
     >auto</span>

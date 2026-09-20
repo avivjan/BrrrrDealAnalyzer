@@ -15,8 +15,8 @@ import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
 const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
-const f = useDealField(props.deal);
-const calc = computed(() => brrrAutoCalc(props.deal));
+const field = useDealField(props.deal);
+const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
 const LOAN_CHARGE_PRESETS = [
   { label: "3shacks", value: 900 },
@@ -30,22 +30,22 @@ const sellerPaidId = useId();
 
 const onClosingDate = (event: Event) => {
   const value = (event.target as HTMLInputElement).value;
-  f.setStr("buyClosingDate", value || null);
+  field.setStr("buyClosingDate", value || null);
 };
 const onTitleMode = (event: Event) => {
   props.deal.titleModeBuy = (event.target as HTMLSelectElement).value as TitleModeBuy;
 };
 
 const sellerPaidExplicit = computed(() => typeof props.deal.sellerPaidCurrentYearTaxes === "boolean");
-const sellerPaidChecked = computed(() => calc.value.sellerPaidCurrentYearTaxesEffective ?? false);
+const sellerPaidChecked = computed(() => autoCalc.value.sellerPaidCurrentYearTaxesEffective ?? false);
 
-const money = (v: number | null) => (v == null ? undefined : `= ${formatMoney(v)}`);
-const perDiem = computed(() => (calc.value.hmlPerDiem == null ? undefined : `${formatMoney(calc.value.hmlPerDiem)}/day`));
-const prepaidHint = computed(() =>
-  calc.value.prepaidDaysBuy != null ? `${calc.value.prepaidDaysBuy} days through month end` : undefined,
+const moneyNote = (amount: number | null) => (amount == null ? undefined : `= ${formatMoney(amount)}`);
+const perDiemNote = computed(() => (autoCalc.value.hmlPerDiem == null ? undefined : `${formatMoney(autoCalc.value.hmlPerDiem)}/day`));
+const prepaidInterestHint = computed(() =>
+  autoCalc.value.prepaidDaysBuy != null ? `${autoCalc.value.prepaidDaysBuy} days through month end` : undefined,
 );
-const taxHint = computed(() => {
-  const paid = calc.value.sellerPaidCurrentYearTaxesEffective;
+const sellerTaxCreditHint = computed(() => {
+  const paid = autoCalc.value.sellerPaidCurrentYearTaxesEffective;
   if (paid == null) return undefined;
   return paid ? "buyer credits the seller (taxes already paid)" : "seller credits the buyer for the days owned";
 });
@@ -60,25 +60,25 @@ const taxHint = computed(() => {
           <label :for="closingDateId" data-part="label" class="text-sm font-medium leading-5 text-fg">Closing Date (Buy)</label>
           <InputInfo :content="impactText('buyClosingDate')" field-label="Closing Date (Buy)" />
         </div>
-        <input :id="closingDateId" data-part="input" type="date" class="ui-input" :value="f.getStr('buyClosingDate') ?? ''" @change="onClosingDate" />
+        <input :id="closingDateId" data-part="input" type="date" class="ui-input" :value="field.getStr('buyClosingDate') ?? ''" @change="onClosingDate" />
       </div>
       <div class="flex flex-col gap-2">
-        <AutoFigure data-testid="form.auto.prepaidInterestBuy" label="Prepaid Interest (Buy)" :value="calc.prepaidInterestBuy" :hint="prepaidHint" />
-        <AutoFigure data-testid="form.auto.sellerTaxCredit" label="Seller Tax Credit" :value="calc.sellerTaxCredit" :hint="taxHint" signed />
-        <div v-if="calc.sellerPaidCurrentYearTaxesEffective != null" class="flex items-center gap-2 text-xs text-fg-muted" data-testid="form.field.sellerPaidCurrentYearTaxes">
+        <AutoFigure data-testid="form.auto.prepaidInterestBuy" label="Prepaid Interest (Buy)" :value="autoCalc.prepaidInterestBuy" :hint="prepaidInterestHint" />
+        <AutoFigure data-testid="form.auto.sellerTaxCredit" label="Seller Tax Credit" :value="autoCalc.sellerTaxCredit" :hint="sellerTaxCreditHint" signed />
+        <div v-if="autoCalc.sellerPaidCurrentYearTaxesEffective != null" class="flex items-center gap-2 text-xs text-fg-muted" data-testid="form.field.sellerPaidCurrentYearTaxes">
           <input :id="sellerPaidId" type="checkbox" class="h-4 w-4 accent-primary" :checked="sellerPaidChecked"
-                 @change="f.setBool('sellerPaidCurrentYearTaxes', ($event.target as HTMLInputElement).checked)" />
+                 @change="field.setBool('sellerPaidCurrentYearTaxes', ($event.target as HTMLInputElement).checked)" />
           <label :for="sellerPaidId">Seller already paid this year's taxes</label>
           <span v-if="!sellerPaidExplicit" data-part="auto" class="rounded-ctl bg-surface-3 px-1.5 text-[10px] uppercase tracking-wide">auto</span>
-          <button v-else type="button" data-part="reset" class="text-primary hover:text-primary-hover" @click="f.setBool('sellerPaidCurrentYearTaxes', null)">auto</button>
+          <button v-else type="button" data-part="reset" class="text-primary hover:text-primary-hover" @click="field.setBool('sellerPaidCurrentYearTaxes', null)">auto</button>
           <InputInfo :content="impactText('sellerPaidCurrentYearTaxes')" field-label="Seller already paid this year's taxes" />
         </div>
       </div>
 
       <MoneyInput
         data-testid="form.field.purchasePrice"
-        :model-value="f.get('purchasePrice')"
-        @update:model-value="(v: number | null) => f.set('purchasePrice', v)"
+        :model-value="field.get('purchasePrice')"
+        @update:model-value="(v: number | null) => field.set('purchasePrice', v)"
         label="Purchase Price"
         :inThousands="true"
         :required="true"
@@ -86,8 +86,8 @@ const taxHint = computed(() => {
       />
       <MoneyInput
         data-testid="form.field.earnestMoneyDeposit"
-        :model-value="f.get('earnestMoneyDeposit')"
-        @update:model-value="(v: number | null) => f.set('earnestMoneyDeposit', v)"
+        :model-value="field.get('earnestMoneyDeposit')"
+        @update:model-value="(v: number | null) => field.set('earnestMoneyDeposit', v)"
         label="Earnest Money Deposit"
         :info="impactText('earnestMoneyDeposit')"
       />
@@ -98,41 +98,41 @@ const taxHint = computed(() => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <NumberInput
             data-testid="form.field.down_payment"
-            :model-value="f.get('down_payment')"
-            @update:model-value="(v: number | null) => f.set('down_payment', v)"
+            :model-value="field.get('down_payment')"
+            @update:model-value="(v: number | null) => field.set('down_payment', v)"
             label="Down Payment"
             suffix="%"
             :min="0"
             :max="100"
             :info="impactText('down_payment')"
-            :note="calc.purchaseLoanAmount == null ? undefined : `loan ${formatMoney(calc.purchaseLoanAmount)}`"
+            :note="autoCalc.purchaseLoanAmount == null ? undefined : `loan ${formatMoney(autoCalc.purchaseLoanAmount)}`"
           />
           <NumberInput
             data-testid="form.field.hmlPoints"
-            :model-value="f.get('hmlPoints')"
-            @update:model-value="(v: number | null) => f.set('hmlPoints', v)"
+            :model-value="field.get('hmlPoints')"
+            @update:model-value="(v: number | null) => field.set('hmlPoints', v)"
             label="Points"
             suffix=" pts"
             :min="0"
             :max="100"
             :info="impactText('hmlPoints')"
-            :note="money(calc.hmlPointsDollars)"
+            :note="moneyNote(autoCalc.hmlPointsDollars)"
           />
           <NumberInput
             data-testid="form.field.HMLInterestRate"
-            :model-value="f.get('HMLInterestRate')"
-            @update:model-value="(v: number | null) => f.set('HMLInterestRate', v)"
+            :model-value="field.get('HMLInterestRate')"
+            @update:model-value="(v: number | null) => field.set('HMLInterestRate', v)"
             label="Interest Rate"
             suffix="%"
             :min="0"
             :max="100"
             :info="impactText('HMLInterestRate')"
-            :note="perDiem"
+            :note="perDiemNote"
           />
         </div>
         <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-          <AutoFigure data-testid="form.auto.hmlAmount" label="Total hard money loan" :value="calc.hmlAmount" hint="purchase loan + construction budget" />
-          <AutoFigure data-testid="form.auto.totalHardMoneyCost" label="Total Hard Money Cost" :value="calc.totalHardMoneyCost" hint="points + interest until refi + loan charges" />
+          <AutoFigure data-testid="form.auto.hmlAmount" label="Total hard money loan" :value="autoCalc.hmlAmount" hint="purchase loan + construction budget" />
+          <AutoFigure data-testid="form.auto.totalHardMoneyCost" label="Total Hard Money Cost" :value="autoCalc.totalHardMoneyCost" hint="points + interest until refi + loan charges" />
         </div>
       </div>
 
@@ -142,17 +142,17 @@ const taxHint = computed(() => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <PresetSelectInput
             data-testid="form.field.loanChargesBuy"
-            :model-value="f.get('loanChargesBuy')"
-            @update:model-value="(v: number | null) => f.set('loanChargesBuy', v)"
+            :model-value="field.get('loanChargesBuy')"
+            @update:model-value="(v: number | null) => field.set('loanChargesBuy', v)"
             label="Loan Charges"
             :presets="LOAN_CHARGE_PRESETS"
             :info="impactText('loanChargesBuy')"
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.recordingTransferBuy"
-            :model-value="f.getNullable('recordingTransferBuy')"
-            :computed-default="calc.recordingTransferBuyDefault"
-            @update:model-value="(v: number | null) => f.setNullable('recordingTransferBuy', v)"
+            :model-value="field.getNullable('recordingTransferBuy')"
+            :computed-default="autoCalc.recordingTransferBuyDefault"
+            @update:model-value="(v: number | null) => field.setNullable('recordingTransferBuy', v)"
             label="Recording & Transfer"
             :info="impactText('recordingTransferBuy')"
           />
@@ -168,33 +168,33 @@ const taxHint = computed(() => {
           </div>
           <AutoDefaultMoneyInput
             data-testid="form.field.titleEscrowBuy"
-            :model-value="f.getNullable('titleEscrowBuy')"
-            :computed-default="calc.titleEscrowBuyDefault"
-            @update:model-value="(v: number | null) => f.setNullable('titleEscrowBuy', v)"
+            :model-value="field.getNullable('titleEscrowBuy')"
+            :computed-default="autoCalc.titleEscrowBuyDefault"
+            @update:model-value="(v: number | null) => field.setNullable('titleEscrowBuy', v)"
             label="Title & Escrow / Settlement"
             :info="impactText('titleEscrowBuy')"
           />
           <div class="flex items-center gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryBuy">
-            <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="f.getBool('onlineNotaryBuy', true)"
-                   @change="f.setBool('onlineNotaryBuy', ($event.target as HTMLInputElement).checked)" />
+            <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="field.getBool('onlineNotaryBuy', true)"
+                   @change="field.setBool('onlineNotaryBuy', ($event.target as HTMLInputElement).checked)" />
             <label :for="notaryId" class="text-sm font-medium text-fg">Online notary (+$250)</label>
             <InputInfo :content="impactText('onlineNotaryBuy')" field-label="Online notary" />
           </div>
           <MoneyInput
             data-testid="form.field.otherClosingCostsBuy"
-            :model-value="f.get('otherClosingCostsBuy')"
-            @update:model-value="(v: number | null) => f.set('otherClosingCostsBuy', v)"
+            :model-value="field.get('otherClosingCostsBuy')"
+            @update:model-value="(v: number | null) => field.set('otherClosingCostsBuy', v)"
             label="Other Closing Costs"
             :info="impactText('otherClosingCostsBuy')"
           />
         </div>
         <div class="mt-3">
-          <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="calc.closingCostsBuyTotal" />
+          <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="autoCalc.closingCostsBuyTotal" />
         </div>
       </div>
     </div>
     <template #footer>
-      <AutoFigure data-testid="form.auto.cashToCloseBuy" label="Cash to Close (Buy)" :value="calc.cashToCloseBuy" hint="down payment + closing costs + points + prepaid interest − tax credit − EMD" />
+      <AutoFigure data-testid="form.auto.cashToCloseBuy" label="Cash to Close (Buy)" :value="autoCalc.cashToCloseBuy" hint="down payment + closing costs + points + prepaid interest − tax credit − EMD" />
     </template>
   </LifecycleSection>
 </template>

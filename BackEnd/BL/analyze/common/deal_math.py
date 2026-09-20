@@ -139,21 +139,21 @@ def calc_prepaid_interest_refi(loan_amount, interest_rate, days):
 
 # -- settlement-line helpers (BRRRR lifecycle) ----------------------------------
 
-def effective(value, default):
+def effective(user_value, formula_default):
     """The user's value, or the formula default when the field was left `None`."""
-    return default if value is None else value
+    return formula_default if user_value is None else user_value
 
-def days_in_month(d: date) -> int:
-    return calendar.monthrange(d.year, d.month)[1]
+def days_in_month(day: date) -> int:
+    return calendar.monthrange(day.year, day.month)[1]
 
-def days_in_year(d: date) -> int:
-    return 366 if calendar.isleap(d.year) else 365
+def days_in_year(day: date) -> int:
+    return 366 if calendar.isleap(day.year) else 365
 
-def days_through_month_end(d: date) -> int:
-    """Days from `d` through the last day of its month, both inclusive (the prepaid-interest window)."""
-    return days_in_month(d) - d.day + 1
+def days_through_month_end(day: date) -> int:
+    """Days from `day` through the last day of its month, both inclusive (the prepaid-interest window)."""
+    return days_in_month(day) - day.day + 1
 
-def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_paid_current_year: bool):
+def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_already_paid_current_year_taxes: bool):
     """Property-tax proration on the purchase settlement, positive = credit to the buyer.
 
     Taxes are billed in November for the calendar year. Until then the seller owes the
@@ -162,11 +162,11 @@ def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_paid_current
     it reverses: the buyer owes the seller for closing day through Dec 31.
     Calendar-day proration on the closing year's 365 or 366 days, divide last.
     """
-    year_days = days_in_year(closing_date)
-    day_of_year = closing_date.timetuple().tm_yday
-    if seller_paid_current_year:
-        return -annual_taxes * Decimal(year_days - day_of_year + 1) / Decimal(year_days)
-    return annual_taxes * Decimal(day_of_year - 1) / Decimal(year_days)
+    days_in_closing_year = days_in_year(closing_date)
+    closing_day_of_year = closing_date.timetuple().tm_yday
+    if seller_already_paid_current_year_taxes:
+        return -annual_taxes * Decimal(days_in_closing_year - closing_day_of_year + 1) / Decimal(days_in_closing_year)
+    return annual_taxes * Decimal(closing_day_of_year - 1) / Decimal(days_in_closing_year)
 
 def recording_transfer_default(loan_amount):
     """Government recording & transfer charges: 0.55% of the loan recorded + $250."""
@@ -177,9 +177,9 @@ def title_escrow_buy_default(title_mode: str, purchase_price):
     ($2,050 under $150k, $2,200 from $150k to $200k inclusive, $2,400 above)."""
     if title_mode != "we_pay_all":
         return TITLE_ESCROW_BUY_STANDARD
-    for upper_bound, fee in TITLE_ESCROW_BUY_WE_PAY_ALL:
-        if purchase_price < upper_bound:
-            return fee
+    for price_upper_bound, title_fee in TITLE_ESCROW_BUY_WE_PAY_ALL:
+        if purchase_price < price_upper_bound:
+            return title_fee
     if purchase_price == TITLE_ESCROW_BUY_WE_PAY_ALL[-1][0]:
         return TITLE_ESCROW_BUY_WE_PAY_ALL[-1][1]
     return TITLE_ESCROW_BUY_WE_PAY_ALL_TOP

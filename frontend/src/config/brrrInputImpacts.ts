@@ -102,7 +102,7 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
 
 /** "Affects: Cash to Close (Buy), Cash Needed, …" for the (i) icon of `field`. */
 export function impactText(field: string): string {
-  const keys = BRRR_INPUT_IMPACTS[field] ?? [];
-  const labels = keys.map((k) => BRRR_OUTPUT_LABELS[k] ?? k);
-  return labels.length ? `Affects: ${labels.join(", ")}` : "";
+  const affectedOutputKeys = BRRR_INPUT_IMPACTS[field] ?? [];
+  const affectedOutputLabels = affectedOutputKeys.map((outputKey) => BRRR_OUTPUT_LABELS[outputKey] ?? outputKey);
+  return affectedOutputLabels.length ? `Affects: ${affectedOutputLabels.join(", ")}` : "";
 }

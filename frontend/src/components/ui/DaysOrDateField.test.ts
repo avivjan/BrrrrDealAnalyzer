@@ -189,40 +189,40 @@ describe("DaysOrDateField", () => {
       });
 
     it("shows the days and the date they land on, side by side", () => {
-      const w = mountAnchored(181);
-      expect(w.attributes("data-mode")).toBe("anchored");
-      expect(w.findComponent({ name: "NumberInput" }).props("modelValue")).toBe(181);
-      expect(w.find<HTMLInputElement>('[data-part="date-linked"]').element.value).toBe("2026-07-10");
-      expect(w.find('[data-part="toggle"]').exists()).toBe(false);
+      const wrapper = mountAnchored(181);
+      expect(wrapper.attributes("data-mode")).toBe("anchored");
+      expect(wrapper.findComponent({ name: "NumberInput" }).props("modelValue")).toBe(181);
+      expect(wrapper.find<HTMLInputElement>('[data-part="date-linked"]').element.value).toBe("2026-07-10");
+      expect(wrapper.find('[data-part="toggle"]').exists()).toBe(false);
     });
 
     it("editing the date writes the day count back", async () => {
-      const w = mountAnchored(180);
-      const date = w.find('[data-part="date-linked"]');
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
       (date.element as HTMLInputElement).value = "2026-07-10";
       await date.trigger("change");
-      expect(w.emitted("update:modelValue")![0]).toEqual([181]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([181]);
     });
 
     it("refuses a date before the anchor or under the minimum", async () => {
-      const w = mountAnchored(180);
-      const date = w.find('[data-part="date-linked"]');
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
       (date.element as HTMLInputElement).value = "2026-01-10";
       await date.trigger("change");
       (date.element as HTMLInputElement).value = "2025-12-01";
       await date.trigger("change");
-      expect(w.emitted("update:modelValue")).toBeUndefined();
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
     });
 
     it("a zero minimum lets the tenant move in on closing day", async () => {
-      const w = mount(DaysOrDateField, {
+      const wrapper = mount(DaysOrDateField, {
         props: { modelValue: 90, label: "Until Tenant Occupied", anchorDate: "2026-01-10", min: 0 },
         global: { stubs },
       });
-      const date = w.find('[data-part="date-linked"]');
+      const date = wrapper.find('[data-part="date-linked"]');
       (date.element as HTMLInputElement).value = "2026-01-10";
       await date.trigger("change");
-      expect(w.emitted("update:modelValue")![0]).toEqual([0]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([0]);
     });
 
     it("falls back to the picker without an anchor", () => {

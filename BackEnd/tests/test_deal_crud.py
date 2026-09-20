@@ -128,13 +128,13 @@ class TestLifecycleFieldsRoundTrip:
                 assert deal[field] is None, field
         assert float(deal["vacancy_reserve_effective"]) == pytest.approx(float(brrrr_payload["rent"]))
         assert float(deal["lowest_arv_effective"]) == pytest.approx(0.9 * brrrr_payload["arv_in_thousands"] * 1000)
-        typed = client.put(f"/active-deals/{deal['id']}", json={**deal, "recordingTransferBuy": 1234.5, "lowestArv": 300}).json()
-        assert float(typed["recordingTransferBuy"]) == pytest.approx(1234.5)
-        assert float(typed["recording_transfer_buy_effective"]) == pytest.approx(1234.5)
-        assert float(typed["lowest_arv_effective"]) == pytest.approx(300000)
-        reset = client.put(f"/active-deals/{deal['id']}", json={**typed, "recordingTransferBuy": None}).json()
-        assert reset["recordingTransferBuy"] is None
-        assert float(reset["recording_transfer_buy_effective"]) != pytest.approx(1234.5)
+        deal_with_typed_overrides = client.put(f"/active-deals/{deal['id']}", json={**deal, "recordingTransferBuy": 1234.5, "lowestArv": 300}).json()
+        assert float(deal_with_typed_overrides["recordingTransferBuy"]) == pytest.approx(1234.5)
+        assert float(deal_with_typed_overrides["recording_transfer_buy_effective"]) == pytest.approx(1234.5)
+        assert float(deal_with_typed_overrides["lowest_arv_effective"]) == pytest.approx(300000)
+        deal_reset_to_formula = client.put(f"/active-deals/{deal['id']}", json={**deal_with_typed_overrides, "recordingTransferBuy": None}).json()
+        assert deal_reset_to_formula["recordingTransferBuy"] is None
+        assert float(deal_reset_to_formula["recording_transfer_buy_effective"]) != pytest.approx(1234.5)
 
     def test_no_date_leaves_the_date_driven_figures_out(self, client, brrrr_payload):
         deal = _create(client, {**brrrr_payload, "buyClosingDate": None})
@@ -142,11 +142,11 @@ class TestLifecycleFieldsRoundTrip:
         assert deal["prepaid_interest_buy"] == 0 and deal["seller_tax_credit"] == 0 and deal["prepaid_interest_refi"] == 0
 
     def test_a_stale_client_sending_the_hm_flag_gets_a_construction_budget(self, client, brrrr_payload):
-        legacy = {k: v for k, v in brrrr_payload.items() if k != "constructionLoanBudget"}
-        deal = _create(client, {**legacy, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
-        assert float(deal["constructionLoanBudget"]) == pytest.approx(55)
-        cash = _create(client, {**legacy, "use_HM_for_rehab": False})
-        assert float(cash["constructionLoanBudget"]) == 0
+        payload_without_budget = {key: value for key, value in brrrr_payload.items() if key != "constructionLoanBudget"}
+        hard_money_rehab_deal = _create(client, {**payload_without_budget, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
+        assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55)
+        cash_rehab_deal = _create(client, {**payload_without_budget, "use_HM_for_rehab": False})
+        assert float(cash_rehab_deal["constructionLoanBudget"]) == 0
 
 
 class TestBoardLoad:

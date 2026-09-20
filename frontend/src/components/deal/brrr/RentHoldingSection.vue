@@ -13,12 +13,12 @@ import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
 const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
-const f = useDealField(props.deal);
-const calc = computed(() => brrrAutoCalc(props.deal));
+const field = useDealField(props.deal);
+const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
-const rentHint = computed(() =>
-  calc.value.daysRentedBeforeRefi == null ? undefined
-    : calc.value.daysRentedBeforeRefi > 0 ? `${calc.value.daysRentedBeforeRefi} days rented before the refi` : "tenant placed at or after the refi",
+const preRefiRentHint = computed(() =>
+  autoCalc.value.daysRentedBeforeRefi == null ? undefined
+    : autoCalc.value.daysRentedBeforeRefi > 0 ? `${autoCalc.value.daysRentedBeforeRefi} days rented before the refi` : "tenant placed at or after the refi",
 );
 </script>
 
@@ -27,41 +27,41 @@ const rentHint = computed(() =>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <MoneyInput
         data-testid="form.field.rent"
-        :model-value="f.get('rent')"
-        @update:model-value="(v: number | null) => f.set('rent', v)"
+        :model-value="field.get('rent')"
+        @update:model-value="(v: number | null) => field.set('rent', v)"
         label="Monthly Rent"
         :required="true"
         :info="impactText('rent')"
       />
       <DaysOrDateField
         data-testid="form.field.daysUntilRented"
-        :model-value="f.get('daysUntilRented')"
-        @update:model-value="(v: number | null) => f.set('daysUntilRented', v)"
+        :model-value="field.get('daysUntilRented')"
+        @update:model-value="(v: number | null) => field.set('daysUntilRented', v)"
         label="Until Tenant Occupied"
         date-label="Tenant occupied"
-        :anchor-date="f.getStr('buyClosingDate')"
+        :anchor-date="field.getStr('buyClosingDate')"
         :min="0"
         :info="impactText('daysUntilRented')"
       />
       <MoneyInput
         data-testid="form.field.monthlyUtilitiesUntilRented"
-        :model-value="f.get('monthlyUtilitiesUntilRented')"
-        @update:model-value="(v: number | null) => f.set('monthlyUtilitiesUntilRented', v)"
+        :model-value="field.get('monthlyUtilitiesUntilRented')"
+        @update:model-value="(v: number | null) => field.set('monthlyUtilitiesUntilRented', v)"
         label="Utilities until Rented (per month)"
         :info="impactText('monthlyUtilitiesUntilRented')"
-        :note="calc.utilitiesUntilRented == null ? undefined : `= ${formatMoney(calc.utilitiesUntilRented)}`"
+        :note="autoCalc.utilitiesUntilRented == null ? undefined : `= ${formatMoney(autoCalc.utilitiesUntilRented)}`"
       />
       <MoneyInput
         data-testid="form.field.maintenanceBeforeRefi"
-        :model-value="f.get('maintenanceBeforeRefi')"
-        @update:model-value="(v: number | null) => f.set('maintenanceBeforeRefi', v)"
+        :model-value="field.get('maintenanceBeforeRefi')"
+        @update:model-value="(v: number | null) => field.set('maintenanceBeforeRefi', v)"
         label="Maintenance before Refi"
         :info="impactText('maintenanceBeforeRefi')"
       />
       <MoneyInput
         data-testid="form.field.appliances"
-        :model-value="f.get('appliances')"
-        @update:model-value="(v: number | null) => f.set('appliances', v)"
+        :model-value="field.get('appliances')"
+        @update:model-value="(v: number | null) => field.set('appliances', v)"
         label="Appliances"
         :info="impactText('appliances')"
       />
@@ -69,22 +69,22 @@ const rentHint = computed(() =>
 
       <MoneyInput
         data-testid="form.field.annual_property_taxes"
-        :model-value="f.get('annual_property_taxes')"
-        @update:model-value="(v: number | null) => f.set('annual_property_taxes', v)"
+        :model-value="field.get('annual_property_taxes')"
+        @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
         label="Annual Taxes"
         :info="impactText('annual_property_taxes')"
       />
       <MoneyInput
         data-testid="form.field.annual_insurance"
-        :model-value="f.get('annual_insurance')"
-        @update:model-value="(v: number | null) => f.set('annual_insurance', v)"
+        :model-value="field.get('annual_insurance')"
+        @update:model-value="(v: number | null) => field.set('annual_insurance', v)"
         label="Annual Insurance"
         :info="impactText('annual_insurance')"
       />
       <MoneyInput
         data-testid="form.field.montly_hoa"
-        :model-value="f.get('montly_hoa')"
-        @update:model-value="(v: number | null) => f.set('montly_hoa', v)"
+        :model-value="field.get('montly_hoa')"
+        @update:model-value="(v: number | null) => field.set('montly_hoa', v)"
         label="Monthly HOA"
         :info="impactText('montly_hoa')"
       />
@@ -92,32 +92,32 @@ const rentHint = computed(() =>
       <div class="md:col-span-2 mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
         <NumberInput
           data-testid="form.field.vacancyPercent"
-          :model-value="f.get('vacancyPercent')"
-          @update:model-value="(v: number | null) => f.set('vacancyPercent', v)"
+          :model-value="field.get('vacancyPercent')"
+          @update:model-value="(v: number | null) => field.set('vacancyPercent', v)"
           label="Vacancy"
           suffix="%"
           :info="impactText('vacancyPercent')"
         />
         <NumberInput
           data-testid="form.field.maintenancePercent"
-          :model-value="f.get('maintenancePercent')"
-          @update:model-value="(v: number | null) => f.set('maintenancePercent', v)"
+          :model-value="field.get('maintenancePercent')"
+          @update:model-value="(v: number | null) => field.set('maintenancePercent', v)"
           label="Maint."
           suffix="%"
           :info="impactText('maintenancePercent')"
         />
         <NumberInput
           data-testid="form.field.capexPercent"
-          :model-value="f.get('capexPercent')"
-          @update:model-value="(v: number | null) => f.set('capexPercent', v)"
+          :model-value="field.get('capexPercent')"
+          @update:model-value="(v: number | null) => field.set('capexPercent', v)"
           label="CapEx"
           suffix="%"
           :info="impactText('capexPercent')"
         />
         <NumberInput
           data-testid="form.field.property_managment_fee_precentages_from_rent"
-          :model-value="f.get('property_managment_fee_precentages_from_rent')"
-          @update:model-value="(v: number | null) => f.set('property_managment_fee_precentages_from_rent', v)"
+          :model-value="field.get('property_managment_fee_precentages_from_rent')"
+          @update:model-value="(v: number | null) => field.set('property_managment_fee_precentages_from_rent', v)"
           label="Prop. Mgmt"
           suffix="%"
           :info="impactText('property_managment_fee_precentages_from_rent')"
@@ -125,7 +125,7 @@ const rentHint = computed(() =>
       </div>
     </div>
     <template #footer>
-      <AutoFigure data-testid="form.auto.preRefiRentalIncome" label="Pre-Refi Rental Income" :value="calc.preRefiRentalIncome" :hint="rentHint" />
+      <AutoFigure data-testid="form.auto.preRefiRentalIncome" label="Pre-Refi Rental Income" :value="autoCalc.preRefiRentalIncome" :hint="preRefiRentHint" />
     </template>
   </LifecycleSection>
 </template>

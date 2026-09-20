@@ -34,78 +34,78 @@ const FIXTURE: DealInputModel = {
   section: 2, stage: 2, address: "1 Shared Form St",
 };
 
-const close = (actual: number | null, expected: number) => expect(actual).toBeCloseTo(expected, 2);
+const expectCloseToTheCent = (actual: number | null, expected: number) => expect(actual).toBeCloseTo(expected, 2);
 
 describe("brrrAutoCalc — parity with the backend engine", () => {
-  const c = brrrAutoCalc(FIXTURE);
+  const autoCalc = brrrAutoCalc(FIXTURE);
 
   it("the hard-money stack", () => {
-    close(c.purchaseLoanAmount, 160_000);
-    close(c.hmlAmount, 215_000);
-    close(c.hmlPointsDollars, 4_300);
-    close(c.totalHardMoneyCost, 4300 + 11890.69 + 900);
+    expectCloseToTheCent(autoCalc.purchaseLoanAmount, 160_000);
+    expectCloseToTheCent(autoCalc.hmlAmount, 215_000);
+    expectCloseToTheCent(autoCalc.hmlPointsDollars, 4_300);
+    expectCloseToTheCent(autoCalc.totalHardMoneyCost, 4300 + 11890.69 + 900);
   });
 
   it("the interest timeline: 22 prepaid days, refi on Jul 10", () => {
-    expect(c.prepaidDaysBuy).toBe(22);
-    expect(c.refiClosingDate).toBe("2026-07-10");
-    expect(c.tenantOccupiedDate).toBe("2026-04-10");
-    close(c.prepaidInterestBuy, 1445.28);
-    expect(c.prepaidDaysRefi).toBe(22);
-    close(c.prepaidInterestRefi, 940.27);
+    expect(autoCalc.prepaidDaysBuy).toBe(22);
+    expect(autoCalc.refiClosingDate).toBe("2026-07-10");
+    expect(autoCalc.tenantOccupiedDate).toBe("2026-04-10");
+    expectCloseToTheCent(autoCalc.prepaidInterestBuy, 1445.28);
+    expect(autoCalc.prepaidDaysRefi).toBe(22);
+    expectCloseToTheCent(autoCalc.prepaidInterestRefi, 940.27);
   });
 
   it("the purchase settlement", () => {
-    close(c.sellerTaxCredit, 88.77);
-    expect(c.sellerPaidCurrentYearTaxesEffective).toBe(false);
-    close(c.recordingTransferBuyEffective, 1130);
-    close(c.titleEscrowBuyEffective, 1000);
-    close(c.closingCostsBuyTotal, 3280);
-    close(c.cashToCloseBuy, 43936.51);
+    expectCloseToTheCent(autoCalc.sellerTaxCredit, 88.77);
+    expect(autoCalc.sellerPaidCurrentYearTaxesEffective).toBe(false);
+    expectCloseToTheCent(autoCalc.recordingTransferBuyEffective, 1130);
+    expectCloseToTheCent(autoCalc.titleEscrowBuyEffective, 1000);
+    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 3280);
+    expectCloseToTheCent(autoCalc.cashToCloseBuy, 43936.51);
   });
 
   it("the rehab draws and the holding period", () => {
-    close(c.stolenMoney, 0);
-    close(c.preRefiRentalIncome, 7886.67);
-    close(c.utilitiesUntilRented, 240);
+    expectCloseToTheCent(autoCalc.stolenMoney, 0);
+    expectCloseToTheCent(autoCalc.preRefiRentalIncome, 7886.67);
+    expectCloseToTheCent(autoCalc.utilitiesUntilRented, 240);
   });
 
   it("the refinance settlement and the two wires", () => {
-    close(c.refiLoanAmount, 240_000);
-    close(c.closingCostsRefiTotal, 10_980);
-    close(c.reservesTotal, 6_600);
-    close(c.lowestArvEffective, 288_000);
-    close(c.cashOutWire, 5888.48);
-    close(c.cashOutWireConservative, -17417.5);
+    expectCloseToTheCent(autoCalc.refiLoanAmount, 240_000);
+    expectCloseToTheCent(autoCalc.closingCostsRefiTotal, 10_980);
+    expectCloseToTheCent(autoCalc.reservesTotal, 6_600);
+    expectCloseToTheCent(autoCalc.lowestArvEffective, 288_000);
+    expectCloseToTheCent(autoCalc.cashOutWire, 5888.48);
+    expectCloseToTheCent(autoCalc.cashOutWireConservative, -17417.5);
   });
 });
 
 describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
   it("is empty on an empty form", () => {
-    const c = brrrAutoCalc({ deal_type: "BRRRR" } as DealInputModel);
-    expect(c.purchaseLoanAmount).toBeNull();
-    expect(c.cashToCloseBuy).toBeNull();
-    expect(c.prepaidInterestBuy).toBeNull();
-    expect(c.sellerTaxCredit).toBeNull();
-    expect(c.cashOutWire).toBeNull();
-    expect(c.refiClosingDate).toBeNull();
+    const autoCalc = brrrAutoCalc({ deal_type: "BRRRR" } as DealInputModel);
+    expect(autoCalc.purchaseLoanAmount).toBeNull();
+    expect(autoCalc.cashToCloseBuy).toBeNull();
+    expect(autoCalc.prepaidInterestBuy).toBeNull();
+    expect(autoCalc.sellerTaxCredit).toBeNull();
+    expect(autoCalc.cashOutWire).toBeNull();
+    expect(autoCalc.refiClosingDate).toBeNull();
   });
 
   it("needs a closing date for the date-driven figures, and rent for the rent-driven ones", () => {
-    const undated = brrrAutoCalc({ ...FIXTURE, buyClosingDate: null });
-    expect(undated.prepaidInterestBuy).toBeNull();
-    expect(undated.sellerTaxCredit).toBeNull();
-    expect(undated.refiClosingDate).toBeNull();
-    expect(undated.cashToCloseBuy).not.toBeNull(); // the wire still shows, without the dated lines
+    const withoutClosingDate = brrrAutoCalc({ ...FIXTURE, buyClosingDate: null });
+    expect(withoutClosingDate.prepaidInterestBuy).toBeNull();
+    expect(withoutClosingDate.sellerTaxCredit).toBeNull();
+    expect(withoutClosingDate.refiClosingDate).toBeNull();
+    expect(withoutClosingDate.cashToCloseBuy).not.toBeNull(); // the wire still shows, without the dated lines
     expect(brrrAutoCalc({ ...FIXTURE, rent: 0 }).preRefiRentalIncome).toBeNull();
   });
 
   it("honours typed overrides of the formula defaults", () => {
-    const c = brrrAutoCalc({ ...FIXTURE, recordingTransferBuy: 1234, lowestArv: 250, vacancyReserve: 0, titleModeBuy: "we_pay_all" });
-    expect(c.recordingTransferBuyEffective).toBe(1234);
-    expect(c.lowestArvEffective).toBe(250_000);
-    expect(c.vacancyReserveEffective).toBe(0);
-    expect(c.titleEscrowBuyEffective).toBe(2200);
+    const autoCalc = brrrAutoCalc({ ...FIXTURE, recordingTransferBuy: 1234, lowestArv: 250, vacancyReserve: 0, titleModeBuy: "we_pay_all" });
+    expect(autoCalc.recordingTransferBuyEffective).toBe(1234);
+    expect(autoCalc.lowestArvEffective).toBe(250_000);
+    expect(autoCalc.vacancyReserveEffective).toBe(0);
+    expect(autoCalc.titleEscrowBuyEffective).toBe(2200);
   });
 
   it("flips the tax credit in December and with the override", () => {

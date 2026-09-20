@@ -8,12 +8,12 @@ import type { BrrrAnalyzeRes } from "../types";
 /** Every input the BRRRR sections render, read off their `impactText('…')` calls. */
 function renderedInputs(): string[] {
   const dir = join(__dirname, "..", "components", "deal", "brrr");
-  const keys = new Set<string>();
+  const inputKeys = new Set<string>();
   for (const file of readdirSync(dir)) {
     const source = readFileSync(join(dir, file), "utf8");
-    for (const match of source.matchAll(/impactText\('([A-Za-z_]+)'\)/g)) keys.add(match[1]!);
+    for (const match of source.matchAll(/impactText\('([A-Za-z_]+)'\)/g)) inputKeys.add(match[1]!);
   }
-  return [...keys];
+  return [...inputKeys];
 }
 
 const RESULT_KEYS: Array<keyof BrrrAnalyzeRes> = [
@@ -28,7 +28,7 @@ describe("brrrInputImpacts", () => {
   it("covers every input the lifecycle sections render", () => {
     const rendered = renderedInputs();
     expect(rendered.length).toBeGreaterThan(40);
-    const missing = rendered.filter((k) => !(k in BRRR_INPUT_IMPACTS));
+    const missing = rendered.filter((inputKey) => !(inputKey in BRRR_INPUT_IMPACTS));
     expect(missing).toEqual([]);
   });
 

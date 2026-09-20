@@ -19,7 +19,7 @@ const props = withDefaults(
   { signed: false, hint: undefined },
 );
 
-const tone = computed(() => {
+const valueToneClass = computed(() => {
   if (!props.signed || props.value == null || props.value === 0) return "text-fg";
   return props.value > 0 ? "text-positive" : "text-negative";
 });
@@ -35,6 +35,6 @@ const tone = computed(() => {
       <span data-part="label" class="block text-xs font-medium text-fg-muted">{{ label }}</span>
       <span v-if="hint" data-part="hint" class="block text-[11px] text-fg-muted">{{ hint }}</span>
     </span>
-    <span data-part="value" class="numeric shrink-0 text-sm font-semibold" :class="tone">{{ formatMoney(value) }}</span>
+    <span data-part="value" class="numeric shrink-0 text-sm font-semibold" :class="valueToneClass">{{ formatMoney(value) }}</span>
   </div>
 </template>

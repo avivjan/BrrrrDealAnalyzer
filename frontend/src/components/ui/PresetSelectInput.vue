@@ -26,17 +26,17 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-const CUSTOM = "__custom__";
+const CUSTOM_OPTION_VALUE = "__custom__";
 
-const selected = computed(() => {
-  const match = props.presets.find((p) => props.modelValue != null && p.value === props.modelValue);
-  return match ? match.label : CUSTOM;
+const selectedPresetLabel = computed(() => {
+  const matchingPreset = props.presets.find((preset) => props.modelValue != null && preset.value === props.modelValue);
+  return matchingPreset ? matchingPreset.label : CUSTOM_OPTION_VALUE;
 });
 
-const onSelect = (event: Event) => {
-  const label = (event.target as HTMLSelectElement).value;
-  const preset = props.presets.find((p) => p.label === label);
-  if (preset) emit("update:modelValue", preset.value);
+const onPresetSelected = (event: Event) => {
+  const chosenLabel = (event.target as HTMLSelectElement).value;
+  const chosenPreset = props.presets.find((preset) => preset.label === chosenLabel);
+  if (chosenPreset) emit("update:modelValue", chosenPreset.value);
 };
 
 const selectId = useId();
@@ -51,9 +51,9 @@ const selectId = useId();
           <InputInfo v-if="info" :content="info" :field-label="label" />
         </span>
       </div>
-      <select :id="selectId" data-part="preset" class="ui-select" :value="selected" @change="onSelect">
-        <option v-for="p in presets" :key="p.label" :value="p.label">{{ p.label }} · ${{ p.value.toLocaleString() }}</option>
-        <option :value="CUSTOM">Custom</option>
+      <select :id="selectId" data-part="preset" class="ui-select" :value="selectedPresetLabel" @change="onPresetSelected">
+        <option v-for="preset in presets" :key="preset.label" :value="preset.label">{{ preset.label }} · ${{ preset.value.toLocaleString() }}</option>
+        <option :value="CUSTOM_OPTION_VALUE">Custom</option>
       </select>
     </div>
     <MoneyInput

@@ -52,26 +52,26 @@ def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
 
 def calculate_brrr_results(payload) -> analyzeBRRRRes:
     """Numbers plus their explanation, as the API response model."""
-    r = compute_brrr_with_intermediates(payload)
+    results = compute_brrr_with_intermediates(payload)
     return analyzeBRRRRes(
-        cash_flow=r.cash_flow, dscr=r.dscr, cash_out=r.cash_out,
-        cash_out_routi=r.cash_out_routi, cash_out_routi_conservative=r.cash_out_routi_conservative,
-        cash_to_refi_table_conservative=r.cash_to_refi_table_conservative,
-        cash_on_cash=r.cash_on_cash, roi=r.roi, equity=r.equity, net_profit=r.net_profit,
-        total_cash_needed_for_deal=r.total_cash_needed, cash_needed_conservative=r.cash_needed_conservative,
-        total_cash_invested=r.total_cash_invested, cash_to_close_buy=r.cash_to_close_buy,
-        purchase_loan_amount=r.purchase_loan_amount, hml_amount=r.hml_amount, hml_payoff=r.hml_payoff,
-        total_hard_money_cost=r.total_hard_money_cost, prepaid_interest_buy=r.prepaid_interest_buy,
-        seller_tax_credit=r.seller_tax_credit, closing_costs_buy_total=r.closing_costs_buy_total,
-        stolen_money=r.stolen_money, pre_refi_rental_income=r.pre_refi_rental_income,
-        closing_costs_refi_total=r.closing_costs_refi_total, prepaid_interest_refi=r.prepaid_interest_refi,
-        reserves_total=r.reserves_total,
-        refi_closing_date=r.refi_closing_date, tenant_occupied_date=r.tenant_occupied_date,
-        recording_transfer_buy_effective=r.recording_transfer_buy, title_escrow_buy_effective=r.title_escrow_buy,
-        recording_transfer_refi_effective=r.recording_transfer_refi, title_escrow_refi_effective=r.title_escrow_refi,
-        vacancy_reserve_effective=r.vacancy_reserve, lowest_arv_effective=r.lowest_arv,
+        cash_flow=results.cash_flow, dscr=results.dscr, cash_out=results.cash_out,
+        cash_out_routi=results.cash_out_routi, cash_out_routi_conservative=results.cash_out_routi_conservative,
+        cash_to_refi_table_conservative=results.cash_to_refi_table_conservative,
+        cash_on_cash=results.cash_on_cash, roi=results.roi, equity=results.equity, net_profit=results.net_profit,
+        total_cash_needed_for_deal=results.total_cash_needed, cash_needed_conservative=results.cash_needed_conservative,
+        total_cash_invested=results.total_cash_invested, cash_to_close_buy=results.cash_to_close_buy,
+        purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
+        total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
+        seller_tax_credit=results.seller_tax_credit, closing_costs_buy_total=results.closing_costs_buy_total,
+        stolen_money=results.stolen_money, pre_refi_rental_income=results.pre_refi_rental_income,
+        closing_costs_refi_total=results.closing_costs_refi_total, prepaid_interest_refi=results.prepaid_interest_refi,
+        reserves_total=results.reserves_total,
+        refi_closing_date=results.refi_closing_date, tenant_occupied_date=results.tenant_occupied_date,
+        recording_transfer_buy_effective=results.recording_transfer_buy, title_escrow_buy_effective=results.title_escrow_buy,
+        recording_transfer_refi_effective=results.recording_transfer_refi, title_escrow_refi_effective=results.title_escrow_refi,
+        vacancy_reserve_effective=results.vacancy_reserve, lowest_arv_effective=results.lowest_arv,
         messages=None,
-        breakdowns=explain_brrr(payload, r),
+        breakdowns=explain_brrr(payload, results),
     )
 
 
@@ -81,54 +81,54 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget, lowest_arv = dollar_basis_step(payload)
     purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price, construction_budget)
     timeline = timeline_step(payload)
-    hml = hml_and_holding_costs_step(payload, hml_amount, timeline)
-    buy = closing_costs_buy_step(payload, purchase_price, purchase_loan_amount, down_payment_cash, hml, timeline)
+    hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
+    buy_settlement = closing_costs_buy_step(payload, purchase_price, purchase_loan_amount, down_payment_cash, hml_and_holding, timeline)
     # Rehab
-    stolen_money, rehab_cash = rehab_draw_step(rehab_cost, construction_budget)
+    stolen_money, rehab_paid_cash_out_of_pocket = rehab_draw_step(rehab_cost, construction_budget)
     # Rent
-    opex = operating_expenses_step(payload)
+    operating_expenses = operating_expenses_step(payload)
     # Refinance
-    refi = refi_terms_step(payload, arv, lowest_arv, timeline)
-    cash = cash_out_at_refi_step(payload, hml_amount, hml, buy, rehab_cash, refi)
-    mortgage_payment = mortgage_payment_step(payload, arv, refi.ltv)
-    net_operating_income, cash_flow = cash_flow_step(payload, opex.total, mortgage_payment)
+    refi_terms = refi_terms_step(payload, arv, lowest_arv, timeline)
+    cash_out_figures = cash_out_at_refi_step(payload, hml_amount, hml_and_holding, buy_settlement, rehab_paid_cash_out_of_pocket, refi_terms)
+    mortgage_payment = mortgage_payment_step(payload, arv, refi_terms.ltv)
+    net_operating_income, cash_flow = cash_flow_step(payload, operating_expenses.total, mortgage_payment)
     pitia, dscr = dscr_step(payload, mortgage_payment)
-    cash_on_cash = cash_on_cash_step(cash.cash_out, cash_flow)
-    equity, net_profit = equity_and_net_profit_step(arv, refi.ltv, refi.reserves_total, cash.cash_out)
-    roi = roi_step(cash.cash_out, cash_flow, net_profit)
-    refi_shortfall, total_cash_needed, cash_needed_conservative = total_cash_needed_step(payload, cash)
+    cash_on_cash = cash_on_cash_step(cash_out_figures.cash_out, cash_flow)
+    equity, net_profit = equity_and_net_profit_step(arv, refi_terms.ltv, refi_terms.reserves_total, cash_out_figures.cash_out)
+    roi = roi_step(cash_out_figures.cash_out, cash_flow, net_profit)
+    refi_shortfall, total_cash_needed, cash_needed_conservative = total_cash_needed_step(payload, cash_out_figures)
 
     return BrrrResultsWithIntermediates(
         arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
         rehab_contingency=rehab_contingency, rehab_cost=rehab_cost, construction_budget=construction_budget,
         purchase_loan_amount=purchase_loan_amount, down_payment_cash=down_payment_cash, hml_amount=hml_amount,
         buy_closing_date=timeline.buy_closing_date, refi_closing_date=timeline.refi_closing_date,
-        tenant_occupied_date=timeline.tenant_occupied_date, prepaid_days_buy=timeline.hml_interest_days_prepaid_at_purchase_closing,
-        monthly_interest_days=timeline.hml_interest_days_paid_monthly, accrued_days_at_payoff=timeline.hml_interest_days_accrued_into_refi_payoff,
-        prepaid_days_refi=timeline.dscr_interest_days_prepaid_at_refi_closing, days_rented_before_refi=timeline.days_tenant_occupied_before_refi,
-        hml_points=hml.hml_points, hml_per_diem=hml.hml_per_diem, hml_interest=hml.hml_interest,
-        prepaid_interest_buy=hml.prepaid_interest_buy, hml_monthly_interest_paid=hml.hml_monthly_interest_paid,
-        hml_accrued_interest_at_payoff=hml.hml_accrued_interest_at_payoff, holding_costs=hml.holding_costs,
-        utilities_until_rented=hml.utilities_until_rented, pre_refi_rental_income=hml.pre_refi_rental_income,
-        recording_transfer_buy=buy.recording_transfer_buy, title_escrow_buy=buy.title_escrow_buy, notary_buy=buy.notary_buy,
-        closing_costs_buy_total=buy.closing_costs_buy_total, seller_paid_current_year_taxes=buy.seller_paid_current_year_taxes,
-        seller_tax_credit=buy.seller_tax_credit, cash_to_close_buy=buy.cash_to_close_buy,
-        total_hard_money_cost=buy.total_hard_money_cost,
-        stolen_money=stolen_money, rehab_cash=rehab_cash,
-        ltv=refi.ltv, refi_loan_amount=refi.refi_loan_amount, conservative_refi_loan_amount=refi.conservative_refi_loan_amount,
-        broker_points_refi=refi.baseline.broker_points_refi, broker_points_refi_conservative=refi.conservative.broker_points_refi,
-        recording_transfer_refi=refi.baseline.recording_transfer_refi, recording_transfer_refi_conservative=refi.conservative.recording_transfer_refi,
-        title_escrow_refi=refi.baseline.title_escrow_refi, title_escrow_refi_conservative=refi.conservative.title_escrow_refi,
-        notary_refi=refi.notary_refi, closing_costs_refi_total=refi.baseline.closing_costs_refi_total,
-        closing_costs_refi_total_conservative=refi.conservative.closing_costs_refi_total,
-        prepaid_interest_refi=refi.baseline.prepaid_interest_refi, prepaid_interest_refi_conservative=refi.conservative.prepaid_interest_refi,
-        vacancy_reserve=refi.vacancy_reserve, reserves_total=refi.reserves_total,
-        hml_payoff=cash.hml_payoff, total_cash_invested=cash.total_cash_invested, cash_out_routi=cash.cash_out_routi,
-        cash_out_routi_conservative=cash.cash_out_routi_conservative,
-        cash_to_refi_table_conservative=cash.cash_to_refi_table_conservative, cash_out=cash.cash_out,
-        vacancy=opex.vacancy, management_fee=opex.management, maintenance=opex.maintenance, capex=opex.capex,
-        monthly_taxes=opex.monthly_taxes, monthly_insurance=opex.monthly_insurance,
-        operating_expenses=opex.total, mortgage_payment=mortgage_payment,
+        tenant_occupied_date=timeline.tenant_occupied_date, hml_interest_days_prepaid_at_purchase_closing=timeline.hml_interest_days_prepaid_at_purchase_closing,
+        hml_interest_days_paid_monthly=timeline.hml_interest_days_paid_monthly, hml_interest_days_accrued_into_refi_payoff=timeline.hml_interest_days_accrued_into_refi_payoff,
+        dscr_interest_days_prepaid_at_refi_closing=timeline.dscr_interest_days_prepaid_at_refi_closing, days_tenant_occupied_before_refi=timeline.days_tenant_occupied_before_refi,
+        hml_points=hml_and_holding.hml_points, hml_per_diem=hml_and_holding.hml_per_diem, hml_interest=hml_and_holding.hml_interest,
+        prepaid_interest_buy=hml_and_holding.prepaid_interest_buy, hml_interest_paid_monthly=hml_and_holding.hml_interest_paid_monthly,
+        hml_interest_accrued_into_refi_payoff=hml_and_holding.hml_interest_accrued_into_refi_payoff, holding_costs=hml_and_holding.holding_costs,
+        utilities_until_rented=hml_and_holding.utilities_until_rented, pre_refi_rental_income=hml_and_holding.pre_refi_rental_income,
+        recording_transfer_buy=buy_settlement.recording_transfer_buy, title_escrow_buy=buy_settlement.title_escrow_buy, notary_buy=buy_settlement.notary_buy,
+        closing_costs_buy_total=buy_settlement.closing_costs_buy_total, seller_paid_current_year_taxes=buy_settlement.seller_paid_current_year_taxes,
+        seller_tax_credit=buy_settlement.seller_tax_credit, cash_to_close_buy=buy_settlement.cash_to_close_buy,
+        total_hard_money_cost=buy_settlement.total_hard_money_cost,
+        stolen_money=stolen_money, rehab_paid_cash_out_of_pocket=rehab_paid_cash_out_of_pocket,
+        ltv=refi_terms.ltv, refi_loan_amount=refi_terms.refi_loan_amount, conservative_refi_loan_amount=refi_terms.conservative_refi_loan_amount,
+        broker_points_refi=refi_terms.at_arv.broker_points_refi, broker_points_refi_conservative=refi_terms.at_lowest_arv.broker_points_refi,
+        recording_transfer_refi=refi_terms.at_arv.recording_transfer_refi, recording_transfer_refi_conservative=refi_terms.at_lowest_arv.recording_transfer_refi,
+        title_escrow_refi=refi_terms.at_arv.title_escrow_refi, title_escrow_refi_conservative=refi_terms.at_lowest_arv.title_escrow_refi,
+        notary_refi=refi_terms.notary_refi, closing_costs_refi_total=refi_terms.at_arv.closing_costs_refi_total,
+        closing_costs_refi_total_conservative=refi_terms.at_lowest_arv.closing_costs_refi_total,
+        prepaid_interest_refi=refi_terms.at_arv.prepaid_interest_refi, prepaid_interest_refi_conservative=refi_terms.at_lowest_arv.prepaid_interest_refi,
+        vacancy_reserve=refi_terms.vacancy_reserve, reserves_total=refi_terms.reserves_total,
+        hml_payoff=cash_out_figures.hml_payoff, total_cash_invested=cash_out_figures.total_cash_invested, cash_out_routi=cash_out_figures.cash_out_routi,
+        cash_out_routi_conservative=cash_out_figures.cash_out_routi_conservative,
+        cash_to_refi_table_conservative=cash_out_figures.cash_to_refi_table_conservative, cash_out=cash_out_figures.cash_out,
+        vacancy=operating_expenses.vacancy, management_fee=operating_expenses.management, maintenance=operating_expenses.maintenance, capex=operating_expenses.capex,
+        monthly_taxes=operating_expenses.monthly_taxes, monthly_insurance=operating_expenses.monthly_insurance,
+        operating_expenses=operating_expenses.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
         refi_shortfall=refi_shortfall, total_cash_needed=total_cash_needed, cash_needed_conservative=cash_needed_conservative,

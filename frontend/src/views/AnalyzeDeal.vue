@@ -60,14 +60,14 @@ const summary = computed(() => [
  * The two wires a BRRRR is judged by, computed client-side from the inputs so far
  * (the page never calls the API before save). Empty until their inputs exist.
  */
-const wires = computed(() => {
+const brrrWireFigures = computed(() => {
   if (selectedType.value !== "BRRRR") return [];
-  const calc = brrrAutoCalc(form.value);
-  const fmt = (v: number | null) => (v == null ? "—" : formatMoney(v));
+  const autoCalc = brrrAutoCalc(form.value);
+  const formatOrDash = (amount: number | null) => (amount == null ? "—" : formatMoney(amount));
   return [
-    { label: "Cash to close", value: fmt(calc.cashToCloseBuy) },
-    { label: "Refi wire", value: fmt(calc.cashOutWire) },
-    { label: "Wire (low ARV)", value: fmt(calc.cashOutWireConservative) },
+    { label: "Cash to close", value: formatOrDash(autoCalc.cashToCloseBuy) },
+    { label: "Refi wire", value: formatOrDash(autoCalc.cashOutWire) },
+    { label: "Wire (low ARV)", value: formatOrDash(autoCalc.cashOutWireConservative) },
   ];
 });
 
@@ -191,8 +191,8 @@ const saveDeal = async () => {
               <dd v-count-up class="numeric mt-1 truncate text-lg font-semibold text-fg">{{ row.value }}</dd>
             </div>
           </dl>
-          <dl v-if="wires.length" data-testid="analyze.wires" class="grid grid-cols-3 gap-3 border-t border-line pt-4">
-            <div v-for="row in wires" :key="row.label" class="min-w-0">
+          <dl v-if="brrrWireFigures.length" data-testid="analyze.wires" class="grid grid-cols-3 gap-3 border-t border-line pt-4">
+            <div v-for="row in brrrWireFigures" :key="row.label" class="min-w-0">
               <dt class="truncate text-[11px] uppercase tracking-[0.1em] text-fg-muted">{{ row.label }}</dt>
               <dd class="numeric mt-1 truncate text-base font-semibold text-fg">{{ row.value }}</dd>
             </div>

@@ -171,7 +171,7 @@ const cashNeededWithBuffer = computed(() =>
     ? brrrDeal.value?.cash_needed_conservative
     : flipDeal.value?.total_cash_needed_with_buffer,
 );
-const bufferCaption = computed(() => (isBrrr.value ? "w/ low ARV" : "w/ buffer"));
+const downsideCaption = computed(() => (isBrrr.value ? "w/ low ARV" : "w/ buffer"));
 
 /**
  * The solid share of the cash bar: needed ÷ with-buffer, 0..1. Without a
@@ -321,7 +321,7 @@ const cashNeededShare = computed(() => {
       </div>
       <div class="numeric mt-1 flex justify-between gap-2 text-[11px] text-fg-muted">
         <span>{{ formatMoney(cashNeeded) }} needed</span>
-        <span>{{ bufferCaption }} {{ formatMoney(cashNeededWithBuffer) }}</span>
+        <span>{{ downsideCaption }} {{ formatMoney(cashNeededWithBuffer) }}</span>
       </div>
     </div>
 

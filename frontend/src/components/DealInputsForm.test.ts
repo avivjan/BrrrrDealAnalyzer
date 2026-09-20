@@ -133,15 +133,15 @@ describe("DealInputsForm", () => {
     });
 
     it("shows an auto-calculated figure only once its inputs exist", () => {
-      const empty = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
-      const figures = (w: ReturnType<typeof mountForm>) =>
-        Object.fromEntries(w.findAll("[data-figure]").map((el) => [el.attributes("data-figure"), el.attributes("data-value")]));
+      const emptyForm = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      const autoFiguresByLabel = (wrapper: ReturnType<typeof mountForm>) =>
+        Object.fromEntries(wrapper.findAll("[data-figure]").map((figure) => [figure.attributes("data-figure"), figure.attributes("data-value")]));
       // no purchase price yet -> no cash to close, no hard money cost
-      expect(figures(empty)["Cash to Close (Buy)"]).toBeUndefined();
-      const typed = mountForm({ ...createEmptyDealForm("BRRRR"), purchasePrice: 140, arv_in_thousands: 200, rent: 2600 }, "BRRRR");
-      expect(Number(figures(typed)["Cash to Close (Buy)"])).toBeGreaterThan(0);
-      expect(Number(figures(typed)["Total Hard Money Cost"])).toBeGreaterThan(0);
-      expect(Number(figures(typed)["Pre-Refi Rental Income"])).toBe(2600 * 90 / 30);
+      expect(autoFiguresByLabel(emptyForm)["Cash to Close (Buy)"]).toBeUndefined();
+      const typedForm = mountForm({ ...createEmptyDealForm("BRRRR"), purchasePrice: 140, arv_in_thousands: 200, rent: 2600 }, "BRRRR");
+      expect(Number(autoFiguresByLabel(typedForm)["Cash to Close (Buy)"])).toBeGreaterThan(0);
+      expect(Number(autoFiguresByLabel(typedForm)["Total Hard Money Cost"])).toBeGreaterThan(0);
+      expect(Number(autoFiguresByLabel(typedForm)["Pre-Refi Rental Income"])).toBe(2600 * 90 / 30);
     });
 
     it("renders the flip strategy fields for a FLIP deal", () => {

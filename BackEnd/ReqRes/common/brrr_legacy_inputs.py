@@ -14,7 +14,7 @@ _REHAB_KEYS = ("rehabCost", "rehab_cost_in_thousands")
 _CONTINGENCY_KEYS = ("rehabContingency", "rehab_contingency_percent")
 
 
-def _first(data: dict, keys) -> Any:
+def _first_present_value(data: dict, keys) -> Any:
     for key in keys:
         if data.get(key) is not None:
             return data[key]
@@ -33,12 +33,12 @@ def construction_budget_from_legacy_hm_flag(data: Any) -> Any:
         return data
     if not data.get("use_HM_for_rehab"):
         return data
-    rehab = _first(data, _REHAB_KEYS)
-    if rehab is None:
+    rehab_cost_in_thousands = _first_present_value(data, _REHAB_KEYS)
+    if rehab_cost_in_thousands is None:
         return data
-    contingency = _first(data, _CONTINGENCY_KEYS) or 0
+    rehab_contingency_percent = _first_present_value(data, _CONTINGENCY_KEYS) or 0
     try:
-        budget = Decimal(str(rehab)) * (1 + Decimal(str(contingency)) / Decimal("100"))
+        construction_budget_in_thousands = Decimal(str(rehab_cost_in_thousands)) * (1 + Decimal(str(rehab_contingency_percent)) / Decimal("100"))
     except (InvalidOperation, ValueError, TypeError):
         return data
-    return {**data, "constructionLoanBudget": str(budget)}
+    return {**data, "constructionLoanBudget": str(construction_budget_in_thousands)}

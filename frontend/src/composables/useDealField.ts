@@ -29,35 +29,35 @@ export type StringKey = {
 }[keyof DealInputModel];
 
 export function useDealField(deal: DealInputModel) {
-  const record = deal as Record<string, unknown>;
+  const dealRecord = deal as Record<string, unknown>;
 
   function get(key: NumericKey): number | null {
-    return toNumber(record[key]) ?? null;
+    return toNumber(dealRecord[key]) ?? null;
   }
   function set(key: NumericKey, value: number | null): void {
-    record[key] = value ?? undefined;
+    dealRecord[key] = value ?? undefined;
   }
   /** For "null = formula default" fields: `null` is a real value and is kept. */
   function setNullable(key: NumericKey, value: number | null): void {
-    record[key] = value;
+    dealRecord[key] = value;
   }
   /** `null` when the field is unset (so a formula default applies), else the number. */
   function getNullable(key: NumericKey): number | null {
-    return toNumber(record[key]) ?? null;
+    return toNumber(dealRecord[key]) ?? null;
   }
   function getBool(key: BooleanKey, fallback: boolean): boolean {
-    const v = record[key];
-    return typeof v === "boolean" ? v : fallback;
+    const storedValue = dealRecord[key];
+    return typeof storedValue === "boolean" ? storedValue : fallback;
   }
   function setBool(key: BooleanKey, value: boolean | null): void {
-    record[key] = value;
+    dealRecord[key] = value;
   }
   function getStr(key: StringKey): string | null {
-    const v = record[key];
-    return typeof v === "string" && v !== "" ? v : null;
+    const storedValue = dealRecord[key];
+    return typeof storedValue === "string" && storedValue !== "" ? storedValue : null;
   }
   function setStr(key: StringKey, value: string | null): void {
-    record[key] = value;
+    dealRecord[key] = value;
   }
   return { get, set, getNullable, setNullable, getBool, setBool, getStr, setStr };
 }

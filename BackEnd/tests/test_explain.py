@@ -122,13 +122,13 @@ class TestEveryFieldIsExplained:
 
 def _numeric_field_values(record) -> set[float]:
     """Every number on the record (dates, booleans and Nones are not step values)."""
-    values = set()
-    for f in dataclasses.fields(record):
-        value = getattr(record, f.name)
-        if isinstance(value, bool) or value is None or isinstance(value, date):
+    numeric_values = set()
+    for record_field in dataclasses.fields(record):
+        field_value = getattr(record, record_field.name)
+        if isinstance(field_value, bool) or field_value is None or isinstance(field_value, date):
             continue
-        values.add(float(value))
-    return values
+        numeric_values.add(float(field_value))
+    return numeric_values
 
 
 class TestStepsComeFromTheCalcRecord:

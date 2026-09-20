@@ -24,7 +24,7 @@ const props = withDefaults(
   defineProps<{
     modelValue: number | null;
     label: string;
-    /** Label of the linked date when anchored ("Refi closing"). */
+    /** Label of the linked date when hasAnchorDate ("Refi closing"). */
     dateLabel?: string;
     /** ISO date the count starts from. Enables the linked-date mode. */
     anchorDate?: string | null;
@@ -39,19 +39,19 @@ const props = withDefaults(
 
 const emit = defineEmits(["update:modelValue"]);
 
-const anchored = computed(() => !!props.anchorDate);
+const hasAnchorDate = computed(() => !!props.anchorDate);
 
-/** The date the day count lands on, when anchored. */
-const linkedDate = computed(() =>
+/** The date the day count lands on, when hasAnchorDate. */
+const linkedDateIso = computed(() =>
   props.anchorDate && props.modelValue != null ? addDays(props.anchorDate, props.modelValue) : null,
 );
 
-const onLinkedDate = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value;
-  if (!props.anchorDate || !value) return;
-  const days = daysBetween(props.anchorDate, value);
-  if (days == null || days < props.min) return;
-  emit("update:modelValue", days);
+const onLinkedDateChange = (event: Event) => {
+  const pickedDateIso = (event.target as HTMLInputElement).value;
+  if (!props.anchorDate || !pickedDateIso) return;
+  const daysFromAnchor = daysBetween(props.anchorDate, pickedDateIso);
+  if (daysFromAnchor == null || daysFromAnchor < props.min) return;
+  emit("update:modelValue", daysFromAnchor);
 };
 
 // ---- Unanchored picker (the original behaviour) ------------------------------------
@@ -61,8 +61,8 @@ const refiDate = ref("");
 
 const pickedDays = computed<number | null>(() => {
   if (!purchaseDate.value || !refiDate.value) return null;
-  const days = daysBetween(purchaseDate.value, refiDate.value);
-  return days != null && days > 0 ? days : null;
+  const daysBetweenPickedDates = daysBetween(purchaseDate.value, refiDate.value);
+  return daysBetweenPickedDates != null && daysBetweenPickedDates > 0 ? daysBetweenPickedDates : null;
 });
 
 const pickerProblem = computed(() => {
@@ -89,7 +89,7 @@ const refiDateId = useId();
 </script>
 
 <template>
-  <div v-if="anchored" data-mode="anchored" class="grid grid-cols-2 gap-3">
+  <div v-if="hasAnchorDate" data-mode="anchored" class="grid grid-cols-2 gap-3">
     <!-- Anchored: days and the date they land on, side by side and linked both ways. -->
     <div class="flex flex-col gap-1.5">
       <div data-part="label-row" class="flex h-5 items-center justify-between gap-2">
@@ -117,10 +117,10 @@ const refiDateId = useId();
         data-part="date-linked"
         :id="linkedDateId"
         type="date"
-        :value="linkedDate ?? ''"
+        :value="linkedDateIso ?? ''"
         :min="anchorDate ?? undefined"
         class="ui-input"
-        @change="onLinkedDate"
+        @change="onLinkedDateChange"
       />
     </div>
   </div>
