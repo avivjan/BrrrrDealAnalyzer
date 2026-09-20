@@ -66,7 +66,7 @@ const brrrWireFigures = computed(() => {
   const formatOrDash = (amount: number | null) => (amount == null ? "—" : formatMoney(amount));
   return [
     { label: "Cash to close", value: formatOrDash(autoCalc.cashToCloseBuy) },
-    { label: "Refi wire", value: formatOrDash(autoCalc.cashOutWire) },
+    { label: "Cash-Out Routi", value: formatOrDash(autoCalc.cashOutWire) },
     { label: "Wire (low ARV)", value: formatOrDash(autoCalc.cashOutWireConservative) },
   ];
 });

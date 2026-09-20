@@ -363,7 +363,7 @@ Cash to Close (Buy): ${formatMoney(brrr.cash_to_close_buy)} (seller tax credit $
 Total Hard Money Cost: ${formatMoney(brrr.total_hard_money_cost)}
 Stolen Money: ${formatMoney(brrr.stolen_money)}
 Pre-Refi Rental Income: ${formatMoney(brrr.pre_refi_rental_income)}
-Cash-Out Wire (Refi): ${formatMoney(brrr.cash_out_routi)}
+Cash-Out Routi: ${formatMoney(brrr.cash_out_routi)}
 Cash-Out Wire (Lowest ARV): ${formatMoney(brrr.cash_out_routi_conservative)}
 Cash Out: ${formatMoney(brrr.cash_out)}
 Cash Needed: ${formatMoney(brrr.total_cash_needed_for_deal)} (planned on the lowest ARV; cash to the refi table ${formatMoney(brrr.cash_to_refi_table_conservative)})

@@ -231,7 +231,7 @@ const prepaidInterestHint = computed(() =>
     </div>
     <template #footer>
       <AutoFigure data-testid="form.auto.hmlPayoff" label="HML payoff at refi" :value="autoCalc.hmlPayoff" hint="principal + interest accrued since the 1st" />
-      <AutoFigure data-testid="form.auto.cashOutWire" label="Cash-Out Wire (Refi)" :value="autoCalc.cashOutWire" hint="negative = cash brought to the table" signed />
+      <AutoFigure data-testid="form.auto.cashOutWire" label="Cash-Out Routi" :value="autoCalc.cashOutWire" hint="negative = cash brought to the table" signed />
       <AutoFigure data-testid="form.auto.cashOutWireConservative" label="Cash-Out Wire at the lowest ARV" :value="autoCalc.cashOutWireConservative" signed />
     </template>
   </LifecycleSection>

@@ -25,14 +25,14 @@ describe("UiTooltip", () => {
     const wrapper = mountTip();
     const classes = wrapper.find('[data-part="bubble"]').classes();
     expect(classes).toContain("opacity-0");
-    expect(classes).toContain("group-hover:opacity-100");
-    expect(classes).toContain("group-focus-within:opacity-100");
-    expect(classes).toContain("group-data-[open=true]:opacity-100");
+    expect(classes).toContain("group-hover/tooltip:opacity-100");
+    expect(classes).toContain("group-focus-within/tooltip:opacity-100");
+    expect(classes).toContain("group-data-[open=true]/tooltip:opacity-100");
     // G-HOVER pairing: the touch counterpart is present, and the bubble is
     // `display: none` on touch until the trigger is tapped open.
     expect(classes).toContain("touch:opacity-100");
     expect(classes).toContain("touch:hidden");
-    expect(classes).toContain("touch:group-data-[open=true]:block");
+    expect(classes).toContain("touch:group-data-[open=true]/tooltip:block");
 
     expect(wrapper.attributes("data-open")).toBe("false");
     await wrapper.trigger("click");
@@ -56,5 +56,13 @@ describe("UiTooltip", () => {
     const ids = page.findAll('[role="tooltip"]').map((el) => el.attributes("id"));
     expect(ids).toHaveLength(2);
     expect(new Set(ids).size).toBe(2);
+  });
+
+  it("opens only from its own trigger: a named group, so an ancestor `group` (the deal form) cannot reveal it", () => {
+    const wrapper = mountTip();
+    expect(wrapper.classes()).toContain("group/tooltip");
+    expect(wrapper.classes()).not.toContain("group");
+    const bubbleClasses = wrapper.get('[data-part="bubble"]').classes();
+    expect(bubbleClasses.some((c) => /^group-(hover|focus-within|data-\[open=true\]):/.test(c))).toBe(false);
   });
 });

@@ -20,8 +20,16 @@ anywhere over the form opens every bubble at once (screenshot from the owner).
 - No other file changes; the form keeps its `group`.
 
 ## Todo
-- [ ] T1 (5 min) `UiTooltip.vue` named group + test update.
-- [ ] T2 (5 min) Tests: unit — `UiTooltip.test.ts` (scoped tokens, tap toggle); integration — `DealInputsForm.test.ts` already mounts every (i) and passes; E2E — none (Playwright untouched per owner).
-- [ ] T3 (2 min) MCP: no endpoint or field change, nothing to add.
-- [ ] T4 (3 min) Security (`.claude/security.md`): CSS-only change, no data, no new sinks; `npm audit` unchanged.
-- [ ] T5 (5 min) `npm test`, `npm run build`; push; PR.
+- [x] T1 (5 min) `UiTooltip.vue` named group + test update.
+- [x] T2 (5 min) Tests: unit — `UiTooltip.test.ts` (scoped tokens, tap toggle); integration — `DealInputsForm.test.ts` already mounts every (i) and passes; E2E — none (Playwright untouched per owner).
+- [x] T3 (2 min) MCP: no endpoint or field change, nothing to add.
+- [x] T4 (3 min) Security (`.claude/security.md`): CSS-only change, no data, no new sinks; `npm audit` unchanged.
+- [x] T5 (5 min) `npm test`, `npm run build`; push; PR.
+
+Also in this PR (owner's ask at the review gate): the UI label "Cash-Out Wire (Refi)" is now
+"Cash-Out Routi" (both modals' tile, the Refinance section's auto figure, the Analyze rail, the
+(i) impact text and the copy-for-AI line). The API field `cash_out_routi` was already named that.
+
+## Review
+`UiTooltip` reveals from `group/tooltip` only; the deal form keeps its plain `group`. 1444 unit tests
+pass (one new: an ancestor group cannot reveal the bubble), `vue-tsc` + `vite build` clean.
