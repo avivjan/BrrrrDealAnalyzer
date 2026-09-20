@@ -7,5 +7,5 @@ def rehab_draw_step(rehab_cost, construction_budget):
     stolen_money = construction_budget - rehab_cost
     # The signed rehab term of the cash invested: what the budget does not cover
     # (negative when draws return cash). A 0 budget is the legacy cash-rehab case.
-    rehab_cash = rehab_cost - construction_budget
+    rehab_paid_cash_out_of_pocket = rehab_paid_cash_out_of_pocket - construction_budget
     return stolen_money, rehab_cash
