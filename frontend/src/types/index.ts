@@ -158,7 +158,6 @@ export interface BrrrAnalyzeRes {
   net_profit?: number;
   /** Cash Needed: total_cash_invested + rehab cushion + refi shortfall. */
   total_cash_needed_for_deal?: number;
-  cash_needed_conservative?: number;
   total_cash_invested?: number;
   cash_to_close_buy?: number;
   purchase_loan_amount?: number;

@@ -157,9 +157,9 @@ const ringLabel = computed(
 );
 
 /**
- * Cash needed, and the figure it could grow to, per deal type: for a BRRRR the
- * downside is the appraisal coming in at the lowest ARV (cash brought to the
- * refi table); for a flip it is the contingency buffer.
+ * Cash needed, and the figure it could grow to, per deal type. A BRRRR has one
+ * Cash Needed only, already planned on the lowest ARV, so its bar is the whole
+ * track; a flip still shows its contingency buffer beyond the solid amount.
  */
 const cashNeeded = computed(() =>
   isBrrr.value
@@ -167,11 +167,8 @@ const cashNeeded = computed(() =>
     : flipDeal.value?.total_cash_needed,
 );
 const cashNeededWithBuffer = computed(() =>
-  isBrrr.value
-    ? brrrDeal.value?.cash_needed_conservative
-    : flipDeal.value?.total_cash_needed_with_buffer,
+  isBrrr.value ? undefined : flipDeal.value?.total_cash_needed_with_buffer,
 );
-const downsideCaption = computed(() => (isBrrr.value ? "w/ low ARV" : "w/ buffer"));
 
 /**
  * The solid share of the cash bar: needed ÷ with-buffer, 0..1. Without a
@@ -321,7 +318,7 @@ const cashNeededShare = computed(() => {
       </div>
       <div class="numeric mt-1 flex justify-between gap-2 text-[11px] text-fg-muted">
         <span>{{ formatMoney(cashNeeded) }} needed</span>
-        <span>{{ downsideCaption }} {{ formatMoney(cashNeededWithBuffer) }}</span>
+        <span v-if="cashNeededWithBuffer != null">w/ buffer {{ formatMoney(cashNeededWithBuffer) }}</span>
       </div>
     </div>
 

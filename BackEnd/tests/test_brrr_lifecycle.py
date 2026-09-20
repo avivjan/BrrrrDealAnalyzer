@@ -233,7 +233,7 @@ class TestLowestArvStressTest:
         results = _compute(brrrr_payload)
         assert results.cash_out_routi_conservative <= results.cash_out_routi
         assert results.cash_to_refi_table_conservative == max(Decimal(0), -results.cash_out_routi_conservative)
-        assert results.cash_needed_conservative == results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
+        assert results.total_cash_needed == results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
 
 
 SCENARIOS = {
@@ -282,7 +282,7 @@ class TestReconcileIdentities:
     def test_cash_identities(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
         _assert_equal_to_the_cent(results.cash_out, results.cash_out_routi - results.total_cash_invested)
-        _assert_equal_to_the_cent(results.total_cash_needed - Decimal(brrrr_payload["rehabCushion"]) - results.refi_shortfall, results.total_cash_invested)
+        _assert_equal_to_the_cent(results.total_cash_needed - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative, results.total_cash_invested)
         assert results.stolen_money == results.construction_budget - results.rehab_cost == -results.rehab_paid_cash_out_of_pocket
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
@@ -297,7 +297,7 @@ class TestApiShapeAndValidation:
         body = client.post("/analyze/brrr", json=brrrr_payload).json()
         for key in ("cash_to_close_buy", "seller_tax_credit", "prepaid_interest_buy", "total_hard_money_cost", "stolen_money",
                     "pre_refi_rental_income", "cash_out_routi_conservative", "cash_to_refi_table_conservative",
-                    "cash_needed_conservative", "total_cash_invested", "refi_closing_date", "tenant_occupied_date",
+                    "total_cash_invested", "refi_closing_date", "tenant_occupied_date",
                     "recording_transfer_buy_effective", "title_escrow_buy_effective", "recording_transfer_refi_effective",
                     "title_escrow_refi_effective", "vacancy_reserve_effective", "lowest_arv_effective"):
             assert key in body, key

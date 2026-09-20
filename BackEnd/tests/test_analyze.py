@@ -34,7 +34,6 @@ BRRRR_METRIC_KEYS = {
     "equity",
     "net_profit",
     "total_cash_needed_for_deal",
-    "cash_needed_conservative",
     "total_cash_invested",
     "cash_to_close_buy",
     "cash_out_routi_conservative",
@@ -287,31 +286,26 @@ class TestAnalyzeFlip:
 class TestAuditFixes:
     """Regression tests for the financial-accuracy audit fixes (F1, F2, F3, F4, F6)."""
 
-    # F2 -- a refi shortfall is part of the lifetime cash requirement.
-    def test_refi_shortfall_raises_total_cash_needed(self, client, brrrr_payload):
+    # F2 -- the cash brought to the refi table (at the lowest ARV) is part of Cash Needed.
+    def test_cash_to_refi_table_raises_total_cash_needed(self, client, brrrr_payload):
         base = client.post("/analyze/brrr", json=brrrr_payload).json()
-        assert base["cash_out_routi"] > 0  # the fixture refis clean: nothing to add
         short = client.post(
             "/analyze/brrr",
             json={**brrrr_payload, "arv_in_thousands": 250, "ltv_as_precent": 70, "maintenanceReserve": 30000},
         ).json()
-        shortfall = -short["cash_out_routi"]
-        assert shortfall > 0
-        # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole
-        # increase is the shortfall the investor wires at the refi table...
+        extra_cash_to_table = short["cash_to_refi_table_conservative"] - base["cash_to_refi_table_conservative"]
+        assert extra_cash_to_table > 0
+        # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole increase is
+        # the extra cash the investor wires at the refi table under the lowest ARV...
         assert short["total_cash_needed_for_deal"] == pytest.approx(
-            base["total_cash_needed_for_deal"] + shortfall, abs=1e-6
+            base["total_cash_needed_for_deal"] + extra_cash_to_table, abs=1e-6
         )
-        # ...which makes lifetime cash needed equal to the cash left in the deal,
-        # plus the cushion that is held rather than spent.
+        # ...and Cash Needed is always invested + cushion + cash to the refi table.
         assert short["total_cash_needed_for_deal"] == pytest.approx(
-            -short["cash_out"] + brrrr_payload["rehabCushion"], abs=1e-6
+            short["total_cash_invested"] + brrrr_payload["rehabCushion"] + short["cash_to_refi_table_conservative"], abs=1e-6
         )
         labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
-        assert "Refi Shortfall (cash to refi table)" in labels
-        assert "Refi Shortfall (cash to refi table)" not in [
-            s["label"] for s in base["breakdowns"]["total_cash_needed_for_deal"]
-        ]
+        assert "Cash to Refi Table (Lowest ARV)" in labels
 
     # F1 -- the buffered breakdown now lists every component it sums (Flip only:
     # the BRRRR engine replaced the buffer with the rehab cushion).

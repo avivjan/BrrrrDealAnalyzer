@@ -20,7 +20,6 @@ export const BRRR_OUTPUT_LABELS: Partial<Record<BrrrOutputKey, string>> = {
   prepaid_interest_refi: "Prepaid Interest (Refi)",
   total_cash_invested: "Total Cash Invested",
   total_cash_needed_for_deal: "Cash Needed",
-  cash_needed_conservative: "Cash Needed (Lowest ARV)",
   cash_out_routi: "Cash-Out Wire",
   cash_out_routi_conservative: "Cash-Out Wire (Lowest ARV)",
   cash_to_refi_table_conservative: "Cash to Refi Table (Lowest ARV)",
@@ -64,7 +63,7 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   rehabCost: ["stolen_money", "total_cash_invested", ...CASH_METRICS],
   rehabContingency: ["stolen_money", "total_cash_invested", ...CASH_METRICS],
   constructionLoanBudget: ["hml_amount", "stolen_money", "total_hard_money_cost", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
-  rehabCushion: ["total_cash_needed_for_deal", "cash_needed_conservative"],
+  rehabCushion: ["total_cash_needed_for_deal"],
   // Rent & holding
   rent: ["pre_refi_rental_income", "reserves_total", "cash_flow", "dscr", "cash_out_routi", ...CASH_METRICS],
   daysUntilRented: ["pre_refi_rental_income", ...HOLDING_ITEM],
@@ -81,7 +80,7 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   // Refinance
   daysUntilRefi: ["total_hard_money_cost", "pre_refi_rental_income", "prepaid_interest_refi", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   arv_in_thousands: ["cash_out_routi", "cash_out_routi_conservative", "equity", "cash_flow", "dscr", ...CASH_METRICS],
-  lowestArv: ["cash_out_routi_conservative", "cash_to_refi_table_conservative", "cash_needed_conservative"],
+  lowestArv: ["cash_out_routi_conservative", "cash_to_refi_table_conservative", "total_cash_needed_for_deal"],
   ltv_as_precent: ["cash_out_routi", "cash_out_routi_conservative", "equity", "cash_flow", "dscr", ...CASH_METRICS],
   interestRate: ["prepaid_interest_refi", "cash_out_routi", "cash_flow", "dscr", "cash_on_cash", "roi"],
   loanTermYears: ["cash_flow", "dscr", "cash_on_cash", "roi"],

@@ -267,18 +267,13 @@ describe("DealCard", () => {
       expect(ring(mountCard(brrrDeal({ cash_on_cash: coc }))).props("tone")).toBe(tone);
     });
 
-    it("draws the solid cash segment as needed ÷ lowest-ARV cash needed of the track", () => {
-      const wrapper = mountCard(
-        brrrDeal({
-          total_cash_needed_for_deal: 63525,
-          cash_needed_conservative: 76638,
-        }),
-      );
+    it("fills the whole track with the one Cash Needed (already planned on the lowest ARV)", () => {
+      const wrapper = mountCard(brrrDeal({ total_cash_needed_for_deal: 63525 }));
       const solid = wrapper.find('[data-part="cash-needed"]').element as HTMLElement;
-      expect(solid.style.width).toBe(`${(63525 / 76638) * 100}%`);
+      expect(solid.style.width).toBe("100%");
       const bar = wrapper.find('[data-part="cash-bar"]').text();
       expect(bar).toContain("$63,525 needed");
-      expect(bar).toContain("w/ low ARV $76,638");
+      expect(bar).not.toContain("w/");
     });
 
     it("shows the next action only when the deal has one", () => {

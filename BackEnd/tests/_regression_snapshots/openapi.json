@@ -1314,18 +1314,6 @@
             "title": "Cash Flow",
             "type": "number"
           },
-          "cash_needed_conservative": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-            "title": "Cash Needed Conservative"
-          },
           "cash_on_cash": {
             "anyOf": [
               {
@@ -2293,7 +2281,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -4650,18 +4638,6 @@
             "title": "Cash Flow",
             "type": "number"
           },
-          "cash_needed_conservative": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-            "title": "Cash Needed Conservative"
-          },
           "cash_on_cash": {
             "anyOf": [
               {
@@ -5602,7 +5578,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -10391,18 +10367,6 @@
             "title": "Cash Flow",
             "type": "number"
           },
-          "cash_needed_conservative": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-            "title": "Cash Needed Conservative"
-          },
           "cash_on_cash": {
             "anyOf": [
               {
@@ -10777,7 +10741,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {

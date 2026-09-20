@@ -730,30 +730,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 54760.67732115677
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 77150.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -1316,9 +1292,17 @@
             "value": 54760.67732115677
           },
           {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -1331,13 +1315,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 59760.67732115677
+            "value": 77150.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -1416,7 +1400,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 77150.94520547945,
       "cash_on_cash": 2.088959390251334,
       "cash_out": -48849.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -1500,7 +1483,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 54760.67732115677,
-      "total_cash_needed_for_deal": 59760.67732115677,
+      "total_cash_needed_for_deal": 77150.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -2853,30 +2836,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 54760.67732115677
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 77150.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -3439,9 +3398,17 @@
             "value": 54760.67732115677
           },
           {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -3454,13 +3421,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 59760.67732115677
+            "value": 77150.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -3539,7 +3506,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 77150.94520547945,
       "cash_on_cash": 2.088959390251334,
       "cash_out": -48849.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -3623,7 +3589,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 54760.67732115677,
-      "total_cash_needed_for_deal": 59760.67732115677,
+      "total_cash_needed_for_deal": 77150.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -4373,30 +4339,6 @@
               "terms": null,
               "unit": "money",
               "value": 17390.26788432268
-            },
-            {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-              "label": "Cash Needed (Lowest ARV)",
-              "note": null,
-              "terms": [
-                {
-                  "label": "Total Cash Invested",
-                  "sign": "+",
-                  "value": 54760.67732115677
-                },
-                {
-                  "label": "Rehab Cushion",
-                  "sign": "+",
-                  "value": 5000.0
-                },
-                {
-                  "label": "Cash to Refi Table (Lowest ARV)",
-                  "sign": "+",
-                  "value": 17390.26788432268
-                }
-              ],
-              "unit": "money",
-              "value": 77150.94520547945
             }
           ],
           "cash_to_close_buy": [
@@ -4959,9 +4901,17 @@
               "value": 54760.67732115677
             },
             {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+              "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+              "label": "Cash to Refi Table (Lowest ARV)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 17390.26788432268
+            },
+            {
+              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
               "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -4974,13 +4924,13 @@
                   "value": 5000.0
                 },
                 {
-                  "label": "Refi Shortfall",
+                  "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
-                  "value": 0.0
+                  "value": 17390.26788432268
                 }
               ],
               "unit": "money",
-              "value": 59760.67732115677
+              "value": 77150.94520547945
             }
           ],
           "total_hard_money_cost": [
@@ -5059,7 +5009,6 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": 77150.94520547945,
         "cash_on_cash": 2.088959390251334,
         "cash_out": -48849.24657534246,
         "cash_out_routi": 5911.430745814308,
@@ -5143,7 +5092,7 @@
         "title_escrow_buy_effective": 1000.0,
         "title_escrow_refi_effective": 1880.0,
         "total_cash_invested": 54760.67732115677,
-        "total_cash_needed_for_deal": 59760.67732115677,
+        "total_cash_needed_for_deal": 77150.94520547945,
         "total_hard_money_cost": 17025.0,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
@@ -6472,30 +6421,6 @@
             "terms": null,
             "unit": "money",
             "value": 25559.823439878233
-          },
-          {
-            "formula": "Total Cash Invested ($56,935.12) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($25,559.82) = $87,494.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 56935.121765601216
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 25559.823439878233
-              }
-            ],
-            "unit": "money",
-            "value": 87494.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -7058,17 +6983,17 @@
             "value": 56935.121765601216
           },
           {
-            "formula": "Refi wire (-$2,258.12) is negative \u2192 $2,258.12 brought to the refi closing table",
-            "label": "Refi Shortfall (cash to refi table)",
-            "note": "The new loan does not cover the hard-money payoff plus refi costs and reserves.",
+            "formula": "Wire (-$25,559.82) is negative \u2192 $25,559.82 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
             "terms": null,
             "unit": "money",
-            "value": 2258.124809741248
+            "value": 25559.823439878233
           },
           {
-            "formula": "Total Cash Invested ($56,935.12) + Rehab Cushion ($5,000) + Refi Shortfall ($2,258.12) = $64,193.25",
+            "formula": "Total Cash Invested ($56,935.12) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($25,559.82) = $87,494.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -7081,13 +7006,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 2258.124809741248
+                "value": 25559.823439878233
               }
             ],
             "unit": "money",
-            "value": 64193.24657534246
+            "value": 87494.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -7166,7 +7091,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 200.53674361688704,
-      "cash_needed_conservative": 87494.94520547945,
       "cash_on_cash": 4.065397765165108,
       "cash_out": -59193.24657534246,
       "cash_out_routi": -2258.124809741248,
@@ -7250,7 +7174,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 56935.121765601216,
-      "total_cash_needed_for_deal": 64193.24657534246,
+      "total_cash_needed_for_deal": 87494.94520547945,
       "total_hard_money_cost": 17625.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -7993,30 +7917,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 54760.67732115677
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 77150.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -8579,9 +8479,17 @@
             "value": 54760.67732115677
           },
           {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -8594,13 +8502,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 59760.67732115677
+            "value": 77150.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -8679,7 +8587,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 77150.94520547945,
       "cash_on_cash": 2.088959390251334,
       "cash_out": -48849.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -8763,7 +8670,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 54760.67732115677,
-      "total_cash_needed_for_deal": 59760.67732115677,
+      "total_cash_needed_for_deal": 77150.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -10098,30 +10005,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 54760.67732115677
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 77150.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -10684,9 +10567,17 @@
             "value": 54760.67732115677
           },
           {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -10699,13 +10590,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 59760.67732115677
+            "value": 77150.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -10784,7 +10675,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 77150.94520547945,
       "cash_on_cash": 2.088959390251334,
       "cash_out": -48849.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -10870,7 +10760,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 54760.67732115677,
-      "total_cash_needed_for_deal": 59760.67732115677,
+      "total_cash_needed_for_deal": 77150.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -11642,30 +11532,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 54760.67732115677
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 77150.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -12228,9 +12094,17 @@
             "value": 54760.67732115677
           },
           {
-            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -12243,13 +12117,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 59760.67732115677
+            "value": 77150.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -12328,7 +12202,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 77150.94520547945,
       "cash_on_cash": 2.088959390251334,
       "cash_out": -48849.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -12414,7 +12287,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 54760.67732115677,
-      "total_cash_needed_for_deal": 59760.67732115677,
+      "total_cash_needed_for_deal": 77150.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -13758,30 +13631,6 @@
               "terms": null,
               "unit": "money",
               "value": 17390.26788432268
-            },
-            {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-              "label": "Cash Needed (Lowest ARV)",
-              "note": null,
-              "terms": [
-                {
-                  "label": "Total Cash Invested",
-                  "sign": "+",
-                  "value": 54760.67732115677
-                },
-                {
-                  "label": "Rehab Cushion",
-                  "sign": "+",
-                  "value": 5000.0
-                },
-                {
-                  "label": "Cash to Refi Table (Lowest ARV)",
-                  "sign": "+",
-                  "value": 17390.26788432268
-                }
-              ],
-              "unit": "money",
-              "value": 77150.94520547945
             }
           ],
           "cash_to_close_buy": [
@@ -14344,9 +14193,17 @@
               "value": 54760.67732115677
             },
             {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+              "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+              "label": "Cash to Refi Table (Lowest ARV)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 17390.26788432268
+            },
+            {
+              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
               "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -14359,13 +14216,13 @@
                   "value": 5000.0
                 },
                 {
-                  "label": "Refi Shortfall",
+                  "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
-                  "value": 0.0
+                  "value": 17390.26788432268
                 }
               ],
               "unit": "money",
-              "value": 59760.67732115677
+              "value": 77150.94520547945
             }
           ],
           "total_hard_money_cost": [
@@ -14444,7 +14301,6 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": 77150.94520547945,
         "cash_on_cash": 2.088959390251334,
         "cash_out": -48849.24657534246,
         "cash_out_routi": 5911.430745814308,
@@ -14530,7 +14386,7 @@
         "title_escrow_buy_effective": 1000.0,
         "title_escrow_refi_effective": 1880.0,
         "total_cash_invested": 54760.67732115677,
-        "total_cash_needed_for_deal": 59760.67732115677,
+        "total_cash_needed_for_deal": 77150.94520547945,
         "total_hard_money_cost": 17025.0,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
@@ -15863,30 +15719,6 @@
             "terms": null,
             "unit": "money",
             "value": 17390.26788432268
-          },
-          {
-            "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $93,650.95",
-            "label": "Cash Needed (Lowest ARV)",
-            "note": null,
-            "terms": [
-              {
-                "label": "Total Cash Invested",
-                "sign": "+",
-                "value": 71260.67732115678
-              },
-              {
-                "label": "Rehab Cushion",
-                "sign": "+",
-                "value": 5000.0
-              },
-              {
-                "label": "Cash to Refi Table (Lowest ARV)",
-                "sign": "+",
-                "value": 17390.26788432268
-              }
-            ],
-            "unit": "money",
-            "value": 93650.94520547945
           }
         ],
         "cash_to_close_buy": [
@@ -16449,9 +16281,17 @@
             "value": 71260.67732115678
           },
           {
-            "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $76,260.68",
+            "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+            "label": "Cash to Refi Table (Lowest ARV)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 17390.26788432268
+          },
+          {
+            "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $93,650.95",
             "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -16464,13 +16304,13 @@
                 "value": 5000.0
               },
               {
-                "label": "Refi Shortfall",
+                "label": "Cash to Refi Table (Lowest ARV)",
                 "sign": "+",
-                "value": 0.0
+                "value": 17390.26788432268
               }
             ],
             "unit": "money",
-            "value": 76260.67732115678
+            "value": 93650.94520547945
           }
         ],
         "total_hard_money_cost": [
@@ -16549,7 +16389,6 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 85.03674361688704,
-      "cash_needed_conservative": 93650.94520547945,
       "cash_on_cash": 1.5615190333161035,
       "cash_out": -65349.24657534246,
       "cash_out_routi": 5911.430745814308,
@@ -16637,7 +16476,7 @@
       "title_escrow_buy_effective": 1000.0,
       "title_escrow_refi_effective": 1880.0,
       "total_cash_invested": 71260.67732115678,
-      "total_cash_needed_for_deal": 76260.67732115678,
+      "total_cash_needed_for_deal": 93650.94520547945,
       "total_hard_money_cost": 17025.0,
       "updated_at": "<updated_at>",
       "use_HM_for_rehab": true,
@@ -17284,7 +17123,7 @@
         "stage": 2,
         "stolen_money": 0.0,
         "task": null,
-        "total_cash_needed": 59760.67732115677,
+        "total_cash_needed": 77150.94520547945,
         "updated_at": "<updated_at>"
       },
       {
@@ -17413,7 +17252,7 @@
         "stage": 2,
         "stolen_money": 0.0,
         "task": null,
-        "total_cash_needed": 59760.67732115677,
+        "total_cash_needed": 77150.94520547945,
         "updated_at": "<updated_at>"
       },
       {
@@ -18244,30 +18083,6 @@
               "terms": null,
               "unit": "money",
               "value": 17390.26788432268
-            },
-            {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-              "label": "Cash Needed (Lowest ARV)",
-              "note": null,
-              "terms": [
-                {
-                  "label": "Total Cash Invested",
-                  "sign": "+",
-                  "value": 54760.67732115677
-                },
-                {
-                  "label": "Rehab Cushion",
-                  "sign": "+",
-                  "value": 5000.0
-                },
-                {
-                  "label": "Cash to Refi Table (Lowest ARV)",
-                  "sign": "+",
-                  "value": 17390.26788432268
-                }
-              ],
-              "unit": "money",
-              "value": 77150.94520547945
             }
           ],
           "cash_to_close_buy": [
@@ -18830,9 +18645,17 @@
               "value": 54760.67732115677
             },
             {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+              "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+              "label": "Cash to Refi Table (Lowest ARV)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 17390.26788432268
+            },
+            {
+              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
               "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -18845,13 +18668,13 @@
                   "value": 5000.0
                 },
                 {
-                  "label": "Refi Shortfall",
+                  "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
-                  "value": 0.0
+                  "value": 17390.26788432268
                 }
               ],
               "unit": "money",
-              "value": 59760.67732115677
+              "value": 77150.94520547945
             }
           ],
           "total_hard_money_cost": [
@@ -18930,7 +18753,6 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": 77150.94520547945,
         "cash_on_cash": 2.088959390251334,
         "cash_out": -48849.24657534246,
         "cash_out_routi": 5911.430745814308,
@@ -19014,7 +18836,7 @@
         "title_escrow_buy_effective": 1000.0,
         "title_escrow_refi_effective": 1880.0,
         "total_cash_invested": 54760.67732115677,
-        "total_cash_needed_for_deal": 59760.67732115677,
+        "total_cash_needed_for_deal": 77150.94520547945,
         "total_hard_money_cost": 17025.0,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
@@ -20340,30 +20162,6 @@
               "terms": null,
               "unit": "money",
               "value": 17390.26788432268
-            },
-            {
-              "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $93,650.95",
-              "label": "Cash Needed (Lowest ARV)",
-              "note": null,
-              "terms": [
-                {
-                  "label": "Total Cash Invested",
-                  "sign": "+",
-                  "value": 71260.67732115678
-                },
-                {
-                  "label": "Rehab Cushion",
-                  "sign": "+",
-                  "value": 5000.0
-                },
-                {
-                  "label": "Cash to Refi Table (Lowest ARV)",
-                  "sign": "+",
-                  "value": 17390.26788432268
-                }
-              ],
-              "unit": "money",
-              "value": 93650.94520547945
             }
           ],
           "cash_to_close_buy": [
@@ -20926,9 +20724,17 @@
               "value": 71260.67732115678
             },
             {
-              "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $76,260.68",
+              "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+              "label": "Cash to Refi Table (Lowest ARV)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 17390.26788432268
+            },
+            {
+              "formula": "Total Cash Invested ($71,260.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $93,650.95",
               "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -20941,13 +20747,13 @@
                   "value": 5000.0
                 },
                 {
-                  "label": "Refi Shortfall",
+                  "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
-                  "value": 0.0
+                  "value": 17390.26788432268
                 }
               ],
               "unit": "money",
-              "value": 76260.67732115678
+              "value": 93650.94520547945
             }
           ],
           "total_hard_money_cost": [
@@ -21026,7 +20832,6 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": 93650.94520547945,
         "cash_on_cash": 1.5615190333161035,
         "cash_out": -65349.24657534246,
         "cash_out_routi": 5911.430745814308,
@@ -21114,7 +20919,7 @@
         "title_escrow_buy_effective": 1000.0,
         "title_escrow_refi_effective": 1880.0,
         "total_cash_invested": 71260.67732115678,
-        "total_cash_needed_for_deal": 76260.67732115678,
+        "total_cash_needed_for_deal": 93650.94520547945,
         "total_hard_money_cost": 17025.0,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
@@ -21854,30 +21659,6 @@
               "terms": null,
               "unit": "money",
               "value": 17390.26788432268
-            },
-            {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
-              "label": "Cash Needed (Lowest ARV)",
-              "note": null,
-              "terms": [
-                {
-                  "label": "Total Cash Invested",
-                  "sign": "+",
-                  "value": 54760.67732115677
-                },
-                {
-                  "label": "Rehab Cushion",
-                  "sign": "+",
-                  "value": 5000.0
-                },
-                {
-                  "label": "Cash to Refi Table (Lowest ARV)",
-                  "sign": "+",
-                  "value": 17390.26788432268
-                }
-              ],
-              "unit": "money",
-              "value": 77150.94520547945
             }
           ],
           "cash_to_close_buy": [
@@ -22440,9 +22221,17 @@
               "value": 54760.67732115677
             },
             {
-              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Refi Shortfall ($0) = $59,760.68",
+              "formula": "Wire (-$17,390.27) is negative \u2192 $17,390.27 brought to the table",
+              "label": "Cash to Refi Table (Lowest ARV)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 17390.26788432268
+            },
+            {
+              "formula": "Total Cash Invested ($54,760.68) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,150.95",
               "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.",
+              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -22455,13 +22244,13 @@
                   "value": 5000.0
                 },
                 {
-                  "label": "Refi Shortfall",
+                  "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
-                  "value": 0.0
+                  "value": 17390.26788432268
                 }
               ],
               "unit": "money",
-              "value": 59760.67732115677
+              "value": 77150.94520547945
             }
           ],
           "total_hard_money_cost": [
@@ -22540,7 +22329,6 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": 77150.94520547945,
         "cash_on_cash": 2.088959390251334,
         "cash_out": -48849.24657534246,
         "cash_out_routi": 5911.430745814308,
@@ -22626,7 +22414,7 @@
         "title_escrow_buy_effective": 1000.0,
         "title_escrow_refi_effective": 1880.0,
         "total_cash_invested": 54760.67732115677,
-        "total_cash_needed_for_deal": 59760.67732115677,
+        "total_cash_needed_for_deal": 77150.94520547945,
         "total_hard_money_cost": 17025.0,
         "updated_at": "<updated_at>",
         "use_HM_for_rehab": true,
