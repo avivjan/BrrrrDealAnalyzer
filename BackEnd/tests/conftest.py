@@ -221,8 +221,11 @@ def brrrr_payload() -> dict:
 
 # The lifecycle inputs neutralised so the engine reduces to the pre-lifecycle one: no
 # dates, the legacy lumps as the only settlement lines, no holding items, no rent offset,
-# no cushion, no reserves, and the budget = the hard-money-funded rehab (50k x 1.10).
+# no cushion, no reserves, the budget = the hard-money-funded rehab (50k x 1.10), and the
+# lowest ARV = the ARV (the old engine had no stress test, so Cash Needed is planned on
+# the baseline wire).
 LEGACY_EQUIVALENT_OVERRIDES = {
+    "lowestArv": 320,
     "buyClosingDate": None, "earnestMoneyDeposit": 0, "loanChargesBuy": 0, "recordingTransferBuy": 0,
     "titleEscrowBuy": 0, "onlineNotaryBuy": False, "otherClosingCostsBuy": 5000, "rehabCushion": 0,
     "daysUntilRented": 180, "monthlyUtilitiesUntilRented": 0, "maintenanceBeforeRefi": 0, "appliances": 0,

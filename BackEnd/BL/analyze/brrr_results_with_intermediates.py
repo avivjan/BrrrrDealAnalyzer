@@ -116,6 +116,4 @@ class BrrrResultsWithIntermediates:
     roi: Decimal                    # percent; -1 = infinite, -2 = undefined
 
     # -- cash needed -----------------------------------------------------------
-    refi_shortfall: Decimal         # max(0, -cash_out_routi): cash brought to the refi table
-    total_cash_needed: Decimal      # total_cash_invested + rehab cushion + refi_shortfall
-    cash_needed_conservative: Decimal   # ... + cash_to_refi_table_conservative instead
+    total_cash_needed: Decimal      # total_cash_invested + rehab cushion + cash_to_refi_table_conservative

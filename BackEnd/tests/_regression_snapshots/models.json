@@ -829,13 +829,6 @@
           "default_factory": null,
           "required": true
         },
-        "cash_needed_conservative": {
-          "alias": null,
-          "annotation": "Optional[float]",
-          "default": "None",
-          "default_factory": null,
-          "required": false
-        },
         "cash_on_cash": {
           "alias": null,
           "annotation": "Optional[float]",
@@ -2739,13 +2732,6 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
-        },
-        "cash_needed_conservative": {
-          "alias": null,
-          "annotation": "Optional[float]",
-          "default": "None",
-          "default_factory": null,
-          "required": false
         },
         "cash_on_cash": {
           "alias": null,
@@ -5848,13 +5834,6 @@
           "default_factory": null,
           "required": true
         },
-        "cash_needed_conservative": {
-          "alias": null,
-          "annotation": "Optional[float]",
-          "default": "None",
-          "default_factory": null,
-          "required": false
-        },
         "cash_on_cash": {
           "alias": null,
           "annotation": "Optional[float]",
@@ -6746,7 +6725,6 @@
         "capexReserve": "2500",
         "cashReserve": "0",
         "cash_flow": 1.0,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -6859,7 +6837,6 @@
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_flow": 1.0,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -6954,7 +6931,7 @@
         "vacancy_reserve_effective": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'cash_flow': 1.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_conservative': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'otherClosingCostsBuy': Decimal('0'), 'sellerPaidCurrentYearTaxes': None, 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None, 'id': UUID('44444444-4444-4444-4444-444444444444'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
+      "dump_python_repr": "{'cash_flow': 1.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'otherClosingCostsBuy': Decimal('0'), 'sellerPaidCurrentYearTaxes': None, 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None, 'id': UUID('44444444-4444-4444-4444-444444444444'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -8257,7 +8234,6 @@
         "capexReserve": "2500",
         "cashReserve": "0",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -8367,7 +8343,6 @@
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -8460,7 +8435,7 @@
         "vacancy_reserve_effective": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_conservative': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'otherClosingCostsBuy': Decimal('0'), 'sellerPaidCurrentYearTaxes': None, 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'id': UUID('11111111-1111-1111-1111-111111111111'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
+      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'otherClosingCostsBuy': Decimal('0'), 'sellerPaidCurrentYearTaxes': None, 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'id': UUID('11111111-1111-1111-1111-111111111111'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -10852,7 +10827,6 @@
           ]
         },
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": null,
         "cash_on_cash": 12.5,
         "cash_out": -1000.5,
         "cash_out_routi": 250.25,
@@ -10903,7 +10877,6 @@
           ]
         },
         "cash_flow": 85.03674361688704,
-        "cash_needed_conservative": null,
         "cash_on_cash": 12.5,
         "cash_out": -1000.5,
         "cash_out_routi": 250.25,
@@ -10940,7 +10913,7 @@
         "total_hard_money_cost": null,
         "vacancy_reserve_effective": null
       },
-      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': 1.2, 'cash_out': -1000.5, 'cash_out_routi': 250.25, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': 12.5, 'roi': 30.0, 'equity': 80000.0, 'net_profit': 79000.0, 'total_cash_needed_for_deal': 63525.0, 'cash_needed_conservative': None, 'total_cash_invested': None, 'cash_to_close_buy': 40000.0, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': 0.0, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': ['a note'], 'breakdowns': {'cash_flow': [{'label': 'x', 'value': 1.5, 'unit': 'money', 'formula': '1 + 0.5', 'terms': None, 'note': None}]}}",
+      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': 1.2, 'cash_out': -1000.5, 'cash_out_routi': 250.25, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': 12.5, 'roi': 30.0, 'equity': 80000.0, 'net_profit': 79000.0, 'total_cash_needed_for_deal': 63525.0, 'total_cash_invested': None, 'cash_to_close_buy': 40000.0, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': 0.0, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': ['a note'], 'breakdowns': {'cash_flow': [{'label': 'x', 'value': 1.5, 'unit': 'money', 'formula': '1 + 0.5', 'terms': None, 'note': None}]}}",
       "exclude_unset": {
         "breakdowns": {
           "cash_flow": [
@@ -10972,7 +10945,6 @@
       "dump_by_alias": {
         "breakdowns": null,
         "cash_flow": 0.0,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -11010,7 +10982,6 @@
       "dump_by_field": {
         "breakdowns": null,
         "cash_flow": 0.0,
-        "cash_needed_conservative": null,
         "cash_on_cash": null,
         "cash_out": null,
         "cash_out_routi": null,
@@ -11045,7 +11016,7 @@
         "total_hard_money_cost": null,
         "vacancy_reserve_effective": null
       },
-      "dump_python_repr": "{'cash_flow': 0.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_conservative': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None}",
+      "dump_python_repr": "{'cash_flow': 0.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': None, 'tenant_occupied_date': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None}",
       "exclude_unset": {
         "cash_flow": 0.0
       },
@@ -13325,19 +13296,6 @@
           "title": "Cash Flow",
           "type": "number"
         },
-        "cash_needed_conservative": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-          "title": "Cash Needed Conservative"
-        },
         "cash_on_cash": {
           "anyOf": [
             {
@@ -14501,7 +14459,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {
@@ -17652,19 +17610,6 @@
           "title": "Cash Flow",
           "type": "number"
         },
-        "cash_needed_conservative": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-          "title": "Cash Needed Conservative"
-        },
         "cash_on_cash": {
           "anyOf": [
             {
@@ -18800,7 +18745,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {
@@ -23804,19 +23749,6 @@
           "title": "Cash Flow",
           "type": "number"
         },
-        "cash_needed_conservative": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative.",
-          "title": "Cash Needed Conservative"
-        },
         "cash_on_cash": {
           "anyOf": [
             {
@@ -24222,7 +24154,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {

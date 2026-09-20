@@ -323,14 +323,9 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Reserves", results.reserves_total, "-"),
     ], note="The loan-dependent fees follow the lower loan; typed-in fees stay as entered.")
     check(results.cash_to_refi_table_conservative == max(Decimal("0"), -results.cash_out_routi_conservative), "cash to refi table (conservative)")
-    breakdown.add(WIRE_LOW, "Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative,
+    breakdown.add([WIRE_LOW, CASH_NEEDED], "Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative,
            (f"Wire ({fmt_money(results.cash_out_routi_conservative)}) is negative → {fmt_money(results.cash_to_refi_table_conservative)} brought to the table"
             if results.cash_to_refi_table_conservative > 0 else f"Wire ({fmt_money(results.cash_out_routi_conservative)}) is not negative → nothing to bring"))
-    breakdown.add_sum(WIRE_LOW, "Cash Needed (Lowest ARV)", results.cash_needed_conservative, [
-        ("Total Cash Invested", results.total_cash_invested),
-        ("Rehab Cushion", payload.rehab_cushion),
-        ("Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative),
-    ])
     breakdown.add_sum(["net_profit", "roi", "cash_on_cash", "cash_out"], "Cash Out from Deal", results.cash_out, [
         ("Cash-Out Wire", results.cash_out_routi),
         ("Total Cash Invested", results.total_cash_invested, "-"),
@@ -367,16 +362,9 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add("roi", "ROI", results.roi, roi_formula, unit="pct")
 
     # -- cash needed -----------------------------------------------------------
-    check(results.refi_shortfall == max(Decimal("0"), -results.cash_out_routi), "refi shortfall")
-    if results.refi_shortfall > 0:
-        breakdown.add(
-            CASH_NEEDED, "Refi Shortfall (cash to refi table)", results.refi_shortfall,
-            f"Refi wire ({fmt_money(results.cash_out_routi)}) is negative → {fmt_money(results.refi_shortfall)} brought to the refi closing table",
-            note="The new loan does not cover the hard-money payoff plus refi costs and reserves.",
-        )
     breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),
-        ("Refi Shortfall", results.refi_shortfall),
-    ], note="The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus any cash brought to the refi table.")
+        ("Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative),
+    ], note="The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.")
     return breakdown.to_dict()

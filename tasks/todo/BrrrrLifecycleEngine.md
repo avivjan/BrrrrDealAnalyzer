@@ -576,3 +576,8 @@ passed (`vitest`), `vue-tsc` + `vite build` clean, G-HOVER and G6 pass in `verif
 fail on pre-existing conditions: missing `ui-baseline` tag, runner paths in `.github/scripts`). bandit,
 pip-audit and npm audit clean. Playwright and everything under `frontend/e2e/` untouched and not run
 (owner's instruction): the nightly's request goldens will read stale until re-recorded separately.
+
+**Follow-up (owner's decision after review).** One Cash Needed only, planned on the stress test:
+`total_cash_needed_for_deal = total_cash_invested + rehab_cushion + cash_to_refi_table_conservative`.
+The baseline `refi_shortfall` and the separate `cash_needed_conservative` are gone from the record,
+the response, the explain layer, the card's cash bar and the impact map.

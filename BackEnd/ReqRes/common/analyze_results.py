@@ -57,9 +57,8 @@ class analyzeBRRRRes(BaseModel):
         "left in, reduces it)."))
     total_cash_needed_for_deal: Optional[float] = Field(None, description=(
         "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: "
-        "total_cash_invested + rehab cushion + refi shortfall (cash brought to the refi table when the wire is negative)."))
-    cash_needed_conservative: Optional[float] = Field(None, description=(
-        "Cash Needed under the lowest ARV, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative."))
+        "total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi "
+        "table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline)."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid "
         "beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money "

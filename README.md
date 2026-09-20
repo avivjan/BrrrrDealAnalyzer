@@ -496,7 +496,8 @@ The BRRRR steps follow the deal's lifecycle — **Buy → Rehab → Rent/Holding
 the engine has two modes with no switch: with the defaults untouched it is a quick estimator;
 with the real closing date and settlement lines typed in, **Cash to Close (Buy)** and the
 **Cash-Out Wire** reconcile to the settlement statements, and **Cash Needed** (=
-total cash invested + rehab cushion + refi shortfall) is the single out-of-pocket figure.
+total cash invested + rehab cushion + the cash brought to the refi table at the lowest ARV) is the
+single out-of-pocket figure, planned on the stress test.
 A field left `null` where the schema says "None = formula" takes its formula default and the
 result reports the value used as `*_effective`.
 
@@ -517,7 +518,7 @@ result reports the value used as `*_effective`.
 | 13 | `cash_on_cash` | **`cash_on_cash`** | | | | |
 | 14 | `equity_and_net_profit` | `equity` (with the recoverable reserves), `net_profit` | | | | |
 | 15 | `roi` | **`roi`** | | | | |
-| 16 | `total_cash_needed` | **`total_cash_needed_for_deal`** and `cash_needed_conservative` | | | | |
+| 16 | `total_cash_needed` | **`total_cash_needed_for_deal`** (planned on the lowest ARV) | | | | |
 
 The explanation carries the reconcile identities as guarded sum steps: the buy settlement
 (sources = uses), the three interest slices (prepaid + monthly + accrued = total), the refi

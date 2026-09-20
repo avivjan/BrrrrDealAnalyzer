@@ -58,7 +58,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         cash_out_routi=results.cash_out_routi, cash_out_routi_conservative=results.cash_out_routi_conservative,
         cash_to_refi_table_conservative=results.cash_to_refi_table_conservative,
         cash_on_cash=results.cash_on_cash, roi=results.roi, equity=results.equity, net_profit=results.net_profit,
-        total_cash_needed_for_deal=results.total_cash_needed, cash_needed_conservative=results.cash_needed_conservative,
+        total_cash_needed_for_deal=results.total_cash_needed,
         total_cash_invested=results.total_cash_invested, cash_to_close_buy=results.cash_to_close_buy,
         purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
@@ -96,7 +96,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     cash_on_cash = cash_on_cash_step(cash_out_figures.cash_out, cash_flow)
     equity, net_profit = equity_and_net_profit_step(arv, refi_terms.ltv, refi_terms.reserves_total, cash_out_figures.cash_out)
     roi = roi_step(cash_out_figures.cash_out, cash_flow, net_profit)
-    refi_shortfall, total_cash_needed, cash_needed_conservative = total_cash_needed_step(payload, cash_out_figures)
+    total_cash_needed = total_cash_needed_step(payload, cash_out_figures)
 
     return BrrrResultsWithIntermediates(
         arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
@@ -131,5 +131,5 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         operating_expenses=operating_expenses.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
-        refi_shortfall=refi_shortfall, total_cash_needed=total_cash_needed, cash_needed_conservative=cash_needed_conservative,
+        total_cash_needed=total_cash_needed,
     )
