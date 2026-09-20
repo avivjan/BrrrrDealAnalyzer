@@ -19,24 +19,49 @@ class Timeline(NamedTuple):
     buy_closing_date: Optional[date]
     refi_closing_date: Optional[date]
     tenant_occupied_date: Optional[date]
-    prepaid_days_buy: int          # HML interest collected at the buy closing
-    monthly_interest_days: int     # HML interest paid on the 1st of each month
-    accrued_days_at_payoff: int    # HML interest inside the payoff at the refi
-    prepaid_days_refi: int         # DSCR interest collected at the refi closing
-    days_rented_before_refi: int   # tenant in place before the refi
+    # Hard-money interest: the days until the refi, split by when they are paid.
+    hml_interest_days_prepaid_at_purchase_closing: int   # closing day through the end of that month
+    hml_interest_days_paid_monthly: int                   # paid on the 1st of each month in between
+    hml_interest_days_accrued_into_refi_payoff: int       # 1st of the refi month through the day before the payoff
+    # DSCR-loan interest collected at the refi closing: refi day through the end of that month.
+    dscr_interest_days_prepaid_at_refi_closing: int
+    # Days with a tenant in place before the refi (the rent that offsets holding costs).
+    days_tenant_occupied_before_refi: int
 
 
 def timeline_step(payload) -> Timeline:
-    buy = payload.buy_closing_date
+    buy_closing_date = payload.buy_closing_date
     days_until_refi = int(payload.days_until_refi)
     days_until_rented = int(payload.days_until_rented)
-    days_rented = max(0, days_until_refi - days_until_rented)
-    if buy is None:
-        return Timeline(None, None, None, 0, days_until_refi, 0, 0, days_rented)
-    refi = buy + timedelta(days=days_until_refi)
-    tenant = buy + timedelta(days=days_until_rented)
-    prepaid_buy = min(days_through_month_end(buy), days_until_refi)
-    same_month = (refi.year, refi.month) == (buy.year, buy.month)
-    accrued = 0 if same_month else refi.day - 1
-    monthly = days_until_refi - prepaid_buy - accrued
-    return Timeline(buy, refi, tenant, prepaid_buy, monthly, accrued, days_through_month_end(refi), days_rented)
+    days_tenant_occupied_before_refi = max(0, days_until_refi - days_until_rented)
+
+    if buy_closing_date is None:
+        return Timeline(
+            buy_closing_date=None,
+            refi_closing_date=None,
+            tenant_occupied_date=None,
+            hml_interest_days_prepaid_at_purchase_closing=0,
+            hml_interest_days_paid_monthly=days_until_refi,
+            hml_interest_days_accrued_into_refi_payoff=0,
+            dscr_interest_days_prepaid_at_refi_closing=0,
+            days_tenant_occupied_before_refi=days_tenant_occupied_before_refi,
+        )
+
+    refi_closing_date = buy_closing_date + timedelta(days=days_until_refi)
+    tenant_occupied_date = buy_closing_date + timedelta(days=days_until_rented)
+
+    hml_interest_days_prepaid_at_purchase_closing = min(days_through_month_end(buy_closing_date), days_until_refi)
+    refi_closes_in_purchase_month = (refi_closing_date.year, refi_closing_date.month) == (buy_closing_date.year, buy_closing_date.month)
+    hml_interest_days_accrued_into_refi_payoff = 0 if refi_closes_in_purchase_month else refi_closing_date.day - 1
+    hml_interest_days_paid_monthly = days_until_refi - hml_interest_days_prepaid_at_purchase_closing - hml_interest_days_accrued_into_refi_payoff
+
+    return Timeline(
+        buy_closing_date=buy_closing_date,
+        refi_closing_date=refi_closing_date,
+        tenant_occupied_date=tenant_occupied_date,
+        hml_interest_days_prepaid_at_purchase_closing=hml_interest_days_prepaid_at_purchase_closing,
+        hml_interest_days_paid_monthly=hml_interest_days_paid_monthly,
+        hml_interest_days_accrued_into_refi_payoff=hml_interest_days_accrued_into_refi_payoff,
+        dscr_interest_days_prepaid_at_refi_closing=days_through_month_end(refi_closing_date),
+        days_tenant_occupied_before_refi=days_tenant_occupied_before_refi,
+    )

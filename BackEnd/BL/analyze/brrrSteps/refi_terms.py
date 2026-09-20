@@ -44,8 +44,8 @@ def refi_terms_step(payload, arv, lowest_arv, timeline) -> RefiTerms:
     refi_loan_amount = arv * ltv
     conservative_loan = lowest_arv * ltv
     notary = ONLINE_NOTARY_FEE if payload.online_notary_refi else Decimal("0")
-    baseline = _settlement_lines(payload, refi_loan_amount, notary, timeline.prepaid_days_refi)
-    conservative = _settlement_lines(payload, conservative_loan, notary, timeline.prepaid_days_refi)
+    baseline = _settlement_lines(payload, refi_loan_amount, notary, timeline.dscr_interest_days_prepaid_at_refi_closing)
+    conservative = _settlement_lines(payload, conservative_loan, notary, timeline.dscr_interest_days_prepaid_at_refi_closing)
     vacancy_reserve = effective(payload.vacancy_reserve, payload.rent)
     reserves_total = payload.maintenance_reserve + vacancy_reserve + payload.capex_reserve
     return RefiTerms(ltv, refi_loan_amount, conservative_loan, notary, baseline, conservative, vacancy_reserve, reserves_total)

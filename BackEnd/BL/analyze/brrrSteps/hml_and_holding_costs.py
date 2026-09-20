@@ -24,13 +24,13 @@ def hml_and_holding_costs_step(payload, hml_amount, timeline) -> HmlAndHolding:
     hml_points = payload.HML_points / Decimal("100.0") * hml_amount
     hml_interest = calc_hml_interest(hml_amount, rate, payload.days_until_refi)
     hml_per_diem = calc_hml_interest(hml_amount, rate, 1)
-    prepaid_interest_buy = calc_hml_interest(hml_amount, rate, timeline.prepaid_days_buy)
-    accrued_at_payoff = calc_hml_interest(hml_amount, rate, timeline.accrued_days_at_payoff)
+    prepaid_interest_buy = calc_hml_interest(hml_amount, rate, timeline.hml_interest_days_prepaid_at_purchase_closing)
+    accrued_at_payoff = calc_hml_interest(hml_amount, rate, timeline.hml_interest_days_accrued_into_refi_payoff)
     # The remainder, so the three slices always add back to the total exactly.
     monthly_paid = hml_interest - prepaid_interest_buy - accrued_at_payoff
     holding_costs = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.days_until_refi)
     utilities_until_rented = payload.monthly_utilities_until_rented * Decimal(payload.days_until_rented) / DAYS_PER_MONTH
-    pre_refi_rental_income = payload.rent * Decimal(timeline.days_rented_before_refi) / DAYS_PER_MONTH
+    pre_refi_rental_income = payload.rent * Decimal(timeline.days_tenant_occupied_before_refi) / DAYS_PER_MONTH
     return HmlAndHolding(
         hml_points, hml_per_diem, hml_interest, prepaid_interest_buy, monthly_paid, accrued_at_payoff,
         holding_costs, utilities_until_rented, pre_refi_rental_income,
