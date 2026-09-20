@@ -22,7 +22,9 @@ class BrrrLifecycleColumns:
     title_mode_buy = Column(String(20), nullable=False, server_default='standard', default='standard')
     title_escrow_buy = Column(Numeric(12, 2), nullable=True)
     online_notary_buy = Column(Boolean, nullable=False, server_default='true', default=True)
+    online_notary_fee_buy = Column(Numeric(12, 2), nullable=True)
     other_closing_costs_buy = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
+    other_closing_costs_buy_note = Column(String(500), nullable=True)
     seller_paid_current_year_taxes = Column(Boolean, nullable=True)
 
     # Rehab
@@ -40,11 +42,13 @@ class BrrrLifecycleColumns:
     recording_transfer_refi = Column(Numeric(12, 2), nullable=True)
     title_escrow_refi = Column(Numeric(12, 2), nullable=True)
     online_notary_refi = Column(Boolean, nullable=False, server_default='true', default=True)
+    online_notary_fee_refi = Column(Numeric(12, 2), nullable=True)
     appraisal_fee = Column(Numeric(12, 2), nullable=False, server_default='700', default=700)
     survey_fee = Column(Numeric(12, 2), nullable=False, server_default='385', default=385)
     refi_underwriting_fee = Column(Numeric(12, 2), nullable=False, server_default='2000', default=2000)
     broker_processing_fee_refi = Column(Numeric(12, 2), nullable=False, server_default='395', default=395)
     other_closing_costs_refi = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
+    other_closing_costs_refi_note = Column(String(500), nullable=True)
     maintenance_reserve = Column(Numeric(12, 2), nullable=False, server_default='1500', default=1500)
     vacancy_reserve = Column(Numeric(12, 2), nullable=True)
     capex_reserve = Column(Numeric(12, 2), nullable=False, server_default='2500', default=2500)

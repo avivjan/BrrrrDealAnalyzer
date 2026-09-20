@@ -136,6 +136,17 @@ class TestLifecycleFieldsRoundTrip:
         assert deal_reset_to_formula["recordingTransferBuy"] is None
         assert float(deal_reset_to_formula["recording_transfer_buy_effective"]) != pytest.approx(1234.5)
 
+    def test_notary_fees_and_closing_cost_notes_round_trip(self, client, brrrr_payload):
+        long_note = "x" * 500
+        deal = _create(client, {**brrrr_payload, "onlineNotaryFeeBuy": 175, "onlineNotaryFeeRefi": 300,
+                                "otherClosingCostsBuyNote": "HOA transfer + home warranty", "otherClosingCostsRefiNote": long_note})
+        assert float(deal["onlineNotaryFeeBuy"]) == 175 and float(deal["onlineNotaryFeeRefi"]) == 300
+        assert deal["otherClosingCostsBuyNote"] == "HOA transfer + home warranty"
+        assert deal["otherClosingCostsRefiNote"] == long_note
+        assert client.post("/active-deals", json={**brrrr_payload, "otherClosingCostsBuyNote": "x" * 501}).status_code == 422
+        untouched = _create(client, brrrr_payload)
+        assert untouched["onlineNotaryFeeBuy"] is None and untouched["otherClosingCostsBuyNote"] is None
+
     def test_no_date_leaves_the_date_driven_figures_out(self, client, brrrr_payload):
         deal = _create(client, {**brrrr_payload, "buyClosingDate": None})
         assert deal["buyClosingDate"] is None and deal["refi_closing_date"] is None

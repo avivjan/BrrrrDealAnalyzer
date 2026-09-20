@@ -36,7 +36,9 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("title_mode_buy", "VARCHAR(20) DEFAULT 'standard'", "'standard'"),
     ("title_escrow_buy", "NUMERIC(12,2)", None),
     ("online_notary_buy", "BOOLEAN DEFAULT TRUE", "TRUE"),
+    ("online_notary_fee_buy", "NUMERIC(12,2)", None),
     ("other_closing_costs_buy", "NUMERIC(12,2) DEFAULT 0", "0"),
+    ("other_closing_costs_buy_note", "VARCHAR(500)", None),
     ("seller_paid_current_year_taxes", "BOOLEAN", None),
     # Rehab
     # Added WITHOUT a DDL default on purpose: Postgres fills existing rows with the default at
@@ -55,11 +57,13 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("recording_transfer_refi", "NUMERIC(12,2)", None),
     ("title_escrow_refi", "NUMERIC(12,2)", None),
     ("online_notary_refi", "BOOLEAN DEFAULT TRUE", "TRUE"),
+    ("online_notary_fee_refi", "NUMERIC(12,2)", None),
     ("appraisal_fee", "NUMERIC(12,2) DEFAULT 700", "700"),
     ("survey_fee", "NUMERIC(12,2) DEFAULT 385", "385"),
     ("refi_underwriting_fee", "NUMERIC(12,2) DEFAULT 2000", "2000"),
     ("broker_processing_fee_refi", "NUMERIC(12,2) DEFAULT 395", "395"),
     ("other_closing_costs_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
+    ("other_closing_costs_refi_note", "VARCHAR(500)", None),
     ("maintenance_reserve", "NUMERIC(12,2) DEFAULT 1500", "1500"),
     ("vacancy_reserve", "NUMERIC(12,2)", None),
     ("capex_reserve", "NUMERIC(12,2) DEFAULT 2500", "2500"),

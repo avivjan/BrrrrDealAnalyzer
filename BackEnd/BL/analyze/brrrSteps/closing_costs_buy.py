@@ -4,11 +4,13 @@ from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from BL.analyze.common.deal_math import (
-    effective, recording_transfer_default, title_escrow_buy_default, calc_seller_tax_credit, ONLINE_NOTARY_FEE,
+    effective, recording_transfer_buy_default, deed_transfer_tax_buy_default, title_escrow_buy_default,
+    calc_seller_tax_credit, ONLINE_NOTARY_FEE,
 )
 
 
 class BuySettlement(NamedTuple):
+    deed_transfer_tax_buy: Decimal    # $0 standard; 0.70% of the price when we pay all closing costs
     recording_transfer_buy: Decimal   # effective
     title_escrow_buy: Decimal         # effective
     notary_buy: Decimal
@@ -19,10 +21,11 @@ class BuySettlement(NamedTuple):
     total_hard_money_cost: Decimal
 
 
-def closing_costs_buy_step(payload, purchase_price, purchase_loan_amount, down_payment_cash, hml_and_holding, timeline) -> BuySettlement:
-    recording_transfer_buy = effective(payload.recording_transfer_buy, recording_transfer_default(purchase_loan_amount))
+def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline) -> BuySettlement:
+    deed_transfer_tax_buy = deed_transfer_tax_buy_default(payload.title_mode_buy, purchase_price)
+    recording_transfer_buy = effective(payload.recording_transfer_buy, recording_transfer_buy_default(hml_amount, deed_transfer_tax_buy))
     title_escrow_buy = effective(payload.title_escrow_buy, title_escrow_buy_default(payload.title_mode_buy, purchase_price))
-    notary_buy = ONLINE_NOTARY_FEE if payload.online_notary_buy else Decimal("0")
+    notary_buy = effective(payload.online_notary_fee_buy, ONLINE_NOTARY_FEE) if payload.online_notary_buy else Decimal("0")
     closing_costs_buy_total = payload.loan_charges_buy + recording_transfer_buy + title_escrow_buy + notary_buy + payload.other_closing_costs_buy
 
     buy_closing_date = timeline.buy_closing_date
@@ -36,6 +39,7 @@ def closing_costs_buy_step(payload, purchase_price, purchase_loan_amount, down_p
                          - seller_tax_credit - payload.earnest_money_deposit)
     total_hard_money_cost = hml_and_holding.hml_points + hml_and_holding.hml_interest + payload.loan_charges_buy
     return BuySettlement(
+        deed_transfer_tax_buy=deed_transfer_tax_buy,
         recording_transfer_buy=recording_transfer_buy,
         title_escrow_buy=title_escrow_buy,
         notary_buy=notary_buy,

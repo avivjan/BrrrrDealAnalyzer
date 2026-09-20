@@ -91,7 +91,8 @@ class TestBrrrLifecycleMigration:
         run_migrations(app_db.engine)
         migrated_row = _row_by_address("active_deals", "HM Rehab")
         for column in ("buy_closing_date", "recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
-                       "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands"):
+                       "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands",
+                       "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note"):
             assert migrated_row[column] is None, column
 
     def test_construction_budget_mirrors_the_legacy_hard_money_flag(self, legacy_rows, brrrr_payload):

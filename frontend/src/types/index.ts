@@ -84,7 +84,10 @@ export interface BrrrAnalyzeReq {
   /** null → $1,000 standard, or the we-pay-all tier by price */
   titleEscrowBuy?: number | null;
   onlineNotaryBuy?: boolean;
+  /** null → $250, applied only while onlineNotaryBuy */
+  onlineNotaryFeeBuy?: number | null;
   otherClosingCostsBuy?: number;
+  otherClosingCostsBuyNote?: string | null;
   /** null → auto: true only for a December closing */
   sellerPaidCurrentYearTaxes?: boolean | null;
   // Rehab
@@ -103,11 +106,14 @@ export interface BrrrAnalyzeReq {
   /** null → $800 + 0.45% × refi loan */
   titleEscrowRefi?: number | null;
   onlineNotaryRefi?: boolean;
+  /** null → $250, applied only while onlineNotaryRefi */
+  onlineNotaryFeeRefi?: number | null;
   appraisalFee?: number;
   surveyFee?: number;
   refiUnderwritingFee?: number;
   brokerProcessingFeeRefi?: number;
   otherClosingCostsRefi?: number;
+  otherClosingCostsRefiNote?: string | null;
   maintenanceReserve?: number;
   /** null → one month of rent */
   vacancyReserve?: number | null;
@@ -167,6 +173,7 @@ export interface BrrrAnalyzeRes {
   prepaid_interest_buy?: number;
   seller_tax_credit?: number;
   closing_costs_buy_total?: number;
+  deed_transfer_tax_buy?: number;
   stolen_money?: number;
   pre_refi_rental_income?: number;
   closing_costs_refi_total?: number;

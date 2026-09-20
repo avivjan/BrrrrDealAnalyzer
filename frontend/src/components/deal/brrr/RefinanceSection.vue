@@ -27,6 +27,8 @@ const UNDERWRITING_PRESETS = [
 ];
 
 const notaryId = useId();
+const otherClosingCostsNoteId = useId();
+const NOTARY_FEE_DEFAULT = 250;
 const moneyNote = (amount: number | null) => (amount == null ? undefined : `= ${formatMoney(amount)}`);
 const prepaidInterestHint = computed(() =>
   autoCalc.value.prepaidDaysRefi != null && autoCalc.value.refiClosingDate ? `${autoCalc.value.prepaidDaysRefi} days from ${autoCalc.value.refiClosingDate} through month end` : undefined,
@@ -133,11 +135,22 @@ const prepaidInterestHint = computed(() =>
             label="Title & Escrow / Settlement (Refi)"
             :info="impactText('titleEscrowRefi')"
           />
-          <div class="flex items-center gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryRefi">
-            <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="field.getBool('onlineNotaryRefi', true)"
-                   @change="field.setBool('onlineNotaryRefi', ($event.target as HTMLInputElement).checked)" />
-            <label :for="notaryId" class="text-sm font-medium text-fg">Online notary (+$250)</label>
-            <InputInfo :content="impactText('onlineNotaryRefi')" field-label="Online notary" />
+          <div class="flex flex-col gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryRefi">
+            <div class="flex items-center gap-2">
+              <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="field.getBool('onlineNotaryRefi', true)"
+                     @change="field.setBool('onlineNotaryRefi', ($event.target as HTMLInputElement).checked)" />
+              <label :for="notaryId" class="text-sm font-medium text-fg">Online notary</label>
+              <InputInfo :content="impactText('onlineNotaryRefi')" field-label="Online notary" />
+            </div>
+            <AutoDefaultMoneyInput
+              v-if="field.getBool('onlineNotaryRefi', true)"
+              data-testid="form.field.onlineNotaryFeeRefi"
+              :model-value="field.getNullable('onlineNotaryFeeRefi')"
+              :computed-default="NOTARY_FEE_DEFAULT"
+              @update:model-value="(v: number | null) => field.setNullable('onlineNotaryFeeRefi', v)"
+              label="Notary fee"
+              :info="impactText('onlineNotaryFeeRefi')"
+            />
           </div>
           <MoneyInput
             data-testid="form.field.appraisalFee"
@@ -184,13 +197,26 @@ const prepaidInterestHint = computed(() =>
             />
             <UiButton type="button" data-testid="form.processing-zero" variant="secondary" size="sm" class="touch:min-h-11" @click="field.set('brokerProcessingFeeRefi', 0)">$0</UiButton>
           </div>
-          <MoneyInput
-            data-testid="form.field.otherClosingCostsRefi"
-            :model-value="field.get('otherClosingCostsRefi')"
-            @update:model-value="(v: number | null) => field.set('otherClosingCostsRefi', v)"
-            label="Other Closing Costs (Refi)"
-            :info="impactText('otherClosingCostsRefi')"
-          />
+          <div class="flex flex-col gap-1.5">
+            <MoneyInput
+              data-testid="form.field.otherClosingCostsRefi"
+              :model-value="field.get('otherClosingCostsRefi')"
+              @update:model-value="(v: number | null) => field.set('otherClosingCostsRefi', v)"
+              label="Other Closing Costs (Refi)"
+              :info="impactText('otherClosingCostsRefi')"
+            />
+            <input
+              :id="otherClosingCostsNoteId"
+              data-testid="form.field.otherClosingCostsRefiNote"
+              type="text"
+              maxlength="500"
+              class="ui-input text-xs"
+              placeholder="What is it for?"
+              aria-label="What the other refi closing costs are for"
+              :value="field.getStr('otherClosingCostsRefiNote') ?? ''"
+              @change="field.setStr('otherClosingCostsRefiNote', ($event.target as HTMLInputElement).value || null)"
+            />
+          </div>
         </div>
         <div class="mt-3">
           <AutoFigure data-testid="form.auto.closingCostsRefiTotal" label="Total closing costs (Refi)" :value="autoCalc.closingCostsRefiTotal" />
@@ -232,7 +258,7 @@ const prepaidInterestHint = computed(() =>
     <template #footer>
       <AutoFigure data-testid="form.auto.hmlPayoff" label="HML payoff at refi" :value="autoCalc.hmlPayoff" hint="principal + interest accrued since the 1st" />
       <AutoFigure data-testid="form.auto.cashOutWire" label="Cash-Out Routi" :value="autoCalc.cashOutWire" hint="negative = cash brought to the table" signed />
-      <AutoFigure data-testid="form.auto.cashOutWireConservative" label="Cash-Out Wire at the lowest ARV" :value="autoCalc.cashOutWireConservative" signed />
+      <AutoFigure data-testid="form.auto.cashOutWireConservative" label="Cash-Out Routi (Lowest ARV)" :value="autoCalc.cashOutWireConservative" signed />
     </template>
   </LifecycleSection>
 </template>

@@ -28,8 +28,9 @@ DSCR_DAYS_PER_YEAR = Decimal("365")
 # Fixed fees and formula defaults of the BRRRR settlement lines. A `None` input on
 # the matching field means "use the formula"; see ReqRes/common/brrr_lifecycle_inputs.py.
 ONLINE_NOTARY_FEE = Decimal("250")
-RECORDING_TRANSFER_RATE = Decimal("0.0055")   # of the loan recorded
-RECORDING_TRANSFER_FLAT = Decimal("250")
+RECORDING_TRANSFER_RATE = Decimal("0.0055")   # of the loan recorded (0.35% + 0.20%)
+RECORDING_TRANSFER_FLAT = Decimal("250")      # deed, mortgage and LLC affidavit recording
+DEED_TRANSFER_TAX_RATE_WE_PAY_ALL = Decimal("0.0070")   # of the purchase price, only when we pay all closing costs
 TITLE_ESCROW_BUY_STANDARD = Decimal("1000")   # lender's policy + endorsements + settlement/search
 TITLE_ESCROW_BUY_WE_PAY_ALL = (               # (upper price bound, flat fee) when the buyer pays all title charges
     (Decimal("150000"), Decimal("2050")),
@@ -169,8 +170,18 @@ def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_already_paid
     return annual_taxes * Decimal(closing_day_of_year - 1) / Decimal(days_in_closing_year)
 
 def recording_transfer_default(loan_amount):
-    """Government recording & transfer charges: 0.55% of the loan recorded + $250."""
+    """Government recording & transfer charges at refi: 0.55% of the loan recorded + $250."""
     return RECORDING_TRANSFER_RATE * loan_amount + RECORDING_TRANSFER_FLAT
+
+def deed_transfer_tax_buy_default(title_mode: str, purchase_price):
+    """Deed transfer tax at purchase: the seller's debit on a standard deal ($0); 0.70% of the
+    purchase price when we pay all closing costs."""
+    return DEED_TRANSFER_TAX_RATE_WE_PAY_ALL * purchase_price if title_mode == "we_pay_all" else Decimal("0")
+
+def recording_transfer_buy_default(hml_amount, deed_transfer_tax):
+    """Government recording & transfer charges at purchase: $250 + 0.55% of the WHOLE hard-money
+    loan (purchase loan + construction budget, the mortgage recorded) + the deed transfer tax."""
+    return RECORDING_TRANSFER_FLAT + RECORDING_TRANSFER_RATE * hml_amount + deed_transfer_tax
 
 def title_escrow_buy_default(title_mode: str, purchase_price):
     """Title/escrow/settlement at purchase: $1,000 standard, or the we-pay-all tier by price

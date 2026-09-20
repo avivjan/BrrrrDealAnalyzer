@@ -63,6 +63,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
         seller_tax_credit=results.seller_tax_credit, closing_costs_buy_total=results.closing_costs_buy_total,
+        deed_transfer_tax_buy=results.deed_transfer_tax_buy,
         stolen_money=results.stolen_money, pre_refi_rental_income=results.pre_refi_rental_income,
         closing_costs_refi_total=results.closing_costs_refi_total, prepaid_interest_refi=results.prepaid_interest_refi,
         reserves_total=results.reserves_total,
@@ -82,7 +83,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price, construction_budget)
     timeline = timeline_step(payload)
     hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
-    buy_settlement = closing_costs_buy_step(payload, purchase_price, purchase_loan_amount, down_payment_cash, hml_and_holding, timeline)
+    buy_settlement = closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline)
     # Rehab
     stolen_money, rehab_paid_cash_out_of_pocket = rehab_draw_step(rehab_cost, construction_budget)
     # Rent
@@ -110,6 +111,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         prepaid_interest_buy=hml_and_holding.prepaid_interest_buy, hml_interest_paid_monthly=hml_and_holding.hml_interest_paid_monthly,
         hml_interest_accrued_into_refi_payoff=hml_and_holding.hml_interest_accrued_into_refi_payoff, holding_costs=hml_and_holding.holding_costs,
         utilities_until_rented=hml_and_holding.utilities_until_rented, pre_refi_rental_income=hml_and_holding.pre_refi_rental_income,
+        deed_transfer_tax_buy=buy_settlement.deed_transfer_tax_buy,
         recording_transfer_buy=buy_settlement.recording_transfer_buy, title_escrow_buy=buy_settlement.title_escrow_buy, notary_buy=buy_settlement.notary_buy,
         closing_costs_buy_total=buy_settlement.closing_costs_buy_total, seller_paid_current_year_taxes=buy_settlement.seller_paid_current_year_taxes,
         seller_tax_credit=buy_settlement.seller_tax_credit, cash_to_close_buy=buy_settlement.cash_to_close_buy,

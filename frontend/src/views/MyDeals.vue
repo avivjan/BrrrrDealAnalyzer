@@ -1059,7 +1059,7 @@ console.groupEnd();
                               <div v-flash data-testid="mydeals.modal.result.cash_to_close_buy" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).cash_to_close_buy) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
-                              <template #label>Wire (Lowest ARV)</template>
+                              <template #label>Cash-Out Routi (Lowest ARV)</template>
                               <div v-flash data-testid="mydeals.modal.result.cash_out_routi_conservative" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi_conservative)">{{ formatCurrency((currentAnalysis as any).cash_out_routi_conservative) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">

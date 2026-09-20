@@ -58,10 +58,11 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
   it("the purchase settlement", () => {
     expectCloseToTheCent(autoCalc.sellerTaxCredit, 88.77);
     expect(autoCalc.sellerPaidCurrentYearTaxesEffective).toBe(false);
-    expectCloseToTheCent(autoCalc.recordingTransferBuyEffective, 1130);
+    expectCloseToTheCent(autoCalc.deedTransferTaxBuy, 0);
+    expectCloseToTheCent(autoCalc.recordingTransferBuyEffective, 250 + 0.0055 * 215_000); // the WHOLE hard-money loan
     expectCloseToTheCent(autoCalc.titleEscrowBuyEffective, 1000);
-    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 3280);
-    expectCloseToTheCent(autoCalc.cashToCloseBuy, 43936.51);
+    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 3582.5);
+    expectCloseToTheCent(autoCalc.cashToCloseBuy, 44239.01);
   });
 
   it("the rehab draws and the holding period", () => {
@@ -98,6 +99,23 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(withoutClosingDate.refiClosingDate).toBeNull();
     expect(withoutClosingDate.cashToCloseBuy).not.toBeNull(); // the wire still shows, without the dated lines
     expect(brrrAutoCalc({ ...FIXTURE, rent: 0 }).preRefiRentalIncome).toBeNull();
+  });
+
+  it("we-pay-all adds the deed transfer tax to the recording default and shows the premium over standard", () => {
+    const wePayAll = brrrAutoCalc({ ...FIXTURE, titleModeBuy: "we_pay_all" });
+    expectCloseToTheCent(wePayAll.deedTransferTaxBuy, 0.007 * 200_000);
+    expectCloseToTheCent(wePayAll.recordingTransferBuyEffective, 250 + 0.0055 * 215_000 + 1400);
+    expectCloseToTheCent(wePayAll.titleEscrowBuyEffective, 2200);
+    // the premium is the same whichever mode is selected: (2200 - 1000) + 1400
+    expectCloseToTheCent(wePayAll.wePayAllExtraClosingCost, 2600);
+    expectCloseToTheCent(brrrAutoCalc(FIXTURE).wePayAllExtraClosingCost, 2600);
+  });
+
+  it("the notary fee defaults to $250, can be typed, and is $0 when the checkbox is off", () => {
+    expect(brrrAutoCalc(FIXTURE).notaryBuy).toBe(250);
+    expect(brrrAutoCalc({ ...FIXTURE, onlineNotaryFeeBuy: 175 }).notaryBuy).toBe(175);
+    expect(brrrAutoCalc({ ...FIXTURE, onlineNotaryFeeBuy: 175, onlineNotaryBuy: false }).notaryBuy).toBe(0);
+    expect(brrrAutoCalc({ ...FIXTURE, onlineNotaryFeeRefi: 300 }).notaryRefi).toBe(300);
   });
 
   it("honours typed overrides of the formula defaults", () => {

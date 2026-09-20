@@ -703,6 +703,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "online_notary_fee_buy",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": "0",
         "foreign_keys": [],
         "index": null,
@@ -713,6 +727,20 @@
         "python_type": "Decimal",
         "server_default": "0",
         "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "other_closing_costs_buy_note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
         "unique": null
       },
       {
@@ -871,6 +899,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "online_notary_fee_refi",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": "700",
         "foreign_keys": [],
         "index": null,
@@ -937,6 +979,20 @@
         "python_type": "Decimal",
         "server_default": "0",
         "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "other_closing_costs_refi_note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
         "unique": null
       },
       {
@@ -2012,6 +2068,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "online_notary_fee_buy",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": "0",
         "foreign_keys": [],
         "index": null,
@@ -2022,6 +2092,20 @@
         "python_type": "Decimal",
         "server_default": "0",
         "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "other_closing_costs_buy_note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
         "unique": null
       },
       {
@@ -2180,6 +2264,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "online_notary_fee_refi",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": "700",
         "foreign_keys": [],
         "index": null,
@@ -2246,6 +2344,20 @@
         "python_type": "Decimal",
         "server_default": "0",
         "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "other_closing_costs_refi_note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
         "unique": null
       },
       {

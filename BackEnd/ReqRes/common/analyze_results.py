@@ -84,6 +84,9 @@ class analyzeBRRRRes(BaseModel):
     closing_costs_buy_total: Optional[float] = Field(None, description=(
         "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + "
         "online notary + other."))
+    deed_transfer_tax_buy: Optional[float] = Field(None, description=(
+        "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the "
+        "seller's debit), 0.70% of the purchase price when we pay all closing costs."))
     stolen_money: Optional[float] = Field(None, description=(
         "Lender draw spread, in dollars: construction loan budget minus actual rehab (with contingency). "
         "Positive = capital pulled out through draws before the refi; negative = extra out-of-pocket rehab."))

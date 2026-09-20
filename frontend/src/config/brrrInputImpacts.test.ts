@@ -20,7 +20,7 @@ const RESULT_KEYS: Array<keyof BrrrAnalyzeRes> = [
   "cash_flow", "dscr", "cash_out", "cash_out_routi", "cash_out_routi_conservative", "cash_to_refi_table_conservative",
   "cash_on_cash", "roi", "equity", "net_profit", "total_cash_needed_for_deal",
   "total_cash_invested", "cash_to_close_buy", "purchase_loan_amount", "hml_amount", "hml_payoff", "total_hard_money_cost",
-  "prepaid_interest_buy", "seller_tax_credit", "closing_costs_buy_total", "stolen_money", "pre_refi_rental_income",
+  "prepaid_interest_buy", "seller_tax_credit", "closing_costs_buy_total", "deed_transfer_tax_buy", "stolen_money", "pre_refi_rental_income",
   "closing_costs_refi_total", "prepaid_interest_refi", "reserves_total",
 ];
 

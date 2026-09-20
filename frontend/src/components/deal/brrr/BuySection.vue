@@ -26,6 +26,8 @@ const LOAN_CHARGE_PRESETS = [
 const closingDateId = useId();
 const titleModeId = useId();
 const notaryId = useId();
+const otherClosingCostsNoteId = useId();
+const NOTARY_FEE_DEFAULT = 250;
 const sellerPaidId = useId();
 
 const onClosingDate = (event: Event) => {
@@ -165,6 +167,10 @@ const sellerTaxCreditHint = computed(() => {
               <option value="standard">Standard (lender's policy)</option>
               <option value="we_pay_all">We pay all closing costs</option>
             </select>
+            <p v-if="autoCalc.wePayAllExtraClosingCost != null" data-testid="form.auto.wePayAllExtraClosingCost" class="numeric text-xs text-fg-muted">
+              Paying all closing costs adds <span class="font-semibold text-fg">{{ formatMoney(autoCalc.wePayAllExtraClosingCost) }}</span> over standard
+              <span class="text-fg-muted">(title tier + 0.70% deed transfer tax)</span>
+            </p>
           </div>
           <AutoDefaultMoneyInput
             data-testid="form.field.titleEscrowBuy"
@@ -174,19 +180,43 @@ const sellerTaxCreditHint = computed(() => {
             label="Title & Escrow / Settlement"
             :info="impactText('titleEscrowBuy')"
           />
-          <div class="flex items-center gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryBuy">
-            <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="field.getBool('onlineNotaryBuy', true)"
-                   @change="field.setBool('onlineNotaryBuy', ($event.target as HTMLInputElement).checked)" />
-            <label :for="notaryId" class="text-sm font-medium text-fg">Online notary (+$250)</label>
-            <InputInfo :content="impactText('onlineNotaryBuy')" field-label="Online notary" />
+          <div class="flex flex-col gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryBuy">
+            <div class="flex items-center gap-2">
+              <input :id="notaryId" type="checkbox" class="h-4 w-4 accent-primary" :checked="field.getBool('onlineNotaryBuy', true)"
+                     @change="field.setBool('onlineNotaryBuy', ($event.target as HTMLInputElement).checked)" />
+              <label :for="notaryId" class="text-sm font-medium text-fg">Online notary</label>
+              <InputInfo :content="impactText('onlineNotaryBuy')" field-label="Online notary" />
+            </div>
+            <AutoDefaultMoneyInput
+              v-if="field.getBool('onlineNotaryBuy', true)"
+              data-testid="form.field.onlineNotaryFeeBuy"
+              :model-value="field.getNullable('onlineNotaryFeeBuy')"
+              :computed-default="NOTARY_FEE_DEFAULT"
+              @update:model-value="(v: number | null) => field.setNullable('onlineNotaryFeeBuy', v)"
+              label="Notary fee"
+              :info="impactText('onlineNotaryFeeBuy')"
+            />
           </div>
-          <MoneyInput
-            data-testid="form.field.otherClosingCostsBuy"
-            :model-value="field.get('otherClosingCostsBuy')"
-            @update:model-value="(v: number | null) => field.set('otherClosingCostsBuy', v)"
-            label="Other Closing Costs"
-            :info="impactText('otherClosingCostsBuy')"
-          />
+          <div class="flex flex-col gap-1.5">
+            <MoneyInput
+              data-testid="form.field.otherClosingCostsBuy"
+              :model-value="field.get('otherClosingCostsBuy')"
+              @update:model-value="(v: number | null) => field.set('otherClosingCostsBuy', v)"
+              label="Other Closing Costs"
+              :info="impactText('otherClosingCostsBuy')"
+            />
+            <input
+              :id="otherClosingCostsNoteId"
+              data-testid="form.field.otherClosingCostsBuyNote"
+              type="text"
+              maxlength="500"
+              class="ui-input text-xs"
+              placeholder="What is it for? (HOA transfer, warranty…)"
+              aria-label="What the other closing costs are for"
+              :value="field.getStr('otherClosingCostsBuyNote') ?? ''"
+              @change="field.setStr('otherClosingCostsBuyNote', ($event.target as HTMLInputElement).value || null)"
+            />
+          </div>
         </div>
         <div class="mt-3">
           <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="autoCalc.closingCostsBuyTotal" />
