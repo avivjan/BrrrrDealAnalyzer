@@ -94,6 +94,45 @@ export const DEFAULT_LONG_TERM_INTEREST_RATE = 7;
  */
 export const DEFAULT_DAYS_UNTIL_REFI = 180;
 
+/** Today as an ISO calendar date (local), the default Buy closing date of a new deal. */
+export function todayIsoDate(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Defaults of the BRRRR lifecycle inputs (mirror the backend's `BrrrLifecycleInputs`). */
+export const BRRR_LIFECYCLE_DEFAULTS = {
+  earnestMoneyDeposit: 5000,
+  loanChargesBuy: 900,
+  recordingTransferBuy: null,
+  titleModeBuy: "standard" as const,
+  titleEscrowBuy: null,
+  onlineNotaryBuy: true,
+  otherClosingCostsBuy: 0,
+  sellerPaidCurrentYearTaxes: null,
+  constructionLoanBudget: 0,
+  rehabCushion: 5000,
+  daysUntilRented: 90,
+  monthlyUtilitiesUntilRented: 80,
+  maintenanceBeforeRefi: 500,
+  appliances: 630,
+  loanChargesRefi: 200,
+  recordingTransferRefi: null,
+  titleEscrowRefi: null,
+  onlineNotaryRefi: true,
+  appraisalFee: 700,
+  surveyFee: 385,
+  refiUnderwritingFee: 2000,
+  brokerProcessingFeeRefi: 395,
+  otherClosingCostsRefi: 0,
+  maintenanceReserve: 1500,
+  vacancyReserve: null,
+  capexReserve: 2500,
+  lowestArv: null,
+};
+
 /**
  * Initial values for a brand-new deal on the Analyze page.
  *
@@ -133,6 +172,8 @@ export function createEmptyDealForm(
     closingCostsRefi: 10,
     refiPoints: DEFAULT_REFI_POINTS,
     cashReserve: DEFAULT_CASH_RESERVE,
+    buyClosingDate: todayIsoDate(),
+    ...BRRR_LIFECYCLE_DEFAULTS,
     loanTermYears: 30,
     ltv_as_precent: DEFAULT_LTV_PERCENT,
     interestRate: DEFAULT_LONG_TERM_INTEREST_RATE,
@@ -152,6 +193,30 @@ export function createEmptyDealForm(
     monthly_utilities: 0,
   };
 }
+
+/** (field, label) of every dollar line item of the BRRRR lifecycle; `null` = formula default, so skipped. */
+const BRRR_NON_NEGATIVE_DOLLARS: Array<[keyof DealInputModel, string]> = [
+  ["earnestMoneyDeposit", "Earnest money deposit"],
+  ["loanChargesBuy", "Loan charges (buy)"],
+  ["recordingTransferBuy", "Recording and transfer charges (buy)"],
+  ["titleEscrowBuy", "Title and escrow charges (buy)"],
+  ["otherClosingCostsBuy", "Other closing costs (buy)"],
+  ["rehabCushion", "Rehab cushion"],
+  ["monthlyUtilitiesUntilRented", "Monthly utilities until rented"],
+  ["maintenanceBeforeRefi", "Maintenance before refi"],
+  ["appliances", "Appliances"],
+  ["loanChargesRefi", "Loan charges (refi)"],
+  ["recordingTransferRefi", "Recording and transfer charges (refi)"],
+  ["titleEscrowRefi", "Title and escrow charges (refi)"],
+  ["appraisalFee", "Appraisal fee"],
+  ["surveyFee", "Survey fee"],
+  ["refiUnderwritingFee", "Refi underwriting fee"],
+  ["brokerProcessingFeeRefi", "Broker processing fee (refi)"],
+  ["otherClosingCostsRefi", "Other closing costs (refi)"],
+  ["maintenanceReserve", "Maintenance reserve"],
+  ["vacancyReserve", "Vacancy reserve"],
+  ["capexReserve", "CapEx reserve"],
+];
 
 /**
  * Client-side bounds checks for the deal inputs, mirroring the backend's
@@ -179,7 +244,7 @@ export function validateDealInputs(
     errors.push("HML points must be between 0% and 100%.");
   if (num(deal.HMLInterestRate) < 0 || num(deal.HMLInterestRate) > 100)
     errors.push("HML interest rate must be between 0% and 100%.");
-  if (num(deal.closingCostsBuy) < 0)
+  if (dealType === "FLIP" && num(deal.closingCostsBuy) < 0)
     errors.push("Closing costs (buy) cannot be negative.");
   if (num(deal.annual_property_taxes) < 0)
     errors.push("Annual property taxes cannot be negative.");
@@ -196,9 +261,19 @@ export function validateDealInputs(
     if (num(deal.ltv_as_precent) <= 0 || num(deal.ltv_as_precent) > 100)
       errors.push("LTV must be between 0% and 100%.");
     if (num(deal.refiPoints) < 0 || num(deal.refiPoints) > 100)
-      errors.push("Refi points must be between 0% and 100%.");
-    if (num(deal.cashReserve) < 0)
-      errors.push("Cash reserve cannot be negative.");
+      errors.push("Broker points must be between 0% and 100%.");
+    for (const [key, label] of BRRR_NON_NEGATIVE_DOLLARS) {
+      const value = deal[key];
+      if (value != null && num(value as number) < 0) errors.push(`${label} cannot be negative.`);
+    }
+    if (num(deal.constructionLoanBudget) < 0)
+      errors.push("Construction loan budget cannot be negative.");
+    if (num(deal.daysUntilRented) < 0)
+      errors.push("Days until rented cannot be negative.");
+    if (deal.lowestArv != null) {
+      if (num(deal.lowestArv) <= 0) errors.push("Lowest ARV must be greater than 0.");
+      else if (num(deal.lowestArv) > num(deal.arv_in_thousands)) errors.push("Lowest ARV cannot exceed ARV.");
+    }
     // The slider's thumb only covers the realistic band, but the typed box is
     // deliberately unclamped so it never rewrites what you meant — which makes
     // this the only thing standing between a typo and a saved 70% mortgage.
@@ -266,22 +341,32 @@ export const formatDealForClipboard = (deal: ActiveDealRes): string => {
       financials = `
 Financials (BRRRR)
 ------------------
+Buy Closing Date: ${brrr.buyClosingDate || "-"}
 Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : undefined)}
-Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
-Closing Costs (Buy): ${formatMoney(brrr.closingCostsBuy ? brrr.closingCostsBuy * 1000 : undefined)}
-ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)}
-Refi Points: ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts
-Cash Reserve: ${formatMoney(((brrr.cashReserve ?? DEFAULT_CASH_RESERVE)) * 1000)}
+Earnest Money Deposit: ${formatMoney(brrr.earnestMoneyDeposit)}
+Closing Costs (Buy): ${formatMoney(brrr.closing_costs_buy_total)} (loan charges ${formatMoney(brrr.loanChargesBuy)}, recording ${formatMoney(brrr.recording_transfer_buy_effective)}, title/escrow ${formatMoney(brrr.title_escrow_buy_effective)}, notary ${brrr.onlineNotaryBuy === false ? "no" : "yes"}, other ${formatMoney(brrr.otherClosingCostsBuy)})
+Actual Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
+Construction Loan Budget: ${formatMoney(toNumber(brrr.constructionLoanBudget) !== undefined ? Number(brrr.constructionLoanBudget) * 1000 : undefined)}
+Rehab Cushion: ${formatMoney(brrr.rehabCushion)}
+Days until Rented: ${brrr.daysUntilRented ?? "-"} (utilities ${formatMoney(brrr.monthlyUtilitiesUntilRented)}/mo, maintenance before refi ${formatMoney(brrr.maintenanceBeforeRefi)}, appliances ${formatMoney(brrr.appliances)})
 Rent: ${formatMoney(brrr.rent)}
+Days until Refi: ${brrr.daysUntilRefi ?? "-"} (refi ${brrr.refi_closing_date || "-"})
+ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)} (lowest ${formatMoney(brrr.lowest_arv_effective)})
+Closing Costs (Refi): ${formatMoney(brrr.closing_costs_refi_total)} (broker points ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts, appraisal ${formatMoney(brrr.appraisalFee)}, survey ${formatMoney(brrr.surveyFee)}, underwriting ${formatMoney(brrr.refiUnderwritingFee)}, processing ${formatMoney(brrr.brokerProcessingFeeRefi)})
+Reserves at Refi: ${formatMoney(brrr.reserves_total)} (maintenance ${formatMoney(brrr.maintenanceReserve)}, vacancy ${formatMoney(brrr.vacancy_reserve_effective)}, capex ${formatMoney(brrr.capexReserve)})
 `;
       analysis = `
 Analysis Results (BRRRR)
 ------------------------
 Cash Flow: ${formatMoney(brrr.cash_flow)}
+Cash to Close (Buy): ${formatMoney(brrr.cash_to_close_buy)} (seller tax credit ${formatMoney(brrr.seller_tax_credit)}, prepaid interest ${formatMoney(brrr.prepaid_interest_buy)})
+Total Hard Money Cost: ${formatMoney(brrr.total_hard_money_cost)}
+Stolen Money: ${formatMoney(brrr.stolen_money)}
+Pre-Refi Rental Income: ${formatMoney(brrr.pre_refi_rental_income)}
+Cash-Out Wire (Refi): ${formatMoney(brrr.cash_out_routi)}
+Cash-Out Wire (Lowest ARV): ${formatMoney(brrr.cash_out_routi_conservative)}
 Cash Out: ${formatMoney(brrr.cash_out)}
-Cash Out Routi: ${formatMoney(brrr.cash_out_routi)}
-Cash Needed: ${formatMoney(brrr.total_cash_needed_for_deal)}
-Cash Needed (Buffered): ${formatMoney(brrr.total_cash_needed_for_deal_with_buffer)}
+Cash Needed: ${formatMoney(brrr.total_cash_needed_for_deal)} (lowest ARV ${formatMoney(brrr.cash_needed_conservative)})
 DSCR: ${brrr.dscr?.toFixed(2) || "-"}
 CoC Return: ${formatPercent(brrr.cash_on_cash)}
 ROI: ${formatPercent(brrr.roi)}

@@ -93,6 +93,24 @@ import line, and `src/components.d.ts` mirrors the names into Vue's
 indirection exists because gate G3 forbids a view's `<script>` from gaining an
 import. Full contracts: `docs/ui-overhaul/primitives.md`.
 
+#### Deal-form primitives
+
+The BRRRR form (`components/deal/brrr/*Section.vue`, one per lifecycle phase, framed by
+`components/deal/LifecycleSection.vue`) is built from a few field primitives beyond
+`MoneyInput` / `NumberInput` / `SliderField`, all sharing the same 20px label row:
+
+- `DaysOrDateField` — a whole-day count with a linked date when it has an anchor (the buy
+  closing date): type days and the date follows, pick a date and the days follow.
+- `AutoDefaultMoneyInput` — a "null = formula default" money field: shows the computed
+  default greyed with an `auto` tag, a typed value overrides it, ↺ restores the formula.
+- `PresetSelectInput` — a money field with a quick-pick of common amounts plus Custom.
+- `InputInfo` — the (i) beside a label; its text comes from `config/brrrInputImpacts.ts`
+  (which outputs the input moves). Every primitive takes `info` and `note` props for it and
+  for an inline derived reading (`= $4,300`).
+- `components/deal/AutoFigure.vue` — an auto-calculated figure that renders only once its
+  inputs exist; the numbers come from `utils/brrrAutoCalc.ts`, a client-side mirror of the
+  backend engine pinned to it by `brrrAutoCalc.test.ts`.
+
 ### PrimeVue
 
 PrimeVue runs **unstyled**. Every class it wears comes from the one global

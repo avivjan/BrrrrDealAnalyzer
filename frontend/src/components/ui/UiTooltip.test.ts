@@ -21,15 +21,24 @@ describe("UiTooltip", () => {
     expect(wrapper.get("button").attributes("aria-describedby")).toBe(bubble.attributes("id"));
   });
 
-  it("is hidden until hover or focus, and not rendered at all on touch", () => {
-    const classes = mountTip().get('[data-part="bubble"]').classes();
+  it("is hidden until hover, focus or a tap; on touch it stays hidden until tapped open", async () => {
+    const wrapper = mountTip();
+    const classes = wrapper.find('[data-part="bubble"]').classes();
     expect(classes).toContain("opacity-0");
     expect(classes).toContain("group-hover:opacity-100");
     expect(classes).toContain("group-focus-within:opacity-100");
-    expect(classes).toContain("touch:hidden");
-    // G-HOVER pairing, inert on touch because of the line above.
+    expect(classes).toContain("group-data-[open=true]:opacity-100");
+    // G-HOVER pairing: the touch counterpart is present, and the bubble is
+    // `display: none` on touch until the trigger is tapped open.
     expect(classes).toContain("touch:opacity-100");
-    expect(classes).toContain("pointer-events-none");
+    expect(classes).toContain("touch:hidden");
+    expect(classes).toContain("touch:group-data-[open=true]:block");
+
+    expect(wrapper.attributes("data-open")).toBe("false");
+    await wrapper.trigger("click");
+    expect(wrapper.attributes("data-open")).toBe("true");
+    await wrapper.trigger("click");
+    expect(wrapper.attributes("data-open")).toBe("false");
   });
 
   it("places above by default and below on request", () => {

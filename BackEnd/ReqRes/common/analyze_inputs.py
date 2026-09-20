@@ -5,29 +5,40 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, model_validator
 
 from ReqRes.common.refi_timing import days_from_legacy_months
+from ReqRes.common.brrr_legacy_inputs import construction_budget_from_legacy_hm_flag
+from ReqRes.common.brrr_lifecycle_inputs import BrrrLifecycleInputs
 
 
-class analyzeBRRRReq(BaseModel):
-    """Captures inputs required to calculate rental cash flow and DSCR."""
+class analyzeBRRRReq(BrrrLifecycleInputs):
+    """Captures inputs required to calculate rental cash flow and DSCR.
+
+    The lifecycle inputs (dates, granular closing costs, construction budget, holding
+    items, reserves, lowest ARV) come from `BrrrLifecycleInputs`.
+    """
 
     @model_validator(mode="before")
     @classmethod
     def _accept_legacy_months_until_refi(cls, data: Any) -> Any:
         return days_from_legacy_months(data)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_hm_for_rehab_flag(cls, data: Any) -> Any:
+        return construction_budget_from_legacy_hm_flag(data)
+
     arv_in_thousands: Decimal = Field(..., description="After repair value (ARV) of the property in thousands")
 
     purchase_price_in_thousands: Annotated[Decimal, Field(alias="purchasePrice", description="Acquisition price for the property")]
 
-    rehab_cost_in_thousands: Annotated[Decimal, Field(alias="rehabCost", description="Estimated rehab costs included in the deal")] = Decimal("0.0")
+    rehab_cost_in_thousands: Annotated[Decimal, Field(alias="rehabCost", description="Actual rehab cost (contractor and materials), in thousands")] = Decimal("0.0")
 
     rehab_contingency_percent: Annotated[Decimal, Field(alias="rehabContingency", description="Contingency budget as a percentage of rehab cost")] = Decimal("0.0")
 
     down_payment: Decimal = Field(..., description="Down payment percentage for hard money purchase (0-100)")
 
-    closing_costs_buy_in_thousands: Annotated[Decimal, Field(alias="closingCostsBuy", description="Closing costs when purchasing with hard money")] = Decimal("0.0")
+    closing_costs_buy_in_thousands: Annotated[Decimal, Field(alias="closingCostsBuy", description="Deprecated for BRRRR (ignored): replaced by the granular buy closing-cost fields")] = Decimal("0.0")
 
-    use_HM_for_rehab: Annotated[bool, Field(alias="use_HM_for_rehab", description="")] = False # make it a toggle for using hard money for rehab costs
+    use_HM_for_rehab: Annotated[bool, Field(alias="use_HM_for_rehab", description="Deprecated for BRRRR (ignored): replaced by constructionLoanBudget")] = False
 
     HML_points: Annotated[Decimal, Field(alias="hmlPoints", description="Hard money lender points (percentage)")] = Decimal("0.0")
 
@@ -35,11 +46,11 @@ class analyzeBRRRReq(BaseModel):
 
     HML_interest_rate: Annotated[Decimal, Field(alias="HMLInterestRate", description="Interest paid during HML period (cash)")]
 
-    closing_cost_refi_in_thousands: Annotated[Decimal, Field(alias="closingCostsRefi", description="Closing costs during the refinance stage")] = Decimal("0.0")
+    closing_cost_refi_in_thousands: Annotated[Decimal, Field(alias="closingCostsRefi", description="Deprecated for BRRRR (ignored): replaced by the granular refi closing-cost fields")] = Decimal("0.0")
 
-    refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Refi lender points as a percentage of the refi loan amount")] = Decimal("2")
+    refi_points: Annotated[Decimal, Field(alias="refiPoints", description="Broker points at refi as a percentage of the refi loan amount")] = Decimal("2")
 
-    cash_reserve_in_thousands: Annotated[Decimal, Field(alias="cashReserve", description="Cash escrowed at refi and returned at exit/sale (in thousands). Not a principal paydown: the DSCR loan and its payment stay on the full ARV x LTV; the reserve reduces cash out and adds to equity 1:1.")] = Decimal("0.0")
+    cash_reserve_in_thousands: Annotated[Decimal, Field(alias="cashReserve", description="Deprecated for BRRRR (ignored): replaced by maintenanceReserve, vacancyReserve and capexReserve")] = Decimal("0.0")
 
     loan_term_years: Annotated[int, Field(alias="loanTermYears")] = 30
 

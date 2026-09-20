@@ -5,12 +5,14 @@ import { reactive } from "vue";
 
 import DealInputsForm from "./DealInputsForm.vue";
 import {
+  BRRR_LIFECYCLE_DEFAULTS,
   DEFAULT_CASH_RESERVE,
   DEFAULT_DAYS_UNTIL_REFI,
   DEFAULT_LTV_PERCENT,
   DEFAULT_REFI_POINTS,
   createEmptyDealForm,
   ensureBrrrLegacyDefaults,
+  todayIsoDate,
 } from "../utils/dealUtils";
 import type { DealInputModel } from "../types";
 
@@ -31,14 +33,20 @@ const FIELD_STUBS = [
   "MoneyInput",
   "NumberInput",
   "SliderField",
-  "DaysUntilRefiField",
+  "DaysOrDateField",
+  "AutoDefaultMoneyInput",
+  "PresetSelectInput",
 ] as const;
 
 const stubs = {
   MoneyInput: fieldStub("MoneyInput"),
   NumberInput: fieldStub("NumberInput"),
   SliderField: fieldStub("SliderField"),
-  DaysUntilRefiField: fieldStub("DaysUntilRefiField"),
+  DaysOrDateField: fieldStub("DaysOrDateField"),
+  AutoDefaultMoneyInput: fieldStub("AutoDefaultMoneyInput"),
+  PresetSelectInput: fieldStub("PresetSelectInput"),
+  InputInfo: { name: "InputInfo", props: ["content"], template: `<i class="input-info" />` },
+  AutoFigure: { name: "AutoFigure", props: ["label", "value"], template: `<div class="auto-figure" :data-figure="label" :data-value="value" />` },
   ToggleSwitch: {
     name: "ToggleSwitch",
     props: ["modelValue"],
@@ -85,30 +93,55 @@ async function emitFrom(
 
 describe("DealInputsForm", () => {
   describe("section visibility", () => {
-    it("renders the BRRRR refinance + rental fields for a BRRRR deal", () => {
+    it("renders the four lifecycle sections with every BRRRR input", () => {
       const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
       const rendered = labels(wrapper);
+      const text = wrapper.text();
 
-      // Shared
-      expect(rendered).toContain("Purchase Price");
-      expect(rendered).toContain("Closing Costs (Buy)");
-      expect(rendered).toContain("Annual Taxes");
-      // BRRRR-only
-      expect(rendered).toContain("ARV");
-      expect(rendered).toContain("LTV");
-      expect(rendered).toContain("Days until Refi");
-      expect(rendered).toContain("Refi Points");
-      expect(rendered).toContain("Cash Reserve (escrowed at refi)");
-      expect(rendered).toContain("Monthly Rent");
-      expect(rendered).toContain("Vacancy");
-      expect(rendered).toContain("Prop. Mgmt");
+      for (const heading of ["Buy", "Rehab", "Rent & Holding", "Refinance"]) expect(text).toContain(heading);
+      // Buy
+      for (const label of ["Purchase Price", "Earnest Money Deposit", "Down Payment", "Points", "Interest Rate",
+                           "Loan Charges", "Recording & Transfer", "Title & Escrow / Settlement", "Other Closing Costs"])
+        expect(rendered, label).toContain(label);
+      expect(wrapper.find('[data-testid="form.field.buyClosingDate"] input[type="date"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="form.field.titleModeBuy"] select').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="form.field.onlineNotaryBuy"] input[type="checkbox"]').exists()).toBe(true);
+      // Rehab
+      for (const label of ["Actual Rehab Cost", "Construction Loan Budget", "Contingency", "Rehab Cushion"])
+        expect(rendered, label).toContain(label);
+      // Rent & Holding
+      for (const label of ["Monthly Rent", "Until Tenant Occupied", "Utilities until Rented (per month)", "Maintenance before Refi",
+                           "Appliances", "Annual Taxes", "Annual Insurance", "Monthly HOA", "Vacancy", "Maint.", "CapEx", "Prop. Mgmt"])
+        expect(rendered, label).toContain(label);
+      // Refinance
+      for (const label of ["Days to Refi", "ARV", "Lowest ARV Possible (stress test)", "LTV", "Long Term Interest Rate", "Loan Term",
+                           "Loan Charges (Refi)", "Recording & Transfer (Refi)", "Title & Escrow / Settlement (Refi)", "Other Closing Costs (Refi)",
+                           "Appraisal", "Survey", "Underwriting Fee", "Broker Points", "Broker Processing Fee",
+                           "Maintenance Reserve", "Vacancy Reserve (1 month rent)", "CapEx Reserve"])
+        expect(rendered, label).toContain(label);
+      expect(wrapper.find('[data-testid="form.field.onlineNotaryRefi"] input[type="checkbox"]').exists()).toBe(true);
+      // Deprecated for BRRRR: the legacy lumps and the hard-money toggle are gone
+      expect(rendered).not.toContain("Closing Costs (Buy)");
+      expect(rendered).not.toContain("Refi Closing Costs");
+      expect(rendered).not.toContain("Cash Reserve (escrowed at refi)");
+      expect(wrapper.find('[data-testid="form.hm-toggle"]').exists()).toBe(false);
       // FLIP-only must be absent
       expect(rendered).not.toContain("Projected Sale Price");
       expect(rendered).not.toContain("Holding Time");
       expect(rendered).not.toContain("Monthly Utilities");
+      expect(text).not.toContain("Flip Strategy");
+    });
 
-      expect(wrapper.text()).toContain("Refinance (BRRRR)");
-      expect(wrapper.text()).not.toContain("Flip Strategy");
+    it("shows an auto-calculated figure only once its inputs exist", () => {
+      const emptyForm = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      const autoFiguresByLabel = (wrapper: ReturnType<typeof mountForm>) =>
+        Object.fromEntries(wrapper.findAll("[data-figure]").map((figure) => [figure.attributes("data-figure"), figure.attributes("data-value")]));
+      // no purchase price yet -> no cash to close, no hard money cost
+      expect(autoFiguresByLabel(emptyForm)["Cash to Close (Buy)"]).toBeUndefined();
+      const typedForm = mountForm({ ...createEmptyDealForm("BRRRR"), purchasePrice: 140, arv_in_thousands: 200, rent: 2600 }, "BRRRR");
+      expect(Number(autoFiguresByLabel(typedForm)["Cash to Close (Buy)"])).toBeGreaterThan(0);
+      expect(Number(autoFiguresByLabel(typedForm)["Total Hard Money Cost"])).toBeGreaterThan(0);
+      expect(Number(autoFiguresByLabel(typedForm)["Pre-Refi Rental Income"])).toBe(2600 * 90 / 30);
     });
 
     it("renders the flip strategy fields for a FLIP deal", () => {
@@ -130,7 +163,8 @@ describe("DealInputsForm", () => {
       expect(rendered).not.toContain("Vacancy");
 
       expect(wrapper.text()).toContain("Flip Strategy");
-      expect(wrapper.text()).not.toContain("Refinance (BRRRR)");
+      expect(wrapper.text()).not.toContain("Rent & Holding");
+      expect(wrapper.find('[data-testid="form.hm-toggle"]').exists()).toBe(true);
     });
 
     it("renders without crashing on a sparse deal missing most keys", () => {
@@ -175,6 +209,34 @@ describe("DealInputsForm", () => {
       maintenancePercent: "5.00",
       capexPercent: "5.00",
       use_HM_for_rehab: true,
+      buyClosingDate: "2026-01-10",
+      earnestMoneyDeposit: "5000.00",
+      loanChargesBuy: "900.00",
+      recordingTransferBuy: null,
+      titleModeBuy: "we_pay_all",
+      titleEscrowBuy: "2200.00",
+      onlineNotaryBuy: false,
+      otherClosingCostsBuy: "0.00",
+      sellerPaidCurrentYearTaxes: null,
+      constructionLoanBudget: "55.0000",
+      rehabCushion: "5000.00",
+      daysUntilRented: 90,
+      monthlyUtilitiesUntilRented: "80.00",
+      maintenanceBeforeRefi: "500.00",
+      appliances: "630.00",
+      loanChargesRefi: "200.00",
+      recordingTransferRefi: "1075.00",
+      titleEscrowRefi: null,
+      onlineNotaryRefi: true,
+      appraisalFee: "700.00",
+      surveyFee: "385.00",
+      refiUnderwritingFee: "2240.00",
+      brokerProcessingFeeRefi: "395.00",
+      otherClosingCostsRefi: "0.00",
+      maintenanceReserve: "1500.00",
+      vacancyReserve: null,
+      capexReserve: "2500.00",
+      lowestArv: "280.0000",
     }) as unknown as DealInputModel;
 
     const savedFlip = () => ({
@@ -202,23 +264,55 @@ describe("DealInputsForm", () => {
 
     it.each([
       ["Purchase Price", 200],
-      ["Rehab Cost", 50],
+      ["Actual Rehab Cost", 50],
       ["Contingency", 10],
-      ["Closing Costs (Buy)", 5],
       ["Down Payment", 20],
       ["Points", 2],
       ["Interest Rate", 11],
       ["ARV", 320],
-      ["Days until Refi", 180],
-      ["Refi Points", 1.5],
+      ["Days to Refi", 180],
+      ["Broker Points", 1.5],
       ["Monthly Rent", 2600],
       ["Annual Taxes", 3600],
       ["Annual Insurance", 1200],
       ["Vacancy", 5],
       ["Prop. Mgmt", 8],
       ["Loan Term", 30],
+      // lifecycle inputs, strings from the API like every other Decimal
+      ["Earnest Money Deposit", 5000],
+      ["Loan Charges", 900],
+      ["Title & Escrow / Settlement", 2200],
+      ["Construction Loan Budget", 55],
+      ["Rehab Cushion", 5000],
+      ["Until Tenant Occupied", 90],
+      ["Utilities until Rented (per month)", 80],
+      ["Maintenance before Refi", 500],
+      ["Appliances", 630],
+      ["Loan Charges (Refi)", 200],
+      ["Recording & Transfer (Refi)", 1075],
+      ["Appraisal", 700],
+      ["Survey", 385],
+      ["Underwriting Fee", 2240],
+      ["Broker Processing Fee", 395],
+      ["Maintenance Reserve", 1500],
+      ["CapEx Reserve", 2500],
+      ["Lowest ARV Possible (stress test)", 280],
     ])("BRRRR: %s is populated, not blank", (label, expected) => {
       expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), label)).toBe(expected);
+    });
+
+    it("binds the date, the title mode and the checkboxes from the saved deal", () => {
+      const wrapper = mountForm(savedBrrrr(), "BRRRR");
+      expect(wrapper.find<HTMLInputElement>('[data-testid="form.field.buyClosingDate"] input').element.value).toBe("2026-01-10");
+      expect(wrapper.find<HTMLSelectElement>('[data-testid="form.field.titleModeBuy"] select').element.value).toBe("we_pay_all");
+      expect(wrapper.find<HTMLInputElement>('[data-testid="form.field.onlineNotaryBuy"] input').element.checked).toBe(false);
+      expect(wrapper.find<HTMLInputElement>('[data-testid="form.field.onlineNotaryRefi"] input').element.checked).toBe(true);
+    });
+
+    it("leaves a formula-defaulted field null so the formula applies", () => {
+      const wrapper = mountForm(savedBrrrr(), "BRRRR");
+      expect(boundValue(wrapper, "Recording & Transfer")).toBeNull(); // the first one is Buy
+      expect(boundValue(wrapper, "Vacancy Reserve (1 month rent)")).toBeNull();
     });
 
     it.each([
@@ -245,14 +339,14 @@ describe("DealInputsForm", () => {
 
     it("keeps a real zero rather than falling back", () => {
       expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Monthly HOA")).toBe(0);
-      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Cash Reserve (escrowed at refi)")).toBe(0);
+      expect(boundValue(mountForm(savedBrrrr(), "BRRRR"), "Other Closing Costs")).toBe(0);
     });
 
     it("leaves a genuinely absent field blank", () => {
-      const partial = { ...(savedBrrrr() as any), rehabCost: null, closingCostsBuy: "" };
+      const partial = { ...(savedBrrrr() as any), rehabCost: null, appliances: "" };
       const wrapper = mountForm(partial, "BRRRR");
-      expect(boundValue(wrapper, "Rehab Cost")).toBeNull();
-      expect(boundValue(wrapper, "Closing Costs (Buy)")).toBeNull();
+      expect(boundValue(wrapper, "Actual Rehab Cost")).toBeNull();
+      expect(boundValue(wrapper, "Appliances")).toBeNull();
     });
 
     it("reads a saved deal without mutating it (no autosave trigger on open)", () => {
@@ -283,9 +377,63 @@ describe("DealInputsForm", () => {
       const deal = reactive(createEmptyDealForm("BRRRR"));
       const wrapper = mountForm(deal, "BRRRR");
 
-      await emitFrom(wrapper, "Closing Costs (Buy)", null);
+      await emitFrom(wrapper, "Other Closing Costs", null);
 
-      expect(deal.closingCostsBuy).toBeUndefined();
+      expect(deal.otherClosingCostsBuy).toBeUndefined();
+    });
+
+    it("stores null, not undefined, on a formula-defaulted field so the formula reaches the backend", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), recordingTransferBuy: 1234 });
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await emitFrom(wrapper, "Recording & Transfer", null);
+
+      expect(deal.recordingTransferBuy).toBeNull();
+      expect("recordingTransferBuy" in deal).toBe(true);
+    });
+
+    it("mirrors the first rehab amount into the construction budget once, then leaves them independent", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await emitFrom(wrapper, "Actual Rehab Cost", 40);
+      expect(deal.constructionLoanBudget).toBe(40);
+
+      await emitFrom(wrapper, "Construction Loan Budget", 55);
+      expect(deal.rehabCost).toBe(40);
+      await emitFrom(wrapper, "Actual Rehab Cost", 42);
+      expect(deal.constructionLoanBudget).toBe(55);
+    });
+
+    it("never mirrors into a saved deal that already has a rehab figure", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), rehabCost: 50, constructionLoanBudget: 0 });
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await emitFrom(wrapper, "Actual Rehab Cost", 52);
+      expect(deal.constructionLoanBudget).toBe(0); // a cash rehab stays a cash rehab
+    });
+
+    it("writes the date, the title mode and the checkboxes back", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await wrapper.find('[data-testid="form.field.buyClosingDate"] input').setValue("2026-03-05");
+      await wrapper.find('[data-testid="form.field.titleModeBuy"] select').setValue("we_pay_all");
+      await wrapper.find('[data-testid="form.field.onlineNotaryBuy"] input').setValue(false);
+
+      expect(deal.buyClosingDate).toBe("2026-03-05");
+      expect(deal.titleModeBuy).toBe("we_pay_all");
+      expect(deal.onlineNotaryBuy).toBe(false);
+    });
+
+    it("resets the seller-paid-taxes override back to auto", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-11-20", annual_property_taxes: 3600 });
+      const wrapper = mountForm(deal, "BRRRR");
+
+      await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] input').setValue(true);
+      expect(deal.sellerPaidCurrentYearTaxes).toBe(true);
+      await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] [data-part="reset"]').trigger("click");
+      expect(deal.sellerPaidCurrentYearTaxes).toBeNull();
     });
 
     it("leaves a defaulted field empty when cleared, instead of snapping back", async () => {
@@ -296,13 +444,13 @@ describe("DealInputsForm", () => {
       const deal = reactive(createEmptyDealForm("BRRRR"));
       const wrapper = mountForm(deal, "BRRRR");
 
-      await emitFrom(wrapper, "Refi Points", null);
-      await emitFrom(wrapper, "Cash Reserve (escrowed at refi)", null);
+      await emitFrom(wrapper, "Broker Points", null);
+      await emitFrom(wrapper, "Maintenance Reserve", null);
       await emitFrom(wrapper, "LTV", null);
       await emitFrom(wrapper, "Long Term Interest Rate", null);
 
       expect(deal.refiPoints).toBeUndefined();
-      expect(deal.cashReserve).toBeUndefined();
+      expect(deal.maintenanceReserve).toBeUndefined();
       expect(deal.ltv_as_precent).toBeUndefined();
       expect(deal.interestRate).toBeUndefined();
     });
@@ -316,11 +464,11 @@ describe("DealInputsForm", () => {
 
       await emitFrom(wrapper, "Long Term Interest Rate", null);
       await emitFrom(wrapper, "LTV", null);
-      await emitFrom(wrapper, "Refi Points", null);
+      await emitFrom(wrapper, "Broker Points", null);
 
       expect(boundValue(wrapper, "Long Term Interest Rate")).toBeNull();
       expect(boundValue(wrapper, "LTV")).toBeNull();
-      expect(boundValue(wrapper, "Refi Points")).toBeNull();
+      expect(boundValue(wrapper, "Broker Points")).toBeNull();
     });
 
     it("can be retyped digit by digit without the default fighting back", async () => {
@@ -328,9 +476,9 @@ describe("DealInputsForm", () => {
       const deal = reactive(createEmptyDealForm("BRRRR"));
       const wrapper = mountForm(deal, "BRRRR");
 
-      await emitFrom(wrapper, "Refi Points", null); // cleared
+      await emitFrom(wrapper, "Broker Points", null); // cleared
       expect(deal.refiPoints).toBeUndefined();
-      await emitFrom(wrapper, "Refi Points", 2);
+      await emitFrom(wrapper, "Broker Points", 2);
       expect(deal.refiPoints).toBe(2);
     });
 
@@ -351,6 +499,12 @@ describe("DealInputsForm", () => {
       // Money defaults are in thousands: $5,000 buy / $10,000 refi closing.
       expect(deal.closingCostsBuy).toBe(5);
       expect(deal.closingCostsRefi).toBe(10);
+      // Lifecycle defaults (plain dollars unless noted), closing date = today.
+      expect(deal.buyClosingDate).toBe(todayIsoDate());
+      expect(deal).toMatchObject(BRRR_LIFECYCLE_DEFAULTS);
+      expect(deal.recordingTransferBuy).toBeNull();
+      expect(deal.lowestArv).toBeNull();
+      expect(deal.vacancyReserve).toBeNull();
     });
 
     it("keeps the legacy 1.5 backfill separate from the new-deal default", () => {
@@ -374,9 +528,9 @@ describe("DealInputsForm", () => {
       expect(deal.sellingClosingCosts).toBe(5);
     });
 
-    it("toggles use_HM_for_rehab through the switch", async () => {
-      const deal = reactive(createEmptyDealForm("BRRRR"));
-      const wrapper = mountForm(deal, "BRRRR");
+    it("toggles use_HM_for_rehab through the switch (FLIP; BRRRR uses the construction budget)", async () => {
+      const deal = reactive(createEmptyDealForm("FLIP"));
+      const wrapper = mountForm(deal, "FLIP");
 
       await wrapper
         .findComponent({ name: "ToggleSwitch" })
@@ -416,19 +570,9 @@ describe("DealInputsForm", () => {
       ).toBe("panel");
     });
 
-    it("keeps the page's flat Rehab/Contingency layout and the modal's paired grid", () => {
-      const brrrCard = mount(DealInputsForm, {
-        props: { deal: createEmptyDealForm("BRRRR"), dealType: "BRRRR" as const },
-        global: { stubs },
-      });
-      const brrrPanel = mount(DealInputsForm, {
-        props: {
-          deal: createEmptyDealForm("BRRRR"),
-          dealType: "BRRRR" as const,
-          surface: "panel" as const,
-        },
-        global: { stubs },
-      });
+    it("keeps the page's flat Rehab/Contingency layout and the modal's paired grid (FLIP)", () => {
+      const brrrCard = card();
+      const brrrPanel = panel();
       // The wrapper around Rehab Cost + Contingency: dissolved on the page
       // (`contents`), a real 2-col grid in the modal.
       expect(brrrCard.find("[data-layout]").attributes("data-layout")).toBe(

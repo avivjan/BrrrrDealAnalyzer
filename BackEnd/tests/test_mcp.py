@@ -169,7 +169,9 @@ class TestEveryToolSchema:
 
     def test_tools_list_payload_stays_within_budget(self):
         payload = json.dumps([spec["tool"].model_dump(exclude_none=True) for spec in mcp_server.tools().values()])
-        assert len(payload) < 200_000, f"tools/list is {len(payload)} bytes"
+        # 256 kB measured after the BRRRR lifecycle inputs (28 described fields, inlined
+        # into the six deal-body tools) and outputs landed; was 174 kB before them.
+        assert len(payload) < 300_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:
@@ -339,7 +341,8 @@ class TestOutputsAreExplained:
 
     def test_glossary_in_instructions(self):
         text = mcp_server.INSTRUCTIONS.lower()
-        for term in ("cash_out", "routi", "equity", "net_profit", "cash_flow", "cash_on_cash", "-1", "-2", "thousands"):
+        for term in ("cash_out", "routi", "equity", "net_profit", "cash_flow", "cash_on_cash", "-1", "-2", "thousands",
+                     "cash_to_close_buy", "stolen_money", "conservative", "lowest arv", "formula", "deprecated"):
             assert term in text, term
         assert "negative" in text and "left in the deal" in text
 
@@ -351,7 +354,7 @@ class TestOutputsAreExplained:
                 continue
             jsonschema.Draft202012Validator.check_schema(schema)
             assert schema.get("type") == "object", name
-            assert "title" not in json.dumps(schema), f"{name}: titles should be stripped"
+            assert '"title":' not in json.dumps(schema), f"{name}: pydantic titles should be stripped"
         brrr = mcp_server.tools()["analyze_brrr"]["tool"].outputSchema
         assert "left in" in brrr["properties"]["cash_out"]["description"]
         rows = mcp_server.tools()["list_deals"]["tool"].outputSchema

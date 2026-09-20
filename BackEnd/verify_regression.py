@@ -151,13 +151,15 @@ thousands_to_dollars = _resolve("thousands_to_dollars", *_MATH)
 get_HML_amount = _resolve("get_HML_amount", *_MATH)
 calc_montly_operating_expenses = _resolve("calc_montly_operating_expenses", *_MATH)
 calcDSCR = _resolve("calcDSCR", *_MATH)
-calc_cash_out_from_deal = _resolve("calc_cash_out_from_deal", *_MATH)
-calc_cash_out_routi = _resolve("calc_cash_out_routi", *_MATH)
 calc_mortgage_payment = _resolve("calc_mortgage_payment", *_MATH)
 calc_cash_on_cash = _resolve("calc_cash_on_cash", *_MATH)
 calc_roi = _resolve("calc_roi", *_MATH)
 calc_holding_costs = _resolve("calc_holding_costs", *_MATH)
-calc_HML_interest_in_cash = _resolve("calc_HML_interest_in_cash", *_MATH)
+calc_hml_interest = _resolve("calc_hml_interest", *_MATH)
+calc_seller_tax_credit = _resolve("calc_seller_tax_credit", *_MATH)
+title_escrow_buy_default = _resolve("title_escrow_buy_default", *_MATH)
+recording_transfer_default = _resolve("recording_transfer_default", *_MATH)
+title_escrow_refi_default = _resolve("title_escrow_refi_default", *_MATH)
 get_total_cash_needed_for_deal = _resolve("get_total_cash_needed_for_deal", *_MATH)
 DAYS_PER_YEAR = _resolve("DAYS_PER_YEAR", *_MATH)
 DAYS_PER_MONTH = _resolve("DAYS_PER_MONTH", *_MATH)
@@ -282,6 +284,35 @@ BRRRR_PAYLOAD: dict[str, Any] = {
     "property_managment_fee_precentages_from_rent": 8,
     "maintenancePercent": 5,
     "capexPercent": 5,
+    # BRRRR lifecycle inputs (dates, settlement lines, construction budget, holding items, reserves)
+    "buyClosingDate": "2026-01-10",
+    "earnestMoneyDeposit": 5000,
+    "loanChargesBuy": 900,
+    "recordingTransferBuy": None,
+    "titleModeBuy": "standard",
+    "titleEscrowBuy": None,
+    "onlineNotaryBuy": True,
+    "otherClosingCostsBuy": 0,
+    "sellerPaidCurrentYearTaxes": None,
+    "constructionLoanBudget": 55,
+    "rehabCushion": 5000,
+    "daysUntilRented": 90,
+    "monthlyUtilitiesUntilRented": 80,
+    "maintenanceBeforeRefi": 500,
+    "appliances": 630,
+    "loanChargesRefi": 200,
+    "recordingTransferRefi": None,
+    "titleEscrowRefi": None,
+    "onlineNotaryRefi": True,
+    "appraisalFee": 700,
+    "surveyFee": 385,
+    "refiUnderwritingFee": 2000,
+    "brokerProcessingFeeRefi": 395,
+    "otherClosingCostsRefi": 0,
+    "maintenanceReserve": 1500,
+    "vacancyReserve": None,
+    "capexReserve": 2500,
+    "lowestArv": None,
     "address": "1 Shared Form St",
     "section": 2,
     "stage": 2,
@@ -325,7 +356,10 @@ BRRRR_CASES: list[tuple[str, dict[str, Any]]] = [
     ("negative_cash_flow_sentinel", _brrr(rent=1, arv_in_thousands=900, ltv_as_precent=90)),
     ("zero_down", _brrr(down_payment=0)),
     ("all_cash", _brrr(down_payment=100, use_HM_for_rehab=False)),
-    ("big_reserve", _brrr(cashReserve=45)),
+    ("big_reserve", _brrr(maintenanceReserve=45000)),
+    ("dated_december_we_pay_all", _brrr(buyClosingDate="2026-12-15", titleModeBuy="we_pay_all", lowestArv=280)),
+    ("no_date_cash_rehab", _brrr(buyClosingDate=None, constructionLoanBudget=0)),
+    ("stolen_money", _brrr(constructionLoanBudget=70, rehabContingency=0)),
     ("high_expenses", _brrr(vacancyPercent=25, maintenancePercent=25, capexPercent=25,
                             property_managment_fee_precentages_from_rent=24)),
     ("with_hoa", _brrr(montly_hoa=450)),
@@ -647,7 +681,7 @@ def capture_models() -> dict[str, Any]:
             "cash_out_routi": 250.25, "cash_on_cash": 12.5, "roi": 30.0,
             "equity": 80000.0, "net_profit": 79000.0,
             "total_cash_needed_for_deal": 63525.0,
-            "total_cash_needed_for_deal_with_buffer": 75000.0,
+            "cash_to_close_buy": 40000.0, "stolen_money": 0.0,
             "messages": ["a note"],
             "breakdowns": {"cash_flow": [{"label": "x", "value": 1.5, "formula": "1 + 0.5"}]},
         }),
@@ -700,7 +734,7 @@ def capture_models() -> dict[str, Any]:
             created_at="2024-01-02T03:04:05+00:00",
             updated_at="2024-01-02T03:04:06+00:00",
             net_profit=12620.0, roi=20.0, annualized_roi=40.0,
-            total_cash_needed=63525.0, total_cash_needed_with_buffer=75000.0,
+            total_cash_needed=63525.0, cash_to_close_buy=40000.0,
             total_holding_costs=9000.0, total_hml_interest=5000.0,
         )),
         ("BoughtBrrrDealCreate/defaults", BoughtBrrrDealCreate, _brrr()),
@@ -997,17 +1031,28 @@ def capture_calculations(client: TestClient) -> dict[str, Any]:
         rec("helpers", f"calc_holding_costs({t},{i},{h},{d})",
             lambda t=t, i=i, h=h, d=d: calc_holding_costs(D(t), D(i), D(h), d))
 
-    for pp, dp, rc, d, r, hm in [
-        ("200000", "20", "55000", 180, "11", True),
-        ("200000", "20", "55000", 180, "11", False),
-        ("200000", "20", "55000", 1, "11", True),
-        ("200000", "20", "55000", 3650, "11", True),
-        ("200000", "20", "55000", 180, "0", True),
-        ("200000", "100", "0", 180, "11", False),
+    for amt, d, r in [
+        ("215000", 180, "11"), ("160000", 180, "11"), ("215000", 1, "11"),
+        ("215000", 3650, "11"), ("215000", 180, "0"), ("0", 180, "11"),
     ]:
-        rec("helpers", f"calc_HML_interest_in_cash({pp},{dp},{rc},{d},{r},{hm})",
-            lambda pp=pp, dp=dp, rc=rc, d=d, r=r, hm=hm: calc_HML_interest_in_cash(
-                D(pp), D(dp), D(rc), d, D(r), hm))
+        rec("helpers", f"calc_hml_interest({amt},{d},{r})",
+            lambda amt=amt, d=d, r=r: calc_hml_interest(D(amt), D(r), d))
+
+    from datetime import date as _date
+    for taxes, closing, paid in [
+        ("3600", _date(2026, 1, 1), False), ("3600", _date(2026, 7, 1), False),
+        ("3600", _date(2026, 11, 20), False), ("3600", _date(2026, 11, 20), True),
+        ("3600", _date(2026, 12, 15), True), ("3600", _date(2024, 2, 29), False),
+    ]:
+        rec("helpers", f"calc_seller_tax_credit({taxes},{closing.isoformat()},{paid})",
+            lambda taxes=taxes, closing=closing, paid=paid: calc_seller_tax_credit(D(taxes), closing, paid))
+    for mode, price in [("standard", "140000"), ("we_pay_all", "149999"), ("we_pay_all", "150000"),
+                        ("we_pay_all", "200000"), ("we_pay_all", "200001")]:
+        rec("helpers", f"title_escrow_buy_default({mode},{price})",
+            lambda mode=mode, price=price: title_escrow_buy_default(mode, D(price)))
+    for loan in ["126000", "150000", "0"]:
+        rec("helpers", f"recording_transfer_default({loan})", lambda loan=loan: recording_transfer_default(D(loan)))
+        rec("helpers", f"title_escrow_refi_default({loan})", lambda loan=loan: title_escrow_refi_default(D(loan)))
 
     for arv, ltv, ir, yrs in [
         ("320000", "0.75", "6.5", 30), ("320000", "0.75", "6.5", 1),
@@ -1034,28 +1079,6 @@ def capture_calculations(client: TestClient) -> dict[str, Any]:
                         ("-10000", "-500", "80000"), ("-10000", "500", "-80000")]:
         rec("helpers", f"calc_roi({co},{cf},{np_})",
             lambda co=co, cf=cf, np_=np_: calc_roi(D(co), D(cf), D(np_)))
-
-    cash_out_args = dict(arv=D("320000"), ltv=D("0.75"), down_payment_precent=D("20"),
-                         purchase_price=D("200000"), closing_costs_buy=D("5000"),
-                         HML_points_in_cash=D("4300"), rehab_cost=D("55000"),
-                         HML_interest_in_cash=D("11825"), closing_cost_refi=D("6000"),
-                         refi_points_in_cash=D("3600"), use_HM_for_rehab=True,
-                         holding_costs_until_refi=D("2400"))
-    rec("helpers", "calc_cash_out_from_deal/baseline",
-        lambda: calc_cash_out_from_deal(**cash_out_args))
-    rec("helpers", "calc_cash_out_from_deal/with_reserve",
-        lambda: calc_cash_out_from_deal(**cash_out_args, cash_reserve_in_cash=D("45000")))
-    rec("helpers", "calc_cash_out_from_deal/cash_rehab",
-        lambda: calc_cash_out_from_deal(**{**cash_out_args, "use_HM_for_rehab": False}))
-    routi_args = dict(arv=D("320000"), ltv=D("0.75"), down_payment_precent=D("20"),
-                      purchase_price=D("200000"), rehab_cost=D("55000"),
-                      closing_cost_refi=D("6000"), refi_points_in_cash=D("3600"),
-                      use_HM_for_rehab=True)
-    rec("helpers", "calc_cash_out_routi/baseline", lambda: calc_cash_out_routi(**routi_args))
-    rec("helpers", "calc_cash_out_routi/with_reserve",
-        lambda: calc_cash_out_routi(**routi_args, cash_reserve_in_cash=D("45000")))
-    rec("helpers", "calc_cash_out_routi/cash_rehab",
-        lambda: calc_cash_out_routi(**{**routi_args, "use_HM_for_rehab": False}))
 
     for hm in (True, False):
         rec("helpers", f"get_total_cash_needed_for_deal(use_HM={hm})",

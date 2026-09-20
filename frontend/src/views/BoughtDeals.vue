@@ -1078,7 +1078,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Out Routi</template>
+                      <template #label>Cash-Out Wire (Refi)</template>
                       <div
                         data-testid="boughtdeals.modal.result.cash_out_routi"
                         class="font-bold"
@@ -1134,19 +1134,27 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>
-                        Total Cash Needed
-                      </template>
+                      <template #label>Cash Needed</template>
                       <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal ) }}
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>
-                        Cash Needed (Buffered)
-                      </template>
-                      <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_for_deal_with_buffer" class="font-bold">
-                        {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal_with_buffer ) }}
+                      <template #label>Cash to Close (Buy)</template>
+                      <div v-flash data-testid="boughtdeals.modal.result.cash_to_close_buy" class="font-bold">
+                        {{ formatCurrency( (currentAnalysis as any) .cash_to_close_buy ) }}
+                      </div>
+                    </UiStatTile>
+                    <UiStatTile tone="neutral" class="bg-surface">
+                      <template #label>Wire (Lowest ARV)</template>
+                      <div v-flash data-testid="boughtdeals.modal.result.cash_out_routi_conservative" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi_conservative)">
+                        {{ formatCurrency( (currentAnalysis as any) .cash_out_routi_conservative ) }}
+                      </div>
+                    </UiStatTile>
+                    <UiStatTile tone="neutral" class="bg-surface">
+                      <template #label>Stolen Money</template>
+                      <div v-flash data-testid="boughtdeals.modal.result.stolen_money" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).stolen_money)">
+                        {{ formatCurrency( (currentAnalysis as any) .stolen_money ) }}
                       </div>
                     </UiStatTile>
                   </template>

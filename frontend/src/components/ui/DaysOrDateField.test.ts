@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 
-import DaysUntilRefiField from "./DaysUntilRefiField.vue";
+import DaysOrDateField from "./DaysOrDateField.vue";
 
 /** The number-entry mode is covered by NumberInput's own behaviour. */
 const stubs = {
@@ -15,7 +15,7 @@ const stubs = {
 };
 
 function mountField(modelValue: number | null = 180) {
-  return mount(DaysUntilRefiField, {
+  return mount(DaysOrDateField, {
     props: { modelValue, label: "Days until Refi" },
     global: { stubs },
   });
@@ -49,7 +49,7 @@ async function pickDates(wrapper: Field, from: string, to: string) {
   await refiInput(wrapper).setValue(to);
 }
 
-describe("DaysUntilRefiField", () => {
+describe("DaysOrDateField", () => {
   it("starts in number-entry mode showing the day count", () => {
     const wrapper = mountField(180);
     expect(wrapper.findComponent({ name: "NumberInput" }).props("modelValue")).toBe(180);
@@ -78,7 +78,7 @@ describe("DaysUntilRefiField", () => {
     });
 
     it("marks a required field with an asterisk for the eye and a word for the ear", () => {
-      const wrapper = mount(DaysUntilRefiField, {
+      const wrapper = mount(DaysOrDateField, {
         props: { modelValue: 180, label: "Days until Refi", required: true },
         global: { stubs },
       });
@@ -178,6 +178,55 @@ describe("DaysUntilRefiField", () => {
 
       expect(wrapper.emitted("update:modelValue")).toBeUndefined();
       expect(wrapper.findComponent({ name: "NumberInput" }).props("modelValue")).toBe(180);
+    });
+  });
+
+  describe("anchored on the buy closing date", () => {
+    const mountAnchored = (modelValue: number | null = 180, anchorDate = "2026-01-10") =>
+      mount(DaysOrDateField, {
+        props: { modelValue, label: "Days to Refi", dateLabel: "Refi closing date", anchorDate, min: 1 },
+        global: { stubs },
+      });
+
+    it("shows the days and the date they land on, side by side", () => {
+      const wrapper = mountAnchored(181);
+      expect(wrapper.attributes("data-mode")).toBe("anchored");
+      expect(wrapper.findComponent({ name: "NumberInput" }).props("modelValue")).toBe(181);
+      expect(wrapper.find<HTMLInputElement>('[data-part="date-linked"]').element.value).toBe("2026-07-10");
+      expect(wrapper.find('[data-part="toggle"]').exists()).toBe(false);
+    });
+
+    it("editing the date writes the day count back", async () => {
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
+      (date.element as HTMLInputElement).value = "2026-07-10";
+      await date.trigger("change");
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([181]);
+    });
+
+    it("refuses a date before the anchor or under the minimum", async () => {
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
+      (date.element as HTMLInputElement).value = "2026-01-10";
+      await date.trigger("change");
+      (date.element as HTMLInputElement).value = "2025-12-01";
+      await date.trigger("change");
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    });
+
+    it("a zero minimum lets the tenant move in on closing day", async () => {
+      const wrapper = mount(DaysOrDateField, {
+        props: { modelValue: 90, label: "Until Tenant Occupied", anchorDate: "2026-01-10", min: 0 },
+        global: { stubs },
+      });
+      const date = wrapper.find('[data-part="date-linked"]');
+      (date.element as HTMLInputElement).value = "2026-01-10";
+      await date.trigger("change");
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([0]);
+    });
+
+    it("falls back to the picker without an anchor", () => {
+      expect(mountField(180).attributes("data-mode")).toBe("picker");
     });
   });
 });

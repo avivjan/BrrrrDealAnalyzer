@@ -1027,7 +1027,7 @@ console.groupEnd();
                               <div v-flash data-testid="mydeals.modal.result.cash_out" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
-                              <template #label>Cash Out Routi</template>
+                              <template #label>Cash-Out Wire (Refi)</template>
                               <div v-flash data-testid="mydeals.modal.result.cash_out_routi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
@@ -1051,12 +1051,20 @@ console.groupEnd();
                               <div v-flash data-testid="mydeals.modal.result.net_profit" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).net_profit)">{{ formatCurrency((currentAnalysis as any).net_profit) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
-                              <template #label>Total Cash Needed</template>
+                              <template #label>Cash Needed</template>
                               <div v-flash data-testid="mydeals.modal.result.total_cash_needed_for_deal" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
-                              <template #label>Cash Needed (Buffered)</template>
-                              <div v-flash data-testid="mydeals.modal.result.total_cash_needed_for_deal_with_buffer" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).total_cash_needed_for_deal_with_buffer) }}</div>
+                              <template #label>Cash to Close (Buy)</template>
+                              <div v-flash data-testid="mydeals.modal.result.cash_to_close_buy" class="numeric font-display text-lg font-bold tracking-display">{{ formatCurrency((currentAnalysis as any).cash_to_close_buy) }}</div>
+                          </UiStatTile>
+                          <UiStatTile tone="neutral" class="bg-surface">
+                              <template #label>Wire (Lowest ARV)</template>
+                              <div v-flash data-testid="mydeals.modal.result.cash_out_routi_conservative" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi_conservative)">{{ formatCurrency((currentAnalysis as any).cash_out_routi_conservative) }}</div>
+                          </UiStatTile>
+                          <UiStatTile tone="neutral" class="bg-surface">
+                              <template #label>Stolen Money</template>
+                              <div v-flash data-testid="mydeals.modal.result.stolen_money" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).stolen_money)">{{ formatCurrency((currentAnalysis as any).stolen_money) }}</div>
                           </UiStatTile>
                       </template>
                       <template v-else>

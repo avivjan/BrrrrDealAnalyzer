@@ -440,11 +440,15 @@ compact tool was used and the answer quotes the money left in a bought deal corr
 
 Every output is explained, not just every input: each result field carries a description
 with its unit and sign convention (for example `cash_out` negative = money still left in
-the deal; `cash_out_routi` = the cash wire received at the refinance closing table), every
-JSON tool publishes an output schema built from those descriptions and returns structured
-content that validates against it, and the server instructions carry a glossary. The
-compact rows add `cash_left_in_deal` and `cash_wire_at_refi` so the common questions need no
-sign reading at all. A test fails on any undocumented output field.
+the deal; `cash_out_routi` = the cash wire received at the refinance closing table;
+`cash_to_close_buy` = the wire to the title company on purchase day; `stolen_money` =
+construction budget minus actual rehab; the `*_conservative` twins are the same figures at
+the lowest ARV), every JSON tool publishes an output schema built from those descriptions
+and returns structured content that validates against it, and the server instructions carry
+a glossary (including which BRRRR inputs are "None = formula" and which legacy lumps are
+deprecated). The compact rows add `cash_left_in_deal`, `cash_wire_at_refi`,
+`cash_wire_at_refi_conservative`, `cash_to_close_buy` and `stolen_money` so the common
+questions need no sign reading at all. A test fails on any undocumented output field.
 
 The transport is stateless Streamable HTTP, served by the same `uvicorn` process at
 `/mcp/<MCP_PATH_SECRET>`. Set `MCP_PATH_SECRET` (32+ random characters) on the Render
@@ -488,20 +492,39 @@ explanation cannot drift from it:
   (calculation plus explanation, no validation; used when a saved deal is re-read and by the PDF
   reports) sit on top. Both accept the request model **or** an ORM row.
 
+The BRRRR steps follow the deal's lifecycle — **Buy → Rehab → Rent/Holding → Refinance** — and
+the engine has two modes with no switch: with the defaults untouched it is a quick estimator;
+with the real closing date and settlement lines typed in, **Cash to Close (Buy)** and the
+**Cash-Out Wire** reconcile to the settlement statements, and **Cash Needed** (=
+total cash invested + rehab cushion + refi shortfall) is the single out-of-pocket figure.
+A field left `null` where the schema says "None = formula" takes its formula default and the
+result reports the value used as `*_effective`.
+
 | # | BRRRR step (`brrrSteps/`) | Produces | | # | Flip step (`flipSteps/`) | Produces |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `dollar_basis` | dollar basis, rehab with contingency | | 1 | `dollar_basis` | dollar basis, rehab with contingency |
-| 2 | `hml_and_holding_costs` | hard-money amount, interest & points, pre-refi holding costs | | 2 | `hml_costs` | HML amount, points, interest over the hold |
-| 3 | `operating_expenses` | monthly operating expenses and their components | | 3 | `holding_costs` | monthly operating, `total_holding_costs` |
-| 4 | `refi_terms` | refi closing costs, points, LTV, reserve | | 4 | `selling_costs` | agent fees, selling closing costs |
-| 5 | `cash_out` | `cash_out`, `cash_out_routi`, refi loan, total cash invested | | 5 | `total_cash_needed` | `total_cash_needed(_with_buffer)` and the buffer components |
-| 6 | `mortgage_payment` | monthly DSCR-loan payment | | 6 | `cost_basis` | cash invested, cost basis, gross profit |
-| 7 | `cash_flow` | NOI, **`cash_flow`** | | 7 | `net_profit` | capital-gains tax, **`net_profit`** |
-| 8 | `dscr` | PITIA, **`dscr`** | | 8 | `roi` | **`roi`**, `annualized_roi` |
-| 9 | `cash_on_cash` | **`cash_on_cash`** | | | | |
-| 10 | `equity_and_net_profit` | `equity`, `net_profit` | | | | |
-| 11 | `roi` | **`roi`** | | | | |
-| 12 | `total_cash_needed` | `total_cash_needed_for_deal(_with_buffer)` and the buffer components | | | | |
+| 1 | `dollar_basis` | dollar basis, rehab with contingency, construction budget, lowest ARV | | 1 | `dollar_basis` | dollar basis, rehab with contingency |
+| 2 | `purchase_loan` | purchase loan, down payment, hard-money principal (purchase loan + budget) | | 2 | `hml_costs` | HML amount, points, interest over the hold |
+| 3 | `timeline` | refi / tenant dates, the prepaid · monthly · accrued interest day split | | 3 | `holding_costs` | monthly operating, `total_holding_costs` |
+| 4 | `hml_and_holding_costs` | points, per diem, interest and its split, holding, utilities, pre-refi rent | | 4 | `selling_costs` | agent fees, selling closing costs |
+| 5 | `closing_costs_buy` | the buy settlement lines, seller tax credit, **`cash_to_close_buy`**, **`total_hard_money_cost`** | | 5 | `total_cash_needed` | `total_cash_needed(_with_buffer)` and the buffer components |
+| 6 | `rehab_draw` | **`stolen_money`** (budget − rehab), rehab out of pocket | | 6 | `cost_basis` | cash invested, cost basis, gross profit |
+| 7 | `operating_expenses` | monthly operating expenses and their components | | 7 | `net_profit` | capital-gains tax, **`net_profit`** |
+| 8 | `refi_terms` | refi loan, the refi settlement lines, prepaid interest, reserves — at ARV and at the lowest ARV | | 8 | `roi` | **`roi`**, `annualized_roi` |
+| 9 | `cash_out` | HML payoff, total cash invested, **`cash_out_routi`** (+ conservative), **`cash_out`** | | | | |
+| 10 | `mortgage_payment` | monthly DSCR-loan payment | | | | |
+| 11 | `cash_flow` | NOI, **`cash_flow`** | | | | |
+| 12 | `dscr` | PITIA, **`dscr`** | | | | |
+| 13 | `cash_on_cash` | **`cash_on_cash`** | | | | |
+| 14 | `equity_and_net_profit` | `equity` (with the recoverable reserves), `net_profit` | | | | |
+| 15 | `roi` | **`roi`** | | | | |
+| 16 | `total_cash_needed` | **`total_cash_needed_for_deal`** and `cash_needed_conservative` | | | | |
+
+The explanation carries the reconcile identities as guarded sum steps: the buy settlement
+(sources = uses), the three interest slices (prepaid + monthly + accrued = total), the refi
+settlement (loan = payoff + costs + prepaid + reserves + wire) and the cash identity
+(cash out = wire − invested). `tests/test_brrr_lifecycle.py` asserts them on every scenario
+and pins the legacy parity: with every lifecycle input neutralised (`legacy_brrrr_payload`)
+the engine reproduces the pre-lifecycle figures to the last digit.
 
 Each breakdown step carries a `unit` (`money`, `pct` or `ratio`), the `formula` with the numbers
 filled in, an optional `note`, and, on sum-type steps, the `terms` that add up to its value, which
@@ -694,9 +717,14 @@ sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
 
 **Frontend**
 
-1. **`components/DealInputsForm.vue`** — add the `<MoneyInput>` / `<NumberInput>` /
-   `<SliderField>` to the right section. Read with `get('field')`, write with
-   `set('field', v)`. This is the only UI edit.
+1. **BRRRR:** the lifecycle section that owns the input under
+   `components/deal/brrr/` (`BuySection`, `RehabSection`, `RentHoldingSection`,
+   `RefinanceSection`). Read with `f.get('field')`, write with `f.set('field', v)`
+   (`composables/useDealField.ts`); a "null = formula default" field uses
+   `AutoDefaultMoneyInput` with `f.getNullable` / `f.setNullable`. Give it
+   `:info="impactText('field')"` and a row in `config/brrrInputImpacts.ts` (the (i)
+   tooltip); an inline figure goes in `utils/brrrAutoCalc.ts`.
+   **FLIP:** `components/DealInputsForm.vue`.
 2. **`types/index.ts`** — add the field to `BaseDealReq` (shared) or to `BrrrAnalyzeReq` /
    `FlipAnalyzeReq`. `DealInputModel`, `BrrrDealCreate`, `FlipDealCreate` and
    `AnalyzeDealReq` derive from those.
@@ -708,30 +736,39 @@ sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
 
 **Backend**
 
-5. **`ReqRes/common/analyze_inputs.py`** (`analyzeBRRRReq` / `analyzeFlipReq`) *and*
-   **`ReqRes/common/active_deal_schemas.py`** (`BaseDealReq`, or `BrrrActiveDealCreate` /
-   `FlipActiveDealCreate`). `bought_deal_schemas.py` inherits from these. The per-endpoint
+5. **BRRRR lifecycle input:** `ReqRes/common/brrr_lifecycle_inputs.py` — one declaration,
+   inherited by `analyzeBRRRReq` and `BrrrActiveDealCreate` (bought inherits from that).
+   **Shared or FLIP input:** `ReqRes/common/analyze_inputs.py` *and*
+   `ReqRes/common/active_deal_schemas.py` / `base_deal.py`. The per-endpoint
    `ReqRes/<division>/<endpoint>/` files only re-export. **The Pydantic `alias=` must
    exactly match the field name used in step 1.**
 6. **`ReqRes/common/analyze_results.py`** — only for a computed *output* metric.
-7. **`DAL/data_models/`** — the `Column` on `common/base_deal.py`'s `BaseDeal` mixin, or on
-   **all four** of `activeDeal/deals.py` and `boughtDeal/deals.py`'s deal tables. Column
-   name is the non-aliased snake_case name.
-8. **`migrations/runner.py`** — `add_column_if_missing` for every existing table (pattern
-   in `migrations/steps/`). `create_all` only creates *new* tables. The migration
-   `DEFAULT` must equal the model `default=` and the Pydantic default, because
-   `update_*_deal` dumps every field on each PUT.
+7. **`DAL/data_models/`** — BRRRR: the `Column` on `common/brrr_lifecycle.py`'s
+   `BrrrLifecycleColumns` mixin (both BRRRR tables at once). Shared: `common/base_deal.py`.
+   FLIP: both Flip classes in `activeDeal/deals.py` and `boughtDeal/deals.py`. Column
+   name is the non-aliased snake_case name; a `*_in_thousands` column also joins
+   `migrations/money_columns.py`.
+8. **`migrations/steps/brrr_lifecycle_columns.py`** (BRRRR: one row in the table) or
+   **`migrations/runner.py`** — `add_column_if_missing` for every existing table.
+   `create_all` only creates *new* tables. The DDL `DEFAULT` must equal the model
+   `default=` and the Pydantic default, because `update_*_deal` dumps every field on each
+   PUT; a formula-defaulted field is nullable with no default. Add a case to
+   `tests/test_migrations.py`.
 9. **`BL/analyze/brrrSteps/`** / **`flipSteps/`** — use the field in the step that owns
-   the subject and register its `CalcStep` there. Range / sign check in
-   `BL/analyze/common/validation.py`.
+   the subject; any new intermediate is a field on `brrr_results_with_intermediates.py`
+   and a step in `explain/brrr.py` (`tests/test_explain.py` fails otherwise). Range / sign
+   check in `BL/analyze/common/validation.py`.
 10. **`DAL/crud/`** — no change expected; they iterate `__table__.columns`. Confirm only.
 11. **`BL/reports/common/deal_pdf.py`** — only if it is a headline metric.
 
 **Then**
 
-12. Extend `components/DealInputsForm.test.ts`, run `npm test` and `npm run build`, update
-    the regression snapshots (`python3 verify_regression.py snapshot`, review the diff),
-    and smoke-test all three pages.
+12. Extend `components/DealInputsForm.test.ts` (and `utils/brrrAutoCalc.test.ts` for an
+    inline figure), run `npm test` and `npm run build`; add the field to
+    `tests/conftest.py::brrrr_payload`, `tests/test_deal_crud.py`'s field lists and
+    `verify_regression.py`'s payload; re-record the regression snapshots
+    (`python3 verify_regression.py snapshot`, review the diff — `tests/test_mcp.py`
+    compares `openapi.json` byte for byte), and smoke-test all three pages.
 13. **MCP.** The field reaches Claude automatically through the tools generated from
     OpenAPI (`BackEnd/mcp_server.py`). If you added or renamed an *endpoint*, give it a
     line in `DESCRIPTIONS` there; `tests/test_mcp.py` fails otherwise.

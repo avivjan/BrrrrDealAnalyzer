@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
+from datetime import date
 
 import pypdf
 import pytest
@@ -34,13 +35,22 @@ from ReqRes.common.analyze_inputs import analyzeBRRRReq, analyzeFlipReq
 # one of these overrides (applied on top of the conftest payloads).
 BRRRR_SCENARIOS = {
     "base": {},
-    "cash_rehab": {"use_HM_for_rehab": False},
+    "cash_rehab": {"constructionLoanBudget": 0},
     "refi_shortfall": {"arv_in_thousands": 250},
     "negative_cash_flow": {"rent": 1200},
     "positive_cash_out": {"arv_in_thousands": 420},
     "zero_interest": {"interestRate": 0},
-    "cash_reserve": {"cashReserve": 45},
+    "big_reserve": {"maintenanceReserve": 45000},
     "pitia_zero": {"arv_in_thousands": 0, "annual_property_taxes": 0, "annual_insurance": 0, "montly_hoa": 0},
+    # lifecycle branches
+    "no_date": {"buyClosingDate": None},
+    "december_paid_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
+    "same_month_refi": {"buyClosingDate": "2026-03-20", "daysUntilRefi": 5, "daysUntilRented": 0},
+    "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
+    "tenant_after_refi": {"daysUntilRented": 400},
+    "typed_overrides": {"recordingTransferBuy": 1000, "titleEscrowBuy": 900, "recordingTransferRefi": 1000,
+                        "titleEscrowRefi": 900, "vacancyReserve": 0, "lowestArv": 300, "onlineNotaryBuy": False,
+                        "onlineNotaryRefi": False, "sellerPaidCurrentYearTaxes": True},
 }
 NO_CASH_IN = {
     "down_payment": 0, "closingCostsBuy": 0, "hmlPoints": 0, "HMLInterestRate": 0,
@@ -110,18 +120,29 @@ class TestEveryFieldIsExplained:
         assert fields - reads == set(), f"FlipResultsWithIntermediates fields never explained: {sorted(fields - reads)}"
 
 
+def _numeric_field_values(record) -> set[float]:
+    """Every number on the record (dates, booleans and Nones are not step values)."""
+    numeric_values = set()
+    for record_field in dataclasses.fields(record):
+        field_value = getattr(record, record_field.name)
+        if isinstance(field_value, bool) or field_value is None or isinstance(field_value, date):
+            continue
+        numeric_values.add(float(field_value))
+    return numeric_values
+
+
 class TestStepsComeFromTheCalcRecord:
     @pytest.mark.parametrize("scenario", list(BRRRR_SCENARIOS))
     def test_brrr_step_values_are_fields(self, brrrr_payload, scenario):
         req, results_w_intermediates = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
-        field_values = {float(getattr(results_w_intermediates, f.name)) for f in dataclasses.fields(results_w_intermediates)}
+        field_values = _numeric_field_values(results_w_intermediates)
         for step in _steps(explain_brrr(req, results_w_intermediates)):
             assert step["value"] in field_values, f"{step['label']} is not a BrrrResultsWithIntermediates field"
 
     @pytest.mark.parametrize("scenario", list(FLIP_SCENARIOS))
     def test_flip_step_values_are_fields(self, flip_payload, scenario):
         req, results_w_intermediates = _flip(flip_payload, FLIP_SCENARIOS[scenario])
-        field_values = {float(getattr(results_w_intermediates, f.name)) for f in dataclasses.fields(results_w_intermediates)}
+        field_values = _numeric_field_values(results_w_intermediates)
         for step in _steps(explain_flip(req, results_w_intermediates)):
             assert step["value"] in field_values, f"{step['label']} is not a FlipResultsWithIntermediates field"
 
@@ -201,6 +222,12 @@ class TestPdfRendersTheExplanation:
         assert "+ Management 8% of rent $208" in text          # a stacked term
         assert "− Operating Expenses $998 = $1,602" in text    # a subtracted term and the total line
         assert "still left in the deal" in text                # a note
+        # the lifecycle sections
+        assert "Cash to Close (Buy) ·" in text
+        assert "Cash-Out Wire (Lowest ARV) ·" in text
+        assert "Stolen Money (draw spread) ·" in text
+        assert "Seller Tax Credit" in text
+        assert "Cash Needed (Buffered)" not in text
 
     def test_address_markup_is_escaped(self, client, brrrr_payload):
         address = "1 <b>Bold</b> & Co <script>"

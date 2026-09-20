@@ -46,7 +46,16 @@ class DealSummary(BaseModel):
         "cash_out is negative, else 0. The number to quote for 'how much did we leave in'."))
     cash_wire_at_refi: Optional[float] = Field(None, description=(
         "'Routi': the cash wire received at the refinance closing table, in dollars (new loan minus "
-        "hard-money payoff, refinance costs, points and reserve), before subtracting what was invested."))
+        "hard-money payoff, refinance costs, prepaid interest and reserves), before subtracting what was invested."))
+    cash_wire_at_refi_conservative: Optional[float] = Field(None, description=(
+        "BRRRR: the refinance wire if the appraisal comes in at the lowest ARV (90% of ARV unless set), in dollars. "
+        "Negative = cash to bring to the refi table."))
+    cash_to_close_buy: Optional[float] = Field(None, description=(
+        "BRRRR: cash wired to the title company on purchase day, in dollars (down payment + closing costs + points + "
+        "prepaid interest - seller tax credit - earnest money)."))
+    stolen_money: Optional[float] = Field(None, description=(
+        "BRRRR: construction loan budget minus actual rehab, in dollars. Positive = capital pulled out through lender "
+        "draws before the refi; negative = extra out-of-pocket rehab."))
     created_at: Optional[datetime] = Field(None, description="When the deal was created on the site.")
     updated_at: Optional[datetime] = Field(None, description="Last edit on the site.")
 

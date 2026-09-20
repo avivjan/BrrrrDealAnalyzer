@@ -17,40 +17,11 @@ from DAL.data_models import (
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
+from migrations.add_column import add_column_if_missing  # noqa: F401  (re-exported; steps import it from here too)
 from migrations.steps.bought_stage_to_string import migrate_bought_stage_to_string
 from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
-
-
-def add_column_if_missing(
-    engine,
-    inspector,
-    table_name: str,
-    column_name: str,
-    column_ddl: str,
-    backfill_value: str,
-) -> None:
-    """Idempotently add a column to an existing table, backfilling old rows.
-
-    `Base.metadata.create_all` only creates tables that do not exist yet, so
-    every column added after a table shipped needs a call here. Keep
-    `backfill_value` in step with the SQLAlchemy `default=` and the Pydantic
-    default: `update_*_deal` dumps every field on each PUT, so a mismatch
-    silently rewrites existing rows.
-    """
-    if table_name not in inspector.get_table_names():
-        return
-    columns = [col["name"] for col in inspector.get_columns(table_name)]
-    if column_name in columns:
-        return
-    with engine.begin() as conn:
-        conn.execute(text(
-            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_ddl}"
-        ))
-        conn.execute(text(
-            f"UPDATE {table_name} SET {column_name} = {backfill_value} "
-            f"WHERE {column_name} IS NULL"
-        ))
+from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
 
 
 # Arbitrary but fixed key identifying "this app's schema migration".
@@ -174,6 +145,11 @@ def _run_migrations_locked(engine):
     # Replace `Months_until_refi` with whole `days_until_refi`. Idempotent.
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
         migrate_months_until_refi_to_days(engine, brrr_table)
+
+    # The BRRRR lifecycle columns (dates, granular closing costs, construction
+    # budget, holding items, reserves, lowest ARV). Reflects fresh: the steps
+    # above may have altered these tables. Idempotent.
+    add_brrr_lifecycle_columns(engine, sa_inspect(engine))
 
     # Widen the money columns so a thousands value can hold an exact dollar.
     widen_money_columns(engine)

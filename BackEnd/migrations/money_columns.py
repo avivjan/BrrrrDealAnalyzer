@@ -11,11 +11,13 @@ MONEY_COLUMNS_BY_TABLE = {
         "purchase_price_in_thousands", "rehab_cost_in_thousands",
         "closing_costs_buy_in_thousands", "arv_in_thousands",
         "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
+        "construction_loan_budget_in_thousands", "lowest_arv_in_thousands",
     ),
     "bought_brrrr_deals": (
         "purchase_price_in_thousands", "rehab_cost_in_thousands",
         "closing_costs_buy_in_thousands", "arv_in_thousands",
         "closing_cost_refi_in_thousands", "cash_reserve_in_thousands",
+        "construction_loan_budget_in_thousands", "lowest_arv_in_thousands",
     ),
     "flip_deals": (
         "purchase_price_in_thousands", "rehab_cost_in_thousands",
