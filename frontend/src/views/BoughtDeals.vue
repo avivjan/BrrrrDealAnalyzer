@@ -1078,7 +1078,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash-Out Wire (Refi)</template>
+                      <template #label>Cash-Out Routi</template>
                       <div
                         data-testid="boughtdeals.modal.result.cash_out_routi"
                         class="font-bold"

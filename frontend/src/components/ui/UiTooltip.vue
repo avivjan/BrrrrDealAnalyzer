@@ -33,7 +33,9 @@ function passthrough() {
   return rest;
 }
 
-const rootClass = computed(() => cn("group relative inline-flex", attrs.class as string));
+// A *named* group: the deal form's root is a plain `group` too, and an unnamed
+// `group-hover:` would open every tooltip inside it while the pointer is anywhere over the form.
+const rootClass = computed(() => cn("group/tooltip relative inline-flex", attrs.class as string));
 
 const isOpenedByTap = ref(false);
 const closeOnOutsideTap = (event: Event) => {
@@ -51,9 +53,9 @@ const bubbleClass = computed(() =>
   cn(
     "pointer-events-none absolute left-1/2 z-40 w-max max-w-[16rem] -translate-x-1/2 rounded-ctl border-ui border-line bg-surface-3 px-2.5 py-1.5 text-xs text-fg shadow-3",
     "opacity-0 transition-opacity duration-fast ease-standard",
-    "group-hover:opacity-100 group-focus-within:opacity-100 group-data-[open=true]:opacity-100",
+    "group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100 group-data-[open=true]/tooltip:opacity-100",
     // G-HOVER pair: on touch the bubble is `display: none` until the trigger is tapped isOpenedByTap.
-    "touch:opacity-100 touch:hidden touch:group-data-[open=true]:block",
+    "touch:opacity-100 touch:hidden touch:group-data-[open=true]/tooltip:block",
     props.placement === "top" ? "bottom-full mb-2" : "top-full mt-2",
   ),
 );

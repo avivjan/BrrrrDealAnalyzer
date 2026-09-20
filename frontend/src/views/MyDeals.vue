@@ -1027,7 +1027,7 @@ console.groupEnd();
                               <div v-flash data-testid="mydeals.modal.result.cash_out" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out)">{{ formatCurrency((currentAnalysis as any).cash_out) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">
-                              <template #label>Cash-Out Wire (Refi)</template>
+                              <template #label>Cash-Out Routi</template>
                               <div v-flash data-testid="mydeals.modal.result.cash_out_routi" class="numeric font-display text-lg font-bold tracking-display" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi)">{{ formatCurrency((currentAnalysis as any).cash_out_routi) }}</div>
                           </UiStatTile>
                           <UiStatTile tone="neutral" class="bg-surface">

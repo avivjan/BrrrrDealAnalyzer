@@ -20,7 +20,7 @@ export const BRRR_OUTPUT_LABELS: Partial<Record<BrrrOutputKey, string>> = {
   prepaid_interest_refi: "Prepaid Interest (Refi)",
   total_cash_invested: "Total Cash Invested",
   total_cash_needed_for_deal: "Cash Needed",
-  cash_out_routi: "Cash-Out Wire",
+  cash_out_routi: "Cash-Out Routi",
   cash_out_routi_conservative: "Cash-Out Wire (Lowest ARV)",
   cash_to_refi_table_conservative: "Cash to Refi Table (Lowest ARV)",
   cash_out: "Cash Out",
