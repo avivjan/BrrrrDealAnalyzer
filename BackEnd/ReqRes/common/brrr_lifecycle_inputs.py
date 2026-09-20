@@ -42,17 +42,22 @@ class BrrrLifecycleInputs(BaseModel):
     loan_charges_buy: Annotated[Decimal, Field(alias="loanChargesBuy", description=(
         "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900)."))] = Decimal("900")
     recording_transfer_buy: Annotated[Optional[Decimal], Field(alias="recordingTransferBuy", description=(
-        "Government recording and transfer charges at purchase, in dollars. None = formula: "
-        "0.55% of the purchase loan + $250."))] = None
+        "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the "
+        "whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the "
+        "purchase price when we pay all closing costs, else $0)."))] = None
     title_mode_buy: Annotated[TitleModeBuy, Field(alias="titleModeBuy", description=(
         "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all "
         "title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above)."))] = "standard"
     title_escrow_buy: Annotated[Optional[Decimal], Field(alias="titleEscrowBuy", description=(
         "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode."))] = None
     online_notary_buy: Annotated[bool, Field(alias="onlineNotaryBuy", description=(
-        "Remote online notary at purchase: adds $250 to the buy closing costs."))] = True
+        "Remote online notary at purchase: adds the notary fee to the buy closing costs."))] = True
+    online_notary_fee_buy: Annotated[Optional[Decimal], Field(alias="onlineNotaryFeeBuy", description=(
+        "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250."))] = None
     other_closing_costs_buy: Annotated[Decimal, Field(alias="otherClosingCostsBuy", description=(
         "Any other purchase settlement lines (HOA transfer, warranty...), in dollars."))] = Decimal("0")
+    other_closing_costs_buy_note: Annotated[Optional[str], Field(alias="otherClosingCostsBuyNote", max_length=500, description=(
+        "What the other purchase closing costs are for (free text)."))] = None
     seller_paid_current_year_taxes: Annotated[Optional[bool], Field(alias="sellerPaidCurrentYearTaxes", description=(
         "Whether the seller already paid this year's property tax bill (billed in November). None = auto: "
         "true only for a December closing. Sets the direction of the seller tax credit."))] = None
@@ -81,7 +86,9 @@ class BrrrLifecycleInputs(BaseModel):
     title_escrow_refi: Annotated[Optional[Decimal], Field(alias="titleEscrowRefi", description=(
         "Title, escrow and settlement charges at refi, in dollars. None = formula: $800 + 0.45% of the refi loan."))] = None
     online_notary_refi: Annotated[bool, Field(alias="onlineNotaryRefi", description=(
-        "Remote online notary at refi: adds $250 to the refi closing costs."))] = True
+        "Remote online notary at refi: adds the notary fee to the refi closing costs."))] = True
+    online_notary_fee_refi: Annotated[Optional[Decimal], Field(alias="onlineNotaryFeeRefi", description=(
+        "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250."))] = None
     appraisal_fee: Annotated[Decimal, Field(alias="appraisalFee", description="Refi appraisal, in dollars.")] = Decimal("700")
     survey_fee: Annotated[Decimal, Field(alias="surveyFee", description="Survey, in dollars ($385 / $450 / $485 are common).")] = Decimal("385")
     refi_underwriting_fee: Annotated[Decimal, Field(alias="refiUnderwritingFee", description=(
@@ -90,6 +97,8 @@ class BrrrLifecycleInputs(BaseModel):
         "Broker processing fee at refi, in dollars ($395 typical, $0 possible)."))] = Decimal("395")
     other_closing_costs_refi: Annotated[Decimal, Field(alias="otherClosingCostsRefi", description=(
         "Any other refi settlement lines, in dollars."))] = Decimal("0")
+    other_closing_costs_refi_note: Annotated[Optional[str], Field(alias="otherClosingCostsRefiNote", max_length=500, description=(
+        "What the other refi closing costs are for (free text)."))] = None
     maintenance_reserve: Annotated[Decimal, Field(alias="maintenanceReserve", description=(
         "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity."))] = Decimal("1500")
     vacancy_reserve: Annotated[Optional[Decimal], Field(alias="vacancyReserve", description=(

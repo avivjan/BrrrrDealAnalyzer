@@ -115,9 +115,27 @@ class TestBuySettlementLines:
     def test_standard_title_is_flat(self):
         assert deal_math.title_escrow_buy_default("standard", Decimal(500_000)) == 1000
 
-    def test_recording_default_follows_the_purchase_loan(self, brrrr_payload):
+    def test_recording_default_is_on_the_whole_hard_money_loan_plus_the_deed_tax(self, brrrr_payload):
         results = _compute(brrrr_payload)
-        assert results.recording_transfer_buy == Decimal("0.0055") * results.purchase_loan_amount + 250
+        assert results.deed_transfer_tax_buy == 0  # standard deal: the seller's debit
+        assert results.recording_transfer_buy == 250 + Decimal("0.0055") * results.hml_amount
+        assert results.hml_amount > results.purchase_loan_amount  # the construction budget is in the loan recorded
+        bigger_budget = _compute(brrrr_payload, constructionLoanBudget=80)
+        assert bigger_budget.recording_transfer_buy == results.recording_transfer_buy + Decimal("0.0055") * 25_000
+
+    def test_we_pay_all_adds_the_deed_transfer_tax_to_the_recording_default(self, brrrr_payload):
+        results = _compute(brrrr_payload, titleModeBuy="we_pay_all")
+        assert results.deed_transfer_tax_buy == Decimal("0.0070") * results.purchase_price
+        assert results.recording_transfer_buy == 250 + Decimal("0.0055") * results.hml_amount + results.deed_transfer_tax_buy
+        assert results.title_escrow_buy == 2200  # the $200k price sits in the middle tier
+
+    def test_notary_fee_defaults_to_250_and_can_be_typed_or_switched_off(self, brrrr_payload):
+        assert _compute(brrrr_payload).notary_buy == 250
+        assert _compute(brrrr_payload, onlineNotaryFeeBuy=175).notary_buy == 175
+        assert _compute(brrrr_payload, onlineNotaryFeeBuy=175, onlineNotaryBuy=False).notary_buy == 0
+        assert _compute(brrrr_payload).notary_refi == 250
+        assert _compute(brrrr_payload, onlineNotaryFeeRefi=300).notary_refi == 300
+        assert _compute(brrrr_payload, onlineNotaryFeeRefi=300, onlineNotaryRefi=False).notary_refi == 0
 
     def test_typed_values_override_the_formulas(self, brrrr_payload):
         results = _compute(brrrr_payload, recordingTransferBuy=1234, titleEscrowBuy=999, titleModeBuy="we_pay_all")
@@ -298,7 +316,7 @@ class TestApiShapeAndValidation:
         for key in ("cash_to_close_buy", "seller_tax_credit", "prepaid_interest_buy", "total_hard_money_cost", "stolen_money",
                     "pre_refi_rental_income", "cash_out_routi_conservative", "cash_to_refi_table_conservative",
                     "total_cash_invested", "refi_closing_date", "tenant_occupied_date",
-                    "recording_transfer_buy_effective", "title_escrow_buy_effective", "recording_transfer_refi_effective",
+                    "deed_transfer_tax_buy", "recording_transfer_buy_effective", "title_escrow_buy_effective", "recording_transfer_refi_effective",
                     "title_escrow_refi_effective", "vacancy_reserve_effective", "lowest_arv_effective"):
             assert key in body, key
         assert "total_cash_needed_for_deal_with_buffer" not in body
@@ -318,6 +336,8 @@ class TestApiShapeAndValidation:
         ("recordingTransferBuy", -1, "Recording and transfer charges (buy) cannot be negative"),
         ("titleEscrowBuy", -1, "Title and escrow charges (buy) cannot be negative"),
         ("otherClosingCostsBuy", -1, "Other closing costs (buy) cannot be negative"),
+        ("onlineNotaryFeeBuy", -1, "Online notary fee (buy) cannot be negative"),
+        ("onlineNotaryFeeRefi", -1, "Online notary fee (refi) cannot be negative"),
         ("constructionLoanBudget", -1, "Construction loan budget cannot be negative"),
         ("rehabCushion", -1, "Rehab cushion cannot be negative"),
         ("daysUntilRented", -1, "Days until rented cannot be negative"),

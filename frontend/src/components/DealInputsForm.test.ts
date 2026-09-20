@@ -216,7 +216,9 @@ describe("DealInputsForm", () => {
       titleModeBuy: "we_pay_all",
       titleEscrowBuy: "2200.00",
       onlineNotaryBuy: false,
+      onlineNotaryFeeBuy: null,
       otherClosingCostsBuy: "0.00",
+      otherClosingCostsBuyNote: "HOA transfer",
       sellerPaidCurrentYearTaxes: null,
       constructionLoanBudget: "55.0000",
       rehabCushion: "5000.00",
@@ -228,6 +230,7 @@ describe("DealInputsForm", () => {
       recordingTransferRefi: "1075.00",
       titleEscrowRefi: null,
       onlineNotaryRefi: true,
+      onlineNotaryFeeRefi: "300.00",
       appraisalFee: "700.00",
       surveyFee: "385.00",
       refiUnderwritingFee: "2240.00",
@@ -289,6 +292,7 @@ describe("DealInputsForm", () => {
       ["Maintenance before Refi", 500],
       ["Appliances", 630],
       ["Loan Charges (Refi)", 200],
+      ["Notary fee", 300],
       ["Recording & Transfer (Refi)", 1075],
       ["Appraisal", 700],
       ["Survey", 385],
@@ -424,6 +428,22 @@ describe("DealInputsForm", () => {
       expect(deal.buyClosingDate).toBe("2026-03-05");
       expect(deal.titleModeBuy).toBe("we_pay_all");
       expect(deal.onlineNotaryBuy).toBe(false);
+    });
+
+    it("shows the notary fee only while the checkbox is on, and writes the closing-cost note back", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      expect(wrapper.find('[data-testid="form.field.onlineNotaryFeeBuy"]').exists()).toBe(true);
+      expect(boundValue(wrapper, "Notary fee")).toBeNull(); // null = the $250 default
+
+      await wrapper.find('[data-testid="form.field.onlineNotaryBuy"] input[type="checkbox"]').setValue(false);
+      expect(deal.onlineNotaryBuy).toBe(false);
+      expect(wrapper.find('[data-testid="form.field.onlineNotaryFeeBuy"]').exists()).toBe(false);
+
+      await wrapper.find('[data-testid="form.field.otherClosingCostsBuyNote"]').setValue("HOA transfer + home warranty");
+      expect(deal.otherClosingCostsBuyNote).toBe("HOA transfer + home warranty");
+      await wrapper.find('[data-testid="form.field.otherClosingCostsBuyNote"]').setValue("");
+      expect(deal.otherClosingCostsBuyNote).toBeNull();
     });
 
     it("resets the seller-paid-taxes override back to auto", async () => {

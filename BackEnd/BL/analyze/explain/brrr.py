@@ -23,6 +23,8 @@ from BL.analyze.common.deal_math import (
     calc_roi,
     calc_seller_tax_credit,
     recording_transfer_default,
+    recording_transfer_buy_default,
+    deed_transfer_tax_buy_default,
     title_escrow_buy_default,
     title_escrow_refi_default,
     lowest_arv_default,
@@ -157,12 +159,18 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     ])
 
     # -- BUY: the settlement -----------------------------------------------------
-    check(results.recording_transfer_buy == (recording_transfer_default(results.purchase_loan_amount) if payload.recording_transfer_buy is None else payload.recording_transfer_buy), "recording (buy)")
+    check(results.deed_transfer_tax_buy == deed_transfer_tax_buy_default(payload.title_mode_buy, results.purchase_price), "deed transfer tax")
+    breakdown.add(
+        CLOSE, "Deed Transfer Tax (Buy)", results.deed_transfer_tax_buy,
+        (f"We pay all closing costs → 0.70% × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.deed_transfer_tax_buy)}"
+         if payload.title_mode_buy == "we_pay_all" else "Standard deal → the seller's debit, $0 to us"),
+    )
+    check(results.recording_transfer_buy == (recording_transfer_buy_default(results.hml_amount, results.deed_transfer_tax_buy) if payload.recording_transfer_buy is None else payload.recording_transfer_buy), "recording (buy)")
     breakdown.add(
         CLOSE, "Recording & Transfer (Buy)", results.recording_transfer_buy,
-        f"0.55% × Purchase Loan ({fmt_money(results.purchase_loan_amount)}) + $250 = {fmt_money(results.recording_transfer_buy)}"
+        f"$250 + 0.55% × Hard Money Loan ({fmt_money(results.hml_amount)}) + Deed Transfer Tax ({fmt_money(results.deed_transfer_tax_buy)}) = {fmt_money(results.recording_transfer_buy)}"
         if payload.recording_transfer_buy is None else f"As entered: {fmt_money(results.recording_transfer_buy)}",
-        note=_default_note(payload.recording_transfer_buy, "government recording and transfer charges"),
+        note=_default_note(payload.recording_transfer_buy, "government recording and transfer charges") + " The 0.55% (0.35% + 0.20%) is on the whole loan recorded, purchase loan plus construction budget.",
     )
     check(results.title_escrow_buy == (title_escrow_buy_default(payload.title_mode_buy, results.purchase_price) if payload.title_escrow_buy is None else payload.title_escrow_buy), "title (buy)")
     breakdown.add(
@@ -171,8 +179,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
          if payload.title_escrow_buy is None else f"As entered: {fmt_money(results.title_escrow_buy)}"),
         note=_default_note(payload.title_escrow_buy, "title, escrow and settlement charges"),
     )
-    check(results.notary_buy == (Decimal("250") if payload.online_notary_buy else Decimal("0")), "notary (buy)")
-    breakdown.add(CLOSE, "Online Notary (Buy)", results.notary_buy, "Remote closing → $250" if payload.online_notary_buy else "Not a remote closing → $0")
+    check(results.notary_buy == ((Decimal("250") if payload.online_notary_fee_buy is None else payload.online_notary_fee_buy) if payload.online_notary_buy else Decimal("0")), "notary (buy)")
+    breakdown.add(CLOSE, "Online Notary (Buy)", results.notary_buy,
+                  f"Remote closing → {fmt_money(results.notary_buy)}" if payload.online_notary_buy else "Not a remote closing → $0",
+                  note=(None if not payload.online_notary_buy else _default_note(payload.online_notary_fee_buy, "the $250 notary fee")))
     breakdown.add_sum([CLOSE, CASH_NEEDED], "Closing Costs (Buy)", results.closing_costs_buy_total, [
         ("Loan Charges", payload.loan_charges_buy),
         ("Recording & Transfer", results.recording_transfer_buy),
@@ -275,7 +285,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
                (f"Refi Loan ({fmt_money(refi_loan)}) × {fmt_pct(payload.interest_rate)}/yr ÷ 365 × {results.dscr_interest_days_prepaid_at_refi_closing} days from {results.refi_closing_date.isoformat()} through month end = {fmt_money(prepaid_interest)}"
                 if has_buy_closing_date else "No buy closing date → no refi date, no prepaid interest is modelled ($0)"),
                note="The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).")
-    check(results.notary_refi == (Decimal("250") if payload.online_notary_refi else Decimal("0")), "notary (refi)")
+    check(results.notary_refi == ((Decimal("250") if payload.online_notary_fee_refi is None else payload.online_notary_fee_refi) if payload.online_notary_refi else Decimal("0")), "notary (refi)")
     check(results.vacancy_reserve == (payload.rent if payload.vacancy_reserve is None else payload.vacancy_reserve), "vacancy reserve")
     breakdown.add_sum([WIRE, WIRE_LOW, "equity"], "Reserves Escrowed at Refi", results.reserves_total, [
         ("Maintenance Reserve", payload.maintenance_reserve),

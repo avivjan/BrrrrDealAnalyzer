@@ -110,7 +110,9 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   titleModeBuy: "standard" as const,
   titleEscrowBuy: null,
   onlineNotaryBuy: true,
+  onlineNotaryFeeBuy: null,
   otherClosingCostsBuy: 0,
+  otherClosingCostsBuyNote: null,
   sellerPaidCurrentYearTaxes: null,
   constructionLoanBudget: 0,
   rehabCushion: 5000,
@@ -122,11 +124,13 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   recordingTransferRefi: null,
   titleEscrowRefi: null,
   onlineNotaryRefi: true,
+  onlineNotaryFeeRefi: null,
   appraisalFee: 700,
   surveyFee: 385,
   refiUnderwritingFee: 2000,
   brokerProcessingFeeRefi: 395,
   otherClosingCostsRefi: 0,
+  otherClosingCostsRefiNote: null,
   maintenanceReserve: 1500,
   vacancyReserve: null,
   capexReserve: 2500,
@@ -201,6 +205,7 @@ const BRRR_NON_NEGATIVE_DOLLARS: Array<[keyof DealInputModel, string]> = [
   ["recordingTransferBuy", "Recording and transfer charges (buy)"],
   ["titleEscrowBuy", "Title and escrow charges (buy)"],
   ["otherClosingCostsBuy", "Other closing costs (buy)"],
+  ["onlineNotaryFeeBuy", "Online notary fee (buy)"],
   ["rehabCushion", "Rehab cushion"],
   ["monthlyUtilitiesUntilRented", "Monthly utilities until rented"],
   ["maintenanceBeforeRefi", "Maintenance before refi"],
@@ -213,6 +218,7 @@ const BRRR_NON_NEGATIVE_DOLLARS: Array<[keyof DealInputModel, string]> = [
   ["refiUnderwritingFee", "Refi underwriting fee"],
   ["brokerProcessingFeeRefi", "Broker processing fee (refi)"],
   ["otherClosingCostsRefi", "Other closing costs (refi)"],
+  ["onlineNotaryFeeRefi", "Online notary fee (refi)"],
   ["maintenanceReserve", "Maintenance reserve"],
   ["vacancyReserve", "Vacancy reserve"],
   ["capexReserve", "CapEx reserve"],
@@ -344,7 +350,7 @@ Financials (BRRRR)
 Buy Closing Date: ${brrr.buyClosingDate || "-"}
 Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : undefined)}
 Earnest Money Deposit: ${formatMoney(brrr.earnestMoneyDeposit)}
-Closing Costs (Buy): ${formatMoney(brrr.closing_costs_buy_total)} (loan charges ${formatMoney(brrr.loanChargesBuy)}, recording ${formatMoney(brrr.recording_transfer_buy_effective)}, title/escrow ${formatMoney(brrr.title_escrow_buy_effective)}, notary ${brrr.onlineNotaryBuy === false ? "no" : "yes"}, other ${formatMoney(brrr.otherClosingCostsBuy)})
+Closing Costs (Buy): ${formatMoney(brrr.closing_costs_buy_total)} (loan charges ${formatMoney(brrr.loanChargesBuy)}, recording ${formatMoney(brrr.recording_transfer_buy_effective)}, title/escrow ${formatMoney(brrr.title_escrow_buy_effective)}, notary ${brrr.onlineNotaryBuy === false ? "no" : formatMoney(toNumber(brrr.onlineNotaryFeeBuy) ?? 250)}, other ${formatMoney(brrr.otherClosingCostsBuy)}${brrr.otherClosingCostsBuyNote ? ` — ${brrr.otherClosingCostsBuyNote}` : ""})
 Actual Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
 Construction Loan Budget: ${formatMoney(toNumber(brrr.constructionLoanBudget) !== undefined ? Number(brrr.constructionLoanBudget) * 1000 : undefined)}
 Rehab Cushion: ${formatMoney(brrr.rehabCushion)}

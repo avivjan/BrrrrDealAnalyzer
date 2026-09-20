@@ -21,6 +21,7 @@ export const RECORDING_FLAT = 250;
 export const TITLE_BUY_STANDARD = 1000;
 export const TITLE_REFI_FLAT = 800;
 export const TITLE_REFI_RATE = 0.0045;
+export const DEED_TRANSFER_TAX_RATE_WE_PAY_ALL = 0.007;
 export const LOWEST_ARV_FACTOR = 0.9;
 export const HML_DAYS_PER_YEAR = 360;
 export const DSCR_DAYS_PER_YEAR = 365;
@@ -72,8 +73,24 @@ export function daysThroughMonthEnd(day: Date): number {
   return daysInMonth(day) - day.getUTCDate() + 1;
 }
 
+/** Refi: 0.55% of the loan recorded + $250. */
 export function recordingTransferDefault(loanAmount: number): number {
   return RECORDING_RATE * loanAmount + RECORDING_FLAT;
+}
+
+/** Deed transfer tax at purchase: the seller's debit on a standard deal, 0.70% of the price when we pay all closing costs. */
+export function deedTransferTaxBuyDefault(titleMode: string | undefined, purchasePriceDollars: number): number {
+  return titleMode === "we_pay_all" ? DEED_TRANSFER_TAX_RATE_WE_PAY_ALL * purchasePriceDollars : 0;
+}
+
+/** Buy: $250 + 0.55% of the WHOLE hard-money loan (purchase loan + construction budget) + the deed transfer tax. */
+export function recordingTransferBuyDefault(hmlAmount: number, deedTransferTax: number): number {
+  return RECORDING_FLAT + RECORDING_RATE * hmlAmount + deedTransferTax;
+}
+
+/** What paying all closing costs adds over a standard deal: the title tier step-up plus the deed transfer tax. */
+export function wePayAllExtraClosingCost(purchasePriceDollars: number): number {
+  return titleEscrowBuyDefault("we_pay_all", purchasePriceDollars) - TITLE_BUY_STANDARD + deedTransferTaxBuyDefault("we_pay_all", purchasePriceDollars);
 }
 
 export function titleEscrowBuyDefault(titleMode: string | undefined, purchasePriceDollars: number): number {
@@ -112,8 +129,10 @@ export interface BrrrAutoCalc {
   prepaidInterestBuy: number | null;
   sellerPaidCurrentYearTaxesEffective: boolean | null;
   sellerTaxCredit: number | null;
+  deedTransferTaxBuy: number | null;
   recordingTransferBuyDefault: number | null;
   titleEscrowBuyDefault: number | null;
+  wePayAllExtraClosingCost: number | null;
   recordingTransferBuyEffective: number | null;
   titleEscrowBuyEffective: number | null;
   notaryBuy: number;
@@ -197,11 +216,13 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const annualPropertyTaxes = numberOrNull(deal.annual_property_taxes);
   const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() === 11) : null;
   const sellerTaxCreditAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
-  const recordingTransferBuyDefaultAmount = purchaseLoanAmount != null ? recordingTransferDefault(purchaseLoanAmount) : null;
+  const deedTransferTaxBuy = purchasePriceDollars != null ? deedTransferTaxBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
+  const recordingTransferBuyDefaultAmount = hmlAmount != null && deedTransferTaxBuy != null ? recordingTransferBuyDefault(hmlAmount, deedTransferTaxBuy) : null;
+  const wePayAllExtra = purchasePriceDollars != null ? wePayAllExtraClosingCost(purchasePriceDollars) : null;
   const titleEscrowBuyDefaultAmount = purchasePriceDollars != null ? titleEscrowBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
   const recordingTransferBuyEffectiveAmount = deal.recordingTransferBuy != null ? numberOrZero(deal.recordingTransferBuy) : recordingTransferBuyDefaultAmount;
   const titleEscrowBuyEffectiveAmount = deal.titleEscrowBuy != null ? numberOrZero(deal.titleEscrowBuy) : titleEscrowBuyDefaultAmount;
-  const notaryBuy = deal.onlineNotaryBuy === false ? 0 : NOTARY_FEE;
+  const notaryBuy = deal.onlineNotaryBuy === false ? 0 : (deal.onlineNotaryFeeBuy != null ? numberOrZero(deal.onlineNotaryFeeBuy) : NOTARY_FEE);
   const closingCostsBuyTotal =
     recordingTransferBuyEffectiveAmount != null && titleEscrowBuyEffectiveAmount != null
       ? numberOrZero(deal.loanChargesBuy) + recordingTransferBuyEffectiveAmount + titleEscrowBuyEffectiveAmount + notaryBuy + numberOrZero(deal.otherClosingCostsBuy)
@@ -232,7 +253,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     const brokerPoints = (numberOrZero(deal.refiPoints) / 100) * refiLoanAmount;
     const recordingTransfer = deal.recordingTransferRefi != null ? numberOrZero(deal.recordingTransferRefi) : recordingTransferDefault(refiLoanAmount);
     const titleEscrow = deal.titleEscrowRefi != null ? numberOrZero(deal.titleEscrowRefi) : titleEscrowRefiDefault(refiLoanAmount);
-    const notary = deal.onlineNotaryRefi === false ? 0 : NOTARY_FEE;
+    const notary = deal.onlineNotaryRefi === false ? 0 : (deal.onlineNotaryFeeRefi != null ? numberOrZero(deal.onlineNotaryFeeRefi) : NOTARY_FEE);
     const closingCostsTotal =
       numberOrZero(deal.loanChargesRefi) + recordingTransfer + titleEscrow + notary + numberOrZero(deal.appraisalFee) + numberOrZero(deal.surveyFee) +
       numberOrZero(deal.refiUnderwritingFee) + brokerPoints + numberOrZero(deal.brokerProcessingFeeRefi) + numberOrZero(deal.otherClosingCostsRefi);
@@ -254,7 +275,8 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   return {
     purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
     prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective, sellerTaxCredit: sellerTaxCreditAmount,
-    recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
+    deedTransferTaxBuy, recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
+    wePayAllExtraClosingCost: wePayAllExtra,
     recordingTransferBuyEffective: recordingTransferBuyEffectiveAmount, titleEscrowBuyEffective: titleEscrowBuyEffectiveAmount,
     notaryBuy, closingCostsBuyTotal, cashToCloseBuy, totalHardMoneyCost,
     rehabCostWithContingency, constructionBudget, stolenMoney,
@@ -263,7 +285,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     brokerPointsDollars: settlementAtArv.brokerPoints, recordingTransferRefiDefault: refiLoanAmount != null ? recordingTransferDefault(refiLoanAmount) : null,
     titleEscrowRefiDefault: refiLoanAmount != null ? titleEscrowRefiDefault(refiLoanAmount) : null,
     recordingTransferRefiEffective: settlementAtArv.recordingTransfer, titleEscrowRefiEffective: settlementAtArv.titleEscrow,
-    notaryRefi: deal.onlineNotaryRefi === false ? 0 : NOTARY_FEE, closingCostsRefiTotal: settlementAtArv.closingCostsTotal,
+    notaryRefi: deal.onlineNotaryRefi === false ? 0 : (deal.onlineNotaryFeeRefi != null ? numberOrZero(deal.onlineNotaryFeeRefi) : NOTARY_FEE), closingCostsRefiTotal: settlementAtArv.closingCostsTotal,
     prepaidDaysRefi, prepaidInterestRefi: settlementAtArv.prepaidInterest,
     vacancyReserveDefault, vacancyReserveEffective, reservesTotal, hmlPayoff,
     cashOutWire: cashOutWireFor(refiLoanAmount, settlementAtArv), cashOutWireConservative: cashOutWireFor(conservativeRefiLoanAmount, settlementAtLowestArv),

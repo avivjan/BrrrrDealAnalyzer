@@ -667,13 +667,45 @@
           },
           "onlineNotaryBuy": {
             "default": true,
-            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "description": "Remote online notary at purchase: adds the notary fee to the buy closing costs.",
             "title": "Onlinenotarybuy",
             "type": "boolean"
           },
+          "onlineNotaryFeeBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250.",
+            "title": "Onlinenotaryfeebuy"
+          },
+          "onlineNotaryFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250.",
+            "title": "Onlinenotaryfeerefi"
+          },
           "onlineNotaryRefi": {
             "default": true,
-            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "description": "Remote online notary at refi: adds the notary fee to the refi closing costs.",
             "title": "Onlinenotaryrefi",
             "type": "boolean"
           },
@@ -691,6 +723,19 @@
             "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
             "title": "Otherclosingcostsbuy"
           },
+          "otherClosingCostsBuyNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other purchase closing costs are for (free text).",
+            "title": "Otherclosingcostsbuynote"
+          },
           "otherClosingCostsRefi": {
             "anyOf": [
               {
@@ -704,6 +749,19 @@
             "default": "0",
             "description": "Any other refi settlement lines, in dollars.",
             "title": "Otherclosingcostsrefi"
+          },
+          "otherClosingCostsRefiNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other refi closing costs are for (free text).",
+            "title": "Otherclosingcostsrefinote"
           },
           "overall_design": {
             "anyOf": [
@@ -774,7 +832,7 @@
                 "type": "null"
               }
             ],
-            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the purchase price when we pay all closing costs, else $0).",
             "title": "Recordingtransferbuy"
           },
           "recordingTransferRefi": {
@@ -1512,6 +1570,18 @@
             "title": "Deal Type",
             "type": "string"
           },
+          "deed_transfer_tax_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the seller's debit), 0.70% of the purchase price when we pay all closing costs.",
+            "title": "Deed Transfer Tax Buy"
+          },
           "down_payment": {
             "anyOf": [
               {
@@ -1776,13 +1846,39 @@
           },
           "onlineNotaryBuy": {
             "default": true,
-            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "description": "Remote online notary at purchase: adds the notary fee to the buy closing costs.",
             "title": "Onlinenotarybuy",
             "type": "boolean"
           },
+          "onlineNotaryFeeBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250.",
+            "title": "Onlinenotaryfeebuy"
+          },
+          "onlineNotaryFeeRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250.",
+            "title": "Onlinenotaryfeerefi"
+          },
           "onlineNotaryRefi": {
             "default": true,
-            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "description": "Remote online notary at refi: adds the notary fee to the refi closing costs.",
             "title": "Onlinenotaryrefi",
             "type": "boolean"
           },
@@ -1793,12 +1889,38 @@
             "title": "Otherclosingcostsbuy",
             "type": "string"
           },
+          "otherClosingCostsBuyNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other purchase closing costs are for (free text).",
+            "title": "Otherclosingcostsbuynote"
+          },
           "otherClosingCostsRefi": {
             "default": "0",
             "description": "Any other refi settlement lines, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Otherclosingcostsrefi",
             "type": "string"
+          },
+          "otherClosingCostsRefiNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other refi closing costs are for (free text).",
+            "title": "Otherclosingcostsrefinote"
           },
           "overall_design": {
             "anyOf": [
@@ -1908,7 +2030,7 @@
                 "type": "null"
               }
             ],
-            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the purchase price when we pay all closing costs, else $0).",
             "title": "Recordingtransferbuy"
           },
           "recordingTransferRefi": {
@@ -4016,13 +4138,45 @@
           },
           "onlineNotaryBuy": {
             "default": true,
-            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "description": "Remote online notary at purchase: adds the notary fee to the buy closing costs.",
             "title": "Onlinenotarybuy",
             "type": "boolean"
           },
+          "onlineNotaryFeeBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250.",
+            "title": "Onlinenotaryfeebuy"
+          },
+          "onlineNotaryFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250.",
+            "title": "Onlinenotaryfeerefi"
+          },
           "onlineNotaryRefi": {
             "default": true,
-            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "description": "Remote online notary at refi: adds the notary fee to the refi closing costs.",
             "title": "Onlinenotaryrefi",
             "type": "boolean"
           },
@@ -4040,6 +4194,19 @@
             "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
             "title": "Otherclosingcostsbuy"
           },
+          "otherClosingCostsBuyNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other purchase closing costs are for (free text).",
+            "title": "Otherclosingcostsbuynote"
+          },
           "otherClosingCostsRefi": {
             "anyOf": [
               {
@@ -4053,6 +4220,19 @@
             "default": "0",
             "description": "Any other refi settlement lines, in dollars.",
             "title": "Otherclosingcostsrefi"
+          },
+          "otherClosingCostsRefiNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other refi closing costs are for (free text).",
+            "title": "Otherclosingcostsrefinote"
           },
           "overall_design": {
             "anyOf": [
@@ -4123,7 +4303,7 @@
                 "type": "null"
               }
             ],
-            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the purchase price when we pay all closing costs, else $0).",
             "title": "Recordingtransferbuy"
           },
           "recordingTransferRefi": {
@@ -4821,6 +5001,18 @@
             "title": "Deal Type",
             "type": "string"
           },
+          "deed_transfer_tax_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the seller's debit), 0.70% of the purchase price when we pay all closing costs.",
+            "title": "Deed Transfer Tax Buy"
+          },
           "down_payment": {
             "anyOf": [
               {
@@ -5085,13 +5277,39 @@
           },
           "onlineNotaryBuy": {
             "default": true,
-            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "description": "Remote online notary at purchase: adds the notary fee to the buy closing costs.",
             "title": "Onlinenotarybuy",
             "type": "boolean"
           },
+          "onlineNotaryFeeBuy": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250.",
+            "title": "Onlinenotaryfeebuy"
+          },
+          "onlineNotaryFeeRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250.",
+            "title": "Onlinenotaryfeerefi"
+          },
           "onlineNotaryRefi": {
             "default": true,
-            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "description": "Remote online notary at refi: adds the notary fee to the refi closing costs.",
             "title": "Onlinenotaryrefi",
             "type": "boolean"
           },
@@ -5102,12 +5320,38 @@
             "title": "Otherclosingcostsbuy",
             "type": "string"
           },
+          "otherClosingCostsBuyNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other purchase closing costs are for (free text).",
+            "title": "Otherclosingcostsbuynote"
+          },
           "otherClosingCostsRefi": {
             "default": "0",
             "description": "Any other refi settlement lines, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Otherclosingcostsrefi",
             "type": "string"
+          },
+          "otherClosingCostsRefiNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other refi closing costs are for (free text).",
+            "title": "Otherclosingcostsrefinote"
           },
           "overall_design": {
             "anyOf": [
@@ -5217,7 +5461,7 @@
                 "type": "null"
               }
             ],
-            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the purchase price when we pay all closing costs, else $0).",
             "title": "Recordingtransferbuy"
           },
           "recordingTransferRefi": {
@@ -10044,13 +10288,45 @@
           },
           "onlineNotaryBuy": {
             "default": true,
-            "description": "Remote online notary at purchase: adds $250 to the buy closing costs.",
+            "description": "Remote online notary at purchase: adds the notary fee to the buy closing costs.",
             "title": "Onlinenotarybuy",
             "type": "boolean"
           },
+          "onlineNotaryFeeBuy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at purchase, in dollars, applied only when onlineNotaryBuy is true. None = $250.",
+            "title": "Onlinenotaryfeebuy"
+          },
+          "onlineNotaryFeeRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Online notary fee at refi, in dollars, applied only when onlineNotaryRefi is true. None = $250.",
+            "title": "Onlinenotaryfeerefi"
+          },
           "onlineNotaryRefi": {
             "default": true,
-            "description": "Remote online notary at refi: adds $250 to the refi closing costs.",
+            "description": "Remote online notary at refi: adds the notary fee to the refi closing costs.",
             "title": "Onlinenotaryrefi",
             "type": "boolean"
           },
@@ -10068,6 +10344,19 @@
             "description": "Any other purchase settlement lines (HOA transfer, warranty...), in dollars.",
             "title": "Otherclosingcostsbuy"
           },
+          "otherClosingCostsBuyNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other purchase closing costs are for (free text).",
+            "title": "Otherclosingcostsbuynote"
+          },
           "otherClosingCostsRefi": {
             "anyOf": [
               {
@@ -10081,6 +10370,19 @@
             "default": "0",
             "description": "Any other refi settlement lines, in dollars.",
             "title": "Otherclosingcostsrefi"
+          },
+          "otherClosingCostsRefiNote": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the other refi closing costs are for (free text).",
+            "title": "Otherclosingcostsrefinote"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -10122,7 +10424,7 @@
                 "type": "null"
               }
             ],
-            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: 0.55% of the purchase loan + $250.",
+            "description": "Government recording and transfer charges at purchase, in dollars. None = formula: $250 + 0.55% of the whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the purchase price when we pay all closing costs, else $0).",
             "title": "Recordingtransferbuy"
           },
           "recordingTransferRefi": {
@@ -10462,6 +10764,18 @@
             ],
             "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
             "title": "Closing Costs Refi Total"
+          },
+          "deed_transfer_tax_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the seller's debit), 0.70% of the purchase price when we pay all closing costs.",
+            "title": "Deed Transfer Tax Buy"
           },
           "dscr": {
             "anyOf": [

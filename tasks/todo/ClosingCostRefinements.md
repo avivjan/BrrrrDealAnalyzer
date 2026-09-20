@@ -50,21 +50,34 @@ plain add and old rows keep today's behaviour):
   (`onlineNotaryFeeBuy/Refi` affect the same outputs as the checkbox; notes affect nothing).
 
 ## Todo (≈ 2 h 15)
-- [ ] C1 (10 min) Branch + this plan.
-- [ ] C2 (25 min) Backend inputs, columns, migration rows; engine (notary amount, deed tax, HML-based
+- [x] C1 (10 min) Branch + this plan.
+- [x] C2 (25 min) Backend inputs, columns, migration rows; engine (notary amount, deed tax, HML-based
   recording), record + response field, explain, validation.
-- [ ] C3 (15 min) Fixtures (`conftest`, `verify_regression`), `test_deal_crud` lists, compact/MCP prose if any.
-- [ ] C4 (25 min) Tests — **Unit**: `test_brrr_lifecycle.py` (recording uses `hml_amount` and moves
+- [x] C3 (15 min) Fixtures (`conftest`, `verify_regression`), `test_deal_crud` lists, compact/MCP prose if any.
+- [x] C4 (25 min) Tests — **Unit**: `test_brrr_lifecycle.py` (recording uses `hml_amount` and moves
   with the construction budget; deed tax 0 vs 0.70% by title mode; notary amount default/override/off);
   **Integration**: `test_deal_crud.py` round trip of the four new fields incl. a 500-char note;
   `test_migrations.py` new columns present and NULL; **E2E**: none (Playwright untouched per owner).
-- [ ] C5 (25 min) Frontend: types, defaults, validation, `brrrAutoCalc`, sections (notary amount,
+- [x] C5 (25 min) Frontend: types, defaults, validation, `brrrAutoCalc`, sections (notary amount,
   notes), labels, impact map, copy-for-AI.
-- [ ] C6 (20 min) Frontend tests: `brrrAutoCalc.test.ts` parity numbers, `DealInputsForm.test.ts`
+- [x] C6 (20 min) Frontend tests: `brrrAutoCalc.test.ts` parity numbers, `DealInputsForm.test.ts`
   (notary amount appears only when checked; note round-trips), impact-map completeness.
-- [ ] C7 (5 min) MCP: no new endpoint; the four fields and `deed_transfer_tax_buy` reach the tools
+- [x] C7 (5 min) MCP: no new endpoint; the four fields and `deed_transfer_tax_buy` reach the tools
   through OpenAPI; re-record goldens; check the `tools/list` budget.
-- [ ] C8 (5 min) Security (`.claude/security.md`): the notes are free text — bounded at 500 chars
+- [x] C8 (5 min) Security (`.claude/security.md`): the notes are free text — bounded at 500 chars
   like the other text fields, rendered through Vue interpolation only (no `v-html`), never in the
   PDF; no new secrets or sinks; audits unchanged.
-- [ ] C9 (5 min) `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`; push; PR.
+- [x] C9 (10 min) **We-pay-all premium** (owner's add at the gate): next to the title mode, a minimal auto
+  figure "Paying all closing costs adds $X" = (we-pay-all title tier − $1,000 standard) + 0.70% × purchase
+  price (the deed transfer tax). Client-side in `brrrAutoCalc.ts` (`wePayAllExtraClosingCost`), shown
+  whatever mode is selected so the comparison is always visible; unit test on the fixture.
+- [x] C10 (5 min) `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`; push; PR.
+
+## Review
+Four nullable columns (`online_notary_fee_buy/refi`, `other_closing_costs_buy/refi_note`), one new output
+(`deed_transfer_tax_buy`). The buy recording default is `$250 + 0.55% × hml_amount + deed transfer tax`
+(the bug used the purchase loan only); the notary fee is editable once the checkbox is on ($250 default);
+"Cash-Out Routi (Lowest ARV)" everywhere the conservative wire shows; a note field under both Other
+Closing Costs; and next to the title mode, "Paying all closing costs adds $X over standard" (title tier
+step-up + 0.70% deed transfer tax, shown in either mode). Backend 714 passed, goldens re-recorded and
+verified; frontend 1448 passed, `vue-tsc` + `vite build` clean. Playwright untouched.

@@ -56,6 +56,7 @@ class BrrrResultsWithIntermediates:
     pre_refi_rental_income: Decimal # rent from tenant placement to the refi
 
     # -- the purchase settlement -------------------------------------------------
+    deed_transfer_tax_buy: Decimal  # $0 standard; 0.70% of the price when we pay all closing costs
     recording_transfer_buy: Decimal # effective
     title_escrow_buy: Decimal       # effective
     notary_buy: Decimal

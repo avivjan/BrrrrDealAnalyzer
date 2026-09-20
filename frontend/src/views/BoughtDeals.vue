@@ -1146,7 +1146,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       </div>
                     </UiStatTile>
                     <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Wire (Lowest ARV)</template>
+                      <template #label>Cash-Out Routi (Lowest ARV)</template>
                       <div v-flash data-testid="boughtdeals.modal.result.cash_out_routi_conservative" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi_conservative)">
                         {{ formatCurrency( (currentAnalysis as any) .cash_out_routi_conservative ) }}
                       </div>
