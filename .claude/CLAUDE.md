@@ -1,11 +1,16 @@
-1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo/*NameOfTask*.md.
-2. Every time you start a new task, create a new branch (if not already exist) named *NameOfTask* from latest main, when you're done, push and create a PR.
-Plan file , todo files and tests should be on the same branch as the implementation.
-3. For each feature/code you add,change or delete you should have the needed tests to make sure we covered - unit, integration, E2E tests in the tasks/todo/<NameOfTask>.md
-4. Each new feature or endpoint you add - you should add task to support it in the MCP server.
-5. The plan should have a list of todo items that you can check off as you complete them - EACH ITEM SHOULD HAVE A TIME ESTIMATE YOU THINK IT WILL TAKE CLAUDE TO DO.
-6. Add to the plan a security task. Read the task's content from .claude/security.md.
-7. Before you begin working, check in with me and I will verify the plan.
-8. Then, begin working on the todo items, marking them as complete as you go and giving me in-chat updates.
-9. Please every step of the way just give me a high level explanation of what changes you made
-10. Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
+## 1. Planning Phase
+- **Explore First:** Think through the problem, inspect relevant codebase files, and draft a plan at `tasks/todo/<task_name>.md`.
+- **Branching:** Create a branch named `<task_name>` from latest `main`. All implementation code, plan files, and tests must reside on this branch.
+- **Plan Requirements:**
+  - Checkable todo items with estimated completion time per item.
+  - Required tests broken down by layer: Unit, Integration, and E2E.
+  - An MCP server support task for any new feature or endpoint.
+  - A dedicated security task with contents read from `.claude/security.md`.
+- **Review Gate:** Check in with me to verify the plan before writing any implementation code.
+## 2. Execution Phase
+- Work through todo items systematically, checking them off as completed.
+- Provide concise, high-level chat updates after each step explaining what changes were made.
+- When finished: push the branch and open a PR.
+## 3. Code Standards & Simplicity
+- **Simplicity First:** Keep every change as minimal and self-contained as possible. Avoid massive refactors or high-impact edits.
+- **Explicit Naming:** Every variable, function, field, DB column, and test name must be fully self-explanatory on its own without needing comments or surrounding context. Always prefer a longer, descriptive name over a short, vague one.
