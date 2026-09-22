@@ -111,6 +111,19 @@ The BRRRR form (`components/deal/brrr/*Section.vue`, one per lifecycle phase, fr
   inputs exist; the numbers come from `utils/brrrAutoCalc.ts`, a client-side mirror of the
   backend engine pinned to it by `brrrAutoCalc.test.ts`.
 
+#### Result tiles and the calculation breakdown popup
+
+Every result tile in the My Deals and Bought Deals modals is a
+`components/deal/ResultTileWithCalculationButton.vue`: the plain `UiStatTile` readout with a
+transparent button laid over it ("Show how Cash Flow is calculated"). Pressing it opens
+`components/deal/CalculationBreakdownPopup.vue`, which renders `breakdowns[<result key>]` of the
+current analysis: the ordered `CalcStep[]` the backend explain layer emits for that headline
+(label, the formula with the concrete numbers, the value read by its unit via
+`calculationStepFormat.ts`, a sum step's operands stacked, the note). The popup computes nothing;
+the numbers and equations are the engine's own, guarded server-side (`BackEnd/BL/analyze/explain/`).
+It is teleported to `<body>` above the deal modal, closes on Escape / scrim / ×, and the tile's own
+value element (its `*.modal.result.<key>` test id included) is untouched.
+
 ### PrimeVue
 
 PrimeVue runs **unstyled**. Every class it wears comes from the one global

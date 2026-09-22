@@ -22,8 +22,8 @@ from datetime import date
 import pypdf
 import pytest
 
-from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
-from BL.analyze.analyzeFlip import compute_flip_with_intermediates
+from BL.analyze.analyzeBRRR import calculate_brrr_results, compute_brrr_with_intermediates
+from BL.analyze.analyzeFlip import calculate_flip_results, compute_flip_with_intermediates
 from BL.analyze.brrr_results_with_intermediates import BrrrResultsWithIntermediates
 from BL.analyze.common.calc_breakdown import CalcExplainMismatch
 from BL.analyze.explain.brrr import BRRR_SECTIONS, explain_brrr
@@ -243,3 +243,53 @@ class TestPdfRendersTheExplanation:
         assert "+ Contingency 10% $5,000 = $55,000" in text
         assert "Agent fees are the buyer's 3% plus the seller's 3%." in text
         assert "ROI · 19.41%" in text
+
+
+# The result tiles the website's deal modals render (MyDeals.vue / BoughtDeals.vue),
+# each of which opens a popup showing `breakdowns[<tile key>]`. A tile key that is
+# not a section would open an empty popup, so the two lists are pinned here.
+FRONTEND_BRRR_RESULT_TILE_KEYS = [
+    "cash_flow", "cash_out", "cash_out_routi", "cash_on_cash", "dscr", "equity", "roi", "net_profit",
+    "total_cash_needed_for_deal", "cash_to_close_buy", "cash_out_routi_conservative", "stolen_money",
+]
+FRONTEND_FLIP_RESULT_TILE_KEYS = [
+    "net_profit", "roi", "annualized_roi", "total_cash_needed", "total_cash_needed_with_buffer",
+    "total_holding_costs", "total_hml_interest",
+]
+
+
+class TestEverySectionKeyHasBreakdownSteps:
+    """Every headline section is present in `breakdowns`, non-empty, and contains a step whose value
+    and unit are the headline result itself: the website's popup marks that step as the answer
+    (a section may end on a derived reading, as the lowest-ARV wire does with the cash to the table)."""
+
+    @staticmethod
+    def _assert_sections_carry_their_headline(response: dict, sections) -> None:
+        breakdowns = response["breakdowns"]
+        for section_key, _label, section_unit in sections:
+            steps = breakdowns.get(section_key)
+            assert steps, f"no breakdown steps for section {section_key!r}"
+            headline_value = response[section_key]
+            headline_steps = [step for step in steps if step["value"] == headline_value]
+            assert headline_steps, f"no step of section {section_key!r} has the headline value {headline_value}"
+            assert headline_steps[-1]["unit"] == section_unit, section_key
+
+    @pytest.mark.parametrize("scenario", list(BRRRR_SCENARIOS))
+    def test_brrr(self, brrrr_payload, scenario):
+        response = calculate_brrr_results(analyzeBRRRReq(**{**brrrr_payload, **BRRRR_SCENARIOS[scenario]})).model_dump()
+        self._assert_sections_carry_their_headline(response, BRRR_SECTIONS)
+
+    @pytest.mark.parametrize("scenario", list(FLIP_SCENARIOS))
+    def test_flip(self, flip_payload, scenario):
+        response = calculate_flip_results(analyzeFlipReq(**{**flip_payload, **FLIP_SCENARIOS[scenario]})).model_dump()
+        self._assert_sections_carry_their_headline(response, FLIP_SECTIONS)
+
+
+class TestFrontendResultTileKeysAreSections:
+    def test_brrr_tiles(self):
+        section_keys = {key for key, _, _ in BRRR_SECTIONS}
+        assert set(FRONTEND_BRRR_RESULT_TILE_KEYS) <= section_keys
+
+    def test_flip_tiles(self):
+        section_keys = {key for key, _, _ in FLIP_SECTIONS}
+        assert set(FRONTEND_FLIP_RESULT_TILE_KEYS) <= section_keys
