@@ -42,7 +42,10 @@ export async function openTabOf(page: Page, name: string): Promise<void> {
 }
 
 export function fieldInput(page: Page, name: string): Locator {
-  return fieldRoot(page, name).locator('input');
+  // A `DaysOrDateField` anchored on the buy closing date also renders a linked
+  // `type="date"` input (`data-part="date-linked"`); the number box is the
+  // field's value, so the date inputs are left out.
+  return fieldRoot(page, name).locator('input:not([data-part^="date-"])');
 }
 
 /** True when the field is a plain `MoneyInput` rather than a PrimeVue one. */

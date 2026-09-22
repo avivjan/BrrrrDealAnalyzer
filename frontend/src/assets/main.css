@@ -140,6 +140,16 @@
   }
 
   /*
+   * A native date box draws its segmented editor 2px taller than a text box of
+   * the same padding, so beside a number input in one row (DaysOrDateField) it
+   * broke the shared control height. Pinned to the same 42px (44px on touch).
+   */
+  .ui-input[type="date"] {
+    height: 42px;
+    @apply touch:h-11;
+  }
+
+  /*
    * `type="date"`, `time` and `datetime-local` are deliberately left alone:
    * these rules set no `appearance`, so the native picker indicator survives.
    */
