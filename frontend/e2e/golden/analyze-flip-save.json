@@ -16,37 +16,69 @@
         "address": "2 Shared Form Ave",
         "annual_insurance": 1200,
         "annual_property_taxes": 3600,
+        "appliances": 630,
+        "appraisalFee": 700,
         "arv_in_thousands": 320,
+        "brokerProcessingFeeRefi": 0,
+        "buyClosingDate": "2026-09-04",
         "buyerAgentSellingFee": 3,
         "capexPercent": 0,
+        "capexReserve": 2500,
         "capitalGainsTax": 20,
         "cashReserve": 0,
         "closingCostsBuy": 5,
         "closingCostsRefi": 10,
+        "constructionLoanBudget": 0,
         "daysUntilRefi": 180,
+        "daysUntilRented": 90,
         "deal_type": "FLIP",
         "down_payment": 20,
+        "earnestMoneyDeposit": 5000,
         "hmlPoints": 2,
         "holdingTime": 6,
         "interestRate": 7,
+        "loanChargesBuy": 900,
+        "loanChargesRefi": 200,
         "loanTermYears": 30,
+        "lowestArv": null,
         "ltv_as_precent": 75,
+        "maintenanceBeforeRefi": 500,
         "maintenancePercent": 5,
+        "maintenanceReserve": 1500,
+        "monthlyUtilitiesUntilRented": 80,
         "monthly_utilities": 250,
         "montly_hoa": 0,
+        "onlineNotaryBuy": true,
+        "onlineNotaryFeeBuy": null,
+        "onlineNotaryFeeRefi": null,
+        "onlineNotaryRefi": true,
+        "otherClosingCostsBuy": 0,
+        "otherClosingCostsBuyNote": null,
+        "otherClosingCostsRefi": 0,
+        "otherClosingCostsRefiNote": null,
         "property_managment_fee_precentages_from_rent": 0,
         "purchasePrice": 200,
+        "recordingTransferBuy": null,
+        "recordingTransferRefi": null,
         "refiPoints": 2,
+        "refiUnderwritingFee": 2000,
         "rehabContingency": 10,
         "rehabCost": 50,
+        "rehabCushion": 5000,
         "rent": 0,
         "salePrice": 320,
         "section": 2,
         "sellerAgentSellingFee": 3,
+        "sellerPaidCurrentYearTaxes": null,
         "sellingClosingCosts": 5,
         "stage": 2,
+        "surveyFee": 385,
+        "titleEscrowBuy": null,
+        "titleEscrowRefi": null,
+        "titleModeBuy": "standard",
         "use_HM_for_rehab": true,
-        "vacancyPercent": 5
+        "vacancyPercent": 5,
+        "vacancyReserve": null
       }
     },
     {
@@ -92,11 +124,13 @@
                 {
                   "label": "Rehab",
                   "sign": "+",
+                  "step_label": null,
                   "value": 50000
                 },
                 {
                   "label": "Contingency 10%",
                   "sign": "+",
+                  "step_label": null,
                   "value": 5000
                 }
               ],
@@ -135,11 +169,13 @@
                 {
                   "label": "HML Interest",
                   "sign": "+",
+                  "step_label": "Total HML Interest (over holding period)",
                   "value": 11825
                 },
                 {
                   "label": "Operating",
                   "sign": "+",
+                  "step_label": "Total Operating Costs (during holding)",
                   "value": 3900
                 }
               ],
@@ -162,31 +198,37 @@
                 {
                   "label": "Purchase",
                   "sign": "+",
+                  "step_label": null,
                   "value": 200000
                 },
                 {
                   "label": "Rehab",
                   "sign": "+",
+                  "step_label": "Rehab Cost (with contingency)",
                   "value": 55000
                 },
                 {
                   "label": "Closing",
                   "sign": "+",
+                  "step_label": "Closing Costs (Buy)",
                   "value": 5000
                 },
                 {
                   "label": "Holding",
                   "sign": "+",
+                  "step_label": "Total Holding Costs",
                   "value": 15725
                 },
                 {
                   "label": "Selling",
                   "sign": "+",
+                  "step_label": "Selling Costs",
                   "value": 24200
                 },
                 {
                   "label": "HML Points",
                   "sign": "+",
+                  "step_label": "HML Points (cash)",
                   "value": 4300
                 }
               ],
@@ -201,11 +243,13 @@
                 {
                   "label": "Sale Price",
                   "sign": "+",
+                  "step_label": null,
                   "value": 320000
                 },
                 {
                   "label": "Total Cost Basis",
                   "sign": "-",
+                  "step_label": "Total Cost Basis",
                   "value": 304225
                 }
               ],
@@ -228,11 +272,13 @@
                 {
                   "label": "Gross Profit",
                   "sign": "+",
+                  "step_label": "Gross Profit",
                   "value": 15775
                 },
                 {
                   "label": "Capital Gains Tax",
                   "sign": "-",
+                  "step_label": "Capital Gains Tax",
                   "value": 3155
                 }
               ],
@@ -249,26 +295,31 @@
                 {
                   "label": "Down Payment",
                   "sign": "+",
+                  "step_label": "Down Payment (cash)",
                   "value": 40000
                 },
                 {
                   "label": "Closing",
                   "sign": "+",
+                  "step_label": "Closing Costs (Buy)",
                   "value": 5000
                 },
                 {
                   "label": "HML Points",
                   "sign": "+",
+                  "step_label": "HML Points (cash)",
                   "value": 4300
                 },
                 {
                   "label": "Holding",
                   "sign": "+",
+                  "step_label": "Total Holding Costs",
                   "value": 15725
                 },
                 {
                   "label": "Rehab Out-of-Pocket",
                   "sign": "+",
+                  "step_label": "Rehab Cash (out-of-pocket)",
                   "value": 0
                 }
               ],
@@ -283,11 +334,13 @@
                 {
                   "label": "Gross Profit",
                   "sign": "+",
+                  "step_label": "Gross Profit",
                   "value": 15775
                 },
                 {
                   "label": "Capital Gains Tax",
                   "sign": "-",
+                  "step_label": "Capital Gains Tax",
                   "value": 3155
                 }
               ],
@@ -360,31 +413,37 @@
                 {
                   "label": "Down Payment",
                   "sign": "+",
+                  "step_label": "Down Payment (cash)",
                   "value": 40000
                 },
                 {
                   "label": "Closing",
                   "sign": "+",
+                  "step_label": "Closing Costs (Buy)",
                   "value": 5000
                 },
                 {
                   "label": "HML Points",
                   "sign": "+",
+                  "step_label": "HML Points (cash)",
                   "value": 4300
                 },
                 {
                   "label": "Rehab Cash",
                   "sign": "+",
+                  "step_label": "Rehab Cash (out-of-pocket)",
                   "value": 0
                 },
                 {
                   "label": "HML Interest",
                   "sign": "+",
+                  "step_label": "HML Interest (cash, during holding)",
                   "value": 11825
                 },
                 {
                   "label": "Operating",
                   "sign": "+",
+                  "step_label": "Operating Costs (during holding)",
                   "value": 3900
                 }
               ],
@@ -465,36 +524,43 @@
                 {
                   "label": "Down Payment",
                   "sign": "+",
+                  "step_label": "Down Payment (cash)",
                   "value": 40000
                 },
                 {
                   "label": "Closing × 1.1",
                   "sign": "+",
+                  "step_label": "Closing × 1.1 buffer",
                   "value": 5500
                 },
                 {
                   "label": "HML Points",
                   "sign": "+",
+                  "step_label": "HML Points (cash)",
                   "value": 4300
                 },
                 {
                   "label": "Rehab Cash",
                   "sign": "+",
+                  "step_label": "Rehab Cash (out-of-pocket)",
                   "value": 0
                 },
                 {
                   "label": "Rehab Float",
                   "sign": "+",
+                  "step_label": "Rehab float buffer (10% of rehab)",
                   "value": 5500
                 },
                 {
                   "label": "HML Interest × 1.5",
                   "sign": "+",
+                  "step_label": "HML Interest × 1.5 buffer",
                   "value": 17737.5
                 },
                 {
                   "label": "Operating × 1.5",
                   "sign": "+",
+                  "step_label": "Operating × 1.5 buffer",
                   "value": 5850
                 }
               ],
@@ -545,21 +611,25 @@
                 {
                   "label": "Taxes ÷ 12",
                   "sign": "+",
+                  "step_label": null,
                   "value": 300
                 },
                 {
                   "label": "Insurance ÷ 12",
                   "sign": "+",
+                  "step_label": null,
                   "value": 100
                 },
                 {
                   "label": "HOA",
                   "sign": "+",
+                  "step_label": null,
                   "value": 0
                 },
                 {
                   "label": "Utilities",
                   "sign": "+",
+                  "step_label": null,
                   "value": 250
                 }
               ],
@@ -582,11 +652,13 @@
                 {
                   "label": "HML Interest",
                   "sign": "+",
+                  "step_label": "Total HML Interest (over holding period)",
                   "value": 11825
                 },
                 {
                   "label": "Operating",
                   "sign": "+",
+                  "step_label": "Total Operating Costs (during holding)",
                   "value": 3900
                 }
               ],
@@ -603,6 +675,7 @@
         "crime_rate": null,
         "deal_type": "FLIP",
         "down_payment": "20.00",
+        "google_drive_link": null,
         "hmlPoints": "2.00",
         "holdingTime": 6,
         "id": "<redacted>",

@@ -13,6 +13,7 @@ import {
  * most valuable thing in the suite.
  */
 
+/** The twelve BRRRR tiles the modal renders (the buffered cash-needed tile is gone). */
 const RESULT_KEYS = [
   'cash_flow',
   'cash_out',
@@ -23,7 +24,9 @@ const RESULT_KEYS = [
   'roi',
   'net_profit',
   'total_cash_needed_for_deal',
-  'total_cash_needed_for_deal_with_buffer',
+  'cash_to_close_buy',
+  'cash_out_routi_conservative',
+  'stolen_money',
 ];
 
 test('analyze a BRRRR deal, save it, and land on its open modal', async ({

@@ -1,20 +1,11 @@
 {
   "requests": [
     {
-      "method": "GET",
-      "path": "/helloworld"
-    },
-    {
-      "method": "GET",
-      "path": "/active-deals"
-    },
-    {
-      "method": "GET",
-      "path": "/active-deals"
-    },
-    {
       "method": "POST",
-      "path": "/analyze/brrr",
+      "path": "/reports/brrr-pdf",
+      "query": {
+        "address": "1 Shared Form St"
+      },
       "body": {
         "HMLInterestRate": "11.00",
         "address": "1 Shared Form St",
@@ -25,6 +16,7 @@
         "arv_in_thousands": "320.0000",
         "bathrooms": null,
         "bedrooms": null,
+        "boughtStage": "purchase",
         "breakdowns": {
           "cash_flow": [
             {
@@ -1572,6 +1564,7 @@
         "closingCostsRefi": "6.0000",
         "closing_costs_buy_total": 3582.5,
         "closing_costs_refi_total": 10585,
+        "completedSubstages": {},
         "constructionLoanBudget": "55.0000",
         "contact": null,
         "created_at": "<redacted>",
@@ -1639,8 +1632,9 @@
         "sellerPaidCurrentYearTaxes": null,
         "seller_tax_credit": 0,
         "sold_comps": null,
+        "sourceDealId": "<redacted>",
         "sqft": null,
-        "stage": 2,
+        "stage": 3,
         "stolen_money": 0,
         "surveyFee": "385.00",
         "task": null,
@@ -1659,6 +1653,10 @@
         "vacancyReserve": null,
         "vacancy_reserve_effective": 2600,
         "zillow_link": null
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/pdf"
       }
     }
   ]

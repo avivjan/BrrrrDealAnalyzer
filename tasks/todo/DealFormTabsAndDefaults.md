@@ -139,7 +139,7 @@ Six owner asks after using the site, all on the deal-input UI shared by Analyze,
       `useDealReportPdf.test.ts` (blob URL create/revoke, filename); `BoughtDeals.*.contract.test.ts` (View
       Report calls `api.downloadDealPdf` with the bought deal and opens `boughtdeals.pdf-modal`).
       `npm test`, `npm run build`.
-- [ ] T10 (35 min) **E2E**: `fixtures/form.ts` tab-aware `setField`; `payloads.ts` drop the three unrendered
+- [x] T10 (35 min) **E2E**: `fixtures/form.ts` tab-aware `setField`; `payloads.ts` drop the three unrendered
       BRRRR fields; `analyze-brrr.spec.ts` expectation from typed fields; `analyze-flip.spec.ts:33` +
       `alignment.spec.ts:248` wait on the Flip Strategy tab and walk every tab; `pdf-report.spec.ts` bought-deal
       case; `npm run e2e:record` (chromium) then `npm run e2e`.
@@ -151,7 +151,7 @@ Six owner asks after using the site, all on the deal-input UI shared by Analyze,
       markup (no external fetch); the bought PDF payload is the same body My Deals already sends, still behind
       `require_session`; no secrets in the frontend, no new sinks, no `v-html`; `SET DEFAULT` migration is
       parameter-free DDL on fixed table names.
-- [ ] T13 (15 min) Final run: `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`, `npm run e2e`;
+- [x] T13 (15 min) Final run: `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`, `npm run e2e`;
       push; open the PR.
 
 ## Verification
@@ -169,3 +169,27 @@ Six owner asks after using the site, all on the deal-input UI shared by Analyze,
   "View Report" opens the PDF preview and Download offers `BigWhales_<type>_<address>.pdf`.
 - MCP: `analyze_brrr` with `brokerProcessingFeeRefi` omitted → refi closing total excludes 395; `report_brrr_pdf`
   with a body from `get_bought_deals` returns the PDF blob; `get_deal` shows `google_drive_link`.
+
+## Review
+The shared deal form is four (BRRRR) or three (FLIP) phase tabs with every section kept mounted behind
+`v-show`; the results panel sits under the tabs in both modals and the Analyze rail is unchanged. The six
+BRRRR and five FLIP inputs the analysis cannot run without carry `neededToRunAnalysis` (bold primary label,
+primary border) and a tab dots itself while one of its needed inputs is still 0. `google_drive_link` is a
+nullable column on all four deal tables (idempotent migration, both boots verified), a Pydantic field capped
+at `MAX_URL`, an input in both modals and a Drive-icon link on the bought card through `safeHref`. The bought
+modal offers "View Report" through the `useDealReportPdf` composable and the `DealReportPdfPreviewModal`
+lifted out of My Deals (same test ids). Typing the actual rehab first seeds the budget at rehab × (1 +
+contingency), rounded to 4 decimals in thousands; the broker processing fee defaults to $0 (form, Pydantic,
+DB default via `SET DEFAULT 0`, stored rows untouched) with a `$395` quick button.
+
+E2E drift found and fixed along the way (the suite had not been run since the lifecycle refactor):
+`BRRRR_FORM_FIELDS` listed three lump-sum fields the form no longer renders; the form fixture matched the
+linked date input of an anchored `DaysOrDateField`; the modal-scroll footer locator also matched section
+footers; the analyze-brrr spec read a removed "with buffer" tile; a native date box was 2px taller than the
+number box beside it (now pinned in `main.css`). Goldens re-recorded on chromium, which also catches them up
+with the lifecycle and breakdown fields main already returns.
+
+Backend: pytest green on Postgres 16 (whole suite), `verify_regression.py verify` identical after
+re-snapshot, bandit clean, the CI migration smoke (two boots on a fresh database) passes. Frontend:
+1516 vitest tests pass, `vue-tsc -b && vite build` clean, Playwright chromium 109 passed / 3 skipped
+(webkit projects not run here: the sandbox has no WebKit build).
