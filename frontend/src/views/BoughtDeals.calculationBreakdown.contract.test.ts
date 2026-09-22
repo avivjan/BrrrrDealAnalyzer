@@ -60,7 +60,7 @@ const DEAL = {
         unit: "money",
         formula: "Refi Loan ($240,000) − HML Payoff ($200,000) − Closing Costs (Refi) ($9,600) − Prepaid Interest (Refi) ($0) − Reserves ($15,000) = $15,400",
         terms: [
-          { label: "Refi Loan", value: 240000, sign: "+" },
+          { label: "Refi Loan", value: 240000, sign: "+", step_label: "Refi Loan Amount" },
           { label: "HML Payoff", value: 200000, sign: "-" },
           { label: "Closing Costs (Refi)", value: 9600, sign: "-" },
           { label: "Prepaid Interest (Refi)", value: 0, sign: "-" },
@@ -127,9 +127,11 @@ describe("BoughtDeals — result tiles open the calculation breakdown popup", ()
     expect(popup()).not.toBeNull();
     expect(popupText()).toContain("How Cash-Out Routi is calculated");
     expect(popupText()).toContain("ARV ($320,000) × LTV 75% = $240,000");
-    const termLabels = [...document.querySelectorAll('[data-part="term-label"]')].map((el) => el.textContent!.trim());
-    expect(termLabels).toEqual(["Refi Loan", "HML Payoff", "Closing Costs (Refi)", "Prepaid Interest (Refi)", "Reserves"]);
-    expect(document.querySelector('[data-part="step-note"]')!.textContent).toContain("refi closing table");
+    const rowLabels = [...document.querySelectorAll('[data-part="tree"] [data-part="row-label"]')].map((el) => el.textContent!.trim());
+    expect(rowLabels).toEqual(["Refi Loan", "HML Payoff", "Closing Costs (Refi)", "Prepaid Interest (Refi)", "Reserves"]);
+    // Refi Loan is a computed operand, so it is open on its formula by default.
+    expect(document.querySelector('[data-part="row-formula"]')!.textContent).toContain("ARV ($320,000) × LTV 75% = $240,000");
+    expect(document.querySelector('[data-part="headline-note"]')!.textContent).toContain("refi closing table");
     expect(document.querySelector('[data-part="headline-value"]')!.textContent!.trim()).toBe("$15,400");
 
     expect(wrapper.find('[data-testid="boughtdeals.modal"]').exists()).toBe(true);

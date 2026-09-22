@@ -61,7 +61,7 @@ def _default_note(user_value, what_it_is: str) -> str:
 
 
 def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, list[dict]]:
-    breakdown = CalcBreakdown()
+    breakdown = CalcBreakdown(results)
     has_buy_closing_date = results.buy_closing_date is not None
     # The derived dates read as text wherever they are known.
     refi_date_suffix = f" on {results.refi_closing_date.isoformat()}" if results.refi_closing_date is not None else ""

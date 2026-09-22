@@ -4,7 +4,7 @@ import { mount, type VueWrapper } from "@vue/test-utils";
 import { nextTick } from "vue";
 
 import CalculationBreakdownPopup from "./CalculationBreakdownPopup.vue";
-import type { CalcStep } from "../../types";
+import type { CalcBreakdowns, CalcStep } from "../../types";
 
 let wrapper: VueWrapper | null = null;
 
@@ -14,52 +14,98 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-const CASH_FLOW_STEPS: CalcStep[] = [
-  {
-    label: "Net Operating Income (NOI)",
-    value: 1800,
-    unit: "money",
-    formula: "Rent ($2,600) − Operating Expenses ($800) = $1,800",
-    terms: [
-      { label: "Rent", value: 2600, sign: "+" },
-      { label: "Operating Expenses", value: 800, sign: "-" },
-    ],
-  },
-  {
-    label: "Monthly Mortgage Payment",
-    value: 1714.96,
-    unit: "money",
-    formula: "Refi Loan ($150,000) amortized at 7%/yr over 30 years = $1,714.96",
-    note: "A 0% loan repays straight-line: loan ÷ number of months.",
-  },
-  {
-    label: "Monthly Cash Flow",
-    value: 85.04,
-    unit: "money",
-    formula: "NOI ($1,800) − Mortgage ($1,714.96) = $85.04",
-    terms: [
-      { label: "NOI", value: 1800, sign: "+" },
-      { label: "Mortgage", value: 1714.96, sign: "-" },
-    ],
-  },
-];
+const money = (label: string, value: number, extra: Partial<CalcStep> = {}): CalcStep => ({
+  label,
+  value,
+  unit: "money",
+  formula: `${label} = ${value}`,
+  ...extra,
+});
+
+/** Cash Needed = Invested + Cushion; Invested = Cash to Close + Holding; Cash to Close = Down + Points. */
+const BREAKDOWNS: CalcBreakdowns = {
+  cash_to_close_buy: [
+    money("Down Payment (cash)", 40000, { formula: "20% × Purchase ($200,000) = $40,000" }),
+    money("HML Points (cash at closing)", 3220, { formula: "2% × Hard Money Loan ($161,000) = $3,220" }),
+    money("Cash to Close (Buy)", 43220, {
+      note: "The wire to the title company on purchase day.",
+      terms: [
+        { label: "Down Payment", value: 40000, sign: "+", step_label: "Down Payment (cash)" },
+        { label: "HML Points", value: 3220, sign: "+", step_label: "HML Points (cash at closing)" },
+      ],
+    }),
+  ],
+  total_cash_needed_for_deal: [
+    money("Cash to Close (Buy)", 43220, {
+      terms: [
+        { label: "Down Payment", value: 40000, sign: "+", step_label: "Down Payment (cash)" },
+        { label: "HML Points", value: 3220, sign: "+", step_label: "HML Points (cash at closing)" },
+      ],
+    }),
+    money("Holding Costs (until refi)", 2400, { formula: "(Taxes + Insurance) × 180 days ÷ 360 = $2,400" }),
+    money("Total Cash Invested (pre-refi)", 45620, {
+      note: "Every dollar actually spent before the refinance.",
+      terms: [
+        { label: "Cash to Close (Buy)", value: 43220, sign: "+", step_label: "Cash to Close (Buy)" },
+        { label: "Holding Costs", value: 2400, sign: "+", step_label: "Holding Costs (until refi)" },
+      ],
+    }),
+    money("Cash Needed", 50620, {
+      note: "The single out-of-pocket figure through the refinance.",
+      terms: [
+        { label: "Total Cash Invested", value: 45620, sign: "+", step_label: "Total Cash Invested (pre-refi)" },
+        { label: "Rehab Cushion", value: 5000, sign: "+", step_label: null },
+      ],
+    }),
+  ],
+  dscr: [
+    money("PITIA", 2166.67, {
+      terms: [
+        { label: "Mortgage", value: 1716.67, sign: "+" },
+        { label: "Taxes ÷ 12", value: 450, sign: "+" },
+      ],
+    }),
+    { label: "DSCR", value: 1.2, unit: "ratio", formula: "Rent ($2,600) ÷ PITIA ($2,166.67) = 1.20" },
+  ],
+  cash_out_routi_conservative: [
+    money("Cash-Out Wire (Lowest ARV)", -17417.5, {
+      terms: [{ label: "Refi Loan (Lowest ARV)", value: 216000, sign: "+" }, { label: "HML Payoff", value: 233417.5, sign: "-" }],
+    }),
+    money("Cash to Refi Table (Lowest ARV)", 17417.5, { formula: "Wire (-$17,417.50) is negative → $17,417.50 brought to the table" }),
+  ],
+  roi: [
+    { label: "Cash on Cash", value: -2, unit: "pct", formula: "Cash Flow ≤ 0 → return undefined (-∞)" },
+    { label: "ROI", value: 19.87, unit: "pct", formula: "… = 19.87%" },
+  ],
+};
 
 const mountPopup = (props: Record<string, unknown> = {}) =>
   mount(CalculationBreakdownPopup, {
     attachTo: document.body,
     props: {
       open: true,
-      metricLabel: "Cash Flow",
-      metricKey: "cash_flow",
-      steps: CASH_FLOW_STEPS,
+      metricLabel: "Cash Needed",
+      metricKey: "total_cash_needed_for_deal",
+      metricValue: 50620,
+      breakdowns: BREAKDOWNS,
       ...props,
     },
   });
 
 const popup = () => document.querySelector('[data-testid="calculation-breakdown-popup"]');
 const dialog = () => document.querySelector('[role="dialog"]');
-const textsOf = (selector: string) =>
-  [...document.querySelectorAll(selector)].map((el) => el.textContent?.replace(/\s+/g, " ").trim());
+const tree = () => document.querySelector('[data-part="tree"]')!;
+const rowsIn = (root: Element) => [...root.querySelectorAll('[data-part="row"]')] as HTMLElement[];
+const rowByPath = (path: string) => rowsIn(document.body).find((r) => r.dataset.path === path)!;
+const rowSummary = (row: HTMLElement) => [
+  row.dataset.path,
+  row.querySelector(':scope > div > [data-part="row-sign"]')!.textContent!.trim(),
+  row.querySelector(':scope > div > [data-part="row-label"]')!.textContent!.trim(),
+  row.querySelector(':scope > div > [data-part="row-value"]')!.textContent!.trim(),
+];
+const click = (el: Element | null) => (el as HTMLElement).click();
+/** The text of a grid line: its cells joined by single spaces. */
+const lineText = (line: Element) => [...line.children].map((cell) => cell.textContent!.trim()).filter(Boolean).join(" ");
 
 describe("CalculationBreakdownPopup", () => {
   it("renders nothing while closed", async () => {
@@ -68,106 +114,120 @@ describe("CalculationBreakdownPopup", () => {
     expect(popup()).toBeNull();
   });
 
-  it("teleports a dialog to body, named 'How <metric> is calculated', with the last step as the headline", async () => {
+  it("teleports a dialog to body, named 'How <metric> is calculated', with the tile's value as the headline", async () => {
     wrapper = mountPopup();
     await nextTick();
     expect(popup()).not.toBeNull();
-    expect(popup()!.getAttribute("data-metric-key")).toBe("cash_flow");
+    expect(popup()!.getAttribute("data-metric-key")).toBe("total_cash_needed_for_deal");
     const heading = document.querySelector("h2")!;
-    expect(heading.textContent?.trim()).toBe("How Cash Flow is calculated");
+    expect(heading.textContent?.trim()).toBe("How Cash Needed is calculated");
     expect(dialog()!.getAttribute("aria-labelledby")).toBe(heading.id);
-    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("$85.04");
+    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("$50,620");
   });
 
-  it("lists every step in order with its label and unit-formatted value; the last one is marked as the headline", async () => {
+  it("opens on the answer: the headline's operands as rows, the total line, and the first level already open", async () => {
     wrapper = mountPopup();
     await nextTick();
-    expect(textsOf('[data-part="step-label"]')).toEqual([
-      "Net Operating Income (NOI)",
-      "Monthly Mortgage Payment",
-      "Monthly Cash Flow",
+    const topLevel = rowsIn(tree()).filter((r) => r.dataset.depth === "0");
+    expect(topLevel.map(rowSummary)).toEqual([
+      ["0", "+", "Total Cash Invested", "$45,620"],
+      ["1", "+", "Rehab Cushion", "$5,000"],
     ]);
-    expect(textsOf('[data-part="step-value"]')).toEqual(["$1,800", "$1,714.96", "$85.04"]);
-    const items = document.querySelectorAll('[data-part="steps"] > li');
-    expect(items).toHaveLength(3);
-    expect(items[0]!.getAttribute("data-part")).toBe("step");
-    expect(items[2]!.getAttribute("data-part")).toBe("headline-step");
+    expect(lineText(tree().querySelector('[data-part="headline-total"]')!)).toBe("= Cash Needed $50,620");
+    expect(document.querySelector('[data-part="headline-note"]')!.textContent).toContain("single out-of-pocket figure");
+    // Depth 1 is open: Total Cash Invested shows its operands; its own computed operands stay closed.
+    expect(rowByPath("0").querySelector('[data-part="row-toggle"]')!.getAttribute("aria-expanded")).toBe("true");
+    expect(rowsIn(tree()).filter((r) => r.dataset.depth === "1").map(rowSummary)).toEqual([
+      ["0/0", "+", "Cash to Close (Buy)", "$43,220"],
+      ["0/1", "+", "Holding Costs", "$2,400"],
+    ]);
+    expect(rowByPath("0/0").querySelector('[data-part="row-toggle"]')!.getAttribute("aria-expanded")).toBe("false");
+    expect(rowsIn(tree()).some((r) => r.dataset.depth === "2")).toBe(false);
+    expect(document.querySelector('[data-part="headline-formula"]')).toBeNull();
   });
 
-  it("stacks a sum-type step's terms with their sign, and shows the formula text on every other step", async () => {
+  it("a click drills a computed row down to its rows and then to a formula, and Expand all / Collapse all cover the whole tree", async () => {
     wrapper = mountPopup();
     await nextTick();
-    const items = document.querySelectorAll('[data-part="steps"] > li');
-    const noiTerms = [...items[0]!.querySelectorAll('[data-part="step-term"]')].map((el) => [
-      el.querySelector('[data-part="term-sign"]')!.textContent!.trim(),
-      el.querySelector('[data-part="term-label"]')!.textContent!.trim(),
-      el.querySelector('[data-part="term-value"]')!.textContent!.trim(),
+    click(rowByPath("0/0").querySelector('[data-part="row-toggle"]'));
+    await nextTick();
+    expect(rowsIn(tree()).filter((r) => r.dataset.depth === "2").map(rowSummary)).toEqual([
+      ["0/0/0", "+", "Down Payment", "$40,000"],
+      ["0/0/1", "+", "HML Points", "$3,220"],
     ]);
-    expect(noiTerms).toEqual([
-      ["+", "Rent", "$2,600"],
-      ["-", "Operating Expenses", "$800"],
-    ]);
-    expect(items[0]!.querySelector('[data-part="step-formula"]')).toBeNull();
-    expect(items[1]!.querySelector('[data-part="step-terms"]')).toBeNull();
-    expect(items[1]!.querySelector('[data-part="step-formula"]')!.textContent?.trim()).toBe(
-      "Refi Loan ($150,000) amortized at 7%/yr over 30 years = $1,714.96",
-    );
+    click(rowByPath("0/0/1").querySelector('[data-part="row-toggle"]'));
+    await nextTick();
+    expect(rowByPath("0/0/1").querySelector('[data-part="row-formula"]')!.textContent!.trim()).toBe("2% × Hard Money Loan ($161,000) = $3,220");
+
+    click(document.querySelector('[data-part="collapse-all"]'));
+    await nextTick();
+    expect(rowsIn(tree()).map((r) => r.dataset.path)).toEqual(["0", "1"]);
+    expect(rowByPath("0").querySelector('[data-part="row-toggle"]')!.getAttribute("aria-expanded")).toBe("false");
+
+    click(document.querySelector('[data-part="expand-all"]'));
+    await nextTick();
+    expect(rowsIn(tree()).map((r) => r.dataset.path)).toEqual(["0", "0/0", "0/0/0", "0/0/1", "0/1", "1"]);
+    expect(rowByPath("0/1").querySelector('[data-part="row-formula"]')!.textContent).toContain("180 days ÷ 360");
   });
 
-  it("prints a step's note under it, and nothing where there is none", async () => {
+  it("resets to the first level whenever it opens again on a metric", async () => {
     wrapper = mountPopup();
     await nextTick();
-    expect(textsOf('[data-part="step-note"]')).toEqual([
-      "A 0% loan repays straight-line: loan ÷ number of months.",
-    ]);
-  });
-
-  it("formats percentage and ratio steps by their unit, including the ±∞ sentinels", async () => {
-    wrapper = mountPopup({
-      metricLabel: "ROI",
-      metricKey: "roi",
-      steps: [
-        { label: "DSCR", value: 1.2, unit: "ratio", formula: "Rent ($2,600) ÷ PITIA ($2,166.67) = 1.2" },
-        { label: "Cash on Cash", value: -2, unit: "pct", formula: "Cash Flow ≤ 0 → return undefined (-∞)" },
-        { label: "ROI", value: 19.87, unit: "pct", formula: "… = 19.87%" },
-      ] satisfies CalcStep[],
-    });
+    click(document.querySelector('[data-part="expand-all"]'));
     await nextTick();
-    expect(textsOf('[data-part="step-value"]')).toEqual(["1.20x", "-∞%", "19.87%"]);
-    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("19.87%");
+    expect(rowsIn(tree()).length).toBe(6);
+    await wrapper.setProps({ open: false });
+    await wrapper.setProps({ open: true });
+    await nextTick();
+    expect(rowsIn(tree()).map((r) => r.dataset.path)).toEqual(["0", "0/0", "0/1", "1"]);
   });
 
-  it("marks the step carrying the tile's own value as the headline when the section ends on a derived reading", async () => {
-    wrapper = mountPopup({
-      metricLabel: "Cash-Out Routi (Lowest ARV)",
-      metricKey: "cash_out_routi_conservative",
-      metricValue: -17417.5,
-      steps: [
-        { label: "Refi Loan (Lowest ARV)", value: 216000, unit: "money", formula: "Lowest ARV (,000) × LTV 75% = ,000" },
-        { label: "Cash-Out Wire (Lowest ARV)", value: -17417.5, unit: "money", formula: "… = -,417.50" },
-        { label: "Cash to Refi Table (Lowest ARV)", value: 17417.5, unit: "money", formula: "Wire (-,417.50) is negative → ,417.50 brought to the table" },
-      ] satisfies CalcStep[],
-    });
+  it("a headline that is not a sum shows its formula first and the section's earlier steps as its inputs", async () => {
+    wrapper = mountPopup({ metricLabel: "DSCR", metricKey: "dscr", metricValue: 1.2 });
+    await nextTick();
+    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("1.20x");
+    expect(document.querySelector('[data-part="headline-formula"]')!.textContent).toContain("Rent ($2,600) ÷ PITIA ($2,166.67) = 1.20");
+    expect(document.querySelector('[data-part="headline-total"]')).toBeNull();
+    const inputs = rowsIn(tree()).filter((r) => r.dataset.depth === "0");
+    expect(inputs.map(rowSummary)).toEqual([["input/0", "", "PITIA", "$2,166.67"]]);
+    // Open by default, so PITIA's operands are visible at once.
+    expect(rowsIn(tree()).filter((r) => r.dataset.depth === "1").map((r) => rowSummary(r)[2])).toEqual(["Mortgage", "Taxes ÷ 12"]);
+  });
+
+  it("lists the steps the section derives after the headline under their own caption, open by default", async () => {
+    wrapper = mountPopup({ metricLabel: "Cash-Out Routi (Lowest ARV)", metricKey: "cash_out_routi_conservative", metricValue: -17417.5 });
     await nextTick();
     expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("-$17,417.50");
-    const items = document.querySelectorAll('[data-part="steps"] > li');
-    expect(items[1]!.getAttribute("data-part")).toBe("headline-step");
-    expect(items[2]!.getAttribute("data-part")).toBe("step");
+    expect(document.querySelector('[data-part="derived-caption"]')!.textContent!.trim()).toBe("Derived from this");
+    const derived = rowsIn(document.querySelector('[data-part="derived-tree"]')!);
+    expect(derived.map(rowSummary)).toEqual([["derived/0", "", "Cash to Refi Table (Lowest ARV)", "$17,417.50"]]);
+    expect(derived[0]!.querySelector('[data-part="row-formula"]')!.textContent).toContain("brought to the table");
   });
 
-  it("falls back to the last step as the headline when the tile's value matches no step", async () => {
-    wrapper = mountPopup({ metricValue: 999999 });
+  it("formats percentage headlines by their unit, including the ±∞ sentinels", async () => {
+    wrapper = mountPopup({ metricLabel: "ROI", metricKey: "roi", metricValue: 19.87 });
     await nextTick();
-    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("$85.04");
+    expect(document.querySelector('[data-part="headline-value"]')!.textContent?.trim()).toBe("19.87%");
+    expect(rowsIn(tree()).map(rowSummary)).toEqual([["input/0", "", "Cash on Cash", "-∞%"]]);
+  });
+
+  it("keeps every step in calculation order behind a collapsed 'All steps' disclosure", async () => {
+    wrapper = mountPopup();
+    await nextTick();
+    const details = document.querySelector('[data-part="all-steps"]') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector("summary")!.textContent).toContain("All 4 steps");
+    expect([...details.querySelectorAll('[data-part="all-steps-item"]')].length).toBe(4);
   });
 
   it("says so when the analysis carried no breakdown for this result", async () => {
-    wrapper = mountPopup({ steps: undefined });
+    wrapper = mountPopup({ breakdowns: undefined });
     await nextTick();
     expect(document.querySelector('[data-part="empty"]')!.textContent).toContain("No breakdown available");
     expect(document.querySelector('[data-part="headline-value"]')).toBeNull();
+    expect(document.querySelector('[data-part="expand-all"]')).toBeNull();
     wrapper.unmount();
-    wrapper = mountPopup({ steps: [] });
+    wrapper = mountPopup({ breakdowns: { total_cash_needed_for_deal: [] } });
     await nextTick();
     expect(document.querySelector('[data-part="empty"]')).not.toBeNull();
   });

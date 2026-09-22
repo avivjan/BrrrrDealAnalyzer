@@ -78,7 +78,8 @@ INSTRUCTIONS = (
     "_in_thousands or _k are thousands of dollars; every other money field is plain dollars. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
-    "sum-type steps the terms (label, value, sign) that add up to its value."
+    "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
+    "step names it in step_label, so a total can be followed down to its inputs."
 )
 
 # One line per tool, keyed by tool name (the route's function name without a

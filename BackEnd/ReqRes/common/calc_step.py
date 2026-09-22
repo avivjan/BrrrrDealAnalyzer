@@ -9,6 +9,7 @@ class CalcTerm(BaseModel):
     label: str = Field(..., description="Name of the operand, e.g. 'Down Payment'.")
     value: float = Field(..., description="The operand's value in dollars.")
     sign: Literal["+", "-"] = Field("+", description="Whether the operand is added or subtracted.")
+    step_label: Optional[str] = Field(None, description="When the operand is itself a step, that step's label (look it up in this section first, then in any section); absent for a raw input.")
 
 
 class CalcStep(BaseModel):

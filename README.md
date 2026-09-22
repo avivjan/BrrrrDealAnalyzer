@@ -529,7 +529,9 @@ the engine reproduces the pre-lifecycle figures to the last digit.
 
 Each breakdown step carries a `unit` (`money`, `pct` or `ratio`), the `formula` with the numbers
 filled in, an optional `note`, and, on sum-type steps, the `terms` that add up to its value, which
-the PDF stacks one operand per line. Sum-type totals in `deal_math.py` are flat left-to-right sums
+the PDF stacks one operand per line. A term that is itself a step names it in `step_label` (derived from the identity of the `Decimal`
+object the explain layer passed, so the narratives need no edit), which the website's calculation popup
+follows to drill a total down to its inputs. Sum-type totals in `deal_math.py` are flat left-to-right sums
 in the order the explanation lists the terms; that is what lets the guard use exact equality on
 unrounded Decimals. Sentinel values `-1` and `-2` render as `∞` and `-∞`.
 `tests/test_analyze.py` pins the reference results, so a formula change fails loudly.

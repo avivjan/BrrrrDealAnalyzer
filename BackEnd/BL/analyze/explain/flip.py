@@ -33,7 +33,7 @@ CASH_NEEDED = ["total_cash_needed", "total_cash_needed_with_buffer"]
 
 
 def explain_flip(payload, results_w_intermediates: FlipResultsWithIntermediates) -> dict[str, list[dict]]:
-    bd = CalcBreakdown()
+    bd = CalcBreakdown(results_w_intermediates)
     hm = bool(payload.use_HM_for_rehab)
     months = payload.holding_time_months
 

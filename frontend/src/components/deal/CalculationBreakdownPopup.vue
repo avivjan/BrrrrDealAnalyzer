@@ -3,15 +3,20 @@
  * "How is this number calculated?" — the popup behind every result tile in
  * the deal modals.
  *
- * It renders one section of the backend's `breakdowns` (the ordered
- * `CalcStep[]` the explain layer emits for a headline metric): every step's
- * label, the formula with the concrete numbers substituted, the value read by
- * its unit, the stacked operands of a sum-type step and the optional note. The
- * last step is the headline, so it is also shown in the header.
+ * It opens on the answer: the headline step's operands as the first rows,
+ * ending on the "= headline value" line, and any operand that is itself a
+ * computed step (the backend names it in `step_label`) expands in place into
+ * its own operands or its formula, down to the raw inputs. The first level is
+ * open on arrival; "Expand all" / "Collapse all" do the rest. A headline that
+ * is not a sum (DSCR, the returns) shows its formula first and the section's
+ * earlier steps as its inputs beneath. Steps the section derives *after* the
+ * headline (the cash to the refi table from the lowest-ARV wire) follow under
+ * their own caption, and a collapsed "All steps" list keeps the calculation
+ * order at hand.
  *
- * It computes nothing: the numbers are the engine's own, and every equation in
- * the text was verified against the engine before the response left the server
- * (`BackEnd/BL/analyze/explain/`).
+ * It computes nothing: the numbers are the engine's own, and every equation
+ * in the text was verified against the engine before the response left the
+ * server (`BackEnd/BL/analyze/explain/`).
  *
  * The overlay follows `UiDrawer`: teleported to `<body>` (so the `v-reveal`
  * transform on the tile grid cannot misplace a fixed box), `z-[60]` above the
@@ -23,26 +28,33 @@
  */
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 
-import type { CalcStep } from "../../types";
+import type { CalcBreakdowns, CalcStep } from "../../types";
 import { inertOutside } from "../ui/inertOutside";
 import {
-  formatCalculationStepMoney,
-  formatCalculationStepValueByUnit,
-} from "./calculationStepFormat";
+  allExpandableRowPaths,
+  defaultExpandedRowPaths,
+  findHeadlineStepIndex,
+  isSumStep,
+  rowsOfSteps,
+  stepsAfterHeadline,
+  topLevelRowsForHeadline,
+} from "./calculationBreakdownTree";
+import CalculationBreakdownTreeRow from "./CalculationBreakdownTreeRow.vue";
+import { formatCalculationStepValueByUnit } from "./calculationStepFormat";
 
 const props = withDefaults(
   defineProps<{
     open: boolean;
     /** The tile's caption, e.g. "Cash Flow"; names the dialog. */
     metricLabel: string;
-    /** The result key, e.g. "cash_flow"; only used for test ids. */
+    /** The result key, e.g. "cash_flow": the breakdown section to show. */
     metricKey: string;
-    /** `breakdowns[metricKey]` of the current analysis; empty when the response carried none. */
-    steps?: CalcStep[];
+    /** Every section of the current analysis; a term can point at a step filed under another section. */
+    breakdowns?: CalcBreakdowns;
     /** The number on the tile (`analysis[metricKey]`); picks the headline step, since a section may end on a derived reading. */
     metricValue?: number;
   }>(),
-  { steps: undefined, metricValue: undefined },
+  { breakdowns: undefined, metricValue: undefined },
 );
 
 const emit = defineEmits<{ close: [] }>();
@@ -50,31 +62,68 @@ const emit = defineEmits<{ close: [] }>();
 const headingId = useId();
 const overlayRoot = ref<HTMLElement | null>(null);
 
-/**
- * The step that *is* the tile's number: the last one whose value equals it, or
- * the last step when no value was given. A section usually ends on its
- * headline, but not always: the lowest-ARV wire section ends on "Cash to Refi
- * Table", a reading derived from the wire.
- */
-const headlineStepIndex = computed<number>(() => {
-  const steps = props.steps ?? [];
-  if (steps.length === 0) return -1;
-  if (props.metricValue !== undefined) {
-    for (let index = steps.length - 1; index >= 0; index -= 1) {
-      if (steps[index]!.value === props.metricValue) return index;
-    }
-  }
-  return steps.length - 1;
-});
-
+const steps = computed<CalcStep[]>(() => props.breakdowns?.[props.metricKey] ?? []);
+const headlineStepIndex = computed(() => findHeadlineStepIndex(steps.value, props.metricValue));
 const headlineStep = computed<CalcStep | null>(() =>
-  headlineStepIndex.value >= 0 ? props.steps![headlineStepIndex.value]! : null,
+  headlineStepIndex.value >= 0 ? steps.value[headlineStepIndex.value]! : null,
 );
+const headlineIsSum = computed(() => (headlineStep.value ? isSumStep(headlineStep.value) : false));
+const headlineValueText = computed(() =>
+  headlineStep.value ? formatCalculationStepValueByUnit(headlineStep.value.unit, headlineStep.value.value) : "",
+);
+
+const emptyBreakdowns: CalcBreakdowns = {};
+const breakdownsOrEmpty = computed(() => props.breakdowns ?? emptyBreakdowns);
+const rootAncestorStepLabels = computed<ReadonlySet<string>>(
+  () => new Set(headlineStep.value ? [headlineStep.value.label] : []),
+);
+const topLevelRows = computed(() =>
+  topLevelRowsForHeadline(breakdownsOrEmpty.value, props.metricKey, headlineStepIndex.value),
+);
+const derivedRows = computed(() => rowsOfSteps(stepsAfterHeadline(steps.value, headlineStepIndex.value), "derived"));
 
 function formatStepValue(step: CalcStep): string {
   return formatCalculationStepValueByUnit(step.unit, step.value);
 }
 
+// -- expansion -------------------------------------------------------------
+// Replaced, never mutated, so every row re-reads it.
+const expandedRowPaths = ref<ReadonlySet<string>>(new Set());
+
+function resetExpansionToTheFirstLevel() {
+  expandedRowPaths.value = new Set([
+    ...defaultExpandedRowPaths(topLevelRows.value),
+    ...defaultExpandedRowPaths(derivedRows.value),
+  ]);
+}
+
+function expandAllRows() {
+  expandedRowPaths.value = new Set([
+    ...allExpandableRowPaths(topLevelRows.value, breakdownsOrEmpty.value, props.metricKey, rootAncestorStepLabels.value),
+    ...allExpandableRowPaths(derivedRows.value, breakdownsOrEmpty.value, props.metricKey, new Set()),
+  ]);
+}
+
+function collapseAllRows() {
+  expandedRowPaths.value = new Set();
+}
+
+function toggleRow(path: string) {
+  const next = new Set(expandedRowPaths.value);
+  if (next.has(path)) next.delete(path);
+  else next.add(path);
+  expandedRowPaths.value = next;
+}
+
+watch(
+  () => [props.open, props.metricKey] as const,
+  ([open]) => {
+    if (open) resetExpansionToTheFirstLevel();
+  },
+  { immediate: true },
+);
+
+// -- overlay behaviour -------------------------------------------------------
 /**
  * Escape closes the popup from anywhere on the page while it is open. A
  * `document` listener rather than `@keydown` on the root, for the reasons
@@ -139,7 +188,7 @@ watch(
         class="fixed inset-0 z-[60] flex items-center justify-center bg-fg/60 p-4 md:backdrop-blur-sm"
         @click.self="emit('close')"
       >
-        <UiModalPanel size="md" :labelled-by="headingId" tabindex="-1" class="outline-none">
+        <UiModalPanel size="lg" :labelled-by="headingId" tabindex="-1" class="outline-none">
           <template #header>
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
@@ -151,69 +200,110 @@ watch(
                   data-part="headline-value"
                   class="numeric font-display text-xl font-bold tracking-display text-fg"
                 >
-                  {{ formatStepValue(headlineStep) }}
+                  {{ headlineValueText }}
                 </p>
               </div>
-              <UiIconButton label="Close" data-part="close" @click="emit('close')">
-                <i class="pi pi-times" aria-hidden="true"></i>
-              </UiIconButton>
+              <div class="flex shrink-0 items-center gap-1">
+                <UiButton v-if="headlineStep" data-part="expand-all" variant="ghost" size="sm" @click="expandAllRows">
+                  Expand all
+                </UiButton>
+                <UiButton v-if="headlineStep" data-part="collapse-all" variant="ghost" size="sm" @click="collapseAllRows">
+                  Collapse all
+                </UiButton>
+                <UiIconButton label="Close" data-part="close" @click="emit('close')">
+                  <i class="pi pi-times" aria-hidden="true"></i>
+                </UiIconButton>
+              </div>
             </div>
           </template>
 
-          <ol v-if="steps && steps.length" data-part="steps" class="space-y-3">
-            <li
-              v-for="(step, stepIndex) in steps"
-              :key="stepIndex"
-              :data-part="stepIndex === headlineStepIndex ? 'headline-step' : 'step'"
-              class="rounded-card border p-3"
-              :class="
-                stepIndex === headlineStepIndex
-                  ? 'border-primary/40 bg-primary/5'
-                  : 'border-line bg-surface-2'
-              "
+          <template v-if="headlineStep">
+            <!-- A headline that is not a sum: its formula first, then the section's steps as its inputs. -->
+            <div
+              v-if="!headlineIsSum"
+              data-part="headline-formula"
+              class="mb-3 rounded-card border border-primary/40 bg-primary/5 p-3"
             >
-              <div class="flex items-baseline justify-between gap-3">
-                <span data-part="step-label" class="text-sm font-semibold text-fg">{{ step.label }}</span>
-                <span data-part="step-value" class="numeric tabular text-sm font-bold text-fg">
-                  {{ formatStepValue(step) }}
-                </span>
-              </div>
+              <p class="break-words font-mono text-xs leading-relaxed text-fg">{{ headlineStep.formula }}</p>
+              <p v-if="headlineStep.note" data-part="headline-note" class="mt-2 text-xs text-fg-muted">
+                {{ headlineStep.note }}
+              </p>
+              <p v-if="topLevelRows.length" class="mt-2 text-xs font-semibold uppercase tracking-wider text-fg-muted">
+                Built from
+              </p>
+            </div>
 
-              <!-- A sum-type step stacks its operands; every other step shows its formula text. -->
-              <ul
-                v-if="step.terms && step.terms.length"
-                data-part="step-terms"
-                class="mt-2 space-y-0.5 text-sm"
+            <ul
+              v-if="topLevelRows.length || headlineIsSum"
+              data-part="tree"
+              class="m-0 list-none rounded-card border border-line bg-surface-2 px-3 py-1"
+            >
+              <CalculationBreakdownTreeRow
+                v-for="row in topLevelRows"
+                :key="row.path"
+                :row="row"
+                :depth="0"
+                :ancestor-step-labels="rootAncestorStepLabels"
+                :expanded-row-paths="expandedRowPaths"
+                :breakdowns="breakdownsOrEmpty"
+                :section-key="metricKey"
+                @toggle="toggleRow"
+              />
+              <li
+                v-if="headlineIsSum"
+                data-part="headline-total"
+                class="grid grid-cols-[1.25rem_1rem_minmax(0,1fr)_auto] items-baseline gap-x-2 border-t-2 border-primary/40 py-2 text-sm font-bold"
               >
-                <li
-                  v-for="(term, termIndex) in step.terms"
-                  :key="termIndex"
-                  data-part="step-term"
-                  class="flex justify-between gap-3"
-                >
-                  <span class="text-fg-muted">
-                    <span data-part="term-sign" class="mr-1 inline-block w-3 text-center font-mono">{{ term.sign }}</span><span data-part="term-label">{{ term.label }}</span>
-                  </span>
-                  <span data-part="term-value" class="numeric tabular text-fg">{{ formatCalculationStepMoney(term.value) }}</span>
-                </li>
-                <li class="flex justify-between gap-3 border-t border-line pt-1 font-semibold">
-                  <span class="text-fg-muted"><span class="mr-1 inline-block w-3 text-center font-mono">=</span>{{ step.label }}</span>
-                  <span class="numeric tabular text-fg">{{ formatStepValue(step) }}</span>
-                </li>
+                <span aria-hidden="true"></span>
+                <span class="text-center font-mono text-fg-muted">=</span>
+                <span class="truncate text-fg">{{ headlineStep.label }}</span>
+                <span class="numeric tabular text-fg">{{ headlineValueText }}</span>
+              </li>
+            </ul>
+            <p v-if="headlineIsSum && headlineStep.note" data-part="headline-note" class="mt-2 text-xs text-fg-muted">
+              {{ headlineStep.note }}
+            </p>
+
+            <template v-if="derivedRows.length">
+              <p data-part="derived-caption" class="mb-1 mt-4 text-xs font-semibold uppercase tracking-wider text-fg-muted">
+                Derived from this
+              </p>
+              <ul data-part="derived-tree" class="m-0 list-none rounded-card border border-line bg-surface-2 px-3 py-1">
+                <CalculationBreakdownTreeRow
+                  v-for="row in derivedRows"
+                  :key="row.path"
+                  :row="row"
+                  :depth="0"
+                  :ancestor-step-labels="new Set<string>()"
+                  :expanded-row-paths="expandedRowPaths"
+                  :breakdowns="breakdownsOrEmpty"
+                  :section-key="metricKey"
+                  @toggle="toggleRow"
+                />
               </ul>
-              <p
-                v-else
-                data-part="step-formula"
-                class="mt-2 break-words font-mono text-xs leading-relaxed text-fg"
-              >
-                {{ step.formula }}
-              </p>
+            </template>
 
-              <p v-if="step.note" data-part="step-note" class="mt-2 text-xs text-fg-muted">
-                {{ step.note }}
-              </p>
-            </li>
-          </ol>
+            <details data-part="all-steps" class="mt-4">
+              <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-fg-muted">
+                All {{ steps.length }} steps in calculation order
+              </summary>
+              <ol class="mt-2 space-y-2">
+                <li
+                  v-for="(step, stepIndex) in steps"
+                  :key="stepIndex"
+                  data-part="all-steps-item"
+                  class="rounded-card border border-line bg-surface-2 p-3"
+                >
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-sm font-semibold text-fg">{{ step.label }}</span>
+                    <span class="numeric tabular text-sm font-bold text-fg">{{ formatStepValue(step) }}</span>
+                  </div>
+                  <p class="mt-1 break-words font-mono text-xs leading-relaxed text-fg">{{ step.formula }}</p>
+                  <p v-if="step.note" class="mt-1 text-xs text-fg-muted">{{ step.note }}</p>
+                </li>
+              </ol>
+            </details>
+          </template>
           <p v-else data-part="empty" class="text-sm text-fg-muted">
             No breakdown available for this result. Re-open the deal to fetch a fresh analysis.
           </p>
