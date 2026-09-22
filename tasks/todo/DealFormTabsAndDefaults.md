@@ -191,5 +191,5 @@ with the lifecycle and breakdown fields main already returns.
 
 Backend: pytest green on Postgres 16 (whole suite), `verify_regression.py verify` identical after
 re-snapshot, bandit clean, the CI migration smoke (two boots on a fresh database) passes. Frontend:
-1516 vitest tests pass, `vue-tsc -b && vite build` clean, Playwright chromium 109 passed / 3 skipped
+1516 vitest tests pass, `vue-tsc -b && vite build` clean, Playwright chromium 107 passed / 3 skipped (110 total, verify mode against the committed goldens)
 (webkit projects not run here: the sandbox has no WebKit build).
