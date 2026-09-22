@@ -54,3 +54,23 @@ test('the download button offers the branded filename', async ({ page, seed }) =
 
   expect(download.suggestedFilename()).toBe(EXPECTED_FILENAME);
 });
+
+test('a bought deal offers the same report from its modal', async ({ page, api, seed }) => {
+  const bought = await seed.seedBoughtDeal('BRRRR');
+
+  await page.goto('/bought-deals');
+  await page.getByTestId(`boughtdeals.card.${bought.id}`).click();
+  await expect(page.getByTestId('boughtdeals.modal')).toBeVisible();
+
+  api.reset();
+
+  await page.getByTestId('boughtdeals.modal.view-report').click();
+
+  await expect(page.getByTestId('boughtdeals.pdf-modal')).toBeVisible();
+  await expect(page.getByTestId('boughtdeals.pdf-modal.iframe')).toHaveAttribute(
+    'src',
+    /^blob:/,
+  );
+
+  await api.expectContract('pdf-report-bought');
+});

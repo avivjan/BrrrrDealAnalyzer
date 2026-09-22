@@ -139,5 +139,24 @@ describe("MoneyInput", () => {
       expect(wrapper.find('[data-part="required"]').exists()).toBe(false);
       expect(wrapper.find("label .sr-only").exists()).toBe(false);
     });
+
+    it("emphasises a field the analysis cannot run without: bold primary label, primary border", () => {
+      const wrapper = mountInput({ neededToRunAnalysis: true });
+      const label = wrapper.get("label");
+      expect(label.classes()).toContain("font-semibold");
+      expect(label.classes()).toContain("text-primary");
+      expect(label.attributes("data-needed")).toBe("true");
+      expect(wrapper.get("input").classes()).toContain("border-primary/60");
+    });
+
+    it("keeps the emphasis and the required asterisk independent", () => {
+      const plainRequired = mountInput({ required: true });
+      expect(plainRequired.get("label").classes()).not.toContain("text-primary");
+      expect(plainRequired.get("label").attributes("data-needed")).toBeUndefined();
+      expect(plainRequired.get("input").classes()).not.toContain("border-primary/60");
+
+      const neededButNotRequired = mountInput({ neededToRunAnalysis: true });
+      expect(neededButNotRequired.find('[data-part="required"]').exists()).toBe(false);
+    });
   });
 });

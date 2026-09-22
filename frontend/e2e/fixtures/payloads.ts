@@ -79,22 +79,22 @@ export const IN_THOUSANDS_FIELDS = new Set([
  * The order the Analyze page's form fields are filled in. Only the inputs the
  * form actually renders for that deal type; `arv_in_thousands` / `salePrice`
  * mirror each other through the watchers in `AnalyzeDeal.vue`, so the mirrored
- * twin is deliberately not typed a second time.
+ * twin is deliberately not typed a second time. The BRRRR form has no
+ * `closingCostsBuy`, `closingCostsRefi` or `cashReserve` box since the lifecycle
+ * sections replaced the lump sums (the granular settlement lines took over), so
+ * those three travel with `createEmptyDealForm`'s defaults instead.
  */
 export const BRRRR_FORM_FIELDS = [
   'purchasePrice',
   'rehabCost',
   'rehabContingency',
-  'closingCostsBuy',
   'down_payment',
   'hmlPoints',
   'HMLInterestRate',
   'arv_in_thousands',
   'ltv_as_precent',
   'daysUntilRefi',
-  'closingCostsRefi',
   'refiPoints',
-  'cashReserve',
   'interestRate',
   'loanTermYears',
   'rent',

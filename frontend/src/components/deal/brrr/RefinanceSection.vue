@@ -29,6 +29,8 @@ const UNDERWRITING_PRESETS = [
 const notaryId = useId();
 const otherClosingCostsNoteId = useId();
 const NOTARY_FEE_DEFAULT = 250;
+/** $0 by default (the owner's brokers rarely charge one); this quick button sets the typical fee. */
+const BROKER_PROCESSING_FEE_TYPICAL = 395;
 const moneyNote = (amount: number | null) => (amount == null ? undefined : `= ${formatMoney(amount)}`);
 const prepaidInterestHint = computed(() =>
   autoCalc.value.prepaidDaysRefi != null && autoCalc.value.refiClosingDate ? `${autoCalc.value.prepaidDaysRefi} days from ${autoCalc.value.refiClosingDate} through month end` : undefined,
@@ -58,6 +60,7 @@ const prepaidInterestHint = computed(() =>
         label="ARV"
         :inThousands="true"
         :required="true"
+        :needed-to-run-analysis="true"
         :info="impactText('arv_in_thousands')"
       />
       <AutoDefaultMoneyInput
@@ -195,7 +198,7 @@ const prepaidInterestHint = computed(() =>
               label="Broker Processing Fee"
               :info="impactText('brokerProcessingFeeRefi')"
             />
-            <UiButton type="button" data-testid="form.processing-zero" variant="secondary" size="sm" class="touch:min-h-11" @click="field.set('brokerProcessingFeeRefi', 0)">$0</UiButton>
+            <UiButton type="button" data-testid="form.processing-395" variant="secondary" size="sm" class="touch:min-h-11" title="The usual broker processing fee" @click="field.set('brokerProcessingFeeRefi', BROKER_PROCESSING_FEE_TYPICAL)">$395</UiButton>
           </div>
           <div class="flex flex-col gap-1.5">
             <MoneyInput

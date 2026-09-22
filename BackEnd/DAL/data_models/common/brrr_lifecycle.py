@@ -46,7 +46,7 @@ class BrrrLifecycleColumns:
     appraisal_fee = Column(Numeric(12, 2), nullable=False, server_default='700', default=700)
     survey_fee = Column(Numeric(12, 2), nullable=False, server_default='385', default=385)
     refi_underwriting_fee = Column(Numeric(12, 2), nullable=False, server_default='2000', default=2000)
-    broker_processing_fee_refi = Column(Numeric(12, 2), nullable=False, server_default='395', default=395)
+    broker_processing_fee_refi = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
     other_closing_costs_refi = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
     other_closing_costs_refi_note = Column(String(500), nullable=True)
     maintenance_reserve = Column(Numeric(12, 2), nullable=False, server_default='1500', default=1500)

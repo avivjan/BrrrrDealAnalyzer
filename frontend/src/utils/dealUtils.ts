@@ -128,7 +128,7 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   appraisalFee: 700,
   surveyFee: 385,
   refiUnderwritingFee: 2000,
-  brokerProcessingFeeRefi: 395,
+  brokerProcessingFeeRefi: 0,
   otherClosingCostsRefi: 0,
   otherClosingCostsRefiNote: null,
   maintenanceReserve: 1500,
@@ -432,6 +432,7 @@ LINKS
 -----
 Zillow: ${deal.zillow_link || "-"}
 Photos: ${deal.pics_link || "-"}
+Google Drive: ${deal.google_drive_link || "-"}
 ${financials}
 ${analysis}
 ${comps}

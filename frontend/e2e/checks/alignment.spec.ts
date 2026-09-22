@@ -240,13 +240,26 @@ function isNarrow(page: Page): boolean {
 }
 
 test.describe('alignment', () => {
-  test('the Analyze form, as BRRRR and then as FLIP', async ({ page }) => {
+  test('the Analyze form, as BRRRR and then as FLIP, one phase tab at a time', async ({ page }) => {
+    // The form shows one phase per tab, so walk every tab: a hidden tab's
+    // controls are `display: none` and would otherwise never be measured.
+    const everyTab = async () => {
+      const tabs = page.locator('[data-testid^="form.tab."]:not([data-testid$=".needs-input"])');
+      const count = await tabs.count();
+      expect(count).toBeGreaterThan(0);
+      for (let index = 0; index < count; index += 1) {
+        await tabs.nth(index).click();
+        await expect(tabs.nth(index)).toHaveAttribute('aria-selected', 'true');
+        await expectAligned(page, 'form.root', { expectRows: !isNarrow(page) });
+      }
+    };
+
     await page.goto('/analyze');
-    await expectAligned(page, 'form.root', { expectRows: !isNarrow(page) });
+    await everyTab();
 
     await page.getByTestId('analyze.type-flip').click();
-    await expect(page.getByTestId('form.field.salePrice')).toBeVisible();
-    await expectAligned(page, 'form.root', { expectRows: !isNarrow(page) });
+    await expect(page.getByTestId('form.tab.flipStrategy')).toBeVisible();
+    await everyTab();
   });
 
   test('the My Deals deal modal', async ({ page, seed }) => {

@@ -94,7 +94,7 @@ class BrrrLifecycleInputs(BaseModel):
     refi_underwriting_fee: Annotated[Decimal, Field(alias="refiUnderwritingFee", description=(
         "Refi underwriting fee, in dollars (presets: MyLoanPathway $2,240, Clear2Mortgage $1,500, Cake Mortgage $2,195)."))] = Decimal("2000")
     broker_processing_fee_refi: Annotated[Decimal, Field(alias="brokerProcessingFeeRefi", description=(
-        "Broker processing fee at refi, in dollars ($395 typical, $0 possible)."))] = Decimal("395")
+        "Broker processing fee at refi, in dollars ($0 by default; $395 when the broker charges one)."))] = Decimal("0")
     other_closing_costs_refi: Annotated[Decimal, Field(alias="otherClosingCostsRefi", description=(
         "Any other refi settlement lines, in dollars."))] = Decimal("0")
     other_closing_costs_refi_note: Annotated[Optional[str], Field(alias="otherClosingCostsRefiNote", max_length=500, description=(

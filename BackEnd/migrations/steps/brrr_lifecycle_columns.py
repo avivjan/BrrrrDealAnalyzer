@@ -61,7 +61,7 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("appraisal_fee", "NUMERIC(12,2) DEFAULT 700", "700"),
     ("survey_fee", "NUMERIC(12,2) DEFAULT 385", "385"),
     ("refi_underwriting_fee", "NUMERIC(12,2) DEFAULT 2000", "2000"),
-    ("broker_processing_fee_refi", "NUMERIC(12,2) DEFAULT 395", "395"),
+    ("broker_processing_fee_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_refi_note", "VARCHAR(500)", None),
     ("maintenance_reserve", "NUMERIC(12,2) DEFAULT 1500", "1500"),
@@ -83,3 +83,11 @@ def add_brrr_lifecycle_columns(engine, inspector) -> None:
                 conn.execute(text(
                     f"ALTER TABLE {table_name} ALTER COLUMN construction_loan_budget_in_thousands SET DEFAULT 0"
                 ))
+        # The broker processing fee defaulted to $395 when the column shipped; the owner
+        # now wants $0 unless a broker charges one. Rows keep their stored value; only
+        # the DDL default moves, so it matches the model and the Pydantic default.
+        # Idempotent: SET DEFAULT on an already-0 default is a no-op.
+        with engine.begin() as conn:
+            conn.execute(text(
+                f"ALTER TABLE {table_name} ALTER COLUMN broker_processing_fee_refi SET DEFAULT 0"
+            ))

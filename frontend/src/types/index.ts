@@ -36,6 +36,8 @@ export interface BaseDealReq {
   overall_design?: string;
   crime_rate?: string;
   pics_link?: string;
+  /** The deal's Google Drive folder; shown as a Drive icon link on the bought card. */
+  google_drive_link?: string;
   contact?: string;
   task?: string;
   niche?: string;

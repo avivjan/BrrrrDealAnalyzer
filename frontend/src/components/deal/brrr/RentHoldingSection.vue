@@ -31,6 +31,7 @@ const preRefiRentHint = computed(() =>
         @update:model-value="(v: number | null) => field.set('rent', v)"
         label="Monthly Rent"
         :required="true"
+        :needed-to-run-analysis="true"
         :info="impactText('rent')"
       />
       <DaysOrDateField
@@ -72,6 +73,7 @@ const preRefiRentHint = computed(() =>
         :model-value="field.get('annual_property_taxes')"
         @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
         label="Annual Taxes"
+        :needed-to-run-analysis="true"
         :info="impactText('annual_property_taxes')"
       />
       <MoneyInput
@@ -79,6 +81,7 @@ const preRefiRentHint = computed(() =>
         :model-value="field.get('annual_insurance')"
         @update:model-value="(v: number | null) => field.set('annual_insurance', v)"
         label="Annual Insurance"
+        :needed-to-run-analysis="true"
         :info="impactText('annual_insurance')"
       />
       <MoneyInput

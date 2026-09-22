@@ -15,6 +15,7 @@
 import { computed, ref, watch } from "vue";
 import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
+import { safeHref } from "../utils/safeHref";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import {
@@ -235,10 +236,37 @@ const onToggleSubstage = (substageId: string) => {
       <UiProgressRing :value="ringValue" :size="40" :thickness="4" :label="ringLabel" class="shrink-0" />
     </div>
 
-    <!-- Header: Address -->
-    <h3 class="mt-2 line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
-      {{ deal.address || "No Address" }}
-    </h3>
+    <!-- Header: Address, with the deal's Google Drive folder beside it when one is set -->
+    <div class="mt-2 flex items-start justify-between gap-2">
+      <h3 class="min-w-0 line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
+        {{ deal.address || "No Address" }}
+      </h3>
+      <!--
+        `@click.stop` so opening the folder never opens the card's modal; `safeHref`
+        drops anything that is not http(s). A static inline glyph: no external fetch.
+      -->
+      <a
+        v-if="deal.google_drive_link"
+        data-testid="boughtcard.google-drive-link"
+        :href="safeHref(deal.google_drive_link)"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="`Open the Google Drive folder for ${deal.address || 'this deal'}`"
+        title="Open Google Drive folder"
+        class="inline-flex shrink-0 items-center gap-1 rounded-ctl border-ui border-line bg-surface px-2 py-1 text-xs font-medium text-fg transition-colors duration-fast ease-standard hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        @click.stop
+      >
+        <svg viewBox="0 0 87.3 78" class="h-3.5 w-3.5" aria-hidden="true">
+          <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+          <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+          <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+          <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+          <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+          <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+        </svg>
+        Drive
+      </a>
+    </div>
     </div>
 
     <!-- Checklist: every stage, stacked; the open row's body is the substage boxes -->

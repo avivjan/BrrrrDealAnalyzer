@@ -16,6 +16,7 @@ class BaseDeal:
     overall_design = Column(String, nullable=True)
     crime_rate = Column(String, nullable=True)
     pics_link = Column(String, nullable=True)
+    google_drive_link = Column(String, nullable=True)
     contact = Column(String, nullable=True)
     task = Column(String, nullable=True)
     niche = Column(String, nullable=True)

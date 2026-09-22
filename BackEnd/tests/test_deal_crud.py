@@ -298,3 +298,61 @@ class TestDealReportPdf:
         )
         assert response.status_code == 200, response.text
         assert response.content[:4] == b"%PDF"
+
+
+class TestGoogleDriveLink:
+    """The Drive folder link a bought card shows: a plain shared text field, both deal types,
+    through create, autosave, move-to-bought and the bought-card autosave."""
+
+    DRIVE_URL = "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz"
+
+    @pytest.mark.parametrize("payload_fixture", ["brrrr_payload", "flip_payload"])
+    def test_round_trips_on_create_and_update(self, client, request, payload_fixture):
+        payload = request.getfixturevalue(payload_fixture)
+        deal = _create(client, {**payload, "google_drive_link": self.DRIVE_URL})
+        assert deal["google_drive_link"] == self.DRIVE_URL
+        cleared = client.put(f"/active-deals/{deal['id']}", json={**deal, "google_drive_link": None})
+        assert cleared.status_code == 200, cleared.text
+        assert cleared.json()["google_drive_link"] is None
+
+    @pytest.mark.parametrize("payload_fixture, deal_type", [("brrrr_payload", "BRRRR"), ("flip_payload", "FLIP")])
+    def test_carries_across_to_bought_and_autosaves_there(self, client, request, payload_fixture, deal_type):
+        payload = request.getfixturevalue(payload_fixture)
+        deal = _create(client, {**payload, "google_drive_link": self.DRIVE_URL})
+        bought = client.post(f"/bought-deals/from-active/{deal['id']}", params={"deal_type": deal_type}).json()
+        assert bought["google_drive_link"] == self.DRIVE_URL
+        edited_url = self.DRIVE_URL + "-edited"
+        updated = client.put(f"/bought-deals/{bought['id']}", json={**bought, "google_drive_link": edited_url})
+        assert updated.status_code == 200, updated.text
+        assert updated.json()["google_drive_link"] == edited_url
+        assert client.get("/bought-deals").json()[0]["google_drive_link"] == edited_url
+
+    def test_is_null_when_never_set(self, client, brrrr_payload):
+        assert _create(client, brrrr_payload)["google_drive_link"] is None
+
+    def test_is_capped_like_the_other_links(self, client, brrrr_payload):
+        too_long = client.post("/active-deals", json={**brrrr_payload, "google_drive_link": "https://" + "x" * 2_000})
+        assert too_long.status_code == 422
+
+
+class TestBrokerProcessingFeeDefault:
+    def test_an_omitted_fee_saves_as_zero(self, client, brrrr_payload):
+        without_fee = {k: v for k, v in brrrr_payload.items() if k != "brokerProcessingFeeRefi"}
+        assert float(_create(client, without_fee)["brokerProcessingFeeRefi"]) == 0.0
+
+
+class TestBoughtDealReportPdf:
+    """The bought modal sends the bought deal whole (stage, checklist and results included);
+    the report endpoint must accept that body exactly as it accepts an active deal's."""
+
+    @pytest.mark.parametrize("payload_fixture, deal_type, endpoint", [
+        ("brrrr_payload", "BRRRR", "/reports/brrr-pdf"),
+        ("flip_payload", "FLIP", "/reports/flip-pdf"),
+    ])
+    def test_a_bought_deal_body_renders(self, client, request, payload_fixture, deal_type, endpoint):
+        payload = request.getfixturevalue(payload_fixture)
+        deal = _create(client, payload)
+        bought = client.post(f"/bought-deals/from-active/{deal['id']}", params={"deal_type": deal_type}).json()
+        response = client.post(endpoint, json=bought, params={"address": bought["address"]})
+        assert response.status_code == 200, response.text
+        assert response.content[:4] == b"%PDF"

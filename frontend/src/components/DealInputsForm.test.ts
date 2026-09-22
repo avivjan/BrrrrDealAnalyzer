@@ -174,6 +174,95 @@ describe("DealInputsForm", () => {
     });
   });
 
+  describe("the phase tabs", () => {
+    const boxStyle = (wrapper: ReturnType<typeof mountForm>, tabKey: string) =>
+      wrapper.find(`[data-form-tab="${tabKey}"]`).attributes("style") ?? "";
+    const isShown = (wrapper: ReturnType<typeof mountForm>, tabKey: string) =>
+      !boxStyle(wrapper, tabKey).includes("display: none");
+    const tabKeys = (wrapper: ReturnType<typeof mountForm>) =>
+      wrapper.findAll('[data-testid^="form.tab."]:not([data-testid$=".needs-input"])').map((el) => el.attributes("data-testid"));
+
+    it("offers one tab per BRRRR phase and opens on Buy", () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      expect(tabKeys(wrapper)).toEqual(["form.tab.buy", "form.tab.rehab", "form.tab.rentHolding", "form.tab.refinance"]);
+      expect(isShown(wrapper, "buy")).toBe(true);
+      for (const hidden of ["rehab", "rentHolding", "refinance"]) expect(isShown(wrapper, hidden), hidden).toBe(false);
+    });
+
+    it("offers one tab per FLIP phase and opens on Buy & Rehab", () => {
+      const wrapper = mountForm(createEmptyDealForm("FLIP"), "FLIP");
+      expect(tabKeys(wrapper)).toEqual(["form.tab.buyRehab", "form.tab.flipStrategy", "form.tab.expenses"]);
+      expect(isShown(wrapper, "buyRehab")).toBe(true);
+      expect(isShown(wrapper, "flipStrategy")).toBe(false);
+      expect(isShown(wrapper, "expenses")).toBe(false);
+    });
+
+    it("shows exactly the clicked phase and keeps the others mounted", async () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      await wrapper.find('[data-testid="form.tab.refinance"]').trigger("click");
+      expect(isShown(wrapper, "refinance")).toBe(true);
+      expect(isShown(wrapper, "buy")).toBe(false);
+      // Still in the DOM: a hidden section's fields keep their state and stay findable.
+      expect(labels(wrapper)).toContain("Purchase Price");
+      expect(labels(wrapper)).toContain("ARV");
+    });
+
+    it("writes a value typed into a hidden phase back to the deal", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      await emitFrom(wrapper, "ARV", 320); // Refinance tab, while Buy is open
+      expect(deal.arv_in_thousands).toBe(320);
+    });
+
+    it("lands on the first tab of the other strategy when the deal type switches", async () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      await wrapper.find('[data-testid="form.tab.rehab"]').trigger("click");
+      await wrapper.setProps({ dealType: "FLIP" });
+      expect(tabKeys(wrapper)).toHaveLength(3);
+      expect(isShown(wrapper, "buyRehab")).toBe(true);
+      expect(isShown(wrapper, "flipStrategy")).toBe(false);
+    });
+
+    it("dots every tab whose needed inputs are still empty, and clears the dot as they are typed", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      const dot = (tabKey: string) => wrapper.find(`[data-testid="form.tab.${tabKey}.needs-input"]`).exists();
+      for (const tabKey of ["buy", "rehab", "rentHolding", "refinance"]) expect(dot(tabKey), tabKey).toBe(true);
+
+      await emitFrom(wrapper, "Purchase Price", 200);
+      await emitFrom(wrapper, "Actual Rehab Cost", 50);
+      await emitFrom(wrapper, "ARV", 320);
+      expect(dot("buy")).toBe(false);
+      expect(dot("rehab")).toBe(false);
+      expect(dot("refinance")).toBe(false);
+      expect(dot("rentHolding")).toBe(true); // rent, taxes and insurance are all still 0
+
+      await emitFrom(wrapper, "Monthly Rent", 2600);
+      await emitFrom(wrapper, "Annual Taxes", 3600);
+      expect(dot("rentHolding")).toBe(true); // insurance still missing
+      await emitFrom(wrapper, "Annual Insurance", 1200);
+      expect(dot("rentHolding")).toBe(false);
+    });
+
+    it("dots the FLIP tabs by their own needed inputs", () => {
+      const wrapper = mountForm({ ...createEmptyDealForm("FLIP"), purchasePrice: 200, rehabCost: 50 }, "FLIP");
+      expect(wrapper.find('[data-testid="form.tab.buyRehab.needs-input"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="form.tab.flipStrategy.needs-input"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="form.tab.expenses.needs-input"]').exists()).toBe(true);
+    });
+
+    it("marks the needed inputs on the fields themselves", () => {
+      const needed = (wrapper: ReturnType<typeof mountForm>) =>
+        wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.attributes("needed-to-run-analysis") === "true").map((c) => c.props("label"));
+      expect(needed(mountForm(createEmptyDealForm("BRRRR"), "BRRRR"))).toEqual(
+        ["Purchase Price", "Actual Rehab Cost", "Monthly Rent", "Annual Taxes", "Annual Insurance", "ARV"],
+      );
+      expect(needed(mountForm(createEmptyDealForm("FLIP"), "FLIP"))).toEqual(
+        ["Purchase Price", "Rehab Cost", "Projected Sale Price", "Annual Taxes", "Annual Insurance"],
+      );
+    });
+  });
+
   describe("populating from a saved deal (API shape)", () => {
     /**
      * A deal as it actually arrives from `/active-deals` and `/bought-deals`:
@@ -396,16 +485,33 @@ describe("DealInputsForm", () => {
       expect("recordingTransferBuy" in deal).toBe(true);
     });
 
-    it("mirrors the first rehab amount into the construction budget once, then leaves them independent", async () => {
-      const deal = reactive(createEmptyDealForm("BRRRR"));
+    it("seeds the construction budget at rehab + contingency from the first rehab amount, then leaves them independent", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR")); // contingency 10% by default
       const wrapper = mountForm(deal, "BRRRR");
 
       await emitFrom(wrapper, "Actual Rehab Cost", 40);
-      expect(deal.constructionLoanBudget).toBe(40);
+      expect(deal.constructionLoanBudget).toBe(44); // 40 × 1.10: the lender finances the contingency
 
       await emitFrom(wrapper, "Construction Loan Budget", 55);
       expect(deal.rehabCost).toBe(40);
       await emitFrom(wrapper, "Actual Rehab Cost", 42);
+      expect(deal.constructionLoanBudget).toBe(55);
+    });
+
+    it("seeds the budget at exactly the rehab when there is no contingency, rounded to whole dollars in thousands", async () => {
+      const noContingency = reactive({ ...createEmptyDealForm("BRRRR"), rehabContingency: 0 });
+      await emitFrom(mountForm(noContingency, "BRRRR"), "Actual Rehab Cost", 40);
+      expect(noContingency.constructionLoanBudget).toBe(40);
+
+      const floatingPointTrap = reactive(createEmptyDealForm("BRRRR"));
+      await emitFrom(mountForm(floatingPointTrap, "BRRRR"), "Actual Rehab Cost", 50);
+      expect(floatingPointTrap.constructionLoanBudget).toBe(55); // not 55.000000000000007
+    });
+
+    it("copies a budget typed first to the rehab unchanged (a budget is the lender's number)", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      await emitFrom(mountForm(deal, "BRRRR"), "Construction Loan Budget", 55);
+      expect(deal.rehabCost).toBe(55);
       expect(deal.constructionLoanBudget).toBe(55);
     });
 

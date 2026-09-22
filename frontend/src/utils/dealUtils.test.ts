@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BRRR_LIFECYCLE_DEFAULTS,
   createEmptyDealForm,
   formatDealForClipboard,
   toNumber,
@@ -79,6 +80,19 @@ describe("formatDealForClipboard", () => {
   it("still works when the deal already holds real numbers", () => {
     const typed = { ...savedFlip, purchasePrice: 200, salePrice: 320 } as ActiveDealRes;
     expect(() => formatDealForClipboard(typed)).not.toThrow();
+  });
+
+  it("lists the Google Drive folder with the other links, and a dash when there is none", () => {
+    const withDrive = { ...savedFlip, google_drive_link: "https://drive.google.com/drive/folders/abc" } as ActiveDealRes;
+    expect(formatDealForClipboard(withDrive)).toContain("Google Drive: https://drive.google.com/drive/folders/abc");
+    expect(formatDealForClipboard(savedFlip)).toContain("Google Drive: -");
+  });
+});
+
+describe("createEmptyDealForm defaults the owner changed", () => {
+  it("starts the broker processing fee at $0: most refi brokers do not charge one", () => {
+    expect(createEmptyDealForm("BRRRR").brokerProcessingFeeRefi).toBe(0);
+    expect(BRRR_LIFECYCLE_DEFAULTS.brokerProcessingFeeRefi).toBe(0);
   });
 });
 

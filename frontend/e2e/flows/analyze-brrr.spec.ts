@@ -75,12 +75,24 @@ test('analyze a BRRRR deal, save it, and land on its open modal', async ({
     ).trim();
   }
 
-  // The saved body must be the fixture, field for field.
+  // The saved body must carry every field the form typed, field for field.
+  // The three lump sums the lifecycle form no longer renders (`closingCostsBuy`,
+  // `closingCostsRefi`, `cashReserve`) travel with the form's defaults and are
+  // frozen by the golden below, like the FLIP spec's untyped BRRRR fields.
   const saved = api.matching(
     (request) => request.method === 'POST' && request.path === '/active-deals',
   );
   expect(saved).toHaveLength(1);
-  expect(saved[0]!.body).toMatchObject({ ...BRRRR_PAYLOAD });
+  const expected: Record<string, unknown> = {
+    deal_type: BRRRR_PAYLOAD.deal_type,
+    address: BRRRR_PAYLOAD.address,
+    section: BRRRR_PAYLOAD.section,
+    stage: BRRRR_PAYLOAD.stage,
+  };
+  for (const field of BRRRR_FORM_FIELDS) {
+    expected[field] = (BRRRR_PAYLOAD as Record<string, unknown>)[field];
+  }
+  expect(saved[0]!.body).toMatchObject(expected);
 
   await api.expectContract('analyze-brrr-save', { rendered });
 });
