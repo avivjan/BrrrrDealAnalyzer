@@ -65,8 +65,27 @@ class CalcBreakdown:
     used by both `cash_flow` and `dscr`) by passing a list of keys.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, results_record=None) -> None:
         self._steps: dict[str, list[CalcStep]] = {}
+        # Every step value, by the identity of the Decimal object it was added with, to the
+        # (label, section keys) of the steps carrying it. The explain layer reads each value off the
+        # frozen results record and later passes the very same object as an operand of a sum, which is
+        # what lets `add_sum` stamp that operand with the step it came from, without any narrative edit.
+        self._step_labels_by_value_object_id: dict[int, list[tuple[str, frozenset[str]]]] = {}
+        # A Decimal object the record stores under two different fields (the default notary fee
+        # constant backing both legs; a typed refi line reused at the lowest ARV) is not one value:
+        # it may only link inside a section its step was added to. `vars()`, not `getattr` over
+        # `dataclasses.fields`: the reads proxy in tests/test_explain.py logs attribute reads, and
+        # this bookkeeping must not count as "explaining" a field.
+        record_fields = vars(results_record).values() if results_record is not None else ()
+        seen_once: set[int] = set()
+        self._value_object_ids_backing_two_record_fields: set[int] = set()
+        for field_value in record_fields:
+            if not isinstance(field_value, Decimal):
+                continue
+            if id(field_value) in seen_once:
+                self._value_object_ids_backing_two_record_fields.add(id(field_value))
+            seen_once.add(id(field_value))
 
     def add(
         self,
@@ -78,11 +97,27 @@ class CalcBreakdown:
         note: Optional[str] = None,
         terms: Optional[list[CalcTerm]] = None,
     ) -> None:
-        if isinstance(keys, str):
-            keys = (keys,)
+        keys = (keys,) if isinstance(keys, str) else tuple(keys)
+        if isinstance(value, Decimal):  # before float(): the identity is that of the Decimal object
+            self._step_labels_by_value_object_id.setdefault(id(value), []).append((label, frozenset(keys)))
         step = CalcStep(label=label, value=float(value), unit=unit, formula=formula, terms=terms, note=note)
         for k in keys:
             self._steps.setdefault(k, []).append(step)
+
+    def _linked_step_label(self, operand_value: Number, sum_step_keys: frozenset[str]) -> Optional[str]:
+        """The label of the step this operand is the value of, or None for a raw input.
+
+        A step filed under one of the sum's own sections wins; otherwise an object that backs two
+        record fields is ambiguous and stays unlinked; otherwise the sole step carrying it (a
+        cross-section link, e.g. a flip's Total Cash Invested reaching Total Holding Costs).
+        """
+        candidates = self._step_labels_by_value_object_id.get(id(operand_value)) or []
+        for step_label, step_keys in candidates:
+            if step_keys & sum_step_keys:
+                return step_label
+        if id(operand_value) in self._value_object_ids_backing_two_record_fields:
+            return None
+        return candidates[0][0] if candidates else None
 
     def add_sum(
         self,
@@ -100,6 +135,7 @@ class CalcBreakdown:
         calculation gains, drops or reorders an operand and this list is not
         updated, the mismatch raises here instead of printing a wrong formula.
         """
+        sum_step_keys = frozenset((keys,) if isinstance(keys, str) else keys)
         norm = [(t[0], t[1], t[2] if len(t) > 2 else "+") for t in terms]
         acc = norm[0][1] if norm[0][2] == "+" else -norm[0][1]
         for _, value, sign in norm[1:]:
@@ -112,7 +148,10 @@ class CalcBreakdown:
         text += f" = {fmt_money(total)}"
         self.add(
             keys, label, total, text, note=note,
-            terms=[CalcTerm(label=name, value=float(value), sign=sign) for name, value, sign in norm],
+            terms=[
+                CalcTerm(label=name, value=float(value), sign=sign, step_label=self._linked_step_label(value, sum_step_keys))
+                for name, value, sign in norm
+            ],
         )
 
     def to_dict(self) -> dict[str, list[dict]]:

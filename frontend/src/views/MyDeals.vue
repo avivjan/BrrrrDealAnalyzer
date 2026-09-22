@@ -1460,7 +1460,7 @@ console.groupEnd();
       :open="pressedResultTileForCalculationBreakdown !== null"
       :metric-key="pressedResultTileForCalculationBreakdown?.metricKey ?? ''"
       :metric-label="pressedResultTileForCalculationBreakdown?.metricLabel ?? ''"
-      :steps="pressedResultTileForCalculationBreakdown ? currentAnalysis?.breakdowns?.[pressedResultTileForCalculationBreakdown.metricKey] : undefined"
+      :breakdowns="currentAnalysis?.breakdowns"
       :metric-value="pressedResultTileValue"
       @close="pressedResultTileForCalculationBreakdown = null"
     />

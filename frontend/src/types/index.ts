@@ -129,6 +129,8 @@ export interface CalcTerm {
   label: string;
   value: number;
   sign: '+' | '-';
+  /** When the operand is itself a step, that step's label (look it up in this section first, then any section); absent for a raw input. */
+  step_label?: string | null;
 }
 
 /**

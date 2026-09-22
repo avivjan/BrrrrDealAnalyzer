@@ -116,13 +116,18 @@ The BRRRR form (`components/deal/brrr/*Section.vue`, one per lifecycle phase, fr
 Every result tile in the My Deals and Bought Deals modals is a
 `components/deal/ResultTileWithCalculationButton.vue`: the plain `UiStatTile` readout with a
 transparent button laid over it ("Show how Cash Flow is calculated"). Pressing it opens
-`components/deal/CalculationBreakdownPopup.vue`, which renders `breakdowns[<result key>]` of the
-current analysis: the ordered `CalcStep[]` the backend explain layer emits for that headline
-(label, the formula with the concrete numbers, the value read by its unit via
-`calculationStepFormat.ts`, a sum step's operands stacked, the note). The popup computes nothing;
-the numbers and equations are the engine's own, guarded server-side (`BackEnd/BL/analyze/explain/`).
-It is teleported to `<body>` above the deal modal, closes on Escape / scrim / ×, and the tile's own
-value element (its `*.modal.result.<key>` test id included) is untouched.
+`components/deal/CalculationBreakdownPopup.vue`, which opens on the answer: the headline step of
+`breakdowns[<result key>]` as a table of its operands, ending on the "= headline" line. An operand that is
+itself a computed step (the backend names it in `CalcTerm.step_label`) carries a chevron and expands in
+place into its own operands or, for a step that is not a sum, its formula with the numbers filled in, down
+to the raw inputs (`calculationBreakdownTree.ts` resolves the links, `CalculationBreakdownTreeRow.vue`
+renders a row recursively). The first level is open on arrival; "Expand all" / "Collapse all" do the rest;
+a headline that is not a sum (DSCR, the returns) shows its formula first and the section's earlier steps
+as its inputs; a collapsed "All steps" list keeps the calculation order. Values read by their unit via
+`calculationStepFormat.ts`. The popup computes nothing; the numbers, equations and links are the
+engine's own, guarded server-side (`BackEnd/BL/analyze/explain/`). It is teleported to `<body>` above the
+deal modal, closes on Escape / scrim / ×, and the tile's own value element (its `*.modal.result.<key>`
+test id included) is untouched.
 
 ### PrimeVue
 

@@ -61,7 +61,7 @@ const CASH_FLOW_STEPS_FROM_THE_LIST: CalcStep[] = [
     unit: "money",
     formula: "NOI ($2,065) − Mortgage ($1,715) = $350",
     terms: [
-      { label: "NOI", value: 2065, sign: "+" },
+      { label: "NOI", value: 2065, sign: "+", step_label: "Net Operating Income (NOI)" },
       { label: "Mortgage", value: 1715, sign: "-" },
     ],
   },
@@ -148,8 +148,9 @@ describe("MyDeals — result tiles open the calculation breakdown popup", () => 
     expect(document.querySelector('[data-testid="calculation-breakdown-popup"] h2')!.textContent!.trim()).toBe(
       "How Cash Flow is calculated",
     );
-    expect(popupText()).toContain("Net Operating Income (NOI)");
-    expect(popupText()).toContain("Operating Expenses");
+    // The answer first: the headline's operands are the rows, and NOI, a computed one, is already open on its own operands.
+    const rowLabels = [...document.querySelectorAll('[data-part="tree"] [data-part="row-label"]')].map((el) => el.textContent!.trim());
+    expect(rowLabels).toEqual(["NOI", "Rent", "Operating Expenses", "Mortgage"]);
     expect(popupText()).toContain("$2,065");
     expect(document.querySelector('[data-part="headline-value"]')!.textContent!.trim()).toBe("$350");
 
