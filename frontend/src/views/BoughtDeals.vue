@@ -11,6 +11,8 @@ import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
+import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
+import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
 import type { BoughtDealRes, AnalyzeDealReq } from "../types";
 import { ensureBrrrLegacyDefaults } from "../utils/dealUtils";
 import {
@@ -245,6 +247,15 @@ const showDetailModal = ref(false);
 const editingDeal = ref<BoughtDealRes | null>(null);
 
 const currentAnalysis = ref<BoughtDealRes | null>(null);
+/** The result tile whose calculation popup is open; null while none is. */
+const pressedResultTileForCalculationBreakdown = ref<{ metricKey: string; metricLabel: string } | null>(null);
+/** The number on the pressed tile, read off the current analysis by the tile's result key. */
+const pressedResultTileValue = computed<number | undefined>(() => {
+  const pressedTile = pressedResultTileForCalculationBreakdown.value;
+  const analysis = currentAnalysis.value as Record<string, unknown> | null;
+  const value = pressedTile && analysis ? analysis[pressedTile.metricKey] : undefined;
+  return typeof value === "number" ? value : undefined;
+});
 const modalScrollContainer = ref<HTMLElement | null>(null);
 const analysisResultsEl = ref<HTMLElement | null>(null);
 
@@ -285,6 +296,7 @@ const closeModal = async () => {
   if (isDirty && editingDeal.value) {
     await performSave();
   }
+  pressedResultTileForCalculationBreakdown.value = null;
   showDetailModal.value = false;
 };
 
@@ -1057,8 +1069,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                   class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
                 >
                   <template v-if="editingDealType === 'BRRRR'">
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Flow</template>
+                    <ResultTileWithCalculationButton metric-label="Cash Flow" metric-key="cash_flow" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.cash_flow"
                         class="font-bold"
@@ -1066,9 +1077,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatCurrency( (currentAnalysis as any).cash_flow ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Out</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash Out" metric-key="cash_out" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.cash_out"
                         class="font-bold"
@@ -1076,9 +1086,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatCurrency( (currentAnalysis as any).cash_out ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash-Out Routi</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash-Out Routi" metric-key="cash_out_routi" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.cash_out_routi"
                         class="font-bold"
@@ -1086,9 +1095,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatCurrency( (currentAnalysis as any).cash_out_routi ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>CoC</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="CoC" metric-key="cash_on_cash" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.cash_on_cash"
                         class="font-bold"
@@ -1096,9 +1104,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatPercent( (currentAnalysis as any).cash_on_cash ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>DSCR</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="DSCR" metric-key="dscr" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.dscr"
                         class="font-bold"
@@ -1106,15 +1113,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ (currentAnalysis as any).dscr?.toFixed(2) || "-" }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Equity</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Equity" metric-key="equity" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.equity" class="font-bold text-positive">
                         {{ formatCurrency( (currentAnalysis as any).equity ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>ROI</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="ROI" metric-key="roi" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
@@ -1122,9 +1127,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Net Profit</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Net Profit" metric-key="net_profit" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.net_profit"
                         class="font-bold"
@@ -1132,35 +1136,30 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Needed</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash Needed" metric-key="total_cash_needed_for_deal" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_for_deal" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any) .total_cash_needed_for_deal ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash to Close (Buy)</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash to Close (Buy)" metric-key="cash_to_close_buy" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.cash_to_close_buy" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any) .cash_to_close_buy ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash-Out Routi (Lowest ARV)</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash-Out Routi (Lowest ARV)" metric-key="cash_out_routi_conservative" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.cash_out_routi_conservative" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).cash_out_routi_conservative)">
                         {{ formatCurrency( (currentAnalysis as any) .cash_out_routi_conservative ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Stolen Money</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Stolen Money" metric-key="stolen_money" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.stolen_money" class="font-bold" :class="getPerformanceColor((currentAnalysis as any).stolen_money)">
                         {{ formatCurrency( (currentAnalysis as any) .stolen_money ) }}
                       </div>
-                    </UiStatTile>
+                    </ResultTileWithCalculationButton>
                   </template>
                   <template v-else>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Net Profit</template>
+                    <ResultTileWithCalculationButton metric-label="Net Profit" metric-key="net_profit" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.net_profit"
                         class="font-bold"
@@ -1168,9 +1167,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatCurrency( (currentAnalysis as any).net_profit ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>ROI</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="ROI" metric-key="roi" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.roi"
                         class="font-bold"
@@ -1178,9 +1176,8 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatPercent( (currentAnalysis as any).roi ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Annualized ROI</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Annualized ROI" metric-key="annualized_roi" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div
                         data-testid="boughtdeals.modal.result.annualized_roi"
                         class="font-bold"
@@ -1188,31 +1185,27 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                       >
                         {{ formatPercent( (currentAnalysis as any).annualized_roi ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Needed</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash Needed" metric-key="total_cash_needed" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_cash_needed ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Cash Needed (Buffered)</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Cash Needed (Buffered)" metric-key="total_cash_needed_with_buffer" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.total_cash_needed_with_buffer" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_cash_needed_with_buffer ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>Holding Costs</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="Holding Costs" metric-key="total_holding_costs" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.total_holding_costs" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_holding_costs ) }}
                       </div>
-                    </UiStatTile>
-                    <UiStatTile tone="neutral" class="bg-surface">
-                      <template #label>HML Interest</template>
+                    </ResultTileWithCalculationButton>
+                    <ResultTileWithCalculationButton metric-label="HML Interest" metric-key="total_hml_interest" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                       <div v-flash data-testid="boughtdeals.modal.result.total_hml_interest" class="font-bold">
                         {{ formatCurrency( (currentAnalysis as any).total_hml_interest ) }}
                       </div>
-                    </UiStatTile>
+                    </ResultTileWithCalculationButton>
                   </template>
                 </div>
               </div>
@@ -1384,6 +1377,16 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       :initial-tab="activeTab"
       @close="showPipelineEditor = false"
       @saved="refreshColumns"
+    />
+
+    <!-- "How is this number calculated?" for the pressed result tile; reads the latest analysis. -->
+    <CalculationBreakdownPopup
+      :open="pressedResultTileForCalculationBreakdown !== null"
+      :metric-key="pressedResultTileForCalculationBreakdown?.metricKey ?? ''"
+      :metric-label="pressedResultTileForCalculationBreakdown?.metricLabel ?? ''"
+      :steps="pressedResultTileForCalculationBreakdown ? currentAnalysis?.breakdowns?.[pressedResultTileForCalculationBreakdown.metricKey] : undefined"
+      :metric-value="pressedResultTileValue"
+      @close="pressedResultTileForCalculationBreakdown = null"
     />
   </div>
 </template>
