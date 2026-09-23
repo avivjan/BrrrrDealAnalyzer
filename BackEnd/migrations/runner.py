@@ -21,6 +21,7 @@ from migrations.add_column import add_column_if_missing  # noqa: F401  (re-expor
 from migrations.steps.bought_stage_to_string import migrate_bought_stage_to_string
 from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
+from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
 
 
@@ -153,6 +154,9 @@ def _run_migrations_locked(engine):
 
     # Widen the money columns so a thousands value can hold an exact dollar.
     widen_money_columns(engine)
+
+    # Widen the rate columns so a rate quoted in eighths (7.125%) is stored as typed.
+    widen_rate_columns(engine)
 
     # Google Drive folder link on every deal table (active and bought, both types).
     # Nullable free text, no backfill. Reflects fresh: the lifecycle step above may

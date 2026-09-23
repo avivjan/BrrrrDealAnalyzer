@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from ReqRes.common.active_deal_schemas import BrrrActiveDealCreate, FlipActiveDealCreate
 from DAL.crud.active_deal import update_brrr_deal, update_flip_deal
 from BL.common.deal_response import create_deal_response
+from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
 
 
 def update_deal(db: Session, deal_id: str, deal: Union[BrrrActiveDealCreate, FlipActiveDealCreate]):
@@ -20,6 +21,7 @@ def update_deal(db: Session, deal_id: str, deal: Union[BrrrActiveDealCreate, Fli
     The backend receives the payload with `deal_type`.
     """
     if deal.deal_type == "BRRRR":
+        validate_brrr_inputs_for_saved_deal(deal)
         updated = update_brrr_deal(db, deal_id, deal)
         if updated:
             db.commit()

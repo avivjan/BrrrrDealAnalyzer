@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 from decimal import Decimal
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ReqRes.common.refi_timing import days_from_legacy_months
 from ReqRes.common.brrr_legacy_inputs import construction_budget_from_legacy_hm_flag
@@ -14,7 +14,13 @@ class analyzeBRRRReq(BrrrLifecycleInputs):
 
     The lifecycle inputs (dates, granular closing costs, construction budget, holding
     items, reserves, lowest ARV) come from `BrrrLifecycleInputs`.
+
+    Accepts each field by its alias (`purchasePrice`) or its name (`purchase_price_in_thousands`),
+    like the saved-deal models: a body copied from a saved deal must never have a field silently
+    dropped and replaced by its default.
     """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -75,7 +81,9 @@ class analyzeBRRRReq(BrrrLifecycleInputs):
 
 
 class analyzeFlipReq(BaseModel):
-    """Captures inputs required to calculate Flip deal metrics."""
+    """Captures inputs required to calculate Flip deal metrics. Accepts aliases and field names alike."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     purchase_price_in_thousands: Annotated[Decimal, Field(alias="purchasePrice", description="Acquisition price for the property")]
 

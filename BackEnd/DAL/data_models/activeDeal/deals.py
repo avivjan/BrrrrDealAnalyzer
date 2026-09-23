@@ -16,13 +16,13 @@ class BrrrActiveDeal(Base, BaseDeal, BrrrLifecycleColumns):
     # unit and 1 month == 30 days exactly.
     days_until_refi = Column(Integer, nullable=False, server_default='180', default=180)
     closing_cost_refi_in_thousands = Column(Numeric(14, 4), nullable=False, default=0.0)
-    refi_points = Column(Numeric(5, 2), nullable=False, server_default='1.5', default=1.5)
+    refi_points = Column(Numeric(6, 3), nullable=False, server_default='1.5', default=1.5)
     # Cash deposited toward the DSCR loan principal at refi (in thousands).
     # Trades off cash_out for equity; existing rows default to 0 via migration.
     cash_reserve_in_thousands = Column(Numeric(14, 4), nullable=False, server_default='0', default=0.0)
     loan_term_years = Column(Integer, nullable=False, default=30)
-    ltv_as_precent = Column(Numeric(5, 2), nullable=False)
-    interest_rate = Column(Numeric(5, 2), nullable=False) # Long term loan rate
+    ltv_as_precent = Column(Numeric(6, 3), nullable=False)
+    interest_rate = Column(Numeric(6, 3), nullable=False) # Long term loan rate, three decimals (7.125%)
     rent = Column(Numeric(12, 2), nullable=False)
     vacancy_percent = Column(Numeric(5, 2), nullable=False, default=0.0)
     property_managment_fee_precentages_from_rent = Column(Numeric(5, 2), nullable=False, default=0.0)

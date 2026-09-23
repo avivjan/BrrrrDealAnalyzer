@@ -6,14 +6,17 @@ from ReqRes.common.active_deal_schemas import BrrrActiveDealCreate, FlipActiveDe
 
 
 def add_brrr_deal(db: Session, deal_data: BrrrActiveDealCreate) -> BrrrActiveDeal:
-    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
+    # Every field, set or defaulted: the Pydantic defaults are the calculator's defaults, so a
+    # deal saved without a field re-analyzes exactly as `/analyze/brrr` would have computed it
+    # (the DDL defaults only serve rows that predate a column).
+    data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     db_deal = BrrrActiveDeal(**data)
     db.add(db_deal)
     return db_deal
 
 
 def add_flip_deal(db: Session, deal_data: FlipActiveDealCreate) -> FlipActiveDeal:
-    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
+    data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     db_deal = FlipActiveDeal(**data)
     db.add(db_deal)
     return db_deal

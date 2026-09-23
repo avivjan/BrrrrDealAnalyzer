@@ -59,6 +59,20 @@ class TestFlip:
 
 
 class TestBoughtFlow:
+    def test_a_deal_added_without_refi_points_matches_analyze_brrr(self, client, brrrr_payload):
+        """One body, one wire: the saved deal and the calculator must agree on the omitted defaults."""
+        without_refi_points = {key: value for key, value in brrrr_payload.items() if key != "refiPoints"}
+        saved = call_json("add_active_deal", body=without_refi_points)
+        analyzed = call_json("analyze_brrr", body=without_refi_points)
+        assert float(saved["refiPoints"]) == 2
+        for metric in ("cash_out_routi", "cash_out", "total_cash_needed_for_deal", "cash_flow"):
+            assert saved[metric] == pytest.approx(analyzed[metric]), metric
+
+    def test_add_active_deal_refuses_what_analyze_brrr_refuses(self, client, brrrr_payload):
+        with pytest.raises(RuntimeError, match="HTTP 400.*Loan term must be at least 1 year"):
+            call_json("add_active_deal", body={**brrrr_payload, "loanTermYears": 0})
+        assert call_json("get_active_deals") == []
+
     def test_move_to_bought_then_tick_a_checklist_item(self, client, brrrr_payload):
         deal = call_json("add_active_deal", body={**brrrr_payload, "stage": 3})
         bought = call_json("move_to_bought", deal_id=deal["id"], deal_type="BRRRR")

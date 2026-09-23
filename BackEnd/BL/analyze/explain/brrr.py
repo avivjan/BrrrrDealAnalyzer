@@ -385,10 +385,15 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add("roi", "ROI", results.roi, roi_formula, unit="pct")
 
     # -- cash needed -----------------------------------------------------------
-    check(results.hml_interest_first_month == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, DAYS_PER_MONTH), "HML interest (first month)")
+    check(results.hml_interest_first_month_days == max(0, int(DAYS_PER_MONTH) - results.hml_interest_days_prepaid_at_purchase_closing), "HML interest days (first month)")
+    check(results.hml_interest_first_month == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, results.hml_interest_first_month_days), "HML interest (first month)")
     breakdown.add(
         CASH_NEEDED, "HML Interest (first month)", results.hml_interest_first_month,
-        f"Per diem ({fmt_money(results.hml_per_diem)}) × 30 days = {fmt_money(results.hml_interest_first_month)}",
+        (f"Per diem ({fmt_money(results.hml_per_diem)}) × (30 − {results.hml_interest_days_prepaid_at_purchase_closing} days already prepaid in Cash to Close) = "
+         f"{results.hml_interest_first_month_days} days = {fmt_money(results.hml_interest_first_month)}"
+         if has_buy_closing_date else f"Per diem ({fmt_money(results.hml_per_diem)}) × 30 days = {fmt_money(results.hml_interest_first_month)}"),
+        note=("The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here."
+              if has_buy_closing_date else "Without a closing date nothing is prepaid, so the whole first month counts here."),
     )
     check(results.holding_costs_first_month == calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, DAYS_PER_MONTH), "holding costs (first month)")
     breakdown.add(

@@ -8,11 +8,13 @@ silently different number on someone's deal board.
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
 
-from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment
+from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment, days_through_month_end
+from ReqRes.common.analyze_inputs import analyzeBRRRReq
 
 # Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
 EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
@@ -122,6 +124,21 @@ class TestAnalyzeBrrr:
             "/analyze/brrr", json={**brrrr_payload, "refiPoints": 2}
         ).json()
         assert response.json()["cash_out"] == pytest.approx(with_default["cash_out"])
+
+    def test_field_names_are_accepted_like_their_aliases(self, client, brrrr_payload):
+        """A body copied from a saved deal may spell the fields by name (`days_until_refi`); it
+        used to be silently ignored, with every such field falling back to its default."""
+        by_field_name = {}
+        for name, field in analyzeBRRRReq.model_fields.items():
+            alias = field.alias or name
+            if alias in brrrr_payload:
+                by_field_name[name] = brrrr_payload[alias]
+        assert "days_until_refi" in by_field_name and "earnest_money_deposit" in by_field_name
+        by_name_result = client.post("/analyze/brrr", json=by_field_name).json()
+        by_alias_result = client.post("/analyze/brrr", json=brrrr_payload).json()
+        assert by_name_result == by_alias_result
+        assert client.post("/analyze/brrr", json={**by_field_name, "days_until_refi": 90}).json()["total_hard_money_cost"] \
+            < by_alias_result["total_hard_money_cost"]
 
     @pytest.mark.parametrize(
         ("field", "value", "message"),
@@ -315,12 +332,15 @@ class TestAuditFixes:
             json={**brrrr_payload, "constructionLoanBudget": 70, "rehabContingency": 0, "arv_in_thousands": 400},
         ).json()
         assert result["cash_to_refi_table_conservative"] == 0
-        one_month_of_hml_interest = result["hml_amount"] * brrrr_payload["HMLInterestRate"] / 100 * 30 / 360
+        # The fixture closes on 2026-01-10: 22 days of interest are prepaid inside Cash to Close, so the
+        # floor adds only the remaining 8 days of the first month.
+        days_prepaid_at_closing = days_through_month_end(date.fromisoformat(brrrr_payload["buyClosingDate"]))
+        rest_of_first_month_of_hml_interest = result["hml_amount"] * brrrr_payload["HMLInterestRate"] / 100 * (30 - days_prepaid_at_closing) / 360
         one_month_of_taxes_insurance_and_hoa = float(calc_holding_costs(
             Decimal(brrrr_payload["annual_property_taxes"]), Decimal(brrrr_payload["annual_insurance"]), Decimal(brrrr_payload["montly_hoa"]), 30,
         ))
         floor = (brrrr_payload["earnestMoneyDeposit"] + result["cash_to_close_buy"] + brrrr_payload["rehabCushion"]
-                 + brrrr_payload["monthlyUtilitiesUntilRented"] + one_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa)
+                 + brrrr_payload["monthlyUtilitiesUntilRented"] + rest_of_first_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa)
         through_refi = result["total_cash_invested"] + brrrr_payload["rehabCushion"] + result["cash_to_refi_table_conservative"]
         assert through_refi < floor
         assert result["total_cash_needed_for_deal"] == pytest.approx(floor, abs=1e-6)

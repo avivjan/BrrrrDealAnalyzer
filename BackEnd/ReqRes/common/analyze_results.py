@@ -64,8 +64,9 @@ class analyzeBRRRRes(BaseModel):
         "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of "
         "total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi "
         "table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the "
-        "day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and "
-        "taxes, insurance and HOA (30 days)."))
+        "day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and "
+        "HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid "
+        "inside cash_to_close_buy)."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
         "seller tax credit set aside in the property's tax bucket the day after closing + rehab paid "

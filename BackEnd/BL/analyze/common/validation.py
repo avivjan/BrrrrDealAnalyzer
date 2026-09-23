@@ -43,10 +43,94 @@ _BRRR_NON_NEGATIVE_DOLLARS = [
 ]
 
 
-def validate_brrr_inputs(payload: analyzeBRRRReq):
+def _is_negative(value) -> bool:
+    return value is not None and value < 0
+
+
+def _is_outside_percent_range(value) -> bool:
+    return value is not None and (value < 0 or value > 100)
+
+
+def _brrr_range_and_sign_errors(payload) -> list[str]:
+    """The range and sign rules every BRRRR input must satisfy, whoever supplies it.
+
+    Shared by the calculator's validator (a complete `analyzeBRRRReq`) and the saved-deal
+    validator (a `BrrrActiveDealCreate`, whose fields are Optional): a `None` field is
+    "not set" and is skipped, never a violation. The "must be greater than 0" rules on
+    ARV, purchase price and rent are deliberately NOT here -- a brand-new deal on the
+    board is saved with those at 0 until the owner fills them in.
+    """
     validation_errors = []
 
-    # 1. Base Value Checks (Must be positive)
+    # 1. Non-Negative Checks
+    if _is_negative(payload.rehab_cost_in_thousands):
+        validation_errors.append("Rehab cost cannot be negative.")
+    if _is_outside_percent_range(payload.rehab_contingency_percent):
+        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.refi_points):
+        validation_errors.append("Broker points must be between 0% and 100%.")
+    for field, label in _BRRR_NON_NEGATIVE_DOLLARS:
+        if _is_negative(getattr(payload, field)):
+            validation_errors.append(f"{label} cannot be negative.")
+    if _is_negative(payload.construction_loan_budget_in_thousands):
+        validation_errors.append("Construction loan budget cannot be negative.")
+    if _is_negative(payload.days_until_rented):
+        validation_errors.append("Days until rented cannot be negative.")
+    if payload.lowest_arv_in_thousands is not None and payload.lowest_arv_in_thousands <= 0:
+        validation_errors.append("Lowest ARV must be greater than 0.")
+    if _is_negative(payload.annual_property_taxes):
+        validation_errors.append("Annual property taxes cannot be negative.")
+    if _is_negative(payload.annual_insurance):
+        validation_errors.append("Annual insurance cannot be negative.")
+    if _is_negative(payload.montly_hoa):
+        validation_errors.append("HOA dues cannot be negative.")
+
+    # 2. Lending Terms (Percentage Ranges 0-100)
+    if _is_outside_percent_range(payload.down_payment):
+        validation_errors.append("Down payment percentage must be between 0% and 100%.")
+    if payload.ltv_as_precent is not None and (payload.ltv_as_precent <= 0 or payload.ltv_as_precent > 100):
+        validation_errors.append("LTV must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.HML_points):
+        validation_errors.append("HML points must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.HML_interest_rate):
+        validation_errors.append("HML interest rate must be between 0% and 100%.")
+
+    # 3. Timeframes
+    if payload.days_until_refi is not None and payload.days_until_refi <= 0:
+        validation_errors.append("Days until refi must be a positive number.")
+    if payload.loan_term_years is not None and payload.loan_term_years <= 0:
+        validation_errors.append("Loan term must be at least 1 year.")
+
+    # 4. Long-term Financing
+    if _is_outside_percent_range(payload.interest_rate):
+        validation_errors.append("Interest rate must be between 0% and 100%.")
+
+    # 5. Operating Expenses (Percentage Ranges)
+    if _is_outside_percent_range(payload.vacancy_percent):
+        validation_errors.append("Vacancy percentage must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.property_managment_fee_precentages_from_rent):
+        validation_errors.append("Property management percentage must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.maintenance_percent):
+        validation_errors.append("Maintenance percentage must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.capex_percent_of_rent):
+        validation_errors.append("CapEx percentage must be between 0% and 100%.")
+
+    return validation_errors
+
+
+def _lowest_arv_exceeds_arv(payload) -> bool:
+    """Only meaningful once both appraisals are known and positive; a lowest ARV of 0 or less is
+    reported separately by `_brrr_range_and_sign_errors`."""
+    return (payload.lowest_arv_in_thousands is not None and payload.lowest_arv_in_thousands > 0
+            and payload.arv_in_thousands is not None and payload.arv_in_thousands > 0
+            and payload.lowest_arv_in_thousands > payload.arv_in_thousands)
+
+
+def validate_brrr_inputs(payload: analyzeBRRRReq):
+    """The calculator's gate (`POST /analyze/brrr`, the PDF): every input must be usable now."""
+    validation_errors = []
+
+    # Base Value Checks (Must be positive)
     if payload.arv_in_thousands <= 0:
         validation_errors.append("ARV (in thousands) must be greater than 0.")
     if payload.purchase_price_in_thousands <= 0:
@@ -54,63 +138,28 @@ def validate_brrr_inputs(payload: analyzeBRRRReq):
     if payload.rent <= 0:
         validation_errors.append("Rent must be greater than 0.")
 
-    # 2. Non-Negative Checks
-    if payload.rehab_cost_in_thousands < 0:
-        validation_errors.append("Rehab cost cannot be negative.")
-    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
-        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
-    if payload.refi_points < 0 or payload.refi_points > 100:
-        validation_errors.append("Broker points must be between 0% and 100%.")
-    for field, label in _BRRR_NON_NEGATIVE_DOLLARS:
-        value = getattr(payload, field)
-        if value is not None and value < 0:
-            validation_errors.append(f"{label} cannot be negative.")
-    if payload.construction_loan_budget_in_thousands < 0:
-        validation_errors.append("Construction loan budget cannot be negative.")
-    if payload.days_until_rented < 0:
-        validation_errors.append("Days until rented cannot be negative.")
-    if payload.lowest_arv_in_thousands is not None:
-        if payload.lowest_arv_in_thousands <= 0:
-            validation_errors.append("Lowest ARV must be greater than 0.")
-        elif payload.lowest_arv_in_thousands > payload.arv_in_thousands:
-            validation_errors.append("Lowest ARV cannot exceed ARV.")
-    if payload.annual_property_taxes < 0:
-        validation_errors.append("Annual property taxes cannot be negative.")
-    if payload.annual_insurance < 0:
-        validation_errors.append("Annual insurance cannot be negative.")
-    if payload.montly_hoa < 0:
-        validation_errors.append("HOA dues cannot be negative.")
+    validation_errors.extend(_brrr_range_and_sign_errors(payload))
+    if _lowest_arv_exceeds_arv(payload):
+        validation_errors.append("Lowest ARV cannot exceed ARV.")
 
-    # 3. Lending Terms (Percentage Ranges 0-100)
-    if payload.down_payment < 0 or payload.down_payment > 100:
-        validation_errors.append("Down payment percentage must be between 0% and 100%.")
-    if payload.ltv_as_precent <= 0 or payload.ltv_as_precent > 100:
-        validation_errors.append("LTV must be between 0% and 100%.")
-    if payload.HML_points < 0 or payload.HML_points > 100:
-        validation_errors.append("HML points must be between 0% and 100%.")
-    if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
-        validation_errors.append("HML interest rate must be between 0% and 100%.")
+    if validation_errors:
+        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
-    # 4. Timeframes
-    if payload.days_until_refi <= 0:
-        validation_errors.append("Days until refi must be a positive number.")
-    if payload.loan_term_years <= 0:
-        validation_errors.append("Loan term must be at least 1 year.")
 
-    # 5. Long-term Financing
-    if payload.interest_rate < 0 or payload.interest_rate > 100:
-        validation_errors.append("Interest rate must be between 0% and 100%.")
+def validate_brrr_inputs_for_saved_deal(payload):
+    """The board's gate (POST/PUT on active and bought BRRRR deals).
 
-    # 6. Operating Expenses (Percentage Ranges)
-    if payload.vacancy_percent < 0 or payload.vacancy_percent > 100:
-        validation_errors.append("Vacancy percentage must be between 0% and 100%.")
-    if payload.property_managment_fee_precentages_from_rent < 0 or payload.property_managment_fee_precentages_from_rent > 100:
-        validation_errors.append("Property management percentage must be between 0% and 100%.")
-    if payload.maintenance_percent < 0 or payload.maintenance_percent > 100:
-        validation_errors.append("Maintenance percentage must be between 0% and 100%.")
-    if payload.capex_percent_of_rent < 0 or payload.capex_percent_of_rent > 100:
-        validation_errors.append("CapEx percentage must be between 0% and 100%.")
-
+    A saved deal is re-analyzed on every read with no validation of its own
+    (`BL.common.deal_response`), so anything the calculator would reject must be kept out of
+    the row here: out-of-range percents, negative dollar lines, a loan term under a year
+    (which makes the mortgage payment unable to compute and takes the whole board down with
+    it), a lowest ARV above the ARV. Unlike the calculator this allows the blank new-deal
+    zeros -- ARV, purchase price and rent at 0 -- because that is how a deal starts on the
+    board. Takes a `BrrrActiveDealCreate` (or the bought subclass); `None` means "not set".
+    """
+    validation_errors = _brrr_range_and_sign_errors(payload)
+    if _lowest_arv_exceeds_arv(payload):
+        validation_errors.append("Lowest ARV cannot exceed ARV.")
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 

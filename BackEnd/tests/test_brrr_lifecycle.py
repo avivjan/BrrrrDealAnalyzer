@@ -15,6 +15,7 @@ import pytest
 from BL.analyze.analyzeBRRR import calculate_brrr_results, compute_brrr_with_intermediates
 from BL.analyze.common import deal_math
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
+from ReqRes.common.brrr_legacy_inputs import construction_budget_from_legacy_hm_flag
 
 
 
@@ -234,6 +235,26 @@ class TestHoldingIncomeAndCosts:
                                          - results.pre_refi_rental_income)
 
 
+class TestLegacyHardMoneyFlagShim:
+    STALE_PAYLOAD = {"use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10}
+
+    def test_a_stale_payload_gets_the_budget_the_flag_meant(self):
+        shimmed = construction_budget_from_legacy_hm_flag(dict(self.STALE_PAYLOAD))
+        assert Decimal(shimmed["constructionLoanBudget"]) == 55
+
+    def test_a_payload_that_speaks_the_lifecycle_model_is_left_alone(self):
+        """The form still sends the old flag and omits a cleared budget; that is a $0 budget."""
+        for lifecycle_key in ("earnestMoneyDeposit", "rehab_cushion", "daysUntilRented", "capexReserve"):
+            current = {**self.STALE_PAYLOAD, lifecycle_key: 0}
+            assert construction_budget_from_legacy_hm_flag(current) is current
+        assert _compute({**self.STALE_PAYLOAD, "purchasePrice": 200, "arv_in_thousands": 320, "down_payment": 20, "HMLInterestRate": 11,
+                         "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600, "earnestMoneyDeposit": 5000}).construction_budget == 0
+
+    def test_an_explicit_budget_always_wins(self):
+        with_budget = {**self.STALE_PAYLOAD, "constructionLoanBudget": 0}
+        assert construction_budget_from_legacy_hm_flag(with_budget) is with_budget
+
+
 class TestRefinanceSettlement:
     def test_closing_costs_refi_lists_every_line(self, brrrr_payload):
         results = _compute(brrrr_payload)
@@ -356,15 +377,31 @@ class TestCashNeededFloor:
 
     def test_the_floor_is_the_deposit_the_wire_the_cushion_and_one_month_of_carrying(self, brrrr_payload):
         results = _compute(brrrr_payload)
-        one_month_of_hml_interest = results.hml_per_diem * 30
+        # Closing 2026-01-10: 22 days are prepaid inside Cash to Close, so the floor adds the other 8.
+        assert results.hml_interest_days_prepaid_at_purchase_closing == 22
+        assert results.hml_interest_first_month_days == 8
+        rest_of_first_month_of_hml_interest = results.hml_per_diem * 8
         one_month_of_taxes_insurance_and_hoa = results.monthly_taxes + results.monthly_insurance + Decimal(brrrr_payload["montly_hoa"])
-        _assert_equal_to_the_cent(results.hml_interest_first_month, one_month_of_hml_interest)
+        _assert_equal_to_the_cent(results.hml_interest_first_month, rest_of_first_month_of_hml_interest)
         _assert_equal_to_the_cent(results.holding_costs_first_month, one_month_of_taxes_insurance_and_hoa)
         _assert_equal_to_the_cent(
             results.cash_needed_floor,
             Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy + Decimal(brrrr_payload["rehabCushion"])
-            + Decimal(brrrr_payload["monthlyUtilitiesUntilRented"]) + one_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa,
+            + Decimal(brrrr_payload["monthlyUtilitiesUntilRented"]) + rest_of_first_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa,
         )
+
+    def test_the_floor_counts_the_first_month_of_interest_once(self, brrrr_payload):
+        """Prepaid (closing day through month end) plus the floor's share is exactly 30 days when the
+        prepaid window is shorter than a month; without a closing date nothing is prepaid and the
+        floor carries the whole 30 days, which is what keeps the pinned legacy Cash Needed intact."""
+        dated = _compute(brrrr_payload, buyClosingDate="2026-01-10")
+        assert dated.hml_interest_days_prepaid_at_purchase_closing + dated.hml_interest_first_month_days == 30
+        _assert_equal_to_the_cent(dated.prepaid_interest_buy + dated.hml_interest_first_month, dated.hml_per_diem * 30)
+        closing_on_the_first = _compute(brrrr_payload, buyClosingDate="2026-03-01")   # 31 days prepaid: more than a month
+        assert closing_on_the_first.hml_interest_first_month_days == 0 and closing_on_the_first.hml_interest_first_month == 0
+        undated = _compute(brrrr_payload, buyClosingDate=None)
+        assert undated.hml_interest_first_month_days == 30
+        _assert_equal_to_the_cent(undated.hml_interest_first_month, undated.hml_per_diem * 30)
 
     def test_cash_needed_is_unchanged_while_the_through_refi_figure_is_above_the_floor(self, brrrr_payload):
         results = _compute(brrrr_payload)

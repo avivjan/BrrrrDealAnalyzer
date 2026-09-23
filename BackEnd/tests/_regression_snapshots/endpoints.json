@@ -1,7 +1,7 @@
 {
   "active_deals/create_brrr": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -1467,12 +1467,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -1483,7 +1483,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -1515,7 +1515,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -1525,7 +1525,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -1555,7 +1555,7 @@
             "value": 77542.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -1683,22 +1683,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -1728,7 +1728,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -1767,7 +1767,7 @@
   },
   "active_deals/create_flip": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "2 Shared Form Ave",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -2352,9 +2352,9 @@
       "created_at": "<created_at>",
       "crime_rate": null,
       "deal_type": "FLIP",
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "holdingTime": 6,
       "id": "<id>",
       "messages": [],
@@ -2419,7 +2419,7 @@
   },
   "active_deals/duplicate_brrr": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St (Copy)",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -3885,12 +3885,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -3901,7 +3901,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -3933,7 +3933,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -3943,7 +3943,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -3973,7 +3973,7 @@
             "value": 77542.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -4101,22 +4101,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -4146,7 +4146,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -4193,7 +4193,7 @@
   "active_deals/list": {
     "body": [
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "1 Shared Form St",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -5659,12 +5659,12 @@
               "value": 17390.26788432268
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
               "label": "HML Interest (first month)",
-              "note": null,
+              "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
               "terms": null,
               "unit": "money",
-              "value": 1970.8333333333333
+              "value": 525.5555555555555
             },
             {
               "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -5675,7 +5675,7 @@
               "value": 400.0
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
               "label": "Cash Needed Floor",
               "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
               "terms": [
@@ -5707,7 +5707,7 @@
                   "label": "HML Interest (first month)",
                   "sign": "+",
                   "step_label": "HML Interest (first month)",
-                  "value": 1970.8333333333333
+                  "value": 525.5555555555555
                 },
                 {
                   "label": "Holding Costs (first month)",
@@ -5717,7 +5717,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56689.84398782344
+              "value": 55244.56621004566
             },
             {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -5747,7 +5747,7 @@
               "value": 77542.21232876713
             },
             {
-              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -5875,22 +5875,22 @@
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0.0,
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "dscr": 1.356311860095653,
         "earnestMoneyDeposit": "5000.00",
         "equity": 86600.0,
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "hml_amount": 215000.0,
         "hml_payoff": 215525.55555555556,
         "id": "<id>",
-        "interestRate": "6.50",
+        "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
         "lowestArv": null,
         "lowest_arv_effective": 288000.0,
-        "ltv_as_precent": "75.00",
+        "ltv_as_precent": "75.000",
         "maintenanceBeforeRefi": "500.00",
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
@@ -5920,7 +5920,7 @@
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
         "recording_transfer_refi_effective": 1570.0,
-        "refiPoints": "1.50",
+        "refiPoints": "1.500",
         "refiUnderwritingFee": "2000.00",
         "refi_closing_date": "2026-07-09",
         "rehabContingency": "10.00",
@@ -5956,7 +5956,7 @@
         "zillow_link": null
       },
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "2 Shared Form Ave",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -6541,9 +6541,9 @@
         "created_at": "<created_at>",
         "crime_rate": null,
         "deal_type": "FLIP",
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "holdingTime": 6,
         "id": "<id>",
         "messages": [],
@@ -6587,7 +6587,7 @@
   },
   "active_deals/update_brrr": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -8053,12 +8053,12 @@
             "value": 25559.823439878233
           },
           {
-            "formula": "Per diem ($68.14) \u00d7 30 days = $2,044.17",
+            "formula": "Per diem ($68.14) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $545.11",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 2044.1666666666667
+            "value": 545.1111111111111
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -8069,7 +8069,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($46,496.79) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($2,044.17) + Holding Costs (first month) ($400) = $59,020.96",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($46,496.79) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($545.11) + Holding Costs (first month) ($400) = $57,521.90",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -8101,7 +8101,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 2044.1666666666667
+                "value": 545.1111111111111
               },
               {
                 "label": "Holding Costs (first month)",
@@ -8111,7 +8111,7 @@
               }
             ],
             "unit": "money",
-            "value": 59020.95509893455
+            "value": 57521.899543379
           },
           {
             "formula": "Total Cash Invested ($57,326.39) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($25,559.82) = $87,886.21",
@@ -8141,7 +8141,7 @@
             "value": 87886.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($87,886.21) already covers the floor ($59,020.96) \u2192 $0",
+            "formula": "Cash Needed through Refi ($87,886.21) already covers the floor ($57,521.90) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -8269,22 +8269,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.4345606212550175,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86750.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 223000.0,
       "hml_payoff": 223545.11111111112,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -8314,7 +8314,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1476.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -8354,7 +8354,7 @@
   },
   "active_deals/update_clears_optional": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -9820,12 +9820,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -9836,7 +9836,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -9868,7 +9868,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -9878,7 +9878,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -9908,7 +9908,7 @@
             "value": 77542.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -10036,22 +10036,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -10081,7 +10081,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -10121,7 +10121,7 @@
   },
   "active_deals/update_flip": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "2 Shared Form Ave",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -10706,9 +10706,9 @@
       "created_at": "<created_at>",
       "crime_rate": null,
       "deal_type": "FLIP",
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "holdingTime": 6,
       "id": "<id>",
       "messages": [],
@@ -10753,7 +10753,7 @@
   },
   "bought_deals/create_direct": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "3 Direct Bought Rd",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -12220,12 +12220,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -12236,7 +12236,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -12268,7 +12268,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -12278,7 +12278,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -12308,7 +12308,7 @@
             "value": 77542.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -12437,22 +12437,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -12482,7 +12482,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -12551,7 +12551,7 @@
   },
   "bought_deals/from_active_brrr": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -14018,12 +14018,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -14034,7 +14034,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -14066,7 +14066,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -14076,7 +14076,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -14106,7 +14106,7 @@
             "value": 77542.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -14235,22 +14235,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -14280,7 +14280,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -14320,7 +14320,7 @@
   },
   "bought_deals/from_active_flip": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "2 Shared Form Ave",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -14907,9 +14907,9 @@
       "created_at": "<created_at>",
       "crime_rate": null,
       "deal_type": "FLIP",
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "holdingTime": 6,
       "id": "<id>",
       "messages": [],
@@ -14962,7 +14962,7 @@
   "bought_deals/list": {
     "body": [
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "1 Shared Form St",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -16429,12 +16429,12 @@
               "value": 17390.26788432268
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
               "label": "HML Interest (first month)",
-              "note": null,
+              "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
               "terms": null,
               "unit": "money",
-              "value": 1970.8333333333333
+              "value": 525.5555555555555
             },
             {
               "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -16445,7 +16445,7 @@
               "value": 400.0
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
               "label": "Cash Needed Floor",
               "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
               "terms": [
@@ -16477,7 +16477,7 @@
                   "label": "HML Interest (first month)",
                   "sign": "+",
                   "step_label": "HML Interest (first month)",
-                  "value": 1970.8333333333333
+                  "value": 525.5555555555555
                 },
                 {
                   "label": "Holding Costs (first month)",
@@ -16487,7 +16487,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56689.84398782344
+              "value": 55244.56621004566
             },
             {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -16517,7 +16517,7 @@
               "value": 77542.21232876713
             },
             {
-              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -16646,22 +16646,22 @@
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0.0,
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "dscr": 1.356311860095653,
         "earnestMoneyDeposit": "5000.00",
         "equity": 86600.0,
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "hml_amount": 215000.0,
         "hml_payoff": 215525.55555555556,
         "id": "<id>",
-        "interestRate": "6.50",
+        "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
         "lowestArv": null,
         "lowest_arv_effective": 288000.0,
-        "ltv_as_precent": "75.00",
+        "ltv_as_precent": "75.000",
         "maintenanceBeforeRefi": "500.00",
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
@@ -16691,7 +16691,7 @@
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
         "recording_transfer_refi_effective": 1570.0,
-        "refiPoints": "1.50",
+        "refiPoints": "1.500",
         "refiUnderwritingFee": "2000.00",
         "refi_closing_date": "2026-07-09",
         "rehabContingency": "10.00",
@@ -16728,7 +16728,7 @@
         "zillow_link": null
       },
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "2 Shared Form Ave",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -17315,9 +17315,9 @@
         "created_at": "<created_at>",
         "crime_rate": null,
         "deal_type": "FLIP",
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "holdingTime": 6,
         "id": "<id>",
         "messages": [],
@@ -17362,7 +17362,7 @@
   },
   "bought_deals/update": {
     "body": {
-      "HMLInterestRate": "11.00",
+      "HMLInterestRate": "11.000",
       "address": "1 Shared Form St",
       "annual_insurance": "1200.00",
       "annual_property_taxes": "3600.00",
@@ -18829,12 +18829,12 @@
             "value": 17390.26788432268
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
             "label": "HML Interest (first month)",
-            "note": null,
+            "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
             "terms": null,
             "unit": "money",
-            "value": 1970.8333333333333
+            "value": 525.5555555555555
           },
           {
             "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -18845,7 +18845,7 @@
             "value": 400.0
           },
           {
-            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
             "label": "Cash Needed Floor",
             "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
             "terms": [
@@ -18877,7 +18877,7 @@
                 "label": "HML Interest (first month)",
                 "sign": "+",
                 "step_label": "HML Interest (first month)",
-                "value": 1970.8333333333333
+                "value": 525.5555555555555
               },
               {
                 "label": "Holding Costs (first month)",
@@ -18887,7 +18887,7 @@
               }
             ],
             "unit": "money",
-            "value": 56689.84398782344
+            "value": 55244.56621004566
           },
           {
             "formula": "Total Cash Invested ($71,651.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $94,042.21",
@@ -18917,7 +18917,7 @@
             "value": 94042.21232876713
           },
           {
-            "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($56,689.84) \u2192 $0",
+            "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($55,244.57) \u2192 $0",
             "label": "Floor Top-Up",
             "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
             "terms": null,
@@ -19048,22 +19048,22 @@
       "daysUntilRented": 90,
       "deal_type": "BRRRR",
       "deed_transfer_tax_buy": 0.0,
-      "down_payment": "20.00",
+      "down_payment": "20.000",
       "dscr": 1.356311860095653,
       "earnestMoneyDeposit": "5000.00",
       "equity": 86600.0,
       "google_drive_link": null,
-      "hmlPoints": "2.00",
+      "hmlPoints": "2.000",
       "hml_amount": 215000.0,
       "hml_payoff": 215525.55555555556,
       "id": "<id>",
-      "interestRate": "6.50",
+      "interestRate": "6.500",
       "loanChargesBuy": "900.00",
       "loanChargesRefi": "200.00",
       "loanTermYears": 30,
       "lowestArv": null,
       "lowest_arv_effective": 288000.0,
-      "ltv_as_precent": "75.00",
+      "ltv_as_precent": "75.000",
       "maintenanceBeforeRefi": "500.00",
       "maintenancePercent": "5.00",
       "maintenanceReserve": "1500.00",
@@ -19093,7 +19093,7 @@
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
       "recording_transfer_refi_effective": 1570.0,
-      "refiPoints": "1.50",
+      "refiPoints": "1.500",
       "refiUnderwritingFee": "2000.00",
       "refi_closing_date": "2026-07-09",
       "rehabContingency": "10.00",
@@ -19150,7 +19150,7 @@
     "body": {
       "board": "active",
       "deal": {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "2 Shared Form Ave",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -19735,9 +19735,9 @@
         "created_at": "<created_at>",
         "crime_rate": null,
         "deal_type": "FLIP",
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "holdingTime": 6,
         "id": "<id>",
         "messages": [],
@@ -20039,7 +20039,7 @@
   "final/active_deals": {
     "body": [
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "1 Shared Form St",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -21505,12 +21505,12 @@
               "value": 17390.26788432268
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
               "label": "HML Interest (first month)",
-              "note": null,
+              "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
               "terms": null,
               "unit": "money",
-              "value": 1970.8333333333333
+              "value": 525.5555555555555
             },
             {
               "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -21521,7 +21521,7 @@
               "value": 400.0
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
               "label": "Cash Needed Floor",
               "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
               "terms": [
@@ -21553,7 +21553,7 @@
                   "label": "HML Interest (first month)",
                   "sign": "+",
                   "step_label": "HML Interest (first month)",
-                  "value": 1970.8333333333333
+                  "value": 525.5555555555555
                 },
                 {
                   "label": "Holding Costs (first month)",
@@ -21563,7 +21563,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56689.84398782344
+              "value": 55244.56621004566
             },
             {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -21593,7 +21593,7 @@
               "value": 77542.21232876713
             },
             {
-              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -21721,22 +21721,22 @@
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0.0,
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "dscr": 1.356311860095653,
         "earnestMoneyDeposit": "5000.00",
         "equity": 86600.0,
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "hml_amount": 215000.0,
         "hml_payoff": 215525.55555555556,
         "id": "<id>",
-        "interestRate": "6.50",
+        "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
         "lowestArv": null,
         "lowest_arv_effective": 288000.0,
-        "ltv_as_precent": "75.00",
+        "ltv_as_precent": "75.000",
         "maintenanceBeforeRefi": "500.00",
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
@@ -21766,7 +21766,7 @@
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
         "recording_transfer_refi_effective": 1570.0,
-        "refiPoints": "1.50",
+        "refiPoints": "1.500",
         "refiUnderwritingFee": "2000.00",
         "refi_closing_date": "2026-07-09",
         "rehabContingency": "10.00",
@@ -21802,7 +21802,7 @@
         "zillow_link": null
       },
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "2 Shared Form Ave",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -22387,9 +22387,9 @@
         "created_at": "<created_at>",
         "crime_rate": null,
         "deal_type": "FLIP",
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "holdingTime": 6,
         "id": "<id>",
         "messages": [],
@@ -22429,7 +22429,7 @@
   "final/bought_deals": {
     "body": [
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "1 Shared Form St",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -23896,12 +23896,12 @@
               "value": 17390.26788432268
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
               "label": "HML Interest (first month)",
-              "note": null,
+              "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
               "terms": null,
               "unit": "money",
-              "value": 1970.8333333333333
+              "value": 525.5555555555555
             },
             {
               "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -23912,7 +23912,7 @@
               "value": 400.0
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
               "label": "Cash Needed Floor",
               "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
               "terms": [
@@ -23944,7 +23944,7 @@
                   "label": "HML Interest (first month)",
                   "sign": "+",
                   "step_label": "HML Interest (first month)",
-                  "value": 1970.8333333333333
+                  "value": 525.5555555555555
                 },
                 {
                   "label": "Holding Costs (first month)",
@@ -23954,7 +23954,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56689.84398782344
+              "value": 55244.56621004566
             },
             {
               "formula": "Total Cash Invested ($71,651.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $94,042.21",
@@ -23984,7 +23984,7 @@
               "value": 94042.21232876713
             },
             {
-              "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($56,689.84) \u2192 $0",
+              "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($55,244.57) \u2192 $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -24115,22 +24115,22 @@
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0.0,
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "dscr": 1.356311860095653,
         "earnestMoneyDeposit": "5000.00",
         "equity": 86600.0,
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "hml_amount": 215000.0,
         "hml_payoff": 215525.55555555556,
         "id": "<id>",
-        "interestRate": "6.50",
+        "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
         "lowestArv": null,
         "lowest_arv_effective": 288000.0,
-        "ltv_as_precent": "75.00",
+        "ltv_as_precent": "75.000",
         "maintenanceBeforeRefi": "500.00",
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
@@ -24160,7 +24160,7 @@
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
         "recording_transfer_refi_effective": 1570.0,
-        "refiPoints": "1.50",
+        "refiPoints": "1.500",
         "refiUnderwritingFee": "2000.00",
         "refi_closing_date": "2026-07-09",
         "rehabContingency": "10.00",
@@ -24197,7 +24197,7 @@
         "zillow_link": null
       },
       {
-        "HMLInterestRate": "11.00",
+        "HMLInterestRate": "11.000",
         "address": "3 Direct Bought Rd",
         "annual_insurance": "1200.00",
         "annual_property_taxes": "3600.00",
@@ -25664,12 +25664,12 @@
               "value": 17390.26788432268
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "formula": "Per diem ($65.69) \u00d7 (30 \u2212 22 days already prepaid in Cash to Close) = 8 days = $525.56",
               "label": "HML Interest (first month)",
-              "note": null,
+              "note": "The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
               "terms": null,
               "unit": "money",
-              "value": 1970.8333333333333
+              "value": 525.5555555555555
             },
             {
               "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
@@ -25680,7 +25680,7 @@
               "value": 400.0
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($525.56) + Holding Costs (first month) ($400) = $55,244.57",
               "label": "Cash Needed Floor",
               "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
               "terms": [
@@ -25712,7 +25712,7 @@
                   "label": "HML Interest (first month)",
                   "sign": "+",
                   "step_label": "HML Interest (first month)",
-                  "value": 1970.8333333333333
+                  "value": 525.5555555555555
                 },
                 {
                   "label": "Holding Costs (first month)",
@@ -25722,7 +25722,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56689.84398782344
+              "value": 55244.56621004566
             },
             {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
@@ -25752,7 +25752,7 @@
               "value": 77542.21232876713
             },
             {
-              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($55,244.57) \u2192 $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -25881,22 +25881,22 @@
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0.0,
-        "down_payment": "20.00",
+        "down_payment": "20.000",
         "dscr": 1.356311860095653,
         "earnestMoneyDeposit": "5000.00",
         "equity": 86600.0,
         "google_drive_link": null,
-        "hmlPoints": "2.00",
+        "hmlPoints": "2.000",
         "hml_amount": 215000.0,
         "hml_payoff": 215525.55555555556,
         "id": "<id>",
-        "interestRate": "6.50",
+        "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
         "lowestArv": null,
         "lowest_arv_effective": 288000.0,
-        "ltv_as_precent": "75.00",
+        "ltv_as_precent": "75.000",
         "maintenanceBeforeRefi": "500.00",
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
@@ -25926,7 +25926,7 @@
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
         "recording_transfer_refi_effective": 1570.0,
-        "refiPoints": "1.50",
+        "refiPoints": "1.500",
         "refiUnderwritingFee": "2000.00",
         "refi_closing_date": "2026-07-09",
         "rehabContingency": "10.00",
