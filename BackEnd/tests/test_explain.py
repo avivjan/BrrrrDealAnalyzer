@@ -297,8 +297,9 @@ class TestFrontendResultTileKeysAreSections:
 
 
 def _term_links(breakdowns: dict, section_key: str, step_label_prefix: str) -> dict[str, str | None]:
-    """{term label: step_label} of the first step in the section whose label starts with the prefix."""
-    for step in breakdowns[section_key]:
+    """{term label: step_label} of the step in the section carrying the label, else the first whose label starts with it."""
+    steps = breakdowns[section_key]
+    for step in [s for s in steps if s["label"] == step_label_prefix] + steps:
         if step["label"].startswith(step_label_prefix):
             assert step["terms"], f"{step_label_prefix!r} is not a sum step"
             return {term["label"]: term["step_label"] for term in step["terms"]}
@@ -345,9 +346,23 @@ class TestTermsLinkToTheirSourceStep:
         breakdowns = explain_brrr(req, results_w_intermediates)
         cash_needed = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed")
         assert cash_needed == {
+            "Cash Needed through Refi": "Cash Needed through Refi",
+            "Floor Top-Up": "Floor Top-Up",
+        }
+        through_refi = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed through Refi")
+        assert through_refi == {
             "Total Cash Invested": "Total Cash Invested (pre-refi)",
             "Rehab Cushion": None,
             "Cash to Refi Table (Lowest ARV)": "Cash to Refi Table (Lowest ARV)",
+        }
+        floor = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed Floor")
+        assert floor == {
+            "Earnest Money Deposit": None,
+            "Cash to Close (Buy)": "Cash to Close (Buy)",
+            "Rehab Cushion": None,
+            "Utilities (first month)": None,
+            "HML Interest (first month)": "HML Interest (first month)",
+            "Holding Costs (first month)": "Holding Costs (first month)",
         }
         invested = _term_links(breakdowns, "total_cash_needed_for_deal", "Total Cash Invested")
         assert invested["Cash to Close (Buy)"] == "Cash to Close (Buy)"

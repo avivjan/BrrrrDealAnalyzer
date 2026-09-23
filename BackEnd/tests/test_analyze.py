@@ -300,12 +300,33 @@ class TestAuditFixes:
         assert short["total_cash_needed_for_deal"] == pytest.approx(
             base["total_cash_needed_for_deal"] + extra_cash_to_table, abs=1e-6
         )
-        # ...and Cash Needed is always invested + cushion + cash to the refi table.
+        # ...and Cash Needed is invested + cushion + cash to the refi table (this deal sits above the floor).
         assert short["total_cash_needed_for_deal"] == pytest.approx(
             short["total_cash_invested"] + brrrr_payload["rehabCushion"] + short["cash_to_refi_table_conservative"], abs=1e-6
         )
         labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
         assert "Cash to Refi Table (Lowest ARV)" in labels
+
+    def test_cash_needed_never_drops_below_the_day_one_floor(self, client, brrrr_payload):
+        # Draws give back 20k and the lowest-ARV wire covers everything, so the through-refi figure
+        # falls below what day one and the first month take: Cash Needed is that floor.
+        result = client.post(
+            "/analyze/brrr",
+            json={**brrrr_payload, "constructionLoanBudget": 70, "rehabContingency": 0, "arv_in_thousands": 400},
+        ).json()
+        assert result["cash_to_refi_table_conservative"] == 0
+        one_month_of_hml_interest = result["hml_amount"] * brrrr_payload["HMLInterestRate"] / 100 * 30 / 360
+        one_month_of_taxes_insurance_and_hoa = float(calc_holding_costs(
+            Decimal(brrrr_payload["annual_property_taxes"]), Decimal(brrrr_payload["annual_insurance"]), Decimal(brrrr_payload["montly_hoa"]), 30,
+        ))
+        floor = (brrrr_payload["earnestMoneyDeposit"] + result["cash_to_close_buy"] + brrrr_payload["rehabCushion"]
+                 + brrrr_payload["monthlyUtilitiesUntilRented"] + one_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa)
+        through_refi = result["total_cash_invested"] + brrrr_payload["rehabCushion"] + result["cash_to_refi_table_conservative"]
+        assert through_refi < floor
+        assert result["total_cash_needed_for_deal"] == pytest.approx(floor, abs=1e-6)
+        steps = {s["label"]: s for s in result["breakdowns"]["total_cash_needed_for_deal"]}
+        assert steps["Cash Needed Floor"]["value"] == pytest.approx(floor, abs=1e-6)
+        assert steps["Floor Top-Up"]["value"] == pytest.approx(floor - through_refi, abs=1e-6)
 
     # F1 -- the buffered breakdown now lists every component it sums (Flip only:
     # the BRRRR engine replaced the buffer with the rehab cushion).

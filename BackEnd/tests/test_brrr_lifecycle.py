@@ -286,7 +286,7 @@ class TestLowestArvStressTest:
         results = _compute(brrrr_payload)
         assert results.cash_out_routi_conservative <= results.cash_out_routi
         assert results.cash_to_refi_table_conservative == max(Decimal(0), -results.cash_out_routi_conservative)
-        assert results.total_cash_needed == results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
+        assert results.cash_needed_through_refi == results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
 
 
 SCENARIOS = {
@@ -335,7 +335,8 @@ class TestReconcileIdentities:
     def test_cash_identities(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
         _assert_equal_to_the_cent(results.cash_out, results.cash_out_routi - results.total_cash_invested)
-        _assert_equal_to_the_cent(results.total_cash_needed - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative, results.total_cash_invested)
+        _assert_equal_to_the_cent(results.cash_needed_through_refi - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative, results.total_cash_invested)
+        _assert_equal_to_the_cent(results.total_cash_needed, max(results.cash_needed_floor, results.cash_needed_through_refi))
         assert results.stolen_money == results.construction_budget - results.rehab_cost == -results.rehab_paid_cash_out_of_pocket
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
@@ -343,6 +344,54 @@ class TestReconcileIdentities:
         # every `check` and `add_sum` guard in explain/brrr.py runs here
         result = calculate_brrr_results(analyzeBRRRReq.model_validate({**brrrr_payload, **SCENARIOS[scenario]}))
         assert result.breakdowns and "cash_to_close_buy" in result.breakdowns
+
+
+class TestCashNeededFloor:
+    """Cash Needed never drops below what day one and the first month take, whatever the draws,
+    the rent collected and the refi wire later give back."""
+
+    # A budget 20k above the rehab (draws return 20k) and an ARV high enough that the lowest-ARV wire
+    # covers everything: the through-refi figure falls below the floor.
+    FLOOR_WINS = {"constructionLoanBudget": 70, "rehabContingency": 0, "arv_in_thousands": 400}
+
+    def test_the_floor_is_the_deposit_the_wire_the_cushion_and_one_month_of_carrying(self, brrrr_payload):
+        results = _compute(brrrr_payload)
+        one_month_of_hml_interest = results.hml_per_diem * 30
+        one_month_of_taxes_insurance_and_hoa = results.monthly_taxes + results.monthly_insurance + Decimal(brrrr_payload["montly_hoa"])
+        _assert_equal_to_the_cent(results.hml_interest_first_month, one_month_of_hml_interest)
+        _assert_equal_to_the_cent(results.holding_costs_first_month, one_month_of_taxes_insurance_and_hoa)
+        _assert_equal_to_the_cent(
+            results.cash_needed_floor,
+            Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy + Decimal(brrrr_payload["rehabCushion"])
+            + Decimal(brrrr_payload["monthlyUtilitiesUntilRented"]) + one_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa,
+        )
+
+    def test_cash_needed_is_unchanged_while_the_through_refi_figure_is_above_the_floor(self, brrrr_payload):
+        results = _compute(brrrr_payload)
+        assert results.cash_needed_floor < results.cash_needed_through_refi
+        assert results.cash_needed_floor_top_up == 0
+        assert results.total_cash_needed == results.cash_needed_through_refi
+
+    def test_the_floor_wins_when_the_draws_and_the_refi_wire_give_back_more_than_the_first_month_takes(self, brrrr_payload):
+        results = _compute(brrrr_payload, **self.FLOOR_WINS)
+        assert results.cash_to_refi_table_conservative == 0 and results.stolen_money == 20_000
+        assert results.cash_needed_through_refi < results.cash_needed_floor
+        _assert_equal_to_the_cent(results.cash_needed_floor_top_up, results.cash_needed_floor - results.cash_needed_through_refi)
+        _assert_equal_to_the_cent(results.total_cash_needed, results.cash_needed_floor)
+
+    @pytest.mark.parametrize("scenario", list(SCENARIOS))
+    def test_cash_needed_is_the_larger_of_the_floor_and_the_through_refi_figure(self, brrrr_payload, scenario):
+        results = _compute(brrrr_payload, **SCENARIOS[scenario])
+        assert results.total_cash_needed >= results.cash_needed_floor
+        assert results.total_cash_needed >= results.cash_needed_through_refi
+        _assert_equal_to_the_cent(results.total_cash_needed, max(results.cash_needed_floor, results.cash_needed_through_refi))
+
+    def test_the_explanation_holds_when_the_floor_wins(self, brrrr_payload):
+        result = calculate_brrr_results(analyzeBRRRReq.model_validate({**brrrr_payload, **self.FLOOR_WINS}))
+        steps = {step.label: step for step in result.breakdowns["total_cash_needed_for_deal"]}
+        assert steps["Floor Top-Up"].value > 0
+        assert [term.label for term in steps["Cash Needed"].terms] == ["Cash Needed through Refi", "Floor Top-Up"]
+        assert steps["Cash Needed"].value == pytest.approx(steps["Cash Needed Floor"].value)
 
 
 class TestApiShapeAndValidation:

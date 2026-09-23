@@ -97,7 +97,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     cash_on_cash = cash_on_cash_step(cash_out_figures.cash_out, cash_flow)
     equity, net_profit = equity_and_net_profit_step(arv, refi_terms.ltv, refi_terms.reserves_total, cash_out_figures.cash_out)
     roi = roi_step(cash_out_figures.cash_out, cash_flow, net_profit)
-    total_cash_needed = total_cash_needed_step(payload, cash_out_figures)
+    cash_needed = total_cash_needed_step(payload, hml_amount, buy_settlement, cash_out_figures)
 
     return BrrrResultsWithIntermediates(
         arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
@@ -135,5 +135,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         operating_expenses=operating_expenses.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
-        total_cash_needed=total_cash_needed,
+        hml_interest_first_month=cash_needed.hml_interest_first_month, holding_costs_first_month=cash_needed.holding_costs_first_month,
+        cash_needed_floor=cash_needed.cash_needed_floor, cash_needed_through_refi=cash_needed.cash_needed_through_refi,
+        cash_needed_floor_top_up=cash_needed.cash_needed_floor_top_up, total_cash_needed=cash_needed.total_cash_needed,
     )

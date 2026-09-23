@@ -118,4 +118,9 @@ class BrrrResultsWithIntermediates:
     roi: Decimal                    # percent; -1 = infinite, -2 = undefined
 
     # -- cash needed -----------------------------------------------------------
-    total_cash_needed: Decimal      # total_cash_invested + rehab cushion + cash_to_refi_table_conservative
+    hml_interest_first_month: Decimal    # 30 days of the hard-money per diem
+    holding_costs_first_month: Decimal   # taxes + insurance + HOA for 30 days
+    cash_needed_floor: Decimal           # EMD + cash to close + rehab cushion + one month of utilities, interest and holding costs
+    cash_needed_through_refi: Decimal    # total_cash_invested + rehab cushion + cash_to_refi_table_conservative
+    cash_needed_floor_top_up: Decimal    # max(0, cash_needed_floor - cash_needed_through_refi)
+    total_cash_needed: Decimal           # max(cash_needed_floor, cash_needed_through_refi) = cash_needed_through_refi + cash_needed_floor_top_up

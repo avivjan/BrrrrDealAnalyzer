@@ -131,15 +131,23 @@ describe("calculationBreakdownTree against the backend's recorded breakdown", ()
   const breakdowns = recorded.brrr.baseline.body.breakdowns;
   const section = "total_cash_needed_for_deal";
 
-  it("resolves Cash Needed → Total Cash Invested → Cash to Close → HML Points, with raw inputs as leaves", () => {
+  it("resolves Cash Needed → Cash Needed through Refi → Total Cash Invested → Cash to Close → HML Points, with raw inputs as leaves", () => {
     const steps = breakdowns[section]!;
     const headlineIndex = findHeadlineStepIndex(steps, recorded.brrr.baseline.body.total_cash_needed_for_deal);
     expect(steps[headlineIndex]!.label).toBe("Cash Needed");
     const rows = topLevelRowsForHeadline(breakdowns, section, headlineIndex);
     const byLabel = (list: ReturnType<typeof topLevelRowsForHeadline>, label: string) => list.find((r) => r.label === label)!;
-    const invested = byLabel(rows, "Total Cash Invested");
+    expect(rows.map((r) => r.label)).toEqual(["Cash Needed through Refi", "Floor Top-Up"]);
+    // The top-up is a max(), not a sum: it expands into its formula, which names the floor.
+    const floorTopUp = byLabel(rows, "Floor Top-Up");
+    expect(floorTopUp.linkedStep?.terms).toBeFalsy();
+    expect(floorTopUp.linkedStep?.formula).toContain("the floor ($56,689.84)");
+    const throughRefi = byLabel(rows, "Cash Needed through Refi");
+    expect(throughRefi.linkedStep?.label).toBe("Cash Needed through Refi");
+    const throughRefiRows = rowsOfStep(throughRefi.linkedStep!, breakdowns, section, throughRefi.path, new Set());
+    const invested = byLabel(throughRefiRows, "Total Cash Invested");
     expect(invested.linkedStep?.label).toBe("Total Cash Invested (pre-refi)");
-    expect(byLabel(rows, "Rehab Cushion").linkedStep).toBeUndefined();
+    expect(byLabel(throughRefiRows, "Rehab Cushion").linkedStep).toBeUndefined();
     const investedRows = rowsOfStep(invested.linkedStep!, breakdowns, section, invested.path, new Set());
     expect(byLabel(investedRows, "Earnest Money Deposit").linkedStep).toBeUndefined();
     const cashToClose = byLabel(investedRows, "Cash to Close (Buy)");
