@@ -116,10 +116,11 @@ function redact(value: unknown): unknown {
 }
 
 function sortedQuery(url: URL): Record<string, string> | undefined {
-  const keys = [...url.searchParams.keys()].sort();
+  const keys = [...new Set(url.searchParams.keys())].sort();
   if (keys.length === 0) return undefined;
   const out: Record<string, string> = {};
-  for (const key of keys) out[key] = url.searchParams.get(key) ?? '';
+  // A repeated key (a list parameter such as `selected_result_keys`) keeps every value, in order.
+  for (const key of keys) out[key] = url.searchParams.getAll(key).join(',');
   return out;
 }
 

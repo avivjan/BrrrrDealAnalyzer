@@ -11,6 +11,7 @@ import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import DealReportPdfPreviewModal from "../components/deal/DealReportPdfPreviewModal.vue";
+import GenerateReportResultPickerPopup from "../components/deal/GenerateReportResultPickerPopup.vue";
 import { useDealReportPdf } from "../composables/useDealReportPdf";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
@@ -513,9 +514,19 @@ const isHeaderCopied = ref(false);
 // report endpoint whole (its stage, checklist and results are ignored there).
 const { isPreparingPdf, pdfPreview, viewDealReport: viewReportFor, downloadFromPreview, closePdfPreview } = useDealReportPdf();
 
-const viewDealReport = () => {
+/** "Generate Report" first asks which results to include; the picker then generates the PDF. */
+const isReportResultPickerOpen = ref(false);
+const reportDealType = computed<"BRRRR" | "FLIP">(() => (editingDealType.value));
+
+const openReportResultPicker = () => {
   if (!editingDeal.value) return;
-  return viewReportFor(editingDeal.value, editingDealType.value);
+  isReportResultPickerOpen.value = true;
+};
+
+const generateDealReportWithSelectedResults = (selectedResultKeys: string[]) => {
+  isReportResultPickerOpen.value = false;
+  if (!editingDeal.value) return;
+  return viewReportFor(editingDeal.value, reportDealType.value, selectedResultKeys);
 };
 
 const copyToClipboard = async (deal: BoughtDealRes) => {
@@ -743,12 +754,12 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
               <div class="flex items-center gap-2">
                 <UiButton
                   data-testid="boughtdeals.modal.view-report"
-                  @click="viewDealReport"
+                  @click="openReportResultPicker"
                   :disabled="isPreparingPdf"
                   variant="secondary"
                   size="sm"
                   class="min-h-9 touch:min-h-11"
-                  :title="isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
+                  :title="isPreparingPdf ? 'Building PDF…' : 'Generate Deal Report (PDF)'"
                 >
                   <i
                     class="pi text-base"
@@ -756,7 +767,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     aria-hidden="true"
                   ></i>
                   <span class="hidden sm:inline">
-                    {{ isPreparingPdf ? "Generating…" : "View Report" }}
+                    {{ isPreparingPdf ? "Generating…" : "Generate Report" }}
                   </span>
                 </UiButton>
                 <UiIconButton
@@ -1427,6 +1438,15 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       :initial-tab="activeTab"
       @close="showPipelineEditor = false"
       @saved="refreshColumns"
+    />
+
+    <!-- "Generate Report": pick the results, then the PDF opens in the preview below. -->
+    <GenerateReportResultPickerPopup
+      :open="isReportResultPickerOpen"
+      :deal-type="reportDealType"
+      :analysis="currentAnalysis as Record<string, unknown> | null"
+      @generate="generateDealReportWithSelectedResults"
+      @close="isReportResultPickerOpen = false"
     />
 
     <!-- PDF Preview Modal (shared with My Deals) -->

@@ -80,8 +80,10 @@ def select_report_result_tiles(deal_type: str, selected_result_keys: list[str] |
     known_keys = {tile.result_key for tile in tiles}
     unknown_keys = sorted(requested_keys - known_keys)
     if unknown_keys:
+        # Echo at most a few of the caller's keys, each shortened: the message is for a human, not a mirror.
+        echoed_unknown_keys = [unknown_key[:40] for unknown_key in unknown_keys[:5]]
         raise UnknownReportResultKeys(
-            f"Unknown result key(s) for a {deal_type} report: {', '.join(unknown_keys)}. "
+            f"Unknown result key(s) for a {deal_type} report: {', '.join(echoed_unknown_keys)}. "
             f"Valid keys: {', '.join(tile.result_key for tile in tiles)}."
         )
     return [tile for tile in tiles if tile.result_key in requested_keys]

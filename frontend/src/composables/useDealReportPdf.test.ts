@@ -45,7 +45,7 @@ describe("useDealReportPdf", () => {
 
     await report.viewDealReport(boughtDeal, "FLIP");
 
-    expect(downloadDealPdf).toHaveBeenCalledWith(boughtDeal, "FLIP", "9 Bought Rd");
+    expect(downloadDealPdf).toHaveBeenCalledWith(boughtDeal, "FLIP", "9 Bought Rd", undefined);
     expect(report.pdfPreview.value).toEqual({
       url: "blob:preview-1",
       filename: "BigWhales_FLIP_9_Bought_Rd.pdf",
@@ -58,8 +58,14 @@ describe("useDealReportPdf", () => {
   it("falls back to 'Property' when the deal has no address", async () => {
     const { report } = mountHost();
     await report.viewDealReport({}, "BRRRR");
-    expect(downloadDealPdf).toHaveBeenCalledWith({}, "BRRRR", "Property");
+    expect(downloadDealPdf).toHaveBeenCalledWith({}, "BRRRR", "Property", undefined);
     expect(report.pdfPreview.value?.filename).toBe("BigWhales_BRRRR_Property.pdf");
+  });
+
+  it("passes the results picked in Generate Report through to the endpoint", async () => {
+    const { report } = mountHost();
+    await report.viewDealReport({ address: "A" }, "BRRRR", ["cash_flow", "dscr"]);
+    expect(downloadDealPdf).toHaveBeenCalledWith({ address: "A" }, "BRRRR", "A", ["cash_flow", "dscr"]);
   });
 
   it("revokes the object URL when the preview closes, and again on unmount", async () => {

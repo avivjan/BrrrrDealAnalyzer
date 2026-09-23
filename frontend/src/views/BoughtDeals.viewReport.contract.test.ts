@@ -9,10 +9,13 @@ import api from "../api";
 import type { BoughtDealRes } from "../types";
 
 /**
- * "View Report" on a bought deal: the same branded PDF My Deals offers, built from
- * the bought deal sent whole to the report endpoint for its strategy, previewed in
- * the shared preview modal under the `boughtdeals.` test-id namespace.
+ * "Generate Report" on a bought deal: the same branded PDF My Deals offers. The
+ * button opens the result picker (every tile checked); Generate sends the bought
+ * deal whole, with the checked result keys, to the report endpoint for its
+ * strategy, and the PDF opens in the shared preview modal under the
+ * `boughtdeals.` test-id namespace.
  */
+import { BRRRR_REPORT_RESULT_TILES } from "../components/deal/reportResultTiles";
 
 vi.mock("../api", () => ({
   default: {
@@ -64,7 +67,21 @@ async function openTheDeal() {
   return wrapper;
 }
 
-describe("BoughtDeals — View Report", () => {
+const resultPicker = () => document.querySelector('[data-testid="generate-report-result-picker"]');
+const pickerPart = (name: string) => document.querySelector(`[data-testid="generate-report-result-picker"] [data-part="${name}"]`) as HTMLButtonElement;
+
+async function generateReportWithEveryResultExcept(wrapper: VueWrapper, uncheckedResultKeys: string[] = []) {
+  await wrapper.find('[data-testid="boughtdeals.modal.view-report"]').trigger("click");
+  await flushPromises();
+  for (const resultKey of uncheckedResultKeys) {
+    (document.querySelector(`[data-result-key="${resultKey}"] input`) as HTMLInputElement).click();
+  }
+  await flushPromises();
+  pickerPart("generate").click();
+  await flushPromises();
+}
+
+describe("BoughtDeals — Generate Report", () => {
   let quiet: ReturnType<typeof vi.spyOn>[];
 
   beforeEach(() => {
@@ -90,21 +107,42 @@ describe("BoughtDeals — View Report", () => {
     quiet.forEach((spy) => spy.mockRestore());
   });
 
-  it("offers the report in the modal header and no preview until it is asked for", async () => {
+  it("offers 'Generate Report' in the modal header and no preview until it is asked for", async () => {
     const wrapper = await openTheDeal();
-    expect(wrapper.find('[data-testid="boughtdeals.modal.view-report"]').exists()).toBe(true);
+    const button = wrapper.find('[data-testid="boughtdeals.modal.view-report"]');
+    expect(button.exists()).toBe(true);
+    expect(button.text()).toBe("Generate Report");
     expect(wrapper.find('[data-testid="boughtdeals.pdf-modal"]').exists()).toBe(false);
   });
 
-  it("sends the bought deal whole to the endpoint for its strategy and previews the blob", async () => {
+  it("opens the result picker with every result checked, and generates nothing until Generate is pressed", async () => {
     const wrapper = await openTheDeal();
     await wrapper.find('[data-testid="boughtdeals.modal.view-report"]').trigger("click");
     await flushPromises();
+    expect(resultPicker()).not.toBeNull();
+    const checkedResultKeys = [...document.querySelectorAll('[data-part="result-option"]')]
+      .filter((option) => (option.querySelector("input") as HTMLInputElement).checked)
+      .map((option) => (option as HTMLElement).dataset.resultKey);
+    expect(checkedResultKeys).toEqual(BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey));
+    expect(downloadDealPdf).not.toHaveBeenCalled();
+    pickerPart("cancel").click();
+    await flushPromises();
+    expect(resultPicker()).toBeNull();
+    expect(downloadDealPdf).not.toHaveBeenCalled();
+  });
 
+  it("sends the bought deal whole, with the checked results, to the endpoint for its strategy and previews the blob", async () => {
+    const wrapper = await openTheDeal();
+    await generateReportWithEveryResultExcept(wrapper, ["cash_out", "stolen_money"]);
+
+    expect(resultPicker()).toBeNull();
     expect(downloadDealPdf).toHaveBeenCalledTimes(1);
-    const [payload, dealType, address] = downloadDealPdf.mock.calls[0]!;
+    const [payload, dealType, address, selectedResultKeys] = downloadDealPdf.mock.calls[0]!;
     expect(dealType).toBe("BRRRR");
     expect(address).toBe("55 Willow Way");
+    expect(selectedResultKeys).toEqual(
+      BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey).filter((key) => key !== "cash_out" && key !== "stolen_money"),
+    );
     expect(payload).toMatchObject({ purchasePrice: 200, arv_in_thousands: 320, boughtStage: "rehab" });
 
     const preview = wrapper.find('[data-testid="boughtdeals.pdf-modal"]');
@@ -115,8 +153,7 @@ describe("BoughtDeals — View Report", () => {
 
   it("closes the preview and revokes the blob URL from the shared modal's close button", async () => {
     const wrapper = await openTheDeal();
-    await wrapper.find('[data-testid="boughtdeals.modal.view-report"]').trigger("click");
-    await flushPromises();
+    await generateReportWithEveryResultExcept(wrapper);
     await wrapper.find('[data-testid="boughtdeals.pdf-modal.close"]').trigger("click");
     await flushPromises();
     expect(wrapper.find('[data-testid="boughtdeals.pdf-modal"]').exists()).toBe(false);

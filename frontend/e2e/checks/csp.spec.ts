@@ -71,6 +71,8 @@ test('the PDF preview (the one blob: frame) renders under the production CSP', a
   await page.getByTestId(`mydeals.card.${deal.id}`).click();
   await expect(page.getByTestId('mydeals.modal')).toBeVisible();
   await page.getByTestId('mydeals.modal.view-report').click();
+  // "Generate Report" opens the result picker first; Generate (every result checked) fetches the PDF.
+  await page.getByTestId('generate-report-result-picker').locator('[data-part="generate"]').click();
   await expect(page.getByTestId('mydeals.pdf-modal.iframe')).toHaveAttribute('src', /^blob:/);
   await page.waitForTimeout(500);
   expect(await violations(), 'the PDF preview violated the CSP').toEqual([]);

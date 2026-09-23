@@ -4,7 +4,7 @@
  * user asks, and revoke the URL on close (and on unmount) so nothing leaks.
  *
  * Lifted out of `views/MyDeals.vue` so `views/BoughtDeals.vue` offers the same
- * "View Report" with the same behaviour. The report endpoints take the deal's
+ * "Generate Report" with the same behaviour. The report endpoints take the deal's
  * inputs as the body — no deal id — so a bought deal, serialised whole, works
  * exactly like an active one (the extra stage and result fields are ignored).
  */
@@ -37,15 +37,22 @@ export function useDealReportPdf() {
     }
   };
 
-  /** Generate the report for `deal` and open it in the preview. */
-  const viewDealReport = async (deal: { address?: string }, dealType: "BRRRR" | "FLIP") => {
+  /**
+   * Generate the report for `deal` and open it in the preview. `selectedResultKeys` are the
+   * result tiles picked in "Generate Report" (tile order); left out, the report holds them all.
+   */
+  const viewDealReport = async (
+    deal: { address?: string },
+    dealType: "BRRRR" | "FLIP",
+    selectedResultKeys?: readonly string[],
+  ) => {
     isPreparingPdf.value = true;
     try {
       const address = deal.address || "Property";
       // A plain clone: the modals hand over a reactive proxy, and the API layer
       // should serialise a value, not a proxy.
       const payload = JSON.parse(JSON.stringify(deal)) as AnalyzeDealReq;
-      const blob = await api.downloadDealPdf(payload, dealType, address);
+      const blob = await api.downloadDealPdf(payload, dealType, address, selectedResultKeys);
       const url = URL.createObjectURL(blob);
       closePdfPreview();
       pdfPreview.value = { url, filename: dealReportPdfFilename(dealType, address), title: address, dealType };

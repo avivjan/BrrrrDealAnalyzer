@@ -147,26 +147,26 @@ answer, and its rows drill down along the `step_label` links the backend stamps
   - `frontend/scripts/audit/golden/text.json`
 
 ## Todo (≈ 9 h 30)
-- [ ] **T0** (10 min): Commit the plan file to `tasks/todo/ClickableBreakdownPdfReport.md`.
-- [ ] **B1** (20 min): Create `report_result_tiles.py` and pin it to `FRONTEND_*_RESULT_TILE_KEYS` in `test_explain.py`.
-- [ ] **B2** (60 min): Port the tree helpers to `breakdown_tree.py`, with unit tests that mirror `calculationBreakdownTree.test.ts`.
-- [ ] **B3** (30 min): Add the shared parity fixture (breakdowns + expected rows for the conftest BRRRR and flip
+- [x] **T0** (10 min): Commit the plan file to `tasks/todo/ClickableBreakdownPdfReport.md`.
+- [x] **B1** (20 min): Create `report_result_tiles.py` and pin it to `FRONTEND_*_RESULT_TILE_KEYS` in `test_explain.py`.
+- [x] **B2** (60 min): Port the tree helpers to `breakdown_tree.py`, with unit tests that mirror `calculationBreakdownTree.test.ts`.
+- [x] **B3** (30 min): Add the shared parity fixture (breakdowns + expected rows for the conftest BRRRR and flip
   payloads, generated once by a small script documented in the fixture). Add a Python test and a Vitest test that both
   build the tree from it and must match.
-- [ ] **B4** (20 min): Add `format_value_like_calculation_popup`, with parity cases matching `calculationStepFormat.test.ts`.
-- [ ] **B5** (2 h 30): Rewrite `build_deal_pdf`: summary, popup-shaped sections, step appendix, all-steps appendix,
+- [x] **B4** (20 min): Add `format_value_like_calculation_popup`, with parity cases matching `calculationStepFormat.test.ts`.
+- [x] **B5** (2 h 30): Rewrite `build_deal_pdf`: summary, popup-shaped sections, step appendix, all-steps appendix,
   links, bookmark outline and escaping.
-- [ ] **B6** (30 min): Add `selected_result_keys` to the router and the BL, with validation (422s).
-- [ ] **F1** (15 min): Create `reportResultTiles.ts`, and add a contract test that it matches the tiles the views render.
-- [ ] **F2** (75 min): Build `GenerateReportResultPickerPopup.vue` and its tests.
-- [ ] **F3** (20 min): Pass the selected keys through `api.downloadDealPdf` and `useDealReportPdf`.
-- [ ] **F4** (40 min): Wire both views and rename the button to "Generate Report"; update the existing view-report
+- [x] **B6** (30 min): Add `selected_result_keys` to the router and the BL, with validation (422s).
+- [x] **F1** (15 min): Create `reportResultTiles.ts`, and add a contract test that it matches the tiles the views render.
+- [x] **F2** (75 min): Build `GenerateReportResultPickerPopup.vue` and its tests.
+- [x] **F3** (20 min): Pass the selected keys through `api.downloadDealPdf` and `useDealReportPdf`.
+- [x] **F4** (40 min): Wire both views and rename the button to "Generate Report"; update the existing view-report
   contract tests.
-- [ ] **M1** (20 min): MCP task: update the `DESCRIPTIONS` entries and add an MCP test that calls `report_brrr_pdf`
+- [x] **M1** (20 min): MCP task: update the `DESCRIPTIONS` entries and add an MCP test that calls `report_brrr_pdf`
   with `selected_result_keys`.
-- [ ] **G1** (30 min): Re-record the goldens (openapi snapshot, `verify_regression`, e2e `pdf-report*`, audit
+- [x] **G1** (30 min): Re-record the goldens (openapi snapshot, `verify_regression`, e2e `pdf-report*`, audit
   `text.json`) and run the full backend, Vitest and Playwright suites.
-- [ ] **S1** (30 min): Security task, from `.claude/security.md`: *"Please check through all the code you just
+- [x] **S1** (30 min): Security task, from `.claude/security.md`: *"Please check through all the code you just
   wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend
   and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Check each of:
   - Key allow-list validation and the empty/unknown-key 422s.
@@ -176,7 +176,7 @@ answer, and its rows drill down along the `step_label` links the backend stamps
   - No secrets or env in the new frontend files.
   - bandit, pip-audit and `npm audit` clean.
   - Review the diff against the rest of the repo's report path.
-- [ ] **P1** (15 min): Push, open the PR, and tick this plan.
+- [x] **P1** (15 min): Push, open the PR, and tick this plan.
 
 ## Tests by layer
 **Unit**
@@ -226,3 +226,32 @@ answer, and its rows drill down along the `step_label` links the backend stamps
 - Manual check: generate a BRRRR report in Chromium's viewer. Confirm the first level is expanded like the popup,
   clicking "Total Cash Invested" jumps to its step block, "Back" returns, the sidebar outline opens and closes the tree,
   and the values match the popup opened from the same tile.
+
+## Implementation notes
+
+- **Selecting results.** The picker always sends the keys that are checked. The request sends nothing only when an
+  older client or an MCP call omits `selected_result_keys`. The recorded e2e contracts (`pdf-report*.json`) now
+  carry the key list. The e2e recorder (`e2e/fixtures/recorder.ts`) keeps every value of a repeated query key,
+  joined with commas; before this change it kept only the first.
+- **Parity fixture.** `__fixtures__/calculationBreakdownTreeParity.json` is recorded by
+  `RECORD_BREAKDOWN_TREE_PARITY=1 pytest tests/test_report_pdf.py` from the calculation goldens.
+  `calculationBreakdownTree.test.ts` rebuilds the same trees in TypeScript and requires an exact match, including
+  every formatted value.
+- **Step deduplication.** Steps in "Step details" are deduplicated by object identity, which is exact because
+  `find_step_by_label` returns the response's own dicts. The plan said `(section_key, label)`. A step reached from
+  several results links back to each of them.
+- **Test ids.** They keep their names (`*.modal.view-report`) so the e2e and audit selectors stay stable; only the
+  text changes.
+- **Security review (S1).**
+  - Result keys are checked against the deal type's tile list before any calculation. An unknown key or an empty
+    selection returns 422, and the 422 echoes at most five caller keys, each cut to 40 characters.
+  - Every label, formula, note, tile label and the address is escaped before it enters ReportLab markup. A test
+    covers `<b>`, `&`, `<a href>` and `<font>`.
+  - Link and bookmark destinations are named from indices only. The ancestor guard and the step worklist keep the
+    PDF finite.
+  - The new frontend files hold no secrets or env reads.
+  - bandit (CI flags), pip-audit and `npm audit --omit=dev` are clean. The one Low bandit note is the
+    existing `xml.sax.saxutils.escape` import, which only escapes output and never parses XML.
+- **Not changed.** `npm run audit` (the UI script/bindings/text goldens) already fails on `main` because of drift
+  unrelated to this change (RepsTracker, MyDeals preview lifecycle). Only the two changed strings were updated in
+  its goldens.
