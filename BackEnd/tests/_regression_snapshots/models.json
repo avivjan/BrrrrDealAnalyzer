@@ -14082,7 +14082,7 @@
             }
           ],
           "default": null,
-          "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
+          "description": "Debt service coverage ratio after the refinance: monthly rent divided by the monthly PITIA (principal, interest, taxes, insurance and HOA). Above 1.0 the rent covers the payment; lenders usually want 1.2 or more.",
           "title": "Dscr"
         },
         "earnestMoneyDeposit": {
@@ -14332,7 +14332,7 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "monthlyUtilitiesUntilRented": {
@@ -14826,7 +14826,7 @@
             }
           ],
           "default": null,
-          "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
+          "description": "Return on investment in percent: one year of cash flow (12 x cash_flow) plus net_profit, divided by the cash left in the deal (|cash_out|). -1 means infinite (no cash left in the deal); -2 means not applicable (cash flow is 0 or negative).",
           "title": "Roi"
         },
         "section": {
@@ -16355,7 +16355,7 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "monthly_utilities": {
@@ -16389,7 +16389,7 @@
           "title": "Montly Hoa"
         },
         "net_profit": {
-          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
+          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points, holding costs (which include the hard-money interest) and capital gains tax.",
           "title": "Net Profit",
           "type": "number"
         },
@@ -16669,7 +16669,7 @@
           "type": "number"
         },
         "total_holding_costs": {
-          "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
+          "description": "Hard-money interest plus taxes, insurance, HOA and utilities over the holding time, in dollars (total_hml_interest + the operating costs).",
           "title": "Total Holding Costs",
           "type": "number"
         },
@@ -18596,7 +18596,7 @@
             }
           ],
           "default": null,
-          "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
+          "description": "Debt service coverage ratio after the refinance: monthly rent divided by the monthly PITIA (principal, interest, taxes, insurance and HOA). Above 1.0 the rent covers the payment; lenders usually want 1.2 or more.",
           "title": "Dscr"
         },
         "earnestMoneyDeposit": {
@@ -18846,7 +18846,7 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "monthlyUtilitiesUntilRented": {
@@ -19340,7 +19340,7 @@
             }
           ],
           "default": null,
-          "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
+          "description": "Return on investment in percent: one year of cash flow (12 x cash_flow) plus net_profit, divided by the cash left in the deal (|cash_out|). -1 means infinite (no cash left in the deal); -2 means not applicable (cash flow is 0 or negative).",
           "title": "Roi"
         },
         "section": {
@@ -20929,7 +20929,7 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "monthly_utilities": {
@@ -20963,7 +20963,7 @@
           "title": "Montly Hoa"
         },
         "net_profit": {
-          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
+          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points, holding costs (which include the hard-money interest) and capital gains tax.",
           "title": "Net Profit",
           "type": "number"
         },
@@ -21230,7 +21230,7 @@
           "type": "number"
         },
         "total_holding_costs": {
-          "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
+          "description": "Hard-money interest plus taxes, insurance, HOA and utilities over the holding time, in dollars (total_hml_interest + the operating costs).",
           "title": "Total Holding Costs",
           "type": "number"
         },
@@ -24831,7 +24831,7 @@
             }
           ],
           "default": null,
-          "description": "Debt service coverage ratio after the refinance: net operating income divided by the annual mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more.",
+          "description": "Debt service coverage ratio after the refinance: monthly rent divided by the monthly PITIA (principal, interest, taxes, insurance and HOA). Above 1.0 the rent covers the payment; lenders usually want 1.2 or more.",
           "title": "Dscr"
         },
         "equity": {
@@ -24899,7 +24899,7 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "net_profit": {
@@ -25030,7 +25030,7 @@
             }
           ],
           "default": null,
-          "description": "Return on investment in percent: net profit divided by the cash invested. -1 means infinite (no cash left in the deal); -2 means not applicable.",
+          "description": "Return on investment in percent: one year of cash flow (12 x cash_flow) plus net_profit, divided by the cash left in the deal (|cash_out|). -1 means infinite (no cash left in the deal); -2 means not applicable (cash flow is 0 or negative).",
           "title": "Roi"
         },
         "seller_tax_credit": {
@@ -25556,11 +25556,11 @@
             }
           ],
           "default": null,
-          "description": "Warnings from input validation (e.g. an unusual rate), if any.",
+          "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
           "title": "Messages"
         },
         "net_profit": {
-          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points and interest, holding costs and capital gains tax.",
+          "description": "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing costs, agent fees, hard-money points, holding costs (which include the hard-money interest) and capital gains tax.",
           "title": "Net Profit",
           "type": "number"
         },
@@ -25585,7 +25585,7 @@
           "type": "number"
         },
         "total_holding_costs": {
-          "description": "Taxes, insurance, HOA and utilities over the holding time, in dollars.",
+          "description": "Hard-money interest plus taxes, insurance, HOA and utilities over the holding time, in dollars (total_hml_interest + the operating costs).",
           "title": "Total Holding Costs",
           "type": "number"
         }

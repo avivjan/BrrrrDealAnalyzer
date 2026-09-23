@@ -54,19 +54,23 @@ const columns = ref<Record<number, ActiveDealRes[]>>({
 const viewFigures = computed(() => {
   const deals = Object.values(columns.value).flat();
   let cashNeeded = 0;
-  const cocs: number[] = [];
+  // Only a real, positive cash-on-cash counts: the calculator's -1 (∞) and -2 (-∞)
+  // sentinels and a 0 would drag the average down as if they were percentages.
+  const positiveCashOnCashValues: number[] = [];
   for (const d of deals) {
     const any = d as any;
     const isFlip = d.deal_type === "FLIP";
     const needed = Number(isFlip ? any.total_cash_needed : any.total_cash_needed_for_deal);
     if (Number.isFinite(needed)) cashNeeded += needed;
-    const coc = Number(any.cash_on_cash);
-    if (!isFlip && Number.isFinite(coc)) cocs.push(coc);
+    const cashOnCash = Number(any.cash_on_cash);
+    if (!isFlip && Number.isFinite(cashOnCash) && cashOnCash > 0) positiveCashOnCashValues.push(cashOnCash);
   }
   return {
     count: deals.length,
     cashNeeded,
-    avgCoc: cocs.length ? cocs.reduce((a, b) => a + b, 0) / cocs.length : null,
+    avgCoc: positiveCashOnCashValues.length
+      ? positiveCashOnCashValues.reduce((a, b) => a + b, 0) / positiveCashOnCashValues.length
+      : null,
   };
 });
 
@@ -593,7 +597,7 @@ console.groupEnd();
           </div>
           <div class="flex flex-col">
             <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-muted">Avg cash on cash</dt>
-            <dd v-count-up class="numeric font-display text-xl leading-tight tracking-display text-fg">{{ viewFigures.avgCoc == null ? "—" : formatPercent(viewFigures.avgCoc) }}</dd>
+            <dd v-count-up data-testid="mydeals.figures.avg-coc" class="numeric font-display text-xl leading-tight tracking-display text-fg">{{ viewFigures.avgCoc == null ? "—" : formatPercent(viewFigures.avgCoc) }}</dd>
           </div>
         </dl>
       </header>

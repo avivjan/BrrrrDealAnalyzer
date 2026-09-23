@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import type { ActiveDealRes, BrrrDealRes, FlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
+import { formatMoney } from "../utils/money";
 
 const props = defineProps<{
   deal: ActiveDealRes;
@@ -89,8 +90,9 @@ const cardClass = computed(() => {
   return base;
 });
 
-const formatMoney = (val?: number) =>
-  val ? `$${Math.round(val).toLocaleString()}` : "-";
+/** Whole dollars for the card: "$0" for zero, "-$1,234" for a loss, "-" only when there is no value. */
+const formatCardMoney = (val?: number | null) =>
+  val == null || !Number.isFinite(val) ? "-" : formatMoney(Math.round(val));
 
 /**
  * Percent formatter, sentinel-aware. The calculators encode an unbounded
@@ -112,6 +114,13 @@ const formatPercent = (val?: number) => {
  * the target (positive) and at half of it (warning).
  */
 const heroTarget = computed(() => (isBrrr.value ? 10 : 20));
+
+/** Green when the property pays, red when it costs money, neutral at exactly $0 or unknown. */
+const cashFlowToneClass = computed(() => {
+  const cashFlow = brrrDeal.value?.cash_flow;
+  if (cashFlow == null || !Number.isFinite(cashFlow) || cashFlow === 0) return "text-fg";
+  return cashFlow > 0 ? "text-positive" : "text-negative";
+});
 
 const heroPercent = computed(() => {
   const value = isBrrr.value ? brrrDeal.value?.cash_on_cash : flipDeal.value?.roi;
@@ -147,7 +156,7 @@ const heroToneClass = computed(
 const heroText = computed(() =>
   isBrrr.value
     ? formatPercent(brrrDeal.value?.cash_on_cash)
-    : formatMoney(flipDeal.value?.net_profit),
+    : formatCardMoney(flipDeal.value?.net_profit),
 );
 
 const ringLabel = computed(
@@ -317,8 +326,8 @@ const cashNeededShare = computed(() => {
         <span data-part="cash-buffer" class="h-full flex-1 bg-warning/35"></span>
       </div>
       <div class="numeric mt-1 flex justify-between gap-2 text-[11px] text-fg-muted">
-        <span>{{ formatMoney(cashNeeded) }} needed</span>
-        <span v-if="cashNeededWithBuffer != null">w/ buffer {{ formatMoney(cashNeededWithBuffer) }}</span>
+        <span>{{ formatCardMoney(cashNeeded) }} needed</span>
+        <span v-if="cashNeededWithBuffer != null">w/ buffer {{ formatCardMoney(cashNeededWithBuffer) }}</span>
       </div>
     </div>
 
@@ -327,13 +336,13 @@ const cashNeededShare = computed(() => {
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
         <span class="numeric text-fg font-medium">{{
-          formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0)
+          formatCardMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0)
         }}</span>
       </div>
       <div class="flex flex-col min-w-0 text-right">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
         <span class="numeric text-fg font-medium">{{
-          formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0)
+          formatCardMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0)
         }}</span>
       </div>
 
@@ -341,20 +350,17 @@ const cashNeededShare = computed(() => {
         <div class="flex flex-col min-w-0">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash Flow</span>
           <span
+            data-testid="dealcard.cash-flow"
             class="numeric font-medium"
-            :class="
-              (brrrDeal?.cash_flow || 0) > 0
-                ? 'text-positive'
-                : 'text-negative'
-            "
+            :class="cashFlowToneClass"
           >
-            {{ formatMoney(brrrDeal?.cash_flow) }}
+            {{ formatCardMoney(brrrDeal?.cash_flow) }}
           </span>
         </div>
         <div class="flex flex-col min-w-0 text-right">
           <span class="text-[10px] text-fg-muted uppercase tracking-wide">Equity</span>
           <span class="numeric text-fg font-medium">{{
-            formatMoney(brrrDeal?.equity)
+            formatCardMoney(brrrDeal?.equity)
           }}</span>
         </div>
       </template>
