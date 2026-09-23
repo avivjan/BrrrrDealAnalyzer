@@ -225,4 +225,4 @@ validation change.
 - [x] A6 (2 min) MCP: no new endpoint or field; nothing to do.
 - [x] A7 (5 min) Security (`.claude/security.md`): static copy only; chips are buttons without href; focus
       targets found by test id inside the form root; no `v-html`; nothing new leaves the browser.
-- [ ] A8 (10 min) `npm test`, `npm run build`, Playwright chromium; push; update the PR description.
+- [x] A8 (10 min) `npm test`, `npm run build`, Playwright chromium; push; update the PR description.
