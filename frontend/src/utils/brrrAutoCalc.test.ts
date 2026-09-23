@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   addDays,
+  annualPropertyTaxesFromSellerTaxCredit,
   brrrAutoCalc,
   dayOfYear,
   daysBetween,
   daysThroughMonthEnd,
   parseIsoDate,
   sellerTaxCredit,
+  sellerTaxCreditProratedDays,
   titleEscrowBuyDefault,
 } from "./brrrAutoCalc";
 import type { DealInputModel } from "../types";
@@ -130,6 +132,41 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCredit!).toBeLessThan(0);
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20" }).sellerTaxCredit!).toBeGreaterThan(0);
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: true }).sellerTaxCredit!).toBeLessThan(0);
+  });
+
+  it("counts the days the tax proration covers", () => {
+    expect(brrrAutoCalc(FIXTURE).sellerTaxCreditProratedDays).toBe(9); // Jan 1 .. Jan 9
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCreditProratedDays).toBe(17); // Dec 15 .. Dec 31, seller paid
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-01-01" }).sellerTaxCreditProratedDays).toBe(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: null }).sellerTaxCreditProratedDays).toBeNull();
+  });
+});
+
+describe("annualPropertyTaxesFromSellerTaxCredit — the back-solve behind the pencil", () => {
+  it("round-trips the fixture's credit to its annual taxes, to the cent", () => {
+    const closingDay = parseIsoDate("2026-01-10")!;
+    const creditOnTheFixture = sellerTaxCredit(3600, closingDay, false); // 88.77
+    expect(annualPropertyTaxesFromSellerTaxCredit(creditOnTheFixture, closingDay, false)).toBeCloseTo(3600, 2);
+    expect(annualPropertyTaxesFromSellerTaxCredit(177.53, closingDay, false)).toBeCloseTo(7199.83, 2); // 177.53 × 365 ÷ 9
+  });
+
+  it("reads a December reimbursement whatever sign it is typed with", () => {
+    const decemberClosing = parseIsoDate("2026-12-15")!;
+    const reimbursement = sellerTaxCredit(3600, decemberClosing, true); // −167.67, 17 days
+    expect(reimbursement).toBeLessThan(0);
+    expect(annualPropertyTaxesFromSellerTaxCredit(reimbursement, decemberClosing, true)).toBeCloseTo(3600, 2);
+    expect(annualPropertyTaxesFromSellerTaxCredit(-reimbursement, decemberClosing, true)).toBeCloseTo(3600, 2);
+  });
+
+  it("prorates the inverse on the leap year's 366 days", () => {
+    const leapDay = parseIsoDate("2024-02-29")!;
+    expect(annualPropertyTaxesFromSellerTaxCredit((3650 * 59) / 366, leapDay, false)).toBeCloseTo(3650, 2);
+  });
+
+  it("has nothing to solve on a Jan 1 closing with unpaid taxes", () => {
+    expect(sellerTaxCreditProratedDays(parseIsoDate("2026-01-01")!, false)).toBe(0);
+    expect(annualPropertyTaxesFromSellerTaxCredit(100, parseIsoDate("2026-01-01")!, false)).toBeNull();
+    expect(annualPropertyTaxesFromSellerTaxCredit(Number.NaN, parseIsoDate("2026-07-01")!, false)).toBeNull();
   });
 });
 

@@ -3,7 +3,7 @@
 import { computed, useId } from "vue";
 import type { DealInputModel, TitleModeBuy } from "../../../types";
 import { useDealField } from "../../../composables/useDealField";
-import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
+import { annualPropertyTaxesFromSellerTaxCredit, brrrAutoCalc, parseIsoDate } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
@@ -48,9 +48,28 @@ const prepaidInterestHint = computed(() =>
 );
 const sellerTaxCreditHint = computed(() => {
   const paid = autoCalc.value.sellerPaidCurrentYearTaxesEffective;
-  if (paid == null) return undefined;
-  return paid ? "buyer credits the seller (taxes already paid)" : "seller credits the buyer for the days owned";
+  const proratedDays = autoCalc.value.sellerTaxCreditProratedDays;
+  if (paid == null || proratedDays == null) return undefined;
+  if (proratedDays === 0) return "no seller days before a Jan 1 closing, nothing to prorate";
+  return paid
+    ? `buyer credits the seller for ${proratedDays} days (taxes already paid) · a real cost`
+    : `seller credits the buyer for ${proratedDays} days owned · set aside for the tax bill after closing`;
 });
+/** The pencil only makes sense while the proration covers at least one day (a Jan 1 unpaid closing gives $0 for any tax). */
+const sellerTaxCreditIsEditable = computed(() => (autoCalc.value.sellerTaxCreditProratedDays ?? 0) > 0);
+/**
+ * The credit typed over the figure is the one on the settlement statement: back-solve the
+ * annual taxes that produce it and write them to the one shared field, so the figure, this
+ * section's Annual Taxes clone and the Rent & Holding box all follow.
+ */
+const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
+  const closingDay = parseIsoDate(field.getStr("buyClosingDate"));
+  const sellerAlreadyPaid = autoCalc.value.sellerPaidCurrentYearTaxesEffective;
+  if (!closingDay || sellerAlreadyPaid == null) return;
+  const derivedAnnualPropertyTaxes = annualPropertyTaxesFromSellerTaxCredit(sellerTaxCreditDollars, closingDay, sellerAlreadyPaid);
+  if (derivedAnnualPropertyTaxes == null) return;
+  field.set("annual_property_taxes", derivedAnnualPropertyTaxes);
+};
 </script>
 
 <template>
@@ -66,7 +85,25 @@ const sellerTaxCreditHint = computed(() => {
       </div>
       <div class="flex flex-col gap-2">
         <AutoFigure data-testid="form.auto.prepaidInterestBuy" label="Prepaid Interest (Buy)" :value="autoCalc.prepaidInterestBuy" :hint="prepaidInterestHint" />
-        <AutoFigure data-testid="form.auto.sellerTaxCredit" label="Seller Tax Credit" :value="autoCalc.sellerTaxCredit" :hint="sellerTaxCreditHint" signed />
+        <AutoFigure
+          data-testid="form.auto.sellerTaxCredit"
+          label="Seller Tax Credit"
+          :value="autoCalc.sellerTaxCredit"
+          :hint="sellerTaxCreditHint"
+          signed
+          :editable="sellerTaxCreditIsEditable"
+          edit-aria-label="Type the seller tax credit received at closing; Annual Taxes will follow"
+          @commit-edited-value="onSellerTaxCreditEdited"
+        />
+        <!-- The same field as Rent & Holding's Annual Taxes, shown here so the credit and the taxes behind it are read together. -->
+        <MoneyInput
+          data-testid="form.field.annualPropertyTaxesBuyClone"
+          :model-value="field.get('annual_property_taxes')"
+          @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
+          label="Annual Taxes"
+          note="same field as Rent & Holding"
+          :info="impactText('annual_property_taxes')"
+        />
         <div v-if="autoCalc.sellerPaidCurrentYearTaxesEffective != null" class="flex items-center gap-2 text-xs text-fg-muted" data-testid="form.field.sellerPaidCurrentYearTaxes">
           <input :id="sellerPaidId" type="checkbox" class="h-4 w-4 accent-primary" :checked="sellerPaidChecked"
                  @change="field.setBool('sellerPaidCurrentYearTaxes', ($event.target as HTMLInputElement).checked)" />

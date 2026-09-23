@@ -117,6 +117,25 @@ export function sellerTaxCredit(annualPropertyTaxes: number, closingDay: Date, s
     : (annualPropertyTaxes * (closingDayOfYear - 1)) / daysInClosingYear;
 }
 
+/** The days the proration covers: the seller's (Jan 1 → the day before closing) or, once paid, the buyer's (closing → Dec 31). */
+export function sellerTaxCreditProratedDays(closingDay: Date, sellerAlreadyPaidCurrentYearTaxes: boolean): number {
+  const closingDayOfYear = dayOfYear(closingDay);
+  return sellerAlreadyPaidCurrentYearTaxes ? daysInYear(closingDay) - closingDayOfYear + 1 : closingDayOfYear - 1;
+}
+
+/**
+ * The inverse of `sellerTaxCredit`: the annual taxes that produce the credit actually received at
+ * closing, so typing the settlement-statement credit back-solves Annual Taxes. Works on the
+ * credit's absolute value (the seller-paid state supplies the sign), rounded to cents because
+ * the field is stored at two decimals. `null` when the proration covers no days (a Jan 1
+ * closing with unpaid taxes): every tax gives a $0 credit, so there is nothing to solve.
+ */
+export function annualPropertyTaxesFromSellerTaxCredit(sellerTaxCreditDollars: number, closingDay: Date, sellerAlreadyPaidCurrentYearTaxes: boolean): number | null {
+  const proratedDays = sellerTaxCreditProratedDays(closingDay, sellerAlreadyPaidCurrentYearTaxes);
+  if (proratedDays <= 0 || !Number.isFinite(sellerTaxCreditDollars)) return null;
+  return Math.round(((Math.abs(sellerTaxCreditDollars) * daysInYear(closingDay)) / proratedDays) * 100) / 100;
+}
+
 export interface BrrrAutoCalc {
   // Buy
   purchaseLoanAmount: number | null;
@@ -129,6 +148,8 @@ export interface BrrrAutoCalc {
   prepaidInterestBuy: number | null;
   sellerPaidCurrentYearTaxesEffective: boolean | null;
   sellerTaxCredit: number | null;
+  /** Days the proration covers; 0 on a Jan 1 closing with unpaid taxes (nothing to back-solve). */
+  sellerTaxCreditProratedDays: number | null;
   deedTransferTaxBuy: number | null;
   recordingTransferBuyDefault: number | null;
   titleEscrowBuyDefault: number | null;
@@ -216,6 +237,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const annualPropertyTaxes = numberOrNull(deal.annual_property_taxes);
   const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() === 11) : null;
   const sellerTaxCreditAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
+  const sellerTaxCreditProratedDaysCount = buyClosingDay ? sellerTaxCreditProratedDays(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : null;
   const deedTransferTaxBuy = purchasePriceDollars != null ? deedTransferTaxBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
   const recordingTransferBuyDefaultAmount = hmlAmount != null && deedTransferTaxBuy != null ? recordingTransferBuyDefault(hmlAmount, deedTransferTaxBuy) : null;
   const wePayAllExtra = purchasePriceDollars != null ? wePayAllExtraClosingCost(purchasePriceDollars) : null;
@@ -275,6 +297,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   return {
     purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
     prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective, sellerTaxCredit: sellerTaxCreditAmount,
+    sellerTaxCreditProratedDays: sellerTaxCreditProratedDaysCount,
     deedTransferTaxBuy, recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
     wePayAllExtraClosingCost: wePayAllExtra,
     recordingTransferBuyEffective: recordingTransferBuyEffectiveAmount, titleEscrowBuyEffective: titleEscrowBuyEffectiveAmount,
