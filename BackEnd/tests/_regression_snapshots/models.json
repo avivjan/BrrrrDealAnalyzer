@@ -14864,7 +14864,7 @@
             }
           ],
           "default": null,
-          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
           "title": "Seller Tax Credit"
         },
         "sold_comps": {
@@ -15059,7 +15059,7 @@
             }
           ],
           "default": null,
-          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
           "title": "Total Cash Invested"
         },
         "total_cash_needed_for_deal": {
@@ -19378,7 +19378,7 @@
             }
           ],
           "default": null,
-          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
           "title": "Seller Tax Credit"
         },
         "sold_comps": {
@@ -19560,7 +19560,7 @@
             }
           ],
           "default": null,
-          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
           "title": "Total Cash Invested"
         },
         "total_cash_needed_for_deal": {
@@ -25043,7 +25043,7 @@
             }
           ],
           "default": null,
-          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set.",
+          "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
           "title": "Seller Tax Credit"
         },
         "stolen_money": {
@@ -25109,7 +25109,7 @@
             }
           ],
           "default": null,
-          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+          "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
           "title": "Total Cash Invested"
         },
         "total_cash_needed_for_deal": {

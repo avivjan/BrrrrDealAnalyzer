@@ -212,6 +212,14 @@
               "value": 215000
             },
             {
+              "formula": "No credit at closing → nothing to set aside ($0)",
+              "label": "Seller Tax Credit set aside in the tax bucket",
+              "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "Rehab ($50,000) + Contingency 10% ($5,000) = $55,000",
               "label": "Actual Rehab Cost (with contingency)",
               "note": null,
@@ -270,9 +278,9 @@
               "value": 215000
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
               "label": "Total Cash Invested (pre-refi)",
-              "note": "Every dollar actually spent before the refinance; the rehab cushion is held, not spent, so it is not here.",
+              "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -285,6 +293,12 @@
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
                   "value": 42882.5
+                },
+                {
+                  "label": "Seller Tax Credit set aside in the tax bucket",
+                  "sign": "+",
+                  "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
                 },
                 {
                   "label": "Rehab Out-of-Pocket",
@@ -933,7 +947,7 @@
             {
               "formula": "No buy closing date → no tax proration is modelled ($0)",
               "label": "Seller Tax Credit",
-              "note": "Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement.",
+              "note": "Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement, and that credit is set aside in the property's tax bucket the day after closing.",
               "terms": null,
               "unit": "money",
               "value": 0
@@ -1306,6 +1320,14 @@
               "value": 3582.5
             },
             {
+              "formula": "No credit at closing → nothing to set aside ($0)",
+              "label": "Seller Tax Credit set aside in the tax bucket",
+              "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $42,882.50",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
@@ -1383,9 +1405,9 @@
               "value": 7800
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
               "label": "Total Cash Invested (pre-refi)",
-              "note": "Every dollar actually spent before the refinance; the rehab cushion is held, not spent, so it is not here.",
+              "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -1398,6 +1420,12 @@
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
                   "value": 42882.5
+                },
+                {
+                  "label": "Seller Tax Credit set aside in the tax bucket",
+                  "sign": "+",
+                  "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
                 },
                 {
                   "label": "Rehab Out-of-Pocket",

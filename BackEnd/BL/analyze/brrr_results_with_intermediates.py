@@ -63,6 +63,7 @@ class BrrrResultsWithIntermediates:
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
     seller_tax_credit: Decimal      # positive = credit to the buyer
+    seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): in the tax bucket the day after closing
     cash_to_close_buy: Decimal      # the wire on purchase day
     total_hard_money_cost: Decimal  # points + interest + loan charges (buy)
 
@@ -90,7 +91,7 @@ class BrrrResultsWithIntermediates:
 
     # -- cash out at the refinance --------------------------------------------
     hml_payoff: Decimal             # hml_amount + accrued interest
-    total_cash_invested: Decimal    # everything spent before the refi
+    total_cash_invested: Decimal    # everything spent before the refi, plus the credit set aside in the tax bucket
     cash_out_routi: Decimal         # the refi wire
     cash_out_routi_conservative: Decimal      # the wire at the lowest ARV
     cash_to_refi_table_conservative: Decimal  # max(0, -cash_out_routi_conservative)

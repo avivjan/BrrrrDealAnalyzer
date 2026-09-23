@@ -17,6 +17,7 @@ class BuySettlement(NamedTuple):
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
     seller_tax_credit: Decimal        # positive = credit to the buyer
+    seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): put in the property's tax bucket the day after closing
     cash_to_close_buy: Decimal        # the wire to the title company
     total_hard_money_cost: Decimal
 
@@ -34,6 +35,10 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
     else:
         seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, buy_closing_date.month == 12)
         seller_tax_credit = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
+    # A positive credit is the seller's share of this year's bill, which the buyer pays in November: it
+    # comes off the wire today and goes into the property's tax bucket the day after, so Cash Needed never
+    # keeps it. A negative credit (seller already paid) is the buyer's reimbursement, a real cost that stays.
+    seller_tax_credit_set_aside_in_tax_bucket = max(Decimal("0"), seller_tax_credit)
 
     cash_to_close_buy = (down_payment_cash + closing_costs_buy_total + hml_and_holding.hml_points + hml_and_holding.prepaid_interest_buy
                          - seller_tax_credit - payload.earnest_money_deposit)
@@ -46,6 +51,7 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
         closing_costs_buy_total=closing_costs_buy_total,
         seller_paid_current_year_taxes=seller_paid_current_year_taxes,
         seller_tax_credit=seller_tax_credit,
+        seller_tax_credit_set_aside_in_tax_bucket=seller_tax_credit_set_aside_in_tax_bucket,
         cash_to_close_buy=cash_to_close_buy,
         total_hard_money_cost=total_hard_money_cost,
     )

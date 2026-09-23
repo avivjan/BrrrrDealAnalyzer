@@ -202,7 +202,18 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         check(results.seller_paid_current_year_taxes is None and results.seller_tax_credit == 0, "seller tax credit without date")
         tax_formula = "No buy closing date → no tax proration is modelled ($0)"
     breakdown.add(CLOSE, "Seller Tax Credit", results.seller_tax_credit, tax_formula,
-           note="Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement.")
+           note="Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement, "
+                "and that credit is set aside in the property's tax bucket the day after closing.")
+    check(results.seller_tax_credit_set_aside_in_tax_bucket == max(Decimal("0"), results.seller_tax_credit), "seller tax credit set aside")
+    # Filed under the same sections as the Total Cash Invested sum: when the credit is positive
+    # the record holds one Decimal object under both fields, and the breakdown only links such an
+    # operand to a step inside the sum's own sections.
+    breakdown.add([CASH_NEEDED, "cash_out"], "Seller Tax Credit set aside in the tax bucket", results.seller_tax_credit_set_aside_in_tax_bucket,
+           (f"Credit received at closing ({fmt_money(results.seller_tax_credit)}) → put in the property's tax bucket the day after"
+            if results.seller_tax_credit > 0 else
+            "$0: a negative credit is the buyer's reimbursement to the seller and stays in Cash to Close" if results.seller_tax_credit < 0 else
+            "No credit at closing → nothing to set aside ($0)"),
+           note="The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.")
     breakdown.add_sum([CLOSE, CASH_NEEDED], "Cash to Close (Buy)", results.cash_to_close_buy, [
         ("Down Payment", results.down_payment_cash),
         ("Closing Costs (Buy)", results.closing_costs_buy_total),
@@ -302,6 +313,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add_sum(["cash_out", CASH_NEEDED], "Total Cash Invested (pre-refi)", results.total_cash_invested, [
         ("Earnest Money Deposit", payload.earnest_money_deposit),
         ("Cash to Close (Buy)", results.cash_to_close_buy),
+        ("Seller Tax Credit set aside in the tax bucket", results.seller_tax_credit_set_aside_in_tax_bucket),
         ("Rehab Out-of-Pocket", results.rehab_paid_cash_out_of_pocket),
         ("HML Interest paid monthly", results.hml_interest_paid_monthly),
         ("Holding Costs", results.holding_costs),
@@ -309,7 +321,8 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Maintenance before Refi", payload.maintenance_before_refi),
         ("Appliances", payload.appliances),
         ("Pre-Refi Rental Income", results.pre_refi_rental_income, "-"),
-    ], note="Every dollar actually spent before the refinance; the rehab cushion is held, not spent, so it is not here.")
+    ], note="Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; "
+            "the rehab cushion is held, not spent, so it is not here.")
     breakdown.add_sum([WIRE, "cash_out"], f"Cash-Out Wire (Refi{refi_date_suffix})", results.cash_out_routi, [
         ("Refi Loan", results.refi_loan_amount),
         ("HML Payoff", results.hml_payoff, "-"),

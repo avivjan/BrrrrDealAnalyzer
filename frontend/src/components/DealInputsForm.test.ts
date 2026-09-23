@@ -46,7 +46,12 @@ const stubs = {
   AutoDefaultMoneyInput: fieldStub("AutoDefaultMoneyInput"),
   PresetSelectInput: fieldStub("PresetSelectInput"),
   InputInfo: { name: "InputInfo", props: ["content"], template: `<i class="input-info" />` },
-  AutoFigure: { name: "AutoFigure", props: ["label", "value"], template: `<div class="auto-figure" :data-figure="label" :data-value="value" />` },
+  AutoFigure: {
+    name: "AutoFigure",
+    props: ["label", "value", "editable"],
+    emits: ["commitEditedValue"],
+    template: `<div class="auto-figure" :data-figure="label" :data-value="value" :data-editable="editable" />`,
+  },
   ToggleSwitch: {
     name: "ToggleSwitch",
     props: ["modelValue"],
@@ -103,6 +108,8 @@ describe("DealInputsForm", () => {
       for (const label of ["Purchase Price", "Earnest Money Deposit", "Down Payment", "Points", "Interest Rate",
                            "Loan Charges", "Recording & Transfer", "Title & Escrow / Settlement", "Other Closing Costs"])
         expect(rendered, label).toContain(label);
+      // Annual Taxes is rendered twice: the Rent & Holding input and its clone beside the Seller Tax Credit
+      expect(rendered.filter((label) => label === "Annual Taxes")).toHaveLength(2);
       expect(wrapper.find('[data-testid="form.field.buyClosingDate"] input[type="date"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.field.titleModeBuy"] select').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.field.onlineNotaryBuy"] input[type="checkbox"]').exists()).toBe(true);
@@ -550,6 +557,41 @@ describe("DealInputsForm", () => {
       expect(deal.otherClosingCostsBuyNote).toBe("HOA transfer + home warranty");
       await wrapper.find('[data-testid="form.field.otherClosingCostsBuyNote"]').setValue("");
       expect(deal.otherClosingCostsBuyNote).toBeNull();
+    });
+
+    it("keeps the two Annual Taxes boxes on one value, whichever is typed into", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), annual_property_taxes: 3600 });
+      const wrapper = mountForm(deal, "BRRRR");
+      const annualTaxesBoxes = () => wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Annual Taxes");
+      expect(annualTaxesBoxes()).toHaveLength(2);
+      expect(annualTaxesBoxes().map((c) => c.props("modelValue"))).toEqual([3600, 3600]);
+
+      await annualTaxesBoxes()[0]!.vm.$emit("update:modelValue", 4200); // the Buy clone
+      expect(deal.annual_property_taxes).toBe(4200);
+      expect(annualTaxesBoxes().map((c) => c.props("modelValue"))).toEqual([4200, 4200]);
+
+      await annualTaxesBoxes()[1]!.vm.$emit("update:modelValue", 5100); // the Rent & Holding box
+      expect(annualTaxesBoxes().map((c) => c.props("modelValue"))).toEqual([5100, 5100]);
+    });
+
+    it("back-solves Annual Taxes from a seller tax credit typed over the figure", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-01-10", annual_property_taxes: 3600 });
+      const wrapper = mountForm(deal, "BRRRR");
+      const sellerTaxCreditFigure = () => wrapper.findAllComponents({ name: "AutoFigure" }).find((c) => c.props("label") === "Seller Tax Credit")!;
+      expect(sellerTaxCreditFigure().props("editable")).toBe(true);
+      expect(Number(sellerTaxCreditFigure().props("value"))).toBeCloseTo(88.77, 2);
+
+      await sellerTaxCreditFigure().vm.$emit("commitEditedValue", 177.53);
+      expect(deal.annual_property_taxes).toBe(7199.83); // 177.53 × 365 ÷ 9 seller days
+      const annualTaxesBoxes = wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Annual Taxes");
+      expect(annualTaxesBoxes.map((c) => c.props("modelValue"))).toEqual([7199.83, 7199.83]);
+      expect(Number(sellerTaxCreditFigure().props("value"))).toBeCloseTo(177.53, 2);
+    });
+
+    it("turns the seller tax credit pencil off on a Jan 1 closing, where no tax gives a credit", () => {
+      const wrapper = mountForm({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-01-01", annual_property_taxes: 3600 }, "BRRRR");
+      const sellerTaxCreditFigure = wrapper.findAllComponents({ name: "AutoFigure" }).find((c) => c.props("label") === "Seller Tax Credit")!;
+      expect(sellerTaxCreditFigure.props("editable")).toBe(false);
     });
 
     it("resets the seller-paid-taxes override back to auto", async () => {

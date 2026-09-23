@@ -225,7 +225,7 @@
               "value": 85.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($53,119.81) = -$46,675.65",
+              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($55,546.11) = -$49,101.95",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi.",
               "terms": [
@@ -239,19 +239,19 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 53119.8097412481
+                  "value": 55546.11111111111
                 }
               ],
               "unit": "money",
-              "value": -46675.650684931505
+              "value": -49101.95205479452
             },
             {
-              "formula": "Annual Cash Flow ($1,020.44) ÷ |Cash Out| ($46,675.65) × 100 = 2.19%",
+              "formula": "Annual Cash Flow ($1,020.44) ÷ |Cash Out| ($49,101.95) × 100 = 2.08%",
               "label": "Cash on Cash",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 2.186238238628514
+              "value": 2.0782084636144407
             }
           ],
           "cash_out": [
@@ -283,6 +283,14 @@
               ],
               "unit": "money",
               "value": 215000
+            },
+            {
+              "formula": "Credit received at closing ($2,426.30) → put in the property's tax bucket the day after",
+              "label": "Seller Tax Credit set aside in the tax bucket",
+              "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
+              "terms": null,
+              "unit": "money",
+              "value": 2426.301369863014
             },
             {
               "formula": "Rehab ($50,000) + Contingency 10% ($5,000) = $55,000",
@@ -343,9 +351,9 @@
               "value": 215131.38888888888
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,229.95) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $53,119.81",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,229.95) + Seller Tax Credit set aside in the tax bucket ($2,426.30) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,546.11",
               "label": "Total Cash Invested (pre-refi)",
-              "note": "Every dollar actually spent before the refinance; the rehab cushion is held, not spent, so it is not here.",
+              "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -358,6 +366,12 @@
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
                   "value": 42229.94863013698
+                },
+                {
+                  "label": "Seller Tax Credit set aside in the tax bucket",
+                  "sign": "+",
+                  "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 2426.301369863014
                 },
                 {
                   "label": "Rehab Out-of-Pocket",
@@ -403,7 +417,7 @@
                 }
               ],
               "unit": "money",
-              "value": 53119.8097412481
+              "value": 55546.11111111111
             },
             {
               "formula": "Refi Loan ($240,000) − HML Payoff ($215,131.39) − Closing Costs (Refi) ($10,585) − Prepaid Interest (Refi) ($1,239.45) − Reserves ($6,600) = $6,444.16",
@@ -445,7 +459,7 @@
               "value": 6444.159056316591
             },
             {
-              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($53,119.81) = -$46,675.65",
+              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($55,546.11) = -$49,101.95",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi.",
               "terms": [
@@ -459,11 +473,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 53119.8097412481
+                  "value": 55546.11111111111
                 }
               ],
               "unit": "money",
-              "value": -46675.650684931505
+              "value": -49101.95205479452
             }
           ],
           "cash_out_routi": [
@@ -1006,7 +1020,7 @@
             {
               "formula": "Taxes ($3,600) × seller's days (Jan 1 to the day before 2026-09-04) ÷ days in the year = $2,426.30",
               "label": "Seller Tax Credit",
-              "note": "Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement.",
+              "note": "Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement, and that credit is set aside in the property's tax bucket the day after closing.",
               "terms": null,
               "unit": "money",
               "value": 2426.301369863014
@@ -1155,7 +1169,7 @@
           ],
           "net_profit": [
             {
-              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($53,119.81) = -$46,675.65",
+              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($55,546.11) = -$49,101.95",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi.",
               "terms": [
@@ -1169,11 +1183,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 53119.8097412481
+                  "value": 55546.11111111111
                 }
               ],
               "unit": "money",
-              "value": -46675.650684931505
+              "value": -49101.95205479452
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
@@ -1184,7 +1198,7 @@
               "value": 86600
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$46,675.65) = $39,924.35",
+              "formula": "Equity ($86,600) + Cash Out (-$49,101.95) = $37,498.05",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1198,11 +1212,11 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -46675.650684931505
+                  "value": -49101.95205479452
                 }
               ],
               "unit": "money",
-              "value": 39924.349315068495
+              "value": 37498.04794520548
             }
           ],
           "roi": [
@@ -1228,7 +1242,7 @@
               "value": 85.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($53,119.81) = -$46,675.65",
+              "formula": "Cash-Out Wire ($6,444.16) − Total Cash Invested ($55,546.11) = -$49,101.95",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi.",
               "terms": [
@@ -1242,11 +1256,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 53119.8097412481
+                  "value": 55546.11111111111
                 }
               ],
               "unit": "money",
-              "value": -46675.650684931505
+              "value": -49101.95205479452
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
@@ -1257,7 +1271,7 @@
               "value": 86600
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$46,675.65) = $39,924.35",
+              "formula": "Equity ($86,600) + Cash Out (-$49,101.95) = $37,498.05",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1271,19 +1285,19 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -46675.650684931505
+                  "value": -49101.95205479452
                 }
               ],
               "unit": "money",
-              "value": 39924.349315068495
+              "value": 37498.04794520548
             },
             {
-              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($39,924.35)) ÷ |Cash Out| ($46,675.65) × 100 = 87.72%",
+              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($37,498.05)) ÷ |Cash Out| ($49,101.95) × 100 = 78.45%",
               "label": "ROI",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 87.72194846271209
+              "value": 78.445942079093
             }
           ],
           "stolen_money": [
@@ -1379,6 +1393,14 @@
               "value": 3582.5
             },
             {
+              "formula": "Credit received at closing ($2,426.30) → put in the property's tax bucket the day after",
+              "label": "Seller Tax Credit set aside in the tax bucket",
+              "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
+              "terms": null,
+              "unit": "money",
+              "value": 2426.301369863014
+            },
+            {
               "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($1,773.75) − Seller Tax Credit ($2,426.30) − Earnest Money Deposit ($5,000) = $42,229.95",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
@@ -1456,9 +1478,9 @@
               "value": 7800
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,229.95) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $53,119.81",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,229.95) + Seller Tax Credit set aside in the tax bucket ($2,426.30) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,546.11",
               "label": "Total Cash Invested (pre-refi)",
-              "note": "Every dollar actually spent before the refinance; the rehab cushion is held, not spent, so it is not here.",
+              "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -1471,6 +1493,12 @@
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
                   "value": 42229.94863013698
+                },
+                {
+                  "label": "Seller Tax Credit set aside in the tax bucket",
+                  "sign": "+",
+                  "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 2426.301369863014
                 },
                 {
                   "label": "Rehab Out-of-Pocket",
@@ -1516,7 +1544,7 @@
                 }
               ],
               "unit": "money",
-              "value": 53119.8097412481
+              "value": 55546.11111111111
             },
             {
               "formula": "Wire (-$16,831.90) is negative → $16,831.90 brought to the table",
@@ -1527,7 +1555,7 @@
               "value": 16831.89573820396
             },
             {
-              "formula": "Total Cash Invested ($53,119.81) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($16,831.90) = $74,951.71",
+              "formula": "Total Cash Invested ($55,546.11) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($16,831.90) = $77,378.01",
               "label": "Cash Needed",
               "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
@@ -1535,7 +1563,7 @@
                   "label": "Total Cash Invested",
                   "sign": "+",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 53119.8097412481
+                  "value": 55546.11111111111
                 },
                 {
                   "label": "Rehab Cushion",
@@ -1551,7 +1579,7 @@
                 }
               ],
               "unit": "money",
-              "value": 74951.70547945205
+              "value": 77378.00684931508
             }
           ],
           "total_hard_money_cost": [
@@ -1635,8 +1663,8 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 85.03674361688704,
-        "cash_on_cash": 2.186238238628514,
-        "cash_out": -46675.650684931505,
+        "cash_on_cash": 2.0782084636144407,
+        "cash_out": -49101.95205479452,
         "cash_out_routi": 6444.159056316591,
         "cash_out_routi_conservative": -16831.89573820396,
         "cash_to_close_buy": 42229.94863013698,
@@ -1675,7 +1703,7 @@
         "messages": null,
         "monthlyUtilitiesUntilRented": "80.00",
         "montly_hoa": "0.00",
-        "net_profit": 39924.349315068495,
+        "net_profit": 37498.04794520548,
         "niche": null,
         "notes": null,
         "onlineNotaryBuy": true,
@@ -1707,7 +1735,7 @@
         "rent": "2600.00",
         "rent_comps": null,
         "reserves_total": 6600,
-        "roi": 87.72194846271209,
+        "roi": 78.445942079093,
         "section": 2,
         "sellerPaidCurrentYearTaxes": null,
         "seller_tax_credit": 2426.301369863014,
@@ -1723,8 +1751,8 @@
         "titleModeBuy": "standard",
         "title_escrow_buy_effective": 1000,
         "title_escrow_refi_effective": 1880,
-        "total_cash_invested": 53119.8097412481,
-        "total_cash_needed_for_deal": 74951.70547945205,
+        "total_cash_invested": 55546.11111111111,
+        "total_cash_needed_for_deal": 77378.00684931508,
         "total_hard_money_cost": 17025,
         "updated_at": "<redacted>",
         "use_HM_for_rehab": true,
@@ -1737,14 +1765,14 @@
   ],
   "rendered": {
     "cash_flow": "$85",
-    "cash_out": "-$46,676",
+    "cash_out": "-$49,102",
     "cash_out_routi": "$6,444",
-    "cash_on_cash": "2.19%",
+    "cash_on_cash": "2.08%",
     "dscr": "1.36",
     "equity": "$86,600",
-    "roi": "87.72%",
-    "net_profit": "$39,924",
-    "total_cash_needed_for_deal": "$74,952",
+    "roi": "78.45%",
+    "net_profit": "$37,498",
+    "total_cash_needed_for_deal": "$77,378",
     "cash_to_close_buy": "$42,230",
     "cash_out_routi_conservative": "-$16,832",
     "stolen_money": "$0"

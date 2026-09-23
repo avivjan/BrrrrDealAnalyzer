@@ -60,7 +60,8 @@ class analyzeBRRRRes(BaseModel):
         "total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi "
         "table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline)."))
     total_cash_invested: Optional[float] = Field(None, description=(
-        "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + rehab paid "
+        "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
+        "seller tax credit set aside in the property's tax bucket the day after closing + rehab paid "
         "beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money "
         "interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent."))
     cash_to_close_buy: Optional[float] = Field(None, description=(
@@ -80,7 +81,9 @@ class analyzeBRRRRes(BaseModel):
     seller_tax_credit: Optional[float] = Field(None, description=(
         "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer "
         "for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer "
-        "credits the seller (December closing, taxes already paid). 0 when no buy closing date is set."))
+        "credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. "
+        "A positive credit is set aside in the property's tax bucket the day after closing, so it lowers "
+        "cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost."))
     closing_costs_buy_total: Optional[float] = Field(None, description=(
         "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + "
         "online notary + other."))
