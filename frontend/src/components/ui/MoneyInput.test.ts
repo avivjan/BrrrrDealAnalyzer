@@ -140,23 +140,58 @@ describe("MoneyInput", () => {
       expect(wrapper.find("label .sr-only").exists()).toBe(false);
     });
 
-    it("emphasises a field the analysis cannot run without: bold primary label, primary border", () => {
-      const wrapper = mountInput({ neededToRunAnalysis: true });
-      const label = wrapper.get("label");
-      expect(label.classes()).toContain("font-semibold");
-      expect(label.classes()).toContain("text-primary");
-      expect(label.attributes("data-needed")).toBe("true");
-      expect(wrapper.get("input").classes()).toContain("border-primary/60");
-    });
+    describe("a field the analysis cannot run without", () => {
+      it("while empty: no '$0', a placeholder, a NEEDED pill and a strong tinted border", () => {
+        for (const modelValue of [null, 0]) {
+          const wrapper = mountInput({ neededToRunAnalysis: true, modelValue, inThousands: true });
+          const input = wrapper.get("input");
+          expect(input.element.value).toBe("");
+          expect(input.attributes("placeholder")).toBe("Type to get a first result");
+          expect(input.classes()).toContain("border-primary");
+          expect(input.classes()).toContain("bg-primary/5");
+          const label = wrapper.get("label");
+          expect(label.classes()).toContain("font-semibold");
+          expect(label.classes()).toContain("text-primary");
+          expect(label.attributes("data-needed")).toBe("missing");
+          expect(wrapper.get('[data-part="needed"]').text()).toMatch(/needed/i);
+          expect(wrapper.find('[data-part="needed-done"]').exists()).toBe(false);
+        }
+      });
 
-    it("keeps the emphasis and the required asterisk independent", () => {
-      const plainRequired = mountInput({ required: true });
-      expect(plainRequired.get("label").classes()).not.toContain("text-primary");
-      expect(plainRequired.get("label").attributes("data-needed")).toBeUndefined();
-      expect(plainRequired.get("input").classes()).not.toContain("border-primary/60");
+      it("once a value is in: the amount, a check instead of the pill, and a calm border", () => {
+        const wrapper = mountInput({ neededToRunAnalysis: true, modelValue: 200, inThousands: true });
+        const input = wrapper.get("input");
+        expect(input.element.value).toBe("$200,000");
+        expect(input.classes()).toContain("border-primary/40");
+        expect(input.classes()).not.toContain("bg-primary/5");
+        expect(wrapper.get("label").attributes("data-needed")).toBe("filled");
+        expect(wrapper.find('[data-part="needed"]').exists()).toBe(false);
+        expect(wrapper.get('[data-part="needed-done"]').find("i.pi-check-circle").exists()).toBe(true);
+      });
 
-      const neededButNotRequired = mountInput({ neededToRunAnalysis: true });
-      expect(neededButNotRequired.find('[data-part="required"]').exists()).toBe(false);
+      it("keeps a caller's placeholder and still commits what is typed", async () => {
+        const wrapper = mountInput({ neededToRunAnalysis: true, modelValue: 0, inThousands: true, placeholder: "Custom" });
+        expect(wrapper.get("input").attributes("placeholder")).toBe("Custom");
+        expect(await type(wrapper, "200000")).toBe(200);
+      });
+
+      it("leaves a plain field alone: '$0' stays, no pill, no tint", () => {
+        const wrapper = mountInput({ modelValue: 0, label: "Monthly HOA" });
+        expect(wrapper.get("input").element.value).toBe("$0");
+        expect(wrapper.get("input").attributes("placeholder")).toBeUndefined();
+        expect(wrapper.find('[data-part="needed"]').exists()).toBe(false);
+        expect(wrapper.get("label").attributes("data-needed")).toBeUndefined();
+        expect(wrapper.get("input").classes()).not.toContain("bg-primary/5");
+      });
+
+      it("keeps the emphasis and the required asterisk independent", () => {
+        const plainRequired = mountInput({ required: true });
+        expect(plainRequired.get("label").classes()).not.toContain("text-primary");
+        expect(plainRequired.get("label").attributes("data-needed")).toBeUndefined();
+
+        const neededButNotRequired = mountInput({ neededToRunAnalysis: true });
+        expect(neededButNotRequired.find('[data-part="required"]').exists()).toBe(false);
+      });
     });
   });
 });

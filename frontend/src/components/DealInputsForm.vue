@@ -75,7 +75,7 @@ import RefinanceSection from "./deal/brrr/RefinanceSection.vue";
 import MoneyInput from "./ui/MoneyInput.vue";
 import NumberInput from "./ui/NumberInput.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useId } from "vue";
 import type { DealInputModel } from "../types";
 import { toNumber } from "../utils/dealUtils";
@@ -182,22 +182,56 @@ watch(
 const isPhaseTabActive = (key: PhaseTabKey) => activePhaseTabKey.value === key;
 
 /**
- * The inputs with no meaningful default that the analysis cannot run without,
- * by the tab that holds them — the same fields that carry
- * `neededToRunAnalysis` on their `MoneyInput`. A tab shows a dot while any of
- * its fields is still empty or 0.
+ * The inputs with no meaningful default that the analysis cannot run without —
+ * the same fields that carry `neededToRunAnalysis` on their `MoneyInput`, in tab
+ * order. They drive the guidance strip above the tabs (one chip each, a count)
+ * and the "still needed" badge on every tab. A value of 0 counts as missing:
+ * none of these is ever really zero.
  */
-const NEEDED_FIELDS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
-  buy: ["purchasePrice"],
-  rehab: ["rehabCost"],
-  rentHolding: ["rent", "annual_property_taxes", "annual_insurance"],
-  refinance: ["arv_in_thousands"],
-  buyRehab: ["purchasePrice", "rehabCost"],
-  flipStrategy: ["salePrice"],
-  expenses: ["annual_property_taxes", "annual_insurance"],
+interface NeededField {
+  key: NumericKey;
+  label: string;
+  tabKey: PhaseTabKey;
+}
+const NEEDED_FIELDS_BRRRR: readonly NeededField[] = [
+  { key: "purchasePrice", label: "Purchase Price", tabKey: "buy" },
+  { key: "rehabCost", label: "Actual Rehab Cost", tabKey: "rehab" },
+  { key: "rent", label: "Monthly Rent", tabKey: "rentHolding" },
+  { key: "annual_property_taxes", label: "Annual Taxes", tabKey: "rentHolding" },
+  { key: "annual_insurance", label: "Annual Insurance", tabKey: "rentHolding" },
+  { key: "arv_in_thousands", label: "ARV", tabKey: "refinance" },
+];
+const NEEDED_FIELDS_FLIP: readonly NeededField[] = [
+  { key: "purchasePrice", label: "Purchase Price", tabKey: "buyRehab" },
+  { key: "rehabCost", label: "Rehab Cost", tabKey: "buyRehab" },
+  { key: "salePrice", label: "Projected Sale Price", tabKey: "flipStrategy" },
+  { key: "annual_property_taxes", label: "Annual Taxes", tabKey: "expenses" },
+  { key: "annual_insurance", label: "Annual Insurance", tabKey: "expenses" },
+];
+const COUNT_WORDS: Record<number, string> = { 5: "Five", 6: "Six" };
+
+const neededFields = computed(() => (isBrrr.value ? NEEDED_FIELDS_BRRRR : NEEDED_FIELDS_FLIP));
+const neededFieldStatuses = computed(() =>
+  neededFields.value.map((field) => ({ ...field, filled: !!(toNumber(props.deal[field.key]) ?? 0) })),
+);
+const neededFieldsFilledCount = computed(() => neededFieldStatuses.value.filter((field) => field.filled).length);
+const neededFieldsMissingCount = computed(() => neededFieldStatuses.value.length - neededFieldsFilledCount.value);
+const neededFieldsCountWord = computed(
+  () => COUNT_WORDS[neededFields.value.length] ?? String(neededFields.value.length),
+);
+const missingNeededFieldCountForTab = (tabKey: PhaseTabKey): number =>
+  neededFieldStatuses.value.filter((field) => !field.filled && field.tabKey === tabKey).length;
+
+const formRootElement = ref<HTMLElement | null>(null);
+
+/** A chip in the guidance strip: open the field's tab and put the cursor in it. */
+const jumpToNeededField = async (field: NeededField) => {
+  activePhaseTabKey.value = field.tabKey;
+  await nextTick();
+  formRootElement.value
+    ?.querySelector<HTMLElement>(`[data-testid="form.field.${field.key}"] input`)
+    ?.focus();
 };
-const phaseTabNeedsInput = (key: PhaseTabKey): boolean =>
-  NEEDED_FIELDS_BY_PHASE_TAB[key].some((field) => !(toNumber(props.deal[field]) ?? 0));
 
 // Cosmetic divergence kept from the two v1 hosts: the modal names the box more fully.
 const sellingBoxHeading = computed(() =>
@@ -231,10 +265,54 @@ const subHeading = computed(() => "h4" as const);
     a colour without a class computed.
   -->
   <div
+    ref="formRootElement"
     data-testid="form.root"
     :data-surface="surface"
     class="group data-[surface=card]:space-y-8 data-[surface=panel]:space-y-6"
   >
+  <!--
+    The guidance strip: which numbers are enough for a first result, how many
+    are in, and a chip per field that jumps to it. Gone once every one is in, so
+    a finished deal's modal stays clean.
+  -->
+  <UiSurface
+    v-if="neededFieldsMissingCount > 0"
+    data-testid="form.first-result-guide"
+    :level="2"
+    padding="sm"
+    class="border-primary/40"
+  >
+    <div class="flex flex-col gap-2">
+      <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 text-sm">
+        <p class="flex min-w-0 items-start gap-2 text-fg">
+          <i class="pi pi-bolt mt-0.5 flex-none text-primary" aria-hidden="true"></i>
+          <span>
+            <span class="font-semibold">{{ neededFieldsCountWord }} numbers get you a first result.</span>
+            <span class="text-fg-muted">Everything else is pre-filled with a sensible default — refine it later.</span>
+          </span>
+        </p>
+        <span
+          data-testid="form.first-result-guide.count"
+          class="numeric shrink-0 rounded-ctl bg-primary/12 px-2 py-0.5 text-xs font-semibold text-primary"
+        >{{ neededFieldsFilledCount }} of {{ neededFields.length }} in</span>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        <UiChip
+          v-for="field in neededFieldStatuses"
+          :key="field.key"
+          as="button"
+          type="button"
+          :data-testid="`form.first-result-guide.${field.key}`"
+          :data-filled="field.filled"
+          :tone="field.filled ? 'positive' : 'primary'"
+          :icon="field.filled ? 'pi-check' : 'pi-circle'"
+          :aria-label="`${field.label}: ${field.filled ? 'in' : 'still needed'}. Go to it`"
+          @click="jumpToNeededField(field)"
+        >{{ field.label }}</UiChip>
+      </div>
+    </div>
+  </UiSurface>
+
   <!--
     BRRRR follows the deal's lifecycle: Buy, Rehab, Rent & Holding, Refinance
     (`components/deal/brrr/`). Each section reads and writes `deal` in place through
@@ -255,14 +333,14 @@ const subHeading = computed(() => "h4" as const);
     >
       <i class="pi text-xs" :class="tab.icon" aria-hidden="true"></i>
       {{ tab.label }}
-      <template v-if="phaseTabNeedsInput(tab.key)">
+      <template v-if="missingNeededFieldCountForTab(tab.key) > 0">
         <span
           :data-testid="`form.tab.${tab.key}.needs-input`"
           data-part="needs-input"
           aria-hidden="true"
-          class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-        ></span>
-        <span class="sr-only">needs input</span>
+          class="numeric inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-fg"
+        >{{ missingNeededFieldCountForTab(tab.key) }}</span>
+        <span class="sr-only">{{ missingNeededFieldCountForTab(tab.key) }} still needed</span>
       </template>
     </UiButton>
   </UiTabs>

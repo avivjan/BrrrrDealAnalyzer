@@ -30,9 +30,11 @@ const props = defineProps<{
   /**
    * One of the handful of inputs with no meaningful default that the analysis cannot
    * run without (purchase price, rehab, rent, taxes, insurance, ARV / sale price).
-   * Bold primary label and a primary border, so a first-time user sees at a glance
-   * which boxes to fill to get a first result. Independent of `required`, which only
-   * draws the asterisk: LTV or the long-term rate are required but arrive pre-filled.
+   * While the value is still empty or 0 the box shows a placeholder instead of "$0",
+   * a NEEDED pill sits beside the label and the border is strong; once a value is in,
+   * the pill becomes a check and the border calms down. Independent of `required`,
+   * which only draws the asterisk: LTV or the long-term rate are required but arrive
+   * pre-filled.
    */
   neededToRunAnalysis?: boolean;
   disabled?: boolean;
@@ -67,8 +69,29 @@ watch(dollars, (next) => {
   if (!focused.value) draft.value = toEditableText(next);
 });
 
+/** A needed field with nothing in it yet: 0 is "not entered", never a real amount here. */
+const isNeededAndEmpty = computed(() => props.neededToRunAnalysis === true && !dollars.value);
+
+/** `missing` / `filled` on a needed field, undefined on any other. */
+const neededState = computed<"missing" | "filled" | undefined>(() =>
+  props.neededToRunAnalysis ? (isNeededAndEmpty.value ? "missing" : "filled") : undefined,
+);
+
+/** An empty needed field shows its placeholder, not "$0", so it never looks filled in. */
 const displayText = computed(() =>
-  focused.value ? draft.value : formatMoney(dollars.value),
+  focused.value ? draft.value : isNeededAndEmpty.value ? "" : formatMoney(dollars.value),
+);
+
+const effectivePlaceholder = computed(() =>
+  props.placeholder ?? (props.neededToRunAnalysis ? "Type to get a first result" : undefined),
+);
+
+const inputEmphasisClass = computed(() =>
+  neededState.value === "missing"
+    ? "border-primary bg-primary/5 ring-1 ring-primary/25"
+    : neededState.value === "filled"
+      ? "border-primary/40"
+      : "",
 );
 
 /** Live interpretation of the draft, shown as a hint while typing. */
@@ -142,9 +165,20 @@ const inputId = useId();
           data-part="label"
           class="truncate text-sm leading-5"
           :class="neededToRunAnalysis ? 'font-semibold text-primary' : 'font-medium text-fg'"
-          :data-needed="neededToRunAnalysis || undefined"
+          :data-needed="neededState"
         >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
         <InputInfo v-if="info" :content="info" :field-label="label" />
+        <!-- The same 20px pill row the AUTO tag uses: NEEDED while empty, a check once a value is in. -->
+        <span
+          v-if="neededState === 'missing'"
+          data-part="needed"
+          class="inline-flex h-5 shrink-0 items-center rounded-ctl bg-primary px-1.5 text-[10px] font-semibold uppercase tracking-wide text-primary-fg"
+        >needed<span class="sr-only"> for a first result</span></span>
+        <span
+          v-else-if="neededState === 'filled'"
+          data-part="needed-done"
+          class="inline-flex h-5 shrink-0 items-center text-positive"
+        ><i class="pi pi-check-circle text-xs" aria-hidden="true"></i><span class="sr-only">in</span></span>
       </span>
       <span
         v-if="hint"
@@ -164,10 +198,10 @@ const inputId = useId();
       inputmode="decimal"
       autocomplete="off"
       :value="displayText"
-      :placeholder="placeholder"
+      :placeholder="effectivePlaceholder"
       :disabled="disabled"
       class="ui-input numeric"
-      :class="neededToRunAnalysis ? 'border-primary/60' : ''"
+      :class="inputEmphasisClass"
       @focus="onFocus"
       @blur="commit"
       @input="draft = ($event.target as HTMLInputElement).value"

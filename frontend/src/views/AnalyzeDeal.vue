@@ -246,7 +246,7 @@ const saveDeal = async () => {
           <ol class="flex flex-col gap-3 text-sm">
             <li class="flex items-start gap-3">
               <span class="numeric grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">1</span>
-              <span><span class="font-medium text-fg">Fill in deal numbers.</span> <span class="text-fg-muted">Purchase, rehab, financing, expenses.</span></span>
+              <span><span class="font-medium text-fg">Fill in the {{ selectedType === 'FLIP' ? 'five' : 'six' }} highlighted numbers.</span> <span class="text-fg-muted">Everything else starts at a sensible default you can change later.</span></span>
             </li>
             <li class="flex items-start gap-3">
               <span class="numeric grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">2</span>

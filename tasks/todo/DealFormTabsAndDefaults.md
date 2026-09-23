@@ -193,3 +193,36 @@ Backend: pytest green on Postgres 16 (whole suite), `verify_regression.py verify
 re-snapshot, bandit clean, the CI migration smoke (two boots on a fresh database) passes. Frontend:
 1516 vitest tests pass, `vue-tsc -b && vite build` clean, Playwright chromium 107 passed / 3 skipped (110 total, verify mode against the committed goldens)
 (webkit projects not run here: the sandbox has no WebKit build).
+
+## Follow-up A: make the "first result" inputs unmistakable
+
+The owner's screenshot after #76: the gold label and border are too subtle, a needed field still reads
+"$0" as if filled, and nothing says these are the *only* numbers needed for a first answer.
+
+**Design (frontend only).** `MoneyInput` with `neededToRunAnalysis`: while the value is empty or 0 the box
+shows a placeholder instead of "$0", a filled **NEEDED** pill sits beside the label and the input gets a
+strong tinted border; once a value is in, the pill becomes a green check and the border calms down.
+`DealInputsForm` renders a guidance strip above the tabs while any needed field is missing: "Six numbers
+get you a first result. Everything else is pre-filled with a sensible default." with a `N of 6 in` count
+and one clickable chip per field (jumps to its tab and focuses the input); the tab dot becomes the count
+of fields still needed on that tab. The Analyze "How it works" step 1 says the same. No backend, MCP or
+validation change.
+
+- [x] A1 (5 min) This section.
+- [x] A2 (25 min) `MoneyInput.vue`: placeholder instead of "$0", NEEDED / done pill, missing vs filled border.
+- [x] A3 (35 min) `DealInputsForm.vue`: ordered needed-field lists, guidance strip with count and chips
+      (tab switch + focus), tab count badge, root ref.
+- [x] A3b (15 min) Owner's add: the bought card's Google Drive link is a permanent icon button beside the
+      address (colour glyph opens the folder; a muted dashed glyph when unset opens the deal to add one),
+      never behind a hover like the other links. `BoughtDealCard.contract.test.ts` covers both states.
+- [x] A4 (5 min) `AnalyzeDeal.vue` "How it works" step 1 copy.
+- [x] A5 (30 min) Tests — **Unit**: `MoneyInput.test.ts` (needed + 0: placeholder, NEEDED pill, strong
+      border; needed + value: check, calm border; plain field still "$0"; typing still commits);
+      `DealInputsForm.test.ts` (strip with six / five chips in tab order, count text, missing/filled tones,
+      chip click shows the tab and focuses the input, strip gone when all filled, tab badge count).
+      **Integration**: none (no API change). **E2E**: chromium suite; re-record only what the recorder
+      reports changed.
+- [x] A6 (2 min) MCP: no new endpoint or field; nothing to do.
+- [x] A7 (5 min) Security (`.claude/security.md`): static copy only; chips are buttons without href; focus
+      targets found by test id inside the form root; no `v-html`; nothing new leaves the browser.
+- [ ] A8 (10 min) `npm test`, `npm run build`, Playwright chromium; push; update the PR description.

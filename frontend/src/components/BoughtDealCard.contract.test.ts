@@ -278,9 +278,27 @@ describe("BoughtDealCard", () => {
     const link = (wrapper: ReturnType<typeof mountCard>) =>
       wrapper.find('[data-testid="boughtcard.google-drive-link"]');
 
-    it("is absent until a link is set", () => {
-      expect(link(mountCard()).exists()).toBe(false);
-      expect(link(mountCard(boughtDeal({ google_drive_link: "" }))).exists()).toBe(false);
+    it("shows a muted 'add one' glyph until a link is set, which opens the deal like the rest of the header", async () => {
+      for (const deal of [boughtDeal(), boughtDeal({ google_drive_link: "" })]) {
+        const wrapper = mountCard(deal);
+        expect(link(wrapper).exists()).toBe(false);
+        const missing = wrapper.find('[data-testid="boughtcard.google-drive-missing"]');
+        expect(missing.exists()).toBe(true);
+        expect(missing.attributes("aria-label")).toContain("Open the deal to add one");
+        expect(missing.find("svg").classes()).toContain("grayscale");
+      }
+      const parentClick = vi.fn();
+      const Board = defineComponent({
+        setup: () => () => h("div", { onClick: parentClick }, [h(BoughtDealCard, { deal: boughtDeal() })]),
+      });
+      await mount(Board).find('[data-testid="boughtcard.google-drive-missing"]').trigger("click");
+      expect(parentClick).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the 'add one' glyph once a link is set", () => {
+      const wrapper = mountCard(boughtDeal({ google_drive_link: DRIVE_URL }));
+      expect(wrapper.find('[data-testid="boughtcard.google-drive-missing"]').exists()).toBe(false);
+      expect(link(wrapper).attributes("title")).toContain("Google Drive");
     });
 
     it("opens the folder in a new tab, without a referrer, once a link is set", () => {

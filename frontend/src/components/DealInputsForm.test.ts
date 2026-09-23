@@ -55,10 +55,11 @@ const stubs = {
   },
 };
 
-function mountForm(deal: DealInputModel, dealType: "BRRRR" | "FLIP") {
+function mountForm(deal: DealInputModel, dealType: "BRRRR" | "FLIP", options: { attachTo?: Element } = {}) {
   return mount(DealInputsForm, {
     props: { deal, dealType },
     global: { stubs },
+    ...options,
   });
 }
 
@@ -223,6 +224,16 @@ describe("DealInputsForm", () => {
       expect(isShown(wrapper, "flipStrategy")).toBe(false);
     });
 
+    it("counts the needed inputs still missing on each tab, and drops the count as they are typed", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      const badge = (tabKey: string) => wrapper.find(`[data-testid="form.tab.${tabKey}.needs-input"]`);
+      expect(badge("buy").text()).toBe("1");
+      expect(badge("rentHolding").text()).toBe("3");
+      await emitFrom(wrapper, "Monthly Rent", 2600);
+      expect(badge("rentHolding").text()).toBe("2");
+    });
+
     it("dots every tab whose needed inputs are still empty, and clears the dot as they are typed", async () => {
       const deal = reactive(createEmptyDealForm("BRRRR"));
       const wrapper = mountForm(deal, "BRRRR");
@@ -260,6 +271,59 @@ describe("DealInputsForm", () => {
       expect(needed(mountForm(createEmptyDealForm("FLIP"), "FLIP"))).toEqual(
         ["Purchase Price", "Rehab Cost", "Projected Sale Price", "Annual Taxes", "Annual Insurance"],
       );
+    });
+  });
+
+  describe("the first-result guide above the tabs", () => {
+    const guide = (wrapper: ReturnType<typeof mountForm>) => wrapper.find('[data-testid="form.first-result-guide"]');
+    const chips = (wrapper: ReturnType<typeof mountForm>) =>
+      wrapper.findAll('[data-testid^="form.first-result-guide."]:not([data-testid$=".count"])');
+
+    it("names the six BRRRR numbers, in tab order, and counts how many are in", () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      expect(guide(wrapper).text()).toContain("Six numbers get you a first result.");
+      expect(guide(wrapper).text()).toContain("Everything else is pre-filled");
+      expect(wrapper.get('[data-testid="form.first-result-guide.count"]').text()).toBe("0 of 6 in");
+      expect(chips(wrapper).map((c) => c.text())).toEqual(
+        ["Purchase Price", "Actual Rehab Cost", "Monthly Rent", "Annual Taxes", "Annual Insurance", "ARV"],
+      );
+      expect(chips(wrapper).every((c) => c.attributes("data-filled") === "false")).toBe(true);
+    });
+
+    it("names the five FLIP numbers", () => {
+      const wrapper = mountForm(createEmptyDealForm("FLIP"), "FLIP");
+      expect(guide(wrapper).text()).toContain("Five numbers get you a first result.");
+      expect(chips(wrapper).map((c) => c.text())).toEqual(
+        ["Purchase Price", "Rehab Cost", "Projected Sale Price", "Annual Taxes", "Annual Insurance"],
+      );
+    });
+
+    it("turns a chip green and moves the count as a number is typed", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      await emitFrom(wrapper, "Purchase Price", 200);
+      const purchase = wrapper.get('[data-testid="form.first-result-guide.purchasePrice"]');
+      expect(purchase.attributes("data-filled")).toBe("true");
+      expect(purchase.classes()).toContain("text-positive");
+      expect(wrapper.get('[data-testid="form.first-result-guide.count"]').text()).toBe("1 of 6 in");
+    });
+
+    it("a chip opens the field's tab and focuses its input", async () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR", { attachTo: document.body });
+      await wrapper.get('[data-testid="form.first-result-guide.arv_in_thousands"]').trigger("click");
+      await wrapper.vm.$nextTick();
+      const refinanceBox = wrapper.find('[data-form-tab="refinance"]');
+      expect(refinanceBox.attributes("style") ?? "").not.toContain("display: none");
+      expect(wrapper.find('[data-form-tab="buy"]').attributes("style") ?? "").toContain("display: none");
+      wrapper.unmount();
+    });
+
+    it("disappears once every needed number is in, so a finished deal's modal stays clean", () => {
+      const filled = {
+        ...createEmptyDealForm("BRRRR"),
+        purchasePrice: 200, rehabCost: 50, rent: 2600, annual_property_taxes: 3600, annual_insurance: 1200, arv_in_thousands: 320,
+      };
+      expect(guide(mountForm(filled, "BRRRR")).exists()).toBe(false);
     });
   });
 
