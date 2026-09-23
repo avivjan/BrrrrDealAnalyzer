@@ -19,7 +19,12 @@ def cash_out_at_refi_step(payload, hml_amount, hml_and_holding, buy_settlement, 
     # Every dollar actually spent before the refinance. EMD + cash to close is the whole
     # purchase settlement; the three interest slices are counted once each: prepaid inside
     # cash to close, monthly here, accrued inside the payoff. Rent collected offsets it.
-    total_cash_invested = (payload.earnest_money_deposit + buy_settlement.cash_to_close_buy + rehab_paid_cash_out_of_pocket
+    # A positive seller tax credit came off the wire at closing but is put in the property's
+    # tax bucket the day after (the buyer pays the whole year's bill in November), so it is
+    # added straight back: the credit moves cash between the wire and the bucket, never out
+    # of Cash Needed. A negative credit (seller already paid) is a real reimbursement and stays.
+    total_cash_invested = (payload.earnest_money_deposit + buy_settlement.cash_to_close_buy
+                           + buy_settlement.seller_tax_credit_set_aside_in_tax_bucket + rehab_paid_cash_out_of_pocket
                            + hml_and_holding.hml_interest_paid_monthly + hml_and_holding.holding_costs + hml_and_holding.utilities_until_rented
                            + payload.maintenance_before_refi + payload.appliances - hml_and_holding.pre_refi_rental_income)
     cash_out_routi = (refi_terms.refi_loan_amount - hml_payoff - refi_terms.at_arv.closing_costs_refi_total

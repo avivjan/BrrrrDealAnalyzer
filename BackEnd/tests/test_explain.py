@@ -351,6 +351,7 @@ class TestTermsLinkToTheirSourceStep:
         }
         invested = _term_links(breakdowns, "total_cash_needed_for_deal", "Total Cash Invested")
         assert invested["Cash to Close (Buy)"] == "Cash to Close (Buy)"
+        assert invested["Seller Tax Credit set aside in the tax bucket"] == "Seller Tax Credit set aside in the tax bucket"
         assert invested["Holding Costs"] == "Holding Costs (until refi)"
         assert invested["Pre-Refi Rental Income"] == "Pre-Refi Rental Income"
         assert invested["Earnest Money Deposit"] is None

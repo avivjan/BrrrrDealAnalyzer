@@ -71,6 +71,34 @@ class TestTaxProration:
         without_tax_credit = _compute(brrrr_payload, buyClosingDate="2026-07-01", annual_property_taxes=0)
         assert with_tax_credit.cash_to_close_buy < without_tax_credit.cash_to_close_buy
 
+    def test_a_positive_seller_tax_credit_lowers_cash_to_close_but_not_cash_needed(self, brrrr_payload):
+        # The seller's share comes off the wire and goes into the property's tax bucket the day after,
+        # so taxes reach Cash Needed only through the holding costs, never through the credit.
+        with_taxes = _compute(brrrr_payload, buyClosingDate="2026-07-01")
+        without_taxes = _compute(brrrr_payload, buyClosingDate="2026-07-01", annual_property_taxes=0)
+        assert with_taxes.seller_tax_credit > 0 and without_taxes.seller_tax_credit == 0
+        assert with_taxes.seller_tax_credit_set_aside_in_tax_bucket == with_taxes.seller_tax_credit
+        assert with_taxes.cash_to_close_buy == without_taxes.cash_to_close_buy - with_taxes.seller_tax_credit
+        holding_costs_of_the_taxes = with_taxes.holding_costs - without_taxes.holding_costs
+        assert with_taxes.total_cash_invested == without_taxes.total_cash_invested + holding_costs_of_the_taxes
+        assert with_taxes.total_cash_needed == without_taxes.total_cash_needed + holding_costs_of_the_taxes
+
+    def test_a_december_reimbursement_stays_in_cash_needed(self, brrrr_payload):
+        seller_paid = _compute(brrrr_payload, buyClosingDate="2026-12-15")
+        seller_unpaid = _compute(brrrr_payload, buyClosingDate="2026-12-15", sellerPaidCurrentYearTaxes=False)
+        assert seller_paid.seller_tax_credit < 0 and seller_paid.seller_tax_credit_set_aside_in_tax_bucket == 0
+        assert seller_unpaid.seller_tax_credit > 0 and seller_unpaid.seller_tax_credit_set_aside_in_tax_bucket == seller_unpaid.seller_tax_credit
+        both_prorations = seller_unpaid.seller_tax_credit - seller_paid.seller_tax_credit
+        # The reimbursement raises the wire by |credit| and the unpaid credit lowers it by its own amount...
+        assert seller_paid.cash_to_close_buy == seller_unpaid.cash_to_close_buy + both_prorations
+        # ...but only the reimbursement reaches Cash Needed: the unpaid credit is put back into the bucket.
+        assert seller_paid.total_cash_invested == seller_unpaid.total_cash_invested - seller_paid.seller_tax_credit
+        assert seller_paid.total_cash_needed == seller_unpaid.total_cash_needed - seller_paid.seller_tax_credit
+
+    def test_the_tax_bucket_is_zero_without_a_closing_date(self, brrrr_payload):
+        results = _compute(brrrr_payload, buyClosingDate=None)
+        assert results.seller_tax_credit == 0 and results.seller_tax_credit_set_aside_in_tax_bucket == 0
+
 
 class TestInterestTimeline:
     def test_prepaid_window_runs_from_closing_through_month_end(self):
@@ -199,7 +227,8 @@ class TestHoldingIncomeAndCosts:
 
     def test_rent_offsets_and_items_add_to_the_cash_invested(self, brrrr_payload):
         results = _compute(brrrr_payload)
-        assert results.total_cash_invested == (Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy + results.rehab_paid_cash_out_of_pocket
+        assert results.total_cash_invested == (Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy
+                                         + results.seller_tax_credit_set_aside_in_tax_bucket + results.rehab_paid_cash_out_of_pocket
                                          + results.hml_interest_paid_monthly + results.holding_costs + results.utilities_until_rented
                                          + Decimal(brrrr_payload["maintenanceBeforeRefi"]) + Decimal(brrrr_payload["appliances"])
                                          - results.pre_refi_rental_income)
