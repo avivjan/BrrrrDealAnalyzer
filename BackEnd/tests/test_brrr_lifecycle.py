@@ -216,6 +216,12 @@ class TestRefinanceSettlement:
         assert results.title_escrow_refi == 800 + Decimal("0.0045") * results.refi_loan_amount
         assert results.broker_points_refi == Decimal(payload["refiPoints"]) / 100 * results.refi_loan_amount
 
+    def test_broker_processing_fee_defaults_to_zero_when_omitted(self, brrrr_payload):
+        without_fee = {k: v for k, v in brrrr_payload.items() if k != "brokerProcessingFeeRefi"}
+        with_fee_zero = _compute(brrrr_payload, brokerProcessingFeeRefi=0)
+        assert _compute(without_fee).closing_costs_refi_total == with_fee_zero.closing_costs_refi_total
+        assert _compute(without_fee).closing_costs_refi_total == _compute(brrrr_payload).closing_costs_refi_total - Decimal(brrrr_payload["brokerProcessingFeeRefi"])
+
     def test_vacancy_reserve_defaults_to_one_month_of_rent(self, brrrr_payload):
         assert _compute(brrrr_payload, vacancyReserve=None).vacancy_reserve == Decimal(brrrr_payload["rent"])
         assert _compute(brrrr_payload, vacancyReserve=0).vacancy_reserve == 0

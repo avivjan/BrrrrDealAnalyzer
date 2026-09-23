@@ -39,6 +39,7 @@ class BaseDealReq(BaseModel):
     overall_design: Optional[str] = Field(None, max_length=MAX_TEXT)
     crime_rate: Optional[str] = Field(None, max_length=MAX_TEXT)
     pics_link: Optional[str] = Field(None, max_length=MAX_URL)
+    google_drive_link: Optional[str] = Field(None, max_length=MAX_URL)
     contact: Optional[str] = Field(None, max_length=MAX_TEXT)
     task: Optional[str] = Field(None, max_length=MAX_TEXT)
     niche: Optional[str] = Field(None, max_length=MAX_TEXT)

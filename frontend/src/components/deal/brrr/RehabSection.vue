@@ -2,10 +2,16 @@
 /**
  * BRRRR › Rehab: what the work costs, what the lender finances, and the spread between.
  *
- * Mirror-once: both amounts start at 0; the first value typed into either is copied to
- * the other, after which they are independent (a real budget rarely equals the actual).
+ * Mirror-once: both amounts start at 0; the first value typed into either seeds the
+ * other, after which they are independent (a real budget rarely equals the actual).
  * Only while BOTH are still empty, so opening a saved cash-rehab deal never turns it
  * into a financed one.
+ *
+ * The seed is asymmetric on purpose. Typing the actual rehab first seeds the budget at
+ * rehab × (1 + contingency) — the amount the lender should finance so the contingency is
+ * drawn, not paid from pocket (110% at the default 10%). Typing the budget first copies
+ * it to the rehab unchanged: a budget is the lender's number, and deriving a rehab from
+ * it would only invent a figure.
  */
 import { computed, ref } from "vue";
 import type { DealInputModel } from "../../../types";
@@ -25,10 +31,18 @@ const autoCalc = computed(() => brrrAutoCalc(props.deal));
 const mirroredOnce = ref(false);
 const isEmptyAmount = (amount: number | null) => !amount;
 
+/** Thousands at NUMERIC(14,4): 50 × 1.1 is 55.000000000000007 in floating point, so round. */
+const roundToFourDecimals = (amount: number) => Math.round(amount * 10_000) / 10_000;
+
+const constructionBudgetSeededFromRehab = (rehabCostThousands: number) =>
+  roundToFourDecimals(rehabCostThousands * (1 + (field.get("rehabContingency") ?? 0) / 100));
+
 const setActualRehabCost = (newRehabCostThousands: number | null) => {
   const bothAmountsEmpty = isEmptyAmount(field.get("rehabCost")) && isEmptyAmount(field.get("constructionLoanBudget"));
   field.set("rehabCost", newRehabCostThousands);
-  if (!mirroredOnce.value && bothAmountsEmpty && newRehabCostThousands != null) field.set("constructionLoanBudget", newRehabCostThousands);
+  if (!mirroredOnce.value && bothAmountsEmpty && newRehabCostThousands != null) {
+    field.set("constructionLoanBudget", constructionBudgetSeededFromRehab(newRehabCostThousands));
+  }
   mirroredOnce.value = true;
 };
 const setConstructionLoanBudget = (newBudgetThousands: number | null) => {
@@ -52,6 +66,7 @@ const stolenLabel = computed(() =>
         @update:model-value="setActualRehabCost"
         label="Actual Rehab Cost"
         :inThousands="true"
+        :needed-to-run-analysis="true"
         :info="impactText('rehabCost')"
       />
       <MoneyInput
@@ -60,6 +75,7 @@ const stolenLabel = computed(() =>
         @update:model-value="setConstructionLoanBudget"
         label="Construction Loan Budget"
         :inThousands="true"
+        placeholder="rehab + contingency"
         :info="impactText('constructionLoanBudget')"
         :note="autoCalc.hmlAmount == null ? undefined : `HML total ${formatMoney(autoCalc.hmlAmount)}`"
       />

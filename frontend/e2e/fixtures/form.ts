@@ -25,8 +25,27 @@ export function fieldRoot(page: Page, name: string): Locator {
   return page.getByTestId(`form.field.${name}`);
 }
 
+/**
+ * The deal form shows one phase at a time (`DealInputsForm` tabs); a field on
+ * another phase is in the DOM but hidden. Its owning box carries
+ * `data-form-tab`, and the tab button is `form.tab.<key>`; click it unless it
+ * is already the selected one (`aria-selected`, from `UiButton variant="tab"`).
+ */
+export async function openTabOf(page: Page, name: string): Promise<void> {
+  const owningBox = fieldRoot(page, name).locator('xpath=ancestor-or-self::*[@data-form-tab]').first();
+  if ((await owningBox.count()) === 0) return; // not inside the tabbed form
+  const tabKey = await owningBox.getAttribute('data-form-tab');
+  const tab = page.getByTestId(`form.tab.${tabKey}`);
+  if ((await tab.getAttribute('aria-selected')) === 'true') return;
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
+
 export function fieldInput(page: Page, name: string): Locator {
-  return fieldRoot(page, name).locator('input');
+  // A `DaysOrDateField` anchored on the buy closing date also renders a linked
+  // `type="date"` input (`data-part="date-linked"`); the number box is the
+  // field's value, so the date inputs are left out.
+  return fieldRoot(page, name).locator('input:not([data-part^="date-"])');
 }
 
 /** True when the field is a plain `MoneyInput` rather than a PrimeVue one. */
@@ -65,6 +84,7 @@ export async function setField(
   name: string,
   value: number,
 ): Promise<void> {
+  await openTabOf(page, name);
   const plain = await isPlainInput(page, name);
   await typeInto(fieldInput(page, name), plain ? moneyText(name, value) : String(value));
 }

@@ -7,6 +7,16 @@
  *   - `views/MyDeals.vue`       (card detail modal, `surface="panel"`)
  *   - `views/BoughtDeals.vue`   (card detail modal, `surface="panel"`)
  *
+ * The phases are TABS (Buy / Rehab / Rent & Holding / Refinance; Buy & Rehab /
+ * Flip Strategy / Expenses), one section on screen at a time: the whole form
+ * was one long scroll inside the card modals. Every section stays mounted and
+ * switches with `v-show`, so a section's own state (the rehab mirror-once), the
+ * unit tests that find any field, and the e2e locators all keep working; the
+ * hosts' results panel sits below this component, outside the tabs, so it is
+ * visible whatever tab is open. A tab carries a dot while one of its
+ * `neededToRunAnalysis` inputs is still empty, so a first-time user sees where
+ * to type to get a first result.
+ *
  * ---------------------------------------------------------------------------
  * ADDING A NEW INPUT FIELD — the full checklist
  * ---------------------------------------------------------------------------
@@ -65,7 +75,7 @@ import RefinanceSection from "./deal/brrr/RefinanceSection.vue";
 import MoneyInput from "./ui/MoneyInput.vue";
 import NumberInput from "./ui/NumberInput.vue";
 import ToggleSwitch from "primevue/toggleswitch";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useId } from "vue";
 import type { DealInputModel } from "../types";
 import { toNumber } from "../utils/dealUtils";
@@ -139,6 +149,56 @@ const useHmForRehab = computed({
 
 const isBrrr = computed(() => props.dealType === "BRRRR");
 
+/** One tab per phase of the deal; `key` is also the `data-form-tab` the e2e fixture reads. */
+type PhaseTabKey = "buy" | "rehab" | "rentHolding" | "refinance" | "buyRehab" | "flipStrategy" | "expenses";
+interface PhaseTab {
+  key: PhaseTabKey;
+  label: string;
+  /** PrimeIcons name, the same glyph the section header shows. */
+  icon: string;
+}
+
+const BRRRR_PHASE_TABS: readonly PhaseTab[] = [
+  { key: "buy", label: "Buy", icon: "pi-home" },
+  { key: "rehab", label: "Rehab", icon: "pi-wrench" },
+  { key: "rentHolding", label: "Rent & Holding", icon: "pi-key" },
+  { key: "refinance", label: "Refinance", icon: "pi-refresh" },
+];
+const FLIP_PHASE_TABS: readonly PhaseTab[] = [
+  { key: "buyRehab", label: "Buy & Rehab", icon: "pi-home" },
+  { key: "flipStrategy", label: "Flip Strategy", icon: "pi-dollar" },
+  { key: "expenses", label: "Expenses", icon: "pi-wallet" },
+];
+
+const phaseTabs = computed(() => (isBrrr.value ? BRRRR_PHASE_TABS : FLIP_PHASE_TABS));
+const activePhaseTabKey = ref<PhaseTabKey>(phaseTabs.value[0]!.key);
+/** Switching BRRRR <-> FLIP swaps the tab set, so land on the first tab of the new one. */
+watch(
+  () => props.dealType,
+  () => {
+    activePhaseTabKey.value = phaseTabs.value[0]!.key;
+  },
+);
+const isPhaseTabActive = (key: PhaseTabKey) => activePhaseTabKey.value === key;
+
+/**
+ * The inputs with no meaningful default that the analysis cannot run without,
+ * by the tab that holds them — the same fields that carry
+ * `neededToRunAnalysis` on their `MoneyInput`. A tab shows a dot while any of
+ * its fields is still empty or 0.
+ */
+const NEEDED_FIELDS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
+  buy: ["purchasePrice"],
+  rehab: ["rehabCost"],
+  rentHolding: ["rent", "annual_property_taxes", "annual_insurance"],
+  refinance: ["arv_in_thousands"],
+  buyRehab: ["purchasePrice", "rehabCost"],
+  flipStrategy: ["salePrice"],
+  expenses: ["annual_property_taxes", "annual_insurance"],
+};
+const phaseTabNeedsInput = (key: PhaseTabKey): boolean =>
+  NEEDED_FIELDS_BY_PHASE_TAB[key].some((field) => !(toNumber(props.deal[field]) ?? 0));
+
 // Cosmetic divergence kept from the two v1 hosts: the modal names the box more fully.
 const sellingBoxHeading = computed(() =>
   props.surface === "panel" ? "Selling Costs Breakdown" : "Selling Costs",
@@ -180,11 +240,51 @@ const subHeading = computed(() => "h4" as const);
     (`components/deal/brrr/`). Each section reads and writes `deal` in place through
     `useDealField` and shows its auto-calculated figures beside the inputs.
   -->
+  <!--
+    The phase tabs. `UiButton variant="tab"` carries `role="tab"` and
+    `aria-selected`, which is also how the e2e fixture tells the active tab.
+  -->
+  <UiTabs data-testid="form.tabs" aria-label="Deal phase" class="max-w-full">
+    <UiButton
+      v-for="tab in phaseTabs"
+      :key="tab.key"
+      :data-testid="`form.tab.${tab.key}`"
+      variant="tab"
+      :active="isPhaseTabActive(tab.key)"
+      @click="activePhaseTabKey = tab.key"
+    >
+      <i class="pi text-xs" :class="tab.icon" aria-hidden="true"></i>
+      {{ tab.label }}
+      <template v-if="phaseTabNeedsInput(tab.key)">
+        <span
+          :data-testid="`form.tab.${tab.key}.needs-input`"
+          data-part="needs-input"
+          aria-hidden="true"
+          class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+        ></span>
+        <span class="sr-only">needs input</span>
+      </template>
+    </UiButton>
+  </UiTabs>
+
+  <!--
+    Each phase in its own `v-show` box, so a section's own state survives a tab
+    switch and hidden fields stay in the DOM. `data-form-tab` names the tab that
+    owns the box: the e2e `setField` fixture clicks it before typing.
+  -->
   <template v-if="isBrrr">
-    <BuySection :deal="deal" :surface="surface" />
-    <RehabSection :deal="deal" :surface="surface" />
-    <RentHoldingSection :deal="deal" :surface="surface" />
-    <RefinanceSection :deal="deal" :surface="surface" />
+    <div v-show="isPhaseTabActive('buy')" data-form-tab="buy">
+      <BuySection :deal="deal" :surface="surface" />
+    </div>
+    <div v-show="isPhaseTabActive('rehab')" data-form-tab="rehab">
+      <RehabSection :deal="deal" :surface="surface" />
+    </div>
+    <div v-show="isPhaseTabActive('rentHolding')" data-form-tab="rentHolding">
+      <RentHoldingSection :deal="deal" :surface="surface" />
+    </div>
+    <div v-show="isPhaseTabActive('refinance')" data-form-tab="refinance">
+      <RefinanceSection :deal="deal" :surface="surface" />
+    </div>
   </template>
 
   <template v-else>
@@ -197,7 +297,9 @@ const subHeading = computed(() => "h4" as const);
     inside both deal modals, where the same reveal runs once on open.
   -->
   <section
+    v-show="isPhaseTabActive('buyRehab')"
     v-reveal
+    data-form-tab="buyRehab"
     :data-surface="surface"
     class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
@@ -215,6 +317,7 @@ const subHeading = computed(() => "h4" as const);
         label="Purchase Price"
         :inThousands="true"
         :required="true"
+        :needed-to-run-analysis="true"
       />
       <div
         :data-layout="surface === 'panel' ? 'paired' : 'flat'"
@@ -227,6 +330,7 @@ const subHeading = computed(() => "h4" as const);
           @update:model-value="(v: number | null) => set('rehabCost', v)"
           label="Rehab Cost"
           :inThousands="true"
+          :needed-to-run-analysis="true"
         />
         <NumberInput
           data-testid="form.field.rehabContingency"
@@ -299,7 +403,9 @@ const subHeading = computed(() => "h4" as const);
 
   <!-- Group 2b: Flip Strategy (FLIP only) -->
   <section
+    v-show="isPhaseTabActive('flipStrategy')"
     v-reveal
+    data-form-tab="flipStrategy"
     :data-surface="surface"
     class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
@@ -317,6 +423,7 @@ const subHeading = computed(() => "h4" as const);
         label="Projected Sale Price"
         :inThousands="true"
         :required="true"
+        :needed-to-run-analysis="true"
       />
       <NumberInput
         data-testid="form.field.holdingTime"
@@ -390,7 +497,9 @@ const subHeading = computed(() => "h4" as const);
 
   <!-- Group 3: Expenses (shared, with per-type extras) -->
   <section
+    v-show="isPhaseTabActive('expenses')"
     v-reveal
+    data-form-tab="expenses"
     :data-surface="surface"
     class="rounded-card border-ui border-line p-4 shadow-1 md:p-6
            data-[surface=card]:bg-surface data-[surface=panel]:bg-surface-2"
@@ -422,12 +531,14 @@ const subHeading = computed(() => "h4" as const);
           (v: number | null) => set('annual_property_taxes', v)
         "
         label="Annual Taxes"
+        :needed-to-run-analysis="true"
       />
       <MoneyInput
         data-testid="form.field.annual_insurance"
         :model-value="get('annual_insurance')"
         @update:model-value="(v: number | null) => set('annual_insurance', v)"
         label="Annual Insurance"
+        :needed-to-run-analysis="true"
       />
       <MoneyInput
         data-testid="form.field.montly_hoa"

@@ -273,6 +273,45 @@ describe("BoughtDealCard", () => {
     });
   });
 
+  describe("the Google Drive link", () => {
+    const DRIVE_URL = "https://drive.google.com/drive/folders/abc123";
+    const link = (wrapper: ReturnType<typeof mountCard>) =>
+      wrapper.find('[data-testid="boughtcard.google-drive-link"]');
+
+    it("is absent until a link is set", () => {
+      expect(link(mountCard()).exists()).toBe(false);
+      expect(link(mountCard(boughtDeal({ google_drive_link: "" }))).exists()).toBe(false);
+    });
+
+    it("opens the folder in a new tab, without a referrer, once a link is set", () => {
+      const anchor = link(mountCard(boughtDeal({ google_drive_link: DRIVE_URL })));
+      expect(anchor.exists()).toBe(true);
+      expect(anchor.attributes("href")).toBe(DRIVE_URL);
+      expect(anchor.attributes("target")).toBe("_blank");
+      expect(anchor.attributes("rel")).toBe("noopener noreferrer");
+      expect(anchor.attributes("aria-label")).toContain("Google Drive");
+      expect(anchor.find("svg").exists()).toBe(true);
+    });
+
+    it("drops a link that is not http(s), so a javascript: URL never becomes clickable", () => {
+      const anchor = link(mountCard(boughtDeal({ google_drive_link: "javascript:alert(1)" })));
+      expect(anchor.exists()).toBe(true);
+      expect(anchor.attributes("href")).toBeUndefined();
+    });
+
+    it("keeps its click off the parent (which opens the deal)", async () => {
+      const parentClick = vi.fn();
+      const deal = boughtDeal({ google_drive_link: DRIVE_URL });
+      const Board = defineComponent({
+        setup: () => () =>
+          h("div", { onClick: parentClick }, [h(BoughtDealCard, { deal })]),
+      });
+      const board = mount(Board);
+      await board.find('[data-testid="boughtcard.google-drive-link"]').trigger("click");
+      expect(parentClick).not.toHaveBeenCalled();
+    });
+  });
+
   describe("what the card shows", () => {
     it("names the deal's current step and stage", () => {
       expect(mountCard().text()).toContain("Step 1 of 7");

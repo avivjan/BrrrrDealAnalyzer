@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { safeHref } from "../utils/safeHref";
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import { ref, watch, onMounted, nextTick, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDealStore } from "../stores/dealStore";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
@@ -17,7 +17,8 @@ import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
 import type { ActiveDealRes, AnalyzeDealReq } from "../types";
-import api from "../api";
+import { useDealReportPdf } from "../composables/useDealReportPdf";
+import DealReportPdfPreviewModal from "../components/deal/DealReportPdfPreviewModal.vue";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -471,16 +472,6 @@ watch(
 );
 
 const isHeaderCopied = ref(false);
-const isPreparingPdf = ref(false);
-
-// PDF preview modal state. The blob URL is held alive while the modal is open
-// and revoked on close to avoid leaking memory.
-const pdfPreview = ref<{
-  url: string;
-  filename: string;
-  title: string;
-  dealType: "BRRRR" | "FLIP";
-} | null>(null);
 
 const copyToClipboard = async (deal: ActiveDealRes) => {
   try {
@@ -496,50 +487,15 @@ const copyToClipboard = async (deal: ActiveDealRes) => {
   }
 };
 
-// Generate the report and open it in an in-app preview modal. The user can
-// review the PDF inline and only opt into a download from inside the modal.
-const viewDealReport = async () => {
+// The branded PDF report: fetched as a blob, previewed in-app, downloaded only on
+// request. State and the object-URL lifecycle live in `useDealReportPdf`.
+const { isPreparingPdf, pdfPreview, viewDealReport: viewReportFor, downloadFromPreview, closePdfPreview } = useDealReportPdf();
+
+const viewDealReport = () => {
   if (!editingDeal.value) return;
   const deal = editingDeal.value;
-  const dealType: "BRRRR" | "FLIP" = deal.deal_type === "FLIP" ? "FLIP" : "BRRRR";
-
-  isPreparingPdf.value = true;
-  try {
-    const address = deal.address || "Property";
-    const payload = JSON.parse(JSON.stringify(deal)) as AnalyzeDealReq;
-    const blob = await api.downloadDealPdf(payload, dealType, address);
-    const url = URL.createObjectURL(blob);
-    const filename = `BigWhales_${dealType}_${address.replace(/[^A-Za-z0-9]+/g, "_")}.pdf`;
-    closePdfPreview();
-    pdfPreview.value = { url, filename, title: address, dealType };
-  } catch (err) {
-    console.error("Failed to generate deal report", err);
-  } finally {
-    isPreparingPdf.value = false;
-  }
+  return viewReportFor(deal, deal.deal_type === "FLIP" ? "FLIP" : "BRRRR");
 };
-
-const downloadFromPreview = () => {
-  if (!pdfPreview.value) return;
-  const { url, filename } = pdfPreview.value;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
-
-const closePdfPreview = () => {
-  if (pdfPreview.value) {
-    URL.revokeObjectURL(pdfPreview.value.url);
-    pdfPreview.value = null;
-  }
-};
-
-onBeforeUnmount(() => {
-  closePdfPreview();
-});
 
 console.groupEnd();
 </script>
@@ -944,6 +900,27 @@ console.groupEnd();
                     v-if="editingDeal.pics_link"
                     data-testid="mydeals.modal.pics-open"
                     :href="safeHref(editingDeal.pics_link)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
+                    ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
+                  >
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label for="mydeals-modal-google-drive" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
+                    >Google Drive Link</label
+                  >
+                  <input
+                    id="mydeals-modal-google-drive"
+                    data-testid="mydeals.modal.google-drive-link"
+                    v-model="editingDeal.google_drive_link"
+                    class="ui-input"
+                    placeholder="https://drive.google.com/..."
+                  />
+                  <a
+                    v-if="editingDeal.google_drive_link"
+                    data-testid="mydeals.modal.google-drive-open"
+                    :href="safeHref(editingDeal.google_drive_link)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
@@ -1388,72 +1365,13 @@ console.groupEnd();
       </div>
     </UiTransition>
 
-    <!-- PDF Preview Modal -->
-    <!--
-      `modalEnterOnly` — the same opening, no leave hook at all, so the overlay is
-      gone from the DOM the instant the app says it is closed. This panel is a raw
-      `div` rather than a `UiModalPanel`, so the preset finds no
-      `[data-ui="modal-panel"]` and the overlay simply fades: no transform touches
-      a `position: fixed` box.
-    -->
-    <UiTransition preset="modalEnterOnly" appear>
-      <div
-        v-if="pdfPreview"
-        data-testid="mydeals.pdf-modal"
-        class="fixed inset-0 bg-fg/60 md:backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-        @click.self="closePdfPreview"
-      >
-        <!--
-          `pb-safe-b` on the panel, not on a bar inside it: the last box
-          here is the PDF `<iframe>`, and a 92svh dialog centred on a phone
-          bottoms out inside the home-indicator band. The inset is 0 on a
-          device without one.
-        -->
-        <div class="bg-surface w-full max-w-5xl h-[92svh] pb-safe-b rounded-panel border border-line shadow-3 flex flex-col overflow-hidden">
-          <div class="flex justify-between items-center gap-3 px-5 py-3 border-b border-line shrink-0">
-            <div class="flex items-center gap-3 min-w-0">
-              <UiBadge
-                class="shrink-0 font-bold uppercase tracking-wide"
-                :deal-type="pdfPreview.dealType"
-              >
-                {{ pdfPreview.dealType }}
-              </UiBadge>
-              <div class="min-w-0">
-                <h3 class="text-sm font-bold text-fg truncate">{{ pdfPreview.title }}</h3>
-                <p class="text-[11px] text-fg-muted">Deal Report Preview &middot; Big Whales</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <UiButton
-                data-testid="mydeals.pdf-modal.download"
-                @click="downloadFromPreview"
-                variant="secondary"
-                size="sm"
-                class="min-h-9 touch:min-h-11 border-positive/30 bg-positive/10 text-positive hover:bg-positive/20"
-                title="Download this PDF"
-              >
-                <i class="pi pi-download text-base" aria-hidden="true"></i>
-                <span class="hidden sm:inline">Download</span>
-              </UiButton>
-              <UiIconButton
-                data-testid="mydeals.pdf-modal.close"
-                @click="closePdfPreview"
-                label="Close preview"
-                title="Close preview"
-              >
-                <i class="pi pi-times text-lg" aria-hidden="true"></i>
-              </UiIconButton>
-            </div>
-          </div>
-          <iframe
-            data-testid="mydeals.pdf-modal.iframe"
-            :src="pdfPreview.url"
-            class="flex-1 w-full bg-surface-2"
-            title="Deal Report PDF"
-          ></iframe>
-        </div>
-      </div>
-    </UiTransition>
+    <!-- PDF Preview Modal (shared with Bought Deals) -->
+    <DealReportPdfPreviewModal
+      :preview="pdfPreview"
+      test-id-prefix="mydeals"
+      @download="downloadFromPreview"
+      @close="closePdfPreview"
+    />
 
     <!-- "How is this number calculated?" for the pressed result tile; reads the latest analysis. -->
     <CalculationBreakdownPopup

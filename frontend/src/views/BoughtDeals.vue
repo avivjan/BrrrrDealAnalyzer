@@ -10,6 +10,8 @@ import BoughtDealCard from "../components/BoughtDealCard.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
+import DealReportPdfPreviewModal from "../components/deal/DealReportPdfPreviewModal.vue";
+import { useDealReportPdf } from "../composables/useDealReportPdf";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
@@ -507,6 +509,15 @@ const getDSCRColor = (value: number | undefined) => {
 
 const isHeaderCopied = ref(false);
 
+// The branded PDF report, exactly as My Deals offers it: the bought deal goes to the
+// report endpoint whole (its stage, checklist and results are ignored there).
+const { isPreparingPdf, pdfPreview, viewDealReport: viewReportFor, downloadFromPreview, closePdfPreview } = useDealReportPdf();
+
+const viewDealReport = () => {
+  if (!editingDeal.value) return;
+  return viewReportFor(editingDeal.value, editingDealType.value);
+};
+
 const copyToClipboard = async (deal: BoughtDealRes) => {
   try {
     const text = formatDealForClipboard(deal);
@@ -730,6 +741,24 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 />
               </div>
               <div class="flex items-center gap-2">
+                <UiButton
+                  data-testid="boughtdeals.modal.view-report"
+                  @click="viewDealReport"
+                  :disabled="isPreparingPdf"
+                  variant="secondary"
+                  size="sm"
+                  class="min-h-9 touch:min-h-11"
+                  :title="isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
+                >
+                  <i
+                    class="pi text-base"
+                    :class="isPreparingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="hidden sm:inline">
+                    {{ isPreparingPdf ? "Generating…" : "View Report" }}
+                  </span>
+                </UiButton>
                 <UiIconButton
                   data-testid="boughtdeals.modal.copy"
                   @click="copyToClipboard(editingDeal)"
@@ -970,6 +999,27 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     v-if="editingDeal.pics_link"
                     data-testid="boughtdeals.modal.pics-open"
                     :href="safeHref(editingDeal.pics_link)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
+                    ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
+                  >
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label for="boughtdeals-modal-google-drive" class="flex h-5 items-center text-sm font-medium leading-5 text-fg"
+                    >Google Drive Link</label
+                  >
+                  <input
+                    id="boughtdeals-modal-google-drive"
+                    data-testid="boughtdeals.modal.google-drive-link"
+                    v-model="editingDeal.google_drive_link"
+                    class="ui-input"
+                    placeholder="https://drive.google.com/..."
+                  />
+                  <a
+                    v-if="editingDeal.google_drive_link"
+                    data-testid="boughtdeals.modal.google-drive-open"
+                    :href="safeHref(editingDeal.google_drive_link)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
@@ -1377,6 +1427,14 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       :initial-tab="activeTab"
       @close="showPipelineEditor = false"
       @saved="refreshColumns"
+    />
+
+    <!-- PDF Preview Modal (shared with My Deals) -->
+    <DealReportPdfPreviewModal
+      :preview="pdfPreview"
+      test-id-prefix="boughtdeals"
+      @download="downloadFromPreview"
+      @close="closePdfPreview"
     />
 
     <!-- "How is this number calculated?" for the pressed result tile; reads the latest analysis. -->

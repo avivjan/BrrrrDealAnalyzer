@@ -166,7 +166,9 @@ for (const modal of MODALS) {
     test('the footer stays put while the body scrolls', async ({ page, seed }) => {
       await modal.open(page, seed as never);
 
-      const footer = page.locator('[data-ui="modal-panel"] [data-part="footer"]');
+      // The panel's own `<footer>`: the lifecycle sections inside the body carry
+      // `data-part="footer"` on their auto-figure rows too.
+      const footer = page.locator('[data-ui="modal-panel"] footer[data-part="footer"]');
       await expect(footer).toBeVisible();
       const before = (await footer.boundingBox())!;
 

@@ -84,6 +84,7 @@ const sellerTaxCreditHint = computed(() => {
         label="Purchase Price"
         :inThousands="true"
         :required="true"
+        :needed-to-run-analysis="true"
         :info="impactText('purchasePrice')"
       />
       <MoneyInput

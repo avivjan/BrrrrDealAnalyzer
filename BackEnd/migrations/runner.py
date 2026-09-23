@@ -153,3 +153,17 @@ def _run_migrations_locked(engine):
 
     # Widen the money columns so a thousands value can hold an exact dollar.
     widen_money_columns(engine)
+
+    # Google Drive folder link on every deal table (active and bought, both types).
+    # Nullable free text, no backfill. Reflects fresh: the lifecycle step above may
+    # have altered these tables since the inspector at the top was created.
+    google_drive_link_inspector = sa_inspect(engine)
+    for deal_table in ("active_deals", "flip_deals", "bought_brrrr_deals", "bought_flip_deals"):
+        add_column_if_missing(
+            engine,
+            google_drive_link_inspector,
+            deal_table,
+            "google_drive_link",
+            "VARCHAR",
+            None,
+        )

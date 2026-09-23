@@ -27,6 +27,14 @@ const props = defineProps<{
   min?: number;
   max?: number;
   required?: boolean;
+  /**
+   * One of the handful of inputs with no meaningful default that the analysis cannot
+   * run without (purchase price, rehab, rent, taxes, insurance, ARV / sale price).
+   * Bold primary label and a primary border, so a first-time user sees at a glance
+   * which boxes to fill to get a first result. Independent of `required`, which only
+   * draws the asterisk: LTV or the long-term rate are required but arrive pre-filled.
+   */
+  neededToRunAnalysis?: boolean;
   disabled?: boolean;
   /**
    * The value is stored in thousands: display it ×1000, emit ÷1000, and turn
@@ -132,7 +140,9 @@ const inputId = useId();
         <label
           :for="inputId"
           data-part="label"
-          class="truncate text-sm font-medium leading-5 text-fg"
+          class="truncate text-sm leading-5"
+          :class="neededToRunAnalysis ? 'font-semibold text-primary' : 'font-medium text-fg'"
+          :data-needed="neededToRunAnalysis || undefined"
         >{{ label }}<span v-if="required" data-part="required" aria-hidden="true" class="text-negative">*</span><span v-if="required" class="sr-only">required</span></label>
         <InputInfo v-if="info" :content="info" :field-label="label" />
       </span>
@@ -157,6 +167,7 @@ const inputId = useId();
       :placeholder="placeholder"
       :disabled="disabled"
       class="ui-input numeric"
+      :class="neededToRunAnalysis ? 'border-primary/60' : ''"
       @focus="onFocus"
       @blur="commit"
       @input="draft = ($event.target as HTMLInputElement).value"

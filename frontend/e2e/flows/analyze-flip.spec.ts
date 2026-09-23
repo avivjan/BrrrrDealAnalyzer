@@ -30,7 +30,8 @@ test('analyze a FLIP deal, save it, and land on its open modal', async ({
 }) => {
   await page.goto('/analyze');
   await page.getByTestId('analyze.type-flip').click();
-  await expect(page.getByTestId('form.field.salePrice')).toBeVisible();
+  // Sale price lives on the Flip Strategy tab; the FLIP tab set is the proof the form switched.
+  await expect(page.getByTestId('form.tab.flipStrategy')).toBeVisible();
 
   await fillForm(page, FLIP_FORM_FIELDS, FLIP_PAYLOAD);
 
