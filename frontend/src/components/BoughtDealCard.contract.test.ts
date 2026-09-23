@@ -242,6 +242,19 @@ describe("BoughtDealCard", () => {
     });
   });
 
+  describe("money figures", () => {
+    it("shows a zero rehab as $0 and a negative cash needed with a leading minus sign", () => {
+      const wrapper = mountCard(boughtDeal({ rehabCost: 0, total_cash_needed_for_deal: -1234 } as Partial<BoughtDealRes>));
+      expect(wrapper.find('[data-testid="boughtcard.rehab"]').text()).toBe("$0");
+      expect(wrapper.find('[data-testid="boughtcard.cash-needed"]').text()).toBe("-$1,234");
+    });
+
+    it("shows a dash only when the figure is missing", () => {
+      const wrapper = mountCard(boughtDeal({ total_cash_needed_for_deal: undefined } as Partial<BoughtDealRes>));
+      expect(wrapper.find('[data-testid="boughtcard.cash-needed"]').text()).toBe("-");
+    });
+  });
+
   describe("advance", () => {
     const advance = (wrapper: ReturnType<typeof mountCard>) =>
       wrapper.find('[data-testid="boughtcard.advance"]');
