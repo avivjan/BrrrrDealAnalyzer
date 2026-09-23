@@ -283,6 +283,29 @@ describe("DealCard", () => {
       expect(mountCard(brrrDeal({ task: "" })).find('[data-part="task"]').exists()).toBe(false);
     });
 
+    it("reads a cash flow of exactly $0 as neutral, not as a loss", () => {
+      const cashFlow = mountCard(brrrDeal({ cash_flow: 0 })).find('[data-testid="dealcard.cash-flow"]');
+      expect(cashFlow.text()).toBe("$0");
+      expect(cashFlow.classes()).toContain("text-fg");
+      expect(cashFlow.classes()).not.toContain("text-positive");
+      expect(cashFlow.classes()).not.toContain("text-negative");
+    });
+
+    it("reads a negative cash flow as a minus-signed dollar amount in red", () => {
+      const cashFlow = mountCard(brrrDeal({ cash_flow: -1234 })).find('[data-testid="dealcard.cash-flow"]');
+      expect(cashFlow.text()).toBe("-$1,234");
+      expect(cashFlow.classes()).toContain("text-negative");
+    });
+
+    it("reads a positive cash flow as whole dollars in green, and a missing one as a dash", () => {
+      const positive = mountCard(brrrDeal({ cash_flow: 350.4 })).find('[data-testid="dealcard.cash-flow"]');
+      expect(positive.text()).toBe("$350");
+      expect(positive.classes()).toContain("text-positive");
+      const missing = mountCard(brrrDeal({ cash_flow: undefined })).find('[data-testid="dealcard.cash-flow"]');
+      expect(missing.text()).toBe("-");
+      expect(missing.classes()).toContain("text-fg");
+    });
+
     it("keeps the footer's sqft and bd/ba fallbacks", () => {
       const footer = mountCard(brrrDeal()).find('[data-part="footer"]').text();
       expect(footer).toContain("- sqft");

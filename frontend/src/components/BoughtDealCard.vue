@@ -13,6 +13,7 @@
  * lift is CSS, the accordion is a `grid-template-rows` transition.
  */
 import { computed, ref, watch } from "vue";
+import { formatMoney } from "../utils/money";
 import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import { safeHref } from "../utils/safeHref";
@@ -117,7 +118,9 @@ const cardClass = computed(() => {
   return base;
 });
 
-const formatMoney = (val?: number) => val ? `$${Math.round(val).toLocaleString()}` : "-";
+/** Whole dollars for the card: "$0" for zero, "-$1,234" for a negative, "-" only when there is no value. */
+const formatCardMoney = (val?: number | null) =>
+  val == null || !Number.isFinite(val) ? "-" : formatMoney(Math.round(val));
 
 /** BRRRR: what the refinance should return — ARV × LTV. `-` until both are known. */
 const refiTarget = computed(() => {
@@ -350,21 +353,21 @@ const onToggleSubstage = (substageId: string) => {
     <div data-part="metrics" class="numeric mt-3 grid grid-cols-2 gap-x-2 gap-y-2 border-t border-line pt-2 text-xs text-fg-muted">
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Purchase</span>
-        <span class="text-fg font-medium">{{ formatMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
+        <span class="text-fg font-medium">{{ formatCardMoney(deal.purchasePrice ? deal.purchasePrice * 1000 : 0) }}</span>
       </div>
       <div class="flex flex-col min-w-0 text-right">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Rehab</span>
-        <span class="text-fg font-medium">{{ formatMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
+        <span data-testid="boughtcard.rehab" class="text-fg font-medium">{{ formatCardMoney(deal.rehabCost ? deal.rehabCost * 1000 : 0) }}</span>
       </div>
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">Cash in</span>
-        <span class="text-warning font-medium">{{
-          formatMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
+        <span data-testid="boughtcard.cash-needed" class="text-warning font-medium">{{
+          formatCardMoney(isBrrr ? brrrDeal?.total_cash_needed_for_deal : flipDeal?.total_cash_needed)
         }}</span>
       </div>
       <div class="flex flex-col min-w-0 text-right">
         <span class="text-[10px] text-fg-muted uppercase tracking-wide">{{ isBrrr ? "Refi target" : "Sale target" }}</span>
-        <span class="text-positive font-medium">{{ formatMoney(isBrrr ? refiTarget : saleTarget) }}</span>
+        <span class="text-positive font-medium">{{ formatCardMoney(isBrrr ? refiTarget : saleTarget) }}</span>
       </div>
     </div>
 
