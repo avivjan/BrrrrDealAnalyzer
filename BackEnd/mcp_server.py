@@ -74,7 +74,8 @@ INSTRUCTIONS = (
     "total_hard_money_cost = points + interest + loan charges. seller_tax_credit positive = the seller "
     "credits the buyer; a positive credit is set aside in the property's tax bucket the day after closing, so it "
     "lowers cash_to_close_buy but not total_cash_invested or Cash Needed (a negative credit is a real cost). equity = ARV minus the new loan plus the recoverable reserves. net_profit = equity "
-    "plus cash out. cash_flow = monthly, after the refinance. cash_on_cash and roi are percents; "
+    "plus cash out. cash_flow = monthly, after the refinance. cash_on_cash = yearly cash flow / cash left "
+    "in the deal and roi = (yearly cash flow + net_profit) / cash left in the deal, both in percent; "
     "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
     "_in_thousands or _k are thousands of dollars; every other money field is plain dollars. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
@@ -91,12 +92,12 @@ DESCRIPTIONS: dict[str, str] = {
         "Run the BRRRR calculator without saving anything. Returns monthly cash flow, DSCR, "
         "cash to close (buy), the cash-out wire at refi (baseline and at the lowest ARV), cash out, "
         "cash-on-cash, ROI, equity, net profit, cash needed, total hard money cost, stolen money, "
-        "the seller tax credit and prepaid interest, warning messages and a per-metric formula breakdown."
+        "the seller tax credit and prepaid interest, and a per-metric formula breakdown."
     ),
     "analyze_flip": (
         "Run the fix-and-flip calculator without saving anything. Returns net profit, ROI, "
         "annualized ROI, total cash needed (and with buffer), holding costs, hard-money "
-        "interest, messages and a per-metric formula breakdown."
+        "interest and a per-metric formula breakdown."
     ),
     # --- PDF reports ---
     "report_brrr_pdf": (

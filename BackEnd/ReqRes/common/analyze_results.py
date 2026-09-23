@@ -17,7 +17,10 @@ _BREAKDOWNS = (
     "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', "
     "'cash_out'): each step has a label, a value and the formula with the numbers filled in."
 )
-_MESSAGES = "Warnings from input validation (e.g. an unusual rate), if any."
+_MESSAGES = (
+    "Reserved for input-validation warnings; currently never populated (invalid input is rejected "
+    "with HTTP 400 instead), so this is null or an empty list."
+)
 
 
 class analyzeBRRRRes(BaseModel):
@@ -28,8 +31,9 @@ class analyzeBRRRRes(BaseModel):
         "property management, taxes, insurance, HOA and the new mortgage payment. Negative = the "
         "property costs money every month."))
     dscr: Optional[float] = Field(None, description=(
-        "Debt service coverage ratio after the refinance: net operating income divided by the annual "
-        "mortgage payments. Above 1.0 the rent covers the loan; lenders usually want 1.2 or more."))
+        "Debt service coverage ratio after the refinance: monthly rent divided by the monthly PITIA "
+        "(principal, interest, taxes, insurance and HOA). Above 1.0 the rent covers the payment; lenders "
+        "usually want 1.2 or more."))
     cash_out: Optional[float] = Field(None, description=(
         "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, "
         "see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). "
@@ -48,8 +52,9 @@ class analyzeBRRRRes(BaseModel):
         "Cash-on-cash return in percent: yearly cash flow divided by the cash left in the deal. "
         "-1 means infinite (no cash left in the deal); -2 means not applicable."))
     roi: Optional[float] = Field(None, description=(
-        "Return on investment in percent: net profit divided by the cash invested. "
-        "-1 means infinite (no cash left in the deal); -2 means not applicable."))
+        "Return on investment in percent: one year of cash flow (12 x cash_flow) plus net_profit, divided "
+        "by the cash left in the deal (|cash_out|). -1 means infinite (no cash left in the deal); "
+        "-2 means not applicable (cash flow is 0 or negative)."))
     equity: Optional[float] = Field(None, description=(
         "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves."))
     net_profit: Optional[float] = Field(None, description=(
@@ -128,7 +133,8 @@ class analyzeFlipRes(BaseModel):
 
     net_profit: float = Field(..., description=(
         "Net profit of the flip, in dollars: sale price minus purchase, rehab, buy and sell closing "
-        "costs, agent fees, hard-money points and interest, holding costs and capital gains tax."))
+        "costs, agent fees, hard-money points, holding costs (which include the hard-money interest) "
+        "and capital gains tax."))
     roi: float = Field(..., description=(
         "Return on investment in percent: net profit divided by the total cash needed. "
         "-1 means infinite (no cash needed); -2 means not applicable."))
@@ -140,7 +146,8 @@ class analyzeFlipRes(BaseModel):
     total_cash_needed_with_buffer: float = Field(..., description=(
         "total_cash_needed plus the rehab contingency buffer, in dollars."))
     total_holding_costs: float = Field(..., description=(
-        "Taxes, insurance, HOA and utilities over the holding time, in dollars."))
+        "Hard-money interest plus taxes, insurance, HOA and utilities over the holding time, in dollars "
+        "(total_hml_interest + the operating costs)."))
     total_hml_interest: float = Field(..., description=(
         "Hard-money loan interest over the holding time, in dollars."))
     messages: Optional[list[str]] = Field(None, description=_MESSAGES)

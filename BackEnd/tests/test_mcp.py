@@ -339,6 +339,24 @@ class TestOutputsAreExplained:
         assert "never negative" in row["cash_left_in_deal"].description.lower()
         assert "routi" in row["cash_wire_at_refi"].description.lower()
 
+    def test_formula_descriptions_match_the_calculation_code(self):
+        """The popup shows these descriptions next to the numbers, so each must say what the code computes."""
+        brrr = _model("ReqRes.common.analyze_results.analyzeBRRRRes").model_fields
+        roi_description = brrr["roi"].description.lower()
+        assert "cash flow" in roi_description and "net_profit" in roi_description and "left in the deal" in roi_description
+        dscr_description = brrr["dscr"].description.lower()
+        assert "rent" in dscr_description and "pitia" in dscr_description
+        assert "net operating income" not in dscr_description and "annual" not in dscr_description
+        flip = _model("ReqRes.common.analyze_results.analyzeFlipRes").model_fields
+        assert "hard-money interest" in flip["total_holding_costs"].description.lower()
+
+    def test_messages_field_and_analyze_tools_do_not_promise_warnings(self):
+        for path in ("ReqRes.common.analyze_results.analyzeBRRRRes", "ReqRes.common.analyze_results.analyzeFlipRes"):
+            assert "never populated" in _model(path).model_fields["messages"].description.lower(), path
+        for tool_name in ("analyze_brrr", "analyze_flip"):
+            tool_description = mcp_server.DESCRIPTIONS[tool_name].lower()
+            assert "warning" not in tool_description and "messages" not in tool_description, tool_name
+
     def test_glossary_in_instructions(self):
         text = mcp_server.INSTRUCTIONS.lower()
         for term in ("cash_out", "routi", "equity", "net_profit", "cash_flow", "cash_on_cash", "-1", "-2", "thousands",
