@@ -166,7 +166,7 @@ export interface BrrrAnalyzeRes {
   roi?: number;
   equity?: number;
   net_profit?: number;
-  /** Cash Needed: total_cash_invested + rehab cushion + refi shortfall. */
+  /** Cash Needed: max(total_cash_invested + rehab cushion + refi shortfall, the day-one floor of EMD + cash to close + cushion + one month of utilities, HML interest and taxes/insurance/HOA). */
   total_cash_needed_for_deal?: number;
   total_cash_invested?: number;
   cash_to_close_buy?: number;

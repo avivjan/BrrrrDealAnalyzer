@@ -1467,9 +1467,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -1488,6 +1549,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 77542.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 77542.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -3795,9 +3885,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -3816,6 +3967,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 77542.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 77542.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -5479,9 +5659,70 @@
               "value": 17390.26788432268
             },
             {
+              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "label": "HML Interest (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+              "label": "Holding Costs (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 400.0
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "label": "Cash Needed Floor",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "terms": [
+                {
+                  "label": "Earnest Money Deposit",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Cash to Close (Buy)",
+                  "sign": "+",
+                  "step_label": "Cash to Close (Buy)",
+                  "value": 44239.01065449011
+                },
+                {
+                  "label": "Rehab Cushion",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Utilities (first month)",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 80.0
+                },
+                {
+                  "label": "HML Interest (first month)",
+                  "sign": "+",
+                  "step_label": "HML Interest (first month)",
+                  "value": 1970.8333333333333
+                },
+                {
+                  "label": "Holding Costs (first month)",
+                  "sign": "+",
+                  "step_label": "Holding Costs (first month)",
+                  "value": 400.0
+                }
+              ],
+              "unit": "money",
+              "value": 56689.84398782344
+            },
+            {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-              "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "label": "Cash Needed through Refi",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -5500,6 +5741,35 @@
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
                   "value": 17390.26788432268
+                }
+              ],
+              "unit": "money",
+              "value": 77542.21232876713
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "label": "Floor Top-Up",
+              "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+              "label": "Cash Needed",
+              "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+              "terms": [
+                {
+                  "label": "Cash Needed through Refi",
+                  "sign": "+",
+                  "step_label": "Cash Needed through Refi",
+                  "value": 77542.21232876713
+                },
+                {
+                  "label": "Floor Top-Up",
+                  "sign": "+",
+                  "step_label": "Floor Top-Up",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -7783,9 +8053,70 @@
             "value": 25559.823439878233
           },
           {
+            "formula": "Per diem ($68.14) \u00d7 30 days = $2,044.17",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 2044.1666666666667
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($46,496.79) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($2,044.17) + Holding Costs (first month) ($400) = $59,020.96",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 46496.78843226789
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 2044.1666666666667
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 59020.95509893455
+          },
+          {
             "formula": "Total Cash Invested ($57,326.39) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($25,559.82) = $87,886.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -7804,6 +8135,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 25559.823439878233
+              }
+            ],
+            "unit": "money",
+            "value": 87886.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($87,886.21) already covers the floor ($59,020.96) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($87,886.21) + Floor Top-Up ($0) = $87,886.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 87886.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -9460,9 +9820,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -9481,6 +9902,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 77542.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 77542.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -11770,9 +12220,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -11791,6 +12302,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 77542.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 77542.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -13478,9 +14018,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -13499,6 +14100,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 77542.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 77542.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -15799,9 +16429,70 @@
               "value": 17390.26788432268
             },
             {
+              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "label": "HML Interest (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+              "label": "Holding Costs (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 400.0
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "label": "Cash Needed Floor",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "terms": [
+                {
+                  "label": "Earnest Money Deposit",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Cash to Close (Buy)",
+                  "sign": "+",
+                  "step_label": "Cash to Close (Buy)",
+                  "value": 44239.01065449011
+                },
+                {
+                  "label": "Rehab Cushion",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Utilities (first month)",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 80.0
+                },
+                {
+                  "label": "HML Interest (first month)",
+                  "sign": "+",
+                  "step_label": "HML Interest (first month)",
+                  "value": 1970.8333333333333
+                },
+                {
+                  "label": "Holding Costs (first month)",
+                  "sign": "+",
+                  "step_label": "Holding Costs (first month)",
+                  "value": 400.0
+                }
+              ],
+              "unit": "money",
+              "value": 56689.84398782344
+            },
+            {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-              "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "label": "Cash Needed through Refi",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -15820,6 +16511,35 @@
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
                   "value": 17390.26788432268
+                }
+              ],
+              "unit": "money",
+              "value": 77542.21232876713
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "label": "Floor Top-Up",
+              "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+              "label": "Cash Needed",
+              "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+              "terms": [
+                {
+                  "label": "Cash Needed through Refi",
+                  "sign": "+",
+                  "step_label": "Cash Needed through Refi",
+                  "value": 77542.21232876713
+                },
+                {
+                  "label": "Floor Top-Up",
+                  "sign": "+",
+                  "step_label": "Floor Top-Up",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -18109,9 +18829,70 @@
             "value": 17390.26788432268
           },
           {
+            "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+            "label": "HML Interest (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 1970.8333333333333
+          },
+          {
+            "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+            "label": "Holding Costs (first month)",
+            "note": null,
+            "terms": null,
+            "unit": "money",
+            "value": 400.0
+          },
+          {
+            "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+            "label": "Cash Needed Floor",
+            "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+            "terms": [
+              {
+                "label": "Earnest Money Deposit",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Cash to Close (Buy)",
+                "sign": "+",
+                "step_label": "Cash to Close (Buy)",
+                "value": 44239.01065449011
+              },
+              {
+                "label": "Rehab Cushion",
+                "sign": "+",
+                "step_label": null,
+                "value": 5000.0
+              },
+              {
+                "label": "Utilities (first month)",
+                "sign": "+",
+                "step_label": null,
+                "value": 80.0
+              },
+              {
+                "label": "HML Interest (first month)",
+                "sign": "+",
+                "step_label": "HML Interest (first month)",
+                "value": 1970.8333333333333
+              },
+              {
+                "label": "Holding Costs (first month)",
+                "sign": "+",
+                "step_label": "Holding Costs (first month)",
+                "value": 400.0
+              }
+            ],
+            "unit": "money",
+            "value": 56689.84398782344
+          },
+          {
             "formula": "Total Cash Invested ($71,651.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $94,042.21",
-            "label": "Cash Needed",
-            "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+            "label": "Cash Needed through Refi",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -18130,6 +18911,35 @@
                 "sign": "+",
                 "step_label": "Cash to Refi Table (Lowest ARV)",
                 "value": 17390.26788432268
+              }
+            ],
+            "unit": "money",
+            "value": 94042.21232876713
+          },
+          {
+            "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($56,689.84) \u2192 $0",
+            "label": "Floor Top-Up",
+            "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Cash Needed through Refi ($94,042.21) + Floor Top-Up ($0) = $94,042.21",
+            "label": "Cash Needed",
+            "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+            "terms": [
+              {
+                "label": "Cash Needed through Refi",
+                "sign": "+",
+                "step_label": "Cash Needed through Refi",
+                "value": 94042.21232876713
+              },
+              {
+                "label": "Floor Top-Up",
+                "sign": "+",
+                "step_label": "Floor Top-Up",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -20695,9 +21505,70 @@
               "value": 17390.26788432268
             },
             {
+              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "label": "HML Interest (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+              "label": "Holding Costs (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 400.0
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "label": "Cash Needed Floor",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "terms": [
+                {
+                  "label": "Earnest Money Deposit",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Cash to Close (Buy)",
+                  "sign": "+",
+                  "step_label": "Cash to Close (Buy)",
+                  "value": 44239.01065449011
+                },
+                {
+                  "label": "Rehab Cushion",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Utilities (first month)",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 80.0
+                },
+                {
+                  "label": "HML Interest (first month)",
+                  "sign": "+",
+                  "step_label": "HML Interest (first month)",
+                  "value": 1970.8333333333333
+                },
+                {
+                  "label": "Holding Costs (first month)",
+                  "sign": "+",
+                  "step_label": "Holding Costs (first month)",
+                  "value": 400.0
+                }
+              ],
+              "unit": "money",
+              "value": 56689.84398782344
+            },
+            {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-              "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "label": "Cash Needed through Refi",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -20716,6 +21587,35 @@
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
                   "value": 17390.26788432268
+                }
+              ],
+              "unit": "money",
+              "value": 77542.21232876713
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "label": "Floor Top-Up",
+              "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+              "label": "Cash Needed",
+              "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+              "terms": [
+                {
+                  "label": "Cash Needed through Refi",
+                  "sign": "+",
+                  "step_label": "Cash Needed through Refi",
+                  "value": 77542.21232876713
+                },
+                {
+                  "label": "Floor Top-Up",
+                  "sign": "+",
+                  "step_label": "Floor Top-Up",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -22996,9 +23896,70 @@
               "value": 17390.26788432268
             },
             {
+              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "label": "HML Interest (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+              "label": "Holding Costs (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 400.0
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "label": "Cash Needed Floor",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "terms": [
+                {
+                  "label": "Earnest Money Deposit",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Cash to Close (Buy)",
+                  "sign": "+",
+                  "step_label": "Cash to Close (Buy)",
+                  "value": 44239.01065449011
+                },
+                {
+                  "label": "Rehab Cushion",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Utilities (first month)",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 80.0
+                },
+                {
+                  "label": "HML Interest (first month)",
+                  "sign": "+",
+                  "step_label": "HML Interest (first month)",
+                  "value": 1970.8333333333333
+                },
+                {
+                  "label": "Holding Costs (first month)",
+                  "sign": "+",
+                  "step_label": "Holding Costs (first month)",
+                  "value": 400.0
+                }
+              ],
+              "unit": "money",
+              "value": 56689.84398782344
+            },
+            {
               "formula": "Total Cash Invested ($71,651.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $94,042.21",
-              "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "label": "Cash Needed through Refi",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -23017,6 +23978,35 @@
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
                   "value": 17390.26788432268
+                }
+              ],
+              "unit": "money",
+              "value": 94042.21232876713
+            },
+            {
+              "formula": "Cash Needed through Refi ($94,042.21) already covers the floor ($56,689.84) \u2192 $0",
+              "label": "Floor Top-Up",
+              "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Cash Needed through Refi ($94,042.21) + Floor Top-Up ($0) = $94,042.21",
+              "label": "Cash Needed",
+              "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+              "terms": [
+                {
+                  "label": "Cash Needed through Refi",
+                  "sign": "+",
+                  "step_label": "Cash Needed through Refi",
+                  "value": 94042.21232876713
+                },
+                {
+                  "label": "Floor Top-Up",
+                  "sign": "+",
+                  "step_label": "Floor Top-Up",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -24674,9 +25664,70 @@
               "value": 17390.26788432268
             },
             {
+              "formula": "Per diem ($65.69) \u00d7 30 days = $1,970.83",
+              "label": "HML Interest (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1970.8333333333333
+            },
+            {
+              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) \u00d7 12) \u00d7 30 days \u00f7 360 = $400",
+              "label": "Holding Costs (first month)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 400.0
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,239.01) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $56,689.84",
+              "label": "Cash Needed Floor",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "terms": [
+                {
+                  "label": "Earnest Money Deposit",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Cash to Close (Buy)",
+                  "sign": "+",
+                  "step_label": "Cash to Close (Buy)",
+                  "value": 44239.01065449011
+                },
+                {
+                  "label": "Rehab Cushion",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 5000.0
+                },
+                {
+                  "label": "Utilities (first month)",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 80.0
+                },
+                {
+                  "label": "HML Interest (first month)",
+                  "sign": "+",
+                  "step_label": "HML Interest (first month)",
+                  "value": 1970.8333333333333
+                },
+                {
+                  "label": "Holding Costs (first month)",
+                  "sign": "+",
+                  "step_label": "Holding Costs (first month)",
+                  "value": 400.0
+                }
+              ],
+              "unit": "money",
+              "value": 56689.84398782344
+            },
+            {
               "formula": "Total Cash Invested ($55,151.94) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($17,390.27) = $77,542.21",
-              "label": "Cash Needed",
-              "note": "The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "label": "Cash Needed through Refi",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -24695,6 +25746,35 @@
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
                   "value": 17390.26788432268
+                }
+              ],
+              "unit": "money",
+              "value": 77542.21232876713
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) already covers the floor ($56,689.84) \u2192 $0",
+              "label": "Floor Top-Up",
+              "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Cash Needed through Refi ($77,542.21) + Floor Top-Up ($0) = $77,542.21",
+              "label": "Cash Needed",
+              "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
+              "terms": [
+                {
+                  "label": "Cash Needed through Refi",
+                  "sign": "+",
+                  "step_label": "Cash Needed through Refi",
+                  "value": 77542.21232876713
+                },
+                {
+                  "label": "Floor Top-Up",
+                  "sign": "+",
+                  "step_label": "Floor Top-Up",
+                  "value": 0.0
                 }
               ],
               "unit": "money",

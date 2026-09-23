@@ -385,9 +385,39 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add("roi", "ROI", results.roi, roi_formula, unit="pct")
 
     # -- cash needed -----------------------------------------------------------
-    breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
+    check(results.hml_interest_first_month == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, DAYS_PER_MONTH), "HML interest (first month)")
+    breakdown.add(
+        CASH_NEEDED, "HML Interest (first month)", results.hml_interest_first_month,
+        f"Per diem ({fmt_money(results.hml_per_diem)}) × 30 days = {fmt_money(results.hml_interest_first_month)}",
+    )
+    check(results.holding_costs_first_month == calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, DAYS_PER_MONTH), "holding costs (first month)")
+    breakdown.add(
+        CASH_NEEDED, "Holding Costs (first month)", results.holding_costs_first_month,
+        f"(Taxes ({fmt_money(payload.annual_property_taxes)}) + Insurance ({fmt_money(payload.annual_insurance)}) + HOA ({fmt_money(payload.montly_hoa)}) × 12) × 30 days ÷ 360 = {fmt_money(results.holding_costs_first_month)}",
+    )
+    breakdown.add_sum(CASH_NEEDED, "Cash Needed Floor", results.cash_needed_floor, [
+        ("Earnest Money Deposit", payload.earnest_money_deposit),
+        ("Cash to Close (Buy)", results.cash_to_close_buy),
+        ("Rehab Cushion", payload.rehab_cushion),
+        ("Utilities (first month)", payload.monthly_utilities_until_rented),
+        ("HML Interest (first month)", results.hml_interest_first_month),
+        ("Holding Costs (first month)", results.holding_costs_first_month),
+    ], note="The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.")
+    breakdown.add_sum(CASH_NEEDED, "Cash Needed through Refi", results.cash_needed_through_refi, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),
         ("Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative),
-    ], note="The single out-of-pocket figure through the refinance: everything spent, plus the cushion held for draws and surprises, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.")
+    ], note="Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.")
+    check(results.cash_needed_floor_top_up == max(Decimal("0"), results.cash_needed_floor - results.cash_needed_through_refi), "cash needed floor top-up")
+    breakdown.add(
+        CASH_NEEDED, "Floor Top-Up", results.cash_needed_floor_top_up,
+        (f"Cash Needed Floor ({fmt_money(results.cash_needed_floor)}) − Cash Needed through Refi ({fmt_money(results.cash_needed_through_refi)}) = {fmt_money(results.cash_needed_floor_top_up)}"
+         if results.cash_needed_floor_top_up > 0
+         else f"Cash Needed through Refi ({fmt_money(results.cash_needed_through_refi)}) already covers the floor ({fmt_money(results.cash_needed_floor)}) → $0"),
+        note="Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
+    )
+    breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
+        ("Cash Needed through Refi", results.cash_needed_through_refi),
+        ("Floor Top-Up", results.cash_needed_floor_top_up),
+    ], note="The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.")
     return breakdown.to_dict()

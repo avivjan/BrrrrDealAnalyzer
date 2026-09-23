@@ -2427,7 +2427,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -5894,7 +5894,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -11163,7 +11163,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
