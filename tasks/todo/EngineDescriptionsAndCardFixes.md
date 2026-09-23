@@ -96,12 +96,12 @@ description strings changed in `openapi.json` / `models.json` and the other thre
   interpolated as HTML and no secrets touched. `bandit` job in CI stays green.
 
 ## Todo (≈ 2 h)
-- [ ] **F1** (5 min) — Plan file at `tasks/todo/EngineDescriptionsAndCardFixes.md`, first commit.
-- [ ] **F2** (15 min) — Backend descriptions: items 1, 2, 3, 6 in `analyze_results.py` and `mcp_server.py`.
-- [ ] **F3** (15 min) — `test_mcp.py` description assertions; re-record `openapi.json` / `models.json`; pytest.
-- [ ] **F4** (15 min) — `MyDeals.vue` average CoC filter + new figures contract test.
-- [ ] **F5** (25 min) — `DealCard.vue` / `BoughtDealCard.vue` `formatCardMoney` + `cashFlowToneClass` + tests.
-- [ ] **F6** (20 min) — `npm test`, Playwright smoke for the two boards, security read-through.
+- [x] **F1** (5 min) — Plan file at `tasks/todo/EngineDescriptionsAndCardFixes.md`, first commit.
+- [x] **F2** (15 min) — Backend descriptions: items 1, 2, 3, 6 in `analyze_results.py` and `mcp_server.py`.
+- [x] **F3** (15 min) — `test_mcp.py` description assertions; re-record `openapi.json` / `models.json`; pytest.
+- [x] **F4** (15 min) — `MyDeals.vue` average CoC filter + new figures contract test.
+- [x] **F5** (25 min) — `DealCard.vue` / `BoughtDealCard.vue` `formatCardMoney` + `cashFlowToneClass` + tests.
+- [x] **F6** (20 min) — `npm test`, Playwright smoke for the two boards, security read-through.
 - [ ] **F7** (10 min) — Tick the six items in `CalculationBreakdownPopup.md`'s "Noticed, not changed" list as
   fixed here, push, open the PR.
 

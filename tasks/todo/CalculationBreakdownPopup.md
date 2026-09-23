@@ -181,18 +181,18 @@ Found while mapping the engine for this task; the popup will make each one visib
    cash flow is negative; `cash_out == 0` also counts as infinite. `DealCard.vue:120` then draws a full green ring
    for a money-losing deal.
 2. **ROI definition**: code is `(12 × cash_flow + net_profit) ÷ |cash_out|`, and `net_profit` already includes
-   `cash_out`; the field description says "net profit divided by the cash invested".
-3. **DSCR description** (`analyze_results.py:30-32`) says "NOI ÷ annual mortgage"; code is `rent ÷ PITIA`.
+   `cash_out`; the field description says "net profit divided by the cash invested". — **fixed in `EngineDescriptionsAndCardFixes`**
+3. **DSCR description** (`analyze_results.py:30-32`) says "NOI ÷ annual mortgage"; code is `rent ÷ PITIA`. — **fixed in `EngineDescriptionsAndCardFixes`**
 4. **Flip descriptions**: `total_holding_costs` omits that HML interest is included; `total_cash_needed_with_buffer`
-   says "rehab contingency buffer" but the code applies ×1.1 / ×1.5 multipliers plus a 10% rehab float.
-5. **My Deals header average CoC** (`MyDeals.vue:60-66`) averages the -1/-2 sentinels as real numbers.
+   says "rehab contingency buffer" but the code applies ×1.1 / ×1.5 multipliers plus a 10% rehab float. — the `total_holding_costs` half is **fixed in `EngineDescriptionsAndCardFixes`**; the buffer wording is still open
+5. **My Deals header average CoC** (`MyDeals.vue:60-66`) averages the -1/-2 sentinels as real numbers. — **fixed in `EngineDescriptionsAndCardFixes`**
 6. **Card `formatMoney`** (`DealCard.vue:92`, `BoughtDealCard.vue:119`): `$0` renders as "-", negatives as
-   `$-1,234`; Cash Flow turns red at exactly 0.
+   `$-1,234`; Cash Flow turns red at exactly 0. — **fixed in `EngineDescriptionsAndCardFixes`**
 7. **Bought card labels**: "Cash in" is Cash Needed (includes cushion and the stress-test cash to the refi table);
    "Refi target" is the gross loan (ARV × LTV), not the wire.
 8. **`compact.py:129`** `bought_total_cash_invested` sums `total_cash_needed`.
 9. **Stale comment** `types/index.ts:81` still describes recording/transfer as 0.55% × purchase loan.
-10. **`analyze_brrr` MCP description** promises warning messages; BRRRR always returns `messages=None`.
+10. **`analyze_brrr` MCP description** promises warning messages; BRRRR always returns `messages=None`. — **fixed in `EngineDescriptionsAndCardFixes`**
 
 ## Review
 
