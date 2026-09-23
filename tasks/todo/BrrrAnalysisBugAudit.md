@@ -122,8 +122,8 @@ Each item ends with its unit / integration tests (see the test matrix).
 - [x] F8 `populate_by_name=True` on `analyzeBRRRReq` / `analyzeFlipReq` (10 min)
 - [x] MCP support task (below) (20 min)
 - [x] Security task (below) (20 min)
-- [ ] Run the full backend suite, frontend unit tests and the Playwright checks; re-record the goldens F6 moves (30 min)
-- [ ] Push the branch and open the PR (10 min)
+- [x] Run the full backend suite (819 passed), frontend unit tests (1541 passed) and the Playwright chromium suite; re-recorded the 10 network-contract goldens F6/F7 move (30 min)
+- [x] Push the branch and open the PR (10 min)
 
 ## Tests by layer
 
@@ -155,5 +155,5 @@ From `.claude/security.md`: "Please check through all the code you just wrote an
 ## Verification
 1. `cd BackEnd && pytest -q` all green; `python verify_regression.py verify` to see which goldens moved and confirm each is an intended F-item.
 2. `cd frontend && npm test` and the Playwright checks.
-3. Against the live database (read-only, Render MCP `query_render_postgres`): count BRRRR rows that the new save-time validator would reject (`loan_term_years <= 0`, `lowest_arv_in_thousands > arv_in_thousands`, percents outside 0-100, negative dollar lines) so the owner can fix any before the deploy blocks their PUT.
+3. Against the live database (read-only, Render MCP `query_render_postgres`): counted the BRRRR rows the new save-time validator would reject. Result on 2026-09-23: 0 of 89 active and 0 of 8 bought deals, so no existing deal is blocked by the deploy.
 4. Post-deploy: open the board, the PDF for one deal, and MCP `portfolio_summary`; the cards for a deal with no closing date must be unchanged, the F-items only move where predicted.
