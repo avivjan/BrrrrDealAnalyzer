@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 
 import MoneyInput from "./MoneyInput.vue";
 
@@ -83,6 +83,29 @@ describe("MoneyInput", () => {
       await input.trigger("keydown", { key: "Escape" });
 
       expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    });
+
+    it("emits nothing when focused and left without an edit", async () => {
+      const wrapper = mountInput({ modelValue: 288, inThousands: true });
+      const input = wrapper.find("input");
+      await input.trigger("focus");
+      await input.trigger("blur");
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    });
+
+    it("selects the whole editable value after the focus re-render, so typing replaces it", async () => {
+      const wrapper = mount(MoneyInput, {
+        props: { modelValue: 288, label: "Lowest ARV", inThousands: true },
+        attachTo: document.body,
+      });
+      const inputElement = wrapper.find("input").element;
+      inputElement.focus();
+      await flushPromises();
+
+      expect(inputElement.value).toBe("288000");
+      expect([inputElement.selectionStart, inputElement.selectionEnd]).toEqual([0, "288000".length]);
+      wrapper.unmount();
     });
 
     it("re-formats once focus leaves", async () => {

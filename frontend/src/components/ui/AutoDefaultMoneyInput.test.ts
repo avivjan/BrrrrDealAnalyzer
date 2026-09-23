@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 
 import AutoDefaultMoneyInput from "./AutoDefaultMoneyInput.vue";
 
@@ -36,5 +36,18 @@ describe("AutoDefaultMoneyInput", () => {
 
   it("shows nothing while the formula's inputs are missing", () => {
     expect(mountField(null, null).findComponent({ name: "MoneyInput" }).props("modelValue")).toBeNull();
+  });
+
+  it("stays on the formula when the box is focused and left without typing", async () => {
+    const wrapper = mount(AutoDefaultMoneyInput, {
+      props: { modelValue: null, computedDefault: 265.5, label: "Lowest ARV Possible (stress test)", inThousands: true },
+    });
+    const input = wrapper.find("input");
+    await input.trigger("focus");
+    await flushPromises();
+    await input.trigger("blur");
+
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    expect(wrapper.attributes("data-auto")).toBe("true");
   });
 });

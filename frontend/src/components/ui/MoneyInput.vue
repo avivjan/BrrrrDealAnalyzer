@@ -14,7 +14,7 @@
  * on blur / Enter — the same commit point the previous `InputNumber` used, so
  * the card modals' debounced autosave and re-analyze behave exactly as before.
  */
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useId } from "vue";
 import { formatMoney, parseMoney, toEditableText } from "../../utils/money";
 import InputInfo from "./InputInfo.vue";
@@ -87,17 +87,29 @@ const hint = computed(() =>
     : "",
 );
 
-const onFocus = (e: FocusEvent) => {
+/** The editable text the draft was seeded with on focus; a blur with the draft unchanged writes nothing. */
+const draftSeededOnFocus = ref("");
+
+const onFocus = async (e: FocusEvent) => {
+  const focusedInput = e.target as HTMLInputElement;
   draft.value = toEditableText(dollars.value);
+  draftSeededOnFocus.value = draft.value;
   focused.value = true;
   // Select everything so typing replaces the old number, which is what you
-  // want ~always on a field like this.
-  (e.target as HTMLInputElement).select();
+  // want ~always on a field like this. Only after the re-render: swapping the
+  // formatted "$288,000" for the editable "288000" rewrites `input.value`,
+  // which collapses a selection made before it, so the typed digits used to be
+  // appended to the old amount ("288000" + "250000").
+  await nextTick();
+  if (focused.value && document.activeElement === focusedInput) focusedInput.select();
 };
 
 /** Parse, clamp, and write back — then let the formatted view take over. */
 const commit = () => {
   focused.value = false;
+  // Focus-and-leave is not an edit: re-emitting the shown value would turn a
+  // formula default (`AutoDefaultMoneyInput`) into a frozen typed override.
+  if (draft.value === draftSeededOnFocus.value) return;
   const { dollars: parsedDollars } = parseMoney(
     draft.value,
     props.inThousands === true,
