@@ -74,3 +74,24 @@ test('clicking into a formula-default money field and leaving keeps it on the fo
 
   expect(api.matching((request) => request.method === 'PUT' && request.path === '/bought-deals/{id}')).toHaveLength(0);
 });
+
+test('the Cash Out popup expands HML Interest paid monthly into monthly interest × months', async ({
+  page,
+  seed,
+  settle,
+}) => {
+  const deal = await seed.seedBoughtDeal('BRRRR');
+  await openBoughtDealModal(page, deal.id, settle);
+  await page.getByTestId('result-tile.cash_out.show-calculation').click();
+  const popup = page.getByTestId('calculation-breakdown-popup');
+  await expect(popup).toBeVisible();
+
+  // The headline's operands open expanded; Total Cash Invested lists HML Interest paid monthly.
+  await expect(popup.getByRole('button', { name: 'Hide how Total Cash Invested is calculated' })).toBeVisible();
+  const showHmlInterestPaidMonthly = popup.getByRole('button', { name: 'Show how HML Interest paid monthly is calculated' });
+  await expect(showHmlInterestPaidMonthly).toBeVisible();
+  await showHmlInterestPaidMonthly.click();
+
+  await expect(popup).toContainText('/month ×');
+  await expect(popup).toContainText('days paid monthly ÷ 30)');
+});
