@@ -8,7 +8,8 @@ from BL.analyze.common.deal_math import calc_hml_interest, calc_holding_costs, D
 
 
 class CashNeeded(NamedTuple):
-    hml_interest_first_month: Decimal    # 30 days of the hard-money per diem
+    hml_interest_first_month_days: int   # 30 less the days already prepaid inside Cash to Close (Buy)
+    hml_interest_first_month: Decimal    # the hard-money per diem over those days
     holding_costs_first_month: Decimal   # taxes + insurance + HOA for 30 days
     cash_needed_floor: Decimal           # EMD + cash to close + cushion + one month of utilities, interest and holding costs
     cash_needed_through_refi: Decimal    # total_cash_invested + cushion + cash to the refi table at the lowest ARV
@@ -16,12 +17,16 @@ class CashNeeded(NamedTuple):
     total_cash_needed: Decimal           # max(floor, through refi), written as through refi + top-up
 
 
-def total_cash_needed_step(payload, hml_amount, buy_settlement, cash_out_figures) -> CashNeeded:
+def total_cash_needed_step(payload, hml_amount, buy_settlement, cash_out_figures, timeline) -> CashNeeded:
     # The floor: what the deal takes on day one and through the first month whatever the draws,
     # the rent and the refi wire later give back -- the deposit, the purchase wire, the rehab
     # cushion (capital held, not spent) and one month of utilities, hard-money interest and
     # taxes, insurance and HOA (30 days on the same 360-day year as the holding costs).
-    hml_interest_first_month = calc_hml_interest(hml_amount, payload.HML_interest_rate, DAYS_PER_MONTH)
+    # The purchase wire already holds the interest prepaid from the closing day through the end
+    # of that month, so the first month's interest here is the remaining days only; with no
+    # closing date nothing is prepaid and the full 30 days count.
+    hml_interest_first_month_days = max(0, int(DAYS_PER_MONTH) - timeline.hml_interest_days_prepaid_at_purchase_closing)
+    hml_interest_first_month = calc_hml_interest(hml_amount, payload.HML_interest_rate, hml_interest_first_month_days)
     holding_costs_first_month = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, DAYS_PER_MONTH)
     cash_needed_floor = (payload.earnest_money_deposit + buy_settlement.cash_to_close_buy + payload.rehab_cushion
                          + payload.monthly_utilities_until_rented + hml_interest_first_month + holding_costs_first_month)
@@ -34,6 +39,7 @@ def total_cash_needed_step(payload, hml_amount, buy_settlement, cash_out_figures
     cash_needed_floor_top_up = max(Decimal("0"), cash_needed_floor - cash_needed_through_refi)
     total_cash_needed = cash_needed_through_refi + cash_needed_floor_top_up
     return CashNeeded(
+        hml_interest_first_month_days=hml_interest_first_month_days,
         hml_interest_first_month=hml_interest_first_month,
         holding_costs_first_month=holding_costs_first_month,
         cash_needed_floor=cash_needed_floor,

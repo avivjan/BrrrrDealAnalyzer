@@ -35,17 +35,22 @@ class BaseDeal:
 
     notes = Column(String, nullable=True)
 
+    # Rate columns (percent) carry three decimals: lenders quote in eighths (7.125%), and
+    # NUMERIC(5,2) rounded that to 7.13, so the saved deal no longer matched the calculator.
+    # `down_payment`, `HML_points`, `HML_interest_rate` below and the BRRRR refi rates in
+    # DAL/data_models/{activeDeal,boughtDeal}/deals.py; widened by
+    # migrations/steps/widen_rate_columns.py.
     # Money columns are stored in *thousands*. The scale is 4 (not 2) so a
     # thousands value can express an exact dollar: at scale 2 the DB rounds to
     # the nearest $10, which would make a $50,500 purchase price unstorable.
     purchase_price_in_thousands = Column(Numeric(14, 4), nullable=False)
     rehab_cost_in_thousands = Column(Numeric(14, 4), nullable=False, default=0.0)
     rehab_contingency_percent = Column(Numeric(5, 2), nullable=False, default=0.0)
-    down_payment = Column(Numeric(5, 2), nullable=False)
+    down_payment = Column(Numeric(6, 3), nullable=False)
     closing_costs_buy_in_thousands = Column(Numeric(14, 4), nullable=False, default=0.0)
     use_HM_for_rehab = Column(Boolean, nullable=False, default=False)
-    HML_points = Column(Numeric(5, 2), nullable=False, default=0.0)
-    HML_interest_rate = Column(Numeric(5, 2), nullable=False)
+    HML_points = Column(Numeric(6, 3), nullable=False, default=0.0)
+    HML_interest_rate = Column(Numeric(6, 3), nullable=False)
 
     # Holding costs (Shared mostly)
     annual_property_taxes = Column(Numeric(12, 2), nullable=False, default=0.0)

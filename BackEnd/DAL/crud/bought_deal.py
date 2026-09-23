@@ -6,14 +6,15 @@ from ReqRes.common.bought_deal_schemas import BoughtBrrrDealCreate, BoughtFlipDe
 
 
 def add_bought_brrr_deal(db: Session, deal_data: BoughtBrrrDealCreate) -> BoughtBrrrDeal:
-    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
+    # Every field, set or defaulted, for the same reason as `DAL.crud.active_deal.add_brrr_deal`.
+    data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     db_deal = BoughtBrrrDeal(**data)
     db.add(db_deal)
     return db_deal
 
 
 def add_bought_flip_deal(db: Session, deal_data: BoughtFlipDealCreate) -> BoughtFlipDeal:
-    data = deal_data.model_dump(mode='json', exclude_unset=True, exclude={'deal_type'})
+    data = deal_data.model_dump(mode='json', exclude={'deal_type'})
     db_deal = BoughtFlipDeal(**data)
     db.add(db_deal)
     return db_deal

@@ -6032,7 +6032,7 @@
         }
       },
       "from_attributes": null,
-      "populate_by_name": null
+      "populate_by_name": true
     },
     "analyzeBRRRRes": {
       "extra": null,
@@ -6424,7 +6424,7 @@
         }
       },
       "from_attributes": null,
-      "populate_by_name": null
+      "populate_by_name": true
     },
     "analyzeFlipRes": {
       "extra": null,
@@ -11220,17 +11220,182 @@
       "ok": true
     },
     "analyzeBRRRReq/snake_alias_rejected": {
-      "error": [
-        {
-          "loc": [
-            "purchasePrice"
-          ],
-          "msg": "Field required",
-          "type": "missing"
-        }
-      ],
-      "error_type": "ValidationError",
-      "ok": false
+      "dump_by_alias": {
+        "HMLInterestRate": "11",
+        "annual_insurance": "1200",
+        "annual_property_taxes": "3600",
+        "appliances": "630",
+        "appraisalFee": "700",
+        "arv_in_thousands": "320",
+        "brokerProcessingFeeRefi": "395",
+        "buyClosingDate": "2026-01-10",
+        "capexPercent": "5",
+        "capexReserve": "2500",
+        "cashReserve": "0",
+        "closingCostsBuy": "5",
+        "closingCostsRefi": "6",
+        "constructionLoanBudget": "55",
+        "daysUntilRefi": 180,
+        "daysUntilRented": 90,
+        "down_payment": "20",
+        "earnestMoneyDeposit": "5000",
+        "hmlPoints": "2",
+        "interestRate": "6.5",
+        "loanChargesBuy": "900",
+        "loanChargesRefi": "200",
+        "loanTermYears": 30,
+        "lowestArv": null,
+        "ltv_as_precent": "75",
+        "maintenanceBeforeRefi": "500",
+        "maintenancePercent": "5",
+        "maintenanceReserve": "1500",
+        "monthlyUtilitiesUntilRented": "80",
+        "montly_hoa": "0",
+        "onlineNotaryBuy": true,
+        "onlineNotaryFeeBuy": null,
+        "onlineNotaryFeeRefi": null,
+        "onlineNotaryRefi": true,
+        "otherClosingCostsBuy": "0",
+        "otherClosingCostsBuyNote": null,
+        "otherClosingCostsRefi": "0",
+        "otherClosingCostsRefiNote": null,
+        "property_managment_fee_precentages_from_rent": "8",
+        "purchasePrice": "200",
+        "recordingTransferBuy": null,
+        "recordingTransferRefi": null,
+        "refiPoints": "1.5",
+        "refiUnderwritingFee": "2000",
+        "rehabContingency": "10",
+        "rehabCost": "50",
+        "rehabCushion": "5000",
+        "rent": "2600",
+        "sellerPaidCurrentYearTaxes": null,
+        "surveyFee": "385",
+        "titleEscrowBuy": null,
+        "titleEscrowRefi": null,
+        "titleModeBuy": "standard",
+        "use_HM_for_rehab": true,
+        "vacancyPercent": "5",
+        "vacancyReserve": null
+      },
+      "dump_by_field": {
+        "HML_interest_rate": "11",
+        "HML_points": "2",
+        "annual_insurance": "1200",
+        "annual_property_taxes": "3600",
+        "appliances": "630",
+        "appraisal_fee": "700",
+        "arv_in_thousands": "320",
+        "broker_processing_fee_refi": "395",
+        "buy_closing_date": "2026-01-10",
+        "capex_percent_of_rent": "5",
+        "capex_reserve": "2500",
+        "cash_reserve_in_thousands": "0",
+        "closing_cost_refi_in_thousands": "6",
+        "closing_costs_buy_in_thousands": "5",
+        "construction_loan_budget_in_thousands": "55",
+        "days_until_refi": 180,
+        "days_until_rented": 90,
+        "down_payment": "20",
+        "earnest_money_deposit": "5000",
+        "interest_rate": "6.5",
+        "loan_charges_buy": "900",
+        "loan_charges_refi": "200",
+        "loan_term_years": 30,
+        "lowest_arv_in_thousands": null,
+        "ltv_as_precent": "75",
+        "maintenance_before_refi": "500",
+        "maintenance_percent": "5",
+        "maintenance_reserve": "1500",
+        "monthly_utilities_until_rented": "80",
+        "montly_hoa": "0",
+        "online_notary_buy": true,
+        "online_notary_fee_buy": null,
+        "online_notary_fee_refi": null,
+        "online_notary_refi": true,
+        "other_closing_costs_buy": "0",
+        "other_closing_costs_buy_note": null,
+        "other_closing_costs_refi": "0",
+        "other_closing_costs_refi_note": null,
+        "property_managment_fee_precentages_from_rent": "8",
+        "purchase_price_in_thousands": "200",
+        "recording_transfer_buy": null,
+        "recording_transfer_refi": null,
+        "refi_points": "1.5",
+        "refi_underwriting_fee": "2000",
+        "rehab_contingency_percent": "10",
+        "rehab_cost_in_thousands": "50",
+        "rehab_cushion": "5000",
+        "rent": "2600",
+        "seller_paid_current_year_taxes": null,
+        "survey_fee": "385",
+        "title_escrow_buy": null,
+        "title_escrow_refi": null,
+        "title_mode_buy": "standard",
+        "use_HM_for_rehab": true,
+        "vacancy_percent": "5",
+        "vacancy_reserve": null
+      },
+      "dump_python_repr": "{'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "exclude_unset": {
+        "HMLInterestRate": "11",
+        "annual_insurance": "1200",
+        "annual_property_taxes": "3600",
+        "appliances": "630",
+        "appraisalFee": "700",
+        "arv_in_thousands": "320",
+        "brokerProcessingFeeRefi": "395",
+        "buyClosingDate": "2026-01-10",
+        "capexPercent": "5",
+        "capexReserve": "2500",
+        "cashReserve": "0",
+        "closingCostsBuy": "5",
+        "closingCostsRefi": "6",
+        "constructionLoanBudget": "55",
+        "daysUntilRefi": 180,
+        "daysUntilRented": 90,
+        "down_payment": "20",
+        "earnestMoneyDeposit": "5000",
+        "hmlPoints": "2",
+        "interestRate": "6.5",
+        "loanChargesBuy": "900",
+        "loanChargesRefi": "200",
+        "loanTermYears": 30,
+        "lowestArv": null,
+        "ltv_as_precent": "75",
+        "maintenanceBeforeRefi": "500",
+        "maintenancePercent": "5",
+        "maintenanceReserve": "1500",
+        "monthlyUtilitiesUntilRented": "80",
+        "montly_hoa": "0",
+        "onlineNotaryBuy": true,
+        "onlineNotaryFeeBuy": null,
+        "onlineNotaryFeeRefi": null,
+        "onlineNotaryRefi": true,
+        "otherClosingCostsBuy": "0",
+        "otherClosingCostsBuyNote": null,
+        "otherClosingCostsRefi": "0",
+        "otherClosingCostsRefiNote": null,
+        "property_managment_fee_precentages_from_rent": "8",
+        "purchasePrice": "200",
+        "recordingTransferBuy": null,
+        "recordingTransferRefi": null,
+        "refiPoints": "1.5",
+        "refiUnderwritingFee": "2000",
+        "rehabContingency": "10",
+        "rehabCost": "50",
+        "rehabCushion": "5000",
+        "rent": "2600",
+        "sellerPaidCurrentYearTaxes": null,
+        "surveyFee": "385",
+        "titleEscrowBuy": null,
+        "titleEscrowRefi": null,
+        "titleModeBuy": "standard",
+        "use_HM_for_rehab": true,
+        "vacancyPercent": "5",
+        "vacancyReserve": null
+      },
+      "ok": true
     },
     "analyzeBRRRRes/full": {
       "dump_by_alias": {
@@ -15072,7 +15237,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {
@@ -19573,7 +19738,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {
@@ -23802,7 +23967,7 @@
       "type": "object"
     },
     "analyzeBRRRReq": {
-      "description": "Captures inputs required to calculate rental cash flow and DSCR.\n\nThe lifecycle inputs (dates, granular closing costs, construction budget, holding\nitems, reserves, lowest ARV) come from `BrrrLifecycleInputs`.",
+      "description": "Captures inputs required to calculate rental cash flow and DSCR.\n\nThe lifecycle inputs (dates, granular closing costs, construction budget, holding\nitems, reserves, lowest ARV) come from `BrrrLifecycleInputs`.\n\nAccepts each field by its alias (`purchasePrice`) or its name (`purchase_price_in_thousands`),\nlike the saved-deal models: a body copied from a saved deal must never have a field silently\ndropped and replaced by its default.",
       "properties": {
         "HMLInterestRate": {
           "anyOf": [
@@ -25122,7 +25287,7 @@
             }
           ],
           "default": null,
-          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities, hard-money interest and taxes, insurance and HOA (30 days).",
+          "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
           "title": "Total Cash Needed For Deal"
         },
         "total_hard_money_cost": {
@@ -25159,7 +25324,7 @@
       "type": "object"
     },
     "analyzeFlipReq": {
-      "description": "Captures inputs required to calculate Flip deal metrics.",
+      "description": "Captures inputs required to calculate Flip deal metrics. Accepts aliases and field names alike.",
       "properties": {
         "HMLInterestRate": {
           "anyOf": [

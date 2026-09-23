@@ -16,6 +16,7 @@ from sqlalchemy import text
 import db as app_db
 from migrations.runner import run_migrations
 from migrations.steps.brrr_lifecycle_columns import BRRR_LIFECYCLE_COLUMNS, BRRR_TABLES
+from migrations.rate_columns import RATE_COLUMNS_BY_TABLE, RATE_COLUMN_SCALE
 
 NEW_COLUMNS = [name for name, _ddl, _backfill in BRRR_LIFECYCLE_COLUMNS]
 ALL_DEAL_TABLES = ("active_deals", "flip_deals", "bought_brrrr_deals", "bought_flip_deals")
@@ -159,3 +160,44 @@ class TestGoogleDriveLinkMigration:
             assert "google_drive_link" in _column_names_of(table), table
         assert _row_by_address("active_deals", "Drive BRRRR")["google_drive_link"] is None
         assert _row_by_address("flip_deals", "Drive FLIP")["google_drive_link"] is None
+
+
+def _numeric_scale_of(table: str, column: str) -> int | None:
+    with app_db.engine.connect() as conn:
+        return conn.execute(text(
+            "SELECT numeric_scale FROM information_schema.columns WHERE table_name = :t AND column_name = :c"
+        ), {"t": table, "c": column}).scalar()
+
+
+class TestWidenRateColumns:
+    """The percent-rate columns were NUMERIC(5,2): a 7.125% rate was stored as 7.13, so the saved
+    deal recomputed with a rate the owner never typed and disagreed with the calculator."""
+
+    @pytest.fixture
+    def narrow_rate_columns(self):
+        with app_db.engine.begin() as conn:
+            for table, columns in RATE_COLUMNS_BY_TABLE.items():
+                for column in columns:
+                    conn.execute(text(f'ALTER TABLE {table} ALTER COLUMN "{column}" TYPE NUMERIC(5,2)'))
+        for table, columns in RATE_COLUMNS_BY_TABLE.items():
+            for column in columns:
+                assert _numeric_scale_of(table, column) == 2
+        yield
+        run_migrations(app_db.engine)   # leave the schema as the models define it, whatever the test did
+
+    def test_widens_every_rate_column_on_every_deal_table_and_is_idempotent(self, narrow_rate_columns):
+        run_migrations(app_db.engine)
+        run_migrations(app_db.engine)
+        for table, columns in RATE_COLUMNS_BY_TABLE.items():
+            for column in columns:
+                assert _numeric_scale_of(table, column) == RATE_COLUMN_SCALE, (table, column)
+
+    def test_an_eighth_point_rate_is_stored_as_typed_and_recomputes_like_the_calculator(self, narrow_rate_columns, client, brrrr_payload):
+        run_migrations(app_db.engine)
+        eighth_point_rates = {**brrrr_payload, "address": "Eighth Point Rd", "interestRate": 7.125, "HMLInterestRate": 10.875, "refiPoints": 1.875}
+        saved = client.post("/active-deals", json=eighth_point_rates).json()
+        assert (float(saved["interestRate"]), float(saved["HMLInterestRate"]), float(saved["refiPoints"])) == (7.125, 10.875, 1.875)
+        analyzed = client.post("/analyze/brrr", json=eighth_point_rates).json()
+        assert saved["cash_flow"] == pytest.approx(analyzed["cash_flow"])
+        assert saved["cash_out_routi"] == pytest.approx(analyzed["cash_out_routi"])
+        assert saved["total_cash_needed_for_deal"] == pytest.approx(analyzed["total_cash_needed_for_deal"])

@@ -54,7 +54,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": "1.5",
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -96,7 +96,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -110,7 +110,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -488,7 +488,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -530,7 +530,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -544,7 +544,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1391,7 +1391,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": "1.5",
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1433,7 +1433,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1447,7 +1447,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1867,7 +1867,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1909,7 +1909,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -1923,7 +1923,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -2922,7 +2922,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -2964,7 +2964,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -2978,7 +2978,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -3840,7 +3840,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -3882,7 +3882,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {
@@ -3896,7 +3896,7 @@
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(5, 2)",
+        "type": "NUMERIC(6, 3)",
         "unique": null
       },
       {

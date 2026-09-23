@@ -8,6 +8,7 @@ autosave — using the exact field names `DealInputsForm` emits.
 from __future__ import annotations
 
 import pytest
+from ReqRes.common.brrr_lifecycle_inputs import BrrrLifecycleInputs
 
 # Every field the shared form writes, paired with the value the fixtures send.
 # Guards the frontend key -> Pydantic alias -> DB column chain: if an alias is
@@ -153,11 +154,34 @@ class TestLifecycleFieldsRoundTrip:
         assert deal["prepaid_interest_buy"] == 0 and deal["seller_tax_credit"] == 0 and deal["prepaid_interest_refi"] == 0
 
     def test_a_stale_client_sending_the_hm_flag_gets_a_construction_budget(self, client, brrrr_payload):
-        payload_without_budget = {key: value for key, value in brrrr_payload.items() if key != "constructionLoanBudget"}
-        hard_money_rehab_deal = _create(client, {**payload_without_budget, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
+        """A stale client speaks the pre-lifecycle model: no lifecycle field at all, just the boolean."""
+        lifecycle_aliases = {field.alias or name for name, field in BrrrLifecycleInputs.model_fields.items()}
+        stale_payload = {key: value for key, value in brrrr_payload.items() if key not in lifecycle_aliases}
+        hard_money_rehab_deal = _create(client, {**stale_payload, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
         assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55)
-        cash_rehab_deal = _create(client, {**payload_without_budget, "use_HM_for_rehab": False})
+        cash_rehab_deal = _create(client, {**stale_payload, "use_HM_for_rehab": False})
         assert float(cash_rehab_deal["constructionLoanBudget"]) == 0
+
+    def test_a_current_client_that_clears_the_budget_saves_zero_even_with_the_old_flag_on(self, client, brrrr_payload):
+        """The form still sends `use_HM_for_rehab` (true on a new deal) and omits a cleared budget field.
+        That must mean a $0 budget, never a silently re-derived full-rehab budget."""
+        payload_without_budget = {key: value for key, value in brrrr_payload.items() if key != "constructionLoanBudget"}
+        deal = _create(client, {**payload_without_budget, "use_HM_for_rehab": True})
+        assert float(deal["constructionLoanBudget"]) == 0
+        assert deal["stolen_money"] == pytest.approx(-float(deal["rehabCost"]) * 1000 * (1 + float(deal["rehabContingency"]) / 100))
+
+
+class TestSavedDealDefaultsMatchTheCalculator:
+    def test_a_deal_saved_without_refi_points_is_priced_like_the_calculator(self, client, brrrr_payload):
+        """`add_*_deal` used to dump with exclude_unset, so an omitted field took the DDL default
+        (refi_points 1.5) while the calculator took the Pydantic default (2): one body, two wires."""
+        without_refi_points = {key: value for key, value in brrrr_payload.items() if key != "refiPoints"}
+        saved = _create(client, without_refi_points)
+        analyzed = client.post("/analyze/brrr", json=without_refi_points).json()
+        assert float(saved["refiPoints"]) == 2
+        assert saved["cash_out_routi"] == pytest.approx(analyzed["cash_out_routi"])
+        assert saved["cash_out"] == pytest.approx(analyzed["cash_out"])
+        assert saved["total_cash_needed_for_deal"] == pytest.approx(analyzed["total_cash_needed_for_deal"])
 
 
 class TestBoardLoad:
