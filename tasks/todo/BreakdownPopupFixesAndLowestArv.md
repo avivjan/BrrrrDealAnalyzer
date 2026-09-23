@@ -49,7 +49,7 @@ Branch: the session requires `claude/pensive-lovelace-7mdnm5`. CLAUDE.md asks fo
      blur/Enter and the results update. Committing while typing would send every partial number (the "<1,000 means
      thousands" rule turns "2" into $2,000) to analyze and autosave.
    - **c.** Fix whatever else step 2 finds, for example a stale `useDealField` binding, a validation 400, or a save race on close. Keep the fix minimal.
-- [ ] 4. **Make HML Interest paid monthly expandable** (20m). In `brrr.py`, before the Total Cash Invested sum, add an `add_sum([CASH_NEEDED, "cash_out"], "HML Interest paid monthly", results.hml_interest_paid_monthly, [...])` with these terms:
+- [x] 4. **Make HML Interest paid monthly expandable** (20m). In `brrr.py`, before the Total Cash Invested sum, add an `add_sum([CASH_NEEDED, "cash_out"], "HML Interest paid monthly", results.hml_interest_paid_monthly, [...])` with these terms:
    - HML Interest (until refi) +
    - Prepaid Interest (Buy) −
    - Accrued Interest (1st of month → payoff) −
@@ -58,11 +58,13 @@ Branch: the session requires `claude/pensive-lovelace-7mdnm5`. CLAUDE.md asks fo
    - Formula line: "Monthly HML interest (per diem $99.67 × 30 = $2,990) × 3.07 months (92 days paid monthly ÷ 30) = $9,169.33". Months are `hml_interest_days_paid_monthly ÷ 30`, which matches the 30-day months the engine already uses.
    - Below it, the expandable rows split HML Interest (until refi) into three parts: prepaid at the buy closing, paid monthly, and accrued into the payoff. The note lists the day counts for each.
 
-   This uses `breakdown.add(..., terms=[...])` with an explicit `check()`, so the formula text can carry the monthly × months line while the rows stay expandable. No-closing-date case: the prepaid and accrued rows are $0, and all days count as paid monthly. The existing value-identity linking then sets `step_label` on the Total Cash Invested term automatically.
-- [ ] 5. **Explain the Deed Transfer Tax** (10m). Formula and note in `brrr.py:164`:
+   *As built:* a formula step (`breakdown.add`) guarded by `check()` to the cent, not a sum step, because the popup
+   shows a sum row's terms but not its formula line. The monthly × months line is the formula, and the split of the
+   total HML interest is the note. ~~Originally planned: `breakdown.add(..., terms=[...])`~~ with an explicit `check()`, so the formula text can carry the monthly × months line while the rows stay expandable. No-closing-date case: the prepaid and accrued rows are $0, and all days count as paid monthly. The existing value-identity linking then sets `step_label` on the Total Cash Invested term automatically.
+- [x] 5. **Explain the Deed Transfer Tax** (10m). Formula and note in `brrr.py:164`:
    - When we pay all closing costs: "We pay all closing costs → we also take the seller's deed transfer tax: 0.70% × Purchase = …". The note says it is folded into Recording & Transfer (Buy).
    - Standard deal: "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it's $0 to us". The note says switching to 'we pay all' would add 0.70% of the price.
-- [ ] 6. **Explain the Title & Escrow tier** (15m). In `brrr.py:177`, build the formula from the `deal_math` constants rather than hard-coded text. For example: "We pay all closing costs → title fee by price tier: under $150,000 → $2,050 · $150,000–$200,000 → $2,200 · above $200,000 → $2,400. $140,000 is under $150,000 → $2,050". For a standard deal: "Standard deal → flat $1,000 (buyer's lender-policy share)". Keep the "Formula default … type a value to override" note.
+- [x] 6. **Explain the Title & Escrow tier** (15m). In `brrr.py:177`, build the formula from the `deal_math` constants rather than hard-coded text. For example: "We pay all closing costs → title fee by price tier: under $150,000 → $2,050 · $150,000–$200,000 → $2,200 · above $200,000 → $2,400. $140,000 is under $150,000 → $2,050". For a standard deal: "Standard deal → flat $1,000 (buyer's lender-policy share)". Keep the "Formula default … type a value to override" note.
 - [ ] 7. **MCP server support** (10m). `get_deal`, `analyze_brrr` and the report tools return the backend `breakdowns`, so they pick up the new step and texts automatically. Check through `mcp_server.py` and the MCP tests that nothing pins the old strings. No new tool is needed.
 - [ ] 8. **Security** (15m), from `.claude/security.md`: review all the code I write for security best practices. Make sure there is no sensitive information in the frontend and no exploitable vulnerabilities anywhere in the repo's changed code. Run the `security-review` skill on the branch diff.
 - [ ] 9. **Update snapshots and goldens** (15m): `BackEnd/tests/_regression_snapshots/calculations.json` (via `verify_regression.py`), plus any Playwright network goldens the new step changes.
