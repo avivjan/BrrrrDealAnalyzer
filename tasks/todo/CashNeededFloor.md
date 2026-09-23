@@ -33,13 +33,29 @@ On every pytest fixture and scenario the floor is below the current figure (base
 - [x] S1 (5 min) Commit this plan.
 - [x] S2 (30 min) Engine + record + orchestrator mapping + explain steps; descriptions and README/types wording.
 - [x] S3 (35 min) Backend tests. **Unit** (`tests/test_brrr_lifecycle.py`): `TestCashNeededFloor` — the floor is the deposit, the wire, the cushion and one month of utilities, interest and holding costs (components recomputed from the record and the payload); Cash Needed equals `max(floor, through refi)` on every scenario; the floor wins on the stolen-money / high-ARV deal (top-up positive, Cash Needed = floor); the two existing identities at `:289` and `:338` read `cash_needed_through_refi`. **Integration** (`tests/test_analyze.py`): the floor-wins deal through `POST /analyze/brrr` reproduces the floor from response fields and the breakdown carries "Cash Needed Floor" and "Floor Top-Up"; `test_explain.py` link pins updated (helper prefers an exact label match), `TestEveryFieldIsExplained`, terms-add-up and the scenario guards green; `python3 verify_regression.py snapshot` → review the diff → `verify`; `tests/test_mcp.py` green.
-- [ ] S4 (30 min) **E2E** (`frontend/e2e`): `npm run e2e:record` (chromium) re-records the BRRRR goldens whose recorded response carries the breakdown; every other golden must come back byte-identical; `npm run e2e`.
-- [ ] S5 (10 min) **MCP**: no new endpoint, tool or field; the new wording reaches the tool schemas through the Pydantic description and the `INSTRUCTIONS` glossary; manual `analyze_brrr` call on the floor-wins deal shows `total_cash_needed_for_deal` equal to the floor and the breakdown listing "Cash Needed Floor".
+- [x] S4 (30 min) **E2E** (`frontend/e2e`): `npm run e2e:record` (chromium) re-records the BRRRR goldens whose recorded response carries the breakdown; every other golden must come back byte-identical; `npm run e2e`.
+- [x] S5 (10 min) **MCP**: no new endpoint, tool or field; the new wording reaches the tool schemas through the Pydantic description and the `INSTRUCTIONS` glossary; manual `analyze_brrr` call on the floor-wins deal shows `total_cash_needed_for_deal` equal to the floor and the breakdown listing "Cash Needed Floor".
 - [x] S6 (15 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"): re-read every file touched — the engine change is arithmetic on already-validated Decimals (no new input, endpoint, sink or query); the explain text carries no new user-typed string; no frontend code beyond a comment; no secrets; run `bandit -q -r . -x ./tests,./verify_regression.py -ll -ii` and `npm audit`.
-- [ ] S7 (20 min) Final: `cd BackEnd && pytest && python3 verify_regression.py verify`; `cd frontend && npm test && npm run build && npm run e2e`; push `-u origin claude/exciting-pasteur-v8qhlz`; open the PR.
+- [x] S7 (20 min) Final: `cd BackEnd && pytest && python3 verify_regression.py verify`; `cd frontend && npm test && npm run build && npm run e2e`; push `-u origin claude/exciting-pasteur-v8qhlz`; open the PR.
 
 ## Verification
-- Setup in this sandbox: `pip install -r BackEnd/requirements.txt`; `cd frontend && npm ci`; Postgres 16 local cluster started, role/db `brrrr_test`, `TEST_DATABASE_URL=postgresql+psycopg2://brrrr_test:brrrr_test@127.0.0.1:5432/brrrr_test`.
+- Setup in this sandbox: `pip install -r BackEnd/requirements.txt`; `cd frontend && npm ci`; Postgres 16 local cluster started, role/db `brrrr_test`, `TEST_DATABASE_URL=postgresql+psycopg2://brrrr_test:brrrr_test@127.0.0.1:5432/brrrr_test`; Playwright runs on the pre-installed browser with `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` (the pinned headless-shell revision is not downloaded here).
 - Backend: `pytest`; `python3 verify_regression.py verify`.
 - Frontend: `npm test`; `npm run build`; `npm run e2e` (record first where goldens change).
 - Manual: Analyze a BRRRR with a construction budget well above the rehab and a high ARV: the Cash Needed tile reads the floor; the popup shows "Cash Needed through Refi" and a positive "Floor Top-Up"; on an ordinary deal the top-up is $0 and the tile is unchanged.
+
+## Review
+
+`total_cash_needed_step` now returns a `CashNeeded` record: the first month of hard-money interest (30 days of the
+per diem) and of taxes, insurance and HOA (`calc_holding_costs` over 30 days), the floor (EMD + cash to close +
+rehab cushion + one month of utilities + those two), the through-refi figure (unchanged: invested + cushion + cash
+to the refi table at the lowest ARV), the top-up `max(0, floor − through refi)` and Cash Needed as through refi +
+top-up, i.e. `max(floor, through refi)`. The five new figures live on `BrrrResultsWithIntermediates` only; the API
+field `total_cash_needed_for_deal` keeps its name. The breakdown gains "HML Interest (first month)", "Holding Costs
+(first month)", the "Cash Needed Floor" and "Cash Needed through Refi" sums and the "Floor Top-Up" step; the
+"Cash Needed" headline sums the last two, so the popup opens on those two rows and the familiar three terms sit one
+level down. No pytest fixture or Playwright deal crosses the floor, so every pinned number held; three regression
+payloads (`all_cash`, `no_rehab`, `ten_year_refi`) rose to their floor, which is the intended behaviour, and the
+nine Playwright goldens that record a BRRRR response changed in their breakdown steps only. Backend: 3 test files
++ full suite green, goldens re-recorded and verified; frontend: vitest green (the tree test reads the backend
+golden and now walks the extra level), build green, Playwright chromium recorded and replayed green.
