@@ -215,18 +215,21 @@ class TestPdfRendersTheExplanation:
         return re.sub(r"\s+", " ", " ".join(page.extract_text() for page in pages))
 
     def test_brrr_report(self, client, brrrr_payload):
+        # The layout itself (popup-shaped sections, links, outline) is covered by tests/test_report_pdf.py;
+        # this checks the explanation reaches the page.
         response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"address": "1 Shared Form St"})
         assert response.status_code == 200, response.text
         text = self._text(response.content)
-        assert "Monthly Cash Flow · $85.04" in text          # headline value in the section heading
-        assert "DSCR 1.36x" in text                            # ratio unit in the summary table
+        assert "How Cash Flow is calculated $85.04" in text    # headline value under the section title
+        assert "DSCR › 1.36x" in text                          # ratio unit in the summary table
         assert "+ Management 8% of rent $208" in text          # a stacked term
-        assert "− Operating Expenses $998 = $1,602" in text    # a subtracted term and the total line
+        assert "- Operating Expenses › $998" in text           # a subtracted, drillable term
+        assert "= Net Operating Income (NOI) $1,602" in text   # the total line
         assert "still left in the deal" in text                # a note
         # the lifecycle sections
-        assert "Cash to Close (Buy) ·" in text
-        assert "Cash-Out Wire (Lowest ARV) ·" in text
-        assert "Stolen Money (draw spread) ·" in text
+        assert "How Cash to Close (Buy) is calculated" in text
+        assert "How Cash-Out Routi (Lowest ARV) is calculated" in text
+        assert "How Stolen Money is calculated" in text
         assert "Seller Tax Credit" in text
         assert "Cash Needed (Buffered)" not in text
 
@@ -240,10 +243,10 @@ class TestPdfRendersTheExplanation:
         response = client.post("/reports/flip-pdf", json=flip_payload, params={"address": "2 Shared Form Ave"})
         assert response.status_code == 200, response.text
         text = self._text(response.content)
-        assert "Net Profit · $12,620" in text
-        assert "+ Contingency 10% $5,000 = $55,000" in text
+        assert "How Net Profit is calculated $12,620" in text
+        assert "+ Contingency 10% $5,000" in text
         assert "Agent fees are the buyer's 3% plus the seller's 3%." in text
-        assert "ROI · 19.41%" in text
+        assert "How ROI is calculated 19.41%" in text
 
 
 # The result tiles the website's deal modals render (MyDeals.vue / BoughtDeals.vue),

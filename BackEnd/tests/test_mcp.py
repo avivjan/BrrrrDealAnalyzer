@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import io
 import json
 import pathlib
 import uuid
 
 import jsonschema
+import pypdf
 import pytest
 from fastapi import FastAPI
 
@@ -85,6 +87,18 @@ class TestToolsDoWhatTheEndpointsDo:
         resource = blocks[1].resource
         assert resource.mimeType == "application/pdf"
         assert base64.b64decode(resource.blob).startswith(b"%PDF")
+
+    def test_pdf_report_takes_the_selected_results(self, client, brrrr_payload):
+        for tool_name in ("report_brrr_pdf", "report_flip_pdf"):
+            input_properties = mcp_server.tools()[tool_name]["tool"].inputSchema["properties"]
+            assert "selected_result_keys" in input_properties, tool_name
+            assert "cash_flow" in input_properties["selected_result_keys"]["description"]
+        blocks = _call("report_brrr_pdf", address="1 Shared Form St", body=brrrr_payload, selected_result_keys=["dscr"])
+        pdf_text = " ".join(page.extract_text() for page in pypdf.PdfReader(io.BytesIO(base64.b64decode(blocks[1].resource.blob))).pages)
+        assert "How DSCR is calculated" in pdf_text
+        assert "How Cash Flow is calculated" not in pdf_text
+        with pytest.raises(RuntimeError, match="HTTP 422"):
+            _call("report_brrr_pdf", address="x", body=brrrr_payload, selected_result_keys=["annualized_roi"])
 
     def test_http_errors_become_tool_errors(self, client):
         with pytest.raises(RuntimeError, match="HTTP 404"):

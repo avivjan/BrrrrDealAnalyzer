@@ -1246,6 +1246,10 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
            params={"address": "1 Shared Form St", "disposition": "attachment"}, binary=True)
     r.post("reports/flip_pdf", "/reports/flip-pdf", json=FLIP_PAYLOAD,
            params={"address": "2 Shared Form Ave"}, binary=True)
+    r.post("reports/brrr_pdf_selected_results", "/reports/brrr-pdf", json=BRRRR_PAYLOAD,
+           params={"address": "1 Shared Form St", "selected_result_keys": ["cash_flow", "dscr"]}, binary=True)
+    r.post("reports/brrr_pdf_unknown_result_key", "/reports/brrr-pdf", json=BRRRR_PAYLOAD,
+           params={"address": "x", "selected_result_keys": ["annualized_roi"]})
     r.post("reports/brrr_pdf_invalid", "/reports/brrr-pdf",
            json=_brrr(arv_in_thousands=0), params={"address": "x"})
     r.post("reports/flip_pdf_invalid", "/reports/flip-pdf",

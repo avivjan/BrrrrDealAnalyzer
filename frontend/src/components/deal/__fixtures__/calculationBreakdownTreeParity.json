@@ -1,0 +1,3921 @@
+{
+ "_about": "The popup's fully expanded tree for every result tile of the recorded baseline deals (BackEnd/tests/_regression_snapshots/calculations.json). Built by BackEnd/tests/test_report_pdf.py (the PDF's Python tree) and checked by both it and calculationBreakdownTree.test.ts (the popup's TS tree). Re-record with RECORD_BREAKDOWN_TREE_PARITY=1 pytest tests/test_report_pdf.py after a golden change.",
+ "BRRRR": {
+  "cash_flow": {
+   "headlineStepIndex": 3,
+   "headlineStepLabel": "Monthly Cash Flow",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "NOI",
+     "value": 1602.0,
+     "unit": "money",
+     "linkedStepLabel": "Net Operating Income (NOI)",
+     "formattedValue": "$1,602"
+    },
+    {
+     "path": "0/0",
+     "sign": "+",
+     "label": "Rent",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "0/1",
+     "sign": "-",
+     "label": "Operating Expenses",
+     "value": 998.0,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Operating Expenses",
+     "formattedValue": "$998"
+    },
+    {
+     "path": "0/1/0",
+     "sign": "+",
+     "label": "Vacancy 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "0/1/1",
+     "sign": "+",
+     "label": "Management 8% of rent",
+     "value": 208.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$208"
+    },
+    {
+     "path": "0/1/2",
+     "sign": "+",
+     "label": "Maintenance 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "0/1/3",
+     "sign": "+",
+     "label": "CapEx 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "0/1/4",
+     "sign": "+",
+     "label": "Taxes ÷ 12",
+     "value": 300.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$300"
+    },
+    {
+     "path": "0/1/5",
+     "sign": "+",
+     "label": "Insurance ÷ 12",
+     "value": 100.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$100"
+    },
+    {
+     "path": "0/1/6",
+     "sign": "+",
+     "label": "HOA",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "Mortgage",
+     "value": 1516.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Mortgage Payment",
+     "formattedValue": "$1,516.96"
+    }
+   ],
+   "derivedRows": []
+  },
+  "cash_out": {
+   "headlineStepIndex": 9,
+   "headlineStepLabel": "Cash Out from Deal",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Cash-Out Wire",
+     "value": 5911.430745814308,
+     "unit": "money",
+     "linkedStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+     "formattedValue": "$5,911.43"
+    },
+    {
+     "path": "0/0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "0/1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "0/1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "0/1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "0/1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "0/1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "0/2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "0/2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "0/2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "0/2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "0/2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "0/2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "0/2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "0/2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "0/2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "0/2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "0/2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "0/3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "0/4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "0/4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "0/4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "0/4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "1/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "1/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "1/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "1/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "1/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "1/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "1/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "1/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "1/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "1/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "1/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "1/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "1/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "1/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "1/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "1/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "1/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "1/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    }
+   ],
+   "derivedRows": []
+  },
+  "cash_out_routi": {
+   "headlineStepIndex": 9,
+   "headlineStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    }
+   ],
+   "derivedRows": []
+  },
+  "cash_on_cash": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "Cash on Cash",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "Monthly Cash Flow",
+     "value": 85.03674361688704,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Cash Flow",
+     "formattedValue": "$85.04"
+    },
+    {
+     "path": "input/0/0",
+     "sign": "+",
+     "label": "NOI",
+     "value": 1602.0,
+     "unit": "money",
+     "linkedStepLabel": "Net Operating Income (NOI)",
+     "formattedValue": "$1,602"
+    },
+    {
+     "path": "input/0/0/0",
+     "sign": "+",
+     "label": "Rent",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/0/0/1",
+     "sign": "-",
+     "label": "Operating Expenses",
+     "value": 998.0,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Operating Expenses",
+     "formattedValue": "$998"
+    },
+    {
+     "path": "input/0/0/1/0",
+     "sign": "+",
+     "label": "Vacancy 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/1",
+     "sign": "+",
+     "label": "Management 8% of rent",
+     "value": 208.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$208"
+    },
+    {
+     "path": "input/0/0/1/2",
+     "sign": "+",
+     "label": "Maintenance 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/3",
+     "sign": "+",
+     "label": "CapEx 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/4",
+     "sign": "+",
+     "label": "Taxes ÷ 12",
+     "value": 300.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$300"
+    },
+    {
+     "path": "input/0/0/1/5",
+     "sign": "+",
+     "label": "Insurance ÷ 12",
+     "value": 100.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$100"
+    },
+    {
+     "path": "input/0/0/1/6",
+     "sign": "+",
+     "label": "HOA",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/0/1",
+     "sign": "-",
+     "label": "Mortgage",
+     "value": 1516.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Mortgage Payment",
+     "formattedValue": "$1,516.96"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "Cash Out from Deal",
+     "value": -49240.51369863014,
+     "unit": "money",
+     "linkedStepLabel": "Cash Out from Deal",
+     "formattedValue": "-$49,240.51"
+    },
+    {
+     "path": "input/1/0",
+     "sign": "+",
+     "label": "Cash-Out Wire",
+     "value": 5911.430745814308,
+     "unit": "money",
+     "linkedStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+     "formattedValue": "$5,911.43"
+    },
+    {
+     "path": "input/1/0/0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "input/1/0/1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "input/1/0/1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "input/1/0/1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "input/1/0/1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "input/1/0/1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "input/1/0/2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "input/1/0/2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "input/1/0/2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "input/1/0/2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "input/1/0/2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/1/0/2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "input/1/0/2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "input/1/0/2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "input/1/0/2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "input/1/0/2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "input/1/0/2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/0/3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "input/1/0/4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "input/1/0/4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "input/1/0/4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/1/0/4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    },
+    {
+     "path": "input/1/1",
+     "sign": "-",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "input/1/1/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/1/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "input/1/1/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "input/1/1/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "input/1/1/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "input/1/1/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "input/1/1/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "input/1/1/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/1/1/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/1/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "input/1/1/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "input/1/1/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/1/1/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/1/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/1/1/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/1/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "input/1/1/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "input/1/1/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "input/1/1/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "input/1/1/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "input/1/1/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    }
+   ],
+   "derivedRows": []
+  },
+  "dscr": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "DSCR",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "Monthly Mortgage Payment",
+     "value": 1516.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Mortgage Payment",
+     "formattedValue": "$1,516.96"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "PITIA",
+     "value": 1916.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "PITIA",
+     "formattedValue": "$1,916.96"
+    },
+    {
+     "path": "input/1/0",
+     "sign": "+",
+     "label": "Mortgage",
+     "value": 1516.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Mortgage Payment",
+     "formattedValue": "$1,516.96"
+    },
+    {
+     "path": "input/1/1",
+     "sign": "+",
+     "label": "Taxes ÷ 12",
+     "value": 300.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$300"
+    },
+    {
+     "path": "input/1/2",
+     "sign": "+",
+     "label": "Insurance ÷ 12",
+     "value": 100.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$100"
+    },
+    {
+     "path": "input/1/3",
+     "sign": "+",
+     "label": "HOA",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    }
+   ],
+   "derivedRows": []
+  },
+  "equity": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "Equity (post-refi)",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "Refi Loan Amount",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "Reserves Escrowed at Refi",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "input/1/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "input/1/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/1/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    }
+   ],
+   "derivedRows": []
+  },
+  "roi": {
+   "headlineStepIndex": 4,
+   "headlineStepLabel": "ROI",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "Monthly Cash Flow",
+     "value": 85.03674361688704,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Cash Flow",
+     "formattedValue": "$85.04"
+    },
+    {
+     "path": "input/0/0",
+     "sign": "+",
+     "label": "NOI",
+     "value": 1602.0,
+     "unit": "money",
+     "linkedStepLabel": "Net Operating Income (NOI)",
+     "formattedValue": "$1,602"
+    },
+    {
+     "path": "input/0/0/0",
+     "sign": "+",
+     "label": "Rent",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/0/0/1",
+     "sign": "-",
+     "label": "Operating Expenses",
+     "value": 998.0,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Operating Expenses",
+     "formattedValue": "$998"
+    },
+    {
+     "path": "input/0/0/1/0",
+     "sign": "+",
+     "label": "Vacancy 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/1",
+     "sign": "+",
+     "label": "Management 8% of rent",
+     "value": 208.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$208"
+    },
+    {
+     "path": "input/0/0/1/2",
+     "sign": "+",
+     "label": "Maintenance 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/3",
+     "sign": "+",
+     "label": "CapEx 5% of rent",
+     "value": 130.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$130"
+    },
+    {
+     "path": "input/0/0/1/4",
+     "sign": "+",
+     "label": "Taxes ÷ 12",
+     "value": 300.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$300"
+    },
+    {
+     "path": "input/0/0/1/5",
+     "sign": "+",
+     "label": "Insurance ÷ 12",
+     "value": 100.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$100"
+    },
+    {
+     "path": "input/0/0/1/6",
+     "sign": "+",
+     "label": "HOA",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/0/1",
+     "sign": "-",
+     "label": "Mortgage",
+     "value": 1516.963256383113,
+     "unit": "money",
+     "linkedStepLabel": "Monthly Mortgage Payment",
+     "formattedValue": "$1,516.96"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "Cash Out from Deal",
+     "value": -49240.51369863014,
+     "unit": "money",
+     "linkedStepLabel": "Cash Out from Deal",
+     "formattedValue": "-$49,240.51"
+    },
+    {
+     "path": "input/1/0",
+     "sign": "+",
+     "label": "Cash-Out Wire",
+     "value": 5911.430745814308,
+     "unit": "money",
+     "linkedStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+     "formattedValue": "$5,911.43"
+    },
+    {
+     "path": "input/1/0/0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "input/1/0/1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "input/1/0/1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "input/1/0/1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "input/1/0/1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "input/1/0/1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "input/1/0/2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "input/1/0/2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "input/1/0/2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "input/1/0/2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "input/1/0/2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/1/0/2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "input/1/0/2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "input/1/0/2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "input/1/0/2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "input/1/0/2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "input/1/0/2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/0/3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "input/1/0/4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "input/1/0/4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "input/1/0/4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/1/0/4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    },
+    {
+     "path": "input/1/1",
+     "sign": "-",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "input/1/1/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/1/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "input/1/1/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "input/1/1/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "input/1/1/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "input/1/1/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "input/1/1/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "input/1/1/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/1/1/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/1/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "input/1/1/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "input/1/1/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/1/1/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/1/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/1/1/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1/1/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "input/1/1/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "input/1/1/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "input/1/1/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "input/1/1/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "input/1/1/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    },
+    {
+     "path": "input/2",
+     "sign": null,
+     "label": "Equity (post-refi)",
+     "value": 86600.0,
+     "unit": "money",
+     "linkedStepLabel": "Equity (post-refi)",
+     "formattedValue": "$86,600"
+    },
+    {
+     "path": "input/3",
+     "sign": null,
+     "label": "Net Profit",
+     "value": 37359.48630136986,
+     "unit": "money",
+     "linkedStepLabel": "Net Profit",
+     "formattedValue": "$37,359.49"
+    },
+    {
+     "path": "input/3/0",
+     "sign": "+",
+     "label": "Equity",
+     "value": 86600.0,
+     "unit": "money",
+     "linkedStepLabel": "Equity (post-refi)",
+     "formattedValue": "$86,600"
+    },
+    {
+     "path": "input/3/1",
+     "sign": "+",
+     "label": "Cash Out",
+     "value": -49240.51369863014,
+     "unit": "money",
+     "linkedStepLabel": "Cash Out from Deal",
+     "formattedValue": "-$49,240.51"
+    },
+    {
+     "path": "input/3/1/0",
+     "sign": "+",
+     "label": "Cash-Out Wire",
+     "value": 5911.430745814308,
+     "unit": "money",
+     "linkedStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+     "formattedValue": "$5,911.43"
+    },
+    {
+     "path": "input/3/1/0/0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "input/3/1/0/1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "input/3/1/0/1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "input/3/1/0/1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "input/3/1/0/1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "input/3/1/0/1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "input/3/1/0/2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "input/3/1/0/2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "input/3/1/0/2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "input/3/1/0/2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "input/3/1/0/2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/3/1/0/2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "input/3/1/0/2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "input/3/1/0/2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "input/3/1/0/2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "input/3/1/0/2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "input/3/1/0/2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/3/1/0/3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "input/3/1/0/4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "input/3/1/0/4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "input/3/1/0/4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "input/3/1/0/4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    },
+    {
+     "path": "input/3/1/1",
+     "sign": "-",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "input/3/1/1/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/3/1/1/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "input/3/1/1/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "input/3/1/1/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "input/3/1/1/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "input/3/1/1/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "input/3/1/1/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "input/3/1/1/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "input/3/1/1/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/3/1/1/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "input/3/1/1/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "input/3/1/1/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/3/1/1/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/3/1/1/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "input/3/1/1/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/3/1/1/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "input/3/1/1/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "input/3/1/1/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "input/3/1/1/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "input/3/1/1/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "input/3/1/1/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    }
+   ],
+   "derivedRows": []
+  },
+  "net_profit": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "Net Profit",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Equity",
+     "value": 86600.0,
+     "unit": "money",
+     "linkedStepLabel": "Equity (post-refi)",
+     "formattedValue": "$86,600"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Cash Out",
+     "value": -49240.51369863014,
+     "unit": "money",
+     "linkedStepLabel": "Cash Out from Deal",
+     "formattedValue": "-$49,240.51"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Cash-Out Wire",
+     "value": 5911.430745814308,
+     "unit": "money",
+     "linkedStepLabel": "Cash-Out Wire (Refi on 2026-07-09)",
+     "formattedValue": "$5,911.43"
+    },
+    {
+     "path": "1/0/0",
+     "sign": "+",
+     "label": "Refi Loan",
+     "value": 240000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan Amount",
+     "formattedValue": "$240,000"
+    },
+    {
+     "path": "1/0/1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "1/0/1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "1/0/1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "1/0/1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "1/0/1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "1/0/2",
+     "sign": "-",
+     "label": "Closing Costs (Refi)",
+     "value": 10980.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi)",
+     "formattedValue": "$10,980"
+    },
+    {
+     "path": "1/0/2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "1/0/2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1570.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi)",
+     "formattedValue": "$1,570"
+    },
+    {
+     "path": "1/0/2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1880.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi)",
+     "formattedValue": "$1,880"
+    },
+    {
+     "path": "1/0/2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "1/0/2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "1/0/2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "1/0/2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "1/0/2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3600.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi)",
+     "formattedValue": "$3,600"
+    },
+    {
+     "path": "1/0/2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "1/0/2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1/0/3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi)",
+     "value": 983.013698630137,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi)",
+     "formattedValue": "$983.01"
+    },
+    {
+     "path": "1/0/4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "1/0/4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "1/0/4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "1/0/4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    },
+    {
+     "path": "1/1",
+     "sign": "-",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "1/1/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "1/1/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "1/1/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "1/1/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "1/1/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "1/1/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "1/1/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "1/1/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "1/1/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1/1/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "1/1/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "1/1/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "1/1/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "1/1/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "1/1/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "1/1/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "1/1/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "1/1/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "1/1/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "1/1/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "1/1/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    }
+   ],
+   "derivedRows": []
+  },
+  "total_cash_needed_for_deal": {
+   "headlineStepIndex": 15,
+   "headlineStepLabel": "Cash Needed",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Cash Needed through Refi",
+     "value": 77542.21232876713,
+     "unit": "money",
+     "linkedStepLabel": "Cash Needed through Refi",
+     "formattedValue": "$77,542.21"
+    },
+    {
+     "path": "0/0",
+     "sign": "+",
+     "label": "Total Cash Invested",
+     "value": 55151.944444444445,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested (pre-refi)",
+     "formattedValue": "$55,151.94"
+    },
+    {
+     "path": "0/0/0",
+     "sign": "+",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "0/0/1",
+     "sign": "+",
+     "label": "Cash to Close (Buy)",
+     "value": 44239.01065449011,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Close (Buy)",
+     "formattedValue": "$44,239.01"
+    },
+    {
+     "path": "0/0/1/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "0/0/1/1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "0/0/1/1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "0/0/1/1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "0/0/1/1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "0/0/1/1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "0/0/1/1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "0/0/1/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "0/0/1/3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "0/0/1/4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "0/0/1/5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "0/0/2",
+     "sign": "+",
+     "label": "Seller Tax Credit set aside in the tax bucket",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit set aside in the tax bucket",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "0/0/3",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Out-of-Pocket",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "0/0/4",
+     "sign": "+",
+     "label": "HML Interest paid monthly",
+     "value": 9854.166666666666,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$9,854.17"
+    },
+    {
+     "path": "0/0/5",
+     "sign": "+",
+     "label": "Holding Costs",
+     "value": 2400.0,
+     "unit": "money",
+     "linkedStepLabel": "Holding Costs (until refi)",
+     "formattedValue": "$2,400"
+    },
+    {
+     "path": "0/0/6",
+     "sign": "+",
+     "label": "Utilities until Rented",
+     "value": 240.0,
+     "unit": "money",
+     "linkedStepLabel": "Utilities until Rented",
+     "formattedValue": "$240"
+    },
+    {
+     "path": "0/0/7",
+     "sign": "+",
+     "label": "Maintenance before Refi",
+     "value": 500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$500"
+    },
+    {
+     "path": "0/0/8",
+     "sign": "+",
+     "label": "Appliances",
+     "value": 630.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$630"
+    },
+    {
+     "path": "0/0/9",
+     "sign": "-",
+     "label": "Pre-Refi Rental Income",
+     "value": 7800.0,
+     "unit": "money",
+     "linkedStepLabel": "Pre-Refi Rental Income",
+     "formattedValue": "$7,800"
+    },
+    {
+     "path": "0/1",
+     "sign": "+",
+     "label": "Rehab Cushion",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "0/2",
+     "sign": "+",
+     "label": "Cash to Refi Table (Lowest ARV)",
+     "value": 17390.26788432268,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Refi Table (Lowest ARV)",
+     "formattedValue": "$17,390.27"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Floor Top-Up",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Floor Top-Up",
+     "formattedValue": "$0"
+    }
+   ],
+   "derivedRows": []
+  },
+  "cash_to_close_buy": {
+   "headlineStepIndex": 10,
+   "headlineStepLabel": "Cash to Close (Buy)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Closing Costs (Buy)",
+     "value": 3582.5,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$3,582.50"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 900.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$900"
+    },
+    {
+     "path": "1/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1432.5,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Buy)",
+     "formattedValue": "$1,432.50"
+    },
+    {
+     "path": "1/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1000.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Buy)",
+     "formattedValue": "$1,000"
+    },
+    {
+     "path": "1/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": "Online Notary (Buy)",
+     "formattedValue": "$250"
+    },
+    {
+     "path": "1/4",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash at closing)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "3",
+     "sign": "+",
+     "label": "Prepaid Interest (Buy)",
+     "value": 1445.2777777777778,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Buy)",
+     "formattedValue": "$1,445.28"
+    },
+    {
+     "path": "4",
+     "sign": "-",
+     "label": "Seller Tax Credit",
+     "value": 88.76712328767124,
+     "unit": "money",
+     "linkedStepLabel": "Seller Tax Credit",
+     "formattedValue": "$88.77"
+    },
+    {
+     "path": "5",
+     "sign": "-",
+     "label": "Earnest Money Deposit",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    }
+   ],
+   "derivedRows": []
+  },
+  "cash_out_routi_conservative": {
+   "headlineStepIndex": 9,
+   "headlineStepLabel": "Cash-Out Wire (Lowest ARV)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Refi Loan (Lowest ARV)",
+     "value": 216000.0,
+     "unit": "money",
+     "linkedStepLabel": "Refi Loan (Lowest ARV)",
+     "formattedValue": "$216,000"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "HML Payoff",
+     "value": 215525.55555555556,
+     "unit": "money",
+     "linkedStepLabel": "HML Payoff at Refi",
+     "formattedValue": "$215,525.56"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Hard Money Loan",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "Hard Money Loan (total principal)",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "1/0/0",
+     "sign": "+",
+     "label": "Purchase Loan",
+     "value": 160000.0,
+     "unit": "money",
+     "linkedStepLabel": "Purchase Loan (hard money)",
+     "formattedValue": "$160,000"
+    },
+    {
+     "path": "1/0/1",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "1/1",
+     "sign": "+",
+     "label": "Accrued Interest (1st of month → payoff)",
+     "value": 525.5555555555555,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$525.56"
+    },
+    {
+     "path": "2",
+     "sign": "-",
+     "label": "Closing Costs (Refi, Lowest ARV)",
+     "value": 10380.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Refi) (Lowest ARV)",
+     "formattedValue": "$10,380"
+    },
+    {
+     "path": "2/0",
+     "sign": "+",
+     "label": "Loan Charges",
+     "value": 200.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200"
+    },
+    {
+     "path": "2/1",
+     "sign": "+",
+     "label": "Recording & Transfer",
+     "value": 1438.0,
+     "unit": "money",
+     "linkedStepLabel": "Recording & Transfer (Refi) (Lowest ARV)",
+     "formattedValue": "$1,438"
+    },
+    {
+     "path": "2/2",
+     "sign": "+",
+     "label": "Title & Escrow",
+     "value": 1772.0,
+     "unit": "money",
+     "linkedStepLabel": "Title & Escrow (Refi) (Lowest ARV)",
+     "formattedValue": "$1,772"
+    },
+    {
+     "path": "2/3",
+     "sign": "+",
+     "label": "Online Notary",
+     "value": 250.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$250"
+    },
+    {
+     "path": "2/4",
+     "sign": "+",
+     "label": "Appraisal",
+     "value": 700.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$700"
+    },
+    {
+     "path": "2/5",
+     "sign": "+",
+     "label": "Survey",
+     "value": 385.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$385"
+    },
+    {
+     "path": "2/6",
+     "sign": "+",
+     "label": "Underwriting",
+     "value": 2000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,000"
+    },
+    {
+     "path": "2/7",
+     "sign": "+",
+     "label": "Broker Points",
+     "value": 3240.0,
+     "unit": "money",
+     "linkedStepLabel": "Broker Points (Refi) (Lowest ARV)",
+     "formattedValue": "$3,240"
+    },
+    {
+     "path": "2/8",
+     "sign": "+",
+     "label": "Broker Processing",
+     "value": 395.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$395"
+    },
+    {
+     "path": "2/9",
+     "sign": "+",
+     "label": "Other",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$0"
+    },
+    {
+     "path": "3",
+     "sign": "-",
+     "label": "Prepaid Interest (Refi, Lowest ARV)",
+     "value": 884.7123287671233,
+     "unit": "money",
+     "linkedStepLabel": "Prepaid Interest (Refi) (Lowest ARV)",
+     "formattedValue": "$884.71"
+    },
+    {
+     "path": "4",
+     "sign": "-",
+     "label": "Reserves",
+     "value": 6600.0,
+     "unit": "money",
+     "linkedStepLabel": "Reserves Escrowed at Refi",
+     "formattedValue": "$6,600"
+    },
+    {
+     "path": "4/0",
+     "sign": "+",
+     "label": "Maintenance Reserve",
+     "value": 1500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$1,500"
+    },
+    {
+     "path": "4/1",
+     "sign": "+",
+     "label": "Vacancy Reserve",
+     "value": 2600.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,600"
+    },
+    {
+     "path": "4/2",
+     "sign": "+",
+     "label": "CapEx Reserve",
+     "value": 2500.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$2,500"
+    }
+   ],
+   "derivedRows": [
+    {
+     "path": "derived/0",
+     "sign": null,
+     "label": "Cash to Refi Table (Lowest ARV)",
+     "value": 17390.26788432268,
+     "unit": "money",
+     "linkedStepLabel": "Cash to Refi Table (Lowest ARV)",
+     "formattedValue": "$17,390.27"
+    }
+   ]
+  },
+  "stolen_money": {
+   "headlineStepIndex": 1,
+   "headlineStepLabel": "Stolen Money (draw spread)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Construction Budget",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "Actual Rehab Cost",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": "Actual Rehab Cost (with contingency)",
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "1/0",
+     "sign": "+",
+     "label": "Rehab",
+     "value": 50000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$50,000"
+    },
+    {
+     "path": "1/1",
+     "sign": "+",
+     "label": "Contingency 10%",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    }
+   ],
+   "derivedRows": []
+  }
+ },
+ "FLIP": {
+  "net_profit": {
+   "headlineStepIndex": 9,
+   "headlineStepLabel": "Net Profit (after tax)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Gross Profit",
+     "value": 15775.0,
+     "unit": "money",
+     "linkedStepLabel": "Gross Profit",
+     "formattedValue": "$15,775"
+    },
+    {
+     "path": "0/0",
+     "sign": "+",
+     "label": "Sale Price",
+     "value": 320000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$320,000"
+    },
+    {
+     "path": "0/1",
+     "sign": "-",
+     "label": "Total Cost Basis",
+     "value": 304225.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Cost Basis",
+     "formattedValue": "$304,225"
+    },
+    {
+     "path": "0/1/0",
+     "sign": "+",
+     "label": "Purchase",
+     "value": 200000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200,000"
+    },
+    {
+     "path": "0/1/1",
+     "sign": "+",
+     "label": "Rehab",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Cost (with contingency)",
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "0/1/1/0",
+     "sign": "+",
+     "label": "Rehab",
+     "value": 50000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$50,000"
+    },
+    {
+     "path": "0/1/1/1",
+     "sign": "+",
+     "label": "Contingency 10%",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "0/1/2",
+     "sign": "+",
+     "label": "Closing",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "0/1/3",
+     "sign": "+",
+     "label": "Holding",
+     "value": 15725.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Holding Costs",
+     "formattedValue": "$15,725"
+    },
+    {
+     "path": "0/1/3/0",
+     "sign": "+",
+     "label": "HML Interest",
+     "value": 11825.0,
+     "unit": "money",
+     "linkedStepLabel": "Total HML Interest (over holding period)",
+     "formattedValue": "$11,825"
+    },
+    {
+     "path": "0/1/3/1",
+     "sign": "+",
+     "label": "Operating",
+     "value": 3900.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Operating Costs (during holding)",
+     "formattedValue": "$3,900"
+    },
+    {
+     "path": "0/1/4",
+     "sign": "+",
+     "label": "Selling",
+     "value": 24200.0,
+     "unit": "money",
+     "linkedStepLabel": "Selling Costs",
+     "formattedValue": "$24,200"
+    },
+    {
+     "path": "0/1/5",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "1",
+     "sign": "-",
+     "label": "Capital Gains Tax",
+     "value": 3155.0,
+     "unit": "money",
+     "linkedStepLabel": "Capital Gains Tax",
+     "formattedValue": "$3,155"
+    }
+   ],
+   "derivedRows": []
+  },
+  "roi": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "ROI",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "Total Cash Invested",
+     "value": 65025.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Cash Invested",
+     "formattedValue": "$65,025"
+    },
+    {
+     "path": "input/0/0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "input/0/1",
+     "sign": "+",
+     "label": "Closing",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/0/2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "input/0/3",
+     "sign": "+",
+     "label": "Holding",
+     "value": 15725.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Holding Costs",
+     "formattedValue": "$15,725"
+    },
+    {
+     "path": "input/0/3/0",
+     "sign": "+",
+     "label": "HML Interest",
+     "value": 11825.0,
+     "unit": "money",
+     "linkedStepLabel": "Total HML Interest (over holding period)",
+     "formattedValue": "$11,825"
+    },
+    {
+     "path": "input/0/3/1",
+     "sign": "+",
+     "label": "Operating",
+     "value": 3900.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Operating Costs (during holding)",
+     "formattedValue": "$3,900"
+    },
+    {
+     "path": "input/0/4",
+     "sign": "+",
+     "label": "Rehab Out-of-Pocket",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Cash (out-of-pocket)",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "Net Profit (after tax)",
+     "value": 12620.0,
+     "unit": "money",
+     "linkedStepLabel": "Net Profit (after tax)",
+     "formattedValue": "$12,620"
+    },
+    {
+     "path": "input/1/0",
+     "sign": "+",
+     "label": "Gross Profit",
+     "value": 15775.0,
+     "unit": "money",
+     "linkedStepLabel": "Gross Profit",
+     "formattedValue": "$15,775"
+    },
+    {
+     "path": "input/1/0/0",
+     "sign": "+",
+     "label": "Sale Price",
+     "value": 320000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$320,000"
+    },
+    {
+     "path": "input/1/0/1",
+     "sign": "-",
+     "label": "Total Cost Basis",
+     "value": 304225.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Cost Basis",
+     "formattedValue": "$304,225"
+    },
+    {
+     "path": "input/1/0/1/0",
+     "sign": "+",
+     "label": "Purchase",
+     "value": 200000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$200,000"
+    },
+    {
+     "path": "input/1/0/1/1",
+     "sign": "+",
+     "label": "Rehab",
+     "value": 55000.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Cost (with contingency)",
+     "formattedValue": "$55,000"
+    },
+    {
+     "path": "input/1/0/1/1/0",
+     "sign": "+",
+     "label": "Rehab",
+     "value": 50000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$50,000"
+    },
+    {
+     "path": "input/1/0/1/1/1",
+     "sign": "+",
+     "label": "Contingency 10%",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": null,
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/0/1/2",
+     "sign": "+",
+     "label": "Closing",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "input/1/0/1/3",
+     "sign": "+",
+     "label": "Holding",
+     "value": 15725.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Holding Costs",
+     "formattedValue": "$15,725"
+    },
+    {
+     "path": "input/1/0/1/3/0",
+     "sign": "+",
+     "label": "HML Interest",
+     "value": 11825.0,
+     "unit": "money",
+     "linkedStepLabel": "Total HML Interest (over holding period)",
+     "formattedValue": "$11,825"
+    },
+    {
+     "path": "input/1/0/1/3/1",
+     "sign": "+",
+     "label": "Operating",
+     "value": 3900.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Operating Costs (during holding)",
+     "formattedValue": "$3,900"
+    },
+    {
+     "path": "input/1/0/1/4",
+     "sign": "+",
+     "label": "Selling",
+     "value": 24200.0,
+     "unit": "money",
+     "linkedStepLabel": "Selling Costs",
+     "formattedValue": "$24,200"
+    },
+    {
+     "path": "input/1/0/1/5",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "input/1/1",
+     "sign": "-",
+     "label": "Capital Gains Tax",
+     "value": 3155.0,
+     "unit": "money",
+     "linkedStepLabel": "Capital Gains Tax",
+     "formattedValue": "$3,155"
+    }
+   ],
+   "derivedRows": []
+  },
+  "annualized_roi": {
+   "headlineStepIndex": 1,
+   "headlineStepLabel": "Annualized ROI",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "ROI",
+     "value": 19.407920030757403,
+     "unit": "pct",
+     "linkedStepLabel": "ROI",
+     "formattedValue": "19.41%"
+    }
+   ],
+   "derivedRows": []
+  },
+  "total_cash_needed": {
+   "headlineStepIndex": 6,
+   "headlineStepLabel": "Total Cash Needed",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Closing",
+     "value": 5000.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing Costs (Buy)",
+     "formattedValue": "$5,000"
+    },
+    {
+     "path": "2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "3",
+     "sign": "+",
+     "label": "Rehab Cash",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Cash (out-of-pocket)",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "4",
+     "sign": "+",
+     "label": "HML Interest",
+     "value": 11825.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Interest (cash, during holding)",
+     "formattedValue": "$11,825"
+    },
+    {
+     "path": "5",
+     "sign": "+",
+     "label": "Operating",
+     "value": 3900.0,
+     "unit": "money",
+     "linkedStepLabel": "Operating Costs (during holding)",
+     "formattedValue": "$3,900"
+    }
+   ],
+   "derivedRows": []
+  },
+  "total_cash_needed_with_buffer": {
+   "headlineStepIndex": 8,
+   "headlineStepLabel": "Total Cash Needed (Buffered)",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "Down Payment",
+     "value": 40000.0,
+     "unit": "money",
+     "linkedStepLabel": "Down Payment (cash)",
+     "formattedValue": "$40,000"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Closing × 1.1",
+     "value": 5500.0,
+     "unit": "money",
+     "linkedStepLabel": "Closing × 1.1 buffer",
+     "formattedValue": "$5,500"
+    },
+    {
+     "path": "2",
+     "sign": "+",
+     "label": "HML Points",
+     "value": 4300.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Points (cash)",
+     "formattedValue": "$4,300"
+    },
+    {
+     "path": "3",
+     "sign": "+",
+     "label": "Rehab Cash",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab Cash (out-of-pocket)",
+     "formattedValue": "$0"
+    },
+    {
+     "path": "4",
+     "sign": "+",
+     "label": "Rehab Float",
+     "value": 5500.0,
+     "unit": "money",
+     "linkedStepLabel": "Rehab float buffer (10% of rehab)",
+     "formattedValue": "$5,500"
+    },
+    {
+     "path": "5",
+     "sign": "+",
+     "label": "HML Interest × 1.5",
+     "value": 17737.5,
+     "unit": "money",
+     "linkedStepLabel": "HML Interest × 1.5 buffer",
+     "formattedValue": "$17,737.50"
+    },
+    {
+     "path": "6",
+     "sign": "+",
+     "label": "Operating × 1.5",
+     "value": 5850.0,
+     "unit": "money",
+     "linkedStepLabel": "Operating × 1.5 buffer",
+     "formattedValue": "$5,850"
+    }
+   ],
+   "derivedRows": []
+  },
+  "total_holding_costs": {
+   "headlineStepIndex": 3,
+   "headlineStepLabel": "Total Holding Costs",
+   "rows": [
+    {
+     "path": "0",
+     "sign": "+",
+     "label": "HML Interest",
+     "value": 11825.0,
+     "unit": "money",
+     "linkedStepLabel": "Total HML Interest (over holding period)",
+     "formattedValue": "$11,825"
+    },
+    {
+     "path": "1",
+     "sign": "+",
+     "label": "Operating",
+     "value": 3900.0,
+     "unit": "money",
+     "linkedStepLabel": "Total Operating Costs (during holding)",
+     "formattedValue": "$3,900"
+    }
+   ],
+   "derivedRows": []
+  },
+  "total_hml_interest": {
+   "headlineStepIndex": 2,
+   "headlineStepLabel": "Total HML Interest (over holding period)",
+   "rows": [
+    {
+     "path": "input/0",
+     "sign": null,
+     "label": "HML Amount",
+     "value": 215000.0,
+     "unit": "money",
+     "linkedStepLabel": "HML Amount",
+     "formattedValue": "$215,000"
+    },
+    {
+     "path": "input/1",
+     "sign": null,
+     "label": "Monthly HML Interest",
+     "value": 1970.8333333333333,
+     "unit": "money",
+     "linkedStepLabel": "Monthly HML Interest",
+     "formattedValue": "$1,970.83"
+    }
+   ],
+   "derivedRows": []
+  }
+ }
+}
