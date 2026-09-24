@@ -134,6 +134,7 @@ if (typeof window !== "undefined") {
     "count-up": {},
     "draw-on": {},
     tilt: {},
+    shake: {},
   };
 }
 

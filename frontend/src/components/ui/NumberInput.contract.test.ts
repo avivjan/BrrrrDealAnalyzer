@@ -158,4 +158,36 @@ describe("NumberInput", () => {
       ).not.toThrow();
     });
   });
+
+  describe("a wrong value", () => {
+    it("outlines the box, names the reason underneath, and links the two for the ear", () => {
+      const wrapper = mountInput({ modelValue: 150, label: "Down Payment", errorMessage: "Down payment percentage must be between 0% and 100%." });
+      const input = field(wrapper);
+      expect(input.classes()).toContain("ui-input-invalid");
+      expect(input.attributes("aria-invalid")).toBe("true");
+      const message = wrapper.get('[data-part="error-message"]');
+      expect(message.text()).toBe("Down payment percentage must be between 0% and 100%.");
+      expect(message.attributes("role")).toBe("alert");
+      expect(input.attributes("aria-describedby")).toBe(message.attributes("id"));
+    });
+
+    it("renders none of that while the value is fine", () => {
+      const wrapper = mountInput({ modelValue: 20, label: "Down Payment" });
+      expect(field(wrapper).classes()).not.toContain("ui-input-invalid");
+      expect(field(wrapper).attributes("aria-invalid")).toBeUndefined();
+      expect(field(wrapper).attributes("aria-describedby")).toBeUndefined();
+      expect(wrapper.find('[data-part="error-message"]').exists()).toBe(false);
+    });
+
+    it("never clamps: a typed 150 is still 150 after blur, for the error to report", async () => {
+      // PrimeVue's own min/max used to rewrite the box to 100 on blur while the
+      // model kept 150, because the clamp came back only as update:modelValue.
+      const wrapper = mountInput({ modelValue: 150, label: "Down Payment", suffix: "%" });
+      expect(wrapper.findComponent(InputNumber).props("min")).toBeNull();
+      expect(wrapper.findComponent(InputNumber).props("max")).toBeNull();
+      await field(wrapper).trigger("blur");
+      expect(field(wrapper).element.value).toBe("150%");
+      expect(emitted(wrapper)).toBeUndefined();
+    });
+  });
 });

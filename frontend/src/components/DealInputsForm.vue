@@ -79,6 +79,8 @@ import { computed, ref, watch } from "vue";
 import { useId } from "vue";
 import type { DealInputModel } from "../types";
 import { toNumber } from "../utils/dealUtils";
+import { dealInputErrorMessageByFieldKey } from "../utils/dealInputValidation";
+import { DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB, phaseTabsForDealType, type PhaseTabKey } from "../config/dealInputPhaseTabs";
 
 defineOptions({ inheritAttrs: false });
 
@@ -149,28 +151,7 @@ const useHmForRehab = computed({
 
 const isBrrr = computed(() => props.dealType === "BRRRR");
 
-/** One tab per phase of the deal; `key` is also the `data-form-tab` the e2e fixture reads. */
-type PhaseTabKey = "buy" | "rehab" | "rentHolding" | "refinance" | "buyRehab" | "flipStrategy" | "expenses";
-interface PhaseTab {
-  key: PhaseTabKey;
-  label: string;
-  /** PrimeIcons name, the same glyph the section header shows. */
-  icon: string;
-}
-
-const BRRRR_PHASE_TABS: readonly PhaseTab[] = [
-  { key: "buy", label: "Buy", icon: "pi-home" },
-  { key: "rehab", label: "Rehab", icon: "pi-wrench" },
-  { key: "rentHolding", label: "Rent & Holding", icon: "pi-key" },
-  { key: "refinance", label: "Refinance", icon: "pi-refresh" },
-];
-const FLIP_PHASE_TABS: readonly PhaseTab[] = [
-  { key: "buyRehab", label: "Buy & Rehab", icon: "pi-home" },
-  { key: "flipStrategy", label: "Flip Strategy", icon: "pi-dollar" },
-  { key: "expenses", label: "Expenses", icon: "pi-wallet" },
-];
-
-const phaseTabs = computed(() => (isBrrr.value ? BRRRR_PHASE_TABS : FLIP_PHASE_TABS));
+const phaseTabs = computed(() => phaseTabsForDealType(props.dealType));
 const activePhaseTabKey = ref<PhaseTabKey>(phaseTabs.value[0]!.key);
 /** Switching BRRRR <-> FLIP swaps the tab set, so land on the first tab of the new one. */
 watch(
@@ -198,6 +179,15 @@ const NEEDED_FIELDS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
 };
 const phaseTabNeedsInput = (key: PhaseTabKey): boolean =>
   NEEDED_FIELDS_BY_PHASE_TAB[key].some((field) => !(toNumber(props.deal[field]) ?? 0));
+
+/**
+ * Why each field's value is wrong, by key, recomputed as the deal is typed into.
+ * Handed to every input so it can outline itself and say why; a wrong field on a
+ * hidden tab also marks that tab, so it is never invisible.
+ */
+const dealInputErrorMessageByKey = computed(() => dealInputErrorMessageByFieldKey(props.deal, props.dealType));
+const phaseTabHasInvalidInput = (key: PhaseTabKey): boolean =>
+  DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB[key].some((field) => dealInputErrorMessageByKey.value[field] != null);
 
 // Cosmetic divergence kept from the two v1 hosts: the modal names the box more fully.
 const sellingBoxHeading = computed(() =>
@@ -255,7 +245,16 @@ const subHeading = computed(() => "h4" as const);
     >
       <i class="pi text-xs" :class="tab.icon" aria-hidden="true"></i>
       {{ tab.label }}
-      <template v-if="phaseTabNeedsInput(tab.key)">
+      <template v-if="phaseTabHasInvalidInput(tab.key)">
+        <span
+          :data-testid="`form.tab.${tab.key}.has-invalid-input`"
+          data-part="has-invalid-input"
+          aria-hidden="true"
+          class="h-1.5 w-1.5 shrink-0 rounded-full bg-negative"
+        ></span>
+        <span class="sr-only">has an invalid input</span>
+      </template>
+      <template v-else-if="phaseTabNeedsInput(tab.key)">
         <span
           :data-testid="`form.tab.${tab.key}.needs-input`"
           data-part="needs-input"
@@ -274,16 +273,16 @@ const subHeading = computed(() => "h4" as const);
   -->
   <template v-if="isBrrr">
     <div v-show="isPhaseTabActive('buy')" data-form-tab="buy">
-      <BuySection :deal="deal" :surface="surface" />
+      <BuySection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
     <div v-show="isPhaseTabActive('rehab')" data-form-tab="rehab">
-      <RehabSection :deal="deal" :surface="surface" />
+      <RehabSection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
     <div v-show="isPhaseTabActive('rentHolding')" data-form-tab="rentHolding">
-      <RentHoldingSection :deal="deal" :surface="surface" />
+      <RentHoldingSection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
     <div v-show="isPhaseTabActive('refinance')" data-form-tab="refinance">
-      <RefinanceSection :deal="deal" :surface="surface" />
+      <RefinanceSection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
   </template>
 
@@ -312,6 +311,7 @@ const subHeading = computed(() => "h4" as const);
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MoneyInput
         data-testid="form.field.purchasePrice"
+        :error-message="dealInputErrorMessageByKey.purchasePrice"
         :model-value="get('purchasePrice')"
         @update:model-value="(v: number | null) => set('purchasePrice', v)"
         label="Purchase Price"
@@ -326,6 +326,7 @@ const subHeading = computed(() => "h4" as const);
       >
         <MoneyInput
           data-testid="form.field.rehabCost"
+          :error-message="dealInputErrorMessageByKey.rehabCost"
           :model-value="get('rehabCost')"
           @update:model-value="(v: number | null) => set('rehabCost', v)"
           label="Rehab Cost"
@@ -334,16 +335,16 @@ const subHeading = computed(() => "h4" as const);
         />
         <NumberInput
           data-testid="form.field.rehabContingency"
+          :error-message="dealInputErrorMessageByKey.rehabContingency"
           :model-value="get('rehabContingency')"
           @update:model-value="(v: number | null) => set('rehabContingency', v)"
           label="Contingency"
           suffix="%"
-          :min="0"
-          :max="100"
         />
       </div>
       <MoneyInput
         data-testid="form.field.closingCostsBuy"
+        :error-message="dealInputErrorMessageByKey.closingCostsBuy"
         :model-value="get('closingCostsBuy')"
         @update:model-value="(v: number | null) => set('closingCostsBuy', v)"
         label="Closing Costs (Buy)"
@@ -357,30 +358,27 @@ const subHeading = computed(() => "h4" as const);
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <NumberInput
             data-testid="form.field.down_payment"
+            :error-message="dealInputErrorMessageByKey.down_payment"
             :model-value="get('down_payment')"
             @update:model-value="(v: number | null) => set('down_payment', v)"
             label="Down Payment"
             suffix="%"
-            :min="0"
-            :max="100"
           />
           <NumberInput
             data-testid="form.field.hmlPoints"
+            :error-message="dealInputErrorMessageByKey.hmlPoints"
             :model-value="get('hmlPoints')"
             @update:model-value="(v: number | null) => set('hmlPoints', v)"
             label="Points"
             suffix=" pts"
-            :min="0"
-            :max="100"
           />
           <NumberInput
             data-testid="form.field.HMLInterestRate"
+            :error-message="dealInputErrorMessageByKey.HMLInterestRate"
             :model-value="get('HMLInterestRate')"
             @update:model-value="(v: number | null) => set('HMLInterestRate', v)"
             label="Interest Rate"
             suffix="%"
-            :min="0"
-            :max="100"
           />
 
           <div
@@ -418,6 +416,7 @@ const subHeading = computed(() => "h4" as const);
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
         data-testid="form.field.salePrice"
+        :error-message="dealInputErrorMessageByKey.salePrice"
         :model-value="get('salePrice')"
         @update:model-value="(v: number | null) => set('salePrice', v)"
         label="Projected Sale Price"
@@ -427,6 +426,7 @@ const subHeading = computed(() => "h4" as const);
       />
       <NumberInput
         data-testid="form.field.holdingTime"
+        :error-message="dealInputErrorMessageByKey.holdingTime"
         :model-value="get('holdingTime')"
         @update:model-value="(v: number | null) => set('holdingTime', v)"
         label="Holding Time"
@@ -457,6 +457,7 @@ const subHeading = computed(() => "h4" as const);
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NumberInput
             data-testid="form.field.buyerAgentSellingFee"
+            :error-message="dealInputErrorMessageByKey.buyerAgentSellingFee"
             :model-value="get('buyerAgentSellingFee')"
             @update:model-value="
               (v: number | null) => set('buyerAgentSellingFee', v)
@@ -466,6 +467,7 @@ const subHeading = computed(() => "h4" as const);
           />
           <NumberInput
             data-testid="form.field.sellerAgentSellingFee"
+            :error-message="dealInputErrorMessageByKey.sellerAgentSellingFee"
             :model-value="get('sellerAgentSellingFee')"
             @update:model-value="
               (v: number | null) => set('sellerAgentSellingFee', v)
@@ -475,6 +477,7 @@ const subHeading = computed(() => "h4" as const);
           />
           <MoneyInput
             data-testid="form.field.sellingClosingCosts"
+            :error-message="dealInputErrorMessageByKey.sellingClosingCosts"
             :model-value="get('sellingClosingCosts')"
             @update:model-value="
               (v: number | null) => set('sellingClosingCosts', v)
@@ -487,6 +490,7 @@ const subHeading = computed(() => "h4" as const);
 
       <NumberInput
         data-testid="form.field.capitalGainsTax"
+        :error-message="dealInputErrorMessageByKey.capitalGainsTax"
         :model-value="get('capitalGainsTax')"
         @update:model-value="(v: number | null) => set('capitalGainsTax', v)"
         label="Capital Gains Tax Rate"
@@ -518,6 +522,7 @@ const subHeading = computed(() => "h4" as const);
       <MoneyInput
         v-if="isBrrr"
         data-testid="form.field.rent"
+        :error-message="dealInputErrorMessageByKey.rent"
         :model-value="get('rent')"
         @update:model-value="(v: number | null) => set('rent', v)"
         label="Monthly Rent"
@@ -526,6 +531,7 @@ const subHeading = computed(() => "h4" as const);
 
       <MoneyInput
         data-testid="form.field.annual_property_taxes"
+        :error-message="dealInputErrorMessageByKey.annual_property_taxes"
         :model-value="get('annual_property_taxes')"
         @update:model-value="
           (v: number | null) => set('annual_property_taxes', v)
@@ -535,6 +541,7 @@ const subHeading = computed(() => "h4" as const);
       />
       <MoneyInput
         data-testid="form.field.annual_insurance"
+        :error-message="dealInputErrorMessageByKey.annual_insurance"
         :model-value="get('annual_insurance')"
         @update:model-value="(v: number | null) => set('annual_insurance', v)"
         label="Annual Insurance"
@@ -542,6 +549,7 @@ const subHeading = computed(() => "h4" as const);
       />
       <MoneyInput
         data-testid="form.field.montly_hoa"
+        :error-message="dealInputErrorMessageByKey.montly_hoa"
         :model-value="get('montly_hoa')"
         @update:model-value="(v: number | null) => set('montly_hoa', v)"
         label="Monthly HOA"
@@ -549,6 +557,7 @@ const subHeading = computed(() => "h4" as const);
       <MoneyInput
         v-if="!isBrrr"
         data-testid="form.field.monthly_utilities"
+        :error-message="dealInputErrorMessageByKey.monthly_utilities"
         :model-value="get('monthly_utilities')"
         @update:model-value="(v: number | null) => set('monthly_utilities', v)"
         label="Monthly Utilities"
@@ -560,6 +569,7 @@ const subHeading = computed(() => "h4" as const);
       >
         <NumberInput
           data-testid="form.field.vacancyPercent"
+          :error-message="dealInputErrorMessageByKey.vacancyPercent"
           :model-value="get('vacancyPercent')"
           @update:model-value="(v: number | null) => set('vacancyPercent', v)"
           label="Vacancy"
@@ -567,6 +577,7 @@ const subHeading = computed(() => "h4" as const);
         />
         <NumberInput
           data-testid="form.field.maintenancePercent"
+          :error-message="dealInputErrorMessageByKey.maintenancePercent"
           :model-value="get('maintenancePercent')"
           @update:model-value="
             (v: number | null) => set('maintenancePercent', v)
@@ -576,6 +587,7 @@ const subHeading = computed(() => "h4" as const);
         />
         <NumberInput
           data-testid="form.field.capexPercent"
+          :error-message="dealInputErrorMessageByKey.capexPercent"
           :model-value="get('capexPercent')"
           @update:model-value="(v: number | null) => set('capexPercent', v)"
           label="CapEx"
@@ -583,6 +595,7 @@ const subHeading = computed(() => "h4" as const);
         />
         <NumberInput
           data-testid="form.field.property_managment_fee_precentages_from_rent"
+          :error-message="dealInputErrorMessageByKey.property_managment_fee_precentages_from_rent"
           :model-value="get('property_managment_fee_precentages_from_rent')"
           @update:model-value="
             (v: number | null) =>

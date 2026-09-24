@@ -45,6 +45,13 @@ const props = defineProps<{
   info?: string;
   /** A derived reading shown at the right of the label row while not typing ("= $126,000"). */
   note?: string;
+  /**
+   * Why the current value is wrong ("Lowest ARV cannot exceed ARV."), from
+   * `utils/dealInputValidation`. While set the box is outlined in the negative
+   * colour, shakes once, and carries the message underneath; it clears the moment
+   * the value is fixed, because the caller derives it from the value.
+   */
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -123,6 +130,7 @@ const onKeydown = (e: KeyboardEvent) => {
 };
 
 const inputId = useId();
+const errorMessageId = useId();
 </script>
 
 <template>
@@ -167,11 +175,15 @@ const inputId = useId();
       :placeholder="placeholder"
       :disabled="disabled"
       class="ui-input numeric"
-      :class="neededToRunAnalysis ? 'border-primary/60' : ''"
+      :class="[neededToRunAnalysis ? 'border-primary/60' : '', errorMessage ? 'ui-input-invalid' : '']"
+      :aria-invalid="errorMessage ? 'true' : undefined"
+      :aria-describedby="errorMessage ? errorMessageId : undefined"
+      v-shake="errorMessage"
       @focus="onFocus"
       @blur="commit"
       @input="draft = ($event.target as HTMLInputElement).value"
       @keydown="onKeydown"
     />
+    <p v-if="errorMessage" :id="errorMessageId" role="alert" data-part="error-message" class="text-xs text-negative">{{ errorMessage }}</p>
   </div>
 </template>

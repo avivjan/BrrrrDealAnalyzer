@@ -14,7 +14,7 @@
  * Native `<input type="date">` rather than PrimeVue's `DatePicker`: PrimeVue runs
  * `unstyled: true` with no preset, so the native control is the styled one.
  */
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useId } from "vue";
 import NumberInput from "./NumberInput.vue";
 import InputInfo from "./InputInfo.vue";
@@ -33,8 +33,10 @@ const props = withDefaults(
     required?: boolean;
     info?: string;
     note?: string;
+    /** Why the day count is wrong; handed to the number box. */
+    errorMessage?: string;
   }>(),
-  { dateLabel: "Date", anchorDate: null, min: 1, required: false, info: undefined, note: undefined },
+  { dateLabel: "Date", anchorDate: null, min: 1, required: false, info: undefined, note: undefined, errorMessage: undefined },
 );
 
 const emit = defineEmits(["update:modelValue"]);
@@ -46,13 +48,29 @@ const linkedDateIso = computed(() =>
   props.anchorDate && props.modelValue != null ? addDays(props.anchorDate, props.modelValue) : null,
 );
 
+/**
+ * Why the last picked date was refused, shown under the date box until a date is
+ * accepted or the count changes from elsewhere. Refusing silently left the picker
+ * snapping back to the old date with no word on why.
+ */
+const linkedDatePickProblem = ref("");
+const linkedDateEarliestAllowed = computed(() => (props.anchorDate ? addDays(props.anchorDate, props.min) : null));
+
 const onLinkedDateChange = (event: Event) => {
   const pickedDateIso = (event.target as HTMLInputElement).value;
   if (!props.anchorDate || !pickedDateIso) return;
   const daysFromAnchor = daysBetween(props.anchorDate, pickedDateIso);
-  if (daysFromAnchor == null || daysFromAnchor < props.min) return;
+  if (daysFromAnchor == null || daysFromAnchor < props.min) {
+    linkedDatePickProblem.value =
+      props.min > 0
+        ? `Must be after the buy closing date (${props.anchorDate}); the earliest is ${linkedDateEarliestAllowed.value}.`
+        : `Must be on or after the buy closing date (${props.anchorDate}).`;
+    return;
+  }
+  linkedDatePickProblem.value = "";
   emit("update:modelValue", daysFromAnchor);
 };
+watch(() => [props.modelValue, props.anchorDate], () => { linkedDatePickProblem.value = ""; });
 
 // ---- Unanchored picker (the original behaviour) ------------------------------------
 const picking = ref(false);
@@ -86,6 +104,7 @@ const daysInputId = useId();
 const linkedDateId = useId();
 const purchaseDateId = useId();
 const refiDateId = useId();
+const linkedDateProblemId = useId();
 </script>
 
 <template>
@@ -104,7 +123,7 @@ const refiDateId = useId();
         :data-input-id="daysInputId"
         :model-value="modelValue"
         suffix=" days"
-        :min="min"
+        :error-message="errorMessage"
         @update:model-value="(v: number | null) => emit('update:modelValue', v)"
       />
     </div>
@@ -118,10 +137,15 @@ const refiDateId = useId();
         :id="linkedDateId"
         type="date"
         :value="linkedDateIso ?? ''"
-        :min="anchorDate ?? undefined"
+        :min="linkedDateEarliestAllowed ?? undefined"
         class="ui-input"
+        :class="linkedDatePickProblem ? 'ui-input-invalid' : ''"
+        :aria-invalid="linkedDatePickProblem ? 'true' : undefined"
+        :aria-describedby="linkedDatePickProblem ? linkedDateProblemId : undefined"
+        v-shake="linkedDatePickProblem"
         @change="onLinkedDateChange"
       />
+      <p v-if="linkedDatePickProblem" :id="linkedDateProblemId" role="alert" data-part="date-linked-problem" class="text-xs text-negative">{{ linkedDatePickProblem }}</p>
     </div>
   </div>
 
@@ -150,7 +174,7 @@ const refiDateId = useId();
       :data-input-id="daysInputId"
       :model-value="modelValue"
       suffix=" days"
-      :min="min"
+      :error-message="errorMessage"
       @update:model-value="(v: number | null) => emit('update:modelValue', v)"
     />
 

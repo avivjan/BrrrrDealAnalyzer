@@ -7,12 +7,15 @@ import { DUR } from './tokens';
 import {
   FLASH_DURATION,
   REVEAL_CHILD_SELECTOR,
+  SHAKE_DURATION,
+  SHAKE_KEYFRAMES_X,
   TILT_MAX_DEG,
   vCountUp,
   vFlash,
   vHoverLift,
   vPress,
   vReveal,
+  vShake,
   vTilt,
 } from './directives';
 
@@ -834,5 +837,72 @@ describe('v-count-up', () => {
     hook(vCountUp, 'updated', el);
 
     expect(to).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('v-shake', () => {
+  /**
+   * The one directive that reads its expression: the field primitives bind the
+   * error message they render, so the binding carries a value here.
+   */
+  function shakeBinding(value: string | undefined, oldValue: string | undefined): DirectiveBinding<string | undefined> {
+    return { value, oldValue, arg: undefined, modifiers: {}, instance: null, dir: {} } as unknown as DirectiveBinding<string | undefined>;
+  }
+  const updated = (el: HTMLElement, value: string | undefined, oldValue: string | undefined) =>
+    vShake.updated?.(el, shakeBinding(value, oldValue), null as never, null as never);
+
+  it('rocks the element sideways when its error message appears', () => {
+    state.motionOn = true;
+    const { fromTo } = stubTweens();
+    const el = document.createElement('input');
+    document.body.append(el);
+
+    updated(el, 'Lowest ARV cannot exceed ARV.', undefined);
+
+    const [target, from, to] = fromTo.mock.calls[0] as [HTMLElement, Vars, Vars];
+    expect(target).toBe(el);
+    expect(from).toEqual({ x: 0 });
+    expect(to.keyframes).toEqual({ x: SHAKE_KEYFRAMES_X });
+    expect(SHAKE_KEYFRAMES_X[SHAKE_KEYFRAMES_X.length - 1]).toBe(0);
+    expect(to.duration).toBe(SHAKE_DURATION);
+    expect(SHAKE_DURATION).toBe(0.4);
+    expect(to.clearProps).toBe('transform');
+    expect(to.overwrite).toBe('auto');
+  });
+
+  it('shakes again when the message changes to a different one', () => {
+    state.motionOn = true;
+    const { fromTo } = stubTweens();
+    const el = document.createElement('input');
+    updated(el, 'Lowest ARV must be greater than 0.', 'Lowest ARV cannot exceed ARV.');
+    expect(fromTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('sits still while the same message stays, and when the message clears', () => {
+    state.motionOn = true;
+    const { fromTo } = stubTweens();
+    const el = document.createElement('input');
+    updated(el, 'Lowest ARV cannot exceed ARV.', 'Lowest ARV cannot exceed ARV.');
+    updated(el, undefined, 'Lowest ARV cannot exceed ARV.');
+    updated(el, '', undefined);
+    expect(fromTo).not.toHaveBeenCalled();
+  });
+
+  it('does nothing with motion off', () => {
+    state.motionOn = false;
+    const { fromTo } = stubTweens();
+    const el = document.createElement('input');
+    updated(el, 'Lowest ARV cannot exceed ARV.', undefined);
+    expect(fromTo).not.toHaveBeenCalled();
+  });
+
+  it('kills its tween and clears the transform on unmount', () => {
+    state.motionOn = true;
+    const el = document.createElement('input');
+    document.body.append(el);
+    updated(el, 'Lowest ARV cannot exceed ARV.', undefined);
+    vShake.unmounted?.(el, shakeBinding(undefined, undefined), null as never, null as never);
+    expect(gsap.isTweening(el)).toBe(false);
+    expect(el.style.transform).toBe('');
   });
 });

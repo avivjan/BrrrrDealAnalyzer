@@ -244,7 +244,7 @@ test.describe('alignment', () => {
     // The form shows one phase per tab, so walk every tab: a hidden tab's
     // controls are `display: none` and would otherwise never be measured.
     const everyTab = async () => {
-      const tabs = page.locator('[data-testid^="form.tab."]:not([data-testid$=".needs-input"])');
+      const tabs = page.locator('[data-testid^="form.tab."][role="tab"]');
       const count = await tabs.count();
       expect(count).toBeGreaterThan(0);
       for (let index = 0; index < count; index += 1) {

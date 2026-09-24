@@ -2,7 +2,7 @@
 /** BRRRR › Refinance: the new loan, its settlement lines, the reserves, and the two wires. */
 import { computed, useId } from "vue";
 import type { DealInputModel } from "../../../types";
-import { useDealField } from "../../../composables/useDealField";
+import { useDealField, type NumericKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -16,7 +16,12 @@ import InputInfo from "../../ui/InputInfo.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
-const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
+const props = defineProps<{
+  deal: DealInputModel;
+  surface: "card" | "panel";
+  /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
+  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+}>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
@@ -42,6 +47,7 @@ const prepaidInterestHint = computed(() =>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <DaysOrDateField
         data-testid="form.field.daysUntilRefi"
+        :error-message="fieldErrorMessages?.daysUntilRefi"
         :model-value="field.get('daysUntilRefi')"
         @update:model-value="(v: number | null) => field.set('daysUntilRefi', v)"
         label="Days to Refi"
@@ -55,6 +61,7 @@ const prepaidInterestHint = computed(() =>
 
       <MoneyInput
         data-testid="form.field.arv_in_thousands"
+        :error-message="fieldErrorMessages?.arv_in_thousands"
         :model-value="field.get('arv_in_thousands')"
         @update:model-value="(v: number | null) => field.set('arv_in_thousands', v)"
         label="ARV"
@@ -65,6 +72,7 @@ const prepaidInterestHint = computed(() =>
       />
       <AutoDefaultMoneyInput
         data-testid="form.field.lowestArv"
+        :error-message="fieldErrorMessages?.lowestArv"
         :model-value="field.getNullable('lowestArv')"
         :computed-default="autoCalc.lowestArvDefault == null ? null : autoCalc.lowestArvDefault / 1000"
         @update:model-value="(v: number | null) => field.setNullable('lowestArv', v)"
@@ -74,6 +82,7 @@ const prepaidInterestHint = computed(() =>
       />
       <SliderField
         data-testid="form.field.ltv_as_precent"
+        :error-message="fieldErrorMessages?.ltv_as_precent"
         :model-value="field.get('ltv_as_precent')"
         @update:model-value="(v: number | null) => field.set('ltv_as_precent', v)"
         label="LTV"
@@ -89,6 +98,7 @@ const prepaidInterestHint = computed(() =>
       />
       <SliderField
         data-testid="form.field.interestRate"
+        :error-message="fieldErrorMessages?.interestRate"
         :model-value="field.get('interestRate')"
         @update:model-value="(v: number | null) => field.set('interestRate', v)"
         label="Long Term Interest Rate"
@@ -103,6 +113,7 @@ const prepaidInterestHint = computed(() =>
       />
       <NumberInput
         data-testid="form.field.loanTermYears"
+        :error-message="fieldErrorMessages?.loanTermYears"
         :model-value="field.get('loanTermYears')"
         @update:model-value="(v: number | null) => field.set('loanTermYears', v)"
         label="Loan Term"
@@ -117,6 +128,7 @@ const prepaidInterestHint = computed(() =>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <MoneyInput
             data-testid="form.field.loanChargesRefi"
+            :error-message="fieldErrorMessages?.loanChargesRefi"
             :model-value="field.get('loanChargesRefi')"
             @update:model-value="(v: number | null) => field.set('loanChargesRefi', v)"
             label="Loan Charges (Refi)"
@@ -124,6 +136,7 @@ const prepaidInterestHint = computed(() =>
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.recordingTransferRefi"
+            :error-message="fieldErrorMessages?.recordingTransferRefi"
             :model-value="field.getNullable('recordingTransferRefi')"
             :computed-default="autoCalc.recordingTransferRefiDefault"
             @update:model-value="(v: number | null) => field.setNullable('recordingTransferRefi', v)"
@@ -132,6 +145,7 @@ const prepaidInterestHint = computed(() =>
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.titleEscrowRefi"
+            :error-message="fieldErrorMessages?.titleEscrowRefi"
             :model-value="field.getNullable('titleEscrowRefi')"
             :computed-default="autoCalc.titleEscrowRefiDefault"
             @update:model-value="(v: number | null) => field.setNullable('titleEscrowRefi', v)"
@@ -148,6 +162,7 @@ const prepaidInterestHint = computed(() =>
             <AutoDefaultMoneyInput
               v-if="field.getBool('onlineNotaryRefi', true)"
               data-testid="form.field.onlineNotaryFeeRefi"
+              :error-message="fieldErrorMessages?.onlineNotaryFeeRefi"
               :model-value="field.getNullable('onlineNotaryFeeRefi')"
               :computed-default="NOTARY_FEE_DEFAULT"
               @update:model-value="(v: number | null) => field.setNullable('onlineNotaryFeeRefi', v)"
@@ -157,6 +172,7 @@ const prepaidInterestHint = computed(() =>
           </div>
           <MoneyInput
             data-testid="form.field.appraisalFee"
+            :error-message="fieldErrorMessages?.appraisalFee"
             :model-value="field.get('appraisalFee')"
             @update:model-value="(v: number | null) => field.set('appraisalFee', v)"
             label="Appraisal"
@@ -164,6 +180,7 @@ const prepaidInterestHint = computed(() =>
           />
           <MoneyInput
             data-testid="form.field.surveyFee"
+            :error-message="fieldErrorMessages?.surveyFee"
             :model-value="field.get('surveyFee')"
             @update:model-value="(v: number | null) => field.set('surveyFee', v)"
             label="Survey"
@@ -172,6 +189,7 @@ const prepaidInterestHint = computed(() =>
           />
           <PresetSelectInput
             data-testid="form.field.refiUnderwritingFee"
+            :error-message="fieldErrorMessages?.refiUnderwritingFee"
             :model-value="field.get('refiUnderwritingFee')"
             @update:model-value="(v: number | null) => field.set('refiUnderwritingFee', v)"
             label="Underwriting Fee"
@@ -180,18 +198,18 @@ const prepaidInterestHint = computed(() =>
           />
           <NumberInput
             data-testid="form.field.refiPoints"
+            :error-message="fieldErrorMessages?.refiPoints"
             :model-value="field.get('refiPoints')"
             @update:model-value="(v: number | null) => field.set('refiPoints', v)"
             label="Broker Points"
             suffix=" pts"
-            :min="0"
-            :max="100"
             :info="impactText('refiPoints')"
             :note="moneyNote(autoCalc.brokerPointsDollars)"
           />
           <div class="flex items-end gap-2">
             <MoneyInput
               data-testid="form.field.brokerProcessingFeeRefi"
+              :error-message="fieldErrorMessages?.brokerProcessingFeeRefi"
               class="min-w-0 flex-1"
               :model-value="field.get('brokerProcessingFeeRefi')"
               @update:model-value="(v: number | null) => field.set('brokerProcessingFeeRefi', v)"
@@ -203,6 +221,7 @@ const prepaidInterestHint = computed(() =>
           <div class="flex flex-col gap-1.5">
             <MoneyInput
               data-testid="form.field.otherClosingCostsRefi"
+              :error-message="fieldErrorMessages?.otherClosingCostsRefi"
               :model-value="field.get('otherClosingCostsRefi')"
               @update:model-value="(v: number | null) => field.set('otherClosingCostsRefi', v)"
               label="Other Closing Costs (Refi)"
@@ -232,6 +251,7 @@ const prepaidInterestHint = computed(() =>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <MoneyInput
             data-testid="form.field.maintenanceReserve"
+            :error-message="fieldErrorMessages?.maintenanceReserve"
             :model-value="field.get('maintenanceReserve')"
             @update:model-value="(v: number | null) => field.set('maintenanceReserve', v)"
             label="Maintenance Reserve"
@@ -239,6 +259,7 @@ const prepaidInterestHint = computed(() =>
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.vacancyReserve"
+            :error-message="fieldErrorMessages?.vacancyReserve"
             :model-value="field.getNullable('vacancyReserve')"
             :computed-default="autoCalc.vacancyReserveDefault"
             @update:model-value="(v: number | null) => field.setNullable('vacancyReserve', v)"
@@ -247,6 +268,7 @@ const prepaidInterestHint = computed(() =>
           />
           <MoneyInput
             data-testid="form.field.capexReserve"
+            :error-message="fieldErrorMessages?.capexReserve"
             :model-value="field.get('capexReserve')"
             @update:model-value="(v: number | null) => field.set('capexReserve', v)"
             label="CapEx Reserve"

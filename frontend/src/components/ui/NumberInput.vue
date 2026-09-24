@@ -13,25 +13,30 @@
  *   sub-1 `step` was passed, so a rate rendered as `6.50` and deleting a single
  *   digit was near-impossible. It is pinned to 0: type as many or as few
  *   decimals as you like.
+ * - **No `min`/`max`.** PrimeVue clamps a typed 150 to 100 on blur and reports
+ *   it only through `update:modelValue`, which this component does not listen
+ *   to, so the box showed the clamped text while the model kept 150. A wrong
+ *   value is reported by `errorMessage` (from `utils/dealInputValidation`), never
+ *   rewritten.
  */
 import InputNumber from "primevue/inputnumber";
 import InputInfo from "./InputInfo.vue";
-import { useId } from "vue";
+import { computed, useId } from "vue";
 
-defineProps<{
+const props = defineProps<{
   modelValue: number | null;
   /** Omit to render the input bare, when the caller supplies its own label. */
   label?: string;
   suffix?: string;
   placeholder?: string;
-  min?: number;
-  max?: number;
   step?: number;
   required?: boolean;
   /** Tooltip text for the (i) beside the label (what this input affects). */
   info?: string;
   /** A derived reading shown at the right of the label row ("= $4,300"). */
   note?: string;
+  /** Why the current value is wrong; outlines the box, shakes it once, and shows the text underneath. */
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -48,6 +53,11 @@ const handleKeydown = (e: KeyboardEvent) => {
 };
 
 const inputId = useId();
+const errorMessageId = useId();
+/** Reaches the `<input>` PrimeVue renders inside its `<span>` root. */
+const inputPassThrough = computed(() => ({
+  pcInputText: { root: { "aria-describedby": props.errorMessage ? errorMessageId : undefined } },
+}));
 </script>
 
 <template>
@@ -74,17 +84,19 @@ const inputId = useId();
       :input-id="($attrs['data-input-id'] as string | undefined) ?? inputId"
       :model-value="modelValue"
       :suffix="suffix"
-      :min="min"
-      :max="max"
       :step="step"
       :placeholder="placeholder"
       :allowEmpty="true"
       :minFractionDigits="0"
       :maxFractionDigits="3"
-      inputClass="ui-input numeric"
+      :invalid="!!errorMessage"
+      :pt="inputPassThrough"
+      :inputClass="errorMessage ? 'ui-input numeric ui-input-invalid' : 'ui-input numeric'"
       class="w-full"
+      v-shake="errorMessage"
       @keydown="handleKeydown"
       @input="(e: any) => emit('update:modelValue', e.value)"
     />
+    <p v-if="errorMessage" :id="errorMessageId" role="alert" data-part="error-message" class="text-xs text-negative">{{ errorMessage }}</p>
   </div>
 </template>

@@ -159,4 +159,30 @@ describe("MoneyInput", () => {
       expect(neededButNotRequired.find('[data-part="required"]').exists()).toBe(false);
     });
   });
+
+  describe("a wrong value", () => {
+    it("outlines the box, names the reason underneath, and links the two for the ear", () => {
+      const wrapper = mountInput({ modelValue: 400, inThousands: true, errorMessage: "Lowest ARV cannot exceed ARV." });
+      const input = wrapper.find("input");
+      expect(input.classes()).toContain("ui-input-invalid");
+      expect(input.attributes("aria-invalid")).toBe("true");
+      const message = wrapper.get('[data-part="error-message"]');
+      expect(message.text()).toBe("Lowest ARV cannot exceed ARV.");
+      expect(message.attributes("role")).toBe("alert");
+      expect(input.attributes("aria-describedby")).toBe(message.attributes("id"));
+    });
+
+    it("renders none of that while the value is fine", () => {
+      const wrapper = mountInput({ modelValue: 300, inThousands: true });
+      expect(wrapper.find("input").classes()).not.toContain("ui-input-invalid");
+      expect(wrapper.find("input").attributes("aria-invalid")).toBeUndefined();
+      expect(wrapper.find("input").attributes("aria-describedby")).toBeUndefined();
+      expect(wrapper.find('[data-part="error-message"]').exists()).toBe(false);
+    });
+
+    it("keeps the message below the box, never in the label row the hint and note share", () => {
+      const wrapper = mountInput({ modelValue: 400, inThousands: true, errorMessage: "Lowest ARV cannot exceed ARV.", note: "= $1" });
+      expect(wrapper.get('[data-part="label-row"]').find('[data-part="error-message"]').exists()).toBe(false);
+    });
+  });
 });
