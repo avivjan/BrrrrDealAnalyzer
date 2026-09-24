@@ -108,7 +108,7 @@
    "derivedRows": []
   },
   "cash_out": {
-   "headlineStepIndex": 9,
+   "headlineStepIndex": 10,
    "headlineStepLabel": "Cash Out from Deal",
    "rows": [
     {
@@ -468,7 +468,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {
@@ -1202,7 +1202,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {
@@ -1844,7 +1844,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {
@@ -2285,7 +2285,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {
@@ -2715,7 +2715,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {
@@ -2767,7 +2767,7 @@
    "derivedRows": []
   },
   "total_cash_needed_for_deal": {
-   "headlineStepIndex": 15,
+   "headlineStepIndex": 16,
    "headlineStepLabel": "Cash Needed",
    "rows": [
     {
@@ -2929,7 +2929,7 @@
      "label": "HML Interest paid monthly",
      "value": 9854.166666666666,
      "unit": "money",
-     "linkedStepLabel": null,
+     "linkedStepLabel": "HML Interest paid monthly",
      "formattedValue": "$9,854.17"
     },
     {

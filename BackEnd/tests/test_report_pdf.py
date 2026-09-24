@@ -474,3 +474,82 @@ class TestReportPdfRendersThePopups:
         payload = brrrr_payload if route == "brrr" else flip_payload
         response = client.post(f"/reports/{route}-pdf", json=payload, params=params)
         assert response.status_code == 422, response.text
+
+
+# -- main's PR #83 breakdown explanations reach the PDF --------------------------------------------
+BRRRR_BREAKDOWN_SCENARIOS = {
+    "standard_with_closing_date": {},
+    "we_pay_all_closing_costs": {"titleModeBuy": "we_pay_all"},
+    "no_buy_closing_date": {"buyClosingDate": None},
+}
+
+
+def _analysis_and_report_text(client, payload: dict, selected_result_keys: list[str]) -> tuple[dict, str, list]:
+    analysis = client.post("/analyze/brrr", json=payload)
+    assert analysis.status_code == 200, analysis.text
+    report = client.post("/reports/brrr-pdf", json=payload, params={"selected_result_keys": selected_result_keys})
+    assert report.status_code == 200, report.text
+    reader = pypdf.PdfReader(io.BytesIO(report.content))
+    return analysis.json(), _pdf_text(report.content), _outline_titles_by_level(reader.outline)
+
+
+def _step_by_label(breakdowns: dict, label: str) -> dict:
+    step = find_step_by_label(breakdowns, "total_cash_needed_for_deal", label)
+    assert step is not None, label
+    return step
+
+
+class TestBreakdownExplanationsFromPr83ReachThePdf:
+    """HML Interest paid monthly (a new step, now drillable from Total Cash Invested), the deed transfer
+    tax's who-pays explanation and the title & escrow price tier: each in the PDF, word for word as the
+    popup shows it, for a standard deal, a we-pay-all deal and a deal without a buy closing date."""
+
+    @pytest.mark.parametrize("scenario", list(BRRRR_BREAKDOWN_SCENARIOS))
+    def test_hml_interest_paid_monthly_is_a_link_under_total_cash_invested_with_its_own_block(self, client, brrrr_payload, scenario):
+        payload = {**brrrr_payload, **BRRRR_BREAKDOWN_SCENARIOS[scenario]}
+        analysis, text, outline = _analysis_and_report_text(client, payload, ["total_cash_needed_for_deal", "cash_out"])
+        step = _step_by_label(analysis["breakdowns"], "HML Interest paid monthly")
+        value_text = format_value_like_calculation_popup("money", step["value"])
+
+        # A clickable row (›) in the first-level-expanded Total Cash Invested of both sections.
+        assert text.count(f"+ HML Interest paid monthly › {value_text}") >= 2
+        # Its Step details block: heading, the monthly × months formula and the prepaid / accrued note.
+        assert f"HML Interest paid monthly · {value_text}" in text
+        assert _normalize_like_pdf_text(step["formula"]) in text
+        assert _normalize_like_pdf_text(step["note"]) in text
+        assert "Monthly HML interest: per diem" in step["formula"]
+        if scenario == "no_buy_closing_date":
+            assert step["note"].startswith("No buy closing date")
+        else:
+            assert "paid from your pocket on the 1st of each month" in step["note"]
+        # The bookmark tree nests it under Total Cash Invested.
+        for index, (level, title) in enumerate(outline):
+            if title == f"+ HML Interest paid monthly · {value_text}":
+                parent_title = next(t for lvl, t in reversed(outline[:index]) if lvl == level - 1)
+                assert "Total Cash Invested" in parent_title
+                break
+        else:
+            pytest.fail("no outline entry for HML Interest paid monthly")
+
+    @pytest.mark.parametrize("scenario", list(BRRRR_BREAKDOWN_SCENARIOS))
+    def test_deed_transfer_tax_and_title_escrow_explanations_are_in_the_pdf(self, client, brrrr_payload, scenario):
+        payload = {**brrrr_payload, **BRRRR_BREAKDOWN_SCENARIOS[scenario]}
+        analysis, text, _ = _analysis_and_report_text(client, payload, ["cash_to_close_buy"])
+        deed_step = _step_by_label(analysis["breakdowns"], "Deed Transfer Tax (Buy)")
+        title_step = _step_by_label(analysis["breakdowns"], "Title & Escrow (Buy)")
+        for step in (deed_step, title_step):
+            assert _normalize_like_pdf_text(step["formula"]) in text, step["label"]
+            assert _normalize_like_pdf_text(step["note"]) in text, step["label"]
+        if scenario == "we_pay_all_closing_costs":
+            assert "we also pay the seller's deed transfer tax" in deed_step["formula"]
+            assert "added into Recording & Transfer (Buy)" in deed_step["note"]
+            assert "fee is set by the purchase price tier" in title_step["formula"]
+            assert "Purchase $200,000 is between $150,000 and $200,000 → $2,200" in text
+        else:
+            assert "the seller pays the deed transfer tax" in deed_step["formula"]
+            assert "Choosing 'we pay all closing costs' would add it" in deed_step["note"]
+            assert title_step["formula"].startswith("Standard deal → flat $1,000")
+        # Title & Escrow is an operand of Closing Costs (Buy), itself opened under Cash to Close: a link to its block.
+        title_value_text = format_value_like_calculation_popup("money", title_step["value"])
+        assert f"+ Title & Escrow › {title_value_text}" in text
+        assert f"Title & Escrow (Buy) · {title_value_text}" in text

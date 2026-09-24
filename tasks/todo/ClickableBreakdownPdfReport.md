@@ -255,3 +255,38 @@ answer, and its rows drill down along the `step_label` links the backend stamps
 - **Not changed.** `npm run audit` (the UI script/bindings/text goldens) already fails on `main` because of drift
   unrelated to this change (RepsTracker, MyDeals preview lifecycle). Only the two changed strings were updated in
   its goldens.
+
+## Follow-up: merged main (PR #83, breakdown explanations) into the PDF
+
+PR #83 changed only breakdown data in `BackEnd/BL/analyze/explain/brrr.py`:
+- a new step, "HML Interest paid monthly", which is now drillable from Total Cash Invested
+- a who-pays explanation for the Deed Transfer Tax (Buy)
+- the price-tier explanation for Title & Escrow (Buy)
+
+Because it is data, it flows into the PDF with no renderer change. This follow-up merges it and proves that it does.
+
+- [x] **E0** (15 min) Re-create the environment after the container restart: test Postgres, pip, npm.
+- [x] **M1** (20 min) Merge `origin/main` with a merge commit. There were no conflicts.
+  `verify_regression.py verify` passes on the merged tree, so main's re-recorded breakdown bodies and this branch's
+  two report cases both hold.
+- [x] **R1** (10 min) Re-record the parity fixture. The only changes are that "HML Interest paid monthly" is now a
+  linked row in every tree that opens Total Cash Invested, and the headline step indexes shift by one because of
+  the new step. The TypeScript tree still matches row for row.
+- [x] **T1** (40 min) Add `TestBreakdownExplanationsFromPr83ReachThePdf`, covering a standard deal, a we-pay-all
+  deal and a deal with no buy closing date. The tests check:
+  - The new step is a clickable row under Total Cash Invested in both Cash Needed and Cash Out.
+  - Its block shows the formula and note word for word.
+  - It sits under Total Cash Invested in the bookmark tree.
+  - The deed-transfer and title-tier formulas and notes appear word for word.
+  - Title & Escrow is a link to its own block.
+- [x] **V1** (20 min) Render the three scenarios to PNG. `→ − · ÷` all render in the standard PDF fonts, and the
+  long tier formula wraps cleanly, so no font change is needed.
+  - Deed Transfer Tax (Buy) is not an operand of any sum; the popup also shows it only in "All steps". So the PDF
+    shows it in the "All steps in calculation order" list, the same as the popup.
+- [x] **R2** (20 min) Re-record `pdf-report*.json`. Against main, the diff is only the `selected_result_keys`
+  query, and the selected-results golden picks up main's new breakdown bodies. The full Chromium e2e suite runs,
+  including main's new `calculation-breakdown-popup-hml-interest.spec.ts`.
+- [x] **MCP1** (5 min) Nothing new is needed: the report tools render the same breakdowns. The MCP tests pass.
+- [x] **S1** (15 min) Security task from `.claude/security.md`. The merge introduced no new code paths, and the new
+  texts pass through `escape`. bandit (CI flags), pip-audit and `npm audit --omit=dev` are clean.
+- [x] **P1** (15 min) Full backend pytest, `verify_regression.py verify`, Vitest (1557) and `vue-tsc -b` pass; push.
