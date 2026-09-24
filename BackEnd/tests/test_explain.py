@@ -373,7 +373,7 @@ class TestTermsLinkToTheirSourceStep:
         assert invested["Holding Costs"] == "Holding Costs (until refi)"
         assert invested["Pre-Refi Rental Income"] == "Pre-Refi Rental Income"
         assert invested["Earnest Money Deposit"] is None
-        assert invested["HML Interest paid monthly"] is None
+        assert invested["HML Interest paid monthly"] == "HML Interest paid monthly"
         cash_to_close = _term_links(breakdowns, "cash_to_close_buy", "Cash to Close (Buy)")
         assert cash_to_close["Down Payment"] == "Down Payment (cash)"
         assert cash_to_close["HML Points"] == "HML Points (cash at closing)"
@@ -456,3 +456,63 @@ class TestCalcBreakdownLinksByValueObjectIdentity:
         breakdown.add("a", "Rent Step", rent, "as entered")
         breakdown.add_sum("b", "Total", Decimal("2600"), [("Rent", rent), ("Other", Decimal("0"))])
         assert [t["step_label"] for t in breakdown.to_dict()["b"][0]["terms"]] == ["Rent Step", None]
+
+
+def _step_by_label(breakdowns: dict, section_key: str, step_label: str) -> dict:
+    return next(step for step in breakdowns[section_key] if step["label"] == step_label)
+
+
+class TestHmlInterestPaidMonthlyIsExplained:
+    """The Total Cash Invested operand opens onto its own step: a month's interest × the months paid monthly."""
+
+    @pytest.mark.parametrize("scenario", ["base", "no_date", "same_month_refi"])
+    def test_monthly_interest_times_months(self, brrrr_payload, scenario):
+        req, results_w_intermediates = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
+        breakdowns = explain_brrr(req, results_w_intermediates)
+        invested = _term_links(breakdowns, "total_cash_needed_for_deal", "Total Cash Invested")
+        assert invested["HML Interest paid monthly"] == "HML Interest paid monthly"
+        step = _step_by_label(breakdowns, "total_cash_needed_for_deal", "HML Interest paid monthly")
+
+        monthly_interest = results_w_intermediates.hml_per_diem * 30
+        months_paid_monthly = Decimal(results_w_intermediates.hml_interest_days_paid_monthly) / 30
+        assert abs(monthly_interest * months_paid_monthly - results_w_intermediates.hml_interest_paid_monthly) < Decimal("0.005")
+        assert step["value"] == float(results_w_intermediates.hml_interest_paid_monthly)
+        assert "× 30 days = " in step["formula"] and "/month × " in step["formula"]
+        assert f"({results_w_intermediates.hml_interest_days_paid_monthly} days paid monthly ÷ 30)" in step["formula"]
+
+    def test_base_deal_reads_five_whole_months(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {})
+        step = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_out", "HML Interest paid monthly")
+        # $215,000 × 11% ÷ 360 × 30 = $1,970.83 a month; Jan 10 → Jul 9 leaves 150 days paid monthly.
+        assert step["formula"].endswith("= $1,970.83/month × 5 months (150 days paid monthly ÷ 30) = $9,854.17")
+        assert "Prepaid Interest (Buy)" in step["note"] and "Accrued Interest inside the HML payoff" in step["note"]
+
+
+class TestDeedTransferAndTitleExplainWhoPaysAndHow:
+    def test_standard_deal_names_the_seller(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "standard"})
+        breakdowns = explain_brrr(req, results_w_intermediates)
+        deed = _step_by_label(breakdowns, "cash_to_close_buy", "Deed Transfer Tax (Buy)")
+        assert "the seller pays the deed transfer tax" in deed["formula"] and deed["value"] == 0
+        assert "0.70% × $200,000 = $1,400" in deed["note"]
+        title = _step_by_label(breakdowns, "cash_to_close_buy", "Title & Escrow (Buy)")
+        assert title["formula"].startswith("Standard deal → flat $1,000")
+
+    def test_we_pay_all_takes_over_the_sellers_tax(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all"})
+        deed = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_to_close_buy", "Deed Transfer Tax (Buy)")
+        assert deed["formula"] == "We pay all closing costs → we also pay the seller's deed transfer tax: 0.70% × Purchase ($200,000) = $1,400"
+        assert "added into Recording & Transfer (Buy)" in deed["note"]
+
+    @pytest.mark.parametrize("purchase_price_in_thousands, bracket_text, title_fee_text", [
+        (140, "Purchase $140,000 is under $150,000 → $2,050", "$2,050"),
+        (150, "Purchase $150,000 is between $150,000 and $200,000 → $2,200", "$2,200"),
+        (200, "Purchase $200,000 is between $150,000 and $200,000 → $2,200", "$2,200"),
+        (210, "Purchase $210,000 is above $200,000 → $2,400", "$2,400"),
+    ])
+    def test_we_pay_all_title_shows_the_tier_table_and_the_bracket(self, brrrr_payload, purchase_price_in_thousands, bracket_text, title_fee_text):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all", "purchasePrice": purchase_price_in_thousands})
+        title = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_to_close_buy", "Title & Escrow (Buy)")
+        assert "under $150,000 → $2,050 · $150,000 to $200,000 → $2,200 · above $200,000 → $2,400" in title["formula"]
+        assert title["formula"].endswith(bracket_text)
+        assert float(results_w_intermediates.title_escrow_buy) == float(title_fee_text.strip("$").replace(",", ""))

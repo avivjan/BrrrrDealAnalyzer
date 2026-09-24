@@ -29,6 +29,9 @@ from BL.analyze.common.deal_math import (
     title_escrow_refi_default,
     lowest_arv_default,
     DAYS_PER_MONTH,
+    TITLE_ESCROW_BUY_STANDARD,
+    TITLE_ESCROW_BUY_WE_PAY_ALL,
+    TITLE_ESCROW_BUY_WE_PAY_ALL_TOP,
 )
 
 # The headline metrics, in reading order: (result field, label, unit).
@@ -54,6 +57,30 @@ WIRE = "cash_out_routi"
 WIRE_LOW = "cash_out_routi_conservative"
 CLOSE = "cash_to_close_buy"
 HM_COST = "total_hard_money_cost"
+
+
+def _fmt_months(months: Decimal) -> str:
+    """A month count with up to 2 decimals, trailing zeros dropped (3, 3.5, 3.07)."""
+    return f"{float(months):.2f}".rstrip("0").rstrip(".")
+
+
+def _title_escrow_buy_formula(title_mode: str, purchase_price: Decimal, title_escrow_buy: Decimal) -> str:
+    """How the title/escrow default was picked: the flat standard fee, or the we-pay-all price tier."""
+    if title_mode != "we_pay_all":
+        return (f"Standard deal → flat {fmt_money(TITLE_ESCROW_BUY_STANDARD)}: we pay only the lender's title policy, its endorsements "
+                f"and the settlement/search fees; the seller pays the owner's policy")
+    (lowest_tier_upper_bound, lowest_tier_fee), (middle_tier_upper_bound, middle_tier_fee) = TITLE_ESCROW_BUY_WE_PAY_ALL
+    tier_table = (f"under {fmt_money(lowest_tier_upper_bound)} → {fmt_money(lowest_tier_fee)} · "
+                  f"{fmt_money(lowest_tier_upper_bound)} to {fmt_money(middle_tier_upper_bound)} → {fmt_money(middle_tier_fee)} · "
+                  f"above {fmt_money(middle_tier_upper_bound)} → {fmt_money(TITLE_ESCROW_BUY_WE_PAY_ALL_TOP)}")
+    if purchase_price < lowest_tier_upper_bound:
+        chosen_bracket = f"under {fmt_money(lowest_tier_upper_bound)}"
+    elif purchase_price <= middle_tier_upper_bound:
+        chosen_bracket = f"between {fmt_money(lowest_tier_upper_bound)} and {fmt_money(middle_tier_upper_bound)}"
+    else:
+        chosen_bracket = f"above {fmt_money(middle_tier_upper_bound)}"
+    return (f"We pay all closing costs → we pay every title charge, and the fee is set by the purchase price tier ({tier_table}). "
+            f"Purchase {fmt_money(purchase_price)} is {chosen_bracket} → {fmt_money(title_escrow_buy)}")
 
 
 def _default_note(user_value, what_it_is: str) -> str:
@@ -152,6 +179,22 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
               f"({fmt_money(results.hml_interest_paid_monthly)}), {results.hml_interest_days_accrued_into_refi_payoff} days inside the payoff ({fmt_money(results.hml_interest_accrued_into_refi_payoff)})."
               if has_buy_closing_date else f"Without a closing date all {results.hml_interest_days_paid_monthly} days of interest are treated as paid monthly ({fmt_money(results.hml_interest_paid_monthly)})."),
     )
+    # The part of the HML interest paid out of pocket on the 1st of each month: a month's interest
+    # times the months it is paid for. Filed under the Total Cash Invested sections so that sum links it.
+    hml_monthly_interest = calc_hml_interest(results.hml_amount, payload.HML_interest_rate, DAYS_PER_MONTH)
+    hml_months_paid_monthly = Decimal(results.hml_interest_days_paid_monthly) / DAYS_PER_MONTH
+    check(abs(hml_monthly_interest * hml_months_paid_monthly - results.hml_interest_paid_monthly) < Decimal("0.005"), "HML interest paid monthly")
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "HML Interest paid monthly", results.hml_interest_paid_monthly,
+        f"Monthly HML interest: per diem ({fmt_money(results.hml_per_diem)}) × 30 days = {fmt_money(hml_monthly_interest)}/month"
+        f" × {_fmt_months(hml_months_paid_monthly)} months ({results.hml_interest_days_paid_monthly} days paid monthly ÷ 30) = {fmt_money(results.hml_interest_paid_monthly)}",
+        note=(f"Of the HML Interest until refi ({fmt_money(results.hml_interest)}, {payload.days_until_refi} days): "
+              f"− Prepaid Interest (Buy) {fmt_money(results.prepaid_interest_buy)} ({results.hml_interest_days_prepaid_at_purchase_closing} days, already in Cash to Close) "
+              f"− Accrued Interest inside the HML payoff {fmt_money(results.hml_interest_accrued_into_refi_payoff)} ({results.hml_interest_days_accrued_into_refi_payoff} days, paid by the refi wire) "
+              f"= {fmt_money(results.hml_interest_paid_monthly)} paid from your pocket on the 1st of each month."
+              if has_buy_closing_date else
+              f"No buy closing date → all {results.hml_interest_days_paid_monthly} days of the HML Interest until refi ({fmt_money(results.hml_interest)}) are treated as paid monthly."),
+    )
     breakdown.add_sum(HM_COST, "Total Hard Money Cost", results.total_hard_money_cost, [
         ("HML Points", results.hml_points),
         ("HML Interest", results.hml_interest),
@@ -162,8 +205,13 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     check(results.deed_transfer_tax_buy == deed_transfer_tax_buy_default(payload.title_mode_buy, results.purchase_price), "deed transfer tax")
     breakdown.add(
         CLOSE, "Deed Transfer Tax (Buy)", results.deed_transfer_tax_buy,
-        (f"We pay all closing costs → 0.70% × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.deed_transfer_tax_buy)}"
-         if payload.title_mode_buy == "we_pay_all" else "Standard deal → the seller's debit, $0 to us"),
+        (f"We pay all closing costs → we also pay the seller's deed transfer tax: 0.70% × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.deed_transfer_tax_buy)}"
+         if payload.title_mode_buy == "we_pay_all" else
+         "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0"),
+        note=("The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. "
+              + ("Because we pay all closing costs we take it over; it is added into Recording & Transfer (Buy)."
+                 if payload.title_mode_buy == "we_pay_all" else
+                 f"Choosing 'we pay all closing costs' would add it to our costs: 0.70% × {fmt_money(results.purchase_price)} = {fmt_money(deed_transfer_tax_buy_default('we_pay_all', results.purchase_price))}.")),
     )
     check(results.recording_transfer_buy == (recording_transfer_buy_default(results.hml_amount, results.deed_transfer_tax_buy) if payload.recording_transfer_buy is None else payload.recording_transfer_buy), "recording (buy)")
     breakdown.add(
@@ -175,7 +223,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     check(results.title_escrow_buy == (title_escrow_buy_default(payload.title_mode_buy, results.purchase_price) if payload.title_escrow_buy is None else payload.title_escrow_buy), "title (buy)")
     breakdown.add(
         CLOSE, "Title & Escrow (Buy)", results.title_escrow_buy,
-        (f"Title mode '{payload.title_mode_buy}' at a {fmt_money(results.purchase_price)} price → {fmt_money(results.title_escrow_buy)}"
+        (_title_escrow_buy_formula(payload.title_mode_buy, results.purchase_price, results.title_escrow_buy)
          if payload.title_escrow_buy is None else f"As entered: {fmt_money(results.title_escrow_buy)}"),
         note=_default_note(payload.title_escrow_buy, "title, escrow and settlement charges"),
     )
