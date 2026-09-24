@@ -145,18 +145,22 @@ outlive the fix now that fields go red live.
 
 ## Todo (≈ 8 h)
 - [x] T1 (10 m) Write `tasks/todo/DealInputValidationUx.md` mirroring this plan; commit on the branch.
-- [ ] T2 (60 m) A: `config/dealInputPhaseTabs.ts`, `utils/dealInputValidation.ts`, `validateDealInputs` wrapper.
-- [ ] T3 (30 m) `vShake` directive + registration + test stub.
-- [ ] T4 (75 m) B: primitives' `errorMessage` anatomy, pass-throughs, `DaysOrDateField` message, drop the
+- [x] T2 (60 m) A: `config/dealInputPhaseTabs.ts`, `utils/dealInputValidation.ts`, `validateDealInputs` wrapper.
+- [x] T3 (30 m) `vShake` directive + registration + test stub.
+- [x] T4 (75 m) B: primitives' `errorMessage` anatomy, pass-throughs, `DaysOrDateField` message, drop the
   clamp and its call sites; confirm the PrimeVue blur-clamp finding once `node_modules` exists and record it.
-- [ ] T5 (60 m) C: form error map, section prop, tab marker, the two selector fixes.
-- [ ] T6 (15 m) E: `brrrAutoCalc` guard.
-- [ ] T7 (90 m) D: both hosts (gating, results notice, chip, `closeModal` confirm + revert).
-- [ ] T8 (10 m) F: Analyze rail live-clear.
-- [ ] T9 (40 m) H: FLIP saved-deal validator + call sites; `verify_regression.py`.
-- [ ] T10 (15 m) MCP support task (tests above).
+  *Confirmed in `primevue/inputnumber/index.mjs`: `onInputBlur` runs `validateValue` (the min/max clamp), rewrites
+  `input.value` to the clamped text and reports it only through `updateModel` → `update:modelValue`, which
+  `NumberInput`/`SliderField` never listened to (they emit on `input` only). So a typed 150 showed as 100 while the
+  model kept 150. Dropping `min`/`max` removes the rewrite; the inline error carries the rule.*
+- [x] T5 (60 m) C: form error map, section prop, tab marker, the two selector fixes.
+- [x] T6 (15 m) E: `brrrAutoCalc` guard.
+- [x] T7 (90 m) D: both hosts (gating, results notice, chip, `closeModal` confirm + revert).
+- [x] T8 (10 m) F: Analyze rail live-clear.
+- [x] T9 (40 m) H: FLIP saved-deal validator + call sites; `verify_regression.py`.
+- [x] T10 (15 m) MCP support task (tests above).
 - [ ] T11 (45 m) E2E specs (below).
-- [ ] T12 (15 m) Security task.
+- [x] T12 (15 m) Security task. *Result: the `security-review` skill found no HIGH or MEDIUM issue. Every new text sink is a Vue `{{ }}` interpolation (no `v-html` anywhere), the `confirm`/`alert` texts are built from the validator's static strings only, every field whose PrimeVue clamp was dropped is bounded by the backend on both the calculator and the saved-deal paths, and no secret, PII or log line was added.*
 - [ ] T13 (20 m) Full gates (`npm test`, `npm run build`, `npm run e2e`, `pytest`); push; open the PR.
 
 ## Tests

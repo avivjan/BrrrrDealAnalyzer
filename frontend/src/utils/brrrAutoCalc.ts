@@ -267,7 +267,11 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   // -- Refinance -----------------------------------------------------------------
   const refiLoanAmount = arvDollars != null && ltvPercent != null ? arvDollars * (ltvPercent / 100) : null;
   const lowestArvDefault = arvDollars != null ? LOWEST_ARV_FACTOR * arvDollars : null;
-  const lowestArvEffective = deal.lowestArv != null ? numberOrZero(deal.lowestArv) * 1000 : lowestArvDefault;
+  // A typed lowest ARV that is not positive, or sits above a known ARV, is a wrong input
+  // (`utils/dealInputValidation` says so on the field): nothing is computed from it.
+  const lowestArvOverrideDollars = deal.lowestArv != null ? numberOrZero(deal.lowestArv) * 1000 : null;
+  const lowestArvOverrideIsUsable = lowestArvOverrideDollars != null && lowestArvOverrideDollars > 0 && (arvDollars == null || lowestArvOverrideDollars <= arvDollars);
+  const lowestArvEffective = deal.lowestArv != null ? (lowestArvOverrideIsUsable ? lowestArvOverrideDollars : null) : lowestArvDefault;
   const conservativeRefiLoanAmount = lowestArvEffective != null && ltvPercent != null ? lowestArvEffective * (ltvPercent / 100) : null;
   const refiInterestRatePercent = numberOrNull(deal.interestRate);
   const refiSettlementLinesFor = (refiLoanAmount: number | null) => {

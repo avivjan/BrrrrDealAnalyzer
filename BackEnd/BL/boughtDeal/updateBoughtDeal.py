@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from ReqRes.common.bought_deal_schemas import BoughtBrrrDealCreate, BoughtFlipDealCreate
 from DAL.crud.bought_deal import update_bought_brrr_deal, update_bought_flip_deal
 from BL.common.deal_response import create_bought_deal_response
-from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
+from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal, validate_flip_inputs_for_saved_deal
 
 
 def update_bought_deal(db: Session, deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate]):
@@ -17,6 +17,7 @@ def update_bought_deal(db: Session, deal_id: str, deal: Union[BoughtBrrrDealCrea
             db.refresh(updated)
             return create_bought_deal_response(updated)
     elif deal.deal_type == "FLIP":
+        validate_flip_inputs_for_saved_deal(deal)
         updated = update_bought_flip_deal(db, deal_id, deal)
         if updated:
             db.commit()

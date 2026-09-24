@@ -83,3 +83,66 @@ class TestBoughtDealSaveValidation:
         board = client.get("/bought-deals")
         assert board.status_code == 200 and [deal["id"] for deal in board.json()] == [bought["id"]]
         assert board.json()[0]["lowestArv"] == bought["lowestArv"]
+
+
+FLIP_BLANK_NEW_DEAL_ZEROS = {"salePrice": 0, "purchasePrice": 0}
+
+REJECTED_SAVED_FLIP_INPUTS = [
+    ("holdingTime", 0, "Holding time must be greater than 0 months"),
+    ("capitalGainsTax", 101, "Capital gains tax rate must be between 0% and 100%"),
+    ("HMLInterestRate", 150, "HML interest rate must be between 0% and 100%"),
+    ("closingCostsBuy", -5, "Closing costs (buy) cannot be negative"),
+    ("monthly_utilities", -1, "Monthly utilities cannot be negative"),
+    ("buyerAgentSellingFee", 101, "Buyer agent fee must be between 0% and 100%"),
+]
+
+
+class TestFlipActiveDealSaveValidation:
+    """A FLIP row used to be saved with no validation at all; it now has the BRRRR twin's gate."""
+
+    def test_a_blank_new_flip_saves_and_the_board_loads_it(self, client, flip_payload):
+        response = _post_active(client, {**flip_payload, **FLIP_BLANK_NEW_DEAL_ZEROS})
+        assert response.status_code == 200, response.text
+        board = client.get("/active-deals")
+        assert board.status_code == 200 and [deal["id"] for deal in board.json()] == [response.json()["id"]]
+
+    @pytest.mark.parametrize("field, value, message", REJECTED_SAVED_FLIP_INPUTS)
+    def test_post_rejects_what_the_flip_calculator_rejects(self, client, flip_payload, field, value, message):
+        response = _post_active(client, {**flip_payload, field: value})
+        assert response.status_code == 400, response.text
+        assert message in response.json()["detail"]
+        assert client.get("/active-deals").json() == []
+
+    def test_put_rejects_and_keeps_the_saved_row(self, client, flip_payload):
+        deal = _post_active(client, flip_payload).json()
+        response = client.put(f"/active-deals/{deal['id']}", json={**flip_payload, "holdingTime": 0})
+        assert response.status_code == 400
+        assert "Holding time must be greater than 0 months" in response.json()["detail"]
+        board = client.get("/active-deals")
+        assert board.status_code == 200
+        assert [saved["holdingTime"] for saved in board.json()] == [flip_payload["holdingTime"]]
+
+    def test_the_messages_are_the_flip_calculators(self, client, flip_payload):
+        bad = {**flip_payload, "holdingTime": 0, "capitalGainsTax": 101}
+        saved_detail = _post_active(client, bad).json()["detail"]
+        calculator_detail = client.post("/analyze/flip", json=bad).json()["detail"]
+        for message in ("Holding time must be greater than 0 months.", "Capital gains tax rate must be between 0% and 100%."):
+            assert message in saved_detail and message in calculator_detail
+
+
+class TestFlipBoughtDealSaveValidation:
+    def test_post_rejects(self, client, flip_payload):
+        response = client.post("/bought-deals", json={**flip_payload, "boughtStage": "purchase", "sellerAgentSellingFee": 101})
+        assert response.status_code == 400
+        assert "Seller agent fee must be between 0% and 100%" in response.json()["detail"]
+        assert client.get("/bought-deals").json() == []
+
+    def test_put_rejects_and_the_board_keeps_loading(self, client, flip_payload):
+        active = _post_active(client, flip_payload).json()
+        bought = client.post(f"/bought-deals/from-active/{active['id']}", params={"deal_type": "FLIP"}).json()
+        response = client.put(f"/bought-deals/{bought['id']}", json={**flip_payload, "boughtStage": bought["boughtStage"], "holdingTime": -3})
+        assert response.status_code == 400
+        assert "Holding time must be greater than 0 months" in response.json()["detail"]
+        board = client.get("/bought-deals")
+        assert board.status_code == 200 and [deal["id"] for deal in board.json()] == [bought["id"]]
+        assert board.json()[0]["holdingTime"] == bought["holdingTime"]

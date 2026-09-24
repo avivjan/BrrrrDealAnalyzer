@@ -128,6 +128,18 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(autoCalc.titleEscrowBuyEffective).toBe(2200);
   });
 
+  it("computes nothing from a lowest ARV that is above the ARV or not positive", () => {
+    for (const lowestArv of [400, 0, -5]) {
+      const autoCalc = brrrAutoCalc({ ...FIXTURE, lowestArv });
+      expect(autoCalc.lowestArvEffective, `lowestArv ${lowestArv}`).toBeNull();
+      expect(autoCalc.conservativeRefiLoanAmount).toBeNull();
+      expect(autoCalc.cashOutWireConservative).toBeNull();
+      expect(autoCalc.cashOutWire).not.toBeNull(); // the ARV-based figures are untouched
+    }
+    expect(brrrAutoCalc({ ...FIXTURE, lowestArv: 320 }).lowestArvEffective).toBe(320_000); // equal is allowed
+    expect(brrrAutoCalc({ ...FIXTURE, arv_in_thousands: 0, lowestArv: 250 }).lowestArvEffective).toBe(250_000); // no ARV to compare against yet
+  });
+
   it("flips the tax credit in December and with the override", () => {
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCredit!).toBeLessThan(0);
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20" }).sellerTaxCredit!).toBeGreaterThan(0);

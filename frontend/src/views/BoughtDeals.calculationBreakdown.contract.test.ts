@@ -44,6 +44,7 @@ const DEAL = {
   rehabCost: 50,
   arv_in_thousands: 320,
   ltv_as_precent: 75,
+  daysUntilRefi: 180,
   rent: 2600,
   cash_out_routi: 15400,
   breakdowns: {
