@@ -161,7 +161,7 @@ outlive the fix now that fields go red live.
 - [x] T10 (15 m) MCP support task (tests above).
 - [x] T11 (45 m) E2E specs (below). *As built: `e2e/flows/deal-modal-invalid-input.spec.ts` (five cases, the shake one on `chromium-motion` only). The alignment claim is measured inside that spec (the box keeps its height, the message sits below it) rather than in `alignment.spec.ts`, whose tab selector is fixed.*
 - [x] T12 (15 m) Security task. *Result: the `security-review` skill found no HIGH or MEDIUM issue. Every new text sink is a Vue `{{ }}` interpolation (no `v-html` anywhere), the `confirm`/`alert` texts are built from the validator's static strings only, every field whose PrimeVue clamp was dropped is bounded by the backend on both the calculator and the saved-deal paths, and no secret, PII or log line was added.*
-- [ ] T13 (20 m) Full gates (`npm test`, `npm run build`, `npm run e2e`, `pytest`); push; open the PR.
+- [x] T13 (20 m) Full gates (`npm test`, `npm run build`, `npm run e2e`, `pytest`); push; open the PR. *Vitest 1610/1610, vue-tsc clean, Playwright 119 passed / 4 skipped on chromium + chromium-motion, pytest all green, `verify_regression.py verify` identical. The advisory G3/G4 audit manifests were left as they are: a re-baseline moves 15k lines of goldens earlier PRs never re-recorded.*
 
 ## Tests
 **Unit (frontend, Vitest)**
