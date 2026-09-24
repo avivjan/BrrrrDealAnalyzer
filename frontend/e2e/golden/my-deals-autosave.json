@@ -200,6 +200,14 @@
               "value": 215000
             },
             {
+              "formula": "Monthly HML interest: per diem ($65.69) × 30 days = $1,970.83/month × 6 months (180 days paid monthly ÷ 30) = $11,825",
+              "label": "HML Interest paid monthly",
+              "note": "No buy closing date → all 180 days of the HML Interest until refi ($11,825) are treated as paid monthly.",
+              "terms": null,
+              "unit": "money",
+              "value": 11825
+            },
+            {
               "formula": "No credit at closing → nothing to set aside ($0)",
               "label": "Seller Tax Credit set aside in the tax bucket",
               "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
@@ -297,7 +305,7 @@
                 {
                   "label": "HML Interest paid monthly",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "HML Interest paid monthly",
                   "value": 11825
                 },
                 {
@@ -862,9 +870,9 @@
               "value": 0
             },
             {
-              "formula": "Standard deal → the seller's debit, $0 to us",
+              "formula": "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": null,
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% × $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0
@@ -878,7 +886,7 @@
               "value": 1432.5
             },
             {
-              "formula": "Title mode 'standard' at a $200,000 price → $1,000",
+              "formula": "Standard deal → flat $1,000: we pay only the lender's title policy, its endorsements and the settlement/search fees; the seller pays the owner's policy",
               "label": "Title & Escrow (Buy)",
               "note": "Formula default for title, escrow and settlement charges; type a value to override.",
               "terms": null,
@@ -1269,6 +1277,14 @@
               "value": 40000
             },
             {
+              "formula": "Monthly HML interest: per diem ($65.69) × 30 days = $1,970.83/month × 6 months (180 days paid monthly ÷ 30) = $11,825",
+              "label": "HML Interest paid monthly",
+              "note": "No buy closing date → all 180 days of the HML Interest until refi ($11,825) are treated as paid monthly.",
+              "terms": null,
+              "unit": "money",
+              "value": 11825
+            },
+            {
               "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
               "label": "Closing Costs (Buy)",
               "note": null,
@@ -1424,7 +1440,7 @@
                 {
                   "label": "HML Interest paid monthly",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "HML Interest paid monthly",
                   "value": 11825
                 },
                 {
@@ -1967,6 +1983,14 @@
               "value": 215000
             },
             {
+              "formula": "Monthly HML interest: per diem ($65.69) × 30 days = $1,970.83/month × 6 months (180 days paid monthly ÷ 30) = $11,825",
+              "label": "HML Interest paid monthly",
+              "note": "No buy closing date → all 180 days of the HML Interest until refi ($11,825) are treated as paid monthly.",
+              "terms": null,
+              "unit": "money",
+              "value": 11825
+            },
+            {
               "formula": "No credit at closing → nothing to set aside ($0)",
               "label": "Seller Tax Credit set aside in the tax bucket",
               "note": "The buyer pays the whole year's bill in November, so the seller's share is held, not spent: it lowers the wire but never Cash Needed.",
@@ -2064,7 +2088,7 @@
                 {
                   "label": "HML Interest paid monthly",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "HML Interest paid monthly",
                   "value": 11825
                 },
                 {
@@ -2629,9 +2653,9 @@
               "value": 0
             },
             {
-              "formula": "Standard deal → the seller's debit, $0 to us",
+              "formula": "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": null,
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% × $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0
@@ -2645,7 +2669,7 @@
               "value": 1432.5
             },
             {
-              "formula": "Title mode 'standard' at a $200,000 price → $1,000",
+              "formula": "Standard deal → flat $1,000: we pay only the lender's title policy, its endorsements and the settlement/search fees; the seller pays the owner's policy",
               "label": "Title & Escrow (Buy)",
               "note": "Formula default for title, escrow and settlement charges; type a value to override.",
               "terms": null,
@@ -3036,6 +3060,14 @@
               "value": 40000
             },
             {
+              "formula": "Monthly HML interest: per diem ($65.69) × 30 days = $1,970.83/month × 6 months (180 days paid monthly ÷ 30) = $11,825",
+              "label": "HML Interest paid monthly",
+              "note": "No buy closing date → all 180 days of the HML Interest until refi ($11,825) are treated as paid monthly.",
+              "terms": null,
+              "unit": "money",
+              "value": 11825
+            },
+            {
               "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
               "label": "Closing Costs (Buy)",
               "note": null,
@@ -3191,7 +3223,7 @@
                 {
                   "label": "HML Interest paid monthly",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "HML Interest paid monthly",
                   "value": 11825
                 },
                 {
