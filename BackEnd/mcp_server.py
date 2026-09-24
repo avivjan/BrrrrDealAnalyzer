@@ -104,12 +104,14 @@ DESCRIPTIONS: dict[str, str] = {
     "report_brrr_pdf": (
         "Render the Big Whales BRRRR deal report as a PDF (same body as analyze_brrr; put the "
         "property address in `address`). Works for a bought deal too: pass its body from get_deal "
-        "or get_bought_deals. The PDF comes back as an embedded resource."
+        "or get_bought_deals. Each result reads like the site's breakdown popup, with links to "
+        "every step. selected_result_keys (omit = all) picks the results. Returns an embedded PDF."
     ),
     "report_flip_pdf": (
         "Render the Big Whales FLIP deal report as a PDF (same body as analyze_flip; put the "
         "property address in `address`). Works for a bought deal too: pass its body from get_deal "
-        "or get_bought_deals. The PDF comes back as an embedded resource."
+        "or get_bought_deals. Each result reads like the site's breakdown popup, with links to "
+        "every step. selected_result_keys (omit = all) picks the results. Returns an embedded PDF."
     ),
     # --- My Deals (active pipeline) ---
     "get_active_deals": (

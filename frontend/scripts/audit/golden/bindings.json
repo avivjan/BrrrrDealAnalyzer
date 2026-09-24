@@ -8462,7 +8462,7 @@
             "kind": "bind:title",
             "arg": "title",
             "modifiers": [],
-            "expression": "isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
+            "expression": "isPreparingPdf ? 'Building PDF…' : 'Generate Deal Report (PDF)'"
           }
         ]
       },

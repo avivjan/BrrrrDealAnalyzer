@@ -10,9 +10,12 @@ import {
   findHeadlineStepIndex,
   findStepByLabel,
   rowsOfStep,
+  rowsOfSteps,
   stepsAfterHeadline,
   topLevelRowsForHeadline,
 } from "./calculationBreakdownTree";
+import { formatCalculationStepValueByUnit } from "./calculationStepFormat";
+import { BRRRR_REPORT_RESULT_TILES, FLIP_REPORT_RESULT_TILES } from "./reportResultTiles";
 
 const money = (label: string, value: number, extra: Partial<CalcStep> = {}): CalcStep => ({
   label,
@@ -159,4 +162,75 @@ describe("calculationBreakdownTree against the backend's recorded breakdown", ()
     const noiRows = rowsOfStep(breakdowns.cash_flow!.find((s) => s.label === "Net Operating Income (NOI)")!, breakdowns, "cash_flow", "x", new Set());
     expect(byLabel(noiRows, "Rent").linkedStep).toBeUndefined();
   });
+});
+
+describe("calculationBreakdownTree matches the PDF's Python port", () => {
+  // `__fixtures__/calculationBreakdownTreeParity.json` is the popup's fully expanded tree for every
+  // result tile of the recorded baseline deals, as `BackEnd/BL/reports/common/breakdown_tree.py`
+  // builds it (`BackEnd/tests/test_report_pdf.py` records and checks it). Building the same tree
+  // here from the same goldens proves the PDF shows the popup's rows and numbers.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const recorded = JSON.parse(
+    readFileSync(join(here, "../../../../BackEnd/tests/_regression_snapshots/calculations.json"), "utf8"),
+  ) as { brrr: { baseline: { body: Record<string, unknown> } }; flip: { baseline: { body: Record<string, unknown> } } };
+  const parity = JSON.parse(readFileSync(join(here, "__fixtures__/calculationBreakdownTreeParity.json"), "utf8")) as Record<
+    string,
+    Record<string, unknown>
+  >;
+
+  type ParityRow = {
+    path: string;
+    sign: "+" | "-" | null;
+    label: string;
+    value: number;
+    unit: string;
+    linkedStepLabel: string | null;
+    formattedValue: string;
+  };
+
+  function expandedRows(
+    rows: ReturnType<typeof topLevelRowsForHeadline>,
+    breakdowns: CalcBreakdowns,
+    sectionKey: string,
+    ancestorStepLabels: ReadonlySet<string>,
+  ): ParityRow[] {
+    return rows.flatMap((row) => {
+      const flattened: ParityRow[] = [{
+        path: row.path,
+        sign: row.sign,
+        label: row.label,
+        value: row.value,
+        unit: row.unit ?? "money",
+        linkedStepLabel: row.linkedStep?.label ?? null,
+        formattedValue: formatCalculationStepValueByUnit(row.unit, row.value),
+      }];
+      if (!row.linkedStep) return flattened;
+      const ancestors = new Set(ancestorStepLabels);
+      ancestors.add(row.linkedStep.label);
+      const children = rowsOfStep(row.linkedStep, breakdowns, sectionKey, row.path, ancestors);
+      return [...flattened, ...expandedRows(children, breakdowns, sectionKey, ancestors)];
+    });
+  }
+
+  for (const [dealType, body, tiles] of [
+    ["BRRRR", recorded.brrr.baseline.body, BRRRR_REPORT_RESULT_TILES],
+    ["FLIP", recorded.flip.baseline.body, FLIP_REPORT_RESULT_TILES],
+  ] as const) {
+    it(`builds the same ${dealType} trees, row for row and number for number`, () => {
+      const breakdowns = body.breakdowns as CalcBreakdowns;
+      const built: Record<string, unknown> = {};
+      for (const tile of tiles) {
+        const steps = breakdowns[tile.resultKey]!;
+        const headlineIndex = findHeadlineStepIndex(steps, body[tile.resultKey] as number);
+        const headlineLabel = steps[headlineIndex]!.label;
+        built[tile.resultKey] = {
+          headlineStepIndex: headlineIndex,
+          headlineStepLabel: headlineLabel,
+          rows: expandedRows(topLevelRowsForHeadline(breakdowns, tile.resultKey, headlineIndex), breakdowns, tile.resultKey, new Set([headlineLabel])),
+          derivedRows: expandedRows(rowsOfSteps(stepsAfterHeadline(steps, headlineIndex), "derived"), breakdowns, tile.resultKey, new Set()),
+        };
+      }
+      expect(built).toEqual(parity[dealType]);
+    });
+  }
 });

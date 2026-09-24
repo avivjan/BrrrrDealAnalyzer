@@ -202,13 +202,17 @@ export default {
     data: AnalyzeDealReq,
     type: 'BRRRR' | 'FLIP',
     address: string,
+    selectedResultKeys?: readonly string[],
   ): Promise<Blob> {
     const endpoint = type === 'FLIP' ? '/reports/flip-pdf' : '/reports/brrr-pdf';
     const logPrefix = `[DealReport:${type}]`;
     console.group(`API: downloadDealPdf (${type})`);
     try {
       const response = await apiClient.post(endpoint, data, {
-        params: { address },
+        // One `selected_result_keys` per key (no `[]` suffix), the form FastAPI reads as a list;
+        // left out entirely when every result is wanted.
+        params: selectedResultKeys ? { address, selected_result_keys: [...selectedResultKeys] } : { address },
+        paramsSerializer: { indexes: null },
         responseType: 'blob',
       });
       console.log(`${logPrefix} Response Status:`, response.status);

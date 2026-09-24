@@ -659,7 +659,7 @@
     "{{ columns[stage.id]?.length || 0 }}",
     "Address",
     "{{ (!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR') ? 'BRRRR' : 'FLIP' }}",
-    "{{ isPreparingPdf ? \"Generating…\" : \"View Report\" }}",
+    "{{ isPreparingPdf ? \"Generating…\" : \"Generate Report\" }}",
     "Current Task / Status",
     "Stage",
     "{{ s.name }}",

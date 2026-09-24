@@ -27084,6 +27084,20 @@
     "content_type": "application/json",
     "status": 400
   },
+  "reports/brrr_pdf_selected_results": {
+    "content_disposition": "inline; filename=\"BigWhales_BRRRR_1_Shared_Form_St.pdf\"",
+    "content_type": "application/pdf",
+    "magic": "%PDF",
+    "nonempty": true,
+    "status": 200
+  },
+  "reports/brrr_pdf_unknown_result_key": {
+    "body": {
+      "detail": "Unknown result key(s) for a BRRRR report: annualized_roi. Valid keys: cash_flow, cash_out, cash_out_routi, cash_on_cash, dscr, equity, roi, net_profit, total_cash_needed_for_deal, cash_to_close_buy, cash_out_routi_conservative, stolen_money."
+    },
+    "content_type": "application/json",
+    "status": 422
+  },
   "reports/flip_pdf": {
     "content_disposition": "inline; filename=\"BigWhales_FLIP_2_Shared_Form_Ave.pdf\"",
     "content_type": "application/pdf",

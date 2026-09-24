@@ -19,6 +19,7 @@ import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCa
 import type { ActiveDealRes, AnalyzeDealReq } from "../types";
 import { useDealReportPdf } from "../composables/useDealReportPdf";
 import DealReportPdfPreviewModal from "../components/deal/DealReportPdfPreviewModal.vue";
+import GenerateReportResultPickerPopup from "../components/deal/GenerateReportResultPickerPopup.vue";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
@@ -495,10 +496,19 @@ const copyToClipboard = async (deal: ActiveDealRes) => {
 // request. State and the object-URL lifecycle live in `useDealReportPdf`.
 const { isPreparingPdf, pdfPreview, viewDealReport: viewReportFor, downloadFromPreview, closePdfPreview } = useDealReportPdf();
 
-const viewDealReport = () => {
+/** "Generate Report" first asks which results to include; the picker then generates the PDF. */
+const isReportResultPickerOpen = ref(false);
+const reportDealType = computed<"BRRRR" | "FLIP">(() => (editingDeal.value?.deal_type === "FLIP" ? "FLIP" : "BRRRR"));
+
+const openReportResultPicker = () => {
   if (!editingDeal.value) return;
-  const deal = editingDeal.value;
-  return viewReportFor(deal, deal.deal_type === "FLIP" ? "FLIP" : "BRRRR");
+  isReportResultPickerOpen.value = true;
+};
+
+const generateDealReportWithSelectedResults = (selectedResultKeys: string[]) => {
+  isReportResultPickerOpen.value = false;
+  if (!editingDeal.value) return;
+  return viewReportFor(editingDeal.value, reportDealType.value, selectedResultKeys);
 };
 
 console.groupEnd();
@@ -731,12 +741,12 @@ console.groupEnd();
             <div class="flex items-center gap-2">
               <UiButton
                 data-testid="mydeals.modal.view-report"
-                @click="viewDealReport"
+                @click="openReportResultPicker"
                 :disabled="isPreparingPdf"
                 variant="secondary"
                 size="sm"
                 class="min-h-9 touch:min-h-11"
-                :title="isPreparingPdf ? 'Building PDF…' : 'Preview Deal Report (Big Whales branded PDF)'"
+                :title="isPreparingPdf ? 'Building PDF…' : 'Generate Deal Report (PDF)'"
               >
                 <i
                   class="pi text-base"
@@ -744,7 +754,7 @@ console.groupEnd();
                   aria-hidden="true"
                 ></i>
                 <span class="hidden sm:inline">
-                  {{ isPreparingPdf ? "Generating…" : "View Report" }}
+                  {{ isPreparingPdf ? "Generating…" : "Generate Report" }}
                 </span>
               </UiButton>
               <UiIconButton
@@ -1368,6 +1378,15 @@ console.groupEnd();
         </UiModalPanel>
       </div>
     </UiTransition>
+
+    <!-- "Generate Report": pick the results, then the PDF opens in the preview below. -->
+    <GenerateReportResultPickerPopup
+      :open="isReportResultPickerOpen"
+      :deal-type="reportDealType"
+      :analysis="currentAnalysis as Record<string, unknown> | null"
+      @generate="generateDealReportWithSelectedResults"
+      @close="isReportResultPickerOpen = false"
+    />
 
     <!-- PDF Preview Modal (shared with Bought Deals) -->
     <DealReportPdfPreviewModal
