@@ -159,7 +159,7 @@ outlive the fix now that fields go red live.
 - [x] T8 (10 m) F: Analyze rail live-clear.
 - [x] T9 (40 m) H: FLIP saved-deal validator + call sites; `verify_regression.py`.
 - [x] T10 (15 m) MCP support task (tests above).
-- [ ] T11 (45 m) E2E specs (below).
+- [x] T11 (45 m) E2E specs (below). *As built: `e2e/flows/deal-modal-invalid-input.spec.ts` (five cases, the shake one on `chromium-motion` only). The alignment claim is measured inside that spec (the box keeps its height, the message sits below it) rather than in `alignment.spec.ts`, whose tab selector is fixed.*
 - [x] T12 (15 m) Security task. *Result: the `security-review` skill found no HIGH or MEDIUM issue. Every new text sink is a Vue `{{ }}` interpolation (no `v-html` anywhere), the `confirm`/`alert` texts are built from the validator's static strings only, every field whose PrimeVue clamp was dropped is bounded by the backend on both the calculator and the saved-deal paths, and no secret, PII or log line was added.*
 - [ ] T13 (20 m) Full gates (`npm test`, `npm run build`, `npm run e2e`, `pytest`); push; open the PR.
 
@@ -195,7 +195,7 @@ outlive the fix now that fields go red live.
   `[data-part="error-message"]` text, `aria-invalid`, tab marker, `mydeals.modal.results-paused`, chip; `api`
   shows no POST `/analyze/brrr` and no PUT after `settle(2500)`; then 300 → one of each and the conservative
   tile visible; then 400 + close → `expectDialogs([...])`, reopen shows `$300,000`. A bought-deal twin.
-- `alignment.spec.ts`: selector fix plus one measurement with a message showing.
+- `alignment.spec.ts`: selector fix; the with-message measurement lives in the new spec.
 - A short `@motion` spec (chromium-motion project): non-identity `transform` on the input right after the
   message appears.
 - `hooks-inventory` guarantees every new testid exists.

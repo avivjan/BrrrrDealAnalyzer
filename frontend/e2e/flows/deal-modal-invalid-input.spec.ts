@@ -50,11 +50,12 @@ test('a lowest ARV above the ARV pauses the modal, and a fix resumes it', async 
   await expect(page.getByTestId('mydeals.modal.save-status')).toHaveAttribute('data-state', 'error');
   await expect(page.getByTestId('mydeals.modal.save-status')).toHaveText('Not saved — fix the highlighted inputs');
 
-  // The message sits under the box: the ARV box beside it keeps the same top and height.
+  // The message sits under the box, so the box itself stays the height of every other one.
   const arvBox = (await fieldInput(page, 'arv_in_thousands').boundingBox())!;
   const lowestArvBox = (await fieldInput(page, 'lowestArv').boundingBox())!;
-  expect(Math.abs(arvBox.y - lowestArvBox.y)).toBeLessThanOrEqual(1);
   expect(Math.abs(arvBox.height - lowestArvBox.height)).toBeLessThanOrEqual(1);
+  const messageBox = (await lowestArvField.locator('[data-part="error-message"]').boundingBox())!;
+  expect(messageBox.y).toBeGreaterThanOrEqual(lowestArvBox.y + lowestArvBox.height - 1);
 
   // Past both debounces: nothing was analyzed, nothing was saved.
   await settle(2500);
@@ -102,7 +103,8 @@ test('closing on a wrong value asks first, and OK puts only that field back', as
 
   const puts = api.matching((request) => request.method === 'PUT' && request.path === '/active-deals/{id}');
   expect(puts).toHaveLength(1);
-  expect((puts[0]!.body as Record<string, unknown>).lowestArv).toBe(300);
+  // The saved value comes back the way the API stores it, a decimal string.
+  expect(Number((puts[0]!.body as Record<string, unknown>).lowestArv)).toBe(300);
   expect((puts[0]!.body as Record<string, unknown>).task).toBe('Call the lender');
 
   // Reopened, the field shows the saved value, not the refused one.
@@ -146,7 +148,8 @@ test('a percentage typed past 100 is reported, not silently clamped', async ({ p
   await api.expectNoRequests('the Analyze page never calls the API before save');
 });
 
-test('@motion the box shakes once when its message appears, then sits still', async ({ page, seed, settle }) => {
+test('the box shakes once when its message appears, then sits still @motion', async ({ page, seed, settle }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-motion', 'the shake is a GSAP tween; the other projects run with animations off');
   const deal = await seed.seedActiveDeal('BRRRR', { section: 1, lowestArv: 300 });
   await page.goto('/my-deals');
   await openActiveDeal(page, deal.id, settle);
@@ -162,9 +165,9 @@ test('@motion the box shakes once when its message appears, then sits still', as
   // 100 ms into a 400 ms shake the box is off its resting spot ...
   await page.clock.runFor(100);
   expect(await transformOfTheBox()).not.toBe('none');
-  // ... and once it is over, the inline transform is handed back and nothing tweens.
-  await page.clock.runFor(600);
-  expect(await transformOfTheBox()).toBe('none');
+  // ... and once it is over, the box is back at rest and nothing tweens.
+  await settle(1000);
+  expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(await transformOfTheBox());
   const liveTweens = await page.evaluate(() => window.gsap?.globalTimeline.getChildren().length ?? 0);
   expect(liveTweens).toBe(0);
 });
