@@ -13,6 +13,7 @@ import {
 import DealCard from "../components/DealCard.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
+import { hasInvalidDealInput, validateDealInputFields } from "../utils/dealInputValidation";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
@@ -249,6 +250,10 @@ const moveToBought = async (deal: ActiveDealRes) => {
 };
 
 const moveToBoughtFromModal = async () => {
+  if (hasInvalidDealInputs.value) {
+    alert("Fix the highlighted inputs before moving this deal to Bought Deals.");
+    return;
+  }
   if (editingDeal.value) {
     if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
       try {
@@ -265,6 +270,10 @@ const moveToBoughtFromModal = async () => {
 
 
 const duplicateEditingDeal = async () => {
+  if (hasInvalidDealInputs.value) {
+    alert("Fix the highlighted inputs before duplicating this deal.");
+    return;
+  }
   if (editingDeal.value) {
     if (confirm(`Duplicate this deal?`)) {
       try {
@@ -328,6 +337,23 @@ const analysisResultsEl = ref<HTMLElement | null>(null);
 const shouldScrollToResults = ref(false);
 
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+/**
+ * The deal as the server last stored it. While an input is invalid nothing is saved, so
+ * closing the modal puts just the invalid fields back to these values.
+ */
+let lastSavedDealSnapshot: Record<string, unknown> | null = null;
+/**
+ * What is wrong with the deal as typed so far. An `invalid` value (a lowest ARV above the
+ * ARV, a 150% rate) pauses both the analysis and the autosave: the backend rejects the
+ * payload with a 400 either way, and a silently failed request left the old tiles on
+ * screen as if they were fresh. A `missing` required field pauses the analysis only.
+ */
+const dealInputFieldErrors = computed(() =>
+  editingDeal.value ? validateDealInputFields(editingDeal.value, editingDeal.value.deal_type || 'BRRRR') : [],
+);
+const hasInvalidDealInputs = computed(() => hasInvalidDealInput(dealInputFieldErrors.value));
+const invalidDealInputErrors = computed(() => dealInputFieldErrors.value.filter((error) => error.kind === "invalid"));
+const missingDealInputErrors = computed(() => dealInputFieldErrors.value.filter((error) => error.kind === "missing"));
 let isDirty = false;
 let isInitialLoad = true;
 /** Ignore deep-watch churn from inputs mounting (still analyze; no dirty/save). */
@@ -337,6 +363,11 @@ let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const performSave = async () => {
   if (!editingDeal.value || !isDirty) return;
+  // Stays dirty: the watch resumes the autosave the moment the input is fixed.
+  if (hasInvalidDealInputs.value) {
+    saveStatus.value = 'error';
+    return;
+  }
   isDirty = false;
   saveStatus.value = 'saving';
   try {
@@ -344,6 +375,7 @@ const performSave = async () => {
     if (updatedDeal) {
       currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
     }
+    lastSavedDealSnapshot = JSON.parse(JSON.stringify(editingDeal.value));
     if (isDirty) {
       debouncedAutoSave();
     } else {
@@ -360,7 +392,24 @@ const performSave = async () => {
 
 const debouncedAutoSave = useDebounceFn(performSave, 2000);
 
+/**
+ * Closing on an invalid input asks first: OK puts only the invalid fields back to their
+ * last saved values (so the valid edits still save), Cancel keeps the modal open to fix them.
+ */
+const revertInvalidDealInputsToLastSaved = (): boolean => {
+  if (!editingDeal.value || !hasInvalidDealInputs.value) return true;
+  const problems = invalidDealInputErrors.value.map((error) => `- ${error.message} (${error.phaseTabLabel} tab)`).join("\n");
+  const closeAnyway = confirm(
+    `These inputs are invalid and were not saved:\n${problems}\n\nClose anyway? They go back to their last saved values; your other changes are saved.`,
+  );
+  if (!closeAnyway) return false;
+  const editingDealRecord = editingDeal.value as unknown as Record<string, unknown>;
+  for (const error of invalidDealInputErrors.value) editingDealRecord[error.fieldKey] = lastSavedDealSnapshot?.[error.fieldKey];
+  return true;
+};
+
 const closeModal = async () => {
+  if (!revertInvalidDealInputsToLastSaved()) return;
   if (isDirty && editingDeal.value) {
     await performSave();
   }
@@ -423,12 +472,15 @@ const openDeal = (deal: ActiveDealRes) => {
   const clone = JSON.parse(JSON.stringify(deal)) as ActiveDealRes;
   ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
+  lastSavedDealSnapshot = JSON.parse(JSON.stringify(clone));
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
   settleUntilMs = Date.now() + MODAL_SETTLE_MS;
   showDetailModal.value = true;
 };
 
 const analyzeCurrentDeal = useDebounceFn(async () => {
+  // Checked when the debounce fires, so a fix within the 500 ms still analyzes.
+  if (dealInputFieldErrors.value.length > 0) return;
   if (editingDeal.value) {
     console.log(
       "View: MyDeals - Auto-analyzing editing deal:",
@@ -1019,7 +1071,19 @@ console.groupEnd();
                     runs 0.4 s + 9 x 0.06 s = 0.94 s. The BoughtDeals modal is
                     kept identical.
                   -->
-                  <div v-reveal class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div v-if="dealInputFieldErrors.length > 0" data-testid="mydeals.modal.results-paused" role="status" class="rounded-ctl border-ui border-negative/40 bg-negative/5 p-3 text-sm text-fg">
+                    <p class="flex items-center gap-2 font-medium"><i class="pi pi-exclamation-circle text-negative" aria-hidden="true"></i> Results paused until the highlighted inputs are fixed.</p>
+                    <ul v-if="invalidDealInputErrors.length" class="mt-2 list-disc space-y-1 pl-6">
+                      <li v-for="error in invalidDealInputErrors" :key="error.fieldKey" :data-testid="`mydeals.modal.results-paused.${error.fieldKey}`">{{ error.message }} <span class="text-fg-muted">— {{ error.phaseTabLabel }} tab</span></li>
+                    </ul>
+                    <template v-if="missingDealInputErrors.length">
+                      <p class="mt-2 text-fg-muted">Still needed:</p>
+                      <ul class="list-disc space-y-1 pl-6 text-fg-muted">
+                        <li v-for="error in missingDealInputErrors" :key="error.fieldKey">{{ error.message }} <span>— {{ error.phaseTabLabel }} tab</span></li>
+                      </ul>
+                    </template>
+                  </div>
+                  <div v-else v-reveal class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <template v-if="(!editingDeal.deal_type || editingDeal.deal_type === 'BRRRR')">
                           <ResultTileWithCalculationButton metric-label="Cash Flow" metric-key="cash_flow" @show-calculation="pressedResultTileForCalculationBreakdown = $event">
                               <div v-flash data-testid="mydeals.modal.result.cash_flow" class="numeric font-display text-lg font-bold tracking-display" :class="getCashFlowColor((currentAnalysis as any).cash_flow)">{{ formatCurrency((currentAnalysis as any).cash_flow) }}</div>
@@ -1324,8 +1388,11 @@ console.groupEnd();
               Created: {{ new Date(editingDeal.created_at).toLocaleDateString() }}
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <UiSaveStatus data-testid="mydeals.modal.save-status" :data-state="saveStatus" :status="saveStatus" class="mr-1">
-                <template v-if="saveStatus === 'saving'">
+              <UiSaveStatus data-testid="mydeals.modal.save-status" :data-state="hasInvalidDealInputs ? 'error' : saveStatus" :status="hasInvalidDealInputs ? 'error' : saveStatus" class="mr-1">
+                <template v-if="hasInvalidDealInputs">
+                  <span>Not saved — fix the highlighted inputs</span>
+                </template>
+                <template v-else-if="saveStatus === 'saving'">
                   <span>Saving...</span>
                 </template>
                 <template v-else-if="saveStatus === 'saved'">

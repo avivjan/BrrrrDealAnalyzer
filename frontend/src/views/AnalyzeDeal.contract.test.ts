@@ -110,6 +110,28 @@ describe("AnalyzeDeal", () => {
       expect(errors(wrapper)).not.toContain("Rent must be greater than 0.");
     });
 
+    it("clears the errors as soon as the form is fixed, before the button is pressed again", async () => {
+      const wrapper = mountView();
+      await wrapper.find('[data-testid="analyze.analyze-save"]').trigger("click");
+      expect(errors(wrapper)).not.toHaveLength(0);
+
+      await fillValidBrrr(wrapper);
+
+      expect(wrapper.find('[data-testid="analyze.errors"]').exists()).toBe(false);
+    });
+
+    it("marks a wrong value on its field live, without a click", async () => {
+      const wrapper = mountView();
+      await fillValidBrrr(wrapper);
+      await wrapper.find('[data-testid="form.tab.refinance"]').trigger("click");
+      await typeMoney(wrapper, "lowestArv", "400000");
+      const field = wrapper.find('[data-testid="form.field.lowestArv"]');
+      expect(field.find('[data-part="error-message"]').text()).toBe("Lowest ARV cannot exceed ARV.");
+      expect(field.find("input").classes()).toContain("ui-input-invalid");
+      // The rail's Routi (low ARV) reads a dash: nothing is computed from the wrong value.
+      expect(wrapper.find('[data-testid="analyze.wires"]').text()).toContain("Routi (low ARV)—");
+    });
+
     it("clears the errors once the form is fixed", async () => {
       const wrapper = mountView();
       await wrapper.find('[data-testid="analyze.analyze-save"]').trigger("click");

@@ -22,6 +22,8 @@ const props = defineProps<{
   presets: MoneyPreset[];
   required?: boolean;
   info?: string;
+  /** Why the amount is wrong; handed to the amount box. */
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -61,6 +63,7 @@ const selectId = useId();
       :model-value="modelValue"
       label="Amount"
       :required="required"
+      :error-message="errorMessage"
       @update:model-value="(v: number | null) => emit('update:modelValue', v)"
     />
   </div>

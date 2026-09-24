@@ -19,6 +19,8 @@ const props = defineProps<{
   inThousands?: boolean;
   required?: boolean;
   info?: string;
+  /** Why the override is wrong; handed to the money box underneath. */
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -41,6 +43,7 @@ const onAmountUpdate = (value: number | null) => {
       :in-thousands="inThousands"
       :required="required"
       :info="info"
+      :error-message="errorMessage"
       :class="usesFormulaDefault ? '[&_input]:text-fg-muted' : ''"
       @update:model-value="onAmountUpdate"
     />

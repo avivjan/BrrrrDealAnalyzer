@@ -4,6 +4,7 @@ import type {
   DealInputModel,
   FlipDealRes,
 } from "../types";
+import { validateDealInputFields } from "./dealInputValidation";
 
 /**
  * Backend-side defaults for BRRRR fields that were added after the initial
@@ -198,113 +199,19 @@ export function createEmptyDealForm(
   };
 }
 
-/** (field, label) of every dollar line item of the BRRRR lifecycle; `null` = formula default, so skipped. */
-const BRRR_NON_NEGATIVE_DOLLARS: Array<[keyof DealInputModel, string]> = [
-  ["earnestMoneyDeposit", "Earnest money deposit"],
-  ["loanChargesBuy", "Loan charges (buy)"],
-  ["recordingTransferBuy", "Recording and transfer charges (buy)"],
-  ["titleEscrowBuy", "Title and escrow charges (buy)"],
-  ["otherClosingCostsBuy", "Other closing costs (buy)"],
-  ["onlineNotaryFeeBuy", "Online notary fee (buy)"],
-  ["rehabCushion", "Rehab cushion"],
-  ["monthlyUtilitiesUntilRented", "Monthly utilities until rented"],
-  ["maintenanceBeforeRefi", "Maintenance before refi"],
-  ["appliances", "Appliances"],
-  ["loanChargesRefi", "Loan charges (refi)"],
-  ["recordingTransferRefi", "Recording and transfer charges (refi)"],
-  ["titleEscrowRefi", "Title and escrow charges (refi)"],
-  ["appraisalFee", "Appraisal fee"],
-  ["surveyFee", "Survey fee"],
-  ["refiUnderwritingFee", "Refi underwriting fee"],
-  ["brokerProcessingFeeRefi", "Broker processing fee (refi)"],
-  ["otherClosingCostsRefi", "Other closing costs (refi)"],
-  ["onlineNotaryFeeRefi", "Online notary fee (refi)"],
-  ["maintenanceReserve", "Maintenance reserve"],
-  ["vacancyReserve", "Vacancy reserve"],
-  ["capexReserve", "CapEx reserve"],
-];
-
 /**
  * Client-side bounds checks for the deal inputs, mirroring the backend's
  * `validate_brrr_inputs` / `validate_flip_inputs`. Returns human-readable
  * messages; an empty array means the deal is safe to submit.
  *
- * When you add a new input to `DealInputsForm`, add its bounds check here.
+ * The message-only view of `validateDealInputFields` (`utils/dealInputValidation.ts`),
+ * which is where a rule is added and where each field's own error comes from.
  */
 export function validateDealInputs(
   deal: DealInputModel,
   dealType: "BRRRR" | "FLIP",
 ): string[] {
-  const errors: string[] = [];
-  const num = (v: number | undefined) => (v == null ? 0 : Number(v));
-
-  if (!deal.purchasePrice || num(deal.purchasePrice) <= 0)
-    errors.push("Purchase price (in thousands) must be greater than 0.");
-  if (num(deal.rehabCost) < 0)
-    errors.push("Rehab cost (in thousands) cannot be negative.");
-  if (num(deal.rehabContingency) < 0 || num(deal.rehabContingency) > 100)
-    errors.push("Contingency must be between 0% and 100%.");
-  if (num(deal.down_payment) < 0 || num(deal.down_payment) > 100)
-    errors.push("Down payment percentage must be between 0% and 100%.");
-  if (num(deal.hmlPoints) < 0 || num(deal.hmlPoints) > 100)
-    errors.push("HML points must be between 0% and 100%.");
-  if (num(deal.HMLInterestRate) < 0 || num(deal.HMLInterestRate) > 100)
-    errors.push("HML interest rate must be between 0% and 100%.");
-  if (dealType === "FLIP" && num(deal.closingCostsBuy) < 0)
-    errors.push("Closing costs (buy) cannot be negative.");
-  if (num(deal.annual_property_taxes) < 0)
-    errors.push("Annual property taxes cannot be negative.");
-  if (num(deal.annual_insurance) < 0)
-    errors.push("Annual insurance cannot be negative.");
-  if (num(deal.montly_hoa) < 0)
-    errors.push("HOA dues cannot be negative.");
-
-  if (dealType === "BRRRR") {
-    if (!deal.arv_in_thousands || num(deal.arv_in_thousands) <= 0)
-      errors.push("ARV (in thousands) must be greater than 0.");
-    if (!deal.rent || num(deal.rent) <= 0)
-      errors.push("Rent must be greater than 0.");
-    if (num(deal.ltv_as_precent) <= 0 || num(deal.ltv_as_precent) > 100)
-      errors.push("LTV must be between 0% and 100%.");
-    if (num(deal.refiPoints) < 0 || num(deal.refiPoints) > 100)
-      errors.push("Broker points must be between 0% and 100%.");
-    for (const [key, label] of BRRR_NON_NEGATIVE_DOLLARS) {
-      const value = deal[key];
-      if (value != null && num(value as number) < 0) errors.push(`${label} cannot be negative.`);
-    }
-    if (num(deal.constructionLoanBudget) < 0)
-      errors.push("Construction loan budget cannot be negative.");
-    if (num(deal.daysUntilRented) < 0)
-      errors.push("Days until rented cannot be negative.");
-    if (deal.lowestArv != null) {
-      if (num(deal.lowestArv) <= 0) errors.push("Lowest ARV must be greater than 0.");
-      else if (num(deal.lowestArv) > num(deal.arv_in_thousands)) errors.push("Lowest ARV cannot exceed ARV.");
-    }
-    // The slider's thumb only covers the realistic band, but the typed box is
-    // deliberately unclamped so it never rewrites what you meant — which makes
-    // this the only thing standing between a typo and a saved 70% mortgage.
-    if (num(deal.interestRate) < 0 || num(deal.interestRate) > 100)
-      errors.push("Long term interest rate must be between 0% and 100%.");
-    if (num(deal.daysUntilRefi) <= 0)
-      errors.push("Days until refi must be greater than 0.");
-  } else {
-    if (!deal.salePrice || num(deal.salePrice) <= 0)
-      errors.push("Sale Price (ARV) must be greater than 0.");
-    if (num(deal.holdingTime) <= 0)
-      errors.push("Holding time must be greater than 0.");
-    if (num(deal.buyerAgentSellingFee) < 0 || num(deal.buyerAgentSellingFee) > 100)
-      errors.push("Buyer agent fee must be between 0% and 100%.");
-    if (num(deal.sellerAgentSellingFee) < 0 || num(deal.sellerAgentSellingFee) > 100)
-      errors.push("Seller agent fee must be between 0% and 100%.");
-    if (num(deal.sellingClosingCosts) < 0)
-      errors.push("Closing costs cannot be negative.");
-    if (num(deal.monthly_utilities) < 0)
-      errors.push("Monthly utilities cannot be negative.");
-    if (num(deal.capitalGainsTax) < 0 || num(deal.capitalGainsTax) > 100)
-      errors.push("Capital gains tax rate must be between 0% and 100%.");
-  }
-
-  return errors;
+  return validateDealInputFields(deal, dealType).map((fieldError) => fieldError.message);
 }
 
 export const getStageName = (id: number) => {

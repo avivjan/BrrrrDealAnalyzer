@@ -15,7 +15,7 @@
  */
 import { computed, ref } from "vue";
 import type { DealInputModel } from "../../../types";
-import { useDealField } from "../../../composables/useDealField";
+import { useDealField, type NumericKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -24,7 +24,12 @@ import NumberInput from "../../ui/NumberInput.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
-const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
+const props = defineProps<{
+  deal: DealInputModel;
+  surface: "card" | "panel";
+  /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
+  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+}>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
@@ -62,6 +67,7 @@ const stolenLabel = computed(() =>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <MoneyInput
         data-testid="form.field.rehabCost"
+        :error-message="fieldErrorMessages?.rehabCost"
         :model-value="field.get('rehabCost')"
         @update:model-value="setActualRehabCost"
         label="Actual Rehab Cost"
@@ -71,6 +77,7 @@ const stolenLabel = computed(() =>
       />
       <MoneyInput
         data-testid="form.field.constructionLoanBudget"
+        :error-message="fieldErrorMessages?.constructionLoanBudget"
         :model-value="field.get('constructionLoanBudget')"
         @update:model-value="setConstructionLoanBudget"
         label="Construction Loan Budget"
@@ -81,17 +88,17 @@ const stolenLabel = computed(() =>
       />
       <NumberInput
         data-testid="form.field.rehabContingency"
+        :error-message="fieldErrorMessages?.rehabContingency"
         :model-value="field.get('rehabContingency')"
         @update:model-value="(v: number | null) => field.set('rehabContingency', v)"
         label="Contingency"
         suffix="%"
-        :min="0"
-        :max="100"
         :info="impactText('rehabContingency')"
         :note="autoCalc.rehabCostWithContingency == null ? undefined : `rehab ${formatMoney(autoCalc.rehabCostWithContingency)}`"
       />
       <MoneyInput
         data-testid="form.field.rehabCushion"
+        :error-message="fieldErrorMessages?.rehabCushion"
         :model-value="field.get('rehabCushion')"
         @update:model-value="(v: number | null) => field.set('rehabCushion', v)"
         label="Rehab Cushion"

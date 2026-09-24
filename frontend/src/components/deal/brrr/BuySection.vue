@@ -2,7 +2,7 @@
 /** BRRRR › Buy: the closing date, the hard-money stack and the purchase settlement. */
 import { computed, useId } from "vue";
 import type { DealInputModel, TitleModeBuy } from "../../../types";
-import { useDealField } from "../../../composables/useDealField";
+import { useDealField, type NumericKey } from "../../../composables/useDealField";
 import { annualPropertyTaxesFromSellerTaxCredit, brrrAutoCalc, parseIsoDate } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -14,7 +14,12 @@ import InputInfo from "../../ui/InputInfo.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
-const props = defineProps<{ deal: DealInputModel; surface: "card" | "panel" }>();
+const props = defineProps<{
+  deal: DealInputModel;
+  surface: "card" | "panel";
+  /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
+  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+}>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
@@ -98,6 +103,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
         <!-- The same field as Rent & Holding's Annual Taxes, shown here so the credit and the taxes behind it are read together. -->
         <MoneyInput
           data-testid="form.field.annualPropertyTaxesBuyClone"
+          :error-message="fieldErrorMessages?.annual_property_taxes"
           :model-value="field.get('annual_property_taxes')"
           @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
           label="Annual Taxes"
@@ -116,6 +122,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
 
       <MoneyInput
         data-testid="form.field.purchasePrice"
+        :error-message="fieldErrorMessages?.purchasePrice"
         :model-value="field.get('purchasePrice')"
         @update:model-value="(v: number | null) => field.set('purchasePrice', v)"
         label="Purchase Price"
@@ -126,6 +133,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
       />
       <MoneyInput
         data-testid="form.field.earnestMoneyDeposit"
+        :error-message="fieldErrorMessages?.earnestMoneyDeposit"
         :model-value="field.get('earnestMoneyDeposit')"
         @update:model-value="(v: number | null) => field.set('earnestMoneyDeposit', v)"
         label="Earnest Money Deposit"
@@ -138,34 +146,31 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <NumberInput
             data-testid="form.field.down_payment"
+            :error-message="fieldErrorMessages?.down_payment"
             :model-value="field.get('down_payment')"
             @update:model-value="(v: number | null) => field.set('down_payment', v)"
             label="Down Payment"
             suffix="%"
-            :min="0"
-            :max="100"
             :info="impactText('down_payment')"
             :note="autoCalc.purchaseLoanAmount == null ? undefined : `loan ${formatMoney(autoCalc.purchaseLoanAmount)}`"
           />
           <NumberInput
             data-testid="form.field.hmlPoints"
+            :error-message="fieldErrorMessages?.hmlPoints"
             :model-value="field.get('hmlPoints')"
             @update:model-value="(v: number | null) => field.set('hmlPoints', v)"
             label="Points"
             suffix=" pts"
-            :min="0"
-            :max="100"
             :info="impactText('hmlPoints')"
             :note="moneyNote(autoCalc.hmlPointsDollars)"
           />
           <NumberInput
             data-testid="form.field.HMLInterestRate"
+            :error-message="fieldErrorMessages?.HMLInterestRate"
             :model-value="field.get('HMLInterestRate')"
             @update:model-value="(v: number | null) => field.set('HMLInterestRate', v)"
             label="Interest Rate"
             suffix="%"
-            :min="0"
-            :max="100"
             :info="impactText('HMLInterestRate')"
             :note="perDiemNote"
           />
@@ -182,6 +187,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <PresetSelectInput
             data-testid="form.field.loanChargesBuy"
+            :error-message="fieldErrorMessages?.loanChargesBuy"
             :model-value="field.get('loanChargesBuy')"
             @update:model-value="(v: number | null) => field.set('loanChargesBuy', v)"
             label="Loan Charges"
@@ -190,6 +196,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.recordingTransferBuy"
+            :error-message="fieldErrorMessages?.recordingTransferBuy"
             :model-value="field.getNullable('recordingTransferBuy')"
             :computed-default="autoCalc.recordingTransferBuyDefault"
             @update:model-value="(v: number | null) => field.setNullable('recordingTransferBuy', v)"
@@ -212,6 +219,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           </div>
           <AutoDefaultMoneyInput
             data-testid="form.field.titleEscrowBuy"
+            :error-message="fieldErrorMessages?.titleEscrowBuy"
             :model-value="field.getNullable('titleEscrowBuy')"
             :computed-default="autoCalc.titleEscrowBuyDefault"
             @update:model-value="(v: number | null) => field.setNullable('titleEscrowBuy', v)"
@@ -228,6 +236,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
             <AutoDefaultMoneyInput
               v-if="field.getBool('onlineNotaryBuy', true)"
               data-testid="form.field.onlineNotaryFeeBuy"
+              :error-message="fieldErrorMessages?.onlineNotaryFeeBuy"
               :model-value="field.getNullable('onlineNotaryFeeBuy')"
               :computed-default="NOTARY_FEE_DEFAULT"
               @update:model-value="(v: number | null) => field.setNullable('onlineNotaryFeeBuy', v)"
@@ -238,6 +247,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           <div class="flex flex-col gap-1.5">
             <MoneyInput
               data-testid="form.field.otherClosingCostsBuy"
+              :error-message="fieldErrorMessages?.otherClosingCostsBuy"
               :model-value="field.get('otherClosingCostsBuy')"
               @update:model-value="(v: number | null) => field.set('otherClosingCostsBuy', v)"
               label="Other Closing Costs"

@@ -164,7 +164,60 @@ def validate_brrr_inputs_for_saved_deal(payload):
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
 
+def _flip_range_and_sign_errors(payload) -> list[str]:
+    """The range and sign rules every FLIP input must satisfy, whoever supplies it.
+
+    Shared by the calculator's validator (a complete `analyzeFlipReq`) and the saved-deal
+    validator (a `FlipActiveDealCreate`, whose fields are Optional): a `None` field is
+    "not set" and is skipped. The "must be greater than 0" rules on the sale price and the
+    purchase price are deliberately NOT here -- a brand-new deal on the board is saved with
+    those at 0 until the owner fills them in. The holding time IS here: a zero makes the
+    per-month costs and the annualized ROI meaningless, and the frontend never saves one.
+    """
+    validation_errors = []
+
+    if payload.holding_time_months is not None and payload.holding_time_months <= 0:
+        validation_errors.append("Holding time must be greater than 0 months.")
+
+    if _is_negative(payload.rehab_cost_in_thousands):
+        validation_errors.append("Rehab cost cannot be negative.")
+
+    if _is_outside_percent_range(payload.rehab_contingency_percent):
+        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
+
+    if _is_outside_percent_range(payload.down_payment):
+        validation_errors.append("Down payment percentage must be between 0% and 100%.")
+
+    if _is_outside_percent_range(payload.HML_points):
+        validation_errors.append("HML points must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.HML_interest_rate):
+        validation_errors.append("HML interest rate must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.capital_gains_tax_rate):
+        validation_errors.append("Capital gains tax rate must be between 0% and 100%.")
+
+    if _is_negative(payload.closing_costs_buy_in_thousands):
+        validation_errors.append("Closing costs (buy) cannot be negative.")
+    if _is_negative(payload.annual_property_taxes):
+        validation_errors.append("Annual property taxes cannot be negative.")
+    if _is_negative(payload.annual_insurance):
+        validation_errors.append("Annual insurance cannot be negative.")
+    if _is_negative(payload.montly_hoa):
+        validation_errors.append("HOA dues cannot be negative.")
+    if _is_negative(payload.monthly_utilities):
+        validation_errors.append("Monthly utilities cannot be negative.")
+
+    if _is_outside_percent_range(payload.buyer_agent_selling_fee):
+        validation_errors.append("Buyer agent fee must be between 0% and 100%.")
+    if _is_outside_percent_range(payload.seller_agent_selling_fee):
+        validation_errors.append("Seller agent fee must be between 0% and 100%.")
+    if _is_negative(payload.selling_closing_costs_in_thousands):
+        validation_errors.append("Selling closing cost cannot be negative.")
+
+    return validation_errors
+
+
 def validate_flip_inputs(payload: analyzeFlipReq):
+    """The calculator's gate (`POST /analyze/flip`, the PDF): every input must be usable now."""
     validation_errors = []
 
     if payload.sale_price_in_thousands <= 0:
@@ -172,42 +225,19 @@ def validate_flip_inputs(payload: analyzeFlipReq):
     if payload.purchase_price_in_thousands <= 0:
         validation_errors.append("Purchase price must be greater than 0.")
 
-    if payload.holding_time_months <= 0:
-        validation_errors.append("Holding time must be greater than 0 months.")
+    validation_errors.extend(_flip_range_and_sign_errors(payload))
 
-    if payload.rehab_cost_in_thousands < 0:
-        validation_errors.append("Rehab cost cannot be negative.")
+    if validation_errors:
+        raise HTTPException(status_code=400, detail=" ".join(validation_errors))
 
-    if payload.rehab_contingency_percent < 0 or payload.rehab_contingency_percent > 100:
-        validation_errors.append("Rehab contingency percentage must be between 0% and 100%.")
 
-    if payload.down_payment < 0 or payload.down_payment > 100:
-        validation_errors.append("Down payment percentage must be between 0% and 100%.")
-
-    if payload.HML_points < 0 or payload.HML_points > 100:
-        validation_errors.append("HML points must be between 0% and 100%.")
-    if payload.HML_interest_rate < 0 or payload.HML_interest_rate > 100:
-        validation_errors.append("HML interest rate must be between 0% and 100%.")
-    if payload.capital_gains_tax_rate < 0 or payload.capital_gains_tax_rate > 100:
-        validation_errors.append("Capital gains tax rate must be between 0% and 100%.")
-
-    if payload.closing_costs_buy_in_thousands < 0:
-        validation_errors.append("Closing costs (buy) cannot be negative.")
-    if payload.annual_property_taxes < 0:
-        validation_errors.append("Annual property taxes cannot be negative.")
-    if payload.annual_insurance < 0:
-        validation_errors.append("Annual insurance cannot be negative.")
-    if payload.montly_hoa < 0:
-        validation_errors.append("HOA dues cannot be negative.")
-    if payload.monthly_utilities < 0:
-        validation_errors.append("Monthly utilities cannot be negative.")
-
-    if payload.buyer_agent_selling_fee < 0 or payload.buyer_agent_selling_fee > 100:
-        validation_errors.append("Buyer agent fee must be between 0% and 100%.")
-    if payload.seller_agent_selling_fee < 0 or payload.seller_agent_selling_fee > 100:
-        validation_errors.append("Seller agent fee must be between 0% and 100%.")
-    if payload.selling_closing_costs_in_thousands < 0:
-        validation_errors.append("Selling closing cost cannot be negative.")
-
+def validate_flip_inputs_for_saved_deal(payload):
+    """The board's gate (POST/PUT on active and bought FLIP deals), the twin of
+    `validate_brrr_inputs_for_saved_deal`: a saved deal is re-analyzed on every read with no
+    validation of its own, so anything the calculator would reject must be kept out of the
+    row, while the blank new-deal zeros (sale price, purchase price) are allowed. Takes a
+    `FlipActiveDealCreate` (or the bought subclass); `None` means "not set".
+    """
+    validation_errors = _flip_range_and_sign_errors(payload)
     if validation_errors:
         raise HTTPException(status_code=400, detail=" ".join(validation_errors))

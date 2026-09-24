@@ -5,7 +5,7 @@ import { mount } from "@vue/test-utils";
 import PresetSelectInput from "./PresetSelectInput.vue";
 
 const stubs = {
-  MoneyInput: { name: "MoneyInput", props: ["modelValue", "label"], emits: ["update:modelValue"], template: `<div class="money" />` },
+  MoneyInput: { name: "MoneyInput", props: ["modelValue", "label", "errorMessage"], emits: ["update:modelValue"], template: `<div class="money" />` },
 };
 const PRESETS = [{ label: "3shacks", value: 900 }, { label: "212", value: 1900 }];
 const mountField = (modelValue: number | null) =>

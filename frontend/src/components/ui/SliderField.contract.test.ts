@@ -129,8 +129,12 @@ describe("SliderField", () => {
 
       expect(slider(wrapper).props("min")).toBe(3);
       expect(slider(wrapper).props("max")).toBe(12);
-      expect(wrapper.findComponent(InputNumber).props("min")).toBe(0);
-      expect(wrapper.findComponent(InputNumber).props("max")).toBe(30);
+    });
+
+    it("never hands the typed box a min or max: a wrong value is reported, not rewritten", () => {
+      const wrapper = mountField({ modelValue: 150, min: 0, max: 100 });
+      expect(wrapper.findComponent(InputNumber).props("min")).toBeNull();
+      expect(wrapper.findComponent(InputNumber).props("max")).toBeNull();
     });
 
     it("falls back to the typed bounds when none are given for the thumb", () => {
@@ -158,6 +162,28 @@ describe("SliderField", () => {
       const wrapper = mountField({ step: 0.25 });
       expect(slider(wrapper).props("step")).toBe(0.25);
       expect(wrapper.findComponent(InputNumber).props("step")).toBe(0.25);
+    });
+  });
+
+  describe("a wrong value", () => {
+    it("outlines the box, names the reason underneath, and links the two for the ear", () => {
+      const wrapper = mountField({ modelValue: 150, errorMessage: "LTV must be between 0% and 100%." });
+      const input = box(wrapper);
+      expect(input.classes()).toContain("ui-input-invalid");
+      expect(input.attributes("aria-invalid")).toBe("true");
+      const message = wrapper.get('[data-part="error-message"]');
+      expect(message.text()).toBe("LTV must be between 0% and 100%.");
+      expect(message.attributes("role")).toBe("alert");
+      expect(input.attributes("aria-describedby")).toBe(message.attributes("id"));
+      // Below the control row, so the slider and the box keep their 42px row.
+      expect(wrapper.get('[data-part="control"]').find('[data-part="error-message"]').exists()).toBe(false);
+    });
+
+    it("renders none of that while the value is fine", () => {
+      const wrapper = mountField();
+      expect(box(wrapper).classes()).not.toContain("ui-input-invalid");
+      expect(box(wrapper).attributes("aria-invalid")).toBeUndefined();
+      expect(wrapper.find('[data-part="error-message"]').exists()).toBe(false);
     });
   });
 });

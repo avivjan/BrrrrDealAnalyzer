@@ -16,12 +16,12 @@ import type { App } from 'vue';
 
 import UiTransition from './UiTransition.vue';
 import UiTransitionGroup from './UiTransitionGroup.vue';
-import { vCountUp, vDrawOn, vFlash, vHoverLift, vPress, vReveal, vTilt } from './directives';
+import { vCountUp, vDrawOn, vFlash, vHoverLift, vPress, vReveal, vShake, vTilt } from './directives';
 
 export { gsap, motionEnabled } from './gsap';
 export { prefersReducedMotion, REDUCED_MOTION_QUERY } from './reducedMotion';
 export { presets, transitionHooks, type MotionPreset, type PresetName } from './presets';
-export { vCountUp, vDrawOn, vFlash, vHoverLift, vPress, vReveal, vTilt };
+export { vCountUp, vDrawOn, vFlash, vHoverLift, vPress, vReveal, vShake, vTilt };
 export { DUR, EASE } from './tokens';
 export { UiTransition, UiTransitionGroup };
 
@@ -36,4 +36,5 @@ export function registerMotion(app: App): void {
   app.directive('count-up', vCountUp);
   app.directive('draw-on', vDrawOn);
   app.directive('tilt', vTilt);
+  app.directive('shake', vShake);
 }

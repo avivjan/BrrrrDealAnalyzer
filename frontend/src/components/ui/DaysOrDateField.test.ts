@@ -8,7 +8,7 @@ import DaysOrDateField from "./DaysOrDateField.vue";
 const stubs = {
   NumberInput: {
     name: "NumberInput",
-    props: ["modelValue", "label", "suffix", "min"],
+    props: ["modelValue", "label", "suffix", "errorMessage"],
     emits: ["update:modelValue"],
     template: `<div class="number-input" />`,
   },
@@ -212,6 +212,54 @@ describe("DaysOrDateField", () => {
       (date.element as HTMLInputElement).value = "2025-12-01";
       await date.trigger("change");
       expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    });
+
+    it("says why a refused date was refused, until a date is accepted", async () => {
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
+      expect(date.attributes("min")).toBe("2026-01-11");
+      (date.element as HTMLInputElement).value = "2025-12-01";
+      await date.trigger("change");
+      const problem = wrapper.get('[data-part="date-linked-problem"]');
+      expect(problem.text()).toBe("Must be after the buy closing date (2026-01-10); the earliest is 2026-01-11.");
+      expect(problem.attributes("role")).toBe("alert");
+      expect(date.classes()).toContain("ui-input-invalid");
+      expect(date.attributes("aria-invalid")).toBe("true");
+      expect(date.attributes("aria-describedby")).toBe(problem.attributes("id"));
+
+      (date.element as HTMLInputElement).value = "2026-07-10";
+      await date.trigger("change");
+      expect(wrapper.find('[data-part="date-linked-problem"]').exists()).toBe(false);
+      expect(date.classes()).not.toContain("ui-input-invalid");
+    });
+
+    it("drops the refusal once the day count changes from elsewhere", async () => {
+      const wrapper = mountAnchored(180);
+      const date = wrapper.find('[data-part="date-linked"]');
+      (date.element as HTMLInputElement).value = "2025-12-01";
+      await date.trigger("change");
+      await wrapper.setProps({ modelValue: 200 });
+      expect(wrapper.find('[data-part="date-linked-problem"]').exists()).toBe(false);
+    });
+
+    it("words a zero minimum as on-or-after the closing date", async () => {
+      const wrapper = mount(DaysOrDateField, {
+        props: { modelValue: 90, label: "Until Tenant Occupied", anchorDate: "2026-01-10", min: 0 },
+        global: { stubs },
+      });
+      const date = wrapper.find('[data-part="date-linked"]');
+      expect(date.attributes("min")).toBe("2026-01-10");
+      (date.element as HTMLInputElement).value = "2026-01-09";
+      await date.trigger("change");
+      expect(wrapper.get('[data-part="date-linked-problem"]').text()).toBe("Must be on or after the buy closing date (2026-01-10).");
+    });
+
+    it("hands the day count's own error to the number box", () => {
+      const wrapper = mount(DaysOrDateField, {
+        props: { modelValue: 0, label: "Days to Refi", anchorDate: "2026-01-10", min: 1, errorMessage: "Days until refi must be greater than 0." },
+        global: { stubs },
+      });
+      expect(wrapper.findComponent({ name: "NumberInput" }).props("errorMessage")).toBe("Days until refi must be greater than 0.");
     });
 
     it("a zero minimum lets the tenant move in on closing day", async () => {

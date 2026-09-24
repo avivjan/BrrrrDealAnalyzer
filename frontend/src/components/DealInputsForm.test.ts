@@ -23,9 +23,9 @@ import type { DealInputModel } from "../types";
  */
 const fieldStub = (name: string) => ({
   name,
-  props: ["modelValue", "label"],
+  props: ["modelValue", "label", "errorMessage"],
   emits: ["update:modelValue"],
-  template: `<div :data-label="label" />`,
+  template: `<div :data-label="label" :data-error-message="errorMessage" />`,
 });
 
 /** Stub names that stand in for a labelled numeric input. */
@@ -187,7 +187,7 @@ describe("DealInputsForm", () => {
     const isShown = (wrapper: ReturnType<typeof mountForm>, tabKey: string) =>
       !boxStyle(wrapper, tabKey).includes("display: none");
     const tabKeys = (wrapper: ReturnType<typeof mountForm>) =>
-      wrapper.findAll('[data-testid^="form.tab."]:not([data-testid$=".needs-input"])').map((el) => el.attributes("data-testid"));
+      wrapper.findAll('[data-testid^="form.tab."][role="tab"]').map((el) => el.attributes("data-testid"));
 
     it("offers one tab per BRRRR phase and opens on Buy", () => {
       const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
@@ -256,6 +256,43 @@ describe("DealInputsForm", () => {
       expect(wrapper.find('[data-testid="form.tab.buyRehab.needs-input"]').exists()).toBe(false);
       expect(wrapper.find('[data-testid="form.tab.flipStrategy.needs-input"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.tab.expenses.needs-input"]').exists()).toBe(true);
+    });
+
+    it("hands a wrong value's message to its own field, and marks the tab that holds it in red", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), purchasePrice: 200, arv_in_thousands: 320, rent: 2600, lowestArv: 400 });
+      const wrapper = mountForm(deal, "BRRRR");
+      const messages = () => Object.fromEntries(wrapper.findAll("[data-error-message]").map((el) => [el.attributes("data-label"), el.attributes("data-error-message")]));
+      expect(messages()).toEqual({ "Lowest ARV Possible (stress test)": "Lowest ARV cannot exceed ARV." });
+      expect(wrapper.find('[data-testid="form.tab.refinance.has-invalid-input"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="form.tab.refinance.needs-input"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="form.tab.buy.has-invalid-input"]').exists()).toBe(false);
+      expect(wrapper.get('[data-testid="form.tab.refinance"]').text()).toContain("has an invalid input");
+
+      await emitFrom(wrapper, "Lowest ARV Possible (stress test)", 300);
+      expect(messages()).toEqual({});
+      expect(wrapper.find('[data-testid="form.tab.refinance.has-invalid-input"]').exists()).toBe(false);
+    });
+
+    it("marks a wrong value on a hidden tab too, and both Annual Taxes boxes at once", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), purchasePrice: 200, arv_in_thousands: 320, rent: 2600, down_payment: 150, annual_property_taxes: -1 });
+      const wrapper = mountForm(deal, "BRRRR");
+      await wrapper.find('[data-testid="form.tab.refinance"]').trigger("click");
+      expect(wrapper.find('[data-testid="form.tab.buy.has-invalid-input"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="form.tab.rentHolding.has-invalid-input"]').exists()).toBe(true);
+      const withMessage = wrapper.findAll("[data-error-message]").map((el) => el.attributes("data-label"));
+      expect(withMessage).toEqual(["Annual Taxes", "Down Payment", "Annual Taxes"]);
+    });
+
+    it("gives a blank required field no inline message: the dot and the Analyze list already point at it", () => {
+      const wrapper = mountForm(createEmptyDealForm("BRRRR"), "BRRRR");
+      expect(wrapper.findAll("[data-error-message]")).toHaveLength(0);
+      expect(wrapper.find('[data-testid="form.tab.buy.needs-input"]').exists()).toBe(true);
+    });
+
+    it("marks the FLIP tab that holds a zero holding time", () => {
+      const wrapper = mountForm({ ...createEmptyDealForm("FLIP"), purchasePrice: 200, salePrice: 320, holdingTime: 0 }, "FLIP");
+      expect(wrapper.find('[data-testid="form.tab.flipStrategy.has-invalid-input"]').exists()).toBe(true);
+      expect(wrapper.findAll("[data-error-message]").map((el) => el.attributes("data-label"))).toEqual(["Holding Time"]);
     });
 
     it("marks the needed inputs on the fields themselves", () => {

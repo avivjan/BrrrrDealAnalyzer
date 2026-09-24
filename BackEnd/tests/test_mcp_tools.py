@@ -73,6 +73,20 @@ class TestBoughtFlow:
             call_json("add_active_deal", body={**brrrr_payload, "loanTermYears": 0})
         assert call_json("get_active_deals") == []
 
+    def test_a_lowest_arv_above_the_arv_is_refused_with_the_reason_everywhere(self, client, brrrr_payload):
+        """The website's inline message and the MCP client's error text are the same string."""
+        with pytest.raises(RuntimeError, match="HTTP 400.*Lowest ARV cannot exceed ARV"):
+            call("analyze_brrr", body={**brrrr_payload, "lowestArv": 999})
+        deal = call_json("add_active_deal", body=brrrr_payload)
+        with pytest.raises(RuntimeError, match="HTTP 400.*Lowest ARV cannot exceed ARV"):
+            call("update_deal", deal_id=deal["id"], body={**brrrr_payload, "lowestArv": 999})
+        assert [saved["lowestArv"] for saved in call_json("get_active_deals")] == [deal["lowestArv"]]
+
+    def test_add_active_deal_refuses_a_flip_the_flip_calculator_refuses(self, client, flip_payload):
+        with pytest.raises(RuntimeError, match="HTTP 400.*Holding time must be greater than 0 months"):
+            call("add_active_deal", body={**flip_payload, "holdingTime": 0})
+        assert call_json("get_active_deals") == []
+
     def test_move_to_bought_then_tick_a_checklist_item(self, client, brrrr_payload):
         deal = call_json("add_active_deal", body={**brrrr_payload, "stage": 3})
         bought = call_json("move_to_bought", deal_id=deal["id"], deal_type="BRRRR")

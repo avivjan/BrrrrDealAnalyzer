@@ -8,10 +8,12 @@
  *   *and* `@input` wrote twice per keystroke and made the caret jump.
  * - **The slider's range is not the input's range.** `sliderMin`/`sliderMax`
  *   bound where the thumb can travel, so it can cover the realistic span
- *   (3-12% for a DSCR rate) and stay precise under the mouse, while `min`/`max`
- *   let the typed box accept anything sensible. Previously they were the same,
- *   so typing `65` into a rate box capped at 20 silently became `20`.
- *   Out-of-range values are reported by `validateDealInputs`, not rewritten.
+ *   (3-12% for a DSCR rate) and stay precise under the mouse. `min`/`max` are
+ *   only the thumb's fallback bounds: the typed box is not clamped at all.
+ *   PrimeVue used to clamp it on blur through `update:modelValue`, which nobody
+ *   listened to, so the box showed `100` while the model kept `150`. A wrong
+ *   value is reported by `errorMessage` (from `utils/dealInputValidation`),
+ *   never rewritten.
  * - **No fraction mask** (`minFractionDigits: 0`), so `7` doesn't render as
  *   `7.00` and eat your backspaces.
  */
@@ -24,7 +26,7 @@ import { computed } from "vue";
 const props = defineProps<{
   modelValue: number | null;
   label: string;
-  /** Bounds for the typed box. */
+  /** Bounds for the slider thumb when `sliderMin`/`sliderMax` are not given. */
   min: number;
   max: number;
   /** Bounds for the slider thumb. Defaults to `min`/`max`. */
@@ -37,6 +39,8 @@ const props = defineProps<{
   info?: string;
   /** A derived reading shown at the right of the label row ("refi loan $240,000"). */
   note?: string;
+  /** Why the current value is wrong; outlines the box, shakes it once, and shows the text underneath. */
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -55,6 +59,11 @@ const sliderValue = computed({
 });
 
 const inputId = useId();
+const errorMessageId = useId();
+/** Reaches the `<input>` PrimeVue renders inside its `<span>` root. */
+const inputPassThrough = computed(() => ({
+  pcInputText: { root: { "aria-describedby": props.errorMessage ? errorMessageId : undefined } },
+}));
 </script>
 
 <template>
@@ -92,17 +101,19 @@ const inputId = useId();
           data-part="input"
           :input-id="inputId"
           :model-value="modelValue"
-          :min="min"
-          :max="max"
           :suffix="suffix"
           :step="step"
           :allowEmpty="true"
           :minFractionDigits="0"
           :maxFractionDigits="3"
-          inputClass="ui-input numeric text-right"
+          :invalid="!!errorMessage"
+          :pt="inputPassThrough"
+          :inputClass="errorMessage ? 'ui-input numeric text-right ui-input-invalid' : 'ui-input numeric text-right'"
+          v-shake="errorMessage"
           @input="(e: any) => emit('update:modelValue', e.value)"
         />
       </div>
     </div>
+    <p v-if="errorMessage" :id="errorMessageId" role="alert" data-part="error-message" class="text-xs text-negative">{{ errorMessage }}</p>
   </div>
 </template>

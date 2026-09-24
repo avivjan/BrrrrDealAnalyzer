@@ -5,7 +5,7 @@ import { mount } from "@vue/test-utils";
 import AutoDefaultMoneyInput from "./AutoDefaultMoneyInput.vue";
 
 const stubs = {
-  MoneyInput: { name: "MoneyInput", props: ["modelValue", "label", "inThousands", "info"], emits: ["update:modelValue"], template: `<div class="money" />` },
+  MoneyInput: { name: "MoneyInput", props: ["modelValue", "label", "inThousands", "info", "errorMessage"], emits: ["update:modelValue"], template: `<div class="money" />` },
 };
 const mountField = (modelValue: number | null, computedDefault: number | null = 1130) =>
   mount(AutoDefaultMoneyInput, { props: { modelValue, computedDefault, label: "Recording & Transfer" }, global: { stubs } });
@@ -36,5 +36,13 @@ describe("AutoDefaultMoneyInput", () => {
 
   it("shows nothing while the formula's inputs are missing", () => {
     expect(mountField(null, null).findComponent({ name: "MoneyInput" }).props("modelValue")).toBeNull();
+  });
+
+  it("hands the error message to the money box underneath", () => {
+    const wrapper = mount(AutoDefaultMoneyInput, {
+      props: { modelValue: 400, computedDefault: 288, label: "Lowest ARV Possible", errorMessage: "Lowest ARV cannot exceed ARV." },
+      global: { stubs },
+    });
+    expect(wrapper.findComponent({ name: "MoneyInput" }).props("errorMessage")).toBe("Lowest ARV cannot exceed ARV.");
   });
 });

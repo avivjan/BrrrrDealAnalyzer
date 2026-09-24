@@ -71,6 +71,15 @@ const brrrWireFigures = computed(() => {
   ];
 });
 
+/** The rail's list must not outlive the fix: the fields go red live, so the list clears live too. */
+watch(
+  () => validateDealInputs(form.value, selectedType.value),
+  (errorsNow) => {
+    if (validationErrors.value.length > 0 && errorsNow.length === 0) validationErrors.value = [];
+  },
+  { deep: true },
+);
+
 const onAnalyzeAndSaveClick = () => {
   const errors = validateDealInputs(form.value, selectedType.value);
   if (errors.length > 0) {

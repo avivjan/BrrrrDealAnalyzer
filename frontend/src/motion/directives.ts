@@ -32,6 +32,12 @@ export const FLASH_DURATION = 0.4;
 /** The most `v-tilt` ever rotates a card on either axis, in degrees. */
 export const TILT_MAX_DEG = 6;
 
+/** How long `v-shake` rocks an input whose error message just appeared, in seconds. */
+export const SHAKE_DURATION = 0.4;
+
+/** The horizontal path of one shake, in pixels: two hard knocks that settle back to rest. */
+export const SHAKE_KEYFRAMES_X = [-6, 6, -4, 4, 0];
+
 /** The `transformPerspective` a tilted card is viewed through, in pixels. */
 const TILT_PERSPECTIVE = 800;
 
@@ -64,6 +70,7 @@ const FLASH = 'flash';
 const COUNT_UP = 'count-up';
 const DRAW_ON = 'draw-on';
 const TILT = 'tilt';
+const SHAKE = 'shake';
 
 /**
  * Listeners a directive attached, keyed by element *and* directive.
@@ -453,6 +460,38 @@ export const vFlash: ObjectDirective<HTMLElement> = {
     );
   },
   unmounted: (el) => release(el, FLASH),
+};
+
+/**
+ * `v-shake="errorMessage"` — an input rocks sideways the moment its error message
+ * appears or changes, and sits still while the same message stays.
+ *
+ * The one directive here that reads a value, and deliberately so: it belongs to
+ * the field primitives (`MoneyInput`, `NumberInput`, `SliderField`), which own
+ * their own `<script setup>`, not to a frozen view template. The message is the
+ * signal, never the target: the text is rendered by the primitive, and this only
+ * says "look here". Retriggering is a fresh tween each time (`overwrite: 'auto'`
+ * cuts a shake still running), so a second wrong value shakes again without the
+ * input being re-keyed and losing focus. `clearProps` hands the transform back
+ * once the box is at rest.
+ */
+export const vShake: ObjectDirective<HTMLElement, string | undefined> = {
+  updated(el, binding) {
+    if (!binding.value || binding.value === binding.oldValue) return;
+    if (!motionEnabled()) return;
+    gsap.fromTo(
+      el,
+      { x: 0 },
+      {
+        keyframes: { x: SHAKE_KEYFRAMES_X },
+        duration: SHAKE_DURATION,
+        ease: EASE.exit,
+        overwrite: 'auto',
+        clearProps: 'transform',
+      },
+    );
+  },
+  unmounted: (el) => release(el, SHAKE),
 };
 
 /** The first number in a string: optional sign, thousands separators, decimals. */
