@@ -3,7 +3,7 @@
 # CI's pip-audit fails the build on a known advisory.
 fastapi==0.141.1
 uvicorn[standard]==0.32.1
-SQLAlchemy==2.0.52
+SQLAlchemy==2.1.1
 psycopg2-binary==2.9.12
 reportlab==5.0.1
 python-multipart==0.0.32
