@@ -1,6 +1,6 @@
 # Member Loan module (approved plan, revision 2)
 
-Plan for branch `MemberLoan`, cut from `main`. Implementation starts once the open questions at the end are answered.
+Plan for branch `MemberLoan`, cut from `main`. Approved 2026-10-06 with the recommended defaults (see Resolution).
 
 **Revision 2** (owner, 2026-10-06) has three parts:
 1. Events can happen on any day.
@@ -223,9 +223,9 @@ On top of the earlier checklist:
 
 ## Todo (agent wall-clock)
 
-- [ ] **0** (10 min): Branch `MemberLoan` from `main`, copy this file to `tasks/todo/MemberLoan.md`, set up the test Postgres and dependencies.
-- [ ] **1** (45 min): Engine core: 30/360 positions, any-day periods, R4 rounding, capitalization, Interest payable, post-maturity accrual.
-- [ ] **2** (60 min): Engine events: withdrawal (amount only), advance on any day, Yarden reduction and increase, election, reversal, R5 ordering, validation, `validate_with` (R6).
+- [x] **0** (10 min): Branch `MemberLoan` from `main`, copy this file to `tasks/todo/MemberLoan.md`, set up the test Postgres and dependencies.
+- [x] **1** (45 min): Engine core: 30/360 positions, any-day periods, R4 rounding, capitalization, Interest payable, post-maturity accrual.
+- [x] **2** (60 min): Engine events: withdrawal (amount only), advance on any day, Yarden reduction and increase, election, reversal, R5 ordering, validation, `validate_with` (R6).
 - [ ] **3** (45 min): Engine outputs: summary, ledger, statement (periods, equation, sentences, left-out count), preview and fingerprint, explanation.
 - [ ] **4** (50 min): Models: events, **decisions**, audit, sends. Append-only triggers, hash chains, crud, TRUNCATE in tests.
 - [ ] **5** (45 min): Access gate, step-up, CSRF, rate limit.
@@ -337,7 +337,22 @@ Values were computed with Python `Decimal` under R1 and R4.
    ```
 4. After deploy: run one real propose, approve and notify cycle between the two members on a small test amount, then reverse it the same way. Keep the statement dry run on until the owner approves the first real send.
 
-## Open questions for the owner
+## Resolution (owner approved the plan, 2026-10-06)
+
+The owner approved the plan without further answers, so each open question takes its recommended default:
+
+- **Q1:** tentative D17 stands. A withdrawal takes an amount only, and the other types are as in the table. A resent section 3 is applied as a follow-up.
+- **Q2:** a month locks when its statement is really sent. This replaces D6.
+- **Q3:** an effective date may be at most New York's today plus one day. Scheduled future events are not built.
+- **Q4:** a pending proposal expires after 14 days, or when its month locks.
+- **Q5:** a pending proposal in a month that locks expires automatically and can be re-proposed in one click.
+- **Q6:** the approver confirms the live preview through the fingerprint (R7). There is no automatic cancellation.
+- **Q7:** only the other member receives the proposal e-mail.
+- **Q8:** a rejection reason is required.
+
+Execution order follows the Todo list. Each item is checked off in `tasks/todo/MemberLoan.md` as it lands.
+
+## Open questions for the owner (resolved above; kept for the record)
 
 1. **Q1, section 3 was cut off.** Your message ends at the `lender_withdrawal` row ("Amount only. Remove…"). Please resend the full revised event-type table and anything after it. Until then:
    - `lender_withdrawal` takes an amount only, and the interest-only and payoff modes are removed (tentative D17, replacing D11).
