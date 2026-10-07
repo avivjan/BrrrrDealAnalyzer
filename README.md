@@ -763,7 +763,7 @@ service; build `pip install -r BackEnd/requirements.txt`; command
 schedules are in UTC, so that is 6:13 or 7:13 on the 1st in New York; the command itself decides
 "the month that just ended" in **America/New_York** (the loan is in Florida). It sends at most once: a second run, or an interrupted one, never sends again (`--retry-failed`
 after a failure). Start with `MEMBER_LOAN_EMAIL_DRY_RUN=true`, check the files from
-`python manage.py send-member-loan-statement --dry-run --output-dir /tmp/statement`, then set it to
+`python manage.py send-member-loan-statement --dry-run --output-dir <path-to>/statement`, then set it to
 `false`.
 
 **Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
