@@ -237,8 +237,8 @@ On top of the earlier checklist:
 - [x] **11** (15 min): MCP: exclude `/member-loan`, add `DESCRIPTIONS`.
 - [x] **12** (130 min): Frontend: view, store, API, types, `LoanAmountInput`, tabs including **Waiting for approval**, the approval deep link, nav badge.
 - [x] **13** (20 min): Regression snapshot. A `Golden update:` commit if needed.
-- [ ] **14** (40 min): Security task.
-- [ ] **15** (25 min): README: the module, the approval flow, env, Render Cron, America/New_York, 30/360 consequences, the Postgres backup check, the stale "no auth" line. Review section.
+- [x] **14** (40 min): Security task.
+- [x] **15** (25 min): README: the module, the approval flow, env, Render Cron, America/New_York, 30/360 consequences, the Postgres backup check, the stale "no auth" line. Review section.
 - [ ] **16** (15 min): Push `MemberLoan` and open the PR.
 
 Total is about 13 hours, up from 11.
@@ -365,3 +365,65 @@ Execution order follows the Todo list. Each item is checked off in `tasks/todo/M
 6. **Q6, a changed preview.** If other approvals change the figures while a proposal waits, is it enough for the approver to see and confirm the new preview (the R7 fingerprint, recommended)? Or should the proposal be cancelled automatically and need the proposer to re-propose?
 7. **Q7, the proposer's copy.** On proposal, should the proposer also get a copy of the e-mail sent to the other member? Currently only the other member gets it.
 8. **Q8, notification wording.** Should rejection reasons be required, as planned, or optional?
+
+## Review (2026-10-07)
+
+### What shipped
+
+- **Engine** (`BackEnd/BL/memberLoan/common/member_loan_engine.py`): `Decimal`-only 30/360 periods, any-day events, per-period half-up rounding, Interest payable, previews with a fingerprint. Statement figures that refuse to build if an equation does not add up.
+- **API** (`routers/member_loan.py`, 16 routes):
+  - Self-gated to the two members on a passkey web session.
+  - CSRF, step-up and a rate limit on writes.
+  - Two-party approval with a one-decision-per-proposal unique index, expiry, and reversals that also need approval.
+  - Month lock on send.
+  - Append-only Postgres triggers and SHA-256 hash chains on proposals, decisions and audit entries.
+  - E-mails after commit, with failures audited.
+- **Statement:** a six-section PDF in plain sentences, a CSV with a formula-injection guard, and `manage.py send-member-loan-statement`.
+  - The command is dry-run by default.
+  - It commits a `sending` row behind a partial unique index before any SMTP call, so a month can never be sent twice.
+- **Frontend:** `/member-loan` and `/member-loan/approvals/:eventId` (the e-mail deep link).
+  - Tabs: Today, Waiting for approval, History, Propose (checks the figures first), Statements, How it works, Audit.
+  - Amounts stay strings end to end. The strict amount input has no thousands shorthand.
+
+### Deviations from the plan, and why
+
+- **No MCP `DESCRIPTIONS` lines.** `tests/test_mcp.py` fails on a description without a tool, and `/member-loan` is excluded (D12), so there is nothing to describe.
+- **A proposal that cannot be applied today is refused** (422) instead of saved with a warning (R6 at proposal time). Approval re-checks it in any case.
+- **New `POST /member-loan/event-previews`** (side-effect-free). The "check the figures before sending" step needed it.
+- **The loan link sits in the session strip** next to "Devices & passkeys", not in the primary nav. The nav mirrors the six frozen routes and the six-column phone bar, and the strip already appears only when a session exists. It shows the count of proposals waiting for you.
+- **Cron schedule:** Render cron schedules are UTC, so the README uses `13 11 1 * *`. The command itself picks the month in America/New_York.
+
+### Security task (`.claude/security.md`)
+
+- **Module:**
+  - Every route returns 401 without a session in `off`, `shadow` and `enforce`.
+  - A third owner, an MCP session or a pending device gets 403. A bad member configuration gets 503.
+  - The proposer cannot approve. Fingerprints prevent approving unseen figures. E-mail links carry no token.
+  - Every text field is escaped in the HTML mail and the PDF. CSV cells are neutralised.
+  - No figures or addresses are logged. No address, username or secret is in `frontend/dist`.
+- **Repo-wide:**
+  - Bandit is clean. `npm audit --omit=dev` reported 3 high advisories (vue/@vue/server-renderer, source-map-js), fixed by moving to vue 3.5.43 and source-map-js 1.2.2.
+  - `pip-audit` flagged the test-only pin pypdf 6.18.0, fixed with 6.19.0.
+  - Gitleaks is not installed in this container; CI runs it.
+- **Left as is (pre-existing, not security):**
+  - The G8 gate flags absolute paths in `.github/scripts/nightly`.
+  - G1 and G2 need the `ui-baseline` tag, which this clone lacks.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| Backend pytest | 1,015 passed (was 895) |
+| `verify_regression.py verify` | identical after a reviewed snapshot (only additions) |
+| Frontend vitest | 1,646 passed |
+| `npm run build` | passes |
+| Playwright `checks/member-loan.spec.ts` | passes on chromium and Mobile Chrome |
+| `checks/auth.spec.ts` | still passes |
+| Nightly package unittest | passes; the expected-skip total is now 187 |
+
+### For the owner
+
+1. Set the `MEMBER_LOAN_*` variables on Render. Use the two passkey usernames from `python manage.py list-devices`, then your two e-mail addresses.
+2. Create the Render Cron Job from the README. Run one dry run and read the files before setting `MEMBER_LOAN_EMAIL_DRY_RUN=false`. The first real statement is due 2026-11-01.
+3. Check the Render Postgres plan and backup retention.
+4. Section 3 of your revision was cut off. Withdrawals take an amount only (tentative D17). Resend the section if anything else changes.
