@@ -97,6 +97,8 @@ _reset_schema(app_db.engine)
 import main as app_main  # noqa: E402
 from BL.pipelineTemplate.common.seed import ensure_defaults as ensure_pipeline_defaults  # noqa: E402
 from DAL.crud.reps import ensure_activity_category_defaults  # noqa: E402
+from DAL.data_models.memberLoan.models import MEMBER_LOAN_APPEND_ONLY_TABLE_NAMES  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
 # `main` ran create_all + migrations + seeding on import. Re-verify that all of
 # that landed on the test database and not somewhere else.
@@ -135,7 +137,12 @@ def clean_database():
     assert_isolated(app_db.engine)
 
     with app_db.engine.begin() as connection:
+        # The Member Loan tables refuse row DELETEs by trigger (append-only);
+        # TRUNCATE does not fire row triggers, so the harness empties them that way.
+        connection.execute(text("TRUNCATE " + ", ".join(MEMBER_LOAN_APPEND_ONLY_TABLE_NAMES)))
         for table in reversed(app_db.Base.metadata.sorted_tables):
+            if table.name in MEMBER_LOAN_APPEND_ONLY_TABLE_NAMES:
+                continue
             connection.execute(table.delete())
 
     # `move_to_bought` resolves the first pipeline stage, so the templates have

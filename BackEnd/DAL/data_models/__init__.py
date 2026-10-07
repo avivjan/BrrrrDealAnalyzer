@@ -31,6 +31,12 @@ from DAL.data_models.auth.models import (
     OAuthClient,
     OAuthAuthorization,
 )
+from DAL.data_models.memberLoan.models import (
+    MemberLoanEvent,
+    MemberLoanEventDecision,
+    MemberLoanAuditEntry,
+    MemberLoanStatementSend,
+)
 from DAL.data_models.reps.models import (
     RepsPerson,
     RepsProperty,
@@ -60,6 +66,10 @@ __all__ = [
     "AuthChallenge",
     "OAuthClient",
     "OAuthAuthorization",
+    "MemberLoanEvent",
+    "MemberLoanEventDecision",
+    "MemberLoanAuditEntry",
+    "MemberLoanStatementSend",
     "RepsPerson",
     "RepsProperty",
     "RepsActivityCategory",
