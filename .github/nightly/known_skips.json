@@ -97,6 +97,14 @@
       "explain": "The bundle-size check needs the production build that the suite's webServer produces. A nightly run always has it; this firing means the build step was skipped.",
       "files": ["checks/perf.spec.ts"],
       "expected_total": 0
+    },
+    {
+      "id": "virtual-authenticator-chromium",
+      "match": "virtual authenticator needs CDP",
+      "category": "Chromium-only tooling",
+      "explain": "Passkey flows run on Chromium's virtual WebAuthn authenticator, reached through the Chrome DevTools Protocol. WebKit has no equivalent, so the passkey and Member Loan specs skip there.",
+      "files": ["checks/auth.spec.ts", "checks/member-loan.spec.ts"],
+      "expected": {"webkit": 3, "Mobile Safari": 3}
     }
   ]
 }

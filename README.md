@@ -194,9 +194,10 @@ flowchart LR
     API -. REPS_* / GOOGLE_APPLICATION_CREDENTIALS .-> Sheets
 ```
 
-There are **no accounts and no auth**: the app is a private tool for one business, and the
-backend's CORS allow-list (`localhost:5173`, `localhost:3000`, `bigwhales.netlify.app`) is the
-only gate. Looks, theme and motion preferences persist per browser in `localStorage`.
+Sign-in is by passkey (see [Passkeys](#passkeys-face-id--touch-id-sign-in)), behind `AUTH_MODE`
+(`off` by default, `enforce` in production). The [Member Loan](#member-loan) gates itself on a
+passkey session of its two members whatever `AUTH_MODE` says. Looks, theme and motion
+preferences persist per browser in `localStorage`.
 
 ### How a request flows through the backend
 
@@ -357,6 +358,22 @@ document is at `/docs` on a running backend.
 | --- | --- | --- |
 | `POST` | `/send-offer` | E-mail an offer to a listing agent over Gmail SMTP |
 | `GET` | `/helloworld` | Liveness probe; also the Playwright readiness URL |
+</details>
+
+<details>
+<summary><b>Member Loan (the two members only; never an MCP tool)</b></summary>
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/member-loan/access` | Role, and how many proposals wait for the caller |
+| `GET` | `/member-loan/summary?as_of_date=` | Every bucket and Amount Owed on a date the device sends |
+| `GET` | `/member-loan/ledger?through_date=` · `/member-loan/ledger.csv` | Every change and Interest Date, with who proposed and approved it |
+| `POST` | `/member-loan/event-previews` | The before → after figures of a change, saving nothing |
+| `POST` | `/member-loan/events` | Propose a change (step-up). Nothing changes until the other member approves |
+| `GET` | `/member-loan/events[?state=]` · `/member-loan/events/{id}` | Proposals with their live preview and fingerprint |
+| `POST` | `/member-loan/events/{id}/approval` · `/rejection` · `/cancellation` · `/reversal` | Decide or reverse (step-up; only the other member approves or rejects) |
+| `GET` | `/member-loan/statements/{yyyy-mm}` · `/pdf` | One month's statement, final once sent |
+| `GET` | `/member-loan/audit` · `/member-loan/integrity` · `/member-loan/explanation` | Audit trail, hash-chain check, how it is calculated |
 </details>
 
 ### Try it
@@ -707,12 +724,50 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `SEND_OFFER_PER_HOUR` | `/send-offer` | Offers per hour per caller before a 429 (default 30) |
 | `MERCURY_CACHE_SECONDS` | `/liquidity/mercury-balance` | How long a fetched balance summary is reused (default 60; 0 disables) |
 | `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
+| `MEMBER_LOAN_LENDER_USERNAME`, `MEMBER_LOAN_YARDEN_USERNAME`, `MEMBER_LOAN_ALLOWED_USERNAMES` | `BackEnd/BL/memberLoan/common/member_loan_settings.py` | The two members' passkey usernames; the allow-list must name exactly those two, otherwise every `/member-loan` route answers 503 |
+| `MEMBER_LOAN_LENDER_EMAIL`, `MEMBER_LOAN_YARDEN_EMAIL` | Member Loan | Where each member's e-mail goes (never sent to the frontend) |
+| `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
+| `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is only rendered to files. Set `false` once a dry run was checked |
+| `MEMBER_LOAN_APP_ORIGIN`, `MEMBER_LOAN_WRITES_PER_HOUR`, `MEMBER_LOAN_DRY_RUN_DIRECTORY` | Member Loan | Link base in e-mails (default `AUTH_APP_ORIGIN`), write rate limit per member (30), dry-run output folder |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
 | `ANTHROPIC_API_KEY`, `MCP_PROBE_URL` | GitHub Actions secrets | Nightly MCP connector probe (optional; the job skips without them) |
 
 The full Google Cloud walk-through for the REPS tracker (project, service account, bucket,
 sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
+
+### Member Loan
+
+The loan from Aviv Jan (Lender) to Big Whales AY LLC. The signed agreement names this app as
+the deciding calculator. The plan, decisions and tests are in
+[`tasks/todo/MemberLoan.md`](tasks/todo/MemberLoan.md).
+
+- **Who.** Exactly the two members, on a passkey web session, whatever `AUTH_MODE` says. The
+  link sits in the strip above every page, for them only. MCP never sees it.
+- **Changes need both members.** One proposes a change, the other approves or rejects it with a
+  fresh passkey prompt. The approval carries the fingerprint of the figures shown, so nobody
+  approves numbers they did not see. A proposal expires after 14 days. Reversals work the same way.
+- **The calculation** (`BL/memberLoan/common/member_loan_engine.py`, `Decimal` only): 1% a month,
+  every month counted as 30 days (30/360). A change on any day splits the month into stretches,
+  each `balance × 1% × days/30`, rounded half-up to the cent. On the 1st the interest is added to
+  the debt, or paid in cash if Aviv chose so. Interest keeps running after maturity.
+- **History cannot be rewritten.** Postgres triggers refuse UPDATE and DELETE on the loan tables;
+  proposals, decisions and audit entries are SHA-256 hash-chained (`GET /member-loan/integrity`).
+  A month locks once its statement is sent.
+- **E-mail** (Gmail SMTP, `EMAIL_PASSWORD`): a proposal goes to the other member with a link that
+  only opens the app; every decision goes to both. Failures are audited and never undo a change.
+
+**Monthly statement: a Render Cron Job.** Same repository and environment group as the web
+service; build `pip install -r BackEnd/requirements.txt`; command
+`cd BackEnd && python manage.py send-member-loan-statement`; schedule `13 11 1 * *`. Render
+schedules are in UTC, so that is 6:13 or 7:13 on the 1st in New York; the command itself decides
+"the month that just ended" in **America/New_York** (the loan is in Florida). It sends at most once: a second run, or an interrupted one, never sends again (`--retry-failed`
+after a failure). Start with `MEMBER_LOAN_EMAIL_DRY_RUN=true`, check the files from
+`python manage.py send-member-loan-statement --dry-run --output-dir <path-to>/statement`, then set it to
+`false`.
+
+**Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
+only in this database.
 
 ## 🧩 Adding an input to the deal form
 

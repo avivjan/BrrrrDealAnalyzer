@@ -241,8 +241,9 @@ DESCRIPTIONS: dict[str, str] = {
 BODY_ARG = "body"
 
 # Authentication plumbing never becomes a tool: an LLM must not enroll a
-# passkey, approve a device or mint a session.
-EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials")
+# passkey, approve a device or mint a session. The Member Loan is restricted to
+# its two members on a passkey (decision D12), so it is never a tool either.
+EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-loan")
 
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client

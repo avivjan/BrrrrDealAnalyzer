@@ -23,6 +23,7 @@ from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
 from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
+from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 
 
 # Arbitrary but fixed key identifying "this app's schema migration".
@@ -171,3 +172,9 @@ def _run_migrations_locked(engine):
             "VARCHAR",
             None,
         )
+
+    # Member Loan history is append-only in the database itself: row triggers
+    # refuse UPDATE and DELETE (a statement send may only move out of `sending`).
+    # The tables come from `create_all`; this only (re)installs the triggers.
+    if "member_loan_events" in sa_inspect(engine).get_table_names():
+        add_member_loan_append_only_triggers(engine)
