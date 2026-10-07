@@ -232,8 +232,8 @@ On top of the earlier checklist:
 - [x] **6** (60 min): Propose and reversal-propose endpoints, read endpoints, the lock function (R2).
 - [x] **7** (60 min): **Approve, reject and cancel**: counterparty and proposer rules, R6 and R7, unique decision, expiry (Q4 default).
 - [x] **8** (50 min): Notifications: the proposal e-mail to the counterparty with link; approved, rejected, cancelled and expired e-mails to both; audit rows.
-- [ ] **9** (70 min): Statement PDF, six sections with approval wording. Ledger CSV.
-- [ ] **10** (50 min): `send-member-loan-statement`: idempotent, dry run, retry-failed, lock and expiry on send.
+- [x] **9** (70 min): Statement PDF, six sections with approval wording. Ledger CSV.
+- [x] **10** (50 min): `send-member-loan-statement`: idempotent, dry run, retry-failed, lock and expiry on send.
 - [x] **11** (15 min): MCP: exclude `/member-loan`, add `DESCRIPTIONS`.
 - [ ] **12** (130 min): Frontend: view, store, API, types, `LoanAmountInput`, tabs including **Waiting for approval**, the approval deep link, nav badge.
 - [ ] **13** (20 min): Regression snapshot. A `Golden update:` commit if needed.

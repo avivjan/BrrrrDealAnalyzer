@@ -13,6 +13,7 @@ Paragraph markup.
 from __future__ import annotations
 
 import io
+from datetime import date
 from typing import Optional
 from xml.sax.saxutils import escape
 
@@ -38,6 +39,11 @@ EQUATION = ParagraphStyle("equation", fontName="Helvetica", fontSize=10, leading
 EQUATION_TOTAL = ParagraphStyle("equation_total", parent=EQUATION, fontName="Helvetica-Bold")
 SMALL = ParagraphStyle("small", fontName="Helvetica", fontSize=8.5, leading=12, textColor=MUTED, spaceAfter=3)
 WARNING = ParagraphStyle("warning", fontName="Helvetica-Bold", fontSize=10, leading=14, textColor=WARNING_INK)
+
+
+def _long_date(iso_date: str) -> str:
+    calendar_date = date.fromisoformat(iso_date)
+    return f"{calendar_date:%b} {calendar_date.day}, {calendar_date.year}"
 
 
 def _paragraph(text: str, style: ParagraphStyle) -> Paragraph:
@@ -66,7 +72,7 @@ def render_member_loan_statement_pdf(document: dict, *, sent_line: Optional[str]
     story: list = [
         _paragraph(document["title"], TITLE),
         _paragraph(
-            f"Big Whales AY LLC (Borrower) and Aviv Jan (Lender). Statement date: {document['statement_date']}. "
+            f"Big Whales AY LLC (Borrower) and Aviv Jan (Lender). Statement date: {_long_date(document['statement_date'])}. "
             "All amounts in US dollars.",
             SUBTITLE,
         ),

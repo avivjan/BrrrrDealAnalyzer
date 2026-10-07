@@ -258,7 +258,8 @@ def _period_line(period, rate_text: str) -> str:
     )
     calendar_days = (period.period_end_date - period.period_start_date).days
     if calendar_days != period.interest_days_counted:
-        line += f" (30-day months: {calendar_days} calendar day{'s' if calendar_days != 1 else ''} count as {period.interest_days_counted})"
+        noun_and_verb = "calendar day counts" if calendar_days == 1 else "calendar days count"
+        line += f" (30-day months: {calendar_days} {noun_and_verb} as {period.interest_days_counted})"
     return line
 
 
@@ -373,7 +374,7 @@ def build_member_loan_statement_document(
 
     closing_plain = closing.as_plain_dict()
     document = MemberLoanStatementDocument(
-        title=f"Member Loan statement - {month_label}",
+        title=f"Member Loan statement \u2013 {month_label}",
         statement_month_start=figures.statement_month_start,
         statement_date=figures.statement_date,
         summary_rows=summary_rows,
