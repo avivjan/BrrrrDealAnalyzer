@@ -40,6 +40,7 @@ from BL.memberLoan.getStatement import get_statement, get_statement_pdf
 from BL.memberLoan.getSummary import get_member_loan_summary
 from BL.memberLoan.listAudit import list_audit
 from BL.memberLoan.listEvents import list_events
+from BL.memberLoan.previewEvent import preview_event
 from BL.memberLoan.proposeEvent import propose_event
 from BL.memberLoan.proposeReversal import propose_reversal
 from db import get_db
@@ -50,6 +51,7 @@ from ReqRes.common.member_loan_schemas import (
     MemberLoanExplanationRes,
     MemberLoanIntegrityRes,
     MemberLoanLedgerRes,
+    MemberLoanPreviewRes,
     MemberLoanProposalCreateReq,
     MemberLoanProposalRes,
     MemberLoanRejectionReq,
@@ -129,6 +131,17 @@ def member_loan_ledger_csv(
     caller: MemberLoanCaller = Depends(require_member_loan_reader),
 ):
     return _file(db, background_tasks, lambda: export_ledger_csv(db, caller, through_date), "text/csv; charset=utf-8")
+
+
+@router.post("/member-loan/event-previews", response_model=MemberLoanPreviewRes)
+def member_loan_preview_event(
+    request: MemberLoanProposalCreateReq,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    caller: MemberLoanCaller = Depends(require_member_loan_reader),
+):
+    """Side-effect free: what a proposal would show before it is sent."""
+    return _run(db, background_tasks, lambda: preview_event(db, caller, request))
 
 
 @router.post("/member-loan/events", response_model=MemberLoanProposalRes, status_code=201)

@@ -80,6 +80,7 @@ class TestGate:
         ("GET", "/member-loan/integrity"),
         ("GET", "/member-loan/explanation"),
         ("POST", "/member-loan/events"),
+        ("POST", "/member-loan/event-previews"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/approval"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/rejection"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/cancellation"),
@@ -441,6 +442,16 @@ class TestNotifications:
 
 
 class TestReads:
+    def test_a_preview_shows_the_figures_and_writes_nothing(self, aviv, yarden):
+        response = aviv.post("/member-loan/event-previews", json=WITHDRAWAL_ON_DECEMBER_15, headers=WRITE_HEADERS)
+        assert response.status_code == 200, response.text
+        assert response.json()["buckets_after"]["amount_owed"] == "30166.01"
+        assert response.json()["allocation"]["from_capitalized_interest"] == "611.24"
+        assert aviv.get("/member-loan/events").json() == []
+        assert _audit_actions() == []
+        refused = aviv.post("/member-loan/event-previews", json={**WITHDRAWAL_ON_DECEMBER_15, "amount": "99999.00"}, headers=WRITE_HEADERS)
+        assert refused.status_code == 422 and "more than" in refused.json()["detail"]["message"]
+
     def test_summary_needs_an_explicit_date(self, aviv, yarden):
         assert aviv.get("/member-loan/summary").status_code == 422
         assert summary(aviv, "2026-12-15")["buckets"]["accrued_interest"] == "144.77"

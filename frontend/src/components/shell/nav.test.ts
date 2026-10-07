@@ -6,10 +6,12 @@ import { NAV_ITEMS, navItemForPath } from "./nav";
 /** The frozen router, read as text: its `path`/`name` pairs are the truth this file mirrors. */
 const routerSource = readFileSync(new URL("../../router/index.ts", import.meta.url), "utf8");
 const AUTH_ROUTES = new Set(["login", "enroll", "pending", "connect", "devices"]);
+/** The Member Loan is for two members only: linked from the session strip, never the primary nav. */
+const MEMBER_LOAN_ROUTES = new Set(["member-loan", "member-loan-approval"]);
 const routes = [...routerSource.matchAll(/path:\s*['"]([^'"]+)['"],\s*name:\s*['"]([^'"]+)['"]/g)]
   .map((m) => ({ path: m[1]!, name: m[2]! }))
   // The auth routes (login, enroll, pending, connect, devices) are not navigation.
-  .filter((r) => !AUTH_ROUTES.has(r.name));
+  .filter((r) => !AUTH_ROUTES.has(r.name) && !MEMBER_LOAN_ROUTES.has(r.name));
 
 describe("the primary navigation", () => {
   it("mirrors every route the frozen router declares, by path and name", () => {

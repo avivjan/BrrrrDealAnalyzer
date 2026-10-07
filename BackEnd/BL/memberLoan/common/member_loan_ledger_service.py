@@ -396,6 +396,29 @@ class MemberLoanWriteResult:
     decision: Optional[str] = None
 
 
+def preview_member_loan_proposal(db: DbSession, request: MemberLoanProposalCreateReq) -> MemberLoanEventPreview:
+    """The figures a proposal would show, with every check a proposal runs, writing nothing."""
+
+    amount = _validate_proposal_fields(request)
+    snapshot = load_member_loan_ledger_snapshot(db)
+    _refuse_if_too_far_in_the_future(request.effective_date)
+    _refuse_if_month_locked(
+        snapshot, statement_month_affected_by(None, event_type=request.event_type, effective_date=request.effective_date)
+    )
+    candidate = EffectiveMemberLoanEvent(
+        event_id="preview",
+        event_type=request.event_type,
+        effective_date=request.effective_date,
+        application_order=0,
+        amount=amount,
+        interest_election_choice=request.interest_election_choice,
+    )
+    try:
+        return preview_member_loan_event(member_loan_terms(), snapshot.effective_engine_events(), candidate)
+    except MemberLoanEventRejected as rejected:
+        raise MemberLoanRequestRefused(422, rejected.plain_language_reason, code="cannot_be_applied")
+
+
 def propose_member_loan_event(db: DbSession, caller: MemberLoanCaller, request: MemberLoanProposalCreateReq) -> MemberLoanWriteResult:
     amount = _validate_proposal_fields(request)
     member_loan_crud.acquire_member_loan_write_lock(db)
