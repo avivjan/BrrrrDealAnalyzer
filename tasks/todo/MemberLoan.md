@@ -239,7 +239,7 @@ On top of the earlier checklist:
 - [x] **13** (20 min): Regression snapshot. A `Golden update:` commit if needed.
 - [x] **14** (40 min): Security task.
 - [x] **15** (25 min): README: the module, the approval flow, env, Render Cron, America/New_York, 30/360 consequences, the Postgres backup check, the stale "no auth" line. Review section.
-- [ ] **16** (15 min): Push `MemberLoan` and open the PR.
+- [x] **16** (15 min): Push `MemberLoan` and open the PR.
 
 Total is about 13 hours, up from 11.
 
