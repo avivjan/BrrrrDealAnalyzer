@@ -8329,6 +8329,913 @@
         "title": "LoginVerifyReq",
         "type": "object"
       },
+      "MemberLoanAccessRes": {
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "other_member_display_name": {
+            "title": "Other Member Display Name",
+            "type": "string"
+          },
+          "proposals_waiting_for_you": {
+            "title": "Proposals Waiting For You",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "lender",
+              "yarden"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed",
+          "username",
+          "display_name",
+          "role",
+          "other_member_display_name",
+          "proposals_waiting_for_you"
+        ],
+        "title": "MemberLoanAccessRes",
+        "type": "object"
+      },
+      "MemberLoanAllocationRes": {
+        "properties": {
+          "from_accrued_interest": {
+            "title": "From Accrued Interest",
+            "type": "string"
+          },
+          "from_capitalized_interest": {
+            "title": "From Capitalized Interest",
+            "type": "string"
+          },
+          "from_interest_payable": {
+            "title": "From Interest Payable",
+            "type": "string"
+          },
+          "from_original_principal": {
+            "title": "From Original Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_interest_payable",
+          "from_accrued_interest",
+          "from_capitalized_interest",
+          "from_original_principal"
+        ],
+        "title": "MemberLoanAllocationRes",
+        "type": "object"
+      },
+      "MemberLoanApprovalReq": {
+        "additionalProperties": false,
+        "properties": {
+          "preview_fingerprint": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Preview Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preview_fingerprint"
+        ],
+        "title": "MemberLoanApprovalReq",
+        "type": "object"
+      },
+      "MemberLoanAuditEntryRes": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_display_name": {
+            "title": "Actor Display Name",
+            "type": "string"
+          },
+          "audit_sequence": {
+            "title": "Audit Sequence",
+            "type": "integer"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "state_after": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State After"
+          },
+          "state_before": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Before"
+          }
+        },
+        "required": [
+          "audit_sequence",
+          "recorded_at",
+          "actor_display_name",
+          "action"
+        ],
+        "title": "MemberLoanAuditEntryRes",
+        "type": "object"
+      },
+      "MemberLoanBucketsRes": {
+        "properties": {
+          "accrued_interest": {
+            "title": "Accrued Interest",
+            "type": "string"
+          },
+          "amount_owed": {
+            "title": "Amount Owed",
+            "type": "string"
+          },
+          "capitalized_interest": {
+            "title": "Capitalized Interest",
+            "type": "string"
+          },
+          "interest_payable": {
+            "title": "Interest Payable",
+            "type": "string"
+          },
+          "lender_capital_credited": {
+            "title": "Lender Capital Credited",
+            "type": "string"
+          },
+          "original_principal": {
+            "title": "Original Principal",
+            "type": "string"
+          },
+          "total_balance": {
+            "title": "Total Balance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "original_principal",
+          "capitalized_interest",
+          "total_balance",
+          "accrued_interest",
+          "interest_payable",
+          "amount_owed",
+          "lender_capital_credited"
+        ],
+        "title": "MemberLoanBucketsRes",
+        "type": "object"
+      },
+      "MemberLoanExplanationRes": {
+        "properties": {
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "MemberLoanExplanationRes",
+        "type": "object"
+      },
+      "MemberLoanIntegrityRes": {
+        "properties": {
+          "audit_entries_checked": {
+            "title": "Audit Entries Checked",
+            "type": "integer"
+          },
+          "decisions_checked": {
+            "title": "Decisions Checked",
+            "type": "integer"
+          },
+          "intact": {
+            "title": "Intact",
+            "type": "boolean"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "proposals_checked": {
+            "title": "Proposals Checked",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "intact",
+          "problems",
+          "proposals_checked",
+          "decisions_checked",
+          "audit_entries_checked"
+        ],
+        "title": "MemberLoanIntegrityRes",
+        "type": "object"
+      },
+      "MemberLoanLedgerRes": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/MemberLoanLedgerRowRes"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "through_date": {
+            "format": "date",
+            "title": "Through Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "through_date",
+          "rows"
+        ],
+        "title": "MemberLoanLedgerRes",
+        "type": "object"
+      },
+      "MemberLoanLedgerRowRes": {
+        "properties": {
+          "allocation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemberLoanAllocationRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "approved_by_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By Display Name"
+          },
+          "buckets_after": {
+            "$ref": "#/components/schemas/MemberLoanBucketsRes"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "interest_added_to_debt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interest Added To Debt"
+          },
+          "interest_moved_to_interest_payable": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interest Moved To Interest Payable"
+          },
+          "plain_description": {
+            "title": "Plain Description",
+            "type": "string"
+          },
+          "proposed_by_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed By Display Name"
+          },
+          "row_date": {
+            "format": "date",
+            "title": "Row Date",
+            "type": "string"
+          },
+          "row_kind": {
+            "title": "Row Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row_date",
+          "row_kind",
+          "plain_description",
+          "buckets_after"
+        ],
+        "title": "MemberLoanLedgerRowRes",
+        "type": "object"
+      },
+      "MemberLoanPreviewRes": {
+        "properties": {
+          "allocation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemberLoanAllocationRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "buckets_after": {
+            "$ref": "#/components/schemas/MemberLoanBucketsRes"
+          },
+          "buckets_before": {
+            "$ref": "#/components/schemas/MemberLoanBucketsRes"
+          },
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "preview_fingerprint": {
+            "title": "Preview Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effective_date",
+          "buckets_before",
+          "buckets_after",
+          "preview_fingerprint"
+        ],
+        "title": "MemberLoanPreviewRes",
+        "type": "object"
+      },
+      "MemberLoanProposalCreateReq": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "event_type": {
+            "enum": [
+              "lender_withdrawal",
+              "lender_additional_advance",
+              "yarden_capital_contribution_reduction",
+              "yarden_additional_withdrawal_increase",
+              "interest_payment_election"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "interest_election_choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "reinvest",
+                  "cash"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interest Election Choice"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "written_agreement_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Written Agreement Date"
+          },
+          "written_agreement_description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Written Agreement Description"
+          }
+        },
+        "required": [
+          "event_type",
+          "effective_date"
+        ],
+        "title": "MemberLoanProposalCreateReq",
+        "type": "object"
+      },
+      "MemberLoanProposalRes": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "caller_may_approve_or_reject": {
+            "default": false,
+            "title": "Caller May Approve Or Reject",
+            "type": "boolean"
+          },
+          "caller_may_cancel": {
+            "default": false,
+            "title": "Caller May Cancel",
+            "type": "boolean"
+          },
+          "caller_may_propose_reversal": {
+            "default": false,
+            "title": "Caller May Propose Reversal",
+            "type": "boolean"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By Display Name"
+          },
+          "decision_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Reason"
+          },
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "figures_changed_since_proposal": {
+            "default": false,
+            "title": "Figures Changed Since Proposal",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "includes_yarden_increase_warning": {
+            "default": false,
+            "title": "Includes Yarden Increase Warning",
+            "type": "boolean"
+          },
+          "interest_election_choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interest Election Choice"
+          },
+          "live_preview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemberLoanPreviewRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "live_preview_problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Preview Problem"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "plain_event_name": {
+            "title": "Plain Event Name",
+            "type": "string"
+          },
+          "preview_at_proposal": {
+            "$ref": "#/components/schemas/MemberLoanPreviewRes"
+          },
+          "proposal_sequence": {
+            "title": "Proposal Sequence",
+            "type": "integer"
+          },
+          "proposed_at": {
+            "format": "date-time",
+            "title": "Proposed At",
+            "type": "string"
+          },
+          "proposed_by_display_name": {
+            "title": "Proposed By Display Name",
+            "type": "string"
+          },
+          "reversal_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversal Reason"
+          },
+          "reversed_event_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversed Event Summary"
+          },
+          "reverses_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reverses Event Id"
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled",
+              "expired"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "written_agreement_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Written Agreement Date"
+          },
+          "written_agreement_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Written Agreement Description"
+          }
+        },
+        "required": [
+          "id",
+          "proposal_sequence",
+          "event_type",
+          "plain_event_name",
+          "effective_date",
+          "state",
+          "proposed_by_display_name",
+          "proposed_at",
+          "preview_at_proposal"
+        ],
+        "title": "MemberLoanProposalRes",
+        "type": "object"
+      },
+      "MemberLoanRejectionReq": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "MemberLoanRejectionReq",
+        "type": "object"
+      },
+      "MemberLoanReversalProposalReq": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "MemberLoanReversalProposalReq",
+        "type": "object"
+      },
+      "MemberLoanStatementRes": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "is_final": {
+            "title": "Is Final",
+            "type": "boolean"
+          },
+          "objection_deadline": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objection Deadline"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "sent_to": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Sent To",
+            "type": "array"
+          },
+          "statement_month": {
+            "title": "Statement Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statement_month",
+          "document",
+          "is_final"
+        ],
+        "title": "MemberLoanStatementRes",
+        "type": "object"
+      },
+      "MemberLoanSummaryRes": {
+        "properties": {
+          "as_of_date": {
+            "format": "date",
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "buckets": {
+            "$ref": "#/components/schemas/MemberLoanBucketsRes"
+          },
+          "loan_effective_date": {
+            "format": "date",
+            "title": "Loan Effective Date",
+            "type": "string"
+          },
+          "maturity_date": {
+            "format": "date",
+            "title": "Maturity Date",
+            "type": "string"
+          },
+          "original_principal_at_start": {
+            "title": "Original Principal At Start",
+            "type": "string"
+          },
+          "proposals_waiting_for_other_member": {
+            "title": "Proposals Waiting For Other Member",
+            "type": "integer"
+          },
+          "proposals_waiting_for_you": {
+            "title": "Proposals Waiting For You",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "as_of_date",
+          "buckets",
+          "loan_effective_date",
+          "maturity_date",
+          "original_principal_at_start",
+          "proposals_waiting_for_you",
+          "proposals_waiting_for_other_member"
+        ],
+        "title": "MemberLoanSummaryRes",
+        "type": "object"
+      },
       "OAuthApproveReq": {
         "properties": {
           "txn": {
@@ -13312,6 +14219,642 @@
           }
         },
         "summary": "Update Liquidity Transaction"
+      }
+    },
+    "/member-loan/access": {
+      "get": {
+        "operationId": "member_loan_access_member_loan_access_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanAccessRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Member Loan Access"
+      }
+    },
+    "/member-loan/audit": {
+      "get": {
+        "operationId": "member_loan_audit_member_loan_audit_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberLoanAuditEntryRes"
+                  },
+                  "title": "Response Member Loan Audit Member Loan Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Member Loan Audit"
+      }
+    },
+    "/member-loan/event-previews": {
+      "post": {
+        "description": "Side-effect free: what a proposal would show before it is sent.",
+        "operationId": "member_loan_preview_event_member_loan_event_previews_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanProposalCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanPreviewRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Preview Event"
+      }
+    },
+    "/member-loan/events": {
+      "get": {
+        "operationId": "member_loan_list_events_member_loan_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "cancelled",
+                    "expired"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberLoanProposalRes"
+                  },
+                  "title": "Response Member Loan List Events Member Loan Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan List Events"
+      },
+      "post": {
+        "operationId": "member_loan_propose_event_member_loan_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanProposalCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Propose Event"
+      }
+    },
+    "/member-loan/events/{event_id}": {
+      "get": {
+        "operationId": "member_loan_get_event_member_loan_events__event_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Get Event"
+      }
+    },
+    "/member-loan/events/{event_id}/approval": {
+      "post": {
+        "operationId": "member_loan_approve_event_member_loan_events__event_id__approval_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanApprovalReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Approve Event"
+      }
+    },
+    "/member-loan/events/{event_id}/cancellation": {
+      "post": {
+        "operationId": "member_loan_cancel_event_member_loan_events__event_id__cancellation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Cancel Event"
+      }
+    },
+    "/member-loan/events/{event_id}/rejection": {
+      "post": {
+        "operationId": "member_loan_reject_event_member_loan_events__event_id__rejection_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanRejectionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Reject Event"
+      }
+    },
+    "/member-loan/events/{event_id}/reversal": {
+      "post": {
+        "operationId": "member_loan_propose_reversal_member_loan_events__event_id__reversal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanReversalProposalReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Propose Reversal"
+      }
+    },
+    "/member-loan/explanation": {
+      "get": {
+        "operationId": "member_loan_explanation_member_loan_explanation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanExplanationRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Member Loan Explanation"
+      }
+    },
+    "/member-loan/integrity": {
+      "get": {
+        "operationId": "member_loan_integrity_member_loan_integrity_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanIntegrityRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Member Loan Integrity"
+      }
+    },
+    "/member-loan/ledger": {
+      "get": {
+        "operationId": "member_loan_ledger_member_loan_ledger_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "through_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Through Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanLedgerRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Ledger"
+      }
+    },
+    "/member-loan/ledger.csv": {
+      "get": {
+        "operationId": "member_loan_ledger_csv_member_loan_ledger_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "through_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Through Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Ledger Csv"
+      }
+    },
+    "/member-loan/statements/{statement_month}": {
+      "get": {
+        "operationId": "member_loan_statement_member_loan_statements__statement_month__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statement_month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Statement Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanStatementRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Statement"
+      }
+    },
+    "/member-loan/statements/{statement_month}/pdf": {
+      "get": {
+        "operationId": "member_loan_statement_pdf_member_loan_statements__statement_month__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statement_month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Statement Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Statement Pdf"
+      }
+    },
+    "/member-loan/summary": {
+      "get": {
+        "operationId": "member_loan_summary_member_loan_summary_get",
+        "parameters": [
+          {
+            "description": "The device's date: the server never guesses 'today'.",
+            "in": "query",
+            "name": "as_of_date",
+            "required": true,
+            "schema": {
+              "description": "The device's date: the server never guesses 'today'.",
+              "format": "date",
+              "title": "As Of Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanSummaryRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Summary"
       }
     },
     "/pipeline-templates": {

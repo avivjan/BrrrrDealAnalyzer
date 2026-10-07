@@ -236,7 +236,7 @@ On top of the earlier checklist:
 - [x] **10** (50 min): `send-member-loan-statement`: idempotent, dry run, retry-failed, lock and expiry on send.
 - [x] **11** (15 min): MCP: exclude `/member-loan`, add `DESCRIPTIONS`.
 - [x] **12** (130 min): Frontend: view, store, API, types, `LoanAmountInput`, tabs including **Waiting for approval**, the approval deep link, nav badge.
-- [ ] **13** (20 min): Regression snapshot. A `Golden update:` commit if needed.
+- [x] **13** (20 min): Regression snapshot. A `Golden update:` commit if needed.
 - [ ] **14** (40 min): Security task.
 - [ ] **15** (25 min): README: the module, the approval flow, env, Render Cron, America/New_York, 30/360 consequences, the Postgres backup check, the stale "no auth" line. Review section.
 - [ ] **16** (15 min): Push `MemberLoan` and open the PR.
