@@ -105,14 +105,16 @@ def assert_pdf_equations_add_up(text: str) -> None:
     for balance, rate, days, interest in periods:
         assert round_half_up_to_cent(parse_money(balance) * D(rate) / 100 * int(days) / 30) == parse_money(interest)
     period_sum = sum((parse_money(p[3]) for p in periods), D("0"))
-    month_interest = re.search(rf"Interest for \w+: (?:(?:{MONEY}) \+ )*({MONEY})", interest_section.split("Already settled")[0])
-    sum_line = re.search(rf"Interest for \w+: ((?:{MONEY} \+ )+{MONEY}) = ({MONEY})", interest_section)
+    # The PDF lays the totals out as table rows (label, formula, "= value"); the
+    # text read back has no colon after the label, the plain-text document does.
+    month_interest = re.search(rf"Interest for \w+:? (?:(?:{MONEY}) \+ )*({MONEY})", interest_section.split("Already settled")[0])
+    sum_line = re.search(rf"Interest for \w+:? ((?:{MONEY} \+ )+{MONEY}) = ({MONEY})", interest_section)
     if sum_line:
         addends = [parse_money(m) for m in re.findall(MONEY, sum_line[1])]
         assert sum(addends, D("0")) == parse_money(sum_line[2]) == period_sum
     else:
         assert parse_money(month_interest[1]) == period_sum
-    added = re.search(rf"Interest added to the debt on \w+ \d+: ({MONEY})((?: - {MONEY})*)(?: = ({MONEY}))?", interest_section)
+    added = re.search(rf"Interest added to the debt on \w+ \d+:? ({MONEY})((?: - {MONEY})*)(?: = ({MONEY}))?", interest_section)
     assert added is not None
     if added[3]:
         subtracted = [parse_money(m) for m in re.findall(MONEY, added[2])]
@@ -120,7 +122,7 @@ def assert_pdf_equations_add_up(text: str) -> None:
 
     debt_section = _between(text, SECTION_HEADINGS[3], SECTION_HEADINGS[4])
     debt_part, owed_part = debt_section.split("Amount Owed on", 1)
-    opening = parse_money(re.search(rf"Total Balance on \w+ \d+: ({MONEY})", debt_part)[1])
+    opening = parse_money(re.search(rf"Total Balance on \w+ \d+:? ({MONEY})", debt_part)[1])
     running_total = opening
     closing = None
     for sign, money in re.findall(rf"(?:^|\s)([+=-]) (\$[\d,]+\.\d{{2}})", debt_part):
@@ -160,17 +162,21 @@ def test_the_six_sections_in_order_with_the_binding_sentence():
 def test_the_december_example_reads_as_agreed():
     document = _document(SCENARIOS["mid-month withdrawal"], date(2026, 12, 1))
     text = pdf_text(render_member_loan_statement_pdf(document.as_plain_dict()))
+    # Read back in table order: the date chip, then the sentence; each period row as
+    # period, balance, "× rate", "× days/30", "= interest"; each ledger row as label, amount.
     assert (
-        "Dec 15 – Aviv withdrew $1,000.00 (proposed by Aviv on Dec 15, approved by Yarden on Dec 15). "
+        "Dec 15 Aviv withdrew $1,000.00 (proposed by Aviv on Dec 15, approved by Yarden on Dec 15). "
         "It was taken from accrued interest ($144.77), then capitalized interest ($611.24), then principal ($243.99)."
     ) in text
-    assert "Dec 1 – Dec 15: $31,021.24 × 1% × 14/30 = $144.77" in text
-    assert "Dec 15 – Jan 1: $30,166.01 × 1% × 16/30 = $160.89" in text
-    assert "Interest for December: $144.77 + $160.89 = $305.66" in text
-    assert "= $30,326.90 Total Balance on Jan 1" in text
+    assert "Dec 1 – Dec 15 $31,021.24 × 1% × 14/30 = $144.77" in text
+    assert "Dec 15 – Jan 1 $30,166.01 × 1% × 16/30 = $160.89" in text
+    assert "Interest for December $144.77 + $160.89 = $305.66" in text
+    assert "Total Balance on Jan 1 = $30,326.90" in text
+    assert "AMOUNT OWED ON JAN 1 $30,326.90" in text  # the hero card
     for label, value in (("Total Balance on Dec 1", "$31,021.24"), ("Interest for December", "$305.66"),
-                         ("Changes this month", "1"), ("Total Balance on Jan 1", "$30,326.90"), ("Amount Owed on Jan 1", "$30,326.90")):
+                         ("Changes this month", "1"), ("Total Balance on Jan 1", "$30,326.90")):
         assert f"{label} {value}" in text
+    assert "Monthly Statement" in text and "December 2026" in text and "Jan 1, 2027" in text  # the header band
 
 
 def test_a_yarden_increase_and_left_out_proposals_are_warned_about():
@@ -185,7 +191,8 @@ def test_a_yarden_increase_and_left_out_proposals_are_warned_about():
 def test_30_360_days_are_explained_where_they_differ_from_the_calendar():
     document = _document(SCENARIOS["advance on feb 28"], date(2027, 2, 1))
     text = pdf_text(render_member_loan_statement_pdf(document.as_plain_dict()))
-    assert "Feb 28 – Mar 1: $32,644.76 × 1% × 3/30 = $32.64 (30-day months: 1 calendar day counts as 3)" in text
+    assert "Feb 28 – Mar 1 $32,644.76 × 1% × 3/30 = $32.64" in text
+    assert "Feb 28 – Mar 1: every month counts as 30 days, so 1 calendar day counts as 3 days." in text
     assert "a change on Feb 28 counts 3 days" in text
 
 
