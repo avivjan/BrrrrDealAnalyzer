@@ -100,6 +100,7 @@ describe("ArvEstimateWithClaudePopup", () => {
     await nextTick();
     expect((byTestId("arvEstimate.address") as HTMLInputElement).value).toBe("123 Main St, Cleveland, OH");
     expect(byTestId("arvEstimate.strategy")!.textContent).toContain("Flip — conservative");
+    expect(byTestId("arvEstimate.costNote")!.textContent).toContain("Each estimate costs roughly $0.10–0.50");
   });
 
   it("sends the address, the note and the deal's facts in dollars", async () => {

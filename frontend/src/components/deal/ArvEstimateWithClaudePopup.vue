@@ -41,6 +41,8 @@ const estimateErrorMessage = ref<string | null>(null);
 const arvEstimate = ref<ArvEstimateRes | null>(null);
 
 const INVESTOR_SITUATION_NOTE_MAX_LENGTH = 2000;
+/** Opus with live web search; shown before every click so the spend is never a surprise. */
+const ARV_ESTIMATE_COST_NOTE = "Each estimate costs roughly $0.10–0.50 in Claude API usage.";
 
 const isBrrrr = computed(() => props.dealType === "BRRRR");
 const strategyLabel = computed(() => (isBrrrr.value ? "BRRRR — appraisal lens (3–4 strongest comps)" : "Flip — conservative market lens"));
@@ -235,6 +237,9 @@ const activeOrPendingComparableRows = computed(() =>
         <div class="space-y-4">
           <p class="text-sm text-fg-muted">
             Strategy: <span data-testid="arvEstimate.strategy" class="font-medium text-fg">{{ strategyLabel }}</span>
+          </p>
+          <p data-testid="arvEstimate.costNote" class="-mt-3 text-xs text-fg-muted">
+            <i class="pi pi-info-circle mr-1" aria-hidden="true"></i>{{ ARV_ESTIMATE_COST_NOTE }}
           </p>
 
           <UiField>

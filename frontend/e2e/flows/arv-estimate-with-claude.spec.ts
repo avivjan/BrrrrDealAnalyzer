@@ -83,6 +83,7 @@ test('a BRRRR estimate from the deal modal fills ARV and Lowest ARV', async ({ p
   await openTabOf(page, 'arv_in_thousands');
 
   await page.getByTestId('form.action.estimateArvWithClaude').click();
+  await expect(page.getByTestId('arvEstimate.costNote')).toContainText('$0.10–0.50');
   await page.getByTestId('arvEstimate.note').fill('Full gut rehab, adding a second bathroom.');
   await page.getByTestId('arvEstimate.submit').click();
 

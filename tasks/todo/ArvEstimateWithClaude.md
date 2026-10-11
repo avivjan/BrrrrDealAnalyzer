@@ -192,5 +192,7 @@ and no exploitable vulnerability anywhere in the repo. Concretely:
     on re-run and is unrelated.
   - bandit, pip-audit and npm audit are clean.
   - `security-review`: no findings.
+- **Cost note:** the popup always shows "Each estimate costs roughly $0.10–0.50 in Claude API usage." under the
+  strategy line (`arvEstimate.costNote`), added at the user's request.
 - **Not verified:** no live Claude call. There is no API key in the sandbox, so the first real estimate should be
   checked by hand after `ANTHROPIC_API_KEY` is set on Render.
