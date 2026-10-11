@@ -16,6 +16,7 @@ from routers.deals import router as deals
 from routers.auth import router as auth
 from routers.devices import router as devices
 from routers.member_loan import router as member_loan
+from routers.arv_estimate import router as arv_estimate
 
 # Matches the top-to-bottom endpoint definition order in the pre-refactor
 # main.py.
@@ -33,4 +34,5 @@ ALL_ROUTERS = [
     auth,
     devices,
     member_loan,  # self-gated like devices: exactly the two members, on a passkey (tasks/todo/MemberLoan.md)
+    arv_estimate,  # Claude-backed ARV estimate (tasks/todo/ArvEstimateWithClaude.md)
 ]

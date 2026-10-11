@@ -27,6 +27,9 @@ google-cloud-storage==3.13.1
 # MCP server (mcp_server.py): exposes every endpoint as a tool for Claude connectors.
 mcp==1.29.1
 
+# Claude API (BL/arvEstimate): the "Estimate ARV with Claude" popup.
+anthropic==1.13.0
+
 # Test suite (BackEnd/tests). Kept in the main requirements file because the
 # Render build installs from it before running pytest in the pre-deploy step.
 # httpx is what fastapi.testclient.TestClient is built on.

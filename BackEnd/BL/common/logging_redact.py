@@ -38,7 +38,7 @@ def install_access_log_redaction() -> None:
 # --- Secret values -------------------------------------------------------- #
 
 # Environment variables whose values must never appear in a log line.
-SECRET_ENV_VARS = ("EMAIL_PASSWORD", "APP_KEY", "MCP_PATH_SECRET", "DATABASE_URL")
+SECRET_ENV_VARS = ("EMAIL_PASSWORD", "APP_KEY", "MCP_PATH_SECRET", "DATABASE_URL", "ANTHROPIC_API_KEY")
 _SECRET_ENV_PREFIXES = ("MERCURY_API_TOKEN",)
 _BEARER = re.compile(r"(Bearer\s+)[A-Za-z0-9._~+/=-]+")
 

@@ -178,6 +178,12 @@ DESCRIPTIONS: dict[str, str] = {
         "Send a purchase-offer e-mail to a listing agent (the dashboard's 'Send Market Offer' "
         "form). This sends a real e-mail; purchase_price is in plain dollars."
     ),
+    # --- ARV estimate ---
+    "estimate_arv_with_claude": (
+        "Estimate a property's ARV with Claude and live web search. FLIP: conservative, with days on "
+        "market. BRRRR: appraiser lens on the 3-4 strongest comps. Returns range, target, conservative "
+        "lowest ARV, confidence 1-10 and the comps, in dollars. Takes 30-90 s, spends API credit, saves nothing."
+    ),
     # --- Liquidity timeline ---
     "list_liquidity_transactions": (
         "List one-off cash events on the Liquidity timeline (amount_k in thousands, positive "
@@ -249,7 +255,7 @@ EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
 # site's own data; GET tools are read-only.
-OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch"}
+OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template"}
 
