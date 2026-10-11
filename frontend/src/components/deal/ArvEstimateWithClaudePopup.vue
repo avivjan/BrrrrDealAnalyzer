@@ -131,11 +131,12 @@ async function requestArvEstimate() {
     arvEstimate.value = await api.estimateArvWithClaude(buildArvEstimateRequest());
   } catch (error: any) {
     const detail = error?.response?.data?.detail;
+    const httpStatus = error?.response?.status;
     estimateErrorMessage.value =
       typeof detail === "string"
         ? detail
-        : error?.code === "ECONNABORTED"
-          ? "Claude took too long to answer; try again."
+        : httpStatus
+          ? `The ARV estimate failed (HTTP ${httpStatus}); try again.`
           : "The ARV estimate failed; try again.";
   } finally {
     isEstimateInProgress.value = false;
@@ -286,7 +287,7 @@ const activeOrPendingComparableRows = computed(() =>
           <div v-if="isEstimateInProgress" data-testid="arvEstimate.loading" role="status" class="space-y-2">
             <p class="text-sm text-fg-muted">
               <i class="pi pi-spin pi-spinner mr-1" aria-hidden="true"></i>
-              Claude is pulling comps and adjusting them — usually 30–90 seconds.
+              Claude is pulling comps and adjusting them — usually 1–3 minutes. Keep this open.
             </p>
             <UiSkeleton :lines="4" />
           </div>

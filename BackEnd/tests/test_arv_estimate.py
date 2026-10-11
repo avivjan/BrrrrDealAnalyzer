@@ -13,7 +13,7 @@ import pytest
 from pydantic import ValidationError
 
 from BL.arvEstimate import estimateArv
-from BL.arvEstimate.common import anthropic_arv_client
+from BL.arvEstimate.common import anthropic_arv_client, arv_estimate_jobs
 from BL.arvEstimate.common.anthropic_arv_client import (
     ArvEstimateFailedError,
     ArvEstimateNotConfiguredError,
@@ -282,43 +282,128 @@ class TestRequestArvEstimateFromClaude:
 
 
 # --------------------------------------------------------------------------- #
-# Route (integration, through the app and its gates)
+# Background jobs (unit)
 # --------------------------------------------------------------------------- #
 
-def install_a_fake_claude_answer(monkeypatch, answer: dict | None = None) -> list:
+class SynchronousExecutor:
+    """Runs a submitted job before `submit` returns, so a test sees the finished job."""
+
+    def submit(self, function, *arguments):
+        function(*arguments)
+
+
+class HeldExecutor:
+    """Keeps submitted jobs until `run_held_jobs`, so a test sees them RUNNING first."""
+
+    def __init__(self):
+        self.held_jobs = []
+
+    def submit(self, function, *arguments):
+        self.held_jobs.append((function, arguments))
+
+    def run_held_jobs(self):
+        for function, arguments in self.held_jobs:
+            function(*arguments)
+        self.held_jobs.clear()
+
+
+def install_a_fake_claude_answer(monkeypatch, answer: dict | None = None, executor=None) -> list:
     received_requests: list = []
 
     def fake_estimate_arv_with_claude(arv_estimate_request):
         received_requests.append(arv_estimate_request)
         return ArvEstimateRes.model_validate(answer or a_valid_claude_arv_answer())
 
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake-key-for-tests")
     monkeypatch.setattr(estimateArv, "estimate_arv_with_claude", fake_estimate_arv_with_claude)
+    monkeypatch.setattr(arv_estimate_jobs, "arv_estimate_job_executor", executor or SynchronousExecutor())
     return received_requests
 
 
-class TestArvEstimateRoute:
-    def test_returns_the_estimate(self, client, monkeypatch):
-        received_requests = install_a_fake_claude_answer(monkeypatch)
-        response = client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST)
-        assert response.status_code == 200, response.text
-        assert response.json()["target_arv"] == 205000
-        assert response.json()["sold_comparables"][0]["address"] == "130 Main St, Cleveland, OH"
+def install_a_failing_claude_estimate(monkeypatch, error: Exception) -> None:
+    def failing_estimate(_):
+        raise error
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake-key-for-tests")
+    monkeypatch.setattr(estimateArv, "estimate_arv_with_claude", failing_estimate)
+    monkeypatch.setattr(arv_estimate_jobs, "arv_estimate_job_executor", SynchronousExecutor())
+
+
+class TestArvEstimateJobs:
+    def test_a_job_runs_and_keeps_its_estimate(self, monkeypatch):
+        install_a_fake_claude_answer(monkeypatch)
+        job = arv_estimate_jobs.start_arv_estimate_job(ArvEstimateReq(**VALID_BRRRR_ARV_ESTIMATE_REQUEST))
+        found_job = arv_estimate_jobs.find_arv_estimate_job(job.arv_estimate_job_id)
+        assert found_job.status == "SUCCEEDED"
+        assert found_job.arv_estimate.target_arv == 205000
+        assert len(job.arv_estimate_job_id) == 32
+
+    def test_a_failed_estimate_keeps_its_safe_message(self, monkeypatch):
+        install_a_failing_claude_estimate(monkeypatch, ArvEstimateFailedError("Claude declined to estimate this property."))
+        job = arv_estimate_jobs.start_arv_estimate_job(ArvEstimateReq(**VALID_BRRRR_ARV_ESTIMATE_REQUEST))
+        assert (job.status, job.failure_message) == ("FAILED", "Claude declined to estimate this property.")
+
+    def test_an_unexpected_error_never_reaches_the_user(self, monkeypatch):
+        install_a_failing_claude_estimate(monkeypatch, KeyError("internal detail /srv/secret/path"))
+        job = arv_estimate_jobs.start_arv_estimate_job(ArvEstimateReq(**VALID_BRRRR_ARV_ESTIMATE_REQUEST))
+        assert job.status == "FAILED"
+        assert job.failure_message == arv_estimate_jobs.UNEXPECTED_FAILURE_MESSAGE
+
+    def test_finished_jobs_are_forgotten_after_the_retention_period(self, monkeypatch):
+        install_a_fake_claude_answer(monkeypatch)
+        job = arv_estimate_jobs.start_arv_estimate_job(ArvEstimateReq(**VALID_BRRRR_ARV_ESTIMATE_REQUEST))
+        job.finished_at_monotonic_seconds -= arv_estimate_jobs.FINISHED_JOB_RETENTION_SECONDS + 1
+        assert arv_estimate_jobs.find_arv_estimate_job(job.arv_estimate_job_id) is None
+
+    def test_a_running_job_is_never_forgotten(self, monkeypatch):
+        held_executor = HeldExecutor()
+        install_a_fake_claude_answer(monkeypatch, executor=held_executor)
+        job = arv_estimate_jobs.start_arv_estimate_job(ArvEstimateReq(**VALID_BRRRR_ARV_ESTIMATE_REQUEST))
+        job.created_at_monotonic_seconds -= arv_estimate_jobs.FINISHED_JOB_RETENTION_SECONDS * 10
+        assert arv_estimate_jobs.find_arv_estimate_job(job.arv_estimate_job_id).status == "RUNNING"
+
+
+# --------------------------------------------------------------------------- #
+# Routes (integration, through the app and its gates)
+# --------------------------------------------------------------------------- #
+
+class TestArvEstimateRoutes:
+    def test_starts_a_job_then_the_poll_returns_the_estimate(self, client, monkeypatch):
+        held_executor = HeldExecutor()
+        received_requests = install_a_fake_claude_answer(monkeypatch, executor=held_executor)
+        start_response = client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST)
+        assert start_response.status_code == 202, start_response.text
+        arv_estimate_job_id = start_response.json()["arv_estimate_job_id"]
+        assert start_response.json()["status"] == "RUNNING"
+        assert start_response.json()["arv_estimate"] is None
+
+        running_poll = client.get(f"/arv-estimate/{arv_estimate_job_id}")
+        assert (running_poll.status_code, running_poll.json()["status"]) == (200, "RUNNING")
+
+        held_executor.run_held_jobs()
+        finished_poll = client.get(f"/arv-estimate/{arv_estimate_job_id}").json()
+        assert finished_poll["status"] == "SUCCEEDED"
+        assert finished_poll["arv_estimate"]["target_arv"] == 205000
+        assert finished_poll["arv_estimate"]["sold_comparables"][0]["address"] == "130 Main St, Cleveland, OH"
         assert received_requests[0].deal_type == "BRRRR"
 
-    def test_without_an_api_key_answers_503(self, client, monkeypatch):
+    def test_a_failed_job_reports_the_safe_message(self, client, monkeypatch):
+        install_a_failing_claude_estimate(monkeypatch, ArvEstimateFailedError("Claude declined to estimate this property."))
+        arv_estimate_job_id = client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST).json()["arv_estimate_job_id"]
+        poll = client.get(f"/arv-estimate/{arv_estimate_job_id}").json()
+        assert (poll["status"], poll["failure_message"]) == ("FAILED", "Claude declined to estimate this property.")
+
+    def test_an_unknown_job_is_404(self, client):
+        response = client.get("/arv-estimate/0123456789abcdef0123456789abcdef")
+        assert response.status_code == 404
+        assert "start a new one" in response.json()["detail"]
+
+    def test_without_an_api_key_answers_503_and_starts_nothing(self, client, monkeypatch):
+        install_a_fake_claude_answer(monkeypatch)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         response = client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST)
         assert response.status_code == 503
         assert "not configured" in response.json()["detail"]
-
-    def test_a_failed_estimate_answers_502_with_the_safe_message(self, client, monkeypatch):
-        def failing_estimate(_):
-            raise ArvEstimateFailedError("Claude declined to estimate this property.")
-
-        monkeypatch.setattr(estimateArv, "estimate_arv_with_claude", failing_estimate)
-        response = client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST)
-        assert response.status_code == 502
-        assert response.json()["detail"] == "Claude declined to estimate this property."
 
     def test_rejects_a_bad_body_with_422(self, client, monkeypatch):
         install_a_fake_claude_answer(monkeypatch)
@@ -329,7 +414,7 @@ class TestArvEstimateRoute:
         install_a_fake_claude_answer(monkeypatch)
         monkeypatch.setenv("ARV_ESTIMATE_PER_HOUR", "2")
         statuses = [client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST).status_code for _ in range(3)]
-        assert statuses == [200, 200, 429]
+        assert statuses == [202, 202, 429]
 
     def test_the_audit_never_records_the_address_or_note(self, client, monkeypatch):
         install_a_fake_claude_answer(monkeypatch)
@@ -342,26 +427,31 @@ class TestArvEstimateRoute:
         assert len(audit_rows) == 1
         assert "Main St" not in str(audit_rows[0].detail) and "rehab" not in str(audit_rows[0].detail)
 
-    def test_is_behind_the_app_key_gate(self, client, monkeypatch):
+    def test_both_routes_are_behind_the_app_key_gate(self, client, monkeypatch):
         install_a_fake_claude_answer(monkeypatch)
         monkeypatch.setenv("APP_KEY_MODE", "enforce")
         monkeypatch.setenv("APP_KEY", "k" * 40)
         assert client.post("/arv-estimate", json=VALID_BRRRR_ARV_ESTIMATE_REQUEST).status_code == 401
+        assert client.get("/arv-estimate/0123456789abcdef0123456789abcdef").status_code == 401
 
 
 # --------------------------------------------------------------------------- #
-# MCP tool
+# MCP tools
 # --------------------------------------------------------------------------- #
 
-class TestArvEstimateMcpTool:
-    def test_is_listed_as_an_open_world_non_destructive_tool(self, client):
-        tool = mcp_server.tools()["estimate_arv_with_claude"]
-        annotations = mcp_server.tool_annotations("estimate_arv_with_claude", tool["method"])
-        assert annotations.openWorldHint is True
-        assert annotations.destructiveHint is False
+class TestArvEstimateMcpTools:
+    def test_start_is_open_world_and_the_poll_is_read_only(self, client):
+        start_tool = mcp_server.tools()["estimate_arv_with_claude"]
+        start_annotations = mcp_server.tool_annotations("estimate_arv_with_claude", start_tool["method"])
+        assert (start_annotations.openWorldHint, start_annotations.destructiveHint) == (True, False)
+        poll_tool = mcp_server.tools()["get_arv_estimate_job"]
+        poll_annotations = mcp_server.tool_annotations("get_arv_estimate_job", poll_tool["method"])
+        assert (poll_annotations.readOnlyHint, poll_annotations.openWorldHint) == (True, False)
 
-    def test_returns_the_structured_estimate(self, client, monkeypatch):
+    def test_start_then_poll_returns_the_structured_estimate(self, client, monkeypatch):
         install_a_fake_claude_answer(monkeypatch)
-        result = call_json("estimate_arv_with_claude", body={**VALID_BRRRR_ARV_ESTIMATE_REQUEST, "deal_type": "FLIP"})
-        assert result["target_arv"] == 205000
-        assert result["market_pace_verdict"] == "NORMAL"
+        started_job = call_json("estimate_arv_with_claude", body={**VALID_BRRRR_ARV_ESTIMATE_REQUEST, "deal_type": "FLIP"})
+        polled_job = call_json("get_arv_estimate_job", arv_estimate_job_id=started_job["arv_estimate_job_id"])
+        assert polled_job["status"] == "SUCCEEDED"
+        assert polled_job["arv_estimate"]["target_arv"] == 205000
+        assert polled_job["arv_estimate"]["market_pace_verdict"] == "NORMAL"

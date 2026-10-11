@@ -64,3 +64,11 @@ export interface ArvEstimateRes {
   data_caveats: string[];
   source_urls: string[];
 }
+
+/** `POST /arv-estimate` starts a job; `GET /arv-estimate/{arv_estimate_job_id}` is polled until it is not RUNNING. */
+export interface ArvEstimateJobRes {
+  arv_estimate_job_id: string;
+  status: 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  arv_estimate: ArvEstimateRes | null;
+  failure_message: string | null;
+}
