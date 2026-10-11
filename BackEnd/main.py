@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from db import engine, SessionLocal
 import bootstrap
-from routers import ALL_ROUTERS, auth as auth_router, devices as devices_router, health as health_router
+from routers import ALL_ROUTERS, auth as auth_router, devices as devices_router, health as health_router, member_loan as member_loan_router
 from BL.auth.common.app_key import require_app_key
 from BL.auth.common.session_dependency import require_session
 from BL.common.body_limit import BodyLimitMiddleware
@@ -81,8 +81,9 @@ app.add_middleware(
 # `/auth/*` stay public. Neither dependency declares a parameter, so the
 # OpenAPI contract of the existing operations is unchanged.
 # `devices` gates itself: every call needs a real session whatever AUTH_MODE
-# says, and `GET /devices/me` must answer a pending device.
-PUBLIC_ROUTERS = (health_router, auth_router, devices_router)
+# says, and `GET /devices/me` must answer a pending device. `member_loan` gates
+# itself the same way, and only for the two members (BL/memberLoan/common/member_loan_access.py).
+PUBLIC_ROUTERS = (health_router, auth_router, devices_router, member_loan_router)
 
 
 def install_routers(target: FastAPI) -> None:
@@ -100,3 +101,9 @@ install_secret_redaction()
 
 # One MCP tool per endpoint above, served at /mcp[/<MCP_PATH_SECRET>].
 mcp_server.mount(app)
+
+# The monthly Member Loan statement is sent from here, in production only
+# (BL/memberLoan/common/member_loan_statement_schedule.py): no separate cron job.
+from BL.memberLoan.common.member_loan_statement_schedule import start_member_loan_statement_schedule  # noqa: E402
+
+start_member_loan_statement_schedule(IS_PRODUCTION)

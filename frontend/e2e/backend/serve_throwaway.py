@@ -33,6 +33,15 @@ if str(BACKEND_DIR) not in sys.path:
 # Order matters: this must run before `main` is imported.
 import verify_regression  # noqa: E402,F401  (imported for its side effects)
 
+import os  # noqa: E402
+
+# The Member Loan's two members for `e2e/checks/member-loan.spec.ts`. No e-mail
+# address and no SMTP password: every notification takes its "not sent" branch
+# and is audited as such.
+os.environ.setdefault("MEMBER_LOAN_LENDER_USERNAME", "e2e-aviv")
+os.environ.setdefault("MEMBER_LOAN_YARDEN_USERNAME", "e2e-yarden")
+os.environ.setdefault("MEMBER_LOAN_ALLOWED_USERNAMES", "e2e-aviv,e2e-yarden")
+
 import main  # noqa: E402
 import uvicorn  # noqa: E402
 

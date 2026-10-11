@@ -5,6 +5,7 @@
     python manage.py approve-device <device-id>
     python manage.py revoke-device <device-id>
     python manage.py revoke-sessions [--user <username>]
+    python manage.py send-member-loan-statement [--month 2026-10] [--dry-run] [--retry-failed] [--output-dir DIR]
 
 `enroll` prints a one-time enrollment link (15 minutes). Open it on the device
 to enrol; the passkey created there is the login from then on.
@@ -109,6 +110,41 @@ def cmd_revoke_sessions(args) -> int:
     return 0
 
 
+def cmd_send_member_loan_statement(args) -> int:
+    """The monthly Member Loan statement (Render Cron Job, 1st of each month, America/New_York).
+
+    Without --month: the month that just ended in New York. A dry run (also forced
+    while MEMBER_LOAN_EMAIL_DRY_RUN is not `false`) writes the e-mail and PDF into
+    --output-dir and sends nothing. Exit code 1 only when a real send failed.
+    """
+    from datetime import date
+    from pathlib import Path
+
+    from BL.memberLoan.common.member_loan_settings import MemberLoanMisconfigured
+    from BL.memberLoan.common.member_loan_statement_sender import send_member_loan_statement
+
+    month = None
+    if args.month:
+        year, month_number = (int(part) for part in args.month.split("-"))
+        month = date(year, month_number, 1)
+    try:
+        with SessionLocal() as db:
+            result = send_member_loan_statement(
+                db,
+                statement_month=month,
+                dry_run_requested=args.dry_run,
+                retry_failed=args.retry_failed,
+                dry_run_output_directory=Path(args.output_dir) if args.output_dir else None,
+            )
+    except MemberLoanMisconfigured as error:
+        print(f"member loan is not configured: {error}", file=sys.stderr)
+        return 1
+    print(f"{result.statement_month:%Y-%m}: {result.outcome}. {result.message}")
+    for path in result.written_files:
+        print(f"  wrote {path}")
+    return 1 if result.outcome == "failed" else 0
+
+
 def main(argv=None) -> int:
     bootstrap.run(engine, SessionLocal)
     parser = argparse.ArgumentParser(prog="manage.py")
@@ -118,6 +154,8 @@ def main(argv=None) -> int:
     p = sub.add_parser("approve-device"); p.add_argument("device_id"); p.set_defaults(fn=cmd_approve_device)
     p = sub.add_parser("revoke-device"); p.add_argument("device_id"); p.set_defaults(fn=cmd_revoke_device)
     p = sub.add_parser("revoke-sessions"); p.add_argument("--user"); p.set_defaults(fn=cmd_revoke_sessions)
+    p = sub.add_parser("send-member-loan-statement"); p.add_argument("--month"); p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--retry-failed", action="store_true"); p.add_argument("--output-dir"); p.set_defaults(fn=cmd_send_member_loan_statement)
     args = parser.parse_args(argv)
     return args.fn(args)
 

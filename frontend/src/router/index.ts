@@ -10,10 +10,14 @@ import EnrollView from '../views/EnrollView.vue'
 import PendingApproval from '../views/PendingApproval.vue'
 import ConnectView from '../views/ConnectView.vue'
 import SettingsDevices from '../views/SettingsDevices.vue'
+import MemberLoan from '../views/MemberLoan.vue'
 import { useAuthStore } from '../stores/authStore'
 
 /** Routes that never require a session, and are not in the primary nav. */
 export const AUTH_ROUTE_NAMES = ['login', 'enroll', 'pending', 'connect', 'devices'] as const
+
+/** The Member Loan (two members only): reached from the session strip and e-mails, not the primary nav. */
+export const MEMBER_LOAN_ROUTE_NAMES = ['member-loan', 'member-loan-approval'] as const
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,7 +58,11 @@ const router = createRouter({
     { path: '/enroll', name: 'enroll', component: EnrollView, meta: { auth: true } },
     { path: '/pending', name: 'pending', component: PendingApproval, meta: { auth: true } },
     { path: '/connect', name: 'connect', component: ConnectView, meta: { auth: true } },
-    { path: '/settings/devices', name: 'devices', component: SettingsDevices, meta: { auth: true } }
+    { path: '/settings/devices', name: 'devices', component: SettingsDevices, meta: { auth: true } },
+    // The Member Loan gates itself on the API (exactly the two members, on a
+    // passkey); the session strip links it only for them.
+    { path: '/member-loan', name: 'member-loan', component: MemberLoan },
+    { path: '/member-loan/approvals/:eventId', name: 'member-loan-approval', component: MemberLoan, props: true }
   ]
 })
 
