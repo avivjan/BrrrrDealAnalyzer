@@ -2,6 +2,10 @@
 # Bump deliberately; Dependabot (.github/dependabot.yml) proposes updates and
 # CI's pip-audit fails the build on a known advisory.
 fastapi==0.141.1
+# FastAPI's model layer, pinned because it renders the OpenAPI document that
+# tests/test_mcp.py compares byte for byte (pydantic 2.14 changed that output).
+pydantic==2.13.5
+pydantic-core==2.46.5
 uvicorn[standard]==0.32.1
 SQLAlchemy==2.0.52
 psycopg2-binary==2.9.12
