@@ -424,6 +424,6 @@ Execution order follows the Todo list. Each item is checked off in `tasks/todo/M
 ### For the owner
 
 1. Set the `MEMBER_LOAN_*` variables on Render. Use the two passkey usernames from `python manage.py list-devices`, then your two e-mail addresses.
-2. Create the Render Cron Job from the README. Run one dry run and read the files before setting `MEMBER_LOAN_EMAIL_DRY_RUN=false`. The first real statement is due 2026-11-01.
+2. ~~Create the Render Cron Job~~: replaced (2026-10-11) by an automatic send inside the web service (`member_loan_statement_schedule.py`), so no cron job and no copied secrets are needed. The first real statement is due 2026-11-01.
 3. Check the Render Postgres plan and backup retention.
 4. Section 3 of your revision was cut off. Withdrawals take an amount only (tentative D17). Resend the section if anything else changes.

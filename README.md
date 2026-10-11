@@ -727,7 +727,8 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_LENDER_USERNAME`, `MEMBER_LOAN_YARDEN_USERNAME`, `MEMBER_LOAN_ALLOWED_USERNAMES` | `BackEnd/BL/memberLoan/common/member_loan_settings.py` | The two members' passkey usernames; the allow-list must name exactly those two, otherwise every `/member-loan` route answers 503 |
 | `MEMBER_LOAN_LENDER_EMAIL`, `MEMBER_LOAN_YARDEN_EMAIL` | Member Loan | Where each member's e-mail goes (never sent to the frontend) |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
-| `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is only rendered to files. Set `false` once a dry run was checked |
+| `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
+| `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
 | `MEMBER_LOAN_APP_ORIGIN`, `MEMBER_LOAN_WRITES_PER_HOUR`, `MEMBER_LOAN_DRY_RUN_DIRECTORY` | Member Loan | Link base in e-mails (default `AUTH_APP_ORIGIN`), write rate limit per member (30), dry-run output folder |
 | `TEST_DATABASE_URL` | tests only | Defaults to the compose container |
 | `NIGHTLY_MAIL_USERNAME`, `NIGHTLY_MAIL_PASSWORD` | GitHub Actions secrets | Nightly e-mail |
@@ -757,14 +758,14 @@ the deciding calculator. The plan, decisions and tests are in
 - **E-mail** (Gmail SMTP, `EMAIL_PASSWORD`): a proposal goes to the other member with a link that
   only opens the app; every decision goes to both. Failures are audited and never undo a change.
 
-**Monthly statement: a Render Cron Job.** Same repository and environment group as the web
-service; build `pip install -r BackEnd/requirements.txt`; command
-`cd BackEnd && python manage.py send-member-loan-statement`; schedule `13 11 1 * *`. Render
-schedules are in UTC, so that is 6:13 or 7:13 on the 1st in New York; the command itself decides
-"the month that just ended" in **America/New_York** (the loan is in Florida). It sends at most once: a second run, or an interrupted one, never sends again (`--retry-failed`
-after a failure). Start with `MEMBER_LOAN_EMAIL_DRY_RUN=true`, check the files from
-`python manage.py send-member-loan-statement --dry-run --output-dir <path-to>/statement`, then set it to
-`false`.
+**Monthly statement: automatic, inside the web service.** In production a background thread
+checks every 30 minutes; from 06:00 in New York on the 1st it e-mails the statement for the
+month that just ended to both members (`BL/memberLoan/common/member_loan_statement_schedule.py`).
+No cron job is needed. The database guarantees a month is never sent twice; a failed send is
+retried up to three times; an interrupted one is never repeated. While
+`MEMBER_LOAN_EMAIL_DRY_RUN` is not `false` it sends nothing. By hand:
+`cd BackEnd && python manage.py send-member-loan-statement [--dry-run --output-dir <path-to>/statement]`.
+`MEMBER_LOAN_STATEMENT_SCHEDULE=off` turns the automatic send off.
 
 **Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
 only in this database.

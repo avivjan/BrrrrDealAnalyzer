@@ -1,4 +1,4 @@
-"""The monthly statement e-mail (run by `manage.py send-member-loan-statement`, a Render Cron Job).
+"""The monthly statement e-mail (run automatically by member_loan_statement_schedule.py, or by hand with `manage.py send-member-loan-statement`).
 
 Never sends the same month twice:
   1. a `sending` row is committed first; a partial unique index allows only one

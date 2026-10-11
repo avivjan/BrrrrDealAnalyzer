@@ -101,3 +101,9 @@ install_secret_redaction()
 
 # One MCP tool per endpoint above, served at /mcp[/<MCP_PATH_SECRET>].
 mcp_server.mount(app)
+
+# The monthly Member Loan statement is sent from here, in production only
+# (BL/memberLoan/common/member_loan_statement_schedule.py): no separate cron job.
+from BL.memberLoan.common.member_loan_statement_schedule import start_member_loan_statement_schedule  # noqa: E402
+
+start_member_loan_statement_schedule(IS_PRODUCTION)
