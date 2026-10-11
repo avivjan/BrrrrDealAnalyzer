@@ -23,6 +23,10 @@ import type {
   RepsActivityCategoryRes,
   RepsUploadBatchRes,
 } from '../types/reps';
+import type { ArvEstimateReq, ArvEstimateRes } from '../types/arvEstimate';
+
+/** Claude searches the web for comps before answering; an estimate usually takes 30-90 s. */
+export const ARV_ESTIMATE_REQUEST_TIMEOUT_MILLISECONDS = 5 * 60 * 1000;
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -249,6 +253,14 @@ export default {
       console.groupEnd();
       throw error;
     }
+  },
+
+  /** Ask Claude (via the backend) for an ARV estimate of one property. Nothing is saved. */
+  async estimateArvWithClaude(data: ArvEstimateReq): Promise<ArvEstimateRes> {
+    const response = await apiClient.post<ArvEstimateRes>('/arv-estimate', data, {
+      timeout: ARV_ESTIMATE_REQUEST_TIMEOUT_MILLISECONDS,
+    });
+    return response.data;
   },
 
   // Bought Deals

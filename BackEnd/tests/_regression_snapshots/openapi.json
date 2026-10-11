@@ -1,6 +1,493 @@
 {
   "components": {
     "schemas": {
+      "ArvComparableProperty": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "adjusted_value_for_subject": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This comp's price after bed/bath/size/lot adjustments to match the subject.",
+            "title": "Adjusted Value For Subject"
+          },
+          "adjustment_explanation": {
+            "default": "",
+            "title": "Adjustment Explanation",
+            "type": "string"
+          },
+          "bathrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bathrooms"
+          },
+          "bedrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bedrooms"
+          },
+          "days_on_market": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days On Market"
+          },
+          "distance_from_subject_in_miles": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance From Subject In Miles"
+          },
+          "listing_status": {
+            "enum": [
+              "SOLD",
+              "ACTIVE",
+              "PENDING"
+            ],
+            "title": "Listing Status",
+            "type": "string"
+          },
+          "lot_size_square_feet": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lot Size Square Feet"
+          },
+          "price_per_square_foot": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Per Square Foot"
+          },
+          "renovation_condition": {
+            "description": "e.g. 'Flip-grade renovated', 'Turn-key', 'Partially updated'.",
+            "title": "Renovation Condition",
+            "type": "string"
+          },
+          "sale_or_list_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO date (YYYY-MM-DD) of the sale, or of the listing for active/pending.",
+            "title": "Sale Or List Date"
+          },
+          "sale_or_list_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sale Or List Price"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "square_feet": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Square Feet"
+          },
+          "weight_in_valuation": {
+            "enum": [
+              "PRIMARY",
+              "SUPPORTING",
+              "EXCLUDED"
+            ],
+            "title": "Weight In Valuation",
+            "type": "string"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "required": [
+          "address",
+          "listing_status",
+          "renovation_condition",
+          "weight_in_valuation"
+        ],
+        "title": "ArvComparableProperty",
+        "type": "object"
+      },
+      "ArvDiscardedComparable": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "reason_for_discarding": {
+            "title": "Reason For Discarding",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "reason_for_discarding"
+        ],
+        "title": "ArvDiscardedComparable",
+        "type": "object"
+      },
+      "ArvEstimateReq": {
+        "properties": {
+          "deal_type": {
+            "enum": [
+              "BRRRR",
+              "FLIP"
+            ],
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "investor_situation_note": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Investor Situation Note",
+            "type": "string"
+          },
+          "property_address": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Property Address",
+            "type": "string"
+          },
+          "purchase_price": {
+            "anyOf": [
+              {
+                "maximum": 100000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Price"
+          },
+          "rehab_budget": {
+            "anyOf": [
+              {
+                "maximum": 100000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rehab Budget"
+          },
+          "subject_bathrooms": {
+            "anyOf": [
+              {
+                "maximum": 50.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Bathrooms"
+          },
+          "subject_bedrooms": {
+            "anyOf": [
+              {
+                "maximum": 50.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Bedrooms"
+          },
+          "subject_square_feet": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Square Feet"
+          }
+        },
+        "required": [
+          "deal_type",
+          "property_address"
+        ],
+        "title": "ArvEstimateReq",
+        "type": "object"
+      },
+      "ArvEstimateRes": {
+        "properties": {
+          "active_or_pending_comparables": {
+            "items": {
+              "$ref": "#/components/schemas/ArvComparableProperty"
+            },
+            "title": "Active Or Pending Comparables",
+            "type": "array"
+          },
+          "average_days_on_market_of_sold_comparables": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Days On Market Of Sold Comparables"
+          },
+          "confidence_score_1_to_10": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Confidence Score 1 To 10",
+            "type": "integer"
+          },
+          "conservative_lowest_arv": {
+            "description": "A stress-test ARV the investor should still survive, in dollars.",
+            "exclusiveMinimum": 0.0,
+            "title": "Conservative Lowest Arv",
+            "type": "number"
+          },
+          "data_caveats": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Caveats",
+            "type": "array"
+          },
+          "discarded_comparables": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ArvDiscardedComparable"
+            },
+            "title": "Discarded Comparables",
+            "type": "array"
+          },
+          "estimated_arv_range_high": {
+            "exclusiveMinimum": 0.0,
+            "title": "Estimated Arv Range High",
+            "type": "number"
+          },
+          "estimated_arv_range_low": {
+            "exclusiveMinimum": 0.0,
+            "title": "Estimated Arv Range Low",
+            "type": "number"
+          },
+          "market_logic": {
+            "description": "Why this value: which comps carried it and how they were adjusted.",
+            "title": "Market Logic",
+            "type": "string"
+          },
+          "market_pace_verdict": {
+            "enum": [
+              "FAST",
+              "NORMAL",
+              "SLOW",
+              "UNKNOWN"
+            ],
+            "title": "Market Pace Verdict",
+            "type": "string"
+          },
+          "median_days_on_market_of_sold_comparables": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Days On Market Of Sold Comparables"
+          },
+          "sold_comparables": {
+            "items": {
+              "$ref": "#/components/schemas/ArvComparableProperty"
+            },
+            "title": "Sold Comparables",
+            "type": "array"
+          },
+          "source_urls": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Urls",
+            "type": "array"
+          },
+          "subject_property_as_found": {
+            "$ref": "#/components/schemas/ArvSubjectPropertyAsFound"
+          },
+          "target_arv": {
+            "description": "The single most likely ARV for this strategy, in dollars.",
+            "exclusiveMinimum": 0.0,
+            "title": "Target Arv",
+            "type": "number"
+          }
+        },
+        "required": [
+          "estimated_arv_range_low",
+          "estimated_arv_range_high",
+          "target_arv",
+          "conservative_lowest_arv",
+          "confidence_score_1_to_10",
+          "market_pace_verdict",
+          "market_logic",
+          "subject_property_as_found",
+          "sold_comparables",
+          "active_or_pending_comparables"
+        ],
+        "title": "ArvEstimateRes",
+        "type": "object"
+      },
+      "ArvSubjectPropertyAsFound": {
+        "properties": {
+          "bathrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bathrooms"
+          },
+          "bedrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bedrooms"
+          },
+          "lot_size_square_feet": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lot Size Square Feet"
+          },
+          "property_style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Style"
+          },
+          "square_feet": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Square Feet"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "title": "ArvSubjectPropertyAsFound",
+        "type": "object"
+      },
       "AuthConfigRes": {
         "properties": {
           "auth_mode": {
@@ -12770,6 +13257,44 @@
           }
         },
         "summary": "Analyze Flip"
+      }
+    },
+    "/arv-estimate": {
+      "post": {
+        "operationId": "estimate_arv_with_claude_route_arv_estimate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArvEstimateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArvEstimateRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Estimate Arv With Claude Route"
       }
     },
     "/auth/config": {

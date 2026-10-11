@@ -94,6 +94,7 @@ for _var in (
     "REPS_PUBLIC_OBJECTS",
     "REPS_LINK_STYLE",
     "EMAIL_PASSWORD",
+    "ANTHROPIC_API_KEY",
 ):
     os.environ.pop(_var, None)
 for _var in [k for k in os.environ if k.startswith("MERCURY_API_TOKEN")]:

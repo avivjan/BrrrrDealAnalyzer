@@ -52,6 +52,12 @@ const stubs = {
     emits: ["commitEditedValue"],
     template: `<div class="auto-figure" :data-figure="label" :data-value="value" :data-editable="editable" />`,
   },
+  ArvEstimateWithClaudePopup: {
+    name: "ArvEstimateWithClaudePopup",
+    props: ["isOpen", "dealType", "deal"],
+    emits: ["close", "apply-arv-estimate"],
+    template: `<div data-testid="arvEstimate.stub" :data-is-open="isOpen" />`,
+  },
   ToggleSwitch: {
     name: "ToggleSwitch",
     props: ["modelValue"],
@@ -792,6 +798,49 @@ describe("DealInputsForm", () => {
       expect(card().text()).toContain("Selling Costs");
       expect(card().text()).not.toContain("Selling Costs Breakdown");
       expect(panel().text()).toContain("Selling Costs Breakdown");
+    });
+  });
+
+  describe("Estimate ARV with Claude", () => {
+    const CLAUDE_ARV_ESTIMATE = { target_arv: 205400, conservative_lowest_arv: 190000 };
+
+    it("puts the button on the Refinance tab for BRRRR and on the Flip Strategy section for FLIP", () => {
+      for (const dealType of ["BRRRR", "FLIP"] as const) {
+        const wrapper = mountForm(createEmptyDealForm(dealType), dealType);
+        const button = wrapper.find('[data-testid="form.action.estimateArvWithClaude"]');
+        expect(button.exists(), dealType).toBe(true);
+        const owningTab = button.element.closest("[data-form-tab]")?.getAttribute("data-form-tab");
+        expect(owningTab).toBe(dealType === "BRRRR" ? "refinance" : "flipStrategy");
+      }
+    });
+
+    it("opens the popup with the deal and its type", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      const popup = wrapper.findComponent({ name: "ArvEstimateWithClaudePopup" });
+      expect(popup.props("isOpen")).toBe(false);
+      await wrapper.find('[data-testid="form.action.estimateArvWithClaude"]').trigger("click");
+      expect(popup.props("isOpen")).toBe(true);
+      expect(popup.props("dealType")).toBe("BRRRR");
+      expect(popup.props("deal")).toStrictEqual(deal);
+      await popup.vm.$emit("close");
+      expect(popup.props("isOpen")).toBe(false);
+    });
+
+    it("applies a BRRRR estimate to ARV and Lowest ARV, in thousands", async () => {
+      const deal = reactive(createEmptyDealForm("BRRRR"));
+      const wrapper = mountForm(deal, "BRRRR");
+      await wrapper.findComponent({ name: "ArvEstimateWithClaudePopup" }).vm.$emit("apply-arv-estimate", CLAUDE_ARV_ESTIMATE);
+      expect(deal.arv_in_thousands).toBe(205.4);
+      expect(deal.lowestArv).toBe(190);
+    });
+
+    it("applies a FLIP estimate to the projected sale price, in thousands", async () => {
+      const deal = reactive(createEmptyDealForm("FLIP"));
+      const wrapper = mountForm(deal, "FLIP");
+      await wrapper.findComponent({ name: "ArvEstimateWithClaudePopup" }).vm.$emit("apply-arv-estimate", CLAUDE_ARV_ESTIMATE);
+      expect(deal.salePrice).toBe(205.4);
+      expect(boundValue(wrapper, "Projected Sale Price")).toBe(205.4);
     });
   });
 });

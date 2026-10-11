@@ -722,6 +722,8 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MCP_AUTH_MODE`, `MCP_ISSUER_URL`, `AUTH_MCP_ACCESS_MINUTES` | `BackEnd/BL/auth/oauth.py` | `path` (default: the secret URL above) or `oauth` (OAuth 2.1 + PKCE; the connector is approved on `/connect` and holds a revocable device session). Issuer defaults to the Render host; access tokens last 60 minutes and refresh silently |
 | `DEVICE_POLICY` | `BackEnd/BL/auth/device.py` | `off` (default: every browser is trusted on first sign-in), `log`, `enforce` (a new browser waits for approval from a trusted one) |
 | `SEND_OFFER_PER_HOUR` | `/send-offer` | Offers per hour per caller before a 429 (default 30) |
+| `ANTHROPIC_API_KEY` | `/arv-estimate` | Claude API key for the *Estimate ARV with Claude* popup (backend only, redacted from logs); unset → 503 "not configured" |
+| `ARV_ESTIMATE_PER_HOUR`, `ARV_ESTIMATE_MODEL` | `/arv-estimate` | Estimates per hour per caller before a 429 (default 20; each spends API credit and runs web searches); model override (default `claude-opus-5-5`) |
 | `MERCURY_CACHE_SECONDS` | `/liquidity/mercury-balance` | How long a fetched balance summary is reused (default 60; 0 disables) |
 | `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
 | `MEMBER_LOAN_LENDER_USERNAME`, `MEMBER_LOAN_YARDEN_USERNAME`, `MEMBER_LOAN_ALLOWED_USERNAMES` | `BackEnd/BL/memberLoan/common/member_loan_settings.py` | The two members' passkey usernames; the allow-list must name exactly those two, otherwise every `/member-loan` route answers 503 |
