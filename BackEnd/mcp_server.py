@@ -180,9 +180,14 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     # --- ARV estimate ---
     "estimate_arv_with_claude": (
-        "Estimate a property's ARV with Claude and live web search. FLIP: conservative, with days on "
-        "market. BRRRR: appraiser lens on the 3-4 strongest comps. Returns range, target, conservative "
-        "lowest ARV, confidence 1-10 and the comps, in dollars. Takes 30-90 s, spends API credit, saves nothing."
+        "Start an ARV estimate by Claude with live web search; returns arv_estimate_job_id. FLIP: conservative, "
+        "with days on market. BRRRR: appraiser lens on the 3-4 strongest comps. Spends API credit; saves nothing. "
+        "Poll get_arv_estimate_job every few seconds (1-3 minutes) for the result."
+    ),
+    "get_arv_estimate_job": (
+        "Poll an ARV estimate started by estimate_arv_with_claude. status RUNNING, SUCCEEDED (arv_estimate holds "
+        "range, target, conservative lowest ARV, confidence 1-10 and the comps, in dollars) or FAILED "
+        "(failure_message). 404 once it has expired or the server restarted."
     ),
     # --- Liquidity timeline ---
     "list_liquidity_transactions": (

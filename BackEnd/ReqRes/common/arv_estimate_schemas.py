@@ -86,3 +86,14 @@ class ArvEstimateRes(BaseModel):
     discarded_comparables: list[ArvDiscardedComparable] = []
     data_caveats: list[str] = []
     source_urls: list[str] = []
+
+
+class ArvEstimateJobRes(BaseModel):
+    """An estimate runs as a background job (a real one takes minutes, longer than
+    Netlify's proxy waits): `POST /arv-estimate` starts it, `GET
+    /arv-estimate/{arv_estimate_job_id}` is polled until it is not RUNNING."""
+
+    arv_estimate_job_id: str
+    status: Literal["RUNNING", "SUCCEEDED", "FAILED"]
+    arv_estimate: Optional[ArvEstimateRes] = None
+    failure_message: Optional[str] = None
