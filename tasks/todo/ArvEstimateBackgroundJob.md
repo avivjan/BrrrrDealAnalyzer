@@ -94,7 +94,7 @@ Branch: `claude/admiring-fermi-pqek7t`, restarted from main after #97 merged.
 - [x] J1 (40 m) Job registry `BL/arvEstimate/common/arv_estimate_jobs.py`, job schemas.
 - [x] J2 (30 m) POST returns 202 + job id; new GET; MCP descriptions; snapshot re-record.
 - [x] J3 (40 m) Backend tests (unit, route, MCP).
-- [ ] J4 (40 m) Frontend start + poll in `api/index.ts`, popup copy and status-coded error, vitest.
-- [ ] J5 (30 m) Playwright spec on the two mocked routes plus the real 503.
+- [x] J4 (40 m) Frontend start + poll in `api/index.ts`, popup copy and status-coded error, vitest.
+- [x] J5 (30 m) Playwright spec on the two mocked routes plus the real 503.
 - [ ] J6 (20 m) Security task: bandit, pip-audit, npm audit, `security-review`.
 - [ ] J7 (10 m) Push, open the PR.

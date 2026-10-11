@@ -23,10 +23,44 @@ import type {
   RepsActivityCategoryRes,
   RepsUploadBatchRes,
 } from '../types/reps';
-import type { ArvEstimateReq, ArvEstimateRes } from '../types/arvEstimate';
+import type { ArvEstimateJobRes, ArvEstimateReq, ArvEstimateRes } from '../types/arvEstimate';
 
-/** Claude searches the web for comps before answering; an estimate usually takes 30-90 s. */
-export const ARV_ESTIMATE_REQUEST_TIMEOUT_MILLISECONDS = 5 * 60 * 1000;
+/**
+ * An ARV estimate takes 1-3+ minutes (Claude runs many web searches), longer
+ * than Netlify's `/api` proxy keeps a request open, so the backend runs it as a
+ * job: one quick POST starts it, then short GETs poll it until it finishes.
+ */
+export const ARV_ESTIMATE_POLL_INTERVAL_MILLISECONDS = 3000;
+export const ARV_ESTIMATE_MAXIMUM_WAIT_MILLISECONDS = 6 * 60 * 1000;
+export const ARV_ESTIMATE_STILL_RUNNING_MESSAGE = 'Claude is still working after 6 minutes; try again later.';
+
+/** An error the popup reads like an API error: the message is in `response.data.detail`. */
+function arvEstimateErrorWithDetail(detail: string): Error {
+  return Object.assign(new Error(detail), { response: { data: { detail } } });
+}
+
+/**
+ * Poll a started estimate until it succeeds (returns the estimate), fails
+ * (throws its safe message) or runs past the maximum wait. `getJob`, `sleep`
+ * and `nowInMilliseconds` are parameters so the loop can be tested without a
+ * server or real time.
+ */
+export async function waitForArvEstimateJob(
+  startedJob: ArvEstimateJobRes,
+  getJob: (arvEstimateJobId: string) => Promise<ArvEstimateJobRes>,
+  sleep: (milliseconds: number) => Promise<void> = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
+  nowInMilliseconds: () => number = Date.now,
+): Promise<ArvEstimateRes> {
+  const giveUpAtMilliseconds = nowInMilliseconds() + ARV_ESTIMATE_MAXIMUM_WAIT_MILLISECONDS;
+  let job = startedJob;
+  while (job.status === 'RUNNING') {
+    if (nowInMilliseconds() >= giveUpAtMilliseconds) throw arvEstimateErrorWithDetail(ARV_ESTIMATE_STILL_RUNNING_MESSAGE);
+    await sleep(ARV_ESTIMATE_POLL_INTERVAL_MILLISECONDS);
+    job = await getJob(startedJob.arv_estimate_job_id);
+  }
+  if (job.status === 'SUCCEEDED' && job.arv_estimate) return job.arv_estimate;
+  throw arvEstimateErrorWithDetail(job.failure_message || 'The ARV estimate failed; try again.');
+}
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
@@ -257,10 +291,10 @@ export default {
 
   /** Ask Claude (via the backend) for an ARV estimate of one property. Nothing is saved. */
   async estimateArvWithClaude(data: ArvEstimateReq): Promise<ArvEstimateRes> {
-    const response = await apiClient.post<ArvEstimateRes>('/arv-estimate', data, {
-      timeout: ARV_ESTIMATE_REQUEST_TIMEOUT_MILLISECONDS,
-    });
-    return response.data;
+    const startedJob = (await apiClient.post<ArvEstimateJobRes>('/arv-estimate', data)).data;
+    return waitForArvEstimateJob(startedJob, async (arvEstimateJobId) =>
+      (await apiClient.get<ArvEstimateJobRes>(`/arv-estimate/${encodeURIComponent(arvEstimateJobId)}`)).data,
+    );
   },
 
   // Bought Deals

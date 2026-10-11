@@ -181,6 +181,16 @@ describe("ArvEstimateWithClaudePopup", () => {
     expect(byTestId("arvEstimate.apply")).toBeNull();
   });
 
+  it("names the HTTP status when a failure carries no message (a proxy error page)", async () => {
+    estimateArvWithClaude.mockImplementation(async () => {
+      throw Object.assign(new Error("Request failed with status code 504"), { response: { status: 504, data: "<html>Gateway Timeout</html>" } });
+    });
+    wrapper = mountArvEstimatePopup();
+    await nextTick();
+    await clickByTestId("arvEstimate.submit");
+    expect(byTestId("arvEstimate.error")!.textContent).toContain("The ARV estimate failed (HTTP 504); try again.");
+  });
+
   it("asks for an address before calling Claude", async () => {
     wrapper = mountArvEstimatePopup({ deal: {} });
     await nextTick();
