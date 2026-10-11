@@ -72,12 +72,14 @@ import BuySection from "./deal/brrr/BuySection.vue";
 import RehabSection from "./deal/brrr/RehabSection.vue";
 import RentHoldingSection from "./deal/brrr/RentHoldingSection.vue";
 import RefinanceSection from "./deal/brrr/RefinanceSection.vue";
+import ArvEstimateWithClaudePopup from "./deal/ArvEstimateWithClaudePopup.vue";
 import MoneyInput from "./ui/MoneyInput.vue";
 import NumberInput from "./ui/NumberInput.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import { computed, ref, watch } from "vue";
 import { useId } from "vue";
 import type { DealInputModel } from "../types";
+import type { ArvEstimateRes } from "../types/arvEstimate";
 import { toNumber } from "../utils/dealUtils";
 import { dealInputErrorMessageByFieldKey } from "../utils/dealInputValidation";
 import { DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB, phaseTabsForDealType, type PhaseTabKey } from "../config/dealInputPhaseTabs";
@@ -150,6 +152,22 @@ const useHmForRehab = computed({
 });
 
 const isBrrr = computed(() => props.dealType === "BRRRR");
+
+/** "Estimate ARV with Claude": the popup returns dollars; these fields are kept in thousands. */
+const isArvEstimatePopupOpen = ref(false);
+
+function dollarsToThousands(dollars: number): number {
+  return Math.round(dollars) / 1000;
+}
+
+function applyArvEstimate(arvEstimate: ArvEstimateRes): void {
+  if (isBrrr.value) {
+    set("arv_in_thousands", dollarsToThousands(arvEstimate.target_arv));
+    props.deal.lowestArv = dollarsToThousands(arvEstimate.conservative_lowest_arv);
+  } else {
+    set("salePrice", dollarsToThousands(arvEstimate.target_arv));
+  }
+}
 
 const phaseTabs = computed(() => phaseTabsForDealType(props.dealType));
 const activePhaseTabKey = ref<PhaseTabKey>(phaseTabs.value[0]!.key);
@@ -282,6 +300,11 @@ const subHeading = computed(() => "h4" as const);
       <RentHoldingSection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
     <div v-show="isPhaseTabActive('refinance')" data-form-tab="refinance">
+      <div class="mb-3 flex justify-end">
+        <UiButton data-testid="form.action.estimateArvWithClaude" variant="secondary" size="sm" @click="isArvEstimatePopupOpen = true">
+          <i class="pi pi-sparkles" aria-hidden="true"></i> Estimate ARV with Claude
+        </UiButton>
+      </div>
       <RefinanceSection :deal="deal" :surface="surface" :field-error-messages="dealInputErrorMessageByKey" />
     </div>
   </template>
@@ -412,6 +435,11 @@ const subHeading = computed(() => "h4" as const);
       <span class="flex items-center gap-2">
         <span class="grid h-7 w-7 place-items-center rounded-ctl bg-warning/12 text-warning" aria-hidden="true"><i class="pi pi-dollar text-xs"></i></span> Flip Strategy
       </span>
+      <template #actions>
+        <UiButton data-testid="form.action.estimateArvWithClaude" variant="secondary" size="sm" @click="isArvEstimatePopupOpen = true">
+          <i class="pi pi-sparkles" aria-hidden="true"></i> Estimate ARV with Claude
+        </UiButton>
+      </template>
     </UiSectionHeader>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MoneyInput
@@ -609,5 +637,13 @@ const subHeading = computed(() => "h4" as const);
   </section>
 
   </template>
+
+  <ArvEstimateWithClaudePopup
+    :is-open="isArvEstimatePopupOpen"
+    :deal-type="dealType"
+    :deal="deal"
+    @close="isArvEstimatePopupOpen = false"
+    @apply-arv-estimate="applyArvEstimate"
+  />
   </div>
 </template>
