@@ -134,18 +134,18 @@ and no exploitable vulnerability anywhere in the repo. Concretely:
 
 ## Todo (≈ 9 h)
 - [x] T1 (10 m) Write `tasks/todo/ArvEstimateWithClaude.md` mirroring this plan; commit on the branch.
-- [ ] T2 (30 m) Pin `anthropic`; schemas `ArvEstimateReq` / `ArvEstimateRes` / `ArvComparableProperty`.
-- [ ] T3 (60 m) Prompt builder with shared + FLIP + BRRRR sections and the fenced note.
-- [ ] T4 (75 m) Anthropic client: streaming, web search, structured output, pause_turn loop, refusal/fallback,
+- [x] T2 (30 m) Pin `anthropic`; schemas `ArvEstimateReq` / `ArvEstimateRes` / `ArvComparableProperty`.
+- [x] T3 (60 m) Prompt builder with shared + FLIP + BRRRR sections and the fenced note.
+- [x] T4 (75 m) Anthropic client: streaming, web search, structured output, pause_turn loop, refusal/fallback,
       validation + post-checks.
-- [ ] T5 (40 m) Router `/arv-estimate`: rate limit, audit, 503/502/429, wiring; env vars + README.
-- [ ] T6 (20 m) MCP: `OPEN_WORLD_TOOLS` entry + tests.
-- [ ] T7 (30 m) Frontend types + API method.
-- [ ] T8 (120 m) `ArvEstimateWithClaudePopup.vue` (form, loading, result tiles and tables, error, Apply).
-- [ ] T9 (40 m) Buttons in RefinanceSection and the FLIP section; popup wiring + apply in `DealInputsForm.vue`.
-- [ ] T10 (60 m) Tests (below), run lint/typecheck/vitest/pytest/Playwright.
-- [ ] T11 (30 m) Security task (above) + `security-review` skill; fix findings.
-- [ ] T12 (10 m) Push the branch, open the PR.
+- [x] T5 (40 m) Router `/arv-estimate`: rate limit, audit, 503/502/429, wiring; env vars + README.
+- [x] T6 (20 m) MCP: `OPEN_WORLD_TOOLS` entry + tests.
+- [x] T7 (30 m) Frontend types + API method.
+- [x] T8 (120 m) `ArvEstimateWithClaudePopup.vue` (form, loading, result tiles and tables, error, Apply).
+- [x] T9 (40 m) Buttons in RefinanceSection and the FLIP section; popup wiring + apply in `DealInputsForm.vue`.
+- [x] T10 (60 m) Tests (below), run lint/typecheck/vitest/pytest/Playwright.
+- [x] T11 (30 m) Security task (above) + `security-review` skill; fix findings.
+- [x] T12 (10 m) Push the branch, open the PR.
 
 ## Tests
 - **Unit (pytest)**:
@@ -173,3 +173,24 @@ and no exploitable vulnerability anywhere in the repo. Concretely:
 - `npm run lint && npm run typecheck && npm run test` and the new Playwright spec.
 - One live manual call with a real `ANTHROPIC_API_KEY` locally, if available, to confirm that the web search and
   the JSON template come back and render.
+
+## Implementation notes
+- **Design change:** Claude returns the template by calling a `submit_arv_estimate` tool, validated with Pydantic.
+  The plan said `output_config.format` JSON output, but that mode rejects the citations web search adds. The
+  request is non-streaming (16k max tokens, 300 s timeout), so a streamed tool input never has to be re-validated.
+- **MCP tool name:** `estimate_arv_with_claude`, taken from the route function name. It is in `OPEN_WORLD_TOOLS`.
+- **Button placement:** BRRRR has it at the top of the Refinance tab, FLIP in the Flip Strategy header.
+  `DealInputsForm` owns the popup, so the sections and views are unchanged.
+- **Test harness:** `verify_regression.py` scrubs `ANTHROPIC_API_KEY`, so regression and e2e runs never reach the real
+  API.
+- **Verification:**
+  - pytest: full suite green, including 35 new tests in `tests/test_arv_estimate.py`.
+  - `verify_regression.py verify` passes. The OpenAPI snapshot only adds `/arv-estimate` and its schemas.
+  - vitest: 1659 tests green.
+  - `vue-tsc` and `vite build` succeed.
+  - Playwright on chromium + Mobile Chrome: 180 passed. The one failure, the passkey test on Mobile Chrome, passed
+    on re-run and is unrelated.
+  - bandit, pip-audit and npm audit are clean.
+  - `security-review`: no findings.
+- **Not verified:** no live Claude call. There is no API key in the sandbox, so the first real estimate should be
+  checked by hand after `ANTHROPIC_API_KEY` is set on Render.
