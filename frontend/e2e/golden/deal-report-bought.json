@@ -2,10 +2,10 @@
   "requests": [
     {
       "method": "POST",
-      "path": "/reports/brrr-pdf",
+      "path": "/reports/brrr-html",
       "query": {
         "address": "1 Shared Form St",
-        "selected_result_keys": "cash_flow,cash_out_routi,cash_on_cash,dscr,equity,roi,net_profit,total_cash_needed_for_deal,cash_to_close_buy,cash_out_routi_conservative"
+        "selected_result_keys": "cash_flow,cash_out,cash_out_routi,cash_on_cash,dscr,equity,roi,net_profit,total_cash_needed_for_deal,cash_to_close_buy,cash_out_routi_conservative,stolen_money"
       },
       "body": {
         "HMLInterestRate": "11.000",
@@ -17,6 +17,7 @@
         "arv_in_thousands": "320.0000",
         "bathrooms": null,
         "bedrooms": null,
+        "boughtStage": "purchase",
         "breakdowns": {
           "cash_flow": [
             {
@@ -1698,6 +1699,7 @@
         "closingCostsRefi": "6.0000",
         "closing_costs_buy_total": 3582.5,
         "closing_costs_refi_total": 10585,
+        "completedSubstages": {},
         "constructionLoanBudget": "55.0000",
         "contact": null,
         "created_at": "<redacted>",
@@ -1761,12 +1763,13 @@
         "rent_comps": null,
         "reserves_total": 6600,
         "roi": 83.06699592249181,
-        "section": 1,
+        "section": 2,
         "sellerPaidCurrentYearTaxes": null,
         "seller_tax_credit": 0,
         "sold_comps": null,
+        "sourceDealId": "<redacted>",
         "sqft": null,
-        "stage": 2,
+        "stage": 3,
         "stolen_money": 0,
         "surveyFee": "385.00",
         "task": null,
@@ -1788,7 +1791,7 @@
       },
       "response": {
         "status": 200,
-        "contentType": "application/pdf"
+        "contentType": "text/html; charset=utf-8"
       }
     }
   ]

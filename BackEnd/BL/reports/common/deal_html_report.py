@@ -229,6 +229,7 @@ _REPORT_STYLE = """
   --fg: #eaf0ff; --muted: #8f9bc2; --faint: #5d688f;
   --cyan: #22d3ee; --violet: #a78bfa; --blue: #60a5fa; --amber: #fbbf24;
   --glow: 0 0 24px rgba(34,211,238,0.35);
+  --headline-glow: 0 0 28px rgba(34,211,238,0.35);
   --radius: 18px;
   --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", "Liberation Mono", monospace;
@@ -240,7 +241,7 @@ _REPORT_STYLE = """
   --line: rgba(30,41,90,0.12); --line-strong: rgba(30,41,90,0.26);
   --fg: #0b1430; --muted: #4b5677; --faint: #8a93b0;
   --cyan: #0891b2; --violet: #7c3aed; --blue: #2563eb; --amber: #b45309;
-  --glow: none;
+  --glow: none; --headline-glow: none;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
@@ -250,7 +251,7 @@ _REPORT_STYLE = """
     --line: rgba(30,41,90,0.12); --line-strong: rgba(30,41,90,0.26);
     --fg: #0b1430; --muted: #4b5677; --faint: #8a93b0;
     --cyan: #0891b2; --violet: #7c3aed; --blue: #2563eb; --amber: #b45309;
-    --glow: none;
+    --glow: none; --headline-glow: none;
   }
 }
 * { box-sizing: border-box; }
@@ -295,7 +296,7 @@ h1 {
   flex: none; font: 700 11px/1 var(--sans); letter-spacing: 0.18em; padding: 8px 12px; border-radius: 999px;
   color: var(--cyan); border: 1px solid var(--cyan); background: rgba(34,211,238,0.08); box-shadow: var(--glow);
 }
-.badge.flip { color: var(--amber); border-color: var(--amber); background: rgba(251,191,36,0.08); box-shadow: 0 0 24px rgba(251,191,36,0.25); }
+.badge.flip { color: var(--amber); border-color: var(--amber); background: rgba(251,191,36,0.08); }
 .meta { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
 .hint { margin: 14px 0 0; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
   padding: 8px 12px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--surface); }
@@ -310,10 +311,10 @@ h1 {
 .tile:hover, .tile:focus-visible { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--glow); outline: none; }
 .tile-label { display: block; font-size: 12px; color: var(--muted); }
 .tile-value { display: block; margin-top: 4px; font: 700 19px/1.2 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; overflow-wrap: anywhere; }
-.page-tools { display: flex; justify-content: flex-end; gap: 8px; margin: 8px 0 0; }
+.page-tools { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
 button {
   font: 600 12px/1 var(--sans); color: var(--fg); background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 999px; padding: 9px 14px; cursor: pointer; min-height: 34px;
+  border-radius: 999px; padding: 9px 14px; cursor: pointer; min-height: 34px; white-space: nowrap;
 }
 button:hover { border-color: var(--cyan); color: var(--cyan); }
 .card {
@@ -326,9 +327,8 @@ button:hover { border-color: var(--cyan); color: var(--cyan); }
 h2 { margin: 8px 0 0; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
 .headline {
   margin: 6px 0 0; font: 800 clamp(26px, 7vw, 34px)/1.1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
-  text-shadow: 0 0 28px rgba(34,211,238,0.35); overflow-wrap: anywhere;
+  text-shadow: var(--headline-glow); overflow-wrap: anywhere;
 }
-:root[data-theme="light"] .headline { text-shadow: none; }
 .card-tools { display: flex; gap: 6px; flex-wrap: wrap; }
 .card-tools[hidden], .page-tools[hidden] { display: none; }
 .formula-box { margin: 16px 0 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(34,211,238,0.35); background: rgba(34,211,238,0.06); }
@@ -392,6 +392,8 @@ footer strong { color: var(--fg); letter-spacing: 0.04em; }
   .children { margin-left: 6px; padding-left: 10px; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .title-row { flex-direction: column-reverse; }
+  .page-tools { justify-content: flex-start; }
+  button { padding: 9px 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -476,7 +478,7 @@ def build_deal_html_report(
 <div class="page-tools" hidden>
 <button type="button" data-action="expand">Expand everything</button>
 <button type="button" data-action="collapse">Collapse everything</button>
-<button type="button" data-action="theme">Light / Dark</button>
+<button type="button" data-action="theme">Light/Dark</button>
 </div>
 </header>
 <main>{cards}</main>
