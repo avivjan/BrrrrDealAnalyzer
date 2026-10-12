@@ -113,6 +113,18 @@ DESCRIPTIONS: dict[str, str] = {
         "or get_bought_deals. Each result reads like the site's breakdown popup, with links to "
         "every step. selected_result_keys (omit = all) picks the results. Returns an embedded PDF."
     ),
+    "report_brrr_html": (
+        "Render the Big Whales BRRRR deal report as one self-contained interactive HTML file (same "
+        "body as analyze_brrr; address in `address`): each result laid out like the site's breakdown "
+        "popup, rows expanding in place. Opens on any phone or computer; send it on WhatsApp or Gmail. "
+        "selected_result_keys (omit = all) picks the results. Returns an embedded HTML file."
+    ),
+    "report_flip_html": (
+        "Render the Big Whales FLIP deal report as one self-contained interactive HTML file (same "
+        "body as analyze_flip; address in `address`): each result laid out like the site's breakdown "
+        "popup, rows expanding in place. Opens on any phone or computer; send it on WhatsApp or Gmail. "
+        "selected_result_keys (omit = all) picks the results. Returns an embedded HTML file."
+    ),
     # --- My Deals (active pipeline) ---
     "get_active_deals": (
         "Every deal on the My Deals board (deals being analysed or worked, not yet bought): all "
@@ -536,7 +548,7 @@ def _path_segment(name: str, value: Any) -> str:
 
 
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[t.ContentBlock]:
-    """Run a tool; the content blocks only (JSON as text, PDFs as a blob resource)."""
+    """Run a tool; the content blocks only (JSON as text, PDFs as a blob resource, HTML reports as a text resource)."""
     blocks, _ = await call_tool_structured(name, arguments)
     return blocks
 
@@ -621,6 +633,20 @@ async def call_tool_structured(
                     mimeType="application/pdf",
                     blob=base64.b64encode(response.content).decode("ascii"),
                 ),
+            ),
+        ], None
+    if content_type.startswith("text/html"):
+        # The interactive report: one self-contained HTML file, handed over as an attached file
+        # rather than 100+ KB of markup in the chat.
+        filename = "report.html"
+        disposition = response.headers.get("content-disposition", "")
+        if 'filename="' in disposition:
+            filename = disposition.split('filename="', 1)[1].split('"', 1)[0]
+        return [
+            t.TextContent(type="text", text=f"Interactive HTML report generated: {filename} ({len(response.content)} bytes)"),
+            t.EmbeddedResource(
+                type="resource",
+                resource=t.TextResourceContents(uri=f"file:///{filename}", mimeType="text/html", text=response.text),
             ),
         ], None
     if content_type.startswith("application/json"):
