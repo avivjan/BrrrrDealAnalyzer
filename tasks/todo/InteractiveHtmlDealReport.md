@@ -1,7 +1,6 @@
 # InteractiveHtmlDealReport: "Generate Report" produces one self-contained HTML file that works like the popups
 
 Branch: `claude/amazing-rubin-niju54`, restarted from the latest `main` (PR #82 is merged). Plan file: `tasks/todo/InteractiveHtmlDealReport.md`.
-its parents are intact. Plan file on the branch: `tasks/todo/InteractiveHtmlDealReport.md`.
 
 ## Context
 The PDF from PR #82 has the right content, but a PDF can't behave like the website's calculation breakdown popups:
