@@ -9,10 +9,10 @@ import api from "../api";
 import type { BoughtDealRes } from "../types";
 
 /**
- * "Generate Report" on a bought deal: the same branded PDF My Deals offers. The
+ * "Generate Report" on a bought deal: the same interactive HTML report My Deals offers. The
  * button opens the result picker (every tile checked); Generate sends the bought
  * deal whole, with the checked result keys, to the report endpoint for its
- * strategy, and the PDF opens in the shared preview modal under the
+ * strategy, and the report opens in the shared (sandboxed) preview modal under the
  * `boughtdeals.` test-id namespace.
  */
 import { BRRRR_REPORT_RESULT_TILES } from "../components/deal/reportResultTiles";
@@ -23,7 +23,7 @@ vi.mock("../api", () => ({
     updateBoughtDeal: vi.fn(),
     deleteBoughtDeal: vi.fn(),
     analyzeDeal: vi.fn(),
-    downloadDealPdf: vi.fn(),
+    downloadDealReport: vi.fn(),
     getPipelineTemplates: vi.fn().mockResolvedValue([]),
     getPipelineTemplateStats: vi.fn().mockResolvedValue({}),
   },
@@ -33,7 +33,7 @@ vi.mock("../api", () => ({
 const getBoughtDeals = vi.mocked(api.getBoughtDeals);
 const updateBoughtDeal = vi.mocked(api.updateBoughtDeal);
 const analyzeDeal = vi.mocked(api.analyzeDeal);
-const downloadDealPdf = vi.mocked(api.downloadDealPdf);
+const downloadDealReport = vi.mocked(api.downloadDealReport);
 
 const BOUGHT_DEAL = {
   deal_type: "BRRRR",
@@ -94,7 +94,7 @@ describe("BoughtDeals — Generate Report", () => {
     analyzeDeal.mockResolvedValue({ cash_flow: 350 });
     URL.createObjectURL = vi.fn(() => "blob:bought-report");
     URL.revokeObjectURL = vi.fn();
-    downloadDealPdf.mockResolvedValue(new Blob(["%PDF"], { type: "application/pdf" }));
+    downloadDealReport.mockResolvedValue(new Blob(["<!doctype html>"], { type: "text/html" }));
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-01T09:00:00.000Z"));
   });
@@ -112,7 +112,7 @@ describe("BoughtDeals — Generate Report", () => {
     const button = wrapper.find('[data-testid="boughtdeals.modal.view-report"]');
     expect(button.exists()).toBe(true);
     expect(button.text()).toBe("Generate Report");
-    expect(wrapper.find('[data-testid="boughtdeals.pdf-modal"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="boughtdeals.report-modal"]').exists()).toBe(false);
   });
 
   it("opens the result picker with every result checked, and generates nothing until Generate is pressed", async () => {
@@ -124,11 +124,11 @@ describe("BoughtDeals — Generate Report", () => {
       .filter((option) => (option.querySelector("input") as HTMLInputElement).checked)
       .map((option) => (option as HTMLElement).dataset.resultKey);
     expect(checkedResultKeys).toEqual(BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey));
-    expect(downloadDealPdf).not.toHaveBeenCalled();
+    expect(downloadDealReport).not.toHaveBeenCalled();
     pickerPart("cancel").click();
     await flushPromises();
     expect(resultPicker()).toBeNull();
-    expect(downloadDealPdf).not.toHaveBeenCalled();
+    expect(downloadDealReport).not.toHaveBeenCalled();
   });
 
   it("sends the bought deal whole, with the checked results, to the endpoint for its strategy and previews the blob", async () => {
@@ -136,8 +136,8 @@ describe("BoughtDeals — Generate Report", () => {
     await generateReportWithEveryResultExcept(wrapper, ["cash_out", "stolen_money"]);
 
     expect(resultPicker()).toBeNull();
-    expect(downloadDealPdf).toHaveBeenCalledTimes(1);
-    const [payload, dealType, address, selectedResultKeys] = downloadDealPdf.mock.calls[0]!;
+    expect(downloadDealReport).toHaveBeenCalledTimes(1);
+    const [payload, dealType, address, selectedResultKeys] = downloadDealReport.mock.calls[0]!;
     expect(dealType).toBe("BRRRR");
     expect(address).toBe("55 Willow Way");
     expect(selectedResultKeys).toEqual(
@@ -145,18 +145,19 @@ describe("BoughtDeals — Generate Report", () => {
     );
     expect(payload).toMatchObject({ purchasePrice: 200, arv_in_thousands: 320, boughtStage: "rehab" });
 
-    const preview = wrapper.find('[data-testid="boughtdeals.pdf-modal"]');
+    const preview = wrapper.find('[data-testid="boughtdeals.report-modal"]');
     expect(preview.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="boughtdeals.pdf-modal.iframe"]').attributes("src")).toBe("blob:bought-report");
+    expect(wrapper.find('[data-testid="boughtdeals.report-modal.iframe"]').attributes("src")).toBe("blob:bought-report");
+    expect(wrapper.find('[data-testid="boughtdeals.report-modal.iframe"]').attributes("sandbox")).toBe("");
     expect(preview.text()).toContain("55 Willow Way");
   });
 
   it("closes the preview and revokes the blob URL from the shared modal's close button", async () => {
     const wrapper = await openTheDeal();
     await generateReportWithEveryResultExcept(wrapper);
-    await wrapper.find('[data-testid="boughtdeals.pdf-modal.close"]').trigger("click");
+    await wrapper.find('[data-testid="boughtdeals.report-modal.close"]').trigger("click");
     await flushPromises();
-    expect(wrapper.find('[data-testid="boughtdeals.pdf-modal"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="boughtdeals.report-modal"]').exists()).toBe(false);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:bought-report");
     // The deal modal itself stays open.
     expect(wrapper.find('[data-testid="boughtdeals.modal"]').exists()).toBe(true);

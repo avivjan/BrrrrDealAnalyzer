@@ -11,9 +11,9 @@ import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import { hasInvalidDealInput, validateDealInputFields } from "../utils/dealInputValidation";
-import DealReportPdfPreviewModal from "../components/deal/DealReportPdfPreviewModal.vue";
+import DealReportPreviewModal from "../components/deal/DealReportPreviewModal.vue";
 import GenerateReportResultPickerPopup from "../components/deal/GenerateReportResultPickerPopup.vue";
-import { useDealReportPdf } from "../composables/useDealReportPdf";
+import { useDealReport } from "../composables/useDealReport";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
@@ -554,9 +554,10 @@ const getDSCRColor = (value: number | undefined) => {
 
 const isHeaderCopied = ref(false);
 
-// The branded PDF report, exactly as My Deals offers it: the bought deal goes to the
+// The interactive deal report, exactly as My Deals offers it: the bought deal goes to the
 // report endpoint whole (its stage, checklist and results are ignored there).
-const { isPreparingPdf, pdfPreview, viewDealReport: viewReportFor, downloadFromPreview, closePdfPreview } = useDealReportPdf();
+const { isPreparingReport, reportPreview, viewDealReport: viewReportFor, downloadFromPreview, shareFromPreview, closeReportPreview } =
+  useDealReport();
 
 /** "Generate Report" first asks which results to include; the picker then generates the PDF. */
 const isReportResultPickerOpen = ref(false);
@@ -799,19 +800,19 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <UiButton
                   data-testid="boughtdeals.modal.view-report"
                   @click="openReportResultPicker"
-                  :disabled="isPreparingPdf"
+                  :disabled="isPreparingReport"
                   variant="secondary"
                   size="sm"
                   class="min-h-9 touch:min-h-11"
-                  :title="isPreparingPdf ? 'Building PDF…' : 'Generate Deal Report (PDF)'"
+                  :title="isPreparingReport ? 'Building the report…' : 'Generate the interactive deal report'"
                 >
                   <i
                     class="pi text-base"
-                    :class="isPreparingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
+                    :class="isPreparingReport ? 'pi-spin pi-spinner' : 'pi-sparkles'"
                     aria-hidden="true"
                   ></i>
                   <span class="hidden sm:inline">
-                    {{ isPreparingPdf ? "Generating…" : "Generate Report" }}
+                    {{ isPreparingReport ? "Generating…" : "Generate Report" }}
                   </span>
                 </UiButton>
                 <UiIconButton
@@ -1509,12 +1510,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       @close="isReportResultPickerOpen = false"
     />
 
-    <!-- PDF Preview Modal (shared with My Deals) -->
-    <DealReportPdfPreviewModal
-      :preview="pdfPreview"
+    <!-- Report preview (shared with My Deals) -->
+    <DealReportPreviewModal
+      :preview="reportPreview"
       test-id-prefix="boughtdeals"
+      @share="shareFromPreview"
       @download="downloadFromPreview"
-      @close="closePdfPreview"
+      @close="closeReportPreview"
     />
 
     <!-- "How is this number calculated?" for the pressed result tile; reads the latest analysis. -->

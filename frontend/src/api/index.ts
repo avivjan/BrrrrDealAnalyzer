@@ -236,15 +236,19 @@ export default {
     }
   },
 
-  async downloadDealPdf(
+  /**
+   * The interactive deal report: one self-contained HTML file that works like the breakdown
+   * popups, opens on any device and can be shared on WhatsApp or Gmail.
+   */
+  async downloadDealReport(
     data: AnalyzeDealReq,
     type: 'BRRRR' | 'FLIP',
     address: string,
     selectedResultKeys?: readonly string[],
   ): Promise<Blob> {
-    const endpoint = type === 'FLIP' ? '/reports/flip-pdf' : '/reports/brrr-pdf';
+    const endpoint = type === 'FLIP' ? '/reports/flip-html' : '/reports/brrr-html';
     const logPrefix = `[DealReport:${type}]`;
-    console.group(`API: downloadDealPdf (${type})`);
+    console.group(`API: downloadDealReport (${type})`);
     try {
       const response = await apiClient.post(endpoint, data, {
         // One `selected_result_keys` per key (no `[]` suffix), the form FastAPI reads as a list;
