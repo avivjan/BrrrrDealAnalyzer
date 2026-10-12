@@ -258,6 +258,9 @@ class TestTheFileIsSelfContainedAndSafe:
         document = parse_html(html)
         assert document.find_all(lambda e: e.tag == "h1")[0].text() == "Addr" + hostile
         assert any(p.text() == "f" + hostile for p in document.find_all(lambda e: e.tag == "p"))
+        # Even the deal type (always "BRRRR" / "FLIP" from the routes) is escaped where it is printed.
+        html_with_hostile_deal_type = build_deal_html_report("A", "<i>x</i>", body, ["cash_flow"])
+        assert "<I>X</I>" not in html_with_hostile_deal_type and "&lt;I&gt;X&lt;/I&gt;" in html_with_hostile_deal_type
 
 
 # -- the endpoints and the MCP tools ---------------------------------------------------------------

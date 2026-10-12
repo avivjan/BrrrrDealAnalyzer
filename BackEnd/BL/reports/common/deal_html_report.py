@@ -454,6 +454,7 @@ def build_deal_html_report(
     )
     cards = "".join(_result_card_markup(section, len(sections), breakdowns) for section in sections)
     badge_class = "badge flip" if deal_type == "FLIP" else "badge"
+    deal_type_text = _text(deal_type)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -463,7 +464,7 @@ def build_deal_html_report(
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#04060d">
 <meta name="robots" content="noindex">
-<title>{address_text} · {deal_type} Deal Report · Big Whales</title>
+<title>{address_text} · {deal_type_text} Deal Report · Big Whales</title>
 <style>{_REPORT_STYLE}</style>
 </head>
 <body>
@@ -471,7 +472,7 @@ def build_deal_html_report(
 <div class="page" id="top">
 <header class="hero">
 <div class="brand">{_BRAND_MARK_SVG}<div><div class="brand-name">BIG WHALES</div><div class="brand-sub">Real-estate analytics</div></div></div>
-<div class="title-row"><h1>{address_text}</h1><span class="{badge_class}">{deal_type}</span></div>
+<div class="title-row"><h1>{address_text}</h1><span class="{badge_class}">{deal_type_text}</span></div>
 <p class="meta">Interactive Deal Report · Generated {generated_on}</p>
 <p class="hint"><span class="chev" aria-hidden="true"></span>Tap any row with this arrow to see how it is calculated.</p>
 <nav class="tiles" aria-label="Results">{result_tiles}</nav>
