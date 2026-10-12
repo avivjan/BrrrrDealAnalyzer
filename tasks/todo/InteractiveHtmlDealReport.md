@@ -100,7 +100,7 @@ which expand and collapse in place with no script. A tiny inline script only add
   to the sandboxed HTML preview, and wire both views.
 - [x] **V1** (45 min): Render the sample reports in Chromium and WebKit at phone and desktop widths, with
   JavaScript on and off. Take screenshots and polish the design until it looks premium.
-- [ ] **G1** (40 min): Re-record the regression goldens (two HTML cases plus the openapi snapshot), the e2e
+- [x] **G1** (40 min): Re-record the regression goldens (two HTML cases plus the openapi snapshot), the e2e
   `pdf-report*` contracts (now named `deal-report*`), and the audit text strings. Run all suites.
 - [x] **S1** (30 min): Security task, from `.claude/security.md`: *"Please check through all the code you just wrote
   and make sure it follows security best practices. make sure there are no sensitive information in the frontend and
@@ -110,7 +110,7 @@ which expand and collapse in place with no script. A tiny inline script only add
   - no external URLs in the file;
   - the filename is still sanitized;
   - bandit, pip-audit and `npm audit` are clean.
-- [ ] **P1** (15 min): Tick the plan, push, and update the PR description.
+- [x] **P1** (15 min): Tick the plan, push, and update the PR description.
 
 ## Tests by layer
 **Unit**
@@ -184,3 +184,9 @@ which expand and collapse in place with no script. A tiny inline script only add
 - **WebKit.** This container has no WebKit build. The no-JavaScript e2e case stands in for the iPhone
   attachment preview: it checks that the rows expand natively, that the tiles jump, and that nothing scrolls
   sideways at 390 px. The spec also runs on the Mobile Chrome project.
+- **Results:**
+  - Backend: 1087 passed, and `verify_regression.py verify` passes.
+  - Vitest: 1669 passed, and `vue-tsc -b` is clean.
+  - Chromium e2e: 117 passed and 4 skipped. The one axe failure came from the test database being reset by a
+    parallel pytest run; that spec passes on its own (11/11).
+  - The deal-report spec also passes on the Mobile Chrome (Pixel 7) project.
