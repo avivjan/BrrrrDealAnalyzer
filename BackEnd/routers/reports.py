@@ -1,4 +1,6 @@
-"""POST /reports/brrr-pdf, POST /reports/flip-pdf."""
+"""POST /reports/brrr-pdf, /reports/flip-pdf (the branded PDF) and POST /reports/brrr-html,
+/reports/flip-html (the interactive report: one self-contained HTML file that works like the
+breakdown popups, opens on any device and travels on WhatsApp or Gmail)."""
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
@@ -7,6 +9,9 @@ from ReqRes.analyze.analyzeBRRR.analyzeBRRRReq import analyzeBRRRReq
 from ReqRes.analyze.analyzeFlip.analyzeFlipReq import analyzeFlipReq
 from BL.reports.reportBrrrPdf import report_brrr_pdf as report_brrr_pdf_bl
 from BL.reports.reportFlipPdf import report_flip_pdf as report_flip_pdf_bl
+from BL.reports.reportBrrrHtml import report_brrr_html as report_brrr_html_bl
+from BL.reports.reportFlipHtml import report_flip_html as report_flip_html_bl
+from BL.reports.common.deal_html_report import REPORT_CONTENT_SECURITY_POLICY
 from BL.reports.common.report_result_tiles import UnknownReportResultKeys, select_report_result_tiles
 
 router = APIRouter()
@@ -73,3 +78,43 @@ def report_flip_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'{_disposition(disposition)}; filename="{filename}"'},
     )
+
+
+def _html_report_response(html: str, deal_type: str, address: str, disposition: str) -> Response:
+    """The interactive report as a file download. Served from the API origin, it is also sandboxed
+    there: the same policy as the file's own meta tag, plus `sandbox`, so opening the endpoint directly
+    gives the page an opaque origin with no access to anything of this site."""
+    filename = f"BigWhales_{deal_type}_{_safe_filename(address)}.html"
+    return Response(
+        content=html,
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Content-Disposition": f'{_disposition(disposition)}; filename="{filename}"',
+            "Content-Security-Policy": f"{REPORT_CONTENT_SECURITY_POLICY}; sandbox allow-scripts",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@router.post("/reports/brrr-html")
+def report_brrr_html(
+    payload: analyzeBRRRReq,
+    address: str = "Property",
+    disposition: str = "attachment",
+    selected_result_keys: list[str] | None = Query(None, description=SELECTED_RESULT_KEYS_DESCRIPTION),
+) -> Response:
+    validated_selected_result_keys = _validated_selected_result_keys("BRRRR", selected_result_keys)
+    html = report_brrr_html_bl(payload, address, validated_selected_result_keys)
+    return _html_report_response(html, "BRRRR", address, disposition)
+
+
+@router.post("/reports/flip-html")
+def report_flip_html(
+    payload: analyzeFlipReq,
+    address: str = "Property",
+    disposition: str = "attachment",
+    selected_result_keys: list[str] | None = Query(None, description=SELECTED_RESULT_KEYS_DESCRIPTION),
+) -> Response:
+    validated_selected_result_keys = _validated_selected_result_keys("FLIP", selected_result_keys)
+    html = report_flip_html_bl(payload, address, validated_selected_result_keys)
+    return _html_report_response(html, "FLIP", address, disposition)

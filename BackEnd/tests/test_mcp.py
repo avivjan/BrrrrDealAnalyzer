@@ -185,7 +185,9 @@ class TestEveryToolSchema:
         payload = json.dumps([spec["tool"].model_dump(exclude_none=True) for spec in mcp_server.tools().values()])
         # 256 kB measured after the BRRRR lifecycle inputs (28 described fields, inlined
         # into the six deal-body tools) and outputs landed; was 174 kB before them.
-        assert len(payload) < 300_000, f"tools/list is {len(payload)} bytes"
+        # 307 kB after the two interactive HTML report tools (report_brrr_html / report_flip_html),
+        # which inline the deal bodies like the PDF report tools do.
+        assert len(payload) < 320_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

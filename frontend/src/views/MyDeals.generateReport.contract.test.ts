@@ -13,7 +13,8 @@ import { BRRRR_REPORT_RESULT_TILES, FLIP_REPORT_RESULT_TILES } from "../componen
  * "Generate Report" in the My Deals modal: the button opens the result picker
  * (the modal's tiles, all checked, each with the analysis value); Generate sends
  * the deal and the checked result keys to the report endpoint for the deal's
- * strategy and opens the PDF in the preview.
+ * strategy and opens the interactive HTML report in a sandboxed preview, with Share
+ * (the device's share sheet, where it can share files) and Download.
  */
 
 vi.mock("vue-router", () => ({
@@ -28,7 +29,7 @@ vi.mock("../api", () => ({
     analyzeDeal: vi.fn(),
     getBoughtDeals: vi.fn().mockResolvedValue([]),
     getPipelineTemplates: vi.fn().mockResolvedValue([]),
-    downloadDealPdf: vi.fn(),
+    downloadDealReport: vi.fn(),
     deleteActiveDeal: vi.fn(),
     duplicateActiveDeal: vi.fn(),
     moveToBought: vi.fn(),
@@ -39,7 +40,7 @@ vi.mock("../api", () => ({
 const getActiveDeals = vi.mocked(api.getActiveDeals);
 const updateActiveDeal = vi.mocked(api.updateActiveDeal);
 const analyzeDeal = vi.mocked(api.analyzeDeal);
-const downloadDealPdf = vi.mocked(api.downloadDealPdf);
+const downloadDealReport = vi.mocked(api.downloadDealReport);
 
 const BRRRR_DEAL = {
   deal_type: "BRRRR",
@@ -94,7 +95,7 @@ describe("MyDeals — Generate Report", () => {
     analyzeDeal.mockResolvedValue({ cash_flow: 350, dscr: 1.3647 });
     URL.createObjectURL = vi.fn(() => "blob:my-deal-report");
     URL.revokeObjectURL = vi.fn();
-    downloadDealPdf.mockResolvedValue(new Blob(["%PDF"], { type: "application/pdf" }));
+    downloadDealReport.mockResolvedValue(new Blob(["<!doctype html>"], { type: "text/html" }));
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-01T09:00:00.000Z"));
   });
@@ -117,12 +118,12 @@ describe("MyDeals — Generate Report", () => {
     expect(pickerResultKeys()).toEqual(BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey));
     expect(checkedPickerResultKeys()).toEqual(pickerResultKeys());
     expect(document.querySelector('[data-result-key="dscr"] [data-part="result-option-value"]')!.textContent!.trim()).toBe("1.36x");
-    expect(downloadDealPdf).not.toHaveBeenCalled();
+    expect(downloadDealReport).not.toHaveBeenCalled();
     // The deal modal stays open underneath.
     expect(wrapper.find('[data-testid="mydeals.modal"]').exists()).toBe(true);
   });
 
-  it("Generate sends the deal with only the checked results and previews the PDF", async () => {
+  it("Generate sends the deal with only the checked results and previews the HTML report sandboxed", async () => {
     const wrapper = await openTheDeal();
     await wrapper.find('[data-testid="mydeals.modal.view-report"]').trigger("click");
     await flushPromises();
@@ -132,13 +133,41 @@ describe("MyDeals — Generate Report", () => {
     await flushPromises();
 
     expect(resultPicker()).toBeNull();
-    expect(downloadDealPdf).toHaveBeenCalledTimes(1);
-    const [payload, dealType, address, selectedResultKeys] = downloadDealPdf.mock.calls[0]!;
+    expect(downloadDealReport).toHaveBeenCalledTimes(1);
+    const [payload, dealType, address, selectedResultKeys] = downloadDealReport.mock.calls[0]!;
     expect(dealType).toBe("BRRRR");
     expect(address).toBe("2286 Laurel Grove Ln W");
     expect(payload).toMatchObject({ purchasePrice: 200, arv_in_thousands: 320 });
     expect(selectedResultKeys).toEqual(BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey).filter((key) => key !== "roi"));
-    expect(wrapper.find('[data-testid="mydeals.pdf-modal.iframe"]').attributes("src")).toBe("blob:my-deal-report");
+    const iframe = wrapper.find('[data-testid="mydeals.report-modal.iframe"]');
+    expect(iframe.attributes("src")).toBe("blob:my-deal-report");
+    expect(iframe.attributes("sandbox")).toBe("");
+    // jsdom cannot share files: no Share button, Download only.
+    expect(wrapper.find('[data-testid="mydeals.report-modal.share"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="mydeals.report-modal.download"]').exists()).toBe(true);
+  });
+
+  it("offers Share where the device can share files, and it opens the share sheet with the .html file", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    const originalShare = navigator.share;
+    const originalCanShare = navigator.canShare;
+    Object.assign(navigator, { share, canShare: () => true });
+    try {
+      const wrapper = await openTheDeal();
+      await wrapper.find('[data-testid="mydeals.modal.view-report"]').trigger("click");
+      await flushPromises();
+      pickerPart("generate").click();
+      await flushPromises();
+      await wrapper.find('[data-testid="mydeals.report-modal.share"]').trigger("click");
+      await flushPromises();
+      expect(share).toHaveBeenCalledTimes(1);
+      const [{ files, title }] = share.mock.calls[0]!;
+      expect(files[0].name).toBe("BigWhales_BRRRR_2286_Laurel_Grove_Ln_W.html");
+      expect(files[0].type).toBe("text/html");
+      expect(title).toBe("2286 Laurel Grove Ln W · Big Whales deal report");
+    } finally {
+      Object.assign(navigator, { share: originalShare, canShare: originalCanShare });
+    }
   });
 
   it("a flip deal is offered the flip results", async () => {
@@ -148,6 +177,6 @@ describe("MyDeals — Generate Report", () => {
     expect(pickerResultKeys()).toEqual(FLIP_REPORT_RESULT_TILES.map((tile) => tile.resultKey));
     pickerPart("generate").click();
     await flushPromises();
-    expect(downloadDealPdf.mock.calls[0]![1]).toBe("FLIP");
+    expect(downloadDealReport.mock.calls[0]![1]).toBe("FLIP");
   });
 });

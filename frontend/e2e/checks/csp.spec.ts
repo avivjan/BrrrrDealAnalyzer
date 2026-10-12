@@ -8,7 +8,7 @@ import { API_ORIGIN } from '../fixtures/env';
  * Netlify) is what `vite preview` serves too (vite.config.ts), so the whole
  * browser suite already runs under it. This check pins that: the header the
  * preview sends is the file's policy (with the e2e API origin in the place of
- * localhost:8000), and every route plus the one blob: frame (the PDF preview)
+ * localhost:8000), and every route plus the one blob: frame (the report preview)
  * renders without a single violation.
  */
 
@@ -64,17 +64,17 @@ test('every route renders under the production CSP without a violation', async (
   expect(consoleErrors).toEqual([]);
 });
 
-test('the PDF preview (the one blob: frame) renders under the production CSP', async ({ page, seed }) => {
+test('the report preview (the one blob: frame) renders under the production CSP', async ({ page, seed }) => {
   const { violations, consoleErrors } = await watchViolations(page);
   const deal = await seed.seedActiveDeal('BRRRR', { section: 1 });
   await page.goto('/my-deals');
   await page.getByTestId(`mydeals.card.${deal.id}`).click();
   await expect(page.getByTestId('mydeals.modal')).toBeVisible();
   await page.getByTestId('mydeals.modal.view-report').click();
-  // "Generate Report" opens the result picker first; Generate (every result checked) fetches the PDF.
+  // "Generate Report" opens the result picker first; Generate (every result checked) fetches the report.
   await page.getByTestId('generate-report-result-picker').locator('[data-part="generate"]').click();
-  await expect(page.getByTestId('mydeals.pdf-modal.iframe')).toHaveAttribute('src', /^blob:/);
+  await expect(page.getByTestId('mydeals.report-modal.iframe')).toHaveAttribute('src', /^blob:/);
   await page.waitForTimeout(500);
-  expect(await violations(), 'the PDF preview violated the CSP').toEqual([]);
+  expect(await violations(), 'the report preview violated the CSP').toEqual([]);
   expect(consoleErrors).toEqual([]);
 });

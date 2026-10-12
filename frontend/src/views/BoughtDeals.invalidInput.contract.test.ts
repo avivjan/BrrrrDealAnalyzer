@@ -16,7 +16,7 @@ vi.mock("../api", () => ({
     updateBoughtDeal: vi.fn(),
     deleteBoughtDeal: vi.fn(),
     analyzeDeal: vi.fn(),
-    downloadDealPdf: vi.fn(),
+    downloadDealReport: vi.fn(),
     getPipelineTemplates: vi.fn().mockResolvedValue([]),
     getPipelineTemplateStats: vi.fn().mockResolvedValue({}),
   },
