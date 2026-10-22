@@ -86,28 +86,28 @@ The groups inside them follow the section components, for example "Hard Money", 
 7. Both views (`MyDeals.vue`, `BoughtDeals.vue`) pass the flag through.
 
 ## Todo (≈ 5 h 30)
-- [ ] **T0** (10 min): Pull the latest `main` and create the fresh branch `ReportDealInputsSection` from it. Check
+- [x] **T0** (10 min): Pull the latest `main` and create the fresh branch `ReportDealInputsSection` from it. Check
   that no report or form file changed on `main` in a way that affects this plan. Commit the plan to
   `tasks/todo/ReportDealInputsSection.md`.
-- [ ] **B1** (1 h 15): `deal_input_sections.py` with every BRRRR and FLIP field: labels, kinds, groups, effective
+- [x] **B1** (1 h 15): `deal_input_sections.py` with every BRRRR and FLIP field: labels, kinds, groups, effective
   values, conditionals and choice labels.
-- [ ] **B2** (1 h 30): Render the Deal Inputs section in `deal_html_report.py`: markup, CSS (sub-stage panels,
+- [x] **B2** (1 h 30): Render the Deal Inputs section in `deal_html_report.py`: markup, CSS (sub-stage panels,
   icons, grid, chips, phone and light/print), and the summary chip.
-- [ ] **B3** (20 min): Add `include_deal_inputs` through the routes and BL.
-- [ ] **M1** (15 min): MCP support task: update the tool descriptions and add an MCP test with
+- [x] **B3** (20 min): Add `include_deal_inputs` through the routes and BL.
+- [x] **M1** (15 min): MCP support task: update the tool descriptions and add an MCP test with
   `include_deal_inputs=true`.
-- [ ] **F1** (45 min): Picker option, composable, API and views, with their tests.
-- [ ] **V1** (30 min): Screenshots at phone and desktop size, dark and light, JavaScript off. Polish until it looks
+- [x] **F1** (45 min): Picker option, composable, API and views, with their tests.
+- [x] **V1** (30 min): Screenshots at phone and desktop size, dark and light, JavaScript off. Polish until it looks
   premium.
-- [ ] **G1** (30 min): Re-record the goldens (openapi, regression report cases, e2e `deal-report*` contracts) and
+- [x] **G1** (30 min): Re-record the goldens (openapi, regression report cases, e2e `deal-report*` contracts) and
   run every suite.
-- [ ] **S1** (20 min): Security task, from `.claude/security.md`: *"Please check through all the code you just wrote
+- [x] **S1** (20 min): Security task, from `.claude/security.md`: *"Please check through all the code you just wrote
   and make sure it follows security best practices. make sure there are no sensitive information in the frontend and
   there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Check:
   - escaping of every input value, including the two free-text notes, with an injection test;
   - that only calculator inputs are included (no notes, contact or links);
   - bandit, pip-audit and `npm audit`.
-- [ ] **P1** (15 min): Tick the plan, push, and open the PR.
+- [x] **P1** (15 min): Tick the plan, push, and open the PR.
 
 ## Tests by layer
 **Unit**
@@ -144,3 +144,31 @@ The groups inside them follow the section components, for example "Hard Money", 
 - `cd frontend && npm test && npx vue-tsc -b && PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project=chromium`
   (plus `deal-report.spec.ts` on Mobile Chrome)
 - Send you a fresh sample `.html` with the inputs section to try on your phone.
+
+## Implementation notes
+- **Branch.** A fresh branch, `ReportDealInputsSection`, created from a freshly pulled `main` (`5806751`, PR #99).
+- **Layout.** The section sits at the top of `<main>`: a native `<details id="deal-inputs">`, collapsed. Inside
+  it are a stage rail (anchor chips) and one `<details class="stage" open>` per stage. The page header also gets a
+  violet "Deal Inputs · View all" tile. "Expand everything" and print open the section too, because the script's
+  selector now includes it.
+- **Choices made along the way:**
+  - The form's Rent & Holding tab is split into "Holding Costs" and "Operating Expenses (% of rent)", so its 12
+    values read as groups.
+  - FLIP's Capital Gains Tax Rate sits under "Taxes".
+- **Fix carried along.** The picker's button still read "Generate PDF" from the last PR. It now reads "Generate
+  Report".
+- **Security (S1):**
+  - Every input value, label and hint is escaped, including the two free-text notes. This is tested with
+    `<script>`, `<img onerror>` and `</details>`.
+  - Private deal fields (notes, contact, task, niche, links) are never listed. A test sends them in the body and
+    checks that they are absent.
+  - The file's CSP is unchanged: still one hash-pinned script, which the build re-hashes.
+  - bandit (CI flags) is clean.
+  - New advisories that would have turned CI's security job red, all fixed in a separate commit:
+    - pip-audit: mcp 1.29.1 → 1.30.0, pypdf 6.19.0 → 6.21.1
+    - npm audit: follow-redirects 1.16.0 → 1.16.1
+- **Results:**
+  - Backend: 1118 passed, and `verify_regression.py verify` passes.
+  - Vitest: 1672 passed, `vue-tsc -b` is clean, and the build succeeds.
+  - Chromium e2e: 118 passed and 4 skipped.
+  - `deal-report.spec.ts` on Mobile Chrome: 4/4.
