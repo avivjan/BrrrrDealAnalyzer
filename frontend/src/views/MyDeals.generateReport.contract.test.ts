@@ -139,6 +139,8 @@ describe("MyDeals — Generate Report", () => {
     expect(address).toBe("2286 Laurel Grove Ln W");
     expect(payload).toMatchObject({ purchasePrice: 200, arv_in_thousands: 320 });
     expect(selectedResultKeys).toEqual(BRRRR_REPORT_RESULT_TILES.map((tile) => tile.resultKey).filter((key) => key !== "roi"));
+    // "Include deal inputs" starts checked, so the report asks for the inputs section.
+    expect(downloadDealReport.mock.calls[0]![4]).toBe(true);
     const iframe = wrapper.find('[data-testid="mydeals.report-modal.iframe"]');
     expect(iframe.attributes("src")).toBe("blob:my-deal-report");
     expect(iframe.attributes("sandbox")).toBe("");

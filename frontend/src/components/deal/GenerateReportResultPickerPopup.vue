@@ -28,7 +28,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  generate: [selectedResultKeys: string[]];
+  generate: [selectedResultKeys: string[], includeDealInputs: boolean];
   close: [];
 }>();
 
@@ -44,6 +44,8 @@ const selectedResultKeysInTileOrder = computed(() =>
 );
 const areAllResultsSelected = computed(() => selectedResultKeysInTileOrder.value.length === reportResultTiles.value.length);
 const isAnyResultSelected = computed(() => selectedResultKeysInTileOrder.value.length > 0);
+/** Whether the report also lists every input of the deal, by stage. Checked on every open. */
+const includeDealInputs = ref(true);
 
 function selectAllResults() {
   selectedResultKeys.value = new Set(reportResultTiles.value.map((tile) => tile.resultKey));
@@ -67,7 +69,7 @@ function formattedResultValue(resultKey: string, unit: Parameters<typeof formatC
 
 function generateReport() {
   if (!isAnyResultSelected.value) return;
-  emit("generate", selectedResultKeysInTileOrder.value);
+  emit("generate", selectedResultKeysInTileOrder.value, includeDealInputs.value);
 }
 
 // -- overlay behaviour (as CalculationBreakdownPopup) ----------------------------------------------
@@ -95,7 +97,10 @@ onBeforeUnmount(() => {
 watch(
   () => props.open,
   async (open) => {
-    if (open) selectAllResults();
+    if (open) {
+      selectAllResults();
+      includeDealInputs.value = true;
+    }
     if (typeof document === "undefined") return;
     listen(open);
     if (open) {
@@ -181,12 +186,29 @@ watch(
             </li>
           </ul>
 
+          <label
+            data-part="include-deal-inputs"
+            class="mt-3 flex min-h-11 cursor-pointer items-center gap-3 rounded-ctl border border-line bg-surface-2 px-3 py-2 transition-colors duration-fast ease-standard hover:border-primary/40"
+          >
+            <input
+              v-model="includeDealInputs"
+              type="checkbox"
+              data-part="include-deal-inputs-input"
+              class="h-4 w-4 shrink-0 rounded border-line accent-primary"
+            />
+            <i class="pi pi-sliders-h text-sm text-fg-muted" aria-hidden="true"></i>
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-medium text-fg">Include deal inputs</span>
+              <span class="block text-xs text-fg-muted">Every value you entered, by stage, in a collapsed section</span>
+            </span>
+          </label>
+
           <template #footer>
             <div class="flex items-center justify-end gap-2">
               <UiButton data-part="cancel" variant="ghost" size="sm" @click="emit('close')">Cancel</UiButton>
               <UiButton data-part="generate" variant="primary" size="sm" :disabled="!isAnyResultSelected" @click="generateReport">
-                <i class="pi pi-file-pdf text-base" aria-hidden="true"></i>
-                Generate PDF
+                <i class="pi pi-sparkles text-base" aria-hidden="true"></i>
+                Generate Report
               </UiButton>
             </div>
           </template>

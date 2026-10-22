@@ -559,10 +559,10 @@ const openReportResultPicker = () => {
   isReportResultPickerOpen.value = true;
 };
 
-const generateDealReportWithSelectedResults = (selectedResultKeys: string[]) => {
+const generateDealReportWithSelectedResults = (selectedResultKeys: string[], includeDealInputs: boolean) => {
   isReportResultPickerOpen.value = false;
   if (!editingDeal.value) return;
-  return viewReportFor(editingDeal.value, reportDealType.value, selectedResultKeys);
+  return viewReportFor(editingDeal.value, reportDealType.value, selectedResultKeys, includeDealInputs);
 };
 
 console.groupEnd();

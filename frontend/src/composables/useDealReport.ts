@@ -56,11 +56,13 @@ export function useDealReport() {
   /**
    * Generate the report for `deal` and open it in the preview. `selectedResultKeys` are the
    * result tiles picked in "Generate Report" (tile order); left out, the report holds them all.
+   * `includeDealInputs` adds the collapsed "Deal Inputs" section (every input, by stage).
    */
   const viewDealReport = async (
     deal: { address?: string },
     dealType: "BRRRR" | "FLIP",
     selectedResultKeys?: readonly string[],
+    includeDealInputs = false,
   ) => {
     isPreparingReport.value = true;
     try {
@@ -68,7 +70,7 @@ export function useDealReport() {
       // A plain clone: the modals hand over a reactive proxy, and the API layer
       // should serialise a value, not a proxy.
       const payload = JSON.parse(JSON.stringify(deal)) as AnalyzeDealReq;
-      const blob = await api.downloadDealReport(payload, dealType, address, selectedResultKeys);
+      const blob = await api.downloadDealReport(payload, dealType, address, selectedResultKeys, includeDealInputs);
       const filename = dealReportFilename(dealType, address);
       const file = new File([blob], filename, { type: "text/html" });
       const url = URL.createObjectURL(file);
