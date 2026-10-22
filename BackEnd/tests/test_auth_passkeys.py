@@ -165,6 +165,18 @@ class TestRefreshAndLogout:
         assert client.cookies[rt] != old_refresh
         assert client.get("/auth/me").status_code == 200
 
+    @staticmethod
+    def _replace_server_set_cookie(client, name: str, value: str) -> None:
+        """Overwrite the cookie the server set (same domain and path), so exactly one `name` is sent.
+
+        A bare `client.cookies.set(name, value)` adds a second, domain-less cookie instead, and the
+        request then carries both; which one the app reads depends on the test client's header
+        order (it changed in Starlette 1.9), not on the app."""
+        server_set_cookie = next(cookie for cookie in client.cookies.jar if cookie.name == name)
+        client.cookies.set(name, value, domain=server_set_cookie.domain, path=server_set_cookie.path)
+        sent_cookie_header = client.build_request("POST", "/auth/refresh").headers.get("cookie", "")
+        assert sent_cookie_header.count(f"{name}=") == 1
+
     def test_a_replayed_refresh_token_revokes_the_family(self, client):
         pk = SoftPasskey(settings.rp_id(), ORIGIN)
         enroll(client, pk)
@@ -172,9 +184,9 @@ class TestRefreshAndLogout:
         stolen = client.cookies[rt]
         assert client.post("/auth/refresh", headers=XRW).status_code == 200
         fresh = client.cookies[rt]
-        client.cookies.set(rt, stolen)
+        self._replace_server_set_cookie(client, rt, stolen)
         assert client.post("/auth/refresh", headers=XRW).status_code == 401
-        client.cookies.set(rt, fresh)
+        self._replace_server_set_cookie(client, rt, fresh)
         assert client.post("/auth/refresh", headers=XRW).status_code == 401
         assert client.get("/auth/me").status_code == 401
 
