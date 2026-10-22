@@ -27070,6 +27070,13 @@
     "nonempty": true,
     "status": 200
   },
+  "reports/brrr_html_with_deal_inputs": {
+    "content_disposition": "attachment; filename=\"BigWhales_BRRRR_1_Shared_Form_St.html\"",
+    "content_type": "text/html; charset=utf-8",
+    "magic": "<!do",
+    "nonempty": true,
+    "status": 200
+  },
   "reports/brrr_pdf": {
     "content_disposition": "inline; filename=\"BigWhales_BRRRR_1_Shared_Form_St.pdf\"",
     "content_type": "application/pdf",

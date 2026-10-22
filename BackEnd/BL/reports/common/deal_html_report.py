@@ -38,6 +38,7 @@ from BL.reports.common.breakdown_tree import (
     steps_after_headline,
     top_level_rows_for_headline,
 )
+from BL.reports.common.deal_input_sections import ResolvedDealInputSection, resolve_deal_input_sections
 from BL.reports.common.deal_pdf import format_value_like_calculation_popup
 from BL.reports.common.report_result_tiles import ReportResultTile, select_report_result_tiles
 
@@ -194,6 +195,72 @@ def _result_card_markup(section: _HtmlReportResultSection, result_count: int, br
     return f'<section class="card" id="{section.anchor_id}">{header}{"".join(body)}</section>'
 
 
+# -- the deal inputs ---------------------------------------------------------------------------------
+# Line icons drawn inline (no font, no network), one per sub-stage, as the form's tab icons.
+_STAGE_ICON_PATHS = {
+    "home": '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/>',
+    "wrench": '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+    "key": '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7"/><path d="m16.5 6.5 2.5 2.5"/><path d="m14.5 8.5 2 2"/>',
+    "refresh": '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/>',
+    "dollar": '<path d="M12 3v18"/><path d="M16.5 7.5c-.8-1.3-2.4-2-4.5-2-2.5 0-4 1.2-4 3s1.6 2.6 4 3.1 4 1.4 4 3.2-1.6 3.2-4.2 3.2c-2.2 0-3.8-.8-4.6-2.2"/>',
+    "wallet": '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V18a2 2 0 0 0 2 2h14V8H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16" cy="14" r="1.2"/>',
+    "sliders": '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+}
+
+
+def _stage_icon_svg(icon: str) -> str:
+    return (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" '
+        f'stroke-linejoin="round" aria-hidden="true">{_STAGE_ICON_PATHS.get(icon, "")}</svg>'
+    )
+
+
+def _deal_inputs_markup(input_sections: list[ResolvedDealInputSection]) -> str:
+    """The collapsed "Deal Inputs" section: one foldable panel per sub-stage of the form, each a grid of
+    label / value rows. Native <details>, so it opens without a script, like the result rows."""
+    total_inputs = sum(section.row_count for section in input_sections)
+    stage_names = " · ".join(_text(section.title) for section in input_sections)
+    rail = "".join(
+        f'<a class="stage-chip" href="#inputs-{_text(section.tab_key)}">{_stage_icon_svg(section.icon)}{_text(section.title)}</a>'
+        for section in input_sections
+    )
+    panels: list[str] = []
+    for stage_number, section in enumerate(input_sections, start=1):
+        groups_markup = ""
+        for group in section.groups:
+            rows_markup = ""
+            for row in group.rows:
+                chips = "".join(f'<span class="chip chip-{_text(chip)}">{_text(chip)}</span>' for chip in row.chips if chip == "auto")
+                yes_no_class = ""
+                if "yes" in row.chips:
+                    yes_no_class = " value-yes"
+                elif "no" in row.chips:
+                    yes_no_class = " value-no"
+                hint = f'<span class="input-hint">{_text(row.hint)}</span>' if row.hint else ""
+                rows_markup += (
+                    f'<div class="input-row kind-{_text(row.display_kind)}"><dt>{_text(row.label)}</dt>'
+                    f'<dd><span class="input-value{yes_no_class}">{_text(row.value_text)}</span>{chips}{hint}</dd></div>'
+                )
+            group_title = f'<p class="group-title">{_text(group.title)}</p>' if group.title else ""
+            groups_markup += f'<div class="input-group">{group_title}<dl class="input-grid">{rows_markup}</dl></div>'
+        panels.append(
+            f'<details class="stage" id="inputs-{_text(section.tab_key)}" open>'
+            f'<summary class="stage-head"><span class="stage-icon">{_stage_icon_svg(section.icon)}</span>'
+            f'<span class="stage-step">{stage_number:02d}</span><span class="stage-title">{_text(section.title)}</span>'
+            f'<span class="stage-count">{section.row_count} inputs</span><span class="chev" aria-hidden="true"></span></summary>'
+            f'<div class="stage-body">{groups_markup}</div></details>'
+        )
+    return (
+        '<details class="inputs" id="deal-inputs">'
+        f'<summary class="inputs-summary"><span class="inputs-icon">{_stage_icon_svg("sliders")}</span>'
+        '<span class="inputs-titles"><span class="eyebrow">Deal Inputs</span>'
+        '<span class="inputs-title">Everything entered for this deal</span>'
+        f'<span class="inputs-meta">{total_inputs} values · {stage_names}</span></span>'
+        '<span class="chev" aria-hidden="true"></span></summary>'
+        f'<div class="inputs-body"><nav class="stage-rail" aria-label="Stages">{rail}</nav>{"".join(panels)}</div></details>'
+    )
+
+
 # -- the page --------------------------------------------------------------------------------------
 _REPORT_SCRIPT = """
 (function () {
@@ -201,7 +268,7 @@ _REPORT_SCRIPT = """
   var tools = document.querySelectorAll('.card-tools, .page-tools');
   for (var i = 0; i < tools.length; i++) tools[i].hidden = false;
   function setAll(container, open) {
-    var all = container.querySelectorAll('.tree details');
+    var all = container.querySelectorAll('.tree details, details.inputs, details.stage');
     for (var j = 0; j < all.length; j++) all[j].open = open;
   }
   document.addEventListener('click', function (event) {
@@ -381,6 +448,79 @@ details[open] > summary .chev::before { transform: rotate(45deg); left: 5px; top
 .all-steps .formula { margin-top: 4px; font-size: 12px; }
 .to-top { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--cyan); text-decoration: none; }
 .empty { color: var(--muted); }
+.tile-inputs { background: linear-gradient(160deg, rgba(167,139,250,0.16), rgba(34,211,238,0.08)); border-color: rgba(167,139,250,0.35); }
+.tile-inputs .tile-value { display: flex; align-items: center; gap: 8px; font: 700 15px/1.2 var(--sans); color: var(--violet); }
+.tile-inputs .tile-value svg { width: 18px; height: 18px; }
+.inputs {
+  margin: 18px 0; border-radius: var(--radius); border: 1px solid rgba(167,139,250,0.35);
+  background: linear-gradient(150deg, rgba(167,139,250,0.10), rgba(34,211,238,0.05) 60%, var(--surface));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); scroll-margin-top: 16px;
+  box-shadow: 0 20px 60px -30px rgba(0,0,0,0.6);
+}
+.inputs-summary {
+  display: grid; grid-template-columns: 46px minmax(0,1fr) 18px; align-items: center; gap: 14px;
+  padding: 18px; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent;
+}
+.inputs-summary::-webkit-details-marker, .stage-head::-webkit-details-marker { display: none; }
+.inputs-summary:focus-visible, .stage-head:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-radius: 12px; }
+.inputs-icon {
+  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; color: var(--violet);
+  background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.35); box-shadow: 0 0 22px rgba(167,139,250,0.25);
+}
+.inputs-icon svg { width: 24px; height: 24px; }
+.inputs-titles { display: grid; gap: 4px; min-width: 0; }
+.inputs .eyebrow { color: var(--violet); }
+.inputs-title { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
+.inputs-meta { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.inputs-body { padding: 0 18px 18px; }
+.stage-rail { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 12px; scrollbar-width: none; }
+.stage-rail::-webkit-scrollbar { display: none; }
+.stage-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; color: var(--fg); text-decoration: none;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.stage-chip svg { width: 15px; height: 15px; color: var(--cyan); }
+.stage-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+.stage {
+  margin-top: 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface);
+  overflow: hidden; scroll-margin-top: 16px; position: relative;
+}
+.stage::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: linear-gradient(var(--cyan), var(--violet)); opacity: .85; }
+.stage-head {
+  display: grid; grid-template-columns: 34px auto minmax(0,1fr) auto 18px; align-items: center; gap: 10px;
+  padding: 12px 14px 12px 16px; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent;
+}
+.stage-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--cyan);
+  background: rgba(34,211,238,0.10); border: 1px solid rgba(34,211,238,0.30); }
+.stage-icon svg { width: 18px; height: 18px; }
+.stage-step { font: 700 11px/1 var(--mono); color: var(--faint); letter-spacing: 0.08em; }
+.stage-title {
+  font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+  background: linear-gradient(92deg, var(--fg), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.stage-count { font-size: 11.5px; color: var(--muted); padding: 4px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); white-space: nowrap; }
+.stage-body { padding: 2px 16px 14px 18px; display: grid; gap: 14px; }
+.input-group { min-width: 0; }
+.group-title { margin: 6px 0 6px; font: 700 10.5px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.input-grid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.input-row {
+  min-width: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
+  display: grid; gap: 4px; align-content: start;
+}
+.input-row.kind-text { grid-column: 1 / -1; }
+.input-row dt { font-size: 12px; color: var(--muted); }
+.input-row dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; }
+.input-value { font: 650 15.5px/1.3 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.kind-text .input-value, .kind-choice .input-value { font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.input-value.value-yes, .input-value.value-no {
+  font: 700 11px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px;
+}
+.input-value.value-yes { color: #34d399; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.4); }
+.input-value.value-no { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line-strong); }
+.chip { font: 700 9.5px/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; }
+.chip-auto { color: var(--violet); background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.4); }
+.input-hint { flex-basis: 100%; font-size: 11.5px; color: var(--faint); }
 .legend { margin: 26px 0 0; color: var(--muted); font-size: 12px; }
 footer { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
 footer strong { color: var(--fg); letter-spacing: 0.04em; }
@@ -393,6 +533,14 @@ footer strong { color: var(--fg); letter-spacing: 0.04em; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .title-row { flex-direction: column-reverse; }
   .page-tools { justify-content: flex-start; }
+  .inputs-summary { grid-template-columns: 40px minmax(0,1fr) 18px; padding: 14px; gap: 12px; }
+  .inputs-icon { width: 40px; height: 40px; }
+  .inputs-body { padding: 0 10px 12px; }
+  .input-grid { grid-template-columns: minmax(0, 1fr); }
+  .stage-head { grid-template-columns: 30px minmax(0,1fr) auto 18px; padding: 10px 10px 10px 14px; }
+  .stage-icon { width: 30px; height: 30px; }
+  .stage-step { display: none; }
+  .stage-body { padding: 2px 10px 12px 14px; }
   button { padding: 9px 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -403,7 +551,8 @@ footer strong { color: var(--fg); letter-spacing: 0.04em; }
 @media print {
   :root { color-scheme: light; --bg: #fff; --surface: #fff; --surface-2: #f6f7fb; --line: #dfe3ee; --line-strong: #c9cfe0;
     --fg: #0b1430; --muted: #4b5677; --faint: #8a93b0; --cyan: #0e7490; --glow: none; }
-  .aurora, .page-tools, .card-tools, .to-top, .hint { display: none !important; }
+  .aurora, .page-tools, .card-tools, .to-top, .hint, .stage-rail { display: none !important; }
+  .inputs, .stage { break-inside: auto; box-shadow: none; backdrop-filter: none; }
   .card { break-inside: avoid-page; box-shadow: none; backdrop-filter: none; }
   h1 { color: var(--fg); background: none; }
   .headline { text-shadow: none; }
@@ -434,11 +583,13 @@ def build_deal_html_report(
     deal_type: str,
     result: dict,
     selected_result_keys: list[str] | None = None,
+    deal_inputs: dict | None = None,
 ) -> str:
     """Render the interactive deal report as one self-contained HTML document.
 
     `result` is the calculator output as a dict, carrying `breakdowns`. `selected_result_keys` picks the
     result tiles (None = every tile); `select_report_result_tiles` rejects unknown keys and an empty list.
+    `deal_inputs` (the request body by alias) adds the collapsed "Deal Inputs" section; None leaves it out.
     """
     deal_type = (deal_type or "BRRRR").upper()
     breakdowns = result.get("breakdowns") or {}
@@ -453,6 +604,13 @@ def build_deal_html_report(
         for section in sections
     )
     cards = "".join(_result_card_markup(section, len(sections), breakdowns) for section in sections)
+    deal_inputs_section = ""
+    if deal_inputs is not None:
+        deal_inputs_section = _deal_inputs_markup(resolve_deal_input_sections(deal_type, deal_inputs, result))
+        result_tiles += (
+            f'<a class="tile tile-inputs" href="#deal-inputs"><span class="tile-label">Deal Inputs</span>'
+            f'<span class="tile-value">{_stage_icon_svg("sliders")}View all</span></a>'
+        )
     badge_class = "badge flip" if deal_type == "FLIP" else "badge"
     deal_type_text = _text(deal_type)
     return f"""<!doctype html>
@@ -482,7 +640,7 @@ def build_deal_html_report(
 <button type="button" data-action="theme">Light/Dark</button>
 </div>
 </header>
-<main>{cards}</main>
+<main>{deal_inputs_section}{cards}</main>
 <p class="legend">Money is in dollars, percentages as shown, ratios as a multiple (1.20x). "∞" and "-∞" mean the divisor was zero. A note under a step explains a convention.</p>
 <footer>
 <p><strong>Big Whales AY LLC</strong> · Real-estate analytics by big whales · BigWhalesLLC@gmail.com</p>

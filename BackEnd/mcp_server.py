@@ -116,14 +116,16 @@ DESCRIPTIONS: dict[str, str] = {
     "report_brrr_html": (
         "Render the Big Whales BRRRR deal report as one self-contained interactive HTML file (same "
         "body as analyze_brrr; address in `address`): each result laid out like the site's breakdown "
-        "popup, rows expanding in place. Opens on any phone or computer; send it on WhatsApp or Gmail. "
-        "selected_result_keys (omit = all) picks the results. Returns an embedded HTML file."
+        "popup, rows expanding in place. Opens on any device; send it on WhatsApp or Gmail. "
+        "selected_result_keys (omit = all) picks the results; include_deal_inputs adds every input by "
+        "stage. Returns an embedded HTML file."
     ),
     "report_flip_html": (
         "Render the Big Whales FLIP deal report as one self-contained interactive HTML file (same "
         "body as analyze_flip; address in `address`): each result laid out like the site's breakdown "
-        "popup, rows expanding in place. Opens on any phone or computer; send it on WhatsApp or Gmail. "
-        "selected_result_keys (omit = all) picks the results. Returns an embedded HTML file."
+        "popup, rows expanding in place. Opens on any device; send it on WhatsApp or Gmail. "
+        "selected_result_keys (omit = all) picks the results; include_deal_inputs adds every input by "
+        "stage. Returns an embedded HTML file."
     ),
     # --- My Deals (active pipeline) ---
     "get_active_deals": (

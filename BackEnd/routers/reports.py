@@ -80,6 +80,13 @@ def report_flip_pdf(
     )
 
 
+INCLUDE_DEAL_INPUTS_DESCRIPTION = (
+    "true adds a collapsed 'Deal Inputs' section listing every calculator input, grouped by the form's "
+    "stages (BRRRR: Buy, Rehab, Rent & Holding, Refinance; FLIP: Buy & Rehab, Flip Strategy, Expenses). "
+    "Default false."
+)
+
+
 def _html_report_response(html: str, deal_type: str, address: str, disposition: str) -> Response:
     """The interactive report as a file download. Served from the API origin, it is also sandboxed
     there: the same policy as the file's own meta tag, plus `sandbox`, so opening the endpoint directly
@@ -102,9 +109,10 @@ def report_brrr_html(
     address: str = "Property",
     disposition: str = "attachment",
     selected_result_keys: list[str] | None = Query(None, description=SELECTED_RESULT_KEYS_DESCRIPTION),
+    include_deal_inputs: bool = Query(False, description=INCLUDE_DEAL_INPUTS_DESCRIPTION),
 ) -> Response:
     validated_selected_result_keys = _validated_selected_result_keys("BRRRR", selected_result_keys)
-    html = report_brrr_html_bl(payload, address, validated_selected_result_keys)
+    html = report_brrr_html_bl(payload, address, validated_selected_result_keys, include_deal_inputs)
     return _html_report_response(html, "BRRRR", address, disposition)
 
 
@@ -114,7 +122,8 @@ def report_flip_html(
     address: str = "Property",
     disposition: str = "attachment",
     selected_result_keys: list[str] | None = Query(None, description=SELECTED_RESULT_KEYS_DESCRIPTION),
+    include_deal_inputs: bool = Query(False, description=INCLUDE_DEAL_INPUTS_DESCRIPTION),
 ) -> Response:
     validated_selected_result_keys = _validated_selected_result_keys("FLIP", selected_result_keys)
-    html = report_flip_html_bl(payload, address, validated_selected_result_keys)
+    html = report_flip_html_bl(payload, address, validated_selected_result_keys, include_deal_inputs)
     return _html_report_response(html, "FLIP", address, disposition)

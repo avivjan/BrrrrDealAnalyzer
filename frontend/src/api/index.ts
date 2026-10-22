@@ -245,6 +245,7 @@ export default {
     type: 'BRRRR' | 'FLIP',
     address: string,
     selectedResultKeys?: readonly string[],
+    includeDealInputs = false,
   ): Promise<Blob> {
     const endpoint = type === 'FLIP' ? '/reports/flip-html' : '/reports/brrr-html';
     const logPrefix = `[DealReport:${type}]`;
@@ -253,7 +254,12 @@ export default {
       const response = await apiClient.post(endpoint, data, {
         // One `selected_result_keys` per key (no `[]` suffix), the form FastAPI reads as a list;
         // left out entirely when every result is wanted.
-        params: selectedResultKeys ? { address, selected_result_keys: [...selectedResultKeys] } : { address },
+        // `include_deal_inputs` only when wanted, so a report without inputs sends what it always did.
+        params: {
+          address,
+          ...(selectedResultKeys ? { selected_result_keys: [...selectedResultKeys] } : {}),
+          ...(includeDealInputs ? { include_deal_inputs: true } : {}),
+        },
         paramsSerializer: { indexes: null },
         responseType: 'blob',
       });

@@ -10,7 +10,8 @@ import { BRRRR_PAYLOAD, expect, test } from '../fixtures';
  * Generate fetches the report (one self-contained HTML file that works like the
  * breakdown popups) as a blob and previews it in a sandboxed frame inside the app,
  * where its rows expand in place. Download offers the `.html` file. Frozen here: the
- * picker's default, the request (with the picked results), the in-app drill-down, the
+ * picker's default, the request (with the picked results and the deal-inputs choice), the
+ * in-app drill-down and the collapsed Deal Inputs section, the
  * file name, and that the downloaded file works on its own with JavaScript OFF, as it
  * does in the iPhone preview a WhatsApp or Mail attachment opens in.
  */
@@ -20,8 +21,16 @@ const BRRRR_RESULT_KEYS_IN_TILE_ORDER = [
   'total_cash_needed_for_deal', 'cash_to_close_buy', 'cash_out_routi_conservative', 'stolen_money',
 ];
 
-/** Press "Generate Report", check the picker opened with every result checked, uncheck some, press Generate. */
-async function generateReport(page: Page, testIdPrefix: 'mydeals' | 'boughtdeals', uncheckedResultKeys: string[] = []) {
+/**
+ * Press "Generate Report", check the picker opened with every result and "Include deal inputs" checked,
+ * uncheck what the test asks, press Generate.
+ */
+async function generateReport(
+  page: Page,
+  testIdPrefix: 'mydeals' | 'boughtdeals',
+  uncheckedResultKeys: string[] = [],
+  includeDealInputs = true,
+) {
   const button = page.getByTestId(`${testIdPrefix}.modal.view-report`);
   await expect(button).toContainText('Generate Report');
   await button.click();
@@ -36,6 +45,9 @@ async function generateReport(page: Page, testIdPrefix: 'mydeals' | 'boughtdeals
   for (const resultKey of uncheckedResultKeys) {
     await picker.locator(`[data-result-key="${resultKey}"] input`).uncheck();
   }
+  const includeDealInputsBox = picker.locator('[data-part="include-deal-inputs-input"]');
+  await expect(includeDealInputsBox).toBeChecked();
+  if (!includeDealInputs) await includeDealInputsBox.uncheck();
   await picker.locator('[data-part="generate"]').click();
   await expect(picker).toBeHidden();
 }
@@ -80,6 +92,15 @@ test('generating a report with every result previews the interactive report, who
   await expect(operatingExpenses.locator('> .children')).toContainText('Management 8% of rent');
   await operatingExpenses.locator('> summary').click();
   await expect(operatingExpenses).not.toHaveAttribute('open', '');
+
+  // The Deal Inputs section: collapsed; a tap opens the four stages with the deal's values.
+  const dealInputs = report.locator('details#deal-inputs');
+  await expect(dealInputs).not.toHaveAttribute('open', '');
+  await dealInputs.locator('> summary').click();
+  await expect(dealInputs).toHaveAttribute('open', '');
+  await expect(dealInputs.locator('.stage-title')).toHaveText(['Buy', 'Rehab', 'Rent & Holding', 'Refinance']);
+  const purchasePrice = dealInputs.locator('.input-row', { has: report.locator('dt', { hasText: /^Purchase Price$/ }) });
+  await expect(purchasePrice.locator('.input-value')).toHaveText(`$${(BRRRR_PAYLOAD.purchasePrice * 1000).toLocaleString('en-US')}`);
 });
 
 test('the download is the .html file, and it works on its own with JavaScript off (the iPhone preview)', async ({
@@ -118,6 +139,10 @@ test('the download is the .html file, and it works on its own with JavaScript of
     await expect(operatingExpenses).not.toHaveAttribute('open', '');
     await operatingExpenses.locator('> summary').tap();
     await expect(operatingExpenses).toHaveAttribute('open', '');
+    // The Deal Inputs section opens natively too, and its stages fit the phone.
+    await phone.locator('details#deal-inputs > summary').tap();
+    await expect(phone.locator('details#deal-inputs')).toHaveAttribute('open', '');
+    await expect(phone.locator('#inputs-refinance .stage-title')).toHaveText('Refinance');
     // The result tiles jump to their card.
     await phone.locator('a.tile[href="#result-8"]').tap();
     await expect(phone.locator('#result-8')).toBeInViewport();
@@ -148,15 +173,17 @@ test('a bought deal offers the same report from its modal', async ({ page, api, 
   await api.expectContract('deal-report-bought');
 });
 
-test('unchecked results are left out of the report request and the report', async ({ page, api, seed }) => {
+test('unchecked results and unchecked deal inputs are left out of the report request and the report', async ({ page, api, seed }) => {
   await openSeededDealAndGenerate(page, seed);
   api.reset();
 
-  await generateReport(page, 'mydeals', ['cash_out', 'stolen_money']);
+  await generateReport(page, 'mydeals', ['cash_out', 'stolen_money'], false);
 
   await expect(page.getByTestId('mydeals.report-modal.iframe')).toHaveAttribute('src', /^blob:/);
   const report = page.frameLocator('[data-testid="mydeals.report-modal.iframe"]');
   await expect(report.locator('section.card')).toHaveCount(10);
   await expect(report.locator('h2', { hasText: 'How Cash Out is calculated' })).toHaveCount(0);
+  // "Include deal inputs" unchecked: no inputs section, and the request does not ask for one.
+  await expect(report.locator('details#deal-inputs')).toHaveCount(0);
   await api.expectContract('deal-report-selected-results');
 });

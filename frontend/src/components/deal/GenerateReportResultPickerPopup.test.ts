@@ -69,7 +69,7 @@ describe("GenerateReportResultPickerPopup", () => {
     part("generate").click();
     await nextTick();
     const expected = BRRRR_REPORT_RESULT_TILES.map((t) => t.resultKey).filter((k) => k !== "cash_out" && k !== "dscr");
-    expect(wrapper.emitted("generate")).toEqual([[expected]]);
+    expect(wrapper.emitted("generate")).toEqual([[expected, true]]);
   });
 
   it("Clear all disables Generate; Select all brings every result back", async () => {
@@ -87,20 +87,36 @@ describe("GenerateReportResultPickerPopup", () => {
     await nextTick();
     part("generate").click();
     await nextTick();
-    expect(wrapper.emitted("generate")).toEqual([[["roi"]]]);
+    expect(wrapper.emitted("generate")).toEqual([[["roi"], true]]);
     part("select-all").click();
     await nextTick();
     expect(checkedKeys()).toHaveLength(12);
+  });
+
+  it("offers 'Include deal inputs', checked by default, and sends the choice with the results", async () => {
+    wrapper = mountPicker();
+    await nextTick();
+    const includeDealInputs = document.querySelector('[data-part="include-deal-inputs-input"]') as HTMLInputElement;
+    expect(document.querySelector('[data-part="include-deal-inputs"]')!.textContent).toContain("Include deal inputs");
+    expect(includeDealInputs.checked).toBe(true);
+    expect(part("generate").textContent!.trim()).toBe("Generate Report");
+    includeDealInputs.click();
+    await nextTick();
+    part("generate").click();
+    await nextTick();
+    expect(wrapper.emitted("generate")).toEqual([[BRRRR_REPORT_RESULT_TILES.map((t) => t.resultKey), false]]);
   });
 
   it("re-checks everything each time it opens", async () => {
     wrapper = mountPicker();
     await nextTick();
     part("clear-all").click();
+    (document.querySelector('[data-part="include-deal-inputs-input"]') as HTMLInputElement).click();
     await wrapper.setProps({ open: false });
     await wrapper.setProps({ open: true });
     await nextTick();
     expect(checkedKeys()).toHaveLength(12);
+    expect((document.querySelector('[data-part="include-deal-inputs-input"]') as HTMLInputElement).checked).toBe(true);
   });
 
   it("closes on Cancel, the close button, the scrim and Escape, claiming the Escape", async () => {

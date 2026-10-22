@@ -15620,6 +15620,18 @@
               "description": "The result tiles to include, one query parameter per key, in any order (the report keeps tile order). Omit for every tile. BRRRR keys: cash_flow, cash_out, cash_out_routi, cash_on_cash, dscr, equity, roi, net_profit, total_cash_needed_for_deal, cash_to_close_buy, cash_out_routi_conservative, stolen_money. FLIP keys: net_profit, roi, annualized_roi, total_cash_needed, total_cash_needed_with_buffer, total_holding_costs, total_hml_interest. An unknown key or an empty selection is a 422.",
               "title": "Selected Result Keys"
             }
+          },
+          {
+            "description": "true adds a collapsed 'Deal Inputs' section listing every calculator input, grouped by the form's stages (BRRRR: Buy, Rehab, Rent & Holding, Refinance; FLIP: Buy & Rehab, Flip Strategy, Expenses). Default false.",
+            "in": "query",
+            "name": "include_deal_inputs",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "true adds a collapsed 'Deal Inputs' section listing every calculator input, grouped by the form's stages (BRRRR: Buy, Rehab, Rent & Holding, Refinance; FLIP: Buy & Rehab, Flip Strategy, Expenses). Default false.",
+              "title": "Include Deal Inputs",
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -15777,6 +15789,18 @@
               ],
               "description": "The result tiles to include, one query parameter per key, in any order (the report keeps tile order). Omit for every tile. BRRRR keys: cash_flow, cash_out, cash_out_routi, cash_on_cash, dscr, equity, roi, net_profit, total_cash_needed_for_deal, cash_to_close_buy, cash_out_routi_conservative, stolen_money. FLIP keys: net_profit, roi, annualized_roi, total_cash_needed, total_cash_needed_with_buffer, total_holding_costs, total_hml_interest. An unknown key or an empty selection is a 422.",
               "title": "Selected Result Keys"
+            }
+          },
+          {
+            "description": "true adds a collapsed 'Deal Inputs' section listing every calculator input, grouped by the form's stages (BRRRR: Buy, Rehab, Rent & Holding, Refinance; FLIP: Buy & Rehab, Flip Strategy, Expenses). Default false.",
+            "in": "query",
+            "name": "include_deal_inputs",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "true adds a collapsed 'Deal Inputs' section listing every calculator input, grouped by the form's stages (BRRRR: Buy, Rehab, Rent & Holding, Refinance; FLIP: Buy & Rehab, Flip Strategy, Expenses). Default false.",
+              "title": "Include Deal Inputs",
+              "type": "boolean"
             }
           }
         ],
