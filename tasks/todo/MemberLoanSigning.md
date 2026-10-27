@@ -217,7 +217,7 @@ On top of that:
 - [x] **12** (15 min): `verify_regression.py snapshot`. Review the diff, and make a `Golden update:` commit if needed.
 - [x] **13** (40 min): The security task, then the repo-wide pass.
 - [x] **14** (25 min): README: the signing flow, the new env variables, Apps Script setup. The Review section.
-- [ ] **15** (15 min): Push `MemberLoanSigning` and open the PR.
+- [x] **15** (15 min): Push `MemberLoanSigning` and open the PR.
 - [ ] **16** (owner, about 10 min, guided): Paste the Apps Script into bigwhalesllc's Google account and deploy it. I set these Render env vars:
   - `MEMBER_LOAN_COMPANY_EMAIL`
   - `MEMBER_LOAN_LENDER_LEGAL_NAME`
