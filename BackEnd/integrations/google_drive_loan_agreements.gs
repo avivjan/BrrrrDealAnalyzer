@@ -24,6 +24,7 @@
  */
 
 var LARGEST_TIMESTAMP_AGE_SECONDS = 300;
+var LOAN_AGREEMENTS_FOLDER_NAME = 'loan agreements';
 
 function doPost(e) {
   try {
@@ -49,7 +50,7 @@ function doPost(e) {
     if (fileName.slice(-4).toLowerCase() !== '.pdf') {
       return answer_({ ok: false, error: 'only PDF files are saved' });
     }
-    var folder = loanAgreementsFolder_(String(request.folder_name || 'loan agreements'));
+    var folder = loanAgreementsFolder_(LOAN_AGREEMENTS_FOLDER_NAME); // never a name from the request
     var file = folder.createFile(Utilities.newBlob(pdfBytes, 'application/pdf', fileName));
     return answer_({ ok: true, file_id: file.getId() });
   } catch (error) {

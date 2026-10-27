@@ -68,7 +68,8 @@ def save_pdf_to_loan_agreements_folder(file_name: str, pdf: bytes) -> str:
     request = urllib.request.Request(url, data=body.encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
     try:
         # Apps Script answers a POST with a redirect to the result, which urllib follows as a GET.
-        with urllib.request.urlopen(request, timeout=UPLOAD_TIMEOUT_SECONDS) as response:
+        # nosec B310: the URL was checked above to be https://script.google.com/..., never file: or another scheme.
+        with urllib.request.urlopen(request, timeout=UPLOAD_TIMEOUT_SECONDS) as response:  # nosec B310
             answer = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, OSError, ValueError) as error:
         logger.error("member loan drive upload failed: %s", type(error).__name__)

@@ -215,7 +215,7 @@ On top of that:
   - store, API and types; the badge.
 - [x] **11** (60 min): E2E with two browser contexts and virtual authenticators.
 - [x] **12** (15 min): `verify_regression.py snapshot`. Review the diff, and make a `Golden update:` commit if needed.
-- [ ] **13** (40 min): The security task, then the repo-wide pass.
+- [x] **13** (40 min): The security task, then the repo-wide pass.
 - [ ] **14** (25 min): README: the signing flow, the new env variables, Apps Script setup. The Review section.
 - [ ] **15** (15 min): Push `MemberLoanSigning` and open the PR.
 - [ ] **16** (owner, about 10 min, guided): Paste the Apps Script into bigwhalesllc's Google account and deploy it. I set these Render env vars:

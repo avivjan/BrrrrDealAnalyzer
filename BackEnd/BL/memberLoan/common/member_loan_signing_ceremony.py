@@ -33,7 +33,7 @@ MEMBER_LOAN_SIGNATURE_CHALLENGE_KIND = "loan_signature"  # auth_challenges.kind 
 LARGEST_DRAWN_SIGNATURE_BYTES = 60 * 1024
 PNG_FILE_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 SMALLEST_DRAWN_SIGNATURE_SIDE_PIXELS = 40
-LARGEST_DRAWN_SIGNATURE_SIDE_PIXELS = 4000
+LARGEST_DRAWN_SIGNATURE_SIDE_PIXELS = 2000  # the pad exports 600 × 200; a bigger PNG would only cost memory to decode
 ELECTRONIC_SIGNATURE_CONSENT_TEXT = (
     "I agree this is my electronic signature and that it has the same effect as my handwritten signature "
     "(Amendment No. 1 to the Loan Agreement, Section 1)."

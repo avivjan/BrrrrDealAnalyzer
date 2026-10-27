@@ -36,5 +36,6 @@ anthropic==1.13.0
 pytest==9.1.1
 pytest-cov==7.1.0
 httpx==0.28.1
-# pypdf reads the text back out of the generated reports (tests/test_explain.py).
-pypdf==6.21.1
+# pypdf reads the text back out of the generated reports (tests/test_explain.py) and joins
+# a Member Loan document's pages with its signature certificate (member_loan_signing_pdf.py).
+pypdf==6.21.2
