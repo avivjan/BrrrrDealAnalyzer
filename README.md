@@ -365,13 +365,18 @@ document is at `/docs` on a running backend.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/member-loan/access` | Role, and how many proposals wait for the caller |
+| `GET` | `/member-loan/access` | Role, and how many proposals and documents wait for the caller's signature |
 | `GET` | `/member-loan/summary?as_of_date=` | Every bucket and Amount Owed on a date the device sends |
 | `GET` | `/member-loan/ledger?through_date=` · `/member-loan/ledger.csv` | Every change and Interest Date, with who proposed and approved it |
 | `POST` | `/member-loan/event-previews` | The before → after figures of a change, saving nothing |
-| `POST` | `/member-loan/events` | Propose a change (step-up). Nothing changes until the other member approves |
-| `GET` | `/member-loan/events[?state=]` · `/member-loan/events/{id}` | Proposals with their live preview and fingerprint |
-| `POST` | `/member-loan/events/{id}/approval` · `/rejection` · `/cancellation` · `/reversal` | Decide or reverse (step-up; only the other member approves or rejects) |
+| `POST` | `/member-loan/change-documents` · `/member-loan/events/{id}/reversal-documents` | Start proposing a change (or a reversal): renders its Loan Change Record to sign, saving nothing on the loan |
+| `POST` | `/member-loan/documents/{id}/signing-requests` | Start signing (or, for a statement, objecting to) an existing document |
+| `GET` | `/member-loan/signing-requests/{id}/pdf` | The exact PDF being signed (the signer only) |
+| `POST` | `/member-loan/signing-requests/{id}/passkey-options` · `/signature` | Passkey options bound to the PDF's SHA-256, then the signature (legal name, consent, drawn signature, assertion). The other member's signature on a change approves it |
+| `GET` | `/member-loan/documents[?waiting_for_me=true]` · `/documents/{id}` · `/pdf` · `/signed-pdf` | Documents with who signed, the PDF as signed, the signed copy |
+| `GET` | `/member-loan/events[?state=]` · `/member-loan/events/{id}` | Proposals with their live preview and their signing document |
+| `POST` | `/member-loan/events/{id}/rejection` · `/cancellation` | Reject (the other member, with a reason) or cancel (the proposer); step-up |
+| `POST` | `/member-loan/events` · `/events/{id}/approval` · `/events/{id}/reversal` | 410 Gone: a change is proposed and approved by signing |
 | `GET` | `/member-loan/statements/{yyyy-mm}` · `/pdf` | One month's statement, final once sent |
 | `GET` | `/member-loan/audit` · `/member-loan/integrity` · `/member-loan/explanation` | Audit trail, hash-chain check, how it is calculated |
 </details>
@@ -728,6 +733,9 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MAX_BODY_BYTES` | `BackEnd/BL/common/body_limit.py` | Request-body ceiling (default 30 MB); larger bodies get a 413 before they are read |
 | `MEMBER_LOAN_LENDER_USERNAME`, `MEMBER_LOAN_YARDEN_USERNAME`, `MEMBER_LOAN_ALLOWED_USERNAMES` | `BackEnd/BL/memberLoan/common/member_loan_settings.py` | The two members' passkey usernames; the allow-list must name exactly those two, otherwise every `/member-loan` route answers 503 |
 | `MEMBER_LOAN_LENDER_EMAIL`, `MEMBER_LOAN_YARDEN_EMAIL` | Member Loan | Where each member's e-mail goes (never sent to the frontend) |
+| `MEMBER_LOAN_COMPANY_EMAIL` | Member Loan | The Borrower's notice address (`bigwhalesllc@gmail.com`); every signed copy goes to it too. Unset, the signed-copy e-mail fails and is retried |
+| `MEMBER_LOAN_LENDER_LEGAL_NAME`, `MEMBER_LOAN_YARDEN_LEGAL_NAME` | Member Loan | The full legal names typed to sign (default `Aviv Jan`, `Yarden Kelly`) |
+| `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
 | `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
 | `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
@@ -742,14 +750,24 @@ sheets, smoke test) is [`REPS_README.md`](REPS_README.md).
 ### Member Loan
 
 The loan from Aviv Jan (Lender) to Big Whales AY LLC. The signed agreement names this app as
-the deciding calculator. The plan, decisions and tests are in
-[`tasks/todo/MemberLoan.md`](tasks/todo/MemberLoan.md).
+the deciding calculator, and Amendment No. 1 makes signing in it a signature. The plans,
+decisions and tests are in [`tasks/todo/MemberLoan.md`](tasks/todo/MemberLoan.md) and
+[`tasks/todo/MemberLoanSigning.md`](tasks/todo/MemberLoanSigning.md).
 
 - **Who.** Exactly the two members, on a passkey web session, whatever `AUTH_MODE` says. The
   link sits in the strip above every page, for them only. MCP never sees it.
-- **Changes need both members.** One proposes a change, the other approves or rejects it with a
-  fresh passkey prompt. The approval carries the fingerprint of the figures shown, so nobody
-  approves numbers they did not see. A proposal expires after 14 days. Reversals work the same way.
+- **Every change is signed by both members.** Proposing a change opens its *Loan Change Record*
+  (what changes, the section of the Agreement that allows it, the figures before and after); the
+  proposer signs it, and the other member's signature on it approves it. A signature is: read the
+  record, type the full legal name, draw the signature, tick the consent, confirm with the passkey.
+  The passkey's WebAuthn challenge is SHA-256 of the PDF's SHA-256 and a nonce, so the
+  authenticator's signature covers that exact PDF (`member_loan_signing_ceremony.py`). If other
+  changes alter the printed figures first, the record expires and is proposed again. Rejecting and
+  cancelling stay as they were. A proposal expires after 14 days. Reversals work the same way.
+- **Signed copies.** Once everyone has signed, the record plus a signature certificate page is
+  e-mailed to the Lender, Yarden and the company (subject `whales loan update`, or
+  `whales loan statement` for a statement) and saved to the Drive folder `loan agreements`.
+  A failed delivery is retried by the schedule below, three times.
 - **The calculation** (`BL/memberLoan/common/member_loan_engine.py`, `Decimal` only): 1% a month,
   every month counted as 30 days (30/360). A change on any day splits the month into stretches,
   each `balance × 1% × days/30`, rounded half-up to the cent. On the 1st the interest is added to
@@ -757,17 +775,31 @@ the deciding calculator. The plan, decisions and tests are in
 - **History cannot be rewritten.** Postgres triggers refuse UPDATE and DELETE on the loan tables;
   proposals, decisions and audit entries are SHA-256 hash-chained (`GET /member-loan/integrity`).
   A month locks once its statement is sent.
-- **E-mail** (Gmail SMTP, `EMAIL_PASSWORD`): a proposal goes to the other member with a link that
-  only opens the app; every decision goes to both. Failures are audited and never undo a change.
+- **E-mail** (Gmail SMTP, `EMAIL_PASSWORD`): a proposal goes to the other member
+  (`whales loan update – please sign`) with the record attached and a link that only opens the app;
+  rejections, cancellations and expiries go to both. Failures are audited and never undo a change.
 
 **Monthly statement: automatic, inside the web service.** In production a background thread
 checks every 30 minutes; from 06:00 in New York on the 1st it e-mails the statement for the
 month that just ended to both members (`BL/memberLoan/common/member_loan_statement_schedule.py`).
 No cron job is needed. The database guarantees a month is never sent twice; a failed send is
-retried up to three times; an interrupted one is never repeated. While
+retried up to three times; an interrupted one is never repeated. The statement e-mail
+(`whales loan statement – please sign`) attaches the statement with an acknowledgment page: Aviv
+confirms the figures; Yarden, for the company and as Guarantor, acknowledges the debt and promises
+to pay. Either may object with a reason instead. From 09:00 New York time each member who has not
+acted gets one reminder a day, until both have or the 30 days to object end. While
 `MEMBER_LOAN_EMAIL_DRY_RUN` is not `false` it sends nothing. By hand:
 `cd BackEnd && python manage.py send-member-loan-statement [--dry-run --output-dir <path-to>/statement]`.
 `MEMBER_LOAN_STATEMENT_SCHEDULE=off` turns the automatic send off.
+
+**Saving signed copies to Google Drive (once).** A service account cannot keep files in a
+personal Gmail Drive, so a small Apps Script owned by bigwhalesllc@gmail.com does it:
+[`BackEnd/integrations/google_drive_loan_agreements.gs`](BackEnd/integrations/google_drive_loan_agreements.gs).
+Its header lists the three steps: paste it into a new project at script.google.com, add the
+script property `MEMBER_LOAN_DRIVE_UPLOAD_SECRET`, and deploy it as a web app (execute as me,
+anyone may call it). Then set the same secret and the web app URL (`…/exec`) on Render as
+`MEMBER_LOAN_DRIVE_UPLOAD_SECRET` and `MEMBER_LOAN_DRIVE_UPLOAD_URL`. Every upload is
+HMAC-signed and at most five minutes old, so the URL alone lets nobody write to the Drive.
 
 **Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
 only in this database.

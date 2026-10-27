@@ -216,7 +216,7 @@ On top of that:
 - [x] **11** (60 min): E2E with two browser contexts and virtual authenticators.
 - [x] **12** (15 min): `verify_regression.py snapshot`. Review the diff, and make a `Golden update:` commit if needed.
 - [x] **13** (40 min): The security task, then the repo-wide pass.
-- [ ] **14** (25 min): README: the signing flow, the new env variables, Apps Script setup. The Review section.
+- [x] **14** (25 min): README: the signing flow, the new env variables, Apps Script setup. The Review section.
 - [ ] **15** (15 min): Push `MemberLoanSigning` and open the PR.
 - [ ] **16** (owner, about 10 min, guided): Paste the Apps Script into bigwhalesllc's Google account and deploy it. I set these Render env vars:
   - `MEMBER_LOAN_COMPANY_EMAIL`
@@ -298,3 +298,53 @@ Total is about 12.5 hours of agent time.
    ```
 3. Locally, render a sample Change Record, a statement with its acknowledgment page and a signed copy to files, and review them by hand.
 4. After deploy: run one real cycle on a $1 withdrawal: both sign, check the e-mail in all 3 inboxes and the file in Drive `loan agreements`. Then reverse it the same way.
+
+## Review
+
+**Results.**
+
+| Check | Result |
+|---|---|
+| Backend `pytest` | Full suite passes, including the new `tests/test_member_loan_signing.py` (36 tests) and the updated loan API, statement, sender and schedule tests |
+| `verify_regression.py verify` | Every snapshot identical (calculations, endpoints, models unchanged); OpenAPI and schema updated in a `Golden update:` commit, touching only `/member-loan` and the new tables |
+| Frontend `vitest` | 1,674 tests pass |
+| `npm run build` | Succeeds |
+| E2E `member-loan.spec.ts` | Passes on chromium and Mobile Chrome, signing with a mouse-drawn signature; axe clean |
+| Security (CI's own checks) | bandit clean, pip-audit clean (pypdf 6.21.2), npm audit 0 vulnerabilities |
+
+**Deviations from the plan.**
+
+1. **One signature endpoint for every case.** Signing is `POST /member-loan/signing-requests/{id}/passkey-options`, then `POST /member-loan/signing-requests/{id}/signature`, whatever is being signed. The signing request already knows whether it proposes a change, proposes a reversal, or signs a document. `POST /member-loan/events` and `/events/{id}/reversal` answer 410 like `/approval`, instead of taking a signature.
+2. **The passkey challenge is fetched at the last step,** not when signing starts. A WebAuthn challenge lives 5 minutes, and a member may take longer to read. The nonce is stored on the signature row, so the binding can be checked again later; `GET /member-loan/integrity` now checks it for every signature.
+3. **The auth challenge kind is `loan_signature`,** because `auth_challenges.kind` holds 16 characters.
+4. **The approval e-mail is gone.** The signed copy, sent to all three addresses, replaces it.
+5. **The "no clause in the agreement" warning now cites Section 7A.** It appears on statements, proposals and the form. Amendment No. 1 added that clause.
+6. **A pending proposal whose figures changed expires right away,** with an e-mail to both members. This replaces the R7 path of "review the new figures, then approve".
+7. **The statement e-mail is the first request to sign.** Its attachment, the statement plus the acknowledgment page, is byte for byte the signing document. That day's reminder rows are written with it, so the 1st gets one e-mail.
+8. **The E2E does not sign a statement.** A real send needs a month that has ended on the server's clock, which the E2E server cannot fake. Statement signing, objections and reminders are covered by the integration and Vitest tests.
+9. **`verify:ui --fast`** passes G6 (tests and build). G1, G2, G8 and GOLDEN-POLICY fail as they already do on `main`: they compare against the UI-refactor phase's `ui-baseline` tag.
+
+**Security notes.**
+- **Signing requests:** single-use, expire after 30 minutes, bound to their member and to the document's SHA-256.
+- **Passkey assertions:** need user verification and the signer's own credential (`expected_user_id`).
+- **Who signs:** only a required signer, once (a unique index); the proposer cannot countersign.
+- **Inputs:**
+  - the typed name must match the legal name;
+  - the drawn signature must be a PNG of at most 60 KB and 2000 px a side;
+  - all text is escaped into the PDFs and the e-mails.
+- **Links:** e-mail links carry no token.
+- **Downloads:** PDFs are served only through the gated routes, with `nosniff`.
+- **Drive upload:**
+  - only to `https://script.google.com/`;
+  - HMAC over the timestamp, file name and SHA-256, and at most 5 minutes old;
+  - the script always uses the `loan agreements` folder;
+  - the URL and secret come from env only.
+- **Frontend:** nothing sensitive is sent to it. A repo-wide pass of bandit, pip-audit and npm audit is clean.
+
+**Owner setup still to do (step 16):**
+1. Deploy the Apps Script from `BackEnd/integrations/google_drive_loan_agreements.gs`.
+2. Set these on Render:
+   - `MEMBER_LOAN_COMPANY_EMAIL=bigwhalesllc@gmail.com`
+   - `MEMBER_LOAN_DRIVE_UPLOAD_URL`
+   - `MEMBER_LOAN_DRIVE_UPLOAD_SECRET`
+3. The legal names default to "Aviv Jan" and "Yarden Kelly".
