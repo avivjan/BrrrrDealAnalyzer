@@ -22,8 +22,11 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
+    Text,
+    UniqueConstraint,
     Uuid,
     and_,
     false,
@@ -37,6 +40,11 @@ MEMBER_LOAN_APPEND_ONLY_TABLE_NAMES = (
     "member_loan_event_decisions",
     "member_loan_audit_entries",
     "member_loan_statement_sends",
+    "member_loan_signing_documents",
+    "member_loan_signatures",
+    "member_loan_signed_copies",
+    "member_loan_signed_copy_deliveries",
+    "member_loan_statement_signature_reminders",
 )
 
 
@@ -139,3 +147,141 @@ class MemberLoanStatementSend(Base):
             postgresql_where=and_(is_dry_run == false(), status != literal("failed")),
         ),
     )
+
+
+# -- e-signing (tasks/todo/MemberLoanSigning.md) --------------------------------
+
+
+class MemberLoanSigningDocument(Base):
+    """A document the members sign: one Loan Change Record per proposal, or one
+    statement per sent month. The PDF never changes once written; its SHA-256 is
+    what every passkey signature on it covers."""
+
+    __tablename__ = "member_loan_signing_documents"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_sequence = Column(BigInteger, nullable=False, unique=True)
+    document_kind = Column(String(32), nullable=False)  # loan_change | monthly_statement
+    event_id = Column(Uuid(as_uuid=True), ForeignKey("member_loan_events.id"), nullable=True, unique=True)
+    statement_month = Column(Date, nullable=True, unique=True)
+    title = Column(String(300), nullable=False)
+    document_content = Column(JSON, nullable=False)
+    unsigned_pdf = Column(LargeBinary, nullable=False)
+    unsigned_pdf_sha256 = Column(String(64), nullable=False)
+    required_signer_usernames = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    previous_document_hash = Column(String(64), nullable=False)
+    document_hash = Column(String(64), nullable=False, unique=True)
+
+
+class MemberLoanSignature(Base):
+    """One member's signature (or signed objection) on one document, with the
+    passkey assertion over the document's SHA-256 kept as evidence."""
+
+    __tablename__ = "member_loan_signatures"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    signature_sequence = Column(BigInteger, nullable=False, unique=True)
+    document_id = Column(Uuid(as_uuid=True), ForeignKey("member_loan_signing_documents.id"), nullable=False, index=True)
+    signer_user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    signer_username = Column(String(64), nullable=False)
+    signer_role = Column(String(64), nullable=False)
+    signature_meaning = Column(String(16), nullable=False)  # signed | objected
+    objection_reason = Column(String(1000), nullable=True)
+    typed_full_legal_name = Column(String(200), nullable=False)
+    signature_statement_text = Column(Text, nullable=False)
+    drawn_signature_png = Column(LargeBinary, nullable=False)
+    signed_document_sha256 = Column(String(64), nullable=False)
+    webauthn_credential_id = Column(String(512), nullable=False)
+    webauthn_authenticator_data = Column(Text, nullable=False)
+    webauthn_client_data_json = Column(Text, nullable=False)
+    webauthn_signature = Column(Text, nullable=False)
+    # The challenge the passkey signed was SHA-256("<signed_document_sha256>:<nonce>").
+    passkey_challenge_nonce = Column(String(64), nullable=False)
+    request_ip = Column(String(64), nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    device_id = Column(Uuid(as_uuid=True), nullable=True)
+    signed_at = Column(DateTime(timezone=True), nullable=False)
+    previous_signature_hash = Column(String(64), nullable=False)
+    signature_hash = Column(String(64), nullable=False, unique=True)
+
+    __table_args__ = (UniqueConstraint("document_id", "signer_username", name="uq_member_loan_signatures_one_per_signer"),)
+
+
+class MemberLoanSignedCopy(Base):
+    """The finished copy once every required member has acted: the unsigned
+    pages plus a signature certificate page."""
+
+    __tablename__ = "member_loan_signed_copies"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    signed_copy_sequence = Column(BigInteger, nullable=False, unique=True)
+    document_id = Column(Uuid(as_uuid=True), ForeignKey("member_loan_signing_documents.id"), nullable=False, unique=True)
+    signed_pdf = Column(LargeBinary, nullable=False)
+    signed_pdf_sha256 = Column(String(64), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=False)
+    previous_signed_copy_hash = Column(String(64), nullable=False)
+    signed_copy_hash = Column(String(64), nullable=False, unique=True)
+
+
+class MemberLoanSignedCopyDelivery(Base):
+    """One attempt to e-mail a signed copy or save it to Google Drive. A retry
+    is a new row; the newest row per channel is the current state."""
+
+    __tablename__ = "member_loan_signed_copy_deliveries"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    signed_copy_id = Column(Uuid(as_uuid=True), ForeignKey("member_loan_signed_copies.id"), nullable=False, index=True)
+    delivery_channel = Column(String(16), nullable=False)  # email | google_drive
+    delivery_status = Column(String(16), nullable=False)  # sent | failed
+    external_file_id = Column(String(200), nullable=True)
+    error_text = Column(String(500), nullable=True)
+    attempted_at = Column(DateTime(timezone=True), nullable=False)
+
+
+class MemberLoanStatementSignatureReminder(Base):
+    """One day's request to sign a statement, claimed before the e-mail goes out;
+    the unique key keeps it to one a day (a failed send is in the audit trail)."""
+
+    __tablename__ = "member_loan_statement_signature_reminders"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    statement_month = Column(Date, nullable=False)
+    recipient_username = Column(String(64), nullable=False)
+    reminder_date = Column(Date, nullable=False)
+    sent_at = Column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("statement_month", "recipient_username", "reminder_date", name="uq_member_loan_statement_reminder_once_a_day"),
+    )
+
+
+class MemberLoanSigningRequest(Base):
+    """A member's signing in progress (mutable, short-lived, single use).
+
+    It pins the exact PDF being signed: a draft Loan Change Record (no event
+    exists yet) or an existing document. The passkey challenge is derived from
+    `document_sha256`, so the assertion proves which document was signed."""
+
+    __tablename__ = "member_loan_signing_requests"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    username = Column(String(64), nullable=False)
+    signing_purpose = Column(String(32), nullable=False)  # propose_change | propose_reversal | sign_document
+    # No foreign key: the test harness TRUNCATEs the append-only tables, which
+    # a reference from this ordinary table would block.
+    document_id = Column(Uuid(as_uuid=True), nullable=True)
+    proposal_draft = Column(JSON, nullable=True)
+    draft_document_content = Column(JSON, nullable=True)
+    draft_pdf = Column(LargeBinary, nullable=True)
+    document_sha256 = Column(String(64), nullable=False)
+    signature_meaning = Column(String(16), nullable=False)
+    objection_reason = Column(String(1000), nullable=True)
+    signer_role = Column(String(64), nullable=False)
+    signature_statement_text = Column(Text, nullable=False)
+    passkey_challenge_id = Column(Uuid(as_uuid=True), nullable=True)
+    passkey_challenge_nonce = Column(String(64), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    consumed_at = Column(DateTime(timezone=True), nullable=True)

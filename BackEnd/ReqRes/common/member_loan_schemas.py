@@ -8,12 +8,12 @@ engine. Every date is explicit: the device sends its own "today" (D3).
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 MONEY_TEXT_PATTERN = r"^\d{1,8}(\.\d{1,2})?$"
-FINGERPRINT_PATTERN = r"^[0-9a-f]{64}$"
 
 ProposableEventType = Literal[
     "lender_withdrawal",
@@ -43,10 +43,6 @@ class MemberLoanProposalCreateReq(_Strict):
 class MemberLoanReversalProposalReq(_Strict):
     reason: str = Field(min_length=3, max_length=500)
     note: Optional[str] = Field(default=None, max_length=1000)
-
-
-class MemberLoanApprovalReq(_Strict):
-    preview_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
 
 
 class MemberLoanRejectionReq(_Strict):
@@ -85,6 +81,7 @@ class MemberLoanAccessRes(BaseModel):
     role: Literal["lender", "yarden"]
     other_member_display_name: str
     proposals_waiting_for_you: int
+    documents_waiting_for_your_signature: int = 0
 
 
 class MemberLoanSummaryRes(BaseModel):
@@ -122,7 +119,8 @@ class MemberLoanProposalRes(BaseModel):
     live_preview: Optional[MemberLoanPreviewRes] = None
     live_preview_problem: Optional[str] = None
     figures_changed_since_proposal: bool = False
-    caller_may_approve_or_reject: bool = False
+    signing_document_id: Optional[str] = None
+    caller_may_sign_or_reject: bool = False
     caller_may_cancel: bool = False
     caller_may_propose_reversal: bool = False
     includes_yarden_increase_warning: bool = False
@@ -154,6 +152,7 @@ class MemberLoanStatementRes(BaseModel):
     sent_at: Optional[datetime] = None
     objection_deadline: Optional[date] = None
     sent_to: list[str] = []
+    signing_document_id: Optional[str] = None
 
 
 class MemberLoanAuditEntryRes(BaseModel):
@@ -173,7 +172,90 @@ class MemberLoanIntegrityRes(BaseModel):
     proposals_checked: int
     decisions_checked: int
     audit_entries_checked: int
+    signing_documents_checked: int = 0
+    signatures_checked: int = 0
+    signed_copies_checked: int = 0
 
 
 class MemberLoanExplanationRes(BaseModel):
     lines: list[str]
+
+
+# -- e-signing ---------------------------------------------------------------------
+
+SignatureMeaning = Literal["signed", "objected"]
+LARGEST_DRAWN_SIGNATURE_BASE64_CHARACTERS = 90_000  # 60 KB of PNG, base64-encoded, with a data: prefix
+
+
+class MemberLoanDocumentSigningStartReq(_Strict):
+    signature_meaning: SignatureMeaning = "signed"
+    objection_reason: Optional[str] = Field(default=None, max_length=1000)
+
+
+class MemberLoanSignatureSubmitReq(_Strict):
+    typed_full_legal_name: str = Field(min_length=1, max_length=200)
+    electronic_signature_consent_confirmed: bool
+    drawn_signature_png_base64: str = Field(min_length=1, max_length=LARGEST_DRAWN_SIGNATURE_BASE64_CHARACTERS)
+    passkey_challenge_id: UUID
+    passkey_credential: dict[str, Any]
+
+
+class MemberLoanSigningRequestRes(BaseModel):
+    signing_request_id: str
+    signing_purpose: Literal["propose_change", "propose_reversal", "sign_document"]
+    document_id: Optional[str] = None
+    document_sha256: str
+    document_content: dict
+    signature_meaning: SignatureMeaning
+    objection_reason: Optional[str] = None
+    signature_statement_text: str
+    full_legal_name_to_type: str
+    electronic_signature_consent_text: str
+    expires_at: datetime
+
+
+class MemberLoanPasskeySigningOptionsRes(BaseModel):
+    passkey_challenge_id: str
+    options: str
+
+
+class MemberLoanDocumentSignerRes(BaseModel):
+    username: str
+    display_name: str
+    legal_name: str
+    role_label: str
+    status: Literal["waiting", "signed", "objected"]
+    signed_at: Optional[datetime] = None
+    objection_reason: Optional[str] = None
+
+
+class MemberLoanSignedCopyDeliveryRes(BaseModel):
+    delivery_channel: Literal["email", "google_drive"]
+    delivery_status: Literal["sent", "failed"]
+    attempted_at: datetime
+
+
+class MemberLoanSigningDocumentRes(BaseModel):
+    id: str
+    document_kind: Literal["loan_change", "monthly_statement"]
+    title: str
+    event_id: Optional[str] = None
+    statement_month: Optional[str] = None
+    record_number: Optional[int] = None
+    created_at: datetime
+    document_sha256: str
+    content: dict
+    signers: list[MemberLoanDocumentSignerRes]
+    caller_must_act: bool
+    caller_may_object: bool
+    proposal_state: Optional[ProposalState] = None
+    response_deadline: Optional[date] = None
+    is_complete: bool
+    completed_at: Optional[datetime] = None
+    signed_copy_sha256: Optional[str] = None
+    deliveries: list[MemberLoanSignedCopyDeliveryRes] = []
+
+
+class MemberLoanSigningCompletionRes(BaseModel):
+    document: MemberLoanSigningDocumentRes
+    proposal: Optional[MemberLoanProposalRes] = None

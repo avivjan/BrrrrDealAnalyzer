@@ -11,6 +11,11 @@ still guarantees a month is never sent twice, even with several instances.
     AUTOMATIC_RETRIES_AFTER_A_FAILURE times. A send interrupted mid-way
     (`sending`) is never repeated automatically.
   - Turn the thread off with MEMBER_LOAN_STATEMENT_SCHEDULE=off.
+
+Each check also does the signing upkeep (`run_member_loan_signing_upkeep`):
+it makes the signing document for a sent month that has none, sends the
+daily "please sign" reminders for statements, and retries signed copies whose
+e-mail or Google Drive delivery failed.
 """
 
 from __future__ import annotations
@@ -25,6 +30,11 @@ from typing import Optional
 from BL.memberLoan.common import member_loan_settings
 from BL.memberLoan.common.member_loan_engine import first_day_of_previous_month
 from BL.memberLoan.common.member_loan_settings import LOAN_TIME_ZONE, MemberLoanMisconfigured
+from BL.memberLoan.common.member_loan_signed_copy_delivery import retry_failed_signed_copy_deliveries
+from BL.memberLoan.common.member_loan_statement_signing import (
+    create_missing_statement_signing_documents,
+    send_due_statement_signature_reminders,
+)
 from BL.memberLoan.common.member_loan_statement_sender import MemberLoanStatementSendResult, send_member_loan_statement
 from DAL.crud import member_loan as member_loan_crud
 from db import SessionLocal
@@ -68,6 +78,16 @@ def run_member_loan_statement_schedule_check() -> Optional[MemberLoanStatementSe
     return result
 
 
+def run_member_loan_signing_upkeep() -> None:
+    """Never raises: each job is independent, and a failure is only logged."""
+
+    for job in (create_missing_statement_signing_documents, send_due_statement_signature_reminders, retry_failed_signed_copy_deliveries):
+        try:
+            job()
+        except Exception:  # noqa: BLE001 -- a scheduling error must never take the web service down
+            logger.exception("member loan: %s failed", job.__name__)
+
+
 FIRST_CHECK_AFTER_STARTUP_SECONDS = 60
 
 
@@ -76,6 +96,7 @@ def _check_forever(stop: threading.Event) -> None:
         return
     while True:
         run_member_loan_statement_schedule_check()
+        run_member_loan_signing_upkeep()
         if stop.wait(timeout=CHECK_INTERVAL_SECONDS):
             return
 

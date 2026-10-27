@@ -1,6 +1,8 @@
 """Make the Member Loan tables append-only at the database level. Idempotent.
 
-Proposals, decisions and audit entries refuse every UPDATE and DELETE. A
+Proposals, decisions, audit entries and everything about signing (documents,
+signatures, signed copies, their deliveries, statement reminders) refuse
+every UPDATE and DELETE. Signing requests are working rows and stay mutable. A
 statement send may change exactly once: `status` from `sending` to `sent` or
 `failed`, filling `sent_at`, `objection_deadline` and `error_text`; nothing
 else on the row may change and it can never be deleted.
@@ -51,6 +53,11 @@ APPEND_ONLY_TRIGGER_BY_TABLE = {
     "member_loan_event_decisions": "member_loan_refuse_row_change",
     "member_loan_audit_entries": "member_loan_refuse_row_change",
     "member_loan_statement_sends": "member_loan_statement_send_status_only",
+    "member_loan_signing_documents": "member_loan_refuse_row_change",
+    "member_loan_signatures": "member_loan_refuse_row_change",
+    "member_loan_signed_copies": "member_loan_refuse_row_change",
+    "member_loan_signed_copy_deliveries": "member_loan_refuse_row_change",
+    "member_loan_statement_signature_reminders": "member_loan_refuse_row_change",
 }
 
 

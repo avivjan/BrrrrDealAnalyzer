@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * Propose a change. Step 1 "Check the figures" asks the server for the before →
- * after preview (nothing is saved); step 2 sends it to the other member, who
- * must approve it before anything changes. The default date is today on this
+ * after preview (nothing is saved); step 2 opens its Loan Change Record to sign,
+ * and the other member must sign it too before anything changes. The default date is today on this
  * device; a change may fall on any day (D15) but not in the future.
  */
 import { computed, reactive, ref, watch } from "vue";
@@ -35,7 +35,7 @@ const EVENT_TYPE_CHOICES = computed<{ value: MemberLoanEventType; label: string;
   {
     value: "yarden_additional_withdrawal_increase",
     label: `${props.yardenName} withdraws money`,
-    help: `Increases principal from that day and is debited from ${props.lenderName}'s capital account. The signed agreement has no clause for this: it needs a separate written agreement.`,
+    help: `Increases principal from that day and is debited from ${props.lenderName}'s capital account. It is covered by Section 7A of the Agreement (Amendment No. 1) and needs the written agreement both members signed.`,
   },
   {
     value: "interest_payment_election",
@@ -176,7 +176,7 @@ function send() {
 
     <div v-if="preview" class="flex flex-col gap-2 rounded-ctl border border-line bg-surface-muted p-3" data-testid="member-loan.preview">
       <p class="text-sm text-fg">
-        If {{ otherMemberName }} approves<template v-if="form.amount && needsAmount"> this {{ formatLoanMoney(form.amount) }} change</template>, the loan on that day becomes:
+        If {{ otherMemberName }} signs it too<template v-if="form.amount && needsAmount"> this {{ formatLoanMoney(form.amount) }} change</template>, the loan on that day becomes:
       </p>
       <MemberLoanBucketsTable :before="preview.buckets_before" :after="preview.buckets_after" />
     </div>
@@ -186,9 +186,9 @@ function send() {
         Check the figures
       </UiButton>
       <UiButton v-else type="submit" variant="primary" :loading="busy" :disabled="busy" data-testid="member-loan.send">
-        Send to {{ otherMemberName }} for approval
+        <i class="pi pi-pen-to-square" aria-hidden="true" /> Review and sign
       </UiButton>
-      <span class="text-xs text-fg-muted">Nothing changes until {{ otherMemberName }} approves it. Sending asks for your passkey.</span>
+      <span class="text-xs text-fg-muted">You sign its Loan Change Record first; nothing changes until {{ otherMemberName }} signs it too.</span>
     </div>
   </form>
 </template>

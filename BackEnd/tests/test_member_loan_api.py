@@ -1,5 +1,7 @@
-"""Member Loan API: the two-member gate, two-party approval, the month lock,
-append-only storage, the audit trail and the e-mails (tasks/todo/MemberLoan.md, Tests > Integration)."""
+"""Member Loan API: the two-member gate, two-party approval by signing, the month lock,
+append-only storage, the audit trail and the e-mails (tasks/todo/MemberLoan.md and
+tasks/todo/MemberLoanSigning.md, Tests > Integration). Signing itself is covered in
+`test_member_loan_signing.py`."""
 
 from __future__ import annotations
 
@@ -14,15 +16,19 @@ from BL.memberLoan.common.member_loan_engine import MEMBER_LOAN_ENGINE_VERSION
 from DAL.data_models.memberLoan.models import MemberLoanAuditEntry, MemberLoanEvent, MemberLoanStatementSend
 from db import SessionLocal, engine
 from tests.member_loan_helpers import (
+    COMPANY_EMAIL,
     LENDER_EMAIL,
     WRITE_HEADERS,
     YARDEN_EMAIL,
     approve,
     configure_member_loan_environment,
+    start_change_signing,
     enrolled_member_client,
     member_loan_clock,  # noqa: F401  (fixture)
+    member_loan_google_drive,  # noqa: F401  (fixture)
     member_loan_mailbox,  # noqa: F401  (fixture)
     propose,
+    propose_reversal,
     summary,
 )
 
@@ -30,7 +36,7 @@ WITHDRAWAL_ON_DECEMBER_15 = {"event_type": "lender_withdrawal", "effective_date"
 
 
 @pytest.fixture(autouse=True)
-def _member_loan_environment(monkeypatch, member_loan_clock, member_loan_mailbox):
+def _member_loan_environment(monkeypatch, member_loan_clock, member_loan_mailbox, member_loan_google_drive):
     configure_member_loan_environment(monkeypatch)
 
 
@@ -81,6 +87,16 @@ class TestGate:
         ("GET", "/member-loan/explanation"),
         ("POST", "/member-loan/events"),
         ("POST", "/member-loan/event-previews"),
+        ("POST", "/member-loan/change-documents"),
+        ("POST", f"/member-loan/events/{uuid.uuid4()}/reversal-documents"),
+        ("GET", "/member-loan/documents"),
+        ("GET", f"/member-loan/documents/{uuid.uuid4()}"),
+        ("GET", f"/member-loan/documents/{uuid.uuid4()}/pdf"),
+        ("GET", f"/member-loan/documents/{uuid.uuid4()}/signed-pdf"),
+        ("POST", f"/member-loan/documents/{uuid.uuid4()}/signing-requests"),
+        ("GET", f"/member-loan/signing-requests/{uuid.uuid4()}/pdf"),
+        ("POST", f"/member-loan/signing-requests/{uuid.uuid4()}/passkey-options"),
+        ("POST", f"/member-loan/signing-requests/{uuid.uuid4()}/signature"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/approval"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/rejection"),
         ("POST", f"/member-loan/events/{uuid.uuid4()}/cancellation"),
@@ -112,23 +128,36 @@ class TestGate:
         assert aviv.get("/member-loan/access").status_code == 503
 
     def test_writes_need_the_csrf_headers(self, aviv, yarden):
-        response = aviv.post("/member-loan/events", json=WITHDRAWAL_ON_DECEMBER_15)
+        response = aviv.post("/member-loan/change-documents", json=WITHDRAWAL_ON_DECEMBER_15)
         assert response.status_code == 403 and response.json()["detail"].startswith("csrf")
-        cross_site = aviv.post("/member-loan/events", json=WITHDRAWAL_ON_DECEMBER_15, headers={**WRITE_HEADERS, "Origin": "https://evil.example"})
+        cross_site = aviv.post("/member-loan/change-documents", json=WITHDRAWAL_ON_DECEMBER_15,
+                               headers={**WRITE_HEADERS, "Origin": "https://evil.example"})
         assert cross_site.status_code == 403
 
-    def test_writes_need_a_recent_passkey_prompt(self, aviv, yarden):
+    def test_reject_and_cancel_need_a_recent_passkey_prompt_while_signing_carries_its_own(self, aviv, yarden):
         from tests.test_devices import _age_sessions
 
+        first = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
         _age_sessions()
-        response = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15)
-        assert response.status_code == 403 and response.json()["detail"] == "reauth_required"
+        rejection = yarden.post(f"/member-loan/events/{first}/rejection", json={"reason": "no"}, headers=WRITE_HEADERS)
+        assert rejection.status_code == 403 and rejection.json()["detail"] == "reauth_required"
+        assert aviv.post(f"/member-loan/events/{first}/cancellation", headers=WRITE_HEADERS).json()["detail"] == "reauth_required"
+        assert approve(yarden, first).status_code == 200  # the signature's own passkey assertion is the fresh prompt
 
     def test_writes_are_rate_limited(self, aviv, yarden, monkeypatch):
-        monkeypatch.setenv("MEMBER_LOAN_WRITES_PER_HOUR", "2")
+        monkeypatch.setenv("MEMBER_LOAN_WRITES_PER_HOUR", "6")  # a signed proposal is three writes
         assert propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).status_code == 201
         assert propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).status_code == 201
         assert propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).status_code == 429
+
+    def test_the_old_unsigned_routes_are_gone(self, aviv, yarden):
+        event_id = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
+        for path, body in (("/member-loan/events", WITHDRAWAL_ON_DECEMBER_15),
+                           (f"/member-loan/events/{event_id}/approval", {"preview_fingerprint": "0" * 64}),
+                           (f"/member-loan/events/{event_id}/reversal", {"reason": "old route"})):
+            response = yarden.post(path, json=body, headers=WRITE_HEADERS)
+            assert response.status_code == 410 and response.json()["detail"]["code"] == "signing_required", path
+        assert yarden.get(f"/member-loan/events/{event_id}").json()["state"] == "pending"
 
     def test_the_mcp_connector_has_no_member_loan_tool(self):
         import mcp_server
@@ -146,7 +175,7 @@ class TestApproval:
         proposal = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15)
         assert proposal.status_code == 201, proposal.text
         body = proposal.json()
-        assert body["state"] == "pending" and body["caller_may_cancel"] and not body["caller_may_approve_or_reject"]
+        assert body["state"] == "pending" and body["caller_may_cancel"] and not body["caller_may_sign_or_reject"]
         assert body["preview_at_proposal"]["buckets_after"]["amount_owed"] == "30166.01"
         assert summary(aviv, "2026-12-15")["buckets"]["amount_owed"] == "31166.01"
 
@@ -198,26 +227,23 @@ class TestApproval:
                     "decided_at, previous_decision_hash, decision_hash) VALUES (:id, 99, :event_id, 'rejected', 'x', now(), 'a', 'b')"
                 ), {"id": uuid.uuid4(), "event_id": uuid.UUID(event_id)})
 
-    def test_a_stale_fingerprint_is_refused_with_the_new_figures(self, aviv, yarden):
+    def test_a_record_whose_figures_changed_expires_and_cannot_be_signed(self, aviv, yarden, member_loan_mailbox):
         event_id = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
-        seen = yarden.get(f"/member-loan/events/{event_id}").json()["live_preview"]["preview_fingerprint"]
         earlier = propose(yarden, event_type="lender_additional_advance", effective_date="2026-12-02", amount="100.00",
                           written_agreement_date="2026-12-01", written_agreement_description="Signed note").json()["id"]
         assert approve(aviv, earlier).status_code == 200
-        stale = yarden.post(f"/member-loan/events/{event_id}/approval", json={"preview_fingerprint": seen}, headers=WRITE_HEADERS)
-        assert stale.status_code == 409 and stale.json()["detail"]["code"] == "figures_changed"
-        assert stale.json()["detail"]["live_preview"]["preview_fingerprint"] != seen
-        assert yarden.get(f"/member-loan/events/{event_id}").json()["figures_changed_since_proposal"] is True
-        assert approve(yarden, event_id).status_code == 200
+        stale = yarden.get(f"/member-loan/events/{event_id}").json()
+        assert stale["state"] == "expired" and "figures on its Loan Change Record changed" in stale["decision_reason"]
+        assert approve(yarden, event_id).status_code == 409
+        assert any("expired" in m["subject"] for m in member_loan_mailbox.to(LENDER_EMAIL))
+        assert propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).status_code == 201  # proposed again on the new figures
 
-    def test_approval_is_refused_when_it_would_break_a_later_approved_change(self, aviv, yarden):
+    def test_a_change_that_would_break_a_later_approved_change_expires(self, aviv, yarden):
         later = propose(aviv, event_type="lender_withdrawal", effective_date="2026-12-18", amount="31000.00").json()["id"]
         earlier = propose(aviv, event_type="lender_withdrawal", effective_date="2026-12-10", amount="1000.00").json()["id"]
         assert approve(yarden, later).status_code == 200
-        live = yarden.get(f"/member-loan/events/{earlier}").json()
-        assert live["live_preview"] is None and "cannot be approved" in live["live_preview_problem"]
-        response = yarden.post(f"/member-loan/events/{earlier}/approval", json={"preview_fingerprint": "0" * 64}, headers=WRITE_HEADERS)
-        assert response.status_code == 422 and response.json()["detail"]["code"] == "cannot_be_applied"
+        assert yarden.get(f"/member-loan/events/{earlier}").json()["state"] == "expired"
+        assert approve(yarden, earlier).status_code == 409
 
     def test_a_proposal_that_cannot_be_applied_now_is_refused(self, aviv, yarden):
         response = propose(aviv, event_type="lender_withdrawal", effective_date="2026-12-15", amount="40000.00")
@@ -226,15 +252,14 @@ class TestApproval:
     def test_reversal_needs_approval_and_the_original_stays_until_then(self, aviv, yarden):
         event_id = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
         approve(yarden, event_id)
-        reversal = yarden.post(f"/member-loan/events/{event_id}/reversal", json={"reason": "Entered twice"}, headers=WRITE_HEADERS)
+        reversal = propose_reversal(yarden, event_id, reason="Entered twice")
         assert reversal.status_code == 201, reversal.text
         assert reversal.json()["reversed_event_summary"].startswith("Withdrawal by Aviv of $1,000.00")
         assert summary(aviv, "2026-12-15")["buckets"]["amount_owed"] == "30166.01"
-        duplicate = aviv.post(f"/member-loan/events/{event_id}/reversal", json={"reason": "again"}, headers=WRITE_HEADERS)
-        assert duplicate.status_code == 409
+        assert propose_reversal(aviv, event_id, reason="again").status_code == 409
         assert approve(aviv, reversal.json()["id"]).status_code == 200
         assert summary(aviv, "2026-12-15")["buckets"]["amount_owed"] == "31166.01"
-        assert aviv.post(f"/member-loan/events/{event_id}/reversal", json={"reason": "third"}, headers=WRITE_HEADERS).status_code == 409
+        assert propose_reversal(aviv, event_id, reason="third").status_code == 409
 
     def test_pending_proposals_expire_after_14_days(self, aviv, yarden, member_loan_clock, member_loan_mailbox):
         member_loan_clock.set(2026, 12, 2)
@@ -263,8 +288,7 @@ class TestApproval:
 
 
 def approve_after_expiry_is_refused(member_client, event_id) -> bool:
-    response = member_client.post(f"/member-loan/events/{event_id}/approval", json={"preview_fingerprint": "0" * 64}, headers=WRITE_HEADERS)
-    return response.status_code == 409
+    return approve(member_client, event_id).status_code == 409
 
 
 # ---------------------------------------------------------------------------
@@ -288,8 +312,7 @@ class TestDatesAndLock:
         locked = propose(aviv, event_type="lender_withdrawal", effective_date="2026-12-31", amount="10.00")
         assert locked.status_code == 422 and locked.json()["detail"]["code"] == "month_locked"
         assert yarden.get(f"/member-loan/events/{pending_id}").json()["state"] == "expired"
-        reversal = yarden.post(f"/member-loan/events/{approved_id}/reversal", json={"reason": "wrong"}, headers=WRITE_HEADERS)
-        assert reversal.status_code == 422
+        assert propose_reversal(yarden, approved_id, reason="wrong").status_code == 422
         assert propose(aviv, event_type="lender_withdrawal", effective_date="2027-01-01", amount="10.00").status_code == 201
 
     def test_the_interest_choice_for_jan_1_belongs_to_december(self, aviv, yarden, member_loan_clock):
@@ -381,7 +404,8 @@ class TestHistoryCannotBeRewritten:
         assert approval_rows[0].state_before["amount_owed"] == "31166.01"
         assert approval_rows[0].state_after["amount_owed"] == "30166.01"
         audit = aviv.get("/member-loan/audit").json()
-        assert {"event_proposed", "event_approved", "proposal_notification_sent", "decision_notification_sent"} <= {e["action"] for e in audit}
+        assert {"event_proposed", "document_signed", "event_approved", "document_fully_signed", "proposal_notification_sent",
+                "signed_copy_emailed", "signed_copy_saved_to_drive"} <= {e["action"] for e in audit}
 
 
 # ---------------------------------------------------------------------------
@@ -390,26 +414,31 @@ class TestHistoryCannotBeRewritten:
 
 
 class TestNotifications:
-    def test_a_proposal_mails_only_the_other_member_with_a_link_and_no_token(self, aviv, yarden, member_loan_mailbox):
-        event_id = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
+    def test_a_proposal_asks_only_the_other_member_to_sign_with_a_link_and_no_token(self, aviv, yarden, member_loan_mailbox):
+        proposal = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()
         assert member_loan_mailbox.to(LENDER_EMAIL) == []
         [message] = member_loan_mailbox.to(YARDEN_EMAIL)
-        assert message["recipients"] == (YARDEN_EMAIL,)
-        assert f"https://bigwhales.example/member-loan/approvals/{event_id}" in message["text_body"]
+        assert message["recipients"] == (YARDEN_EMAIL,) and message["subject"] == "whales loan update – please sign"
+        assert f"https://bigwhales.example/member-loan/sign/{proposal['signing_document_id']}" in message["text_body"]
         assert "token" not in message["text_body"].lower()
         assert "$31,166.01" in message["text_body"] and "$30,166.01" in message["text_body"]
-        assert "does not approve anything by itself" in message["text_body"]
+        assert "does not sign anything by itself" in message["text_body"]
+        [attachment] = message["attachments"]
+        assert attachment.filename == "loan-change-record-1.pdf" and attachment.content.startswith(b"%PDF")
 
-    def test_approval_mails_both_with_who_and_the_buckets(self, aviv, yarden, member_loan_mailbox):
+    def test_the_signed_copy_goes_to_all_three_addresses_and_to_drive(self, aviv, yarden, member_loan_mailbox, member_loan_google_drive):
         event_id = propose(yarden, event_type="yarden_additional_withdrawal_increase", effective_date="2026-12-15", amount="2000.00",
                            written_agreement_date="2026-12-14", written_agreement_description="Side letter signed by both").json()["id"]
         approve(aviv, event_id)
-        approval = [m for m in member_loan_mailbox.sent if "approved" in m["subject"]]
-        assert len(approval) == 1 and set(approval[0]["recipients"]) == {LENDER_EMAIL, YARDEN_EMAIL}
-        body = approval[0]["text_body"]
-        for expected in ("Proposed by Yarden", "Approved by Aviv", "Side letter signed by both", "Principal", "Capitalized interest",
-                         "Total Balance", "Accrued interest", "Amount Owed", "no clause"):
-            assert expected in body, expected
+        [signed] = [m for m in member_loan_mailbox.sent if m["subject"] == "whales loan update"]
+        assert signed["recipients"] == [LENDER_EMAIL, YARDEN_EMAIL, COMPANY_EMAIL]
+        for expected in ("Loan Change Record No. 1 – Additional withdrawal by Yarden Kelly", "Signed by Yarden Kelly", "Signed by Aviv Jan"):
+            assert expected in signed["text_body"], expected
+        [attachment] = signed["attachments"]
+        assert attachment.filename.endswith("whales loan update #1 – Additional withdrawal by Yarden Kelly $2,000.00 – signed.pdf")
+        assert [name for name, _ in member_loan_google_drive.saved] == [attachment.filename]
+        assert member_loan_google_drive.saved[0][1] == attachment.content
+        assert not [m for m in member_loan_mailbox.sent if "approved" in m["subject"]]  # the signed copy replaces it
 
     @pytest.mark.parametrize("decision", ["rejection", "cancellation"])
     def test_rejection_and_cancellation_mail_both(self, aviv, yarden, member_loan_mailbox, decision):
@@ -425,15 +454,16 @@ class TestNotifications:
         member_loan_mailbox.fail_next = 1
         assert approve(yarden, event_id).status_code == 200
         assert summary(aviv, "2026-12-15")["buckets"]["amount_owed"] == "30166.01"
-        assert "decision_notification_failed" in _audit_actions()
+        assert "signed_copy_email_failed" in _audit_actions() and "signed_copy_saved_to_drive" in _audit_actions()
 
     def test_a_reversal_proposal_and_its_approval_are_mailed(self, aviv, yarden, member_loan_mailbox):
         event_id = propose(aviv, **WITHDRAWAL_ON_DECEMBER_15).json()["id"]
         approve(yarden, event_id)
-        reversal_id = yarden.post(f"/member-loan/events/{event_id}/reversal", json={"reason": "Entered twice"}, headers=WRITE_HEADERS).json()["id"]
+        reversal_id = propose_reversal(yarden, event_id, reason="Entered twice").json()["id"]
         assert any("It reverses: Withdrawal by Aviv" in m["text_body"] for m in member_loan_mailbox.to(LENDER_EMAIL))
         approve(aviv, reversal_id)
-        assert any("Reversal" in m["subject"] and "approved" in m["subject"] for m in member_loan_mailbox.sent)
+        signed = [m for m in member_loan_mailbox.sent if m["subject"] == "whales loan update"]
+        assert len(signed) == 2 and "Loan Change Record No. 2 – Reversal of an earlier change" in signed[-1]["text_body"]
 
 
 # ---------------------------------------------------------------------------
@@ -492,6 +522,8 @@ class TestReads:
     def test_waiting_counts(self, aviv, yarden):
         propose(aviv, **WITHDRAWAL_ON_DECEMBER_15)
         assert yarden.get("/member-loan/access").json()["proposals_waiting_for_you"] == 1
+        assert yarden.get("/member-loan/access").json()["documents_waiting_for_your_signature"] == 1
         assert aviv.get("/member-loan/access").json()["proposals_waiting_for_you"] == 0
+        assert aviv.get("/member-loan/access").json()["documents_waiting_for_your_signature"] == 0
         assert summary(aviv, "2026-12-15")["proposals_waiting_for_other_member"] == 1
         assert [e["state"] for e in yarden.get("/member-loan/events", params={"state": "pending"}).json()] == ["pending"]

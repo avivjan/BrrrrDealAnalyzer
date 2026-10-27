@@ -6,13 +6,15 @@ import { test, expect } from '../fixtures';
 
 /**
  * The Member Loan end to end, with two real members on chromium's virtual
- * authenticator (tasks/todo/MemberLoan.md, Tests > E2E):
+ * authenticator (tasks/todo/MemberLoan.md and MemberLoanSigning.md, Tests > E2E):
  *
- *   Aviv proposes a withdrawal: nothing changes. Yarden sees it waiting, approves
- *   it, and Amount Owed moves. Yarden proposes the reversal, Aviv approves it,
- *   and the loan is back where it started. A change the agreement has no
- *   clause for needs its written agreement. Statements and the CSV download.
- *   Someone who is not a member gets the refusal and no link.
+ *   Aviv proposes a withdrawal by signing its Loan Change Record (read, type the
+ *   legal name, draw, consent, passkey): nothing changes. Yarden sees it waiting,
+ *   signs it the same way, and Amount Owed moves; the signed copy downloads.
+ *   Yarden proposes the reversal by signing, Aviv signs it, and the loan is back
+ *   where it started. A Yarden withdrawal needs its written agreement.
+ *   Statements and the CSV download. Someone who is not a member gets the
+ *   refusal and no link.
  *
  * The backend's members are `e2e-aviv` and `e2e-yarden` (e2e/backend/serve_throwaway.py).
  * The device clock is moved to Oct 6, 2026, a date after the loan started and
@@ -47,6 +49,28 @@ async function signedInMember(context: BrowserContext, page: Page, username: str
   return page;
 }
 
+/** Walk the signing panel the way a member does; the passkey answers on the virtual authenticator. */
+async function signThroughThePanel(page: Page, legalName: string): Promise<void> {
+  const panel = page.getByTestId('member-loan.signing');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('member-loan.signing-statement')).toContainText(`I, ${legalName}`);
+  await panel.getByTestId('member-loan.signing-next').click();
+  await panel.getByTestId('member-loan.signing-name-input').fill(legalName);
+  await panel.getByTestId('member-loan.signing-next').click();
+  const pad = panel.getByTestId('member-loan.signature-pad');
+  const box = (await pad.boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.15, box.y + box.height * 0.6);
+  await page.mouse.down();
+  for (const [x, y] of [[0.3, 0.3], [0.45, 0.7], [0.6, 0.35], [0.8, 0.6]] as const) {
+    await page.mouse.move(box.x + box.width * x, box.y + box.height * y, { steps: 6 });
+  }
+  await page.mouse.up();
+  await panel.getByTestId('member-loan.signing-next').click();
+  await panel.getByTestId('member-loan.signing-consent').check();
+  await panel.getByTestId('member-loan.signing-submit').click();
+  await expect(panel).toHaveCount(0);
+}
+
 async function amountOwed(page: Page): Promise<string> {
   await page.goto('/member-loan?tab=today');
   const tile = page.getByTestId('member-loan.amount-owed');
@@ -57,7 +81,7 @@ async function amountOwed(page: Page): Promise<string> {
 test.describe('member loan', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'virtual authenticator needs CDP');
 
-  test('two-party approval, reversal, statements, and the gate', async ({ browser, page, context }) => {
+  test('two-party signing, reversal, statements, and the gate', async ({ browser, page, context }) => {
     const aviv = await signedInMember(context, page, 'e2e-aviv', 'Aviv');
     const yardenContext = await browser.newContext();
     const yarden = await signedInMember(yardenContext, await yardenContext.newPage(), 'e2e-yarden', 'Yarden');
@@ -75,33 +99,42 @@ test.describe('member loan', () => {
     await aviv.getByTestId('member-loan.check').click();
     await expect(aviv.getByTestId('member-loan.preview')).toBeVisible();
     await aviv.getByTestId('member-loan.send').click();
-    await expect(aviv.getByTestId('member-loan.notice')).toContainText('Nothing changes until they approve it');
+    await signThroughThePanel(aviv, 'Aviv Jan');
+    await expect(aviv.getByTestId('member-loan.notice')).toContainText('Nothing changes until Yarden signs it too');
     expect(await amountOwed(aviv)).toBe(before);
 
-    // Yarden approves it.
+    // Yarden signs it, which approves it.
     await yarden.goto('/member-loan?tab=waiting');
     // Newest first: a leftover from an earlier local run (the server is reused) never wins.
     const waiting = yarden.getByTestId('member-loan.proposal').filter({ hasText: 'Withdrawal by Aviv of $100.00' }).first();
     await expect(waiting).toBeVisible();
-    await waiting.getByTestId('member-loan.approve').click();
-    await expect(yarden.getByTestId('member-loan.notice')).toContainText('Approved');
+    await waiting.getByTestId('member-loan.sign-open').click();
+    await expect(yarden.getByTestId('member-loan.signing-statement')).toContainText('confirmation of fact, not consent');
+    await signThroughThePanel(yarden, 'Yarden Kelly');
+    await expect(yarden.getByTestId('member-loan.notice')).toContainText('The change is now part of the loan');
     const after = await amountOwed(aviv);
     expect(after).not.toBe(before);
 
     // The history shows who proposed and who approved it.
     await aviv.getByTestId('member-loan.tab-history').click();
     await expect(aviv.getByTestId('member-loan.ledger-row').filter({ hasText: 'Proposed by Aviv, approved by Yarden' }).first()).toBeVisible();
+    const approvedForAviv = aviv.getByTestId('member-loan.proposal').filter({ hasText: 'Withdrawal by Aviv of $100.00' }).first();
+    const signedCopy = aviv.waitForEvent('download');
+    await approvedForAviv.getByTestId('member-loan.signed-copy').click();
+    expect((await signedCopy).suggestedFilename()).toMatch(/^Loan Change Record No\. \d+ - signed\.pdf$/);
 
-    // Yarden proposes the reversal; Aviv approves it; the loan is back where it was.
+    // Yarden proposes the reversal by signing it; Aviv signs it; the loan is back where it was.
     await yarden.goto('/member-loan?tab=history');
     const approvedCard = yarden.getByTestId('member-loan.proposal').filter({ hasText: 'Withdrawal by Aviv of $100.00' }).first();
     await approvedCard.getByTestId('member-loan.reverse-open').click();
     await approvedCard.getByTestId('member-loan.reverse-reason').fill('E2E clean-up');
     await approvedCard.getByTestId('member-loan.reverse').click();
-    await expect(yarden.getByTestId('member-loan.notice')).toContainText('reversal was sent');
+    await signThroughThePanel(yarden, 'Yarden Kelly');
+    await expect(yarden.getByTestId('member-loan.notice')).toContainText('Signed and sent to Aviv');
     await aviv.goto('/member-loan?tab=waiting');
-    await aviv.getByTestId('member-loan.proposal').filter({ hasText: 'It reverses' }).first().getByTestId('member-loan.approve').click();
-    await expect(aviv.getByTestId('member-loan.notice')).toContainText('Approved');
+    await aviv.getByTestId('member-loan.proposal').filter({ hasText: 'It reverses' }).first().getByTestId('member-loan.sign-open').click();
+    await signThroughThePanel(aviv, 'Aviv Jan');
+    await expect(aviv.getByTestId('member-loan.notice')).toContainText('The change is now part of the loan');
     expect(await amountOwed(aviv)).toBe(before);
 
     // A Yarden withdrawal needs the written agreement before it can be checked.

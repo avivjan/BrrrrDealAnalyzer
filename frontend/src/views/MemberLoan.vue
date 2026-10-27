@@ -4,9 +4,13 @@
  *
  * Only the two members can open it (the API checks the passkey session and the
  * member list; this page only mirrors that). Every figure comes from the
- * server; "today" is this device's date. A change is proposed by one member
- * and takes effect only when the other approves it. `/member-loan/approvals/:eventId`
- * is the link the approval e-mail carries: it opens the "Waiting" tab on that change.
+ * server; "today" is this device's date. A change is proposed by one member,
+ * who signs its Loan Change Record, and takes effect only when the other signs
+ * it too; each sent statement is signed (or objected to) by both. While a
+ * signing is in progress the signing panel replaces the tab's content.
+ * `/member-loan/sign/:documentId` is the link the e-mails carry: it opens the
+ * change, or the statement, that document belongs to. The older
+ * `/member-loan/approvals/:eventId` links open the change the same way.
  */
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -14,18 +18,20 @@ import { useRoute, useRouter } from "vue-router";
 import MemberLoanBucketsTable from "../components/memberLoan/MemberLoanBucketsTable.vue";
 import MemberLoanProposalCard from "../components/memberLoan/MemberLoanProposalCard.vue";
 import MemberLoanProposeForm from "../components/memberLoan/MemberLoanProposeForm.vue";
+import MemberLoanSigningPanel from "../components/memberLoan/MemberLoanSigningPanel.vue";
 import MemberLoanStatementPanel from "../components/memberLoan/MemberLoanStatementPanel.vue";
+import { memberLoanApi } from "../api/memberLoan";
 import { useAuthStore } from "../stores/authStore";
 import { useMemberLoanStore } from "../stores/memberLoanStore";
-import type { MemberLoanProposal, MemberLoanProposalCreate } from "../types/memberLoan";
+import type { MemberLoanProposal, MemberLoanProposalCreate, MemberLoanSignatureMeaning } from "../types/memberLoan";
 import { deviceToday, formatLoanDate, formatLoanMoney, formatLoanMonth, loanStatementMonths } from "../utils/memberLoanText";
 
-const props = defineProps<{ eventId?: string }>();
+const props = defineProps<{ eventId?: string; documentId?: string }>();
 
 type TabKey = "today" | "waiting" | "history" | "propose" | "statements" | "how" | "audit";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "today", label: "Today" },
-  { key: "waiting", label: "Waiting for approval" },
+  { key: "waiting", label: "Waiting for your signature" },
   { key: "history", label: "History" },
   { key: "propose", label: "Propose a change" },
   { key: "statements", label: "Statements" },
@@ -45,6 +51,16 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   statement_sent: "Sent the monthly statement",
   statement_dry_run: "Prepared a statement (test run, not sent)",
   statement_send_failed: "Could not send the monthly statement",
+  document_signed: "Signed a document",
+  document_objected: "Signed an objection to a statement",
+  document_fully_signed: "Everyone signed: the signed copy was made",
+  statement_signing_document_created: "Prepared the statement for signing",
+  signed_copy_emailed: "E-mailed the signed copy to all three addresses",
+  signed_copy_email_failed: "Could not e-mail the signed copy",
+  signed_copy_saved_to_drive: "Saved the signed copy to Google Drive",
+  signed_copy_drive_save_failed: "Could not save the signed copy to Google Drive",
+  statement_signature_reminder_sent: "Sent a reminder to sign the statement",
+  statement_signature_reminder_failed: "Could not send a reminder to sign the statement",
 };
 
 const auth = useAuthStore();
@@ -60,7 +76,10 @@ const highlightedProposalId = ref<string | null>(props.eventId ?? null);
 const lenderName = computed(() => (loan.access?.role === "lender" ? loan.access.display_name : loan.access?.other_member_display_name) ?? "Aviv");
 const yardenName = computed(() => (loan.access?.role === "yarden" ? loan.access.display_name : loan.access?.other_member_display_name) ?? "Yarden");
 const statementMonths = computed(() => loanStatementMonths("2026-10", deviceToday().slice(0, 7)));
-const waitingCount = computed(() => loan.proposalsWaitingForMe.length);
+const waitingCount = computed(() => loan.proposalsWaitingForMe.length + loan.statementDocumentsWaitingForMe.length);
+const statementSigningDocument = computed(() =>
+  loan.documents.find((d) => d.document_kind === "monthly_statement" && d.statement_month === statementMonth.value) ?? null,
+);
 
 function selectTab(tab: TabKey) {
   activeTab.value = tab;
@@ -89,15 +108,26 @@ watch(statementMonth, (month) => {
 });
 
 async function onPropose(body: MemberLoanProposalCreate) {
-  const created = await loan.propose(body);
-  if (created) {
-    highlightedProposalId.value = created.id;
-    selectTab("waiting");
-  }
+  await loan.beginChangeSigning(body);
 }
 
-async function onApprove(proposal: MemberLoanProposal) {
-  await loan.approve(proposal);
+async function onSign(proposal: MemberLoanProposal) {
+  if (proposal.signing_document_id) await loan.beginDocumentSigning(proposal.signing_document_id);
+}
+
+async function onSignStatement(meaning: MemberLoanSignatureMeaning, objectionReason?: string) {
+  if (statementSigningDocument.value) await loan.beginDocumentSigning(statementSigningDocument.value.id, meaning, objectionReason);
+}
+
+function onSigned() {
+  if (activeTab.value === "propose") selectTab("waiting");
+  else void loadTab(activeTab.value);
+}
+
+function openStatement(month: string | null) {
+  if (!month) return;
+  statementMonth.value = month;
+  selectTab("statements");
 }
 
 async function onReject(proposal: MemberLoanProposal, reason: string) {
@@ -110,7 +140,20 @@ async function onCancel(proposal: MemberLoanProposal) {
 }
 
 async function onReverse(proposal: MemberLoanProposal, reason: string) {
-  await loan.proposeReversal(proposal, reason);
+  await loan.beginReversalSigning(proposal, reason);
+}
+
+/** The e-mail link names a document: open the change or the statement it belongs to. */
+async function tabForLinkedDocument(): Promise<TabKey | null> {
+  if (!props.documentId) return null;
+  const linked = await memberLoanApi.document(props.documentId).catch(() => null);
+  if (!linked) return null;
+  if (linked.document_kind === "monthly_statement" && linked.statement_month) {
+    statementMonth.value = linked.statement_month;
+    return "statements";
+  }
+  highlightedProposalId.value = linked.event_id;
+  return linked.proposal_state === "pending" ? "waiting" : "history";
 }
 
 async function changeAsOfDate(event: Event) {
@@ -133,10 +176,16 @@ onMounted(async () => {
     return;
   }
   const requestedTab = route.query.tab as TabKey | undefined;
-  activeTab.value = props.eventId ? "waiting" : TABS.some((t) => t.key === requestedTab) ? requestedTab! : "today";
   statementMonth.value = (route.query.month as string) || statementMonths.value[1] || statementMonths.value[0]!;
+  const linkedTab = await tabForLinkedDocument();
+  activeTab.value = linkedTab ?? (props.eventId ? "waiting" : TABS.some((t) => t.key === requestedTab) ? requestedTab! : "today");
   ready.value = true;
-  await Promise.all([loadTab(activeTab.value), loan.loadProposals(), activeTab.value === "today" ? null : loan.loadSummary()]);
+  await Promise.all([
+    loadTab(activeTab.value),
+    loan.loadProposals(),
+    loan.loadDocuments(),
+    activeTab.value === "today" ? null : loan.loadSummary(),
+  ]);
   if (highlightedProposalId.value) {
     await nextTick();
     document.getElementById(`proposal-${highlightedProposalId.value}`)?.scrollIntoView({ block: "center" });
@@ -149,7 +198,7 @@ onMounted(async () => {
     <div>
       <p class="text-xs uppercase tracking-wide text-fg-muted">Big Whales AY LLC</p>
       <h1 class="text-2xl font-semibold text-fg">Member Loan</h1>
-      <p class="text-sm text-fg-muted">The loan from Aviv Jan to the company. Every change needs both members.</p>
+      <p class="text-sm text-fg-muted">The loan from Aviv Jan to the company. Every change, and every monthly statement, is signed by both members.</p>
     </div>
 
     <p v-if="ready && loan.accessRefusedMessage" class="rounded-ctl border border-negative/40 bg-negative/10 p-3 text-sm text-fg" role="alert" data-testid="member-loan.refused">
@@ -181,6 +230,9 @@ onMounted(async () => {
         {{ loan.errorMessage }}
       </p>
 
+      <MemberLoanSigningPanel v-if="loan.activeSigningRequest" :key="loan.activeSigningRequest.signing_request_id" :signing-request="loan.activeSigningRequest" @signed="onSigned" />
+
+      <template v-else>
       <!-- Today -->
       <div v-if="activeTab === 'today'" class="flex flex-col gap-4" data-testid="member-loan.today">
         <div class="flex flex-wrap items-end gap-3">
@@ -189,7 +241,7 @@ onMounted(async () => {
             <input id="member-loan-as-of" type="date" :value="loan.asOfDate" min="2026-10-01" class="rounded-ctl border border-line bg-page px-3 py-2 text-fg" data-testid="member-loan.as-of" @change="changeAsOfDate" />
           </div>
           <p v-if="loan.summary?.proposals_waiting_for_you" class="text-sm text-primary">
-            {{ loan.summary.proposals_waiting_for_you }} change{{ loan.summary.proposals_waiting_for_you === 1 ? " is" : "s are" }} waiting for your approval.
+            {{ loan.summary.proposals_waiting_for_you }} change{{ loan.summary.proposals_waiting_for_you === 1 ? " is" : "s are" }} waiting for your signature.
           </p>
         </div>
         <template v-if="loan.summary">
@@ -205,18 +257,30 @@ onMounted(async () => {
         </template>
       </div>
 
-      <!-- Waiting for approval -->
+      <!-- Waiting for your signature -->
       <div v-if="activeTab === 'waiting'" class="flex flex-col gap-6" data-testid="member-loan.waiting">
         <div class="flex flex-col gap-3">
           <h2 class="text-base font-semibold text-fg">Waiting for you</h2>
-          <UiEmptyState v-if="!loan.proposalsWaitingForMe.length">Nothing is waiting for your approval.</UiEmptyState>
+          <UiEmptyState v-if="!loan.proposalsWaitingForMe.length && !loan.statementDocumentsWaitingForMe.length">Nothing is waiting for your signature.</UiEmptyState>
+          <div
+            v-for="document in loan.statementDocumentsWaitingForMe"
+            :key="document.id"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-card border border-line bg-surface p-4"
+            data-testid="member-loan.statement-waiting"
+          >
+            <div>
+              <h3 class="text-base font-semibold text-fg">{{ document.title }}</h3>
+              <p class="text-sm text-fg-muted">Sign it, or object, by {{ formatLoanDate(document.response_deadline) }}.</p>
+            </div>
+            <UiButton variant="primary" size="sm" @click="openStatement(document.statement_month)">Open the statement</UiButton>
+          </div>
           <MemberLoanProposalCard
             v-for="proposal in loan.proposalsWaitingForMe"
             :key="proposal.id"
             :proposal="proposal"
             :highlighted="proposal.id === highlightedProposalId"
             :busy="loan.busyKey !== null"
-            @approve="onApprove(proposal)"
+            @sign="onSign(proposal)"
             @reject="(reason) => onReject(proposal, reason)"
           />
         </div>
@@ -283,6 +347,7 @@ onMounted(async () => {
             :proposal="proposal"
             :busy="loan.busyKey !== null"
             @reverse="(reason) => onReverse(proposal, reason)"
+            @download-signed-copy="loan.downloadSignedCopyPdf(proposal.signing_document_id!, `Loan Change Record No. ${proposal.proposal_sequence}`)"
           />
         </div>
       </div>
@@ -312,7 +377,13 @@ onMounted(async () => {
           </UiButton>
         </div>
         <UiCard v-if="loan.statement" padding="md">
-          <MemberLoanStatementPanel :statement="loan.statement" />
+          <MemberLoanStatementPanel
+            :statement="loan.statement"
+            :signing-document="statementSigningDocument"
+            :busy="loan.busyKey !== null"
+            @sign="onSignStatement"
+            @download-signed-copy="statementSigningDocument && loan.downloadSignedCopyPdf(statementSigningDocument.id, statementSigningDocument.title)"
+          />
         </UiCard>
       </div>
 
@@ -333,8 +404,9 @@ onMounted(async () => {
           data-testid="member-loan.integrity"
         >
           <template v-if="loan.integrity.intact">
-            The history is intact: {{ loan.integrity.proposals_checked }} proposals, {{ loan.integrity.decisions_checked }} decisions and
-            {{ loan.integrity.audit_entries_checked }} audit entries checked.
+            The history is intact: {{ loan.integrity.proposals_checked }} proposals, {{ loan.integrity.decisions_checked }} decisions,
+            {{ loan.integrity.audit_entries_checked }} audit entries, {{ loan.integrity.signing_documents_checked }} signed documents and
+            {{ loan.integrity.signatures_checked }} signatures checked.
           </template>
           <template v-else>Warning: the history was changed outside the app. {{ loan.integrity.problems.join(" ") }}</template>
         </p>
@@ -352,6 +424,7 @@ onMounted(async () => {
           </li>
         </ul>
       </div>
+      </template>
     </template>
   </section>
 </template>

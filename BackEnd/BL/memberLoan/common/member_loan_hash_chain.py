@@ -3,7 +3,8 @@
 Each row's hash covers every column except the hash itself (so it includes the
 previous row's hash). Values are normalised so a row read back from Postgres
 hashes exactly as it did when it was written: money as two-decimal text,
-datetimes in UTC ISO format, dates ISO, UUIDs as text, JSON sorted.
+datetimes in UTC ISO format, dates ISO, UUIDs as text, JSON sorted, binary
+content (a PDF, a drawn signature) as its SHA-256.
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ def _hash_ready(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, uuid.UUID):
         return str(value)
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return "sha256:" + hashlib.sha256(bytes(value)).hexdigest()
     if isinstance(value, dict):
         return {str(k): _hash_ready(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):

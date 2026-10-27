@@ -19,7 +19,7 @@ def _environment(monkeypatch, member_loan_clock, member_loan_mailbox):
 
 
 def _statements(mailbox):
-    return [m for m in mailbox.sent if m["subject"].startswith("Member Loan statement")]
+    return [m for m in mailbox.sent if m["subject"] == "whales loan statement – please sign"]
 
 
 def test_sends_once_from_6am_new_york_on_the_1st(member_loan_clock, member_loan_mailbox):
@@ -31,13 +31,13 @@ def test_sends_once_from_6am_new_york_on_the_1st(member_loan_clock, member_loan_
     member_loan_clock.set(2027, 1, 9, hour=11)
     assert schedule.run_member_loan_statement_schedule_check() is None
     [mail] = _statements(member_loan_mailbox)
-    assert "December 2026" in mail["subject"]
+    assert "Member Loan statement – December 2026" in mail["text_body"]
 
 
 def test_a_month_missed_on_the_1st_goes_out_later_that_month(member_loan_clock, member_loan_mailbox):
     member_loan_clock.set(2026, 11, 3, hour=15)
     assert schedule.run_member_loan_statement_schedule_check().outcome == "sent"
-    assert "October 2026" in _statements(member_loan_mailbox)[0]["subject"]
+    assert "Member Loan statement – October 2026" in _statements(member_loan_mailbox)[0]["text_body"]
 
 
 def test_does_nothing_in_dry_run_mode_or_before_the_first_statement(monkeypatch, member_loan_clock, member_loan_mailbox):

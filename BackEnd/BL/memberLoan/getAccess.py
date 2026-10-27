@@ -1,6 +1,7 @@
 from BL.memberLoan.common.member_loan_access import MemberLoanCaller
 from BL.memberLoan.common.member_loan_ledger_service import load_member_loan_ledger_snapshot, proposals_waiting_for
 from BL.memberLoan.common.member_loan_outcome import MemberLoanOutcome
+from BL.memberLoan.common.member_loan_signing_service import documents_waiting_for
 from ReqRes.common.member_loan_schemas import MemberLoanAccessRes
 
 
@@ -14,5 +15,6 @@ def get_member_loan_access(db, caller: MemberLoanCaller) -> MemberLoanOutcome:
             role=caller.member.role,
             other_member_display_name=caller.other_member.display_name,
             proposals_waiting_for_you=proposals_waiting_for(snapshot, caller.member.username),
+            documents_waiting_for_your_signature=len(documents_waiting_for(db, snapshot, caller.member)),
         ),
     )

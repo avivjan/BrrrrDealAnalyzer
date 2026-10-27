@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from BL.memberLoan.common.member_loan_access import MemberLoanCaller, MemberLoanMembers
 from BL.memberLoan.common.member_loan_engine import (
@@ -27,14 +28,23 @@ from BL.memberLoan.common.member_loan_ledger_service import (
     reversed_event_summary,
     statement_month_affected_by,
 )
+from BL.memberLoan.common import member_loan_settings
+from BL.memberLoan.common.member_loan_signing_ceremony import ELECTRONIC_SIGNATURE_CONSENT_TEXT
+from BL.memberLoan.common.member_loan_signing_documents import DOCUMENT_KIND_MONTHLY_STATEMENT
+from BL.memberLoan.common.member_loan_signing_service import signature_state_of, signing_request_content, statement_response_deadline
 from BL.memberLoan.common.member_loan_statement_document import format_money
-from DAL.data_models.memberLoan.models import MemberLoanEvent
+from DAL.crud import member_loan as member_loan_crud
+from DAL.data_models.memberLoan.models import MemberLoanEvent, MemberLoanSigningDocument, MemberLoanSigningRequest
 from ReqRes.common.member_loan_schemas import (
     MemberLoanAllocationRes,
     MemberLoanBucketsRes,
+    MemberLoanDocumentSignerRes,
     MemberLoanLedgerRowRes,
     MemberLoanPreviewRes,
     MemberLoanProposalRes,
+    MemberLoanSignedCopyDeliveryRes,
+    MemberLoanSigningDocumentRes,
+    MemberLoanSigningRequestRes,
 )
 
 
@@ -57,6 +67,7 @@ def preview_res(preview: MemberLoanEventPreview | dict) -> MemberLoanPreviewRes:
 
 def proposal_res(snapshot: MemberLoanLedgerSnapshot, event: MemberLoanEvent, caller: MemberLoanCaller) -> MemberLoanProposalRes:
     members = caller.members
+    signing_document_id = snapshot.signing_document_id_by_event_id.get(event.id)
     state = snapshot.state_of(event)
     decision = snapshot.decisions_by_event_id.get(event.id)
     live_preview: Optional[MemberLoanPreviewRes] = None
@@ -106,7 +117,8 @@ def proposal_res(snapshot: MemberLoanLedgerSnapshot, event: MemberLoanEvent, cal
         live_preview=live_preview,
         live_preview_problem=live_preview_problem,
         figures_changed_since_proposal=figures_changed,
-        caller_may_approve_or_reject=(state == PROPOSAL_STATE_PENDING and not proposed_by_caller),
+        signing_document_id=str(signing_document_id) if signing_document_id else None,
+        caller_may_sign_or_reject=(state == PROPOSAL_STATE_PENDING and not proposed_by_caller),
         caller_may_cancel=(state == PROPOSAL_STATE_PENDING and proposed_by_caller),
         caller_may_propose_reversal=may_reverse,
         includes_yarden_increase_warning=(
@@ -134,8 +146,6 @@ def _ledger_row_description(row: MemberLoanLedgerRow, members: MemberLoanMembers
 def ledger_row_res(snapshot: MemberLoanLedgerSnapshot, row: MemberLoanLedgerRow, members: MemberLoanMembers) -> MemberLoanLedgerRowRes:
     proposed_by = approved_by = None
     if row.event_id is not None:
-        from uuid import UUID
-
         event = snapshot.events_by_id.get(UUID(row.event_id))
         decision = snapshot.decisions_by_event_id.get(event.id) if event else None
         if event is not None:
@@ -160,3 +170,76 @@ def ledger_row_res(snapshot: MemberLoanLedgerSnapshot, row: MemberLoanLedgerRow,
 
 def statement_month_is_viewable(month: date, loan_start_month: date, current_month: date) -> bool:
     return loan_start_month <= month <= current_month
+
+
+def signing_document_res(
+    db, snapshot: MemberLoanLedgerSnapshot, document: MemberLoanSigningDocument, caller: MemberLoanCaller
+) -> MemberLoanSigningDocumentRes:
+    members = caller.members
+    state = signature_state_of(db, document)
+    signers = []
+    for entry in document.document_content["signers"]:
+        signature = state.signatures_by_username.get(entry["username"])
+        signers.append(MemberLoanDocumentSignerRes(
+            username=entry["username"],
+            display_name=members.display_name_for(entry["username"]),
+            legal_name=entry["legal_name"],
+            role_label=entry["role_label"],
+            status="waiting" if signature is None else signature.signature_meaning,
+            signed_at=None if signature is None else signature.signed_at,
+            objection_reason=None if signature is None else signature.objection_reason,
+        ))
+    proposal_state = None
+    response_deadline = None
+    is_statement = document.document_kind == DOCUMENT_KIND_MONTHLY_STATEMENT
+    if is_statement:
+        response_deadline = statement_response_deadline(db, document)
+        still_open = response_deadline is None or member_loan_settings.new_york_today() <= response_deadline
+    else:
+        event = snapshot.events_by_id.get(document.event_id)
+        proposal_state = snapshot.state_of(event) if event is not None else None
+        still_open = proposal_state == PROPOSAL_STATE_PENDING
+    caller_must_act = (
+        still_open and caller.member.username in document.required_signer_usernames and not state.has_acted(caller.member.username)
+    )
+    signed_copy = member_loan_crud.get_member_loan_signed_copy_for_document(db, document.id)
+    deliveries = member_loan_crud.list_member_loan_signed_copy_deliveries(db, signed_copy.id) if signed_copy else []
+    return MemberLoanSigningDocumentRes(
+        id=str(document.id),
+        document_kind=document.document_kind,
+        title=document.title,
+        event_id=str(document.event_id) if document.event_id else None,
+        statement_month=document.statement_month.strftime("%Y-%m") if document.statement_month else None,
+        record_number=document.document_content.get("record_number"),
+        created_at=document.created_at,
+        document_sha256=document.unsigned_pdf_sha256,
+        content=document.document_content,
+        signers=signers,
+        caller_must_act=caller_must_act,
+        caller_may_object=caller_must_act and is_statement,
+        proposal_state=proposal_state,
+        response_deadline=response_deadline,
+        is_complete=signed_copy is not None,
+        completed_at=signed_copy.completed_at if signed_copy else None,
+        signed_copy_sha256=signed_copy.signed_pdf_sha256 if signed_copy else None,
+        deliveries=[
+            MemberLoanSignedCopyDeliveryRes(delivery_channel=d.delivery_channel, delivery_status=d.delivery_status, attempted_at=d.attempted_at)
+            for d in deliveries
+        ],
+    )
+
+
+def signing_request_res(db, signing_request: MemberLoanSigningRequest, caller: MemberLoanCaller) -> MemberLoanSigningRequestRes:
+    return MemberLoanSigningRequestRes(
+        signing_request_id=str(signing_request.id),
+        signing_purpose=signing_request.signing_purpose,
+        document_id=str(signing_request.document_id) if signing_request.document_id else None,
+        document_sha256=signing_request.document_sha256,
+        document_content=signing_request_content(db, signing_request),
+        signature_meaning=signing_request.signature_meaning,
+        objection_reason=signing_request.objection_reason,
+        signature_statement_text=signing_request.signature_statement_text,
+        full_legal_name_to_type=caller.member.legal_name,
+        electronic_signature_consent_text=ELECTRONIC_SIGNATURE_CONSENT_TEXT,
+        expires_at=signing_request.expires_at,
+    )

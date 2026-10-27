@@ -1,9 +1,9 @@
-"""What a Member Loan endpoint returns: the response, and the e-mails to send after commit."""
+"""What a Member Loan endpoint returns: the response, and the e-mails and other work to do after commit."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID
 
 from BL.memberLoan.common.member_loan_ledger_service import expire_stale_proposals_in_own_transaction
@@ -13,6 +13,8 @@ from BL.memberLoan.common.member_loan_ledger_service import expire_stale_proposa
 class MemberLoanOutcome:
     response: Any
     notifications_after_commit: list[tuple[str, UUID]] = field(default_factory=list)
+    # Other work for after the commit, e.g. delivering a signed copy: (function, its one argument).
+    jobs_after_commit: list[tuple[Callable[[Any], None], Any]] = field(default_factory=list)
 
 
 def expire_and_list_notifications(db) -> list[tuple[str, UUID]]:

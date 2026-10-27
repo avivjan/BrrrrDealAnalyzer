@@ -56,6 +56,7 @@ def sent_line_for(sent) -> Optional[str]:
 
 def get_statement(db, caller: MemberLoanCaller, month_text: str) -> MemberLoanOutcome:
     document, sent = statement_document_and_send(db, caller, month_text)
+    signing_document = member_loan_crud.get_member_loan_signing_document_for_statement_month(db, parse_statement_month(month_text))
     return MemberLoanOutcome(
         MemberLoanStatementRes(
             statement_month=document["statement_month"],
@@ -64,6 +65,7 @@ def get_statement(db, caller: MemberLoanCaller, month_text: str) -> MemberLoanOu
             sent_at=sent.sent_at if sent else None,
             objection_deadline=sent.objection_deadline if sent else None,
             sent_to=list(sent.recipients) if sent else [],
+            signing_document_id=str(signing_document.id) if signing_document else None,
         )
     )
 

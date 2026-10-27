@@ -8,14 +8,22 @@ import type {
   MemberLoanProposal,
   MemberLoanProposalCreate,
   MemberLoanProposalState,
+  MemberLoanSignatureMeaning,
+  MemberLoanSignatureSubmit,
+  MemberLoanSigningCompletion,
+  MemberLoanSigningDocument,
+  MemberLoanSigningRequest,
   MemberLoanStatement,
   MemberLoanSummary,
+  MemberLoanPasskeySigningOptions,
 } from "../types/memberLoan";
 
 /**
  * /member-loan/* — only the two members, on a passkey (the API gates itself).
  * Writes go through the shared client, so a `reauth_required` answer triggers
- * one passkey prompt and a retry (api/index.ts).
+ * one passkey prompt and a retry (api/index.ts). Signing needs no such prompt:
+ * it carries its own passkey assertion over the document (signingPasskeyOptions,
+ * then submitSignature).
  */
 export const memberLoanApi = {
   access: () => apiClient.get<MemberLoanAccess>("/member-loan/access").then((r) => r.data),
@@ -29,13 +37,39 @@ export const memberLoanApi = {
     apiClient.get<MemberLoanProposal[]>("/member-loan/events", { params: state ? { state } : {} }).then((r) => r.data),
   proposal: (eventId: string) => apiClient.get<MemberLoanProposal>(`/member-loan/events/${encodeURIComponent(eventId)}`).then((r) => r.data),
   preview: (body: MemberLoanProposalCreate) => apiClient.post<MemberLoanPreview>("/member-loan/event-previews", body).then((r) => r.data),
-  propose: (body: MemberLoanProposalCreate) => apiClient.post<MemberLoanProposal>("/member-loan/events", body).then((r) => r.data),
-  proposeReversal: (eventId: string, reason: string) =>
-    apiClient.post<MemberLoanProposal>(`/member-loan/events/${encodeURIComponent(eventId)}/reversal`, { reason }).then((r) => r.data),
-  approve: (eventId: string, previewFingerprint: string) =>
+  startChangeSigning: (body: MemberLoanProposalCreate) =>
+    apiClient.post<MemberLoanSigningRequest>("/member-loan/change-documents", body).then((r) => r.data),
+  startReversalSigning: (eventId: string, reason: string) =>
     apiClient
-      .post<MemberLoanProposal>(`/member-loan/events/${encodeURIComponent(eventId)}/approval`, { preview_fingerprint: previewFingerprint })
+      .post<MemberLoanSigningRequest>(`/member-loan/events/${encodeURIComponent(eventId)}/reversal-documents`, { reason })
       .then((r) => r.data),
+  startDocumentSigning: (documentId: string, signatureMeaning: MemberLoanSignatureMeaning, objectionReason?: string) =>
+    apiClient
+      .post<MemberLoanSigningRequest>(`/member-loan/documents/${encodeURIComponent(documentId)}/signing-requests`, {
+        signature_meaning: signatureMeaning,
+        objection_reason: objectionReason ?? null,
+      })
+      .then((r) => r.data),
+  signingPasskeyOptions: (signingRequestId: string) =>
+    apiClient
+      .post<MemberLoanPasskeySigningOptions>(`/member-loan/signing-requests/${encodeURIComponent(signingRequestId)}/passkey-options`)
+      .then((r) => r.data),
+  submitSignature: (signingRequestId: string, body: MemberLoanSignatureSubmit) =>
+    apiClient
+      .post<MemberLoanSigningCompletion>(`/member-loan/signing-requests/${encodeURIComponent(signingRequestId)}/signature`, body)
+      .then((r) => r.data),
+  signingRequestPdf: (signingRequestId: string) =>
+    apiClient
+      .get<Blob>(`/member-loan/signing-requests/${encodeURIComponent(signingRequestId)}/pdf`, { responseType: "blob" })
+      .then((r) => r.data),
+  documents: (waitingForMe = false) =>
+    apiClient.get<MemberLoanSigningDocument[]>("/member-loan/documents", { params: waitingForMe ? { waiting_for_me: true } : {} }).then((r) => r.data),
+  document: (documentId: string) =>
+    apiClient.get<MemberLoanSigningDocument>(`/member-loan/documents/${encodeURIComponent(documentId)}`).then((r) => r.data),
+  documentPdf: (documentId: string) =>
+    apiClient.get<Blob>(`/member-loan/documents/${encodeURIComponent(documentId)}/pdf`, { responseType: "blob" }).then((r) => r.data),
+  signedCopyPdf: (documentId: string) =>
+    apiClient.get<Blob>(`/member-loan/documents/${encodeURIComponent(documentId)}/signed-pdf`, { responseType: "blob" }).then((r) => r.data),
   reject: (eventId: string, reason: string) =>
     apiClient.post<MemberLoanProposal>(`/member-loan/events/${encodeURIComponent(eventId)}/rejection`, { reason }).then((r) => r.data),
   cancel: (eventId: string) =>

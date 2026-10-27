@@ -33,10 +33,10 @@ watch(
     <span class="flex items-center gap-4">
       <RouterLink v-if="memberLoan.access?.allowed" to="/member-loan" class="text-primary underline-offset-2 hover:underline" data-testid="security.member-loan-link">
         <i class="pi pi-briefcase mr-1" aria-hidden="true"></i>Member Loan<span
-          v-if="memberLoan.access.proposals_waiting_for_you"
+          v-if="memberLoan.access.documents_waiting_for_your_signature"
           class="ml-1 rounded-full bg-primary px-1.5 text-[11px] text-primary-fg"
-          :aria-label="`${memberLoan.access.proposals_waiting_for_you} waiting for you`"
-        >{{ memberLoan.access.proposals_waiting_for_you }}</span>
+          :aria-label="`${memberLoan.access.documents_waiting_for_your_signature} waiting for your signature`"
+        >{{ memberLoan.access.documents_waiting_for_your_signature }}</span>
       </RouterLink>
       <RouterLink to="/settings/devices" class="text-primary underline-offset-2 hover:underline" data-testid="security.devices-link">
         <i class="pi pi-shield mr-1" aria-hidden="true"></i>Devices &amp; passkeys
