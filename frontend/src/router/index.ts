@@ -17,7 +17,7 @@ import { useAuthStore } from '../stores/authStore'
 export const AUTH_ROUTE_NAMES = ['login', 'enroll', 'pending', 'connect', 'devices'] as const
 
 /** The Member Loan (two members only): reached from the session strip and e-mails, not the primary nav. */
-export const MEMBER_LOAN_ROUTE_NAMES = ['member-loan', 'member-loan-approval'] as const
+export const MEMBER_LOAN_ROUTE_NAMES = ['member-loan', 'member-loan-approval', 'member-loan-sign'] as const
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -62,7 +62,8 @@ const router = createRouter({
     // The Member Loan gates itself on the API (exactly the two members, on a
     // passkey); the session strip links it only for them.
     { path: '/member-loan', name: 'member-loan', component: MemberLoan },
-    { path: '/member-loan/approvals/:eventId', name: 'member-loan-approval', component: MemberLoan, props: true }
+    { path: '/member-loan/approvals/:eventId', name: 'member-loan-approval', component: MemberLoan, props: true },
+    { path: '/member-loan/sign/:documentId', name: 'member-loan-sign', component: MemberLoan, props: true }
   ]
 })
 

@@ -47,6 +47,7 @@ export interface MemberLoanAccess {
   role: "lender" | "yarden";
   other_member_display_name: string;
   proposals_waiting_for_you: number;
+  documents_waiting_for_your_signature: number;
 }
 
 export interface MemberLoanSummary {
@@ -84,7 +85,8 @@ export interface MemberLoanProposal {
   live_preview: MemberLoanPreview | null;
   live_preview_problem: string | null;
   figures_changed_since_proposal: boolean;
-  caller_may_approve_or_reject: boolean;
+  signing_document_id: string | null;
+  caller_may_sign_or_reject: boolean;
   caller_may_cancel: boolean;
   caller_may_propose_reversal: boolean;
   includes_yarden_increase_warning: boolean;
@@ -139,6 +141,7 @@ export interface MemberLoanStatement {
   sent_at: string | null;
   objection_deadline: string | null;
   sent_to: string[];
+  signing_document_id: string | null;
 }
 
 export interface MemberLoanAuditEntry {
@@ -158,11 +161,123 @@ export interface MemberLoanIntegrity {
   proposals_checked: number;
   decisions_checked: number;
   audit_entries_checked: number;
+  signing_documents_checked: number;
+  signatures_checked: number;
+  signed_copies_checked: number;
 }
 
 /** A refusal from the API: `detail.message` is plain language for the member. */
 export interface MemberLoanRefusal {
   message: string;
   code: string | null;
-  live_preview?: MemberLoanPreview;
+}
+
+// -- signing (tasks/todo/MemberLoanSigning.md) ------------------------------------
+
+export type MemberLoanSignatureMeaning = "signed" | "objected";
+export type MemberLoanSigningPurpose = "propose_change" | "propose_reversal" | "sign_document";
+
+/** A signer as the document lists them; `statement_text` is what their signature says. */
+export interface MemberLoanDocumentSignerEntry {
+  username: string;
+  legal_name: string;
+  role: string;
+  role_label: string;
+  statement_text: string;
+  signs_as?: "proposer" | "counterparty";
+}
+
+/** The structured content a document's PDF is drawn from (BL/memberLoan/common/member_loan_signing_documents.py). */
+export interface MemberLoanDocumentContent {
+  document_kind: "loan_change" | "monthly_statement";
+  title: string;
+  signers: MemberLoanDocumentSignerEntry[];
+  // a Loan Change Record
+  record_number?: number;
+  prepared_on?: string;
+  agreement_reference?: string;
+  parties_lines?: string[];
+  change_rows?: [string, string][];
+  contract_basis_lines?: string[];
+  figures_effective_date?: string;
+  figures_rows?: [string, string, string][];
+  allocation_lines?: string[];
+  effect_lines?: string[];
+  warnings?: string[];
+  // a monthly statement
+  statement_month?: string;
+  month_label?: string;
+  statement_date?: string;
+  amount_owed?: string;
+  acknowledgment_intro_lines?: string[];
+  statement_document?: MemberLoanStatementDocument;
+}
+
+export interface MemberLoanSigningRequest {
+  signing_request_id: string;
+  signing_purpose: MemberLoanSigningPurpose;
+  document_id: string | null;
+  document_sha256: string;
+  document_content: MemberLoanDocumentContent;
+  signature_meaning: MemberLoanSignatureMeaning;
+  objection_reason: string | null;
+  signature_statement_text: string;
+  full_legal_name_to_type: string;
+  electronic_signature_consent_text: string;
+  expires_at: string;
+}
+
+export interface MemberLoanPasskeySigningOptions {
+  passkey_challenge_id: string;
+  options: string;
+}
+
+export interface MemberLoanDocumentSigner {
+  username: string;
+  display_name: string;
+  legal_name: string;
+  role_label: string;
+  status: "waiting" | "signed" | "objected";
+  signed_at: string | null;
+  objection_reason: string | null;
+}
+
+export interface MemberLoanSignedCopyDelivery {
+  delivery_channel: "email" | "google_drive";
+  delivery_status: "sent" | "failed";
+  attempted_at: string;
+}
+
+export interface MemberLoanSigningDocument {
+  id: string;
+  document_kind: "loan_change" | "monthly_statement";
+  title: string;
+  event_id: string | null;
+  statement_month: string | null;
+  record_number: number | null;
+  created_at: string;
+  document_sha256: string;
+  content: MemberLoanDocumentContent;
+  signers: MemberLoanDocumentSigner[];
+  caller_must_act: boolean;
+  caller_may_object: boolean;
+  proposal_state: MemberLoanProposalState | null;
+  response_deadline: string | null;
+  is_complete: boolean;
+  completed_at: string | null;
+  signed_copy_sha256: string | null;
+  deliveries: MemberLoanSignedCopyDelivery[];
+}
+
+export interface MemberLoanSignatureSubmit {
+  typed_full_legal_name: string;
+  electronic_signature_consent_confirmed: boolean;
+  drawn_signature_png_base64: string;
+  passkey_challenge_id: string;
+  passkey_credential: unknown;
+}
+
+export interface MemberLoanSigningCompletion {
+  document: MemberLoanSigningDocument;
+  proposal: MemberLoanProposal | null;
 }

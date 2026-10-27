@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * One proposed change: what it is, who proposed it, the before → after figures,
- * and what the viewer may do. Approve and reject are for the other member only,
- * cancel for the proposer (the server enforces both). Every action asks for a
- * passkey through the API's step-up answer.
+ * and what the viewer may do. Signing its Loan Change Record (which approves it)
+ * and rejecting are for the other member only, cancelling for the proposer (the
+ * server enforces both). Signing asks for the passkey over the document itself;
+ * rejecting and cancelling through the API's step-up answer.
  */
 import { computed, ref } from "vue";
 
@@ -12,7 +13,7 @@ import { PROPOSAL_STATE_LABELS, formatLoanDate, formatLoanMoney } from "../../ut
 import MemberLoanBucketsTable from "./MemberLoanBucketsTable.vue";
 
 const props = defineProps<{ proposal: MemberLoanProposal; busy?: boolean; highlighted?: boolean; lenderName?: string; yardenName?: string }>();
-const emit = defineEmits<{ approve: []; reject: [reason: string]; cancel: []; reverse: [reason: string] }>();
+const emit = defineEmits<{ sign: []; reject: [reason: string]; cancel: []; reverse: [reason: string]; downloadSignedCopy: [] }>();
 
 const rejecting = ref(false);
 const rejectionReason = ref("");
@@ -87,10 +88,7 @@ function submitReversal() {
       class="rounded-ctl border border-warning/50 bg-warning/10 p-2 text-sm text-fg"
       data-testid="member-loan.no-clause-warning"
     >
-      The signed loan agreement has no clause for this kind of change. It relies only on the written agreement cited above.
-    </p>
-    <p v-if="proposal.state === 'pending' && proposal.figures_changed_since_proposal && proposal.live_preview" class="rounded-ctl border border-primary/40 bg-primary/10 p-2 text-sm text-fg" data-testid="member-loan.figures-changed">
-      The figures changed since this was proposed, because another change was approved. These are the figures today.
+      This change increases the loan under Section 7A of the Agreement (Amendment No. 1). It relies on the written agreement cited above.
     </p>
     <p v-if="proposal.live_preview_problem" class="rounded-ctl border border-negative/40 bg-negative/10 p-2 text-sm text-fg" role="alert">
       {{ proposal.live_preview_problem }}
@@ -103,10 +101,16 @@ function submitReversal() {
       <MemberLoanBucketsTable :before="preview.buckets_before" :after="preview.buckets_after" />
     </div>
 
-    <div v-if="proposal.caller_may_approve_or_reject" class="flex flex-col gap-2">
+    <div v-if="proposal.caller_may_sign_or_reject" class="flex flex-col gap-2">
       <div class="flex flex-wrap gap-2">
-        <UiButton variant="primary" :loading="busy" :disabled="busy || !proposal.live_preview" data-testid="member-loan.approve" @click="emit('approve')">
-          Approve
+        <UiButton
+          variant="primary"
+          :loading="busy"
+          :disabled="busy || !proposal.live_preview || !proposal.signing_document_id"
+          data-testid="member-loan.sign-open"
+          @click="emit('sign')"
+        >
+          <i class="pi pi-pen-to-square" aria-hidden="true" /> Review and sign
         </UiButton>
         <UiButton variant="secondary" :disabled="busy" data-testid="member-loan.reject-open" @click="rejecting = !rejecting">Reject…</UiButton>
       </div>
@@ -123,12 +127,18 @@ function submitReversal() {
         />
         <UiButton type="submit" variant="danger" :disabled="busy || !rejectionReason.trim()" data-testid="member-loan.reject">Reject</UiButton>
       </form>
-      <p class="text-xs text-fg-muted">Approving or rejecting asks for your passkey.</p>
+      <p class="text-xs text-fg-muted">Signing its Loan Change Record approves the change. Signing and rejecting ask for your passkey.</p>
     </div>
 
     <div v-if="proposal.caller_may_cancel" class="flex flex-wrap items-center gap-2">
       <UiButton variant="secondary" :disabled="busy" data-testid="member-loan.cancel" @click="emit('cancel')">Cancel this proposal</UiButton>
-      <span class="text-xs text-fg-muted">Waiting for the other member to approve it.</span>
+      <span class="text-xs text-fg-muted">You signed it. Waiting for the other member to sign it too.</span>
+    </div>
+
+    <div v-if="proposal.state === 'approved' && proposal.signing_document_id">
+      <UiButton variant="ghost" size="sm" :disabled="busy" data-testid="member-loan.signed-copy" @click="emit('downloadSignedCopy')">
+        <i class="pi pi-file-pdf" aria-hidden="true" /> Signed Loan Change Record (PDF)
+      </UiButton>
     </div>
 
     <div v-if="proposal.caller_may_propose_reversal" class="flex flex-col gap-2">
@@ -147,7 +157,7 @@ function submitReversal() {
           data-testid="member-loan.reverse-reason"
         />
         <UiButton type="submit" variant="secondary" :disabled="busy || reversalReason.trim().length < 3" data-testid="member-loan.reverse">
-          Send for approval
+          Review and sign the reversal
         </UiButton>
       </form>
     </div>

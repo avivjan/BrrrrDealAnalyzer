@@ -208,7 +208,7 @@ On top of that:
 - [x] **7** (40 min): Scheduler: daily reminders up to 30 days, documents for months sent without one, delivery retries (3).
 - [x] **8** (20 min): `BackEnd/integrations/google_drive_loan_agreements.gs`, the Apps Script, plus step-by-step setup notes.
 - [x] **9** (10 min): MCP: assert that the new routes are excluded with `/member-loan`, and that the OpenAPI golden is updated.
-- [ ] **10** (180 min): Frontend:
+- [x] **10** (180 min): Frontend:
   - signing dialog and signature pad;
   - propose form, proposal card and statement panel;
   - the sign route and redirect;
