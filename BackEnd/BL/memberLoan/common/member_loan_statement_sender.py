@@ -13,6 +13,11 @@ e-mail and the PDF into files, logs the dry run, sends nothing, locks nothing.
 
 A real send locks the month (R2): proposals still pending for it expire and
 both members are told.
+
+The e-mail is also the first request to sign (Amendment No. 1, Section 6.2):
+it attaches the statement followed by its acknowledgment page, links to the
+signing page, and the same PDF becomes the month's signing document in the
+transaction that marks the send `sent`.
 """
 
 from __future__ import annotations
@@ -40,7 +45,8 @@ from BL.memberLoan.common.member_loan_ledger_service import (
 )
 from BL.memberLoan.common.member_loan_notifications import send_member_loan_notification_after_commit
 from BL.memberLoan.common.member_loan_statement_document import format_long_date, format_month_label
-from BL.memberLoan.common.member_loan_statement_pdf import render_member_loan_statement_pdf
+from BL.memberLoan.common.member_loan_signing_service import create_statement_signing_document, statement_signing_pdf_and_content
+from BL.memberLoan.common.member_loan_statement_signing import PLEASE_SIGN_STATEMENT_EMAIL_SUBJECT, claim_todays_statement_reminder
 from BL.memberLoan.common.member_loan_statement_service import build_member_loan_statement_for_month, count_proposals_waiting_for_month
 from DAL.crud import member_loan as member_loan_crud
 from DAL.data_models.memberLoan.models import MemberLoanStatementSend
@@ -60,11 +66,9 @@ class MemberLoanStatementSendResult:
     written_files: list[str] = field(default_factory=list)
 
 
-def _statement_email(document: dict, app_origin: str, sent_on: date, objection_deadline: date) -> tuple[str, str, str]:
-    month_label = format_month_label(date.fromisoformat(document["statement_date"]) - timedelta(days=1))
-    amount_owed = document["summary_rows"][-1][1]
-    subject = f"Member Loan statement – {month_label}: Amount Owed {amount_owed}"
-    link = f"{app_origin}/member-loan?tab=statements&month={document['statement_month']}"
+def _statement_email(document: dict, app_origin: str, sent_on: date, objection_deadline: date, signing_document_id) -> tuple[str, str, str]:
+    subject = PLEASE_SIGN_STATEMENT_EMAIL_SUBJECT
+    link = f"{app_origin}/member-loan/sign/{signing_document_id}"
     text_lines = [document["title"], ""]
     text_lines += [f"{label}: {value}" for label, value in document["summary_rows"]]
     text_lines += ["", "What happened this month:"] + [f"- {s}" for s in document["what_happened_sentences"]]
@@ -72,12 +76,13 @@ def _statement_email(document: dict, app_origin: str, sent_on: date, objection_d
         text_lines += [""] + document["warnings"]
     text_lines += [
         "",
-        "The attached PDF shows how every figure was calculated.",
+        "The attached PDF shows how every figure was calculated. Its last page is the acknowledgment each of us signs.",
         f"Sent on {format_long_date(sent_on)}. Objections must be made in writing by {format_long_date(objection_deadline)}.",
         "",
         document["binding_sentence"],
         "",
-        f"Open it in the app: {link}",
+        f"Please sign it, or object with your reason, in the app: {link}",
+        "Sign in with your passkey. This link does not sign anything by itself.",
     ]
     esc = html.escape
     rows = "".join(
@@ -92,10 +97,11 @@ def _statement_email(document: dict, app_origin: str, sent_on: date, objection_d
         + "".join(f"<li>{esc(s)}</li>" for s in document["what_happened_sentences"])
         + "</ul>"
         + "".join(f"<p style='color:#9a3412'><strong>{esc(w)}</strong></p>" for w in document["warnings"])
-        + "<p>The attached PDF shows how every figure was calculated.</p>"
+        + "<p>The attached PDF shows how every figure was calculated. Its last page is the acknowledgment each of us signs.</p>"
         f"<p>Sent on {esc(format_long_date(sent_on))}. Objections must be made in writing by {esc(format_long_date(objection_deadline))}.</p>"
         f"<p><strong>{esc(document['binding_sentence'])}</strong></p>"
-        f"<p><a href='{esc(link, quote=True)}'>Open the statement in the app</a></p>"
+        f"<p><a href='{esc(link, quote=True)}'>Sign the statement, or object to it, in the app</a>. "
+        "Sign in with your passkey. This link does not sign anything by itself.</p>"
         "</body></html>"
     )
     return subject, "\n".join(text_lines) + "\n", html_body
@@ -149,9 +155,10 @@ def send_member_loan_statement(
         f"Sent on {format_long_date(today)} to {', '.join(recipients)}. "
         f"Objections must be made in writing by {format_long_date(objection_deadline)}."
     )
-    pdf_bytes = render_member_loan_statement_pdf(document, sent_line=sent_line)
+    signing_document_id = uuid.uuid4()
+    _, pdf_bytes = statement_signing_pdf_and_content(statement_document=document, members=members, sent_line=sent_line)
     pdf_sha256 = hashlib.sha256(pdf_bytes).hexdigest()
-    subject, text_body, html_body = _statement_email(document, settings.app_origin, today, objection_deadline)
+    subject, text_body, html_body = _statement_email(document, settings.app_origin, today, objection_deadline, signing_document_id)
     pdf_filename = f"member-loan-statement-{document['statement_month']}.pdf"
 
     send_row = MemberLoanStatementSend(
@@ -217,6 +224,11 @@ def send_member_loan_statement(
     send_row.status = SEND_STATUS_SENT
     send_row.sent_at = member_loan_settings.utc_now()
     send_row.objection_deadline = objection_deadline
+    create_statement_signing_document(
+        db, statement_document=document, members=members, sent_line=sent_line, signing_pdf=pdf_bytes, document_id=signing_document_id,
+    )
+    for member in (members.lender, members.yarden):  # this e-mail is today's request to sign
+        claim_todays_statement_reminder(db, month, member.username, today)
     append_member_loan_audit_entry(
         db, actor_user_id=None, actor_username="system", action="statement_sent",
         detail={"statement_month": document["statement_month"], "pdf_sha256": pdf_sha256, "recipients": recipients,

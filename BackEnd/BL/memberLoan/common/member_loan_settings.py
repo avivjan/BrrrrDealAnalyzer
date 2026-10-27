@@ -5,6 +5,10 @@
     MEMBER_LOAN_ALLOWED_USERNAMES   comma-separated; must name exactly those two
     MEMBER_LOAN_LENDER_EMAIL        where the Lender's mail goes
     MEMBER_LOAN_YARDEN_EMAIL        where the other member's mail goes
+    MEMBER_LOAN_COMPANY_EMAIL       the Borrower's notice address; every signed copy goes
+                                    to it as well (Amendment No. 1, Section 1.4)
+    MEMBER_LOAN_LENDER_LEGAL_NAME   the full legal name the Lender types to sign (default Aviv Jan)
+    MEMBER_LOAN_YARDEN_LEGAL_NAME   the full legal name Yarden types to sign (default Yarden Kelly)
     MEMBER_LOAN_SENDER_ADDRESS      Gmail account that sends (default bigwhalesllc@gmail.com);
                                     its app password is EMAIL_PASSWORD, as for offers
     MEMBER_LOAN_APP_ORIGIN          link base in e-mails (default AUTH_APP_ORIGIN, then the
@@ -49,6 +53,9 @@ class MemberLoanSettings:
     app_origin: str
     statement_email_dry_run: bool
     writes_per_hour_per_member: int
+    company_email: Optional[str] = None
+    lender_legal_name: str = "Aviv Jan"
+    yarden_legal_name: str = "Yarden Kelly"
 
 
 def _env(name: str, default: str = "") -> str:
@@ -86,6 +93,9 @@ def load_member_loan_settings() -> MemberLoanSettings:
         app_origin=origin.rstrip("/"),
         statement_email_dry_run=_env("MEMBER_LOAN_EMAIL_DRY_RUN", "true").lower() != "false",
         writes_per_hour_per_member=max(1, writes_per_hour),
+        company_email=_optional_email("MEMBER_LOAN_COMPANY_EMAIL"),
+        lender_legal_name=_env("MEMBER_LOAN_LENDER_LEGAL_NAME", "Aviv Jan"),
+        yarden_legal_name=_env("MEMBER_LOAN_YARDEN_LEGAL_NAME", "Yarden Kelly"),
     )
 
 

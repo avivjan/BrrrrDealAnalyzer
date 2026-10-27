@@ -26,10 +26,16 @@ LOGIN_FAILURES_GLOBAL_PER_WINDOW = 50
 LOGIN_WINDOW_MINUTES = 15
 
 
-def begin_login(db: DbSession, *, kind: str = "login", user_id: Optional[UUID] = None) -> dict[str, Any]:
+def begin_login(
+    db: DbSession, *, kind: str = "login", user_id: Optional[UUID] = None, challenge: Optional[bytes] = None
+) -> dict[str, Any]:
+    """`challenge` is random unless the caller derives it (a Member Loan signature
+    binds it to the document being signed)."""
+
     options = generate_authentication_options(
         rp_id=settings.rp_id(),
         user_verification=UserVerificationRequirement.REQUIRED,
+        challenge=challenge,
     )
     challenge = crud.add_challenge(
         db,
@@ -133,3 +139,21 @@ def finish_reauth(
     )
     session.auth_time = crud.now()
     audit("reauth_ok", request, user_id=user.id, session_id=session.id, device_id=session.device_id)
+
+
+def verify_signature_assertion(
+    db: DbSession,
+    *,
+    kind: str,
+    challenge_id: UUID,
+    credential: dict[str, Any] | str,
+    request: Optional[Request],
+    expected_user_id: UUID,
+) -> WebAuthnCredential:
+    """A passkey assertion that signs something (a Member Loan document), by `expected_user_id` only."""
+
+    user, credential_row = _verify_assertion(
+        db, kind=kind, challenge_id=challenge_id, credential=credential, request=request, expected_user_id=expected_user_id
+    )
+    audit("signature_assertion_ok", request, user_id=user.id, detail={"kind": kind})
+    return credential_row

@@ -4,7 +4,9 @@ Self-gated like `routers/devices.py`: every route needs a real passkey web
 session whatever AUTH_MODE says (decision D2: defense in depth), the session's
 user must be one of the two configured members, and every write also needs the
 CSRF headers, a recent passkey assertion (step-up) and stays under the hourly
-rate limit. MCP connector sessions are refused outright.
+rate limit. A signature (`require_member_loan_signer`) needs no step-up: it
+carries its own passkey assertion over the document. MCP connector sessions
+are refused outright.
 """
 
 from __future__ import annotations
@@ -36,6 +38,7 @@ class MemberLoanMember:
     display_name: str
     role: str
     email: Optional[str]
+    legal_name: str = ""
 
 
 @dataclass(frozen=True)
@@ -61,13 +64,14 @@ class MemberLoanCaller:
     settings: MemberLoanSettings
     request_ip: Optional[str]
     user_agent: Optional[str]
+    device_id: Optional[UUID] = None
 
     @property
     def other_member(self) -> MemberLoanMember:
         return self.members.other_than(self.member)
 
 
-def _member(db: DbSession, username: str, role: str, email: Optional[str]) -> MemberLoanMember:
+def _member(db: DbSession, username: str, role: str, email: Optional[str], legal_name: str) -> MemberLoanMember:
     user = auth_crud.get_user_by_username(db, username)
     fallback_name = username[:1].upper() + username[1:]
     return MemberLoanMember(
@@ -76,13 +80,14 @@ def _member(db: DbSession, username: str, role: str, email: Optional[str]) -> Me
         display_name=(user.display_name if user and user.display_name else fallback_name),
         role=role,
         email=email,
+        legal_name=legal_name,
     )
 
 
 def load_member_loan_members(db: DbSession, settings: MemberLoanSettings) -> MemberLoanMembers:
     return MemberLoanMembers(
-        lender=_member(db, settings.lender_username, MEMBER_ROLE_LENDER, settings.lender_email),
-        yarden=_member(db, settings.yarden_username, MEMBER_ROLE_YARDEN, settings.yarden_email),
+        lender=_member(db, settings.lender_username, MEMBER_ROLE_LENDER, settings.lender_email, settings.lender_legal_name),
+        yarden=_member(db, settings.yarden_username, MEMBER_ROLE_YARDEN, settings.yarden_email, settings.yarden_legal_name),
     )
 
 
@@ -113,6 +118,7 @@ def _resolve_member_loan_caller(request: Request, db: DbSession) -> tuple[Member
         settings=settings,
         request_ip=client_ip(request),
         user_agent=(request.headers.get("user-agent", "")[:512] or None),
+        device_id=principal.device.id,
     )
     return caller, principal
 
@@ -123,11 +129,19 @@ def require_member_loan_reader(request: Request, db: DbSession = Depends(get_db)
 
 
 def require_member_loan_writer(request: Request, db: DbSession = Depends(get_db)) -> MemberLoanCaller:
+    return _member_loan_write_gate(request, db, step_up_required=True)
+
+
+def require_member_loan_signer(request: Request, db: DbSession = Depends(get_db)) -> MemberLoanCaller:
+    return _member_loan_write_gate(request, db, step_up_required=False)
+
+
+def _member_loan_write_gate(request: Request, db: DbSession, *, step_up_required: bool) -> MemberLoanCaller:
     caller, principal = _resolve_member_loan_caller(request, db)
     problem = _csrf_problem(request)
     if problem is not None:
         raise HTTPException(status_code=403, detail=f"csrf: {problem}")
-    if not sessions_bl.is_recently_authenticated(principal.session):
+    if step_up_required and not sessions_bl.is_recently_authenticated(principal.session):
         raise HTTPException(status_code=403, detail="reauth_required")
     if count_recent(MEMBER_LOAN_WRITE_SECURITY_EVENT, 60, user_id=principal.user.id) >= caller.settings.writes_per_hour_per_member:
         raise HTTPException(status_code=429, detail="Too many changes in the last hour. Please try again later.")

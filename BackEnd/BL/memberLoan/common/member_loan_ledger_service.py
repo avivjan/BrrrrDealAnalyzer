@@ -6,12 +6,14 @@ proposal" rule never race. The event row or decision row and its audit entry
 commit together or not at all. E-mail is never sent here: callers schedule
 notifications after the commit (D5).
 
-Lifecycle (D16): a proposal is `pending` until exactly one decision follows it:
-`approved` (only the other member, with the preview fingerprint they saw, R7),
-`rejected` (only the other member, with a reason), `cancelled` (only the
-proposer) or `expired` (the system: 14 days without a decision, or its month's
-statement was sent first). Only approved events that no approved reversal
-cancels reach the engine (R5).
+Lifecycle (D16, tasks/todo/MemberLoanSigning.md): a proposal exists only once
+its proposer signed its Loan Change Record, and is `pending` until exactly one
+decision follows it: `approved` (written with the other member's signature on
+the record, `member_loan_signing_service.py`), `rejected` (only the other
+member, with a reason), `cancelled` (only the proposer) or `expired` (the
+system: 14 days without a decision, its month's statement was sent first, the
+figures on its record changed, or it predates signing). Only approved events
+that no approved reversal cancels reach the engine (R5).
 """
 
 from __future__ import annotations
@@ -57,6 +59,14 @@ DECISION_REJECTED = "rejected"
 DECISION_CANCELLED = "cancelled"
 DECISION_EXPIRED = "expired"
 SYSTEM_ACTOR_USERNAME = "system"
+APPROVAL_NOW_REQUIRES_SIGNING = "Approving with a button was replaced by signing the change's Loan Change Record."
+EXPIRY_REASON_FIGURES_CHANGED = (
+    "The figures on its Loan Change Record changed before both members signed it, so it can no longer be signed. "
+    "It can be proposed again."
+)
+EXPIRY_REASON_SIGNING_REPLACED_APPROVAL = (
+    "Approving with a button was replaced by signing a Loan Change Record. It can be proposed again and signed."
+)
 
 AUDIT_ACTION_BY_DECISION = {
     DECISION_APPROVED: "event_approved",
@@ -89,6 +99,7 @@ class MemberLoanLedgerSnapshot:
     events: list[MemberLoanEvent]
     decisions_by_event_id: dict[UUID, MemberLoanEventDecision]
     locked_statement_months: set[date]
+    signing_document_id_by_event_id: dict[UUID, UUID] = field(default_factory=dict)
     events_by_id: dict[UUID, MemberLoanEvent] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -158,6 +169,9 @@ def load_member_loan_ledger_snapshot(db: DbSession) -> MemberLoanLedgerSnapshot:
         events=member_loan_crud.list_member_loan_events(db),
         decisions_by_event_id={d.event_id: d for d in member_loan_crud.list_member_loan_event_decisions(db)},
         locked_statement_months=member_loan_crud.list_months_with_a_sent_member_loan_statement(db),
+        signing_document_id_by_event_id={
+            d.event_id: d.id for d in member_loan_crud.list_member_loan_signing_documents(db) if d.event_id is not None
+        },
     )
 
 
@@ -296,12 +310,15 @@ def expire_stale_member_loan_proposals(db: DbSession, snapshot: MemberLoanLedger
     now = member_loan_settings.utc_now()
     for event in snapshot.pending_events():
         reason = None
-        if now - event.proposed_at >= timedelta(days=PENDING_PROPOSAL_LIFETIME_DAYS):
+        affected_month = statement_month_affected_by(_reversal_target_or_self(snapshot, event))
+        if event.id not in snapshot.signing_document_id_by_event_id:
+            reason = EXPIRY_REASON_SIGNING_REPLACED_APPROVAL
+        elif now - event.proposed_at >= timedelta(days=PENDING_PROPOSAL_LIFETIME_DAYS):
             reason = f"It waited {PENDING_PROPOSAL_LIFETIME_DAYS} days without a decision."
-        else:
-            affected_month = statement_month_affected_by(_reversal_target_or_self(snapshot, event))
-            if affected_month in snapshot.locked_statement_months:
-                reason = f"The statement for {format_month_label(affected_month)} was sent before it was approved."
+        elif affected_month in snapshot.locked_statement_months:
+            reason = f"The statement for {format_month_label(affected_month)} was sent before it was approved."
+        elif not live_figures_still_match_the_proposal(snapshot, event):
+            reason = EXPIRY_REASON_FIGURES_CHANGED
         if reason is None:
             continue
         decision = _append_decision(
@@ -315,6 +332,15 @@ def expire_stale_member_loan_proposals(db: DbSession, snapshot: MemberLoanLedger
         )
         expired.append(MemberLoanDecisionOutcome(event.id, DECISION_EXPIRED))
     return expired
+
+
+def live_figures_still_match_the_proposal(snapshot: MemberLoanLedgerSnapshot, event: MemberLoanEvent) -> bool:
+    """Whether the before and after figures printed on its record are still the ones approving it would produce (S4)."""
+
+    try:
+        return live_preview_for(snapshot, event).preview_fingerprint == event.preview_fingerprint_at_proposal
+    except MemberLoanEventRejected:
+        return False
 
 
 def _reversal_target_or_self(snapshot: MemberLoanLedgerSnapshot, event: MemberLoanEvent) -> MemberLoanEvent:
@@ -396,11 +422,13 @@ class MemberLoanWriteResult:
     decision: Optional[str] = None
 
 
-def preview_member_loan_proposal(db: DbSession, request: MemberLoanProposalCreateReq) -> MemberLoanEventPreview:
+def preview_member_loan_proposal(
+    db: DbSession, request: MemberLoanProposalCreateReq, snapshot: Optional[MemberLoanLedgerSnapshot] = None
+) -> MemberLoanEventPreview:
     """The figures a proposal would show, with every check a proposal runs, writing nothing."""
 
     amount = _validate_proposal_fields(request)
-    snapshot = load_member_loan_ledger_snapshot(db)
+    snapshot = snapshot or load_member_loan_ledger_snapshot(db)
     _refuse_if_too_far_in_the_future(request.effective_date)
     _refuse_if_month_locked(
         snapshot, statement_month_affected_by(None, event_type=request.event_type, effective_date=request.effective_date)
@@ -419,14 +447,21 @@ def preview_member_loan_proposal(db: DbSession, request: MemberLoanProposalCreat
         raise MemberLoanRequestRefused(422, rejected.plain_language_reason, code="cannot_be_applied")
 
 
-def propose_member_loan_event(db: DbSession, caller: MemberLoanCaller, request: MemberLoanProposalCreateReq) -> MemberLoanWriteResult:
-    amount = _validate_proposal_fields(request)
-    member_loan_crud.acquire_member_loan_write_lock(db)
-    snapshot = load_member_loan_ledger_snapshot(db)
-    _refuse_if_too_far_in_the_future(request.effective_date)
-    _refuse_if_month_locked(
-        snapshot, statement_month_affected_by(None, event_type=request.event_type, effective_date=request.effective_date)
-    )
+def next_member_loan_proposal_sequence(db: DbSession) -> int:
+    last = member_loan_crud.get_last_member_loan_event(db)
+    return (last.proposal_sequence + 1) if last else 1
+
+
+def append_proposed_member_loan_event(
+    db: DbSession, caller: MemberLoanCaller, request: MemberLoanProposalCreateReq, snapshot: MemberLoanLedgerSnapshot
+) -> MemberLoanEvent:
+    """Write a proposal whose figures the caller checked (`preview_member_loan_proposal`) under the write lock.
+
+    The stored preview is worked out again with the new event's own id: the
+    fingerprint covers the event's description, so it then equals what
+    `live_preview_for` gives for the stored event as long as nothing changes."""
+
+    amount = None if request.amount is None else Decimal(request.amount)
     new_event_id = uuid.uuid4()
     candidate = EffectiveMemberLoanEvent(
         event_id=str(new_event_id),
@@ -436,10 +471,7 @@ def propose_member_loan_event(db: DbSession, caller: MemberLoanCaller, request: 
         amount=amount,
         interest_election_choice=request.interest_election_choice,
     )
-    try:
-        preview = preview_member_loan_event(member_loan_terms(), snapshot.effective_engine_events(), candidate)
-    except MemberLoanEventRejected as rejected:
-        raise MemberLoanRequestRefused(422, rejected.plain_language_reason, code="cannot_be_applied")
+    preview = preview_member_loan_event(member_loan_terms(), snapshot.effective_engine_events(), candidate)
     event = _append_event(
         db,
         caller,
@@ -467,15 +499,14 @@ def propose_member_loan_event(db: DbSession, caller: MemberLoanCaller, request: 
         request_ip=caller.request_ip,
         user_agent=caller.user_agent,
     )
-    db.commit()
-    return MemberLoanWriteResult(event_id=event.id)
+    return event
 
 
-def propose_member_loan_reversal(
-    db: DbSession, caller: MemberLoanCaller, target_event_id: UUID, reason: str, note: Optional[str]
-) -> MemberLoanWriteResult:
-    member_loan_crud.acquire_member_loan_write_lock(db)
-    snapshot = load_member_loan_ledger_snapshot(db)
+def preview_member_loan_reversal_proposal(
+    snapshot: MemberLoanLedgerSnapshot, target_event_id: UUID
+) -> tuple[MemberLoanEvent, MemberLoanEventPreview]:
+    """The event a reversal would cancel and its figures, with every check a reversal proposal runs."""
+
     target = snapshot.events_by_id.get(target_event_id)
     if target is None:
         raise MemberLoanRequestRefused(404, "That change was not found.")
@@ -488,6 +519,12 @@ def propose_member_loan_reversal(
         preview = preview_member_loan_reversal(member_loan_terms(), snapshot.effective_engine_events(), str(target.id))
     except MemberLoanEventRejected as rejected:
         raise MemberLoanRequestRefused(422, f"It cannot be reversed: {rejected.plain_language_reason}", code="cannot_be_applied")
+    return target, preview
+
+
+def append_proposed_member_loan_reversal(
+    db: DbSession, caller: MemberLoanCaller, target: MemberLoanEvent, preview: MemberLoanEventPreview, reason: str, note: Optional[str]
+) -> MemberLoanEvent:
     event = _append_event(
         db,
         caller,
@@ -511,22 +548,17 @@ def propose_member_loan_reversal(
         request_ip=caller.request_ip,
         user_agent=caller.user_agent,
     )
-    db.commit()
-    return MemberLoanWriteResult(event_id=event.id)
+    return event
 
 
 # -- deciding ----------------------------------------------------------------------
 
 
 def decide_member_loan_event(
-    db: DbSession,
-    caller: MemberLoanCaller,
-    event_id: UUID,
-    decision: str,
-    *,
-    preview_fingerprint: Optional[str] = None,
-    reason: Optional[str] = None,
+    db: DbSession, caller: MemberLoanCaller, event_id: UUID, decision: str, *, reason: Optional[str] = None
 ) -> MemberLoanWriteResult:
+    """Reject (the other member) or cancel (the proposer). Approval is a signature (`member_loan_signing_service.py`)."""
+
     member_loan_crud.acquire_member_loan_write_lock(db)
     snapshot = load_member_loan_ledger_snapshot(db)
     event = snapshot.events_by_id.get(event_id)
@@ -543,27 +575,12 @@ def decide_member_loan_event(
     if decision == DECISION_CANCELLED and not proposer_is_caller:
         raise MemberLoanRequestRefused(403, "Only the member who proposed a change can cancel it.", code="not_the_proposer")
 
-    preview: Optional[MemberLoanEventPreview] = None
     if decision == DECISION_APPROVED:
-        _refuse_if_month_locked(snapshot, statement_month_affected_by(_reversal_target_or_self(snapshot, event)))
-        try:
-            preview = live_preview_for(snapshot, event)
-        except MemberLoanEventRejected as rejected:
-            raise MemberLoanRequestRefused(
-                422, f"It cannot be approved any more: {rejected.plain_language_reason}", code="cannot_be_applied"
-            )
-        if preview.preview_fingerprint != preview_fingerprint:
-            raise MemberLoanRequestRefused(
-                409,
-                "The figures changed since you looked: another change was approved in the meantime. Please review the new figures.",
-                code="figures_changed",
-                extra={"live_preview": preview.as_plain_dict()},
-            )
-    else:
-        try:
-            preview = live_preview_for(snapshot, event)
-        except MemberLoanEventRejected:
-            preview = None
+        raise MemberLoanRequestRefused(410, APPROVAL_NOW_REQUIRES_SIGNING, code="approval_requires_signing")
+    try:
+        preview: Optional[MemberLoanEventPreview] = live_preview_for(snapshot, event)
+    except MemberLoanEventRejected:
+        preview = None
 
     decision_row = _append_decision(
         db,
@@ -580,14 +597,36 @@ def decide_member_loan_event(
         actor_username=caller.member.username,
         action=AUDIT_ACTION_BY_DECISION[decision],
         event_id=event.id,
-        state_before=preview.buckets_before.as_plain_dict() if (preview and decision == DECISION_APPROVED) else None,
-        state_after=preview.buckets_after.as_plain_dict() if (preview and decision == DECISION_APPROVED) else None,
         detail={"decision_sequence": decision_row.decision_sequence, "reason": decision_row.decision_reason},
         request_ip=caller.request_ip,
         user_agent=caller.user_agent,
     )
     db.commit()
     return MemberLoanWriteResult(event_id=event.id, decision=decision)
+
+
+def append_member_loan_approval(
+    db: DbSession, caller: MemberLoanCaller, event: MemberLoanEvent, preview: MemberLoanEventPreview
+) -> MemberLoanEventDecision:
+    """Approve `event` as the caller's countersignature does. The caller holds the write lock and commits."""
+
+    decision_row = _append_decision(
+        db, event=event, decision=DECISION_APPROVED, decided_by_user_id=caller.member.user_id,
+        decided_by_username=caller.member.username, preview=preview,
+    )
+    append_member_loan_audit_entry(
+        db,
+        actor_user_id=caller.member.user_id,
+        actor_username=caller.member.username,
+        action=AUDIT_ACTION_BY_DECISION[DECISION_APPROVED],
+        event_id=event.id,
+        state_before=preview.buckets_before.as_plain_dict(),
+        state_after=preview.buckets_after.as_plain_dict(),
+        detail={"decision_sequence": decision_row.decision_sequence, "approved_by_signature": True},
+        request_ip=caller.request_ip,
+        user_agent=caller.user_agent,
+    )
+    return decision_row
 
 
 # -- views -------------------------------------------------------------------------

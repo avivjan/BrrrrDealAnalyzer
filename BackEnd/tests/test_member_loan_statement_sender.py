@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 from datetime import date
 
 import pytest
+from pypdf import PdfReader
 from sqlalchemy import select
 
 from BL.memberLoan.common.member_loan_statement_sender import send_member_loan_statement
@@ -42,7 +45,7 @@ def _run(**kwargs):
 
 
 def _statement_mails(mailbox):
-    return [m for m in mailbox.sent if m["subject"].startswith("Member Loan statement")]
+    return [m for m in mailbox.sent if m["subject"] == "whales loan statement – please sign"]
 
 
 def _sends():
@@ -61,7 +64,7 @@ def test_dry_run_is_the_default_writes_files_and_sends_nothing(member_loan_mailb
     assert _statement_mails(member_loan_mailbox) == []
     assert sorted(p.rsplit(".", 1)[1] for p in result.written_files) == ["html", "pdf", "txt"]
     text = (tmp_path / "dry-runs" / "member-loan-statement-2026-12.txt").read_text()
-    assert "Subject: Member Loan statement – December 2026: Amount Owed $31,331.45" in text
+    assert "Subject: whales loan statement – please sign" in text and "Member Loan statement – December 2026" in text
     assert "This statement is binding unless either party objects in writing within 30 days" in text
     [send] = _sends()
     assert send.is_dry_run and send.status == "dry_run"
@@ -81,6 +84,14 @@ def test_a_real_send_goes_once_to_both_with_the_pdf(real_sends_enabled, member_l
     [send] = _sends()
     assert send.status == "sent" and send.objection_deadline == date(2027, 1, 31) and len(send.pdf_sha256) == 64
     assert send.statement_snapshot["summary_rows"][-1] == ["Amount Owed on Jan 1", "$31,331.45"]
+    with SessionLocal() as db:  # the attached PDF is the one both members are asked to sign
+        document = member_loan_crud.get_member_loan_signing_document_for_statement_month(db, date(2026, 12, 1))
+        assert document.unsigned_pdf_sha256 == send.pdf_sha256 == hashlib.sha256(attachment.content).hexdigest()
+        assert document.required_signer_usernames == ["aviv", "yarden"]
+        assert f"/member-loan/sign/{document.id}" in mail["text_body"]
+        reminders = member_loan_crud.list_member_loan_statement_signature_reminders(db, date(2026, 12, 1))
+        assert sorted(r.recipient_username for r in reminders) == ["aviv", "yarden"]  # today's request is this e-mail
+    assert "Acknowledgment" in PdfReader(io.BytesIO(attachment.content)).pages[-1].extract_text()
 
     again = _run()
     assert again.outcome == "skipped" and "already sent" in again.message

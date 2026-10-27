@@ -182,7 +182,7 @@ def test_the_december_example_reads_as_agreed():
 def test_a_yarden_increase_and_left_out_proposals_are_warned_about():
     document = _document(SCENARIOS["increase"], date(2026, 12, 1), proposals_left_out_count=2)
     text = pdf_text(render_member_loan_statement_pdf(document.as_plain_dict()))
-    assert "The signed loan agreement has no clause for this kind of event" in text
+    assert "It increases the loan under Section 7A of" in text
     assert "2 proposed changes were still waiting for approval" in text
     assert 'Written agreement of 2026-12-01: "Signed by both members"' in text
     assert document.includes_yarden_additional_withdrawal

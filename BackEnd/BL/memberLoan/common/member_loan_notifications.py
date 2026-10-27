@@ -1,9 +1,13 @@
 """E-mails about proposals and decisions (D5, D16), sent after the change commits.
 
 Who gets what:
-  proposed   -> the other member only, with a link to the approval card. The
-                link carries no token: it opens the app, which asks for a passkey.
-  approved, rejected, cancelled, expired -> both members.
+  proposed   -> the other member only: "whales loan update – please sign", with
+                the proposer-signed Loan Change Record attached and a link to the
+                signing page. The link carries no token: it opens the app, which
+                asks for a passkey, and signing needs the passkey again.
+  approved   -> both members (the signed copy itself goes to all three addresses
+                from `member_loan_signed_copy_delivery.py`).
+  rejected, cancelled, expired -> both members.
 
 `send_member_loan_notification_after_commit` is the FastAPI background task.
 It never raises: the outcome (sent or failed) is appended to the Member Loan
@@ -50,6 +54,7 @@ from db import SessionLocal
 logger = logging.getLogger(__name__)
 
 NOTIFICATION_PROPOSED = "proposed"
+PLEASE_SIGN_CHANGE_EMAIL_SUBJECT = "whales loan update – please sign"
 NOTIFICATION_KINDS = (NOTIFICATION_PROPOSED, DECISION_APPROVED, DECISION_REJECTED, DECISION_CANCELLED, DECISION_EXPIRED)
 BUCKETS_SHOWN_IN_EMAILS = ("original_principal", "capitalized_interest", "total_balance", "accrued_interest", "interest_payable", "amount_owed")
 
@@ -111,6 +116,7 @@ def compose_member_loan_notification(
     event: MemberLoanEvent,
     members: MemberLoanMembers,
     settings: MemberLoanSettings,
+    signing_document_id: Optional[UUID] = None,
 ) -> MemberLoanNotificationMessage:
     proposer = members.by_username(event.proposed_by_username) or members.lender
     counterparty = members.other_than(proposer)
@@ -121,9 +127,10 @@ def compose_member_loan_notification(
 
     if kind == NOTIFICATION_PROPOSED:
         recipients_members: tuple[MemberLoanMember, ...] = (counterparty,)
-        subject = f"Member Loan: {proposer.display_name} proposed a change for your approval"
+        subject = PLEASE_SIGN_CHANGE_EMAIL_SUBJECT
         intro = (
-            f"{proposer.display_name} proposed a change to the Member Loan. Nothing changes until you approve it."
+            f"{proposer.display_name} proposed a change to the Member Loan and signed its Loan Change Record (attached). "
+            "Nothing changes until you sign it too."
         )
         preview = event.preview_at_proposal
         figures_heading = f"Before and after, on {when}, if you approve:"
@@ -153,7 +160,10 @@ def compose_member_loan_notification(
     warning = YARDEN_INCREASE_WARNING.format(yarden=members.yarden.display_name) if (
         event.event_type == YARDEN_ADDITIONAL_WITHDRAWAL_INCREASE
     ) else None
-    approval_link = f"{settings.app_origin}/member-loan/approvals/{event.id}"
+    approval_link = (
+        f"{settings.app_origin}/member-loan/sign/{signing_document_id}" if signing_document_id
+        else f"{settings.app_origin}/member-loan/approvals/{event.id}"
+    )
 
     text_lines = [intro, ""] + detail_lines + ["", figures_heading]
     width = max(len(r[0]) for r in bucket_rows)
@@ -164,8 +174,8 @@ def compose_member_loan_notification(
     if kind == NOTIFICATION_PROPOSED:
         text_lines += [
             "",
-            f"To approve or reject it, open {approval_link} and sign in with your passkey.",
-            "This link does not approve anything by itself.",
+            f"To read and sign it, or to reject it, open {approval_link} and sign in with your passkey.",
+            "This link does not sign anything by itself.",
         ]
     text_body = "\n".join(text_lines) + "\n"
 
@@ -188,8 +198,8 @@ def compose_member_loan_notification(
         html_parts.append(f"<p style='color:#9a3412'><strong>{esc(warning)}</strong></p>")
     if kind == NOTIFICATION_PROPOSED:
         html_parts.append(
-            f"<p><a href='{esc(approval_link, quote=True)}'>Open the change in the app</a> and sign in with your passkey "
-            "to approve or reject it. This link does not approve anything by itself.</p>"
+            f"<p><a href='{esc(approval_link, quote=True)}'>Open the Loan Change Record in the app</a> and sign in with your "
+            "passkey to read and sign it, or to reject it. This link does not sign anything by itself.</p>"
         )
     html_parts.append("</body></html>")
     return MemberLoanNotificationMessage(
@@ -212,7 +222,15 @@ def send_member_loan_notification_after_commit(kind: str, event_id: UUID) -> Non
             members = load_member_loan_members(db, settings)
             snapshot = load_member_loan_ledger_snapshot(db)
             event = snapshot.events_by_id[event_id]
-            message = compose_member_loan_notification(kind, snapshot, event, members, settings)
+            signing_document = member_loan_crud.get_member_loan_signing_document_for_event(db, event_id)
+            message = compose_member_loan_notification(
+                kind, snapshot, event, members, settings, signing_document.id if signing_document else None
+            )
+            attachments = []
+            if kind == NOTIFICATION_PROPOSED and signing_document is not None:
+                attachments.append(member_loan_mail_transport.MemberLoanEmailAttachment(
+                    f"loan-change-record-{event.proposal_sequence}.pdf", bytes(signing_document.unsigned_pdf)
+                ))
             detail["recipients"] = list(message.recipients)
         member_loan_mail_transport.deliver_member_loan_email(
             sender_address=settings.sender_address,
@@ -220,6 +238,7 @@ def send_member_loan_notification_after_commit(kind: str, event_id: UUID) -> Non
             subject=message.subject,
             text_body=message.text_body,
             html_body=message.html_body,
+            attachments=attachments,
         )
         outcome_action = f"{audit_action}_sent"
     except Exception as error:  # noqa: BLE001 -- a notification must never break the change it reports

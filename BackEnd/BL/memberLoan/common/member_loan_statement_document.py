@@ -40,8 +40,8 @@ BINDING_STATEMENT_SENTENCE = (
 )
 
 YARDEN_INCREASE_WARNING = (
-    "Warning: this statement includes an additional withdrawal by {yarden}. The signed loan agreement has no "
-    "clause for this kind of event. It relies only on the separate written agreement cited next to it."
+    "Note: this statement includes an additional withdrawal by {yarden}. It increases the loan under Section 7A of "
+    "the Agreement, added by Amendment No. 1, and relies on the written agreement cited next to it."
 )
 
 EVENT_TYPE_PLAIN_NAMES = {
