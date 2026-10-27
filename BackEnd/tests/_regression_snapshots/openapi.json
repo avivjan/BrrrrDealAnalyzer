@@ -8871,6 +8871,11 @@
             "title": "Display Name",
             "type": "string"
           },
+          "documents_waiting_for_your_signature": {
+            "default": 0,
+            "title": "Documents Waiting For Your Signature",
+            "type": "integer"
+          },
           "other_member_display_name": {
             "title": "Other Member Display Name",
             "type": "string"
@@ -8929,21 +8934,6 @@
           "from_original_principal"
         ],
         "title": "MemberLoanAllocationRes",
-        "type": "object"
-      },
-      "MemberLoanApprovalReq": {
-        "additionalProperties": false,
-        "properties": {
-          "preview_fingerprint": {
-            "pattern": "^[0-9a-f]{64}$",
-            "title": "Preview Fingerprint",
-            "type": "string"
-          }
-        },
-        "required": [
-          "preview_fingerprint"
-        ],
-        "title": "MemberLoanApprovalReq",
         "type": "object"
       },
       "MemberLoanAuditEntryRes": {
@@ -9065,6 +9055,95 @@
         "title": "MemberLoanBucketsRes",
         "type": "object"
       },
+      "MemberLoanDocumentSignerRes": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "legal_name": {
+            "title": "Legal Name",
+            "type": "string"
+          },
+          "objection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objection Reason"
+          },
+          "role_label": {
+            "title": "Role Label",
+            "type": "string"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "status": {
+            "enum": [
+              "waiting",
+              "signed",
+              "objected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "display_name",
+          "legal_name",
+          "role_label",
+          "status"
+        ],
+        "title": "MemberLoanDocumentSignerRes",
+        "type": "object"
+      },
+      "MemberLoanDocumentSigningStartReq": {
+        "additionalProperties": false,
+        "properties": {
+          "objection_reason": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objection Reason"
+          },
+          "signature_meaning": {
+            "default": "signed",
+            "enum": [
+              "signed",
+              "objected"
+            ],
+            "title": "Signature Meaning",
+            "type": "string"
+          }
+        },
+        "title": "MemberLoanDocumentSigningStartReq",
+        "type": "object"
+      },
       "MemberLoanExplanationRes": {
         "properties": {
           "lines": {
@@ -9104,6 +9183,21 @@
           },
           "proposals_checked": {
             "title": "Proposals Checked",
+            "type": "integer"
+          },
+          "signatures_checked": {
+            "default": 0,
+            "title": "Signatures Checked",
+            "type": "integer"
+          },
+          "signed_copies_checked": {
+            "default": 0,
+            "title": "Signed Copies Checked",
+            "type": "integer"
+          },
+          "signing_documents_checked": {
+            "default": 0,
+            "title": "Signing Documents Checked",
             "type": "integer"
           }
         },
@@ -9241,6 +9335,24 @@
           "buckets_after"
         ],
         "title": "MemberLoanLedgerRowRes",
+        "type": "object"
+      },
+      "MemberLoanPasskeySigningOptionsRes": {
+        "properties": {
+          "options": {
+            "title": "Options",
+            "type": "string"
+          },
+          "passkey_challenge_id": {
+            "title": "Passkey Challenge Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "passkey_challenge_id",
+          "options"
+        ],
+        "title": "MemberLoanPasskeySigningOptionsRes",
         "type": "object"
       },
       "MemberLoanPreviewRes": {
@@ -9395,11 +9507,6 @@
             ],
             "title": "Amount"
           },
-          "caller_may_approve_or_reject": {
-            "default": false,
-            "title": "Caller May Approve Or Reject",
-            "type": "boolean"
-          },
           "caller_may_cancel": {
             "default": false,
             "title": "Caller May Cancel",
@@ -9408,6 +9515,11 @@
           "caller_may_propose_reversal": {
             "default": false,
             "title": "Caller May Propose Reversal",
+            "type": "boolean"
+          },
+          "caller_may_sign_or_reject": {
+            "default": false,
+            "title": "Caller May Sign Or Reject",
             "type": "boolean"
           },
           "decided_at": {
@@ -9574,6 +9686,17 @@
             ],
             "title": "Reverses Event Id"
           },
+          "signing_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Document Id"
+          },
           "state": {
             "enum": [
               "pending",
@@ -9667,6 +9790,347 @@
         "title": "MemberLoanReversalProposalReq",
         "type": "object"
       },
+      "MemberLoanSignatureSubmitReq": {
+        "additionalProperties": false,
+        "properties": {
+          "drawn_signature_png_base64": {
+            "maxLength": 90000,
+            "minLength": 1,
+            "title": "Drawn Signature Png Base64",
+            "type": "string"
+          },
+          "electronic_signature_consent_confirmed": {
+            "title": "Electronic Signature Consent Confirmed",
+            "type": "boolean"
+          },
+          "passkey_challenge_id": {
+            "format": "uuid",
+            "title": "Passkey Challenge Id",
+            "type": "string"
+          },
+          "passkey_credential": {
+            "additionalProperties": true,
+            "title": "Passkey Credential",
+            "type": "object"
+          },
+          "typed_full_legal_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Typed Full Legal Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "typed_full_legal_name",
+          "electronic_signature_consent_confirmed",
+          "drawn_signature_png_base64",
+          "passkey_challenge_id",
+          "passkey_credential"
+        ],
+        "title": "MemberLoanSignatureSubmitReq",
+        "type": "object"
+      },
+      "MemberLoanSignedCopyDeliveryRes": {
+        "properties": {
+          "attempted_at": {
+            "format": "date-time",
+            "title": "Attempted At",
+            "type": "string"
+          },
+          "delivery_channel": {
+            "enum": [
+              "email",
+              "google_drive"
+            ],
+            "title": "Delivery Channel",
+            "type": "string"
+          },
+          "delivery_status": {
+            "enum": [
+              "sent",
+              "failed"
+            ],
+            "title": "Delivery Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delivery_channel",
+          "delivery_status",
+          "attempted_at"
+        ],
+        "title": "MemberLoanSignedCopyDeliveryRes",
+        "type": "object"
+      },
+      "MemberLoanSigningCompletionRes": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/MemberLoanSigningDocumentRes"
+          },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemberLoanProposalRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "MemberLoanSigningCompletionRes",
+        "type": "object"
+      },
+      "MemberLoanSigningDocumentRes": {
+        "properties": {
+          "caller_may_object": {
+            "title": "Caller May Object",
+            "type": "boolean"
+          },
+          "caller_must_act": {
+            "title": "Caller Must Act",
+            "type": "boolean"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deliveries": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MemberLoanSignedCopyDeliveryRes"
+            },
+            "title": "Deliveries",
+            "type": "array"
+          },
+          "document_kind": {
+            "enum": [
+              "loan_change",
+              "monthly_statement"
+            ],
+            "title": "Document Kind",
+            "type": "string"
+          },
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_complete": {
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "proposal_state": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "approved",
+                  "rejected",
+                  "cancelled",
+                  "expired"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal State"
+          },
+          "record_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Number"
+          },
+          "response_deadline": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Deadline"
+          },
+          "signed_copy_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Copy Sha256"
+          },
+          "signers": {
+            "items": {
+              "$ref": "#/components/schemas/MemberLoanDocumentSignerRes"
+            },
+            "title": "Signers",
+            "type": "array"
+          },
+          "statement_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement Month"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "document_kind",
+          "title",
+          "created_at",
+          "document_sha256",
+          "content",
+          "signers",
+          "caller_must_act",
+          "caller_may_object",
+          "is_complete"
+        ],
+        "title": "MemberLoanSigningDocumentRes",
+        "type": "object"
+      },
+      "MemberLoanSigningRequestRes": {
+        "properties": {
+          "document_content": {
+            "additionalProperties": true,
+            "title": "Document Content",
+            "type": "object"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "electronic_signature_consent_text": {
+            "title": "Electronic Signature Consent Text",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "full_legal_name_to_type": {
+            "title": "Full Legal Name To Type",
+            "type": "string"
+          },
+          "objection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objection Reason"
+          },
+          "signature_meaning": {
+            "enum": [
+              "signed",
+              "objected"
+            ],
+            "title": "Signature Meaning",
+            "type": "string"
+          },
+          "signature_statement_text": {
+            "title": "Signature Statement Text",
+            "type": "string"
+          },
+          "signing_purpose": {
+            "enum": [
+              "propose_change",
+              "propose_reversal",
+              "sign_document"
+            ],
+            "title": "Signing Purpose",
+            "type": "string"
+          },
+          "signing_request_id": {
+            "title": "Signing Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signing_request_id",
+          "signing_purpose",
+          "document_sha256",
+          "document_content",
+          "signature_meaning",
+          "signature_statement_text",
+          "full_legal_name_to_type",
+          "electronic_signature_consent_text",
+          "expires_at"
+        ],
+        "title": "MemberLoanSigningRequestRes",
+        "type": "object"
+      },
       "MemberLoanStatementRes": {
         "properties": {
           "document": {
@@ -9709,6 +10173,17 @@
             },
             "title": "Sent To",
             "type": "array"
+          },
+          "signing_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Document Id"
           },
           "statement_month": {
             "title": "Statement Month",
@@ -14870,6 +15345,254 @@
         "summary": "Member Loan Audit"
       }
     },
+    "/member-loan/change-documents": {
+      "post": {
+        "operationId": "member_loan_start_change_signing_member_loan_change_documents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanProposalCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanSigningRequestRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Start Change Signing"
+      }
+    },
+    "/member-loan/documents": {
+      "get": {
+        "operationId": "member_loan_list_documents_member_loan_documents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "waiting_for_me",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Waiting For Me",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberLoanSigningDocumentRes"
+                  },
+                  "title": "Response Member Loan List Documents Member Loan Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan List Documents"
+      }
+    },
+    "/member-loan/documents/{document_id}": {
+      "get": {
+        "operationId": "member_loan_get_document_member_loan_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanSigningDocumentRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Get Document"
+      }
+    },
+    "/member-loan/documents/{document_id}/pdf": {
+      "get": {
+        "operationId": "member_loan_document_pdf_member_loan_documents__document_id__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Document Pdf"
+      }
+    },
+    "/member-loan/documents/{document_id}/signed-pdf": {
+      "get": {
+        "operationId": "member_loan_signed_copy_pdf_member_loan_documents__document_id__signed_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Signed Copy Pdf"
+      }
+    },
+    "/member-loan/documents/{document_id}/signing-requests": {
+      "post": {
+        "operationId": "member_loan_start_document_signing_member_loan_documents__document_id__signing_requests_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanDocumentSigningStartReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanSigningRequestRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Start Document Signing"
+      }
+    },
     "/member-loan/event-previews": {
       "post": {
         "description": "Side-effect free: what a proposal would show before it is sent.",
@@ -14966,40 +15689,19 @@
         "summary": "Member Loan List Events"
       },
       "post": {
-        "operationId": "member_loan_propose_event_member_loan_events_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MemberLoanProposalCreateReq"
-              }
-            }
-          },
-          "required": true
-        },
+        "description": "Replaced by `POST /member-loan/change-documents`: a change is proposed by signing it.",
+        "operationId": "member_loan_propose_event_without_signature_member_loan_events_post",
         "responses": {
-          "201": {
+          "410": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemberLoanProposalRes"
-                }
+                "schema": {}
               }
             },
             "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
           }
         },
-        "summary": "Member Loan Propose Event"
+        "summary": "Member Loan Propose Event Without Signature"
       }
     },
     "/member-loan/events/{event_id}": {
@@ -15044,7 +15746,8 @@
     },
     "/member-loan/events/{event_id}/approval": {
       "post": {
-        "operationId": "member_loan_approve_event_member_loan_events__event_id__approval_post",
+        "description": "Replaced by signing the change's Loan Change Record (`/member-loan/documents/{document_id}/signing-requests`).",
+        "operationId": "member_loan_approve_event_without_signature_member_loan_events__event_id__approval_post",
         "parameters": [
           {
             "in": "path",
@@ -15057,23 +15760,11 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MemberLoanApprovalReq"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "200": {
+          "410": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemberLoanProposalRes"
-                }
+                "schema": {}
               }
             },
             "description": "Successful Response"
@@ -15089,7 +15780,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Member Loan Approve Event"
+        "summary": "Member Loan Approve Event Without Signature"
       }
     },
     "/member-loan/events/{event_id}/cancellation": {
@@ -15184,7 +15875,46 @@
     },
     "/member-loan/events/{event_id}/reversal": {
       "post": {
-        "operationId": "member_loan_propose_reversal_member_loan_events__event_id__reversal_post",
+        "description": "Replaced by `POST /member-loan/events/{event_id}/reversal-documents`.",
+        "operationId": "member_loan_propose_reversal_without_signature_member_loan_events__event_id__reversal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Propose Reversal Without Signature"
+      }
+    },
+    "/member-loan/events/{event_id}/reversal-documents": {
+      "post": {
+        "operationId": "member_loan_start_reversal_signing_member_loan_events__event_id__reversal_documents_post",
         "parameters": [
           {
             "in": "path",
@@ -15212,7 +15942,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberLoanProposalRes"
+                  "$ref": "#/components/schemas/MemberLoanSigningRequestRes"
                 }
               }
             },
@@ -15229,7 +15959,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Member Loan Propose Reversal"
+        "summary": "Member Loan Start Reversal Signing"
       }
     },
     "/member-loan/explanation": {
@@ -15344,6 +16074,134 @@
           }
         },
         "summary": "Member Loan Ledger Csv"
+      }
+    },
+    "/member-loan/signing-requests/{signing_request_id}/passkey-options": {
+      "post": {
+        "operationId": "member_loan_signing_passkey_options_member_loan_signing_requests__signing_request_id__passkey_options_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signing_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Signing Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanPasskeySigningOptionsRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Signing Passkey Options"
+      }
+    },
+    "/member-loan/signing-requests/{signing_request_id}/pdf": {
+      "get": {
+        "operationId": "member_loan_signing_request_pdf_member_loan_signing_requests__signing_request_id__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signing_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Signing Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Signing Request Pdf"
+      }
+    },
+    "/member-loan/signing-requests/{signing_request_id}/signature": {
+      "post": {
+        "operationId": "member_loan_submit_signature_member_loan_signing_requests__signing_request_id__signature_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signing_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Signing Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLoanSignatureSubmitReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoanSigningCompletionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Member Loan Submit Signature"
       }
     },
     "/member-loan/statements/{statement_month}": {

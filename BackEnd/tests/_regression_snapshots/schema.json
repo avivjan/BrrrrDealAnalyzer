@@ -5082,6 +5082,1071 @@
       "id"
     ]
   },
+  "member_loan_signatures": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_sequence",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": null,
+        "type": "BIGINT",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "member_loan_signing_documents.id"
+        ],
+        "index": true,
+        "name": "document_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "users.id"
+        ],
+        "index": null,
+        "name": "signer_user_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signer_username",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signer_role",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_meaning",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(16)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "objection_reason",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(1000)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "typed_full_legal_name",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(200)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_statement_text",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "TEXT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "drawn_signature_png",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bytes",
+        "server_default": null,
+        "type": "BLOB",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_document_sha256",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "webauthn_credential_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(512)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "webauthn_authenticator_data",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "TEXT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "webauthn_client_data_json",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "TEXT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "webauthn_signature",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "TEXT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "passkey_challenge_nonce",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "request_ip",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "user_agent",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(512)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "device_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "previous_signature_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": true
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:document_id",
+      "ForeignKeyConstraint:signer_user_id",
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:document_id,signer_username",
+      "UniqueConstraint:signature_hash",
+      "UniqueConstraint:signature_sequence"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "document_id"
+        ],
+        "name": "ix_member_loan_signatures_document_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "member_loan_signed_copies": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_copy_sequence",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": null,
+        "type": "BIGINT",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "member_loan_signing_documents.id"
+        ],
+        "index": null,
+        "name": "document_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_pdf",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bytes",
+        "server_default": null,
+        "type": "BLOB",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_pdf_sha256",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "completed_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "previous_signed_copy_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signed_copy_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": true
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:document_id",
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:document_id",
+      "UniqueConstraint:signed_copy_hash",
+      "UniqueConstraint:signed_copy_sequence"
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "member_loan_signed_copy_deliveries": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "member_loan_signed_copies.id"
+        ],
+        "index": true,
+        "name": "signed_copy_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "delivery_channel",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(16)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "delivery_status",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(16)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "external_file_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(200)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "error_text",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "attempted_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:signed_copy_id",
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "signed_copy_id"
+        ],
+        "name": "ix_member_loan_signed_copy_deliveries_signed_copy_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "member_loan_signing_documents": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_sequence",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": null,
+        "type": "BIGINT",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_kind",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "member_loan_events.id"
+        ],
+        "index": null,
+        "name": "event_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "statement_month",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "title",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(300)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_content",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "unsigned_pdf",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bytes",
+        "server_default": null,
+        "type": "BLOB",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "unsigned_pdf_sha256",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "required_signer_usernames",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "created_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "previous_document_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_hash",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": true
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:event_id",
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:document_hash",
+      "UniqueConstraint:document_sequence",
+      "UniqueConstraint:event_id",
+      "UniqueConstraint:statement_month"
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "member_loan_signing_requests": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "users.id"
+        ],
+        "index": null,
+        "name": "user_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "username",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signing_purpose",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "proposal_draft",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "draft_document_content",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "draft_pdf",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bytes",
+        "server_default": null,
+        "type": "BLOB",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "document_sha256",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_meaning",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(16)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "objection_reason",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(1000)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signer_role",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signature_statement_text",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "TEXT",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "passkey_challenge_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "passkey_challenge_nonce",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "created_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "expires_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "consumed_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:user_id",
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ]
+  },
   "member_loan_statement_sends": {
     "columns": [
       {
@@ -5300,6 +6365,88 @@
         "unique": true
       }
     ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "member_loan_statement_signature_reminders": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "statement_month",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "recipient_username",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "reminder_date",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "sent_at",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:recipient_username,reminder_date,statement_month"
+    ],
+    "indexes": [],
     "primary_key": [
       "id"
     ]
