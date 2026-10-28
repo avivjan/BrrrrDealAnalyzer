@@ -13,6 +13,7 @@ import {
 import DealCard from "../components/DealCard.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
+import DealLinkedInspectionsSection from "../components/inspection/DealLinkedInspectionsSection.vue";
 import { hasInvalidDealInput, validateDealInputFields } from "../utils/dealInputValidation";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
@@ -1047,6 +1048,15 @@ console.groupEnd();
                 </div>
               </div>
             </div>
+
+            <!-- Linked property inspections (tasks/todo/InspectionLinkToMyDeals.md) -->
+            <DealLinkedInspectionsSection
+              class="mt-6"
+              deal-board="my_deals"
+              :deal-id="editingDeal.id"
+              :deal-type="editingDeal.deal_type || 'BRRRR'"
+              test-id-prefix="mydeals.modal"
+            />
 
             <!-- Analyze Deal Fields (Structured like Analyze Page) -->
             <div class="border-t border-line pt-6 space-y-6">

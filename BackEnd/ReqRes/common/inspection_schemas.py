@@ -23,6 +23,7 @@ MAXIMUM_COMPLETION_OVERRIDE_REASON_LENGTH = 500
 
 InspectionItemStatus = Literal["not_checked", "ok", "repair", "replace"]
 BoughtDealType = Literal["BRRRR", "FLIP"]
+DealBoard = Literal["my_deals", "bought"]
 
 
 def _clean_single_line_text(value: Optional[str]) -> Optional[str]:
@@ -58,7 +59,7 @@ class InspectionCreateReq(BaseModel):
     _inspector_name_is_clean = field_validator("inspector_name")(_clean_inspector_name)
 
 
-class InspectionForBoughtDealCreateReq(BaseModel):
+class InspectionForDealCreateReq(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     inspection_date: Optional[date] = Field(None, description="Defaults to today.")
@@ -131,8 +132,9 @@ class InspectionCompleteReq(BaseModel):
 class InspectionDealLinkReq(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    bought_deal_id: UUID
+    deal_id: UUID
     deal_type: BoughtDealType
+    deal_board: DealBoard = Field("bought", description="my_deals (the active pipeline) or bought (Bought Deals).")
 
 
 class InspectionItemRes(BaseModel):
@@ -188,14 +190,15 @@ class PublicInspectionRes(BaseModel):
     )
 
 
-class LinkedBoughtDealRes(BaseModel):
-    bought_deal_id: UUID
+class LinkedDealRes(BaseModel):
+    deal_id: UUID
     deal_type: BoughtDealType
+    deal_board: DealBoard
     property_address: Optional[str] = None
 
 
 class InspectionDealLinkRes(BaseModel):
-    linked_deal: Optional[LinkedBoughtDealRes] = None
+    linked_deal: Optional[LinkedDealRes] = None
 
 
 class InspectionListRowRes(BaseModel):
@@ -211,5 +214,5 @@ class InspectionListRowRes(BaseModel):
     total_item_count: int
     repair_or_replace_item_count: int
     photo_count: int
-    linked_deal: Optional[LinkedBoughtDealRes] = None
+    linked_deal: Optional[LinkedDealRes] = None
 

@@ -24,6 +24,7 @@ from migrations.steps.widen_money_columns import widen_money_columns
 from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
+from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
 
 
 # Arbitrary but fixed key identifying "this app's schema migration".
@@ -178,3 +179,6 @@ def _run_migrations_locked(engine):
     # The tables come from `create_all`; this only (re)installs the triggers.
     if "member_loan_events" in sa_inspect(engine).get_table_names():
         add_member_loan_append_only_triggers(engine)
+
+    # An inspection may link to a My Deals deal too (tasks/todo/InspectionLinkToMyDeals.md).
+    add_inspection_links_to_active_deals(engine, sa_inspect(engine))

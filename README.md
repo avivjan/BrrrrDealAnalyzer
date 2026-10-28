@@ -818,8 +818,10 @@ The pre-purchase walkthrough that replaces the PDF checklist (plan, decisions an
   writes, a 32 KB JSON cap, JPEG-only photos within size caps, and every field validated against
   the checklist config. Public responses never carry deal data, only `linked: true/false`.
 - **Logged in** (the site's normal gates, `routers/inspection.py`): list every inspection, delete
-  one, link or unlink a Bought Deal (`PUT/DELETE /inspections/<id>/deal-link`), and the Bought Deal
-  modal's *Inspections* section with **New inspection** (linked, address prefilled).
+  one, and link or unlink it to a deal on **My Deals** or **Bought Deals**
+  (`PUT/DELETE /inspections/<id>/deal-link`, with `deal_board` `my_deals` or `bought`). Both deal
+  windows have an *Inspections* section with **New inspection** (linked, address prefilled).
+  Moving a My Deals deal to Bought carries its inspections onto the new Bought Deal.
 - **The checklist is config.** `BackEnd/BL/inspection/inspection_checklist_config.json` defines
   sections (levels), items, CRITICAL flags, fields and follow-ups (`show_when`). The frontend
   keeps a byte-identical copy; after editing the backend file run

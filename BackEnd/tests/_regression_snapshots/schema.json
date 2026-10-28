@@ -7356,6 +7356,38 @@
         "autoincrement": "auto",
         "default": null,
         "foreign_keys": [
+          "active_deals.id"
+        ],
+        "index": true,
+        "name": "linked_active_brrrr_deal_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "flip_deals.id"
+        ],
+        "index": true,
+        "name": "linked_active_flip_deal_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
           "bought_brrrr_deals.id"
         ],
         "index": true,
@@ -7415,11 +7447,27 @@
     ],
     "constraints": [
       "CheckConstraint:",
+      "ForeignKeyConstraint:linked_active_brrrr_deal_id",
+      "ForeignKeyConstraint:linked_active_flip_deal_id",
       "ForeignKeyConstraint:linked_bought_brrrr_deal_id",
       "ForeignKeyConstraint:linked_bought_flip_deal_id",
       "PrimaryKeyConstraint:id"
     ],
     "indexes": [
+      {
+        "columns": [
+          "linked_active_brrrr_deal_id"
+        ],
+        "name": "ix_property_inspections_linked_active_brrrr_deal_id",
+        "unique": false
+      },
+      {
+        "columns": [
+          "linked_active_flip_deal_id"
+        ],
+        "name": "ix_property_inspections_linked_active_flip_deal_id",
+        "unique": false
+      },
       {
         "columns": [
           "linked_bought_brrrr_deal_id"

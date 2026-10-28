@@ -177,7 +177,7 @@ class TestCompletion:
 class TestLoggedInRoutes:
     def test_link_unlink_list_delete_and_bought_deals_picker_return_401_without_session(self, client, enforced_login):  # noqa: F811
         inspection_id = create_public_inspection(client)["id"]
-        deal_link_body = {"bought_deal_id": str(uuid.uuid4()), "deal_type": "BRRRR"}
+        deal_link_body = {"deal_id": str(uuid.uuid4()), "deal_type": "BRRRR"}
         assert client.get("/inspections").status_code == 401
         assert client.get("/bought-deals").status_code == 401
         assert client.get(f"/inspections/{inspection_id}/deal-link").status_code == 401
@@ -208,15 +208,15 @@ class TestLoggedInRoutes:
         update_item(client, inspection_id, "roof", item_status="replace")
 
         linked = member_client.put(
-            f"/inspections/{inspection_id}/deal-link", json={"bought_deal_id": deal["id"], "deal_type": "BRRRR"}, headers=PUBLIC_WRITE_HEADERS
+            f"/inspections/{inspection_id}/deal-link", json={"deal_id": deal["id"], "deal_type": "BRRRR"}, headers=PUBLIC_WRITE_HEADERS
         )
         assert linked.status_code == 200, linked.text
-        assert linked.json()["linked_deal"] == {"bought_deal_id": deal["id"], "deal_type": "BRRRR", "property_address": deal["address"]}
+        assert linked.json()["linked_deal"] == {"deal_id": deal["id"], "deal_type": "BRRRR", "deal_board": "bought", "property_address": deal["address"]}
 
         rows = member_client.get("/inspections").json()
         assert rows[0]["id"] == inspection_id
         assert rows[0]["repair_or_replace_item_count"] == 1
-        assert rows[0]["linked_deal"]["bought_deal_id"] == deal["id"]
+        assert rows[0]["linked_deal"]["deal_id"] == deal["id"]
 
         deal_rows = member_client.get(f"/bought-deals/{deal['id']}/inspections?deal_type=BRRRR").json()
         assert [row["id"] for row in deal_rows] == [inspection_id]
@@ -228,7 +228,7 @@ class TestLoggedInRoutes:
     def test_linking_to_a_missing_deal_is_404(self, client, brrrr_payload):
         inspection_id = create_public_inspection(client)["id"]
         response = client.put(
-            f"/inspections/{inspection_id}/deal-link", json={"bought_deal_id": str(uuid.uuid4()), "deal_type": "FLIP"}, headers=PUBLIC_WRITE_HEADERS
+            f"/inspections/{inspection_id}/deal-link", json={"deal_id": str(uuid.uuid4()), "deal_type": "FLIP"}, headers=PUBLIC_WRITE_HEADERS
         )
         assert response.status_code == 404
 
@@ -238,7 +238,7 @@ class TestLoggedInRoutes:
         assert response.status_code == 201, response.text
         assert response.json()["property_address"] == deal["address"]
         assert response.json()["linked"] is True
-        assert client.get(f"/inspections/{response.json()['id']}/deal-link").json()["linked_deal"]["bought_deal_id"] == deal["id"]
+        assert client.get(f"/inspections/{response.json()['id']}/deal-link").json()["linked_deal"]["deal_id"] == deal["id"]
 
     def test_deleting_the_deal_keeps_the_inspection_and_clears_the_link(self, client, brrrr_payload):
         deal = create_bought_deal(client, brrrr_payload)

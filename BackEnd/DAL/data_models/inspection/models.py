@@ -1,9 +1,10 @@
 """Property inspections: the pre-purchase walkthrough checklist (tasks/todo/PropertyInspection.md).
 
 An inspection is public: anyone with its id (a random uuid4) can read and
-fill it in. It may be linked to at most one Bought Deal, which is either a
-BRRRR or a FLIP deal, so the link is two nullable foreign keys of which at
-most one is set. Deleting the deal clears the link and keeps the inspection.
+fill it in. It may be linked to at most one deal: a My Deals deal or a Bought
+Deal, each either BRRRR or FLIP, so the link is four nullable foreign keys of
+which at most one is set (tasks/todo/InspectionLinkToMyDeals.md). Deleting the
+deal clears the link and keeps the inspection.
 """
 
 import uuid
@@ -28,13 +29,24 @@ from db import Base
 INSPECTION_STATUS_DRAFT = "draft"
 INSPECTION_STATUS_COMPLETED = "completed"
 
+LINKED_DEAL_COLUMN_NAMES = (
+    "linked_active_brrrr_deal_id",
+    "linked_active_flip_deal_id",
+    "linked_bought_brrrr_deal_id",
+    "linked_bought_flip_deal_id",
+)
+INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_CONSTRAINT_NAME = "property_inspections_linked_to_at_most_one_deal"
+INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_SQL = (
+    " + ".join(f"(CASE WHEN {column} IS NULL THEN 0 ELSE 1 END)" for column in LINKED_DEAL_COLUMN_NAMES) + " <= 1"
+)
+
 
 class PropertyInspection(Base):
     __tablename__ = "property_inspections"
     __table_args__ = (
         CheckConstraint(
-            "linked_bought_brrrr_deal_id IS NULL OR linked_bought_flip_deal_id IS NULL",
-            name="property_inspections_linked_to_at_most_one_deal",
+            INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_SQL,
+            name=INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_CONSTRAINT_NAME,
         ),
     )
 
@@ -45,6 +57,12 @@ class PropertyInspection(Base):
     inspection_status = Column(String, nullable=False, default=INSPECTION_STATUS_DRAFT)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     completion_override_reason = Column(String, nullable=True)
+    linked_active_brrrr_deal_id = Column(
+        Uuid(as_uuid=True), ForeignKey("active_deals.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    linked_active_flip_deal_id = Column(
+        Uuid(as_uuid=True), ForeignKey("flip_deals.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     linked_bought_brrrr_deal_id = Column(
         Uuid(as_uuid=True), ForeignKey("bought_brrrr_deals.id", ondelete="SET NULL"), nullable=True, index=True
     )

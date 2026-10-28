@@ -57,8 +57,8 @@ def test_create_update_get_list_link_and_unlink_through_tools(client, brrrr_payl
     assert [row["id"] for row in call_json("list_inspections")] == [inspection_id]
 
     deal = create_bought_deal(client, brrrr_payload)
-    linked = call_json("link_inspection_to_deal", inspection_id=inspection_id, body={"bought_deal_id": deal["id"], "deal_type": "BRRRR"})
-    assert linked["linked_deal"]["bought_deal_id"] == deal["id"]
+    linked = call_json("link_inspection_to_deal", inspection_id=inspection_id, body={"deal_id": deal["id"], "deal_type": "BRRRR"})
+    assert linked["linked_deal"]["deal_id"] == deal["id"]
     assert call_json("get_inspection", inspection_id=inspection_id)["linked"] is True
 
     assert call_json("unlink_inspection_from_deal", inspection_id=inspection_id) == {"linked_deal": None}

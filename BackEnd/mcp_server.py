@@ -289,11 +289,19 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "delete_inspection_photo": "Delete one photo of an inspection.",
     "delete_inspection": "Delete an inspection with all its answers and photos.",
-    "get_inspection_deal_link": "Which Bought Deal (id, BRRRR or FLIP, address) an inspection is linked to, if any.",
-    "link_inspection_to_deal": "Link an inspection to a Bought Deal (bought_deal_id and deal_type BRRRR or FLIP); replaces any earlier link.",
-    "unlink_inspection_from_deal": "Remove an inspection's link to its Bought Deal (the inspection itself is kept).",
+    "get_inspection_deal_link": "Which deal an inspection is linked to, if any: id, BRRRR or FLIP, the board (my_deals or bought) and its address.",
+    "link_inspection_to_deal": (
+        "Link an inspection to a deal: deal_id, deal_type (BRRRR or FLIP) and deal_board (my_deals for the "
+        "active pipeline, bought for Bought Deals; default bought). Replaces any earlier link."
+    ),
+    "unlink_inspection_from_deal": "Remove an inspection's link to its deal (the inspection itself is kept).",
     "list_bought_deal_inspections": "List the inspections linked to one Bought Deal, with status, date and Repair/Replace counts.",
     "create_inspection_for_bought_deal": "Start a new inspection already linked to a Bought Deal, with the deal's address prefilled.",
+    "list_active_deal_inspections": "List the inspections linked to one My Deals deal, with status, date and Repair/Replace counts.",
+    "create_inspection_for_active_deal": (
+        "Start a new inspection already linked to a My Deals deal, with the deal's address prefilled. "
+        "Moving the deal to Bought later carries the inspection with it."
+    ),
 }
 
 BODY_ARG = "body"

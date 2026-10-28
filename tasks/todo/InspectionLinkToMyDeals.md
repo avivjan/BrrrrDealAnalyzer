@@ -18,19 +18,19 @@ Today an inspection can be linked only to a Bought Deal (`linked_bought_brrrr_de
 | L6 | **MCP:** the new routes become tools (`list_active_deal_inspections`, `create_inspection_for_active_deal`) with descriptions, and `link_inspection_to_deal` documents `deal_board`. |
 
 ## Todo (agent wall-clock)
-- [ ] **0** (5 min): Add this plan to the branch.
-- [ ] **1** (25 min): The model columns, the migration step (columns plus check-constraint swap), and its idempotency test.
-- [ ] **2** (30 min): BL and schemas: `deal_board` on link, link details, the list rows, and the active-deal list and create. The routes.
-- [ ] **3** (15 min): Move to Bought re-points the source deal's inspections.
-- [ ] **4** (10 min): **MCP support:** descriptions for the 2 new tools, the `link_inspection_to_deal` text, and tests.
-- [ ] **5** (35 min): Frontend: the board switch in the link drawer, `DealLinkedInspectionsSection` in the My Deals window and in the Bought window, the API client, and the types.
-- [ ] **6** (10 min): Regenerate the goldens; review the diff.
-- [ ] **7** (20 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
+- [x] **0** (5 min): Add this plan to the branch.
+- [x] **1** (25 min): The model columns, the migration step (columns plus check-constraint swap), and its idempotency test.
+- [x] **2** (30 min): BL and schemas: `deal_board` on link, link details, the list rows, and the active-deal list and create. The routes.
+- [x] **3** (15 min): Move to Bought re-points the source deal's inspections.
+- [x] **4** (10 min): **MCP support:** descriptions for the 2 new tools, the `link_inspection_to_deal` text, and tests.
+- [x] **5** (35 min): Frontend: the board switch in the link drawer, `DealLinkedInspectionsSection` in the My Deals window and in the Bought window, the API client, and the types.
+- [x] **6** (10 min): Regenerate the goldens; review the diff.
+- [x] **7** (20 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
   - The new routes return 401 without a session.
   - Public responses still carry no deal data, from either board.
   - `deal_board` is validated.
   - Then bandit, pip-audit and npm audit.
-- [ ] **8** (10 min): README and the Review section.
+- [x] **8** (10 min): README and the Review section.
 - [ ] **9** (5 min): Push and update the PR; CI green.
 
 ## Tests
@@ -52,5 +52,23 @@ Today an inspection can be linked only to a Bought Deal (`linked_bought_brrrr_de
 
 **E2E:** the existing flows pass. A My Deals window flow checks the Inspections section: open a seeded deal, then **New inspection** lands on its walkthrough.
 
-## Question for the owner
-When a My Deals deal is moved to Bought, should its inspections **move to the new Bought Deal** (recommended), or stay linked to the My Deals copy?
+## Owner's answers (2026-10-28)
+- On Move to Bought, the inspections **move to the new Bought Deal** (L3 as proposed).
+- This work joins PR #109.
+
+## Review
+
+| Check | Result |
+|---|---|
+| Backend `pytest` | 1,255 passed, including `test_inspection_my_deals_link.py` (14) |
+| Migration | The step runs on a database from before this change (adds the two columns, their foreign keys and indexes, and swaps the check), and is a no-op on a fresh one. It is idempotent (tested) |
+| `verify_regression.py` | `openapi` and `schema` changed, inspection-only: the two columns, the two new routes, `deal_board`, and `bought_deal_id` → `deal_id` in the link request and response. Regenerated |
+| Frontend `vitest` and build | 1,714 passed; the build passes |
+| Playwright | All flows pass on Chromium. Opening a My Deals deal now also requests `GET /active-deals/{id}/inspections`. That is the only change in the four re-recorded goldens (`analyze-brrr-save`, `analyze-flip-save`, `deep-link-open`, `my-deals-modal-duplicate-delete`), committed alone as a `Golden update:` |
+| Security | bandit and `npm audit --omit=dev` are clean |
+
+**Deviations from the plan.**
+1. **The link field is renamed** from `bought_deal_id` to `deal_id`, in both the request and the response, because it can now be a My Deals deal. The frontend and the MCP tool description changed with it. The frontend and backend deploy together; an MCP caller still sending `bought_deal_id` gets a 422 that names the field.
+2. **One shared request per board** in the link drawer. Opening on the linked board used to fetch the list twice; a Vitest test caught it.
+
+**Security notes.** The new routes are behind the normal gates (401 without a session, tested). `deal_board` is a closed `Literal` (422 otherwise). Public responses still carry only `linked`, tested for a My Deals link too.

@@ -19,6 +19,7 @@ from BL.inspection.common.inspection_checklist_config import (
     critical_inspection_item_keys,
     visible_field_values,
 )
+from BL.inspection.common.inspection_deal_links import linked_deal_of_inspection
 from DAL.data_models import PropertyInspection, PropertyInspectionItem, PropertyInspectionPhoto
 from ReqRes.common.inspection_schemas import (
     InspectionItemRes,
@@ -26,7 +27,7 @@ from ReqRes.common.inspection_schemas import (
     InspectionPhotoRes,
     InspectionSummaryItemRes,
     InspectionSummaryRes,
-    LinkedBoughtDealRes,
+    LinkedDealRes,
     PublicInspectionRes,
 )
 
@@ -35,15 +36,7 @@ WINDOWS_NEEDING_REPLACEMENT_FIELD_KEY = "windows_needing_replacement_count"
 
 
 def inspection_is_linked_to_a_deal(inspection: PropertyInspection) -> bool:
-    return inspection.linked_bought_brrrr_deal_id is not None or inspection.linked_bought_flip_deal_id is not None
-
-
-def linked_deal_type_and_id(inspection: PropertyInspection):
-    if inspection.linked_bought_brrrr_deal_id is not None:
-        return "BRRRR", inspection.linked_bought_brrrr_deal_id
-    if inspection.linked_bought_flip_deal_id is not None:
-        return "FLIP", inspection.linked_bought_flip_deal_id
-    return None, None
+    return linked_deal_of_inspection(inspection)[0] is not None
 
 
 def item_status_by_key(items: Iterable[PropertyInspectionItem]) -> dict:
@@ -126,11 +119,11 @@ def public_inspection_response(
     )
 
 
-def linked_bought_deal_response(inspection: PropertyInspection, linked_deal_address: Optional[str]) -> Optional[LinkedBoughtDealRes]:
-    deal_type, deal_id = linked_deal_type_and_id(inspection)
-    if deal_type is None:
+def linked_deal_response(inspection: PropertyInspection, linked_deal_address: Optional[str]) -> Optional[LinkedDealRes]:
+    kind, deal_id = linked_deal_of_inspection(inspection)
+    if kind is None:
         return None
-    return LinkedBoughtDealRes(bought_deal_id=deal_id, deal_type=deal_type, property_address=linked_deal_address)
+    return LinkedDealRes(deal_id=deal_id, deal_type=kind.deal_type, deal_board=kind.deal_board, property_address=linked_deal_address)
 
 
 def inspection_list_row_response(
@@ -153,5 +146,5 @@ def inspection_list_row_response(
         total_item_count=len(all_inspection_checklist_items()),
         repair_or_replace_item_count=sum(1 for status in statuses if status in (ITEM_STATUS_REPAIR, ITEM_STATUS_REPLACE)),
         photo_count=photo_count,
-        linked_deal=linked_bought_deal_response(inspection, linked_deal_address),
+        linked_deal=linked_deal_response(inspection, linked_deal_address),
     )
