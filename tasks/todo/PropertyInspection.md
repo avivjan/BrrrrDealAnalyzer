@@ -205,7 +205,7 @@ The deal picker reuses the existing, authenticated `GET /bought-deals`.
   - The 401 redirect change doesn't weaken protected routes.
   - Then a repo-wide pass, and bandit, pip-audit and npm audit come back clean.
 - [x] **15** (20 min): README: the feature, the new env vars, and the Apps Script setup steps. The Review section in the task file.
-- [ ] **16** (10 min): Push, open the PR, CI green.
+- [x] **16** (10 min): Push, open the PR ([#108](https://github.com/avivjan/BrrrrDealAnalyzer/pull/108)), CI green.
 - [ ] **17** (you, ~10 min, guided): Deploy the Apps Script under bigwhalesllc. Set `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL` and `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` on Render.
 
 ## Tests
