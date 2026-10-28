@@ -1,9 +1,10 @@
 """Property inspections: the pre-purchase walkthrough checklist (tasks/todo/PropertyInspection.md).
 
 An inspection is public: anyone with its id (a random uuid4) can read and
-fill it in. It may be linked to at most one Bought Deal, which is either a
-BRRRR or a FLIP deal, so the link is two nullable foreign keys of which at
-most one is set. Deleting the deal clears the link and keeps the inspection.
+fill it in. It may be linked to at most one deal: a My Deals deal or a Bought
+Deal, each either BRRRR or FLIP, so the link is four nullable foreign keys of
+which at most one is set (tasks/todo/InspectionLinkToMyDeals.md). Deleting the
+deal clears the link and keeps the inspection.
 """
 
 import uuid
@@ -28,13 +29,24 @@ from db import Base
 INSPECTION_STATUS_DRAFT = "draft"
 INSPECTION_STATUS_COMPLETED = "completed"
 
+LINKED_DEAL_COLUMN_NAMES = (
+    "linked_active_brrrr_deal_id",
+    "linked_active_flip_deal_id",
+    "linked_bought_brrrr_deal_id",
+    "linked_bought_flip_deal_id",
+)
+INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_CONSTRAINT_NAME = "property_inspections_linked_to_at_most_one_deal"
+INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_SQL = (
+    " + ".join(f"(CASE WHEN {column} IS NULL THEN 0 ELSE 1 END)" for column in LINKED_DEAL_COLUMN_NAMES) + " <= 1"
+)
+
 
 class PropertyInspection(Base):
     __tablename__ = "property_inspections"
     __table_args__ = (
         CheckConstraint(
-            "linked_bought_brrrr_deal_id IS NULL OR linked_bought_flip_deal_id IS NULL",
-            name="property_inspections_linked_to_at_most_one_deal",
+            INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_SQL,
+            name=INSPECTION_LINKED_TO_AT_MOST_ONE_DEAL_CONSTRAINT_NAME,
         ),
     )
 
@@ -45,6 +57,12 @@ class PropertyInspection(Base):
     inspection_status = Column(String, nullable=False, default=INSPECTION_STATUS_DRAFT)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     completion_override_reason = Column(String, nullable=True)
+    linked_active_brrrr_deal_id = Column(
+        Uuid(as_uuid=True), ForeignKey("active_deals.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    linked_active_flip_deal_id = Column(
+        Uuid(as_uuid=True), ForeignKey("flip_deals.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     linked_bought_brrrr_deal_id = Column(
         Uuid(as_uuid=True), ForeignKey("bought_brrrr_deals.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -85,4 +103,38 @@ class PropertyInspectionPhoto(Base):
     drive_file_id = Column(String, nullable=False)
     thumbnail_jpeg = Column(LargeBinary, nullable=False)
     full_image_byte_size = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+REPORT_DELIVERY_PENDING = "pending"
+REPORT_DELIVERY_DELIVERED = "delivered"
+REPORT_DELIVERY_FAILED = "failed"
+
+
+class PropertyInspectionReport(Base):
+    """The PDF report made each time an inspection is finished, and where it was sent.
+
+    The PDF is kept as it was at that finish, so a retry sends exactly what was
+    finished. E-mail and Drive are tracked separately: each is retried on its
+    own until delivered or out of attempts (BL/inspection/common/inspection_report_delivery.py).
+    """
+
+    __tablename__ = "property_inspection_reports"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    inspection_id = Column(
+        Uuid(as_uuid=True), ForeignKey("property_inspections.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    report_pdf = Column(LargeBinary, nullable=False)
+    report_file_name = Column(String, nullable=False)
+    email_delivery_status = Column(String, nullable=False, default=REPORT_DELIVERY_PENDING)
+    email_attempt_count = Column(Integer, nullable=False, default=0)
+    email_last_error_type = Column(String, nullable=True)
+    emailed_at = Column(DateTime(timezone=True), nullable=True)
+    drive_delivery_status = Column(String, nullable=False, default=REPORT_DELIVERY_PENDING)
+    drive_attempt_count = Column(Integer, nullable=False, default=0)
+    drive_last_error_type = Column(String, nullable=True)
+    drive_file_id = Column(String, nullable=True)
+    drive_folder_url = Column(String, nullable=True)
+    saved_to_drive_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

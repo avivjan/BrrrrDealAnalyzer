@@ -86,6 +86,13 @@
       "path": "/active-deals"
     },
     {
+      "method": "GET",
+      "path": "/active-deals/{id}/inspections",
+      "query": {
+        "deal_type": "FLIP"
+      }
+    },
+    {
       "method": "POST",
       "path": "/analyze/flip",
       "body": {

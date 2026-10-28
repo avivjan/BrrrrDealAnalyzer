@@ -28,6 +28,8 @@ export interface PublicInspectionRes {
   updated_at: string | null;
   items: InspectionItemRes[];
   photos: InspectionPhotoRes[];
+  /** The report of the last finish: e-mailed and saved to Drive, still sending, or retrying. Null before a finish. */
+  report_delivery_status?: "sending" | "delivered" | "will_retry" | null;
 }
 
 export interface InspectionCreateReq {
@@ -42,14 +44,18 @@ export interface InspectionItemUpdateReq {
   item_field_values?: Record<string, string | number | null>;
 }
 
-export interface LinkedBoughtDealRes {
-  bought_deal_id: string;
+/** Which board a deal lives on: My Deals (the active pipeline) or Bought Deals. */
+export type InspectionDealBoard = "my_deals" | "bought";
+
+export interface LinkedDealRes {
+  deal_id: string;
   deal_type: "BRRRR" | "FLIP";
+  deal_board: InspectionDealBoard;
   property_address: string | null;
 }
 
 export interface InspectionDealLinkRes {
-  linked_deal: LinkedBoughtDealRes | null;
+  linked_deal: LinkedDealRes | null;
 }
 
 export interface InspectionListRowRes {
@@ -65,5 +71,5 @@ export interface InspectionListRowRes {
   total_item_count: number;
   repair_or_replace_item_count: number;
   photo_count: number;
-  linked_deal: LinkedBoughtDealRes | null;
+  linked_deal: LinkedDealRes | null;
 }

@@ -11,6 +11,7 @@ import { useRouter } from "vue-router";
 import "../inspection/inspectionMotion.css";
 import InspectionPhotoLightbox from "../components/inspection/InspectionPhotoLightbox.vue";
 import InspectionPhotoThumbnail from "../components/inspection/InspectionPhotoThumbnail.vue";
+import InspectionReportDeliveryStatus from "../components/inspection/InspectionReportDeliveryStatus.vue";
 import {
   WINDOWS_ITEM_KEY,
   WINDOWS_NEEDING_REPLACEMENT_FIELD_KEY,
@@ -37,7 +38,19 @@ watch(
   },
   { immediate: true },
 );
-onBeforeUnmount(() => store.stopSyncing());
+// Right after a finish the report is still being sent: look again a few times until it settles.
+const REPORT_STATUS_RECHECK_MILLISECONDS = 4000;
+const MAXIMUM_REPORT_STATUS_RECHECKS = 8;
+let reportStatusRecheckCount = 0;
+const reportStatusRecheckTimer = setInterval(() => {
+  if (store.inspection?.report_delivery_status !== "sending" || reportStatusRecheckCount >= MAXIMUM_REPORT_STATUS_RECHECKS) return;
+  reportStatusRecheckCount += 1;
+  void store.pollOtherDeviceChanges();
+}, REPORT_STATUS_RECHECK_MILLISECONDS);
+onBeforeUnmount(() => {
+  clearInterval(reportStatusRecheckTimer);
+  store.stopSyncing();
+});
 
 const itemsWithStatus = (status: InspectionItemStatus) => allChecklistItems().filter((item) => itemStatusOf(item.key, store.answersByItemKey) === status);
 const replaceItems = computed(() => itemsWithStatus("replace"));
@@ -107,6 +120,7 @@ async function share() {
           <div><dt class="text-sm text-fg-muted">Inspector</dt><dd class="text-fg">{{ store.inspection.inspector_name || "—" }}</dd></div>
           <div><dt class="text-sm text-fg-muted">Photos</dt><dd class="numeric text-fg">{{ store.photos.length }}</dd></div>
         </dl>
+        <InspectionReportDeliveryStatus class="mt-4" :report-delivery-status="store.inspection.report_delivery_status" />
         <p v-if="store.inspection.completion_override_reason" class="mt-4 rounded-ctl border border-accent/50 bg-accent/10 p-3 text-sm text-fg" data-testid="inspection.summary.override">
           <i class="pi pi-bolt mr-1 text-accent" aria-hidden="true"></i>Finished before every mission: {{ store.inspection.completion_override_reason }}
         </p>

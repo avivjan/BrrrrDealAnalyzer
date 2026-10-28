@@ -5,8 +5,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from DAL.data_models import (
-    BoughtBrrrDeal,
-    BoughtFlipDeal,
     PropertyInspection,
     PropertyInspectionItem,
     PropertyInspectionPhoto,
@@ -26,10 +24,8 @@ def get_all_inspections_newest_first(db: Session) -> List[PropertyInspection]:
     return db.query(PropertyInspection).order_by(PropertyInspection.created_at.desc()).all()
 
 
-def get_inspections_linked_to_bought_deal(db: Session, deal_id: UUID, deal_type: str) -> List[PropertyInspection]:
-    linked_deal_column = (
-        PropertyInspection.linked_bought_brrrr_deal_id if deal_type == "BRRRR" else PropertyInspection.linked_bought_flip_deal_id
-    )
+def get_inspections_linked_by_column(db: Session, link_column_name: str, deal_id: UUID) -> List[PropertyInspection]:
+    linked_deal_column = getattr(PropertyInspection, link_column_name)
     return db.query(PropertyInspection).filter(linked_deal_column == deal_id).order_by(PropertyInspection.created_at.desc()).all()
 
 
@@ -95,20 +91,24 @@ def get_drive_file_ids_of_inspection(db: Session, inspection_id: UUID) -> List[s
     return [drive_file_id for (drive_file_id,) in rows]
 
 
-def get_bought_deal_by_id_and_type(db: Session, deal_id: UUID, deal_type: str):
-    deal_model = BoughtBrrrDeal if deal_type == "BRRRR" else BoughtFlipDeal
+def get_deal_by_model_and_id(db: Session, deal_model, deal_id: UUID):
     return db.query(deal_model).filter(deal_model.id == deal_id).first()
 
 
-def get_bought_deal_addresses_by_ids(db: Session, brrrr_deal_ids: List[UUID], flip_deal_ids: List[UUID]) -> dict:
-    """{(deal_type, deal_id): address} for the linked deals shown in the authenticated list."""
+def get_deal_addresses_by_model_and_ids(db: Session, deal_model, deal_ids: List[UUID]) -> dict:
+    """{deal_id: address} for the linked deals shown in the authenticated list."""
 
-    addresses: dict = {}
-    if brrrr_deal_ids:
-        for deal_id, address in db.query(BoughtBrrrDeal.id, BoughtBrrrDeal.address).filter(BoughtBrrrDeal.id.in_(brrrr_deal_ids)):
-            addresses[("BRRRR", deal_id)] = address
-    if flip_deal_ids:
-        for deal_id, address in db.query(BoughtFlipDeal.id, BoughtFlipDeal.address).filter(BoughtFlipDeal.id.in_(flip_deal_ids)):
-            addresses[("FLIP", deal_id)] = address
-    return addresses
+    if not deal_ids:
+        return {}
+    return {deal_id: address for deal_id, address in db.query(deal_model.id, deal_model.address).filter(deal_model.id.in_(deal_ids))}
 
+
+def repoint_inspection_links(db: Session, from_link_column_name: str, from_deal_id: UUID, to_link_column_name: str, to_deal_id: UUID) -> int:
+    """Moves every inspection linked to one deal onto another (Move to Bought). The caller commits."""
+
+    moved_count = 0
+    for inspection in get_inspections_linked_by_column(db, from_link_column_name, from_deal_id):
+        setattr(inspection, from_link_column_name, None)
+        setattr(inspection, to_link_column_name, to_deal_id)
+        moved_count += 1
+    return moved_count

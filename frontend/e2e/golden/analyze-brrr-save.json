@@ -86,6 +86,13 @@
       "path": "/active-deals"
     },
     {
+      "method": "GET",
+      "path": "/active-deals/{id}/inspections",
+      "query": {
+        "deal_type": "BRRRR"
+      }
+    },
+    {
       "method": "POST",
       "path": "/analyze/brrr",
       "body": {

@@ -9,6 +9,13 @@
       "body": null
     },
     {
+      "method": "GET",
+      "path": "/active-deals/{id}/inspections",
+      "query": {
+        "deal_type": "BRRRR"
+      }
+    },
+    {
       "method": "DELETE",
       "path": "/active-deals/{id}",
       "query": {

@@ -4,12 +4,13 @@ Like the loan agreements (`BL/memberLoan/common/member_loan_google_drive.py`),
 the photos go through a small Google Apps Script web app owned by
 bigwhalesllc@gmail.com (`BackEnd/integrations/google_drive_inspection_photos.gs`),
 because a service account has no Drive storage of its own. The script keeps
-every photo under the Drive folder "property inspections", in one sub-folder
-per inspection, and only ever reads or trashes files inside that folder.
+every photo, and the PDF report made each time an inspection is finished,
+under the Drive folder "inspections", in one sub-folder per inspection, and
+only ever reads or trashes files inside that folder.
 
 Every request is signed: HMAC-SHA256 with the shared secret over
 "<timestamp>\\n<action>\\n<subject>\\n<SHA-256 of the image, or empty>", where
-the subject is "<inspection folder>/<file name>" for `save` and the Drive file
+the subject is "<inspection folder>/<file name>" for `save` and `save_report`, and the Drive file
 id for `read` and `trash`. The script refuses a wrong signature and a
 timestamp more than 5 minutes old, so the web app URL alone gives nobody access.
 
@@ -34,7 +35,7 @@ import urllib.request
 
 logger = logging.getLogger(__name__)
 
-PROPERTY_INSPECTIONS_DRIVE_FOLDER_NAME = "property inspections"
+INSPECTIONS_DRIVE_FOLDER_NAME = "inspections"
 DRIVE_REQUEST_TIMEOUT_SECONDS = 60
 MAXIMUM_DRIVE_FOLDER_NAME_LENGTH = 120
 
@@ -113,6 +114,22 @@ def save_inspection_photo_to_drive(inspection_folder_name: str, file_name: str, 
     if not answer.get("file_id"):
         raise InspectionPhotoStorageUnavailable("the Drive script returned no file id")
     return str(answer["file_id"])
+
+
+def save_inspection_report_to_drive(inspection_folder_name: str, file_name: str, report_pdf: bytes) -> tuple[str, str]:
+    """Upload the report PDF next to the inspection's photos; returns (file id, folder URL)."""
+
+    answer = _post_to_drive_script(
+        "save_report",
+        f"{inspection_folder_name}/{file_name}",
+        report_pdf,
+        inspection_folder_name=inspection_folder_name,
+        file_name=file_name,
+    )
+    if not answer.get("file_id"):
+        raise InspectionPhotoStorageUnavailable("the Drive script returned no file id")
+    folder_url = str(answer.get("folder_url") or "")
+    return str(answer["file_id"]), folder_url if folder_url.startswith("https://drive.google.com/") else ""
 
 
 def read_inspection_photo_from_drive(drive_file_id: str) -> bytes:

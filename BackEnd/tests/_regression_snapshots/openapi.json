@@ -8352,9 +8352,19 @@
       "InspectionDealLinkReq": {
         "additionalProperties": false,
         "properties": {
-          "bought_deal_id": {
+          "deal_board": {
+            "default": "bought",
+            "description": "my_deals (the active pipeline) or bought (Bought Deals).",
+            "enum": [
+              "my_deals",
+              "bought"
+            ],
+            "title": "Deal Board",
+            "type": "string"
+          },
+          "deal_id": {
             "format": "uuid",
-            "title": "Bought Deal Id",
+            "title": "Deal Id",
             "type": "string"
           },
           "deal_type": {
@@ -8367,7 +8377,7 @@
           }
         },
         "required": [
-          "bought_deal_id",
+          "deal_id",
           "deal_type"
         ],
         "title": "InspectionDealLinkReq",
@@ -8378,7 +8388,7 @@
           "linked_deal": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LinkedBoughtDealRes"
+                "$ref": "#/components/schemas/LinkedDealRes"
               },
               {
                 "type": "null"
@@ -8389,7 +8399,7 @@
         "title": "InspectionDealLinkRes",
         "type": "object"
       },
-      "InspectionForBoughtDealCreateReq": {
+      "InspectionForDealCreateReq": {
         "additionalProperties": false,
         "properties": {
           "inspection_date": {
@@ -8418,7 +8428,7 @@
             "title": "Inspector Name"
           }
         },
-        "title": "InspectionForBoughtDealCreateReq",
+        "title": "InspectionForDealCreateReq",
         "type": "object"
       },
       "InspectionItemRes": {
@@ -8587,7 +8597,7 @@
           "linked_deal": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LinkedBoughtDealRes"
+                "$ref": "#/components/schemas/LinkedDealRes"
               },
               {
                 "type": "null"
@@ -8822,11 +8832,19 @@
         "title": "InspectionSummaryRes",
         "type": "object"
       },
-      "LinkedBoughtDealRes": {
+      "LinkedDealRes": {
         "properties": {
-          "bought_deal_id": {
+          "deal_board": {
+            "enum": [
+              "my_deals",
+              "bought"
+            ],
+            "title": "Deal Board",
+            "type": "string"
+          },
+          "deal_id": {
             "format": "uuid",
-            "title": "Bought Deal Id",
+            "title": "Deal Id",
             "type": "string"
           },
           "deal_type": {
@@ -8850,10 +8868,11 @@
           }
         },
         "required": [
-          "bought_deal_id",
-          "deal_type"
+          "deal_id",
+          "deal_type",
+          "deal_board"
         ],
-        "title": "LinkedBoughtDealRes",
+        "title": "LinkedDealRes",
         "type": "object"
       },
       "LiquidityRecurringTransactionCreate": {
@@ -11274,6 +11293,23 @@
           "property_address": {
             "title": "Property Address",
             "type": "string"
+          },
+          "report_delivery_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sending",
+                  "delivered",
+                  "will_retry"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The report of the last finish: e-mailed and saved to Drive, still sending, or failed and retrying. Null before the first finish.",
+            "title": "Report Delivery Status"
           },
           "summary": {
             "$ref": "#/components/schemas/InspectionSummaryRes"
@@ -14410,6 +14446,124 @@
         "summary": "Duplicate Deal"
       }
     },
+    "/active-deals/{deal_id}/inspections": {
+      "get": {
+        "operationId": "list_active_deal_inspections_active_deals__deal_id__inspections_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deal_type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "BRRRR",
+                "FLIP"
+              ],
+              "title": "Deal Type",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InspectionListRowRes"
+                  },
+                  "title": "Response List Active Deal Inspections Active Deals  Deal Id  Inspections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Active Deal Inspections"
+      },
+      "post": {
+        "operationId": "create_inspection_for_active_deal_active_deals__deal_id__inspections_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deal_type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "BRRRR",
+                "FLIP"
+              ],
+              "title": "Deal Type",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionForDealCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Inspection For Active Deal"
+      }
+    },
     "/analyze/brrr": {
       "post": {
         "operationId": "analyze_brrr_analyze_brrr_post",
@@ -15258,7 +15412,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InspectionForBoughtDealCreateReq"
+                "$ref": "#/components/schemas/InspectionForDealCreateReq"
               }
             }
           },

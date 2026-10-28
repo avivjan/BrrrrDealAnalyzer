@@ -269,7 +269,7 @@ DESCRIPTIONS: dict[str, str] = {
     "get_inspection": (
         "Get one inspection by id: start info, every item's status, notes and field values, photo list, "
         "and a summary (Replace, Repair and OK items with their fields, CRITICAL items still not checked, "
-        "windows to replace)."
+        "windows to replace), plus report_delivery_status for the last finish's e-mailed and Drive-saved report."
     ),
     "create_inspection": (
         "Start a new property inspection: property_address (required), inspection_date (default today), "
@@ -284,15 +284,24 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "complete_inspection": (
         "Finish an inspection. Refused (409) while a CRITICAL item is not checked, unless "
-        "completion_override_reason (at least 10 characters) explains why."
+        "completion_override_reason (at least 10 characters) explains why. Each finish e-mails a PDF report "
+        "to the company and saves it in the inspection's Drive folder (report_delivery_status tracks it)."
     ),
     "delete_inspection_photo": "Delete one photo of an inspection.",
     "delete_inspection": "Delete an inspection with all its answers and photos.",
-    "get_inspection_deal_link": "Which Bought Deal (id, BRRRR or FLIP, address) an inspection is linked to, if any.",
-    "link_inspection_to_deal": "Link an inspection to a Bought Deal (bought_deal_id and deal_type BRRRR or FLIP); replaces any earlier link.",
-    "unlink_inspection_from_deal": "Remove an inspection's link to its Bought Deal (the inspection itself is kept).",
+    "get_inspection_deal_link": "Which deal an inspection is linked to, if any: id, BRRRR or FLIP, the board (my_deals or bought) and its address.",
+    "link_inspection_to_deal": (
+        "Link an inspection to a deal: deal_id, deal_type (BRRRR or FLIP) and deal_board (my_deals for the "
+        "active pipeline, bought for Bought Deals; default bought). Replaces any earlier link."
+    ),
+    "unlink_inspection_from_deal": "Remove an inspection's link to its deal (the inspection itself is kept).",
     "list_bought_deal_inspections": "List the inspections linked to one Bought Deal, with status, date and Repair/Replace counts.",
     "create_inspection_for_bought_deal": "Start a new inspection already linked to a Bought Deal, with the deal's address prefilled.",
+    "list_active_deal_inspections": "List the inspections linked to one My Deals deal, with status, date and Repair/Replace counts.",
+    "create_inspection_for_active_deal": (
+        "Start a new inspection already linked to a My Deals deal, with the deal's address prefilled. "
+        "Moving the deal to Bought later carries the inspection with it."
+    ),
 }
 
 BODY_ARG = "body"
@@ -310,7 +319,7 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
 # site's own data; GET tools are read-only.
-OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
+OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal"}
 

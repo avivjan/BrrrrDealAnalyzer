@@ -7020,6 +7020,238 @@
       "id"
     ]
   },
+  "property_inspection_reports": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "property_inspections.id"
+        ],
+        "index": true,
+        "name": "inspection_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "report_pdf",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bytes",
+        "server_default": null,
+        "type": "BLOB",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "report_file_name",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "'pending'",
+        "foreign_keys": [],
+        "index": null,
+        "name": "email_delivery_status",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "email_attempt_count",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": null,
+        "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "email_last_error_type",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "emailed_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "'pending'",
+        "foreign_keys": [],
+        "index": null,
+        "name": "drive_delivery_status",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "drive_attempt_count",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": null,
+        "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "drive_last_error_type",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "drive_file_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "drive_folder_url",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "saved_to_drive_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "created_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:inspection_id",
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "inspection_id"
+        ],
+        "name": "ix_property_inspection_reports_inspection_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
   "property_inspections": {
     "columns": [
       {
@@ -7124,6 +7356,38 @@
         "autoincrement": "auto",
         "default": null,
         "foreign_keys": [
+          "active_deals.id"
+        ],
+        "index": true,
+        "name": "linked_active_brrrr_deal_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "flip_deals.id"
+        ],
+        "index": true,
+        "name": "linked_active_flip_deal_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
           "bought_brrrr_deals.id"
         ],
         "index": true,
@@ -7183,11 +7447,27 @@
     ],
     "constraints": [
       "CheckConstraint:",
+      "ForeignKeyConstraint:linked_active_brrrr_deal_id",
+      "ForeignKeyConstraint:linked_active_flip_deal_id",
       "ForeignKeyConstraint:linked_bought_brrrr_deal_id",
       "ForeignKeyConstraint:linked_bought_flip_deal_id",
       "PrimaryKeyConstraint:id"
     ],
     "indexes": [
+      {
+        "columns": [
+          "linked_active_brrrr_deal_id"
+        ],
+        "name": "ix_property_inspections_linked_active_brrrr_deal_id",
+        "unique": false
+      },
+      {
+        "columns": [
+          "linked_active_flip_deal_id"
+        ],
+        "name": "ix_property_inspections_linked_active_flip_deal_id",
+        "unique": false
+      },
       {
         "columns": [
           "linked_bought_brrrr_deal_id"

@@ -110,3 +110,9 @@ mcp_server.mount(app)
 from BL.memberLoan.common.member_loan_statement_schedule import start_member_loan_statement_schedule  # noqa: E402
 
 start_member_loan_statement_schedule(IS_PRODUCTION)
+
+# Inspection reports whose e-mail or Drive save failed are retried from here, in
+# production only (BL/inspection/common/inspection_report_delivery.py).
+from BL.inspection.common.inspection_report_delivery import start_inspection_report_retry_schedule  # noqa: E402
+
+start_inspection_report_retry_schedule(IS_PRODUCTION)

@@ -1,6 +1,7 @@
 import { apiClient } from "./index";
 import type {
   InspectionCreateReq,
+  InspectionDealBoard,
   InspectionDealLinkRes,
   InspectionItemRes,
   InspectionItemUpdateReq,
@@ -11,10 +12,12 @@ import type {
 
 /**
  * Property inspections. `/public/inspections/...` needs no session (anyone
- * with the link); `/inspections/...` and `/bought-deals/.../inspections` are
- * behind the site's normal login.
+ * with the link); `/inspections/...`, `/active-deals/.../inspections` and
+ * `/bought-deals/.../inspections` are behind the site's normal login.
  */
 const publicInspectionPath = (inspectionId: string) => `/public/inspections/${encodeURIComponent(inspectionId)}`;
+/** Where each board's deals live on the API (both behind login). */
+const DEAL_BOARD_PATHS: Record<InspectionDealBoard, string> = { my_deals: "/active-deals", bought: "/bought-deals" };
 
 export const inspectionApi = {
   async createInspection(request: InspectionCreateReq): Promise<PublicInspectionRes> {
@@ -71,19 +74,20 @@ export const inspectionApi = {
     return (await apiClient.get<InspectionDealLinkRes>(`/inspections/${encodeURIComponent(inspectionId)}/deal-link`)).data;
   },
 
-  async linkInspectionToDeal(inspectionId: string, boughtDealId: string, dealType: "BRRRR" | "FLIP"): Promise<InspectionDealLinkRes> {
-    return (await apiClient.put<InspectionDealLinkRes>(`/inspections/${encodeURIComponent(inspectionId)}/deal-link`, { bought_deal_id: boughtDealId, deal_type: dealType })).data;
+  async linkInspectionToDeal(inspectionId: string, dealBoard: InspectionDealBoard, dealId: string, dealType: "BRRRR" | "FLIP"): Promise<InspectionDealLinkRes> {
+    const body = { deal_id: dealId, deal_type: dealType, deal_board: dealBoard };
+    return (await apiClient.put<InspectionDealLinkRes>(`/inspections/${encodeURIComponent(inspectionId)}/deal-link`, body)).data;
   },
 
   async unlinkInspectionFromDeal(inspectionId: string): Promise<InspectionDealLinkRes> {
     return (await apiClient.delete<InspectionDealLinkRes>(`/inspections/${encodeURIComponent(inspectionId)}/deal-link`)).data;
   },
 
-  async listBoughtDealInspections(boughtDealId: string, dealType: "BRRRR" | "FLIP"): Promise<InspectionListRowRes[]> {
-    return (await apiClient.get<InspectionListRowRes[]>(`/bought-deals/${encodeURIComponent(boughtDealId)}/inspections`, { params: { deal_type: dealType } })).data;
+  async listDealInspections(dealBoard: InspectionDealBoard, dealId: string, dealType: "BRRRR" | "FLIP"): Promise<InspectionListRowRes[]> {
+    return (await apiClient.get<InspectionListRowRes[]>(`${DEAL_BOARD_PATHS[dealBoard]}/${encodeURIComponent(dealId)}/inspections`, { params: { deal_type: dealType } })).data;
   },
 
-  async createInspectionForBoughtDeal(boughtDealId: string, dealType: "BRRRR" | "FLIP"): Promise<PublicInspectionRes> {
-    return (await apiClient.post<PublicInspectionRes>(`/bought-deals/${encodeURIComponent(boughtDealId)}/inspections`, {}, { params: { deal_type: dealType } })).data;
+  async createInspectionForDeal(dealBoard: InspectionDealBoard, dealId: string, dealType: "BRRRR" | "FLIP"): Promise<PublicInspectionRes> {
+    return (await apiClient.post<PublicInspectionRes>(`${DEAL_BOARD_PATHS[dealBoard]}/${encodeURIComponent(dealId)}/inspections`, {}, { params: { deal_type: dealType } })).data;
   },
 };

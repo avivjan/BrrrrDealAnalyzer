@@ -1,6 +1,16 @@
 <script setup lang="ts">
 /** The finish screen: a short, full-screen moment with the inspection's numbers, then the summary. */
-defineProps<{ checkedItemCount: number; totalItemCount: number; repairItemCount: number; replaceItemCount: number; photoCount: number }>();
+import type { PublicInspectionRes } from "../../types/inspection";
+import InspectionReportDeliveryStatus from "./InspectionReportDeliveryStatus.vue";
+
+defineProps<{
+  checkedItemCount: number;
+  totalItemCount: number;
+  repairItemCount: number;
+  replaceItemCount: number;
+  photoCount: number;
+  reportDeliveryStatus: PublicInspectionRes["report_delivery_status"];
+}>();
 const emit = defineEmits<{ viewSummary: [] }>();
 </script>
 
@@ -14,6 +24,7 @@ const emit = defineEmits<{ viewSummary: [] }>();
         </div>
         <h2 id="inspection-finished-title" class="font-display text-4xl text-fg">Inspection complete</h2>
         <p class="mt-2 text-base text-fg-muted">Every answer is saved. Share the summary with your contractor or partner.</p>
+        <InspectionReportDeliveryStatus class="mt-3 justify-center" :report-delivery-status="reportDeliveryStatus" />
         <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div class="rounded-card border border-line bg-surface p-3">
             <dt class="text-xs uppercase tracking-wide text-fg-muted">Checked</dt>

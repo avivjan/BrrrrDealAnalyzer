@@ -63,6 +63,8 @@ test('walk an inspection: cards, follow-ups, counter, finish gate, summary', asy
   await page.getByTestId('inspection.finish-dialog.reason').fill('Utilities were shut off today');
   await page.getByTestId('inspection.finish-dialog.confirm').click();
   await expect(page.getByTestId('inspection.finished')).toBeVisible();
+  // The report is e-mailed and saved to Drive in the background right after the finish.
+  await expect(page.getByTestId('inspection.report-status')).toHaveAttribute('data-state', 'sending');
   await page.getByTestId('inspection.finished.summary').click();
 
   await expect(page.getByTestId('inspection.summary.replace')).toContainText('Windows');

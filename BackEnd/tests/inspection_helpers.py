@@ -102,3 +102,42 @@ def find_keys_anywhere(value, wanted_substrings: tuple[str, ...]) -> list[str]:
         for inner in value:
             found.extend(find_keys_anywhere(inner, wanted_substrings))
     return found
+
+
+@dataclass
+class FakeInspectionReportOutbox:
+    """Stands in for Gmail and the Drive script when an inspection is finished."""
+
+    sent_emails: list = field(default_factory=list)
+    saved_reports: list = field(default_factory=list)
+    email_should_fail: bool = False
+    drive_should_fail: bool = False
+
+    def send_email(self, **message) -> None:
+        from BL.memberLoan.common.member_loan_mail_transport import MemberLoanEmailNotSent
+
+        if self.email_should_fail:
+            raise MemberLoanEmailNotSent("SMTPAuthenticationError")
+        self.sent_emails.append(message)
+
+    def save_to_drive(self, inspection_folder_name: str, file_name: str, report_pdf: bytes) -> tuple[str, str]:
+        from BL.inspection.common.inspection_photo_google_drive import InspectionPhotoStorageUnavailable
+
+        if self.drive_should_fail:
+            raise InspectionPhotoStorageUnavailable("URLError")
+        self.saved_reports.append({"folder_name": inspection_folder_name, "file_name": file_name, "report_pdf": report_pdf})
+        return f"drive-report-{len(self.saved_reports)}", "https://drive.google.com/drive/folders/test-folder"
+
+
+@pytest.fixture
+def inspection_report_outbox(monkeypatch) -> FakeInspectionReportOutbox:
+    from BL.inspection.common import inspection_report_delivery
+
+    outbox = FakeInspectionReportOutbox()
+    monkeypatch.setattr(inspection_report_delivery, "send_inspection_report_email", outbox.send_email)
+    monkeypatch.setattr(inspection_report_delivery, "save_inspection_report_pdf_to_drive", outbox.save_to_drive)
+    return outbox
+
+
+def complete_with_override(client: TestClient, inspection_id: str, reason: str = "Testing the report delivery"):
+    return client.post(f"/public/inspections/{inspection_id}/complete", json={"completion_override_reason": reason}, headers=PUBLIC_WRITE_HEADERS)

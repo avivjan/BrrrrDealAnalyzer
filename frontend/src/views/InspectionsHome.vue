@@ -118,7 +118,7 @@ onMounted(async () => {
               <span>{{ formatInspectionDate(row.inspection_date) }}</span>
               <span class="numeric">{{ row.checked_item_count }}/{{ row.total_item_count }} checked</span>
               <span v-if="row.repair_or_replace_item_count" class="text-warning"><i class="pi pi-wrench text-xs" aria-hidden="true"></i> {{ row.repair_or_replace_item_count }} to fix</span>
-              <span v-if="row.linked_deal"><i class="pi pi-link text-xs" aria-hidden="true"></i> {{ row.linked_deal.property_address }}</span>
+              <span v-if="row.linked_deal"><i class="pi pi-link text-xs" aria-hidden="true"></i> {{ row.linked_deal.deal_board === "my_deals" ? "My Deals" : "Bought" }} · {{ row.linked_deal.property_address }}</span>
             </span>
           </button>
           <UiBadge :tone="row.inspection_status === 'completed' ? 'positive' : 'neutral'">{{ row.inspection_status === "completed" ? "Completed" : "Draft" }}</UiBadge>

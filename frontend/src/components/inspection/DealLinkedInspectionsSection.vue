@@ -1,17 +1,24 @@
 <script setup lang="ts">
 /**
- * On a Bought Deal (logged in): the inspections linked to it, with status,
- * date and how many items need Repair or Replace, plus "New inspection",
- * which starts one already linked, with the deal's address prefilled.
+ * On a deal's window (My Deals or Bought Deals, logged in): the inspections
+ * linked to it, with status, date and how many items need Repair or Replace,
+ * plus "New inspection", which starts one already linked, with the deal's
+ * address prefilled. Moving a My Deals deal to Bought carries them along.
  */
 import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 import { inspectionApi } from "../../api/inspection";
 import { rememberInspectionOnDevice } from "../../inspection/inspectionRecentOnDevice";
-import type { InspectionListRowRes } from "../../types/inspection";
+import type { InspectionDealBoard, InspectionListRowRes } from "../../types/inspection";
 
-const props = defineProps<{ boughtDealId: string; dealType: "BRRRR" | "FLIP" }>();
+const props = defineProps<{
+  dealBoard: InspectionDealBoard;
+  dealId: string;
+  dealType: "BRRRR" | "FLIP";
+  /** The hook prefix of the window it sits in, e.g. "boughtdeals.modal" or "mydeals.modal". */
+  testIdPrefix: string;
+}>();
 const router = useRouter();
 
 const linkedInspections = ref<InspectionListRowRes[]>([]);
@@ -23,7 +30,7 @@ async function loadLinkedInspections() {
   isLoading.value = true;
   errorMessage.value = null;
   try {
-    linkedInspections.value = await inspectionApi.listBoughtDealInspections(props.boughtDealId, props.dealType);
+    linkedInspections.value = await inspectionApi.listDealInspections(props.dealBoard, props.dealId, props.dealType);
   } catch {
     errorMessage.value = "Inspections could not be loaded.";
   } finally {
@@ -35,7 +42,7 @@ async function startLinkedInspection() {
   isCreating.value = true;
   errorMessage.value = null;
   try {
-    const inspection = await inspectionApi.createInspectionForBoughtDeal(props.boughtDealId, props.dealType);
+    const inspection = await inspectionApi.createInspectionForDeal(props.dealBoard, props.dealId, props.dealType);
     rememberInspectionOnDevice({ inspection_id: inspection.id, property_address: inspection.property_address, inspection_date: inspection.inspection_date });
     await router.push({ name: "inspection-walkthrough", params: { inspectionId: inspection.id } });
   } catch {
@@ -51,15 +58,15 @@ function formatInspectionDate(isoDate: string): string {
 }
 
 onMounted(loadLinkedInspections);
-watch(() => props.boughtDealId, loadLinkedInspections);
+watch(() => props.dealId, loadLinkedInspections);
 </script>
 
 <template>
-  <UiCard tone="muted" class="mb-6" data-testid="boughtdeals.modal.inspections">
+  <UiCard tone="muted" class="mb-6" :data-testid="`${testIdPrefix}.inspections`">
     <UiSectionHeader as="h4" class="mb-3">
       Inspections
       <template #actions>
-        <UiButton size="sm" variant="secondary" data-testid="boughtdeals.modal.inspections.new" :loading="isCreating" @click="startLinkedInspection">
+        <UiButton size="sm" variant="secondary" :data-testid="`${testIdPrefix}.inspections.new`" :loading="isCreating" @click="startLinkedInspection">
           <i class="pi pi-plus mr-1" aria-hidden="true"></i>New inspection
         </UiButton>
       </template>
@@ -71,7 +78,7 @@ watch(() => props.boughtDealId, loadLinkedInspections);
       <li v-for="inspection in linkedInspections" :key="inspection.id">
         <RouterLink
           :to="{ name: 'inspection-walkthrough', params: { inspectionId: inspection.id } }"
-          :data-testid="`boughtdeals.modal.inspections.${inspection.id}`"
+          :data-testid="`${testIdPrefix}.inspections.${inspection.id}`"
           class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 rounded-ctl border border-line bg-surface px-3 py-2 text-sm hover:border-fg-muted"
         >
           <UiBadge :tone="inspection.inspection_status === 'completed' ? 'positive' : 'neutral'">{{ inspection.inspection_status === "completed" ? "Completed" : "Draft" }}</UiBadge>

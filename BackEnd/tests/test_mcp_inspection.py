@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import mcp_server
-from tests.inspection_helpers import create_bought_deal
+from tests.inspection_helpers import create_bought_deal, inspection_report_outbox  # noqa: F401 -- fixture
 from tests.mcp_helpers import call_json
 
 INSPECTION_TOOL_NAMES = {
@@ -57,9 +57,18 @@ def test_create_update_get_list_link_and_unlink_through_tools(client, brrrr_payl
     assert [row["id"] for row in call_json("list_inspections")] == [inspection_id]
 
     deal = create_bought_deal(client, brrrr_payload)
-    linked = call_json("link_inspection_to_deal", inspection_id=inspection_id, body={"bought_deal_id": deal["id"], "deal_type": "BRRRR"})
-    assert linked["linked_deal"]["bought_deal_id"] == deal["id"]
+    linked = call_json("link_inspection_to_deal", inspection_id=inspection_id, body={"deal_id": deal["id"], "deal_type": "BRRRR"})
+    assert linked["linked_deal"]["deal_id"] == deal["id"]
     assert call_json("get_inspection", inspection_id=inspection_id)["linked"] is True
 
     assert call_json("unlink_inspection_from_deal", inspection_id=inspection_id) == {"linked_deal": None}
     assert call_json("get_inspection", inspection_id=inspection_id)["linked"] is False
+
+
+def test_complete_inspection_through_the_tool_sends_the_report(client, inspection_report_outbox):  # noqa: F811
+    created = call_json("create_inspection", body={"property_address": "9 Bay St, Tampa, FL"})
+    completed = call_json("complete_inspection", inspection_id=created["id"], body={"completion_override_reason": "Finished from the MCP tool"})
+    assert completed["inspection_status"] == "completed"
+    assert len(inspection_report_outbox.sent_emails) == 1
+    assert call_json("get_inspection", inspection_id=created["id"])["report_delivery_status"] == "delivered"
+    assert mcp_server.tools()["complete_inspection"]["tool"].annotations.openWorldHint is True
