@@ -1,0 +1,249 @@
+{
+  "checklist_config_version": 1,
+  "item_statuses": [
+    { "value": "not_checked", "label": "Not checked" },
+    { "value": "ok", "label": "OK" },
+    { "value": "repair", "label": "Repair" },
+    { "value": "replace", "label": "Replace" }
+  ],
+  "sections": [
+    {
+      "key": "structure_and_exterior",
+      "label": "Structure & Exterior",
+      "items": [
+        {
+          "key": "roof",
+          "label": "Roof",
+          "description": "Shingles, waterproofing, roof age.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the roof",
+          "fields": [
+            {
+              "key": "roof_type",
+              "label": "Roof type",
+              "type": "choice",
+              "options": [
+                { "value": "shingle", "label": "Shingle" },
+                { "value": "metal", "label": "Metal" },
+                { "value": "tile", "label": "Tile" },
+                { "value": "flat", "label": "Flat" },
+                { "value": "other", "label": "Other" }
+              ]
+            },
+            {
+              "key": "roof_install_year",
+              "label": "Approximate install year",
+              "type": "year_or_unknown"
+            }
+          ]
+        },
+        {
+          "key": "foundation",
+          "label": "Foundation",
+          "description": "Cracks, settling.",
+          "is_critical": true,
+          "photo_prompt": "Photograph any cracks",
+          "fields": [
+            {
+              "key": "foundation_type",
+              "label": "Foundation type",
+              "type": "choice",
+              "options": [
+                { "value": "concrete_slab", "label": "Concrete slab" },
+                { "value": "crawl_space", "label": "Crawl space" },
+                { "value": "pier_and_beam", "label": "Pier & beam" },
+                { "value": "basement", "label": "Basement" },
+                { "value": "other", "label": "Other" },
+                { "value": "unknown", "label": "Unknown" }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "walls_and_siding",
+          "label": "Walls & siding",
+          "description": "Paint, cracks, stucco or wood.",
+          "is_critical": false,
+          "photo_prompt": "Photograph the walls",
+          "fields": [
+            {
+              "key": "siding_material",
+              "label": "Siding material",
+              "type": "choice",
+              "options": [
+                { "value": "stucco", "label": "Stucco" },
+                { "value": "wood", "label": "Wood" },
+                { "value": "vinyl", "label": "Vinyl" },
+                { "value": "brick", "label": "Brick" },
+                { "value": "block", "label": "Block" },
+                { "value": "other", "label": "Other" }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "windows",
+          "label": "Windows",
+          "description": "Sealing, glass, locks.",
+          "is_critical": false,
+          "photo_prompt": "Photograph damaged windows",
+          "fields": [
+            {
+              "key": "windows_needing_replacement_count",
+              "label": "Windows that need replacement",
+              "type": "counter",
+              "minimum_count": 0,
+              "maximum_count": 99
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "utilities_and_mechanicals",
+      "label": "Utilities & Mechanicals",
+      "items": [
+        {
+          "key": "hvac",
+          "label": "HVAC",
+          "description": "System age, working condition.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the data plate",
+          "fields": [
+            {
+              "key": "hvac_manufacture_year",
+              "label": "Manufacture year (data plate)",
+              "type": "year_or_unknown"
+            }
+          ]
+        },
+        {
+          "key": "electrical",
+          "label": "Electrical",
+          "description": "Modern panel, copper wiring.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the panel",
+          "fields": [
+            {
+              "key": "electrical_panel_brand",
+              "label": "Panel brand",
+              "type": "text_or_unknown"
+            },
+            {
+              "key": "electrical_wiring_type",
+              "label": "Wiring type",
+              "type": "choice",
+              "options": [
+                { "value": "copper", "label": "Copper" },
+                { "value": "aluminum", "label": "Aluminum" },
+                { "value": "knob_and_tube", "label": "Knob & tube" },
+                { "value": "unknown", "label": "Unknown" }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "plumbing",
+          "label": "Plumbing",
+          "description": "Pipe type, leaks.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the pipes",
+          "fields": [
+            {
+              "key": "supply_pipe_material",
+              "label": "Supply pipe material",
+              "type": "choice",
+              "options": [
+                { "value": "copper", "label": "Copper" },
+                { "value": "pex", "label": "PEX" },
+                { "value": "cpvc", "label": "CPVC" },
+                { "value": "galvanized", "label": "Galvanized" },
+                { "value": "polybutylene", "label": "Polybutylene" },
+                { "value": "unknown", "label": "Unknown" }
+              ]
+            },
+            {
+              "key": "drain_pipe_material",
+              "label": "Drain pipe material",
+              "type": "choice",
+              "options": [
+                { "value": "pvc", "label": "PVC" },
+                { "value": "cast_iron", "label": "Cast iron" },
+                { "value": "orangeburg", "label": "Orangeburg" },
+                { "value": "unknown", "label": "Unknown" }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "water_heater",
+          "label": "Water heater",
+          "description": "Leaks, age.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the label",
+          "fields": [
+            {
+              "key": "water_heater_manufacture_year",
+              "label": "Manufacture year (label)",
+              "type": "year_or_unknown"
+            }
+          ]
+        },
+        {
+          "key": "sewer",
+          "label": "Sewer",
+          "description": "City sewer or septic tank.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the cleanout or tank",
+          "fields": [
+            {
+              "key": "sewer_type",
+              "label": "Sewer type",
+              "type": "choice",
+              "options": [
+                { "value": "city", "label": "City" },
+                { "value": "septic", "label": "Septic" }
+              ]
+            },
+            {
+              "key": "septic_last_pump_date",
+              "label": "Last septic pump date",
+              "type": "date_or_unknown",
+              "show_when": { "field_key": "sewer_type", "equals": "septic" }
+            }
+          ]
+        },
+        {
+          "key": "water_supply",
+          "label": "Water supply",
+          "description": "City water or a well.",
+          "is_critical": true,
+          "photo_prompt": "Photograph the well pump",
+          "fields": [
+            {
+              "key": "water_supply_type",
+              "label": "Water supply",
+              "type": "choice",
+              "options": [
+                { "value": "city", "label": "City" },
+                { "value": "well", "label": "Well" }
+              ]
+            },
+            {
+              "key": "well_pump_and_filtration_condition",
+              "label": "Well pump & filtration condition",
+              "type": "choice",
+              "options": [
+                { "value": "good", "label": "Good" },
+                { "value": "needs_service", "label": "Needs service" },
+                { "value": "failing", "label": "Failing" },
+                { "value": "unknown", "label": "Unknown" }
+              ],
+              "show_when": { "field_key": "water_supply_type", "equals": "well" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

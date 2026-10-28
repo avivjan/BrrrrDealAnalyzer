@@ -34,7 +34,8 @@ class TestToolList:
             len(ops) for path, ops in app.openapi()["paths"].items() if not path.startswith(mcp_server.EXCLUDED_PREFIXES)
         )
         tools = mcp_server.tools()
-        assert len(tools) == operations
+        assert len(tools) == operations - len(mcp_server.EXCLUDED_TOOL_NAMES)
+        assert not mcp_server.EXCLUDED_TOOL_NAMES & set(tools)
         assert not any(spec["path"].startswith(mcp_server.EXCLUDED_PREFIXES) for spec in tools.values())
         undocumented = [n for n in tools if n not in mcp_server.DESCRIPTIONS]
         assert undocumented == [], f"add these to mcp_server.DESCRIPTIONS: {undocumented}"
@@ -187,7 +188,9 @@ class TestEveryToolSchema:
         # into the six deal-body tools) and outputs landed; was 174 kB before them.
         # 307 kB after the two interactive HTML report tools (report_brrr_html / report_flip_html),
         # which inline the deal bodies like the PDF report tools do.
-        assert len(payload) < 320_000, f"tools/list is {len(payload)} bytes"
+        # 338 kB after the 13 property inspection tools (tasks/todo/PropertyInspection.md),
+        # whose inspection and summary output schemas are inlined into each of them.
+        assert len(payload) < 350_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

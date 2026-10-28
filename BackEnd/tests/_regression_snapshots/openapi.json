@@ -630,6 +630,28 @@
         "title": "Body_reps_upload_route_reps_upload_post",
         "type": "object"
       },
+      "Body_upload_inspection_photo_public_inspections__inspection_id__items__item_key__photos_post": {
+        "properties": {
+          "full_image": {
+            "contentMediaType": "application/octet-stream",
+            "description": "The compressed photo: JPEG, at most 1600 px and 4 MB.",
+            "title": "Full Image",
+            "type": "string"
+          },
+          "thumbnail_image": {
+            "contentMediaType": "application/octet-stream",
+            "description": "A 320 px JPEG thumbnail, at most 150 KB.",
+            "title": "Thumbnail Image",
+            "type": "string"
+          }
+        },
+        "required": [
+          "full_image",
+          "thumbnail_image"
+        ],
+        "title": "Body_upload_inspection_photo_public_inspections__inspection_id__items__item_key__photos_post",
+        "type": "object"
+      },
       "BoughtBrrrDealCreate": {
         "properties": {
           "HMLInterestRate": {
@@ -8267,6 +8289,573 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InspectionCompleteReq": {
+        "additionalProperties": false,
+        "properties": {
+          "completion_override_reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required to finish while CRITICAL items are still not checked.",
+            "title": "Completion Override Reason"
+          }
+        },
+        "title": "InspectionCompleteReq",
+        "type": "object"
+      },
+      "InspectionCreateReq": {
+        "additionalProperties": false,
+        "properties": {
+          "inspection_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to today.",
+            "title": "Inspection Date"
+          },
+          "inspector_name": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Name"
+          },
+          "property_address": {
+            "maxLength": 600,
+            "title": "Property Address",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_address"
+        ],
+        "title": "InspectionCreateReq",
+        "type": "object"
+      },
+      "InspectionDealLinkReq": {
+        "additionalProperties": false,
+        "properties": {
+          "bought_deal_id": {
+            "format": "uuid",
+            "title": "Bought Deal Id",
+            "type": "string"
+          },
+          "deal_type": {
+            "enum": [
+              "BRRRR",
+              "FLIP"
+            ],
+            "title": "Deal Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bought_deal_id",
+          "deal_type"
+        ],
+        "title": "InspectionDealLinkReq",
+        "type": "object"
+      },
+      "InspectionDealLinkRes": {
+        "properties": {
+          "linked_deal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedBoughtDealRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "InspectionDealLinkRes",
+        "type": "object"
+      },
+      "InspectionForBoughtDealCreateReq": {
+        "additionalProperties": false,
+        "properties": {
+          "inspection_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to today.",
+            "title": "Inspection Date"
+          },
+          "inspector_name": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Name"
+          }
+        },
+        "title": "InspectionForBoughtDealCreateReq",
+        "type": "object"
+      },
+      "InspectionItemRes": {
+        "properties": {
+          "item_field_values": {
+            "additionalProperties": true,
+            "title": "Item Field Values",
+            "type": "object"
+          },
+          "item_key": {
+            "title": "Item Key",
+            "type": "string"
+          },
+          "item_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Notes"
+          },
+          "item_status": {
+            "enum": [
+              "not_checked",
+              "ok",
+              "repair",
+              "replace"
+            ],
+            "title": "Item Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "item_key",
+          "item_status",
+          "item_field_values"
+        ],
+        "title": "InspectionItemRes",
+        "type": "object"
+      },
+      "InspectionItemUpdateReq": {
+        "additionalProperties": false,
+        "description": "A partial update of one item. `item_field_values` is merged key by key into\nwhat is stored (a `null` value clears that field), so two people filling the\nsame inspection never overwrite each other's other answers.",
+        "properties": {
+          "item_field_values": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Field key to new value; null clears the field.",
+            "title": "Item Field Values"
+          },
+          "item_notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An empty string clears the notes.",
+            "title": "Item Notes"
+          },
+          "item_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "not_checked",
+                  "ok",
+                  "repair",
+                  "replace"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Status"
+          }
+        },
+        "title": "InspectionItemUpdateReq",
+        "type": "object"
+      },
+      "InspectionListRowRes": {
+        "properties": {
+          "checked_item_count": {
+            "title": "Checked Item Count",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inspection_date": {
+            "format": "date",
+            "title": "Inspection Date",
+            "type": "string"
+          },
+          "inspection_status": {
+            "enum": [
+              "draft",
+              "completed"
+            ],
+            "title": "Inspection Status",
+            "type": "string"
+          },
+          "inspector_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Name"
+          },
+          "linked_deal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedBoughtDealRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "photo_count": {
+            "title": "Photo Count",
+            "type": "integer"
+          },
+          "property_address": {
+            "title": "Property Address",
+            "type": "string"
+          },
+          "repair_or_replace_item_count": {
+            "title": "Repair Or Replace Item Count",
+            "type": "integer"
+          },
+          "total_item_count": {
+            "title": "Total Item Count",
+            "type": "integer"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "property_address",
+          "inspection_date",
+          "inspection_status",
+          "checked_item_count",
+          "total_item_count",
+          "repair_or_replace_item_count",
+          "photo_count"
+        ],
+        "title": "InspectionListRowRes",
+        "type": "object"
+      },
+      "InspectionPhotoRes": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_key": {
+            "title": "Item Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "item_key"
+        ],
+        "title": "InspectionPhotoRes",
+        "type": "object"
+      },
+      "InspectionStartInfoUpdateReq": {
+        "additionalProperties": false,
+        "description": "Only the fields that are sent change.",
+        "properties": {
+          "inspection_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspection Date"
+          },
+          "inspector_name": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Name"
+          },
+          "property_address": {
+            "anyOf": [
+              {
+                "maxLength": 600,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Address"
+          }
+        },
+        "title": "InspectionStartInfoUpdateReq",
+        "type": "object"
+      },
+      "InspectionSummaryItemRes": {
+        "properties": {
+          "item_key": {
+            "title": "Item Key",
+            "type": "string"
+          },
+          "item_label": {
+            "title": "Item Label",
+            "type": "string"
+          },
+          "item_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Notes"
+          },
+          "item_status": {
+            "enum": [
+              "not_checked",
+              "ok",
+              "repair",
+              "replace"
+            ],
+            "title": "Item Status",
+            "type": "string"
+          },
+          "photo_count": {
+            "title": "Photo Count",
+            "type": "integer"
+          },
+          "visible_field_values": {
+            "additionalProperties": true,
+            "title": "Visible Field Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "item_key",
+          "item_label",
+          "item_status",
+          "visible_field_values",
+          "photo_count"
+        ],
+        "title": "InspectionSummaryItemRes",
+        "type": "object"
+      },
+      "InspectionSummaryRes": {
+        "properties": {
+          "checked_item_count": {
+            "title": "Checked Item Count",
+            "type": "integer"
+          },
+          "critical_item_keys_not_checked": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Critical Item Keys Not Checked",
+            "type": "array"
+          },
+          "items_marked_ok": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionSummaryItemRes"
+            },
+            "title": "Items Marked Ok",
+            "type": "array"
+          },
+          "items_marked_repair": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionSummaryItemRes"
+            },
+            "title": "Items Marked Repair",
+            "type": "array"
+          },
+          "items_marked_replace": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionSummaryItemRes"
+            },
+            "title": "Items Marked Replace",
+            "type": "array"
+          },
+          "photo_count": {
+            "title": "Photo Count",
+            "type": "integer"
+          },
+          "total_item_count": {
+            "title": "Total Item Count",
+            "type": "integer"
+          },
+          "windows_needing_replacement_count": {
+            "title": "Windows Needing Replacement Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checked_item_count",
+          "total_item_count",
+          "critical_item_keys_not_checked",
+          "items_marked_replace",
+          "items_marked_repair",
+          "items_marked_ok",
+          "windows_needing_replacement_count",
+          "photo_count"
+        ],
+        "title": "InspectionSummaryRes",
+        "type": "object"
+      },
+      "LinkedBoughtDealRes": {
+        "properties": {
+          "bought_deal_id": {
+            "format": "uuid",
+            "title": "Bought Deal Id",
+            "type": "string"
+          },
+          "deal_type": {
+            "enum": [
+              "BRRRR",
+              "FLIP"
+            ],
+            "title": "Deal Type",
+            "type": "string"
+          },
+          "property_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Address"
+          }
+        },
+        "required": [
+          "bought_deal_id",
+          "deal_type"
+        ],
+        "title": "LinkedBoughtDealRes",
+        "type": "object"
+      },
       "LiquidityRecurringTransactionCreate": {
         "description": "Definition of a repeating cash-flow rule.\n\nExactly one of `end_date` / `occurrences` may be set (both may be null\nfor an open-ended series; the frontend caps display at the visible\nhorizon).",
         "properties": {
@@ -10595,6 +11184,124 @@
           "bought_count"
         ],
         "title": "PortfolioSummary",
+        "type": "object"
+      },
+      "PublicInspectionRes": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "completion_override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Override Reason"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inspection_date": {
+            "format": "date",
+            "title": "Inspection Date",
+            "type": "string"
+          },
+          "inspection_status": {
+            "enum": [
+              "draft",
+              "completed"
+            ],
+            "title": "Inspection Status",
+            "type": "string"
+          },
+          "inspector_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Name"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionItemRes"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "linked": {
+            "description": "Whether the inspection is linked to a Bought Deal (which one is never public).",
+            "title": "Linked",
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionPhotoRes"
+            },
+            "title": "Photos",
+            "type": "array"
+          },
+          "property_address": {
+            "title": "Property Address",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/InspectionSummaryRes"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "property_address",
+          "inspection_date",
+          "inspection_status",
+          "linked",
+          "items",
+          "photos",
+          "summary"
+        ],
+        "title": "PublicInspectionRes",
         "type": "object"
       },
       "RegisterOptionsReq": {
@@ -14464,6 +15171,124 @@
         "summary": "Update Bought Deal"
       }
     },
+    "/bought-deals/{deal_id}/inspections": {
+      "get": {
+        "operationId": "list_bought_deal_inspections_bought_deals__deal_id__inspections_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deal_type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "BRRRR",
+                "FLIP"
+              ],
+              "title": "Deal Type",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InspectionListRowRes"
+                  },
+                  "title": "Response List Bought Deal Inspections Bought Deals  Deal Id  Inspections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Bought Deal Inspections"
+      },
+      "post": {
+        "operationId": "create_inspection_for_bought_deal_bought_deals__deal_id__inspections_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deal_type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "BRRRR",
+                "FLIP"
+              ],
+              "title": "Deal Type",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionForBoughtDealCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Inspection For Bought Deal"
+      }
+    },
     "/credentials": {
       "get": {
         "operationId": "credentials_list_credentials_get",
@@ -14948,6 +15773,188 @@
           }
         },
         "summary": "Helloworld"
+      }
+    },
+    "/inspections": {
+      "get": {
+        "operationId": "list_inspections_inspections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InspectionListRowRes"
+                  },
+                  "title": "Response List Inspections Inspections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Inspections"
+      }
+    },
+    "/inspections/{inspection_id}": {
+      "delete": {
+        "operationId": "delete_inspection_inspections__inspection_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Inspection"
+      }
+    },
+    "/inspections/{inspection_id}/deal-link": {
+      "delete": {
+        "operationId": "unlink_inspection_from_deal_inspections__inspection_id__deal_link_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionDealLinkRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unlink Inspection From Deal"
+      },
+      "get": {
+        "operationId": "get_inspection_deal_link_inspections__inspection_id__deal_link_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionDealLinkRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inspection Deal Link"
+      },
+      "put": {
+        "operationId": "link_inspection_to_deal_inspections__inspection_id__deal_link_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionDealLinkReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionDealLinkRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link Inspection To Deal"
       }
     },
     "/liquidity/mercury-balance": {
@@ -16432,6 +17439,429 @@
           }
         },
         "summary": "Pipeline Template Stats Route"
+      }
+    },
+    "/public/inspections": {
+      "post": {
+        "operationId": "create_inspection_public_inspections_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionCreateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Inspection"
+      }
+    },
+    "/public/inspections/{inspection_id}": {
+      "get": {
+        "operationId": "get_inspection_public_inspections__inspection_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inspection"
+      },
+      "patch": {
+        "operationId": "update_inspection_start_info_public_inspections__inspection_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionStartInfoUpdateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Inspection Start Info"
+      }
+    },
+    "/public/inspections/{inspection_id}/complete": {
+      "post": {
+        "operationId": "complete_inspection_public_inspections__inspection_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionCompleteReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInspectionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Inspection"
+      }
+    },
+    "/public/inspections/{inspection_id}/items/{item_key}": {
+      "patch": {
+        "operationId": "update_inspection_item_public_inspections__inspection_id__items__item_key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_key",
+            "required": true,
+            "schema": {
+              "title": "Item Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionItemUpdateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionItemRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Inspection Item"
+      }
+    },
+    "/public/inspections/{inspection_id}/items/{item_key}/photos": {
+      "post": {
+        "operationId": "upload_inspection_photo_public_inspections__inspection_id__items__item_key__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_key",
+            "required": true,
+            "schema": {
+              "title": "Item Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_inspection_photo_public_inspections__inspection_id__items__item_key__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionPhotoRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Inspection Photo"
+      }
+    },
+    "/public/inspections/{inspection_id}/photos/{photo_id}": {
+      "delete": {
+        "operationId": "delete_inspection_photo_public_inspections__inspection_id__photos__photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Inspection Photo"
+      }
+    },
+    "/public/inspections/{inspection_id}/photos/{photo_id}/full": {
+      "get": {
+        "operationId": "get_inspection_photo_full_image_public_inspections__inspection_id__photos__photo_id__full_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {}
+            },
+            "description": "The JPEG image."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inspection Photo Full Image"
+      }
+    },
+    "/public/inspections/{inspection_id}/photos/{photo_id}/thumbnail": {
+      "get": {
+        "operationId": "get_inspection_photo_thumbnail_public_inspections__inspection_id__photos__photo_id__thumbnail_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspection_id",
+            "required": true,
+            "schema": {
+              "title": "Inspection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {}
+            },
+            "description": "The JPEG image."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inspection Photo Thumbnail"
       }
     },
     "/reports/brrr-html": {

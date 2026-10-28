@@ -37,6 +37,11 @@ from DAL.data_models.memberLoan.models import (
     MemberLoanAuditEntry,
     MemberLoanStatementSend,
 )
+from DAL.data_models.inspection.models import (
+    PropertyInspection,
+    PropertyInspectionItem,
+    PropertyInspectionPhoto,
+)
 from DAL.data_models.reps.models import (
     RepsPerson,
     RepsProperty,
@@ -70,6 +75,9 @@ __all__ = [
     "MemberLoanEventDecision",
     "MemberLoanAuditEntry",
     "MemberLoanStatementSend",
+    "PropertyInspection",
+    "PropertyInspectionItem",
+    "PropertyInspectionPhoto",
     "RepsPerson",
     "RepsProperty",
     "RepsActivityCategory",

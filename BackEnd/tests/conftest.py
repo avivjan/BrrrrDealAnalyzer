@@ -151,6 +151,11 @@ def clean_database():
         ensure_pipeline_defaults(session)
         ensure_activity_category_defaults(session)
 
+    # The public inspection rate limits are in memory, per process.
+    from BL.inspection.common.inspection_request_guards import reset_inspection_rate_limits
+
+    reset_inspection_rate_limits()
+
     yield
 
 

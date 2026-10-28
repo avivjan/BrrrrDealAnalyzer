@@ -35,9 +35,11 @@ def concrete(path: str) -> str:
 OPERATIONS = operations()
 # /devices... and /member-loan gate themselves on a real passkey session whatever the
 # modes say (tests/test_devices.py, tests/test_member_loan_api.py::TestGate).
+# /public/inspections is open by design and protects itself (tests/test_inspection_api.py).
 PROTECTED = [
     op for op in OPERATIONS
-    if op[1] != "/helloworld" and not op[1].startswith(("/auth", "/devices", "/sessions", "/credentials", "/member-loan"))
+    if op[1] != "/helloworld"
+    and not op[1].startswith(("/auth", "/devices", "/sessions", "/credentials", "/member-loan", "/public/inspections"))
 ]
 
 
