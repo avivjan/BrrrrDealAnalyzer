@@ -7,6 +7,7 @@ import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import BoughtDealCard from "../components/BoughtDealCard.vue";
+import BoughtDealLinkedInspectionsSection from "../components/inspection/BoughtDealLinkedInspectionsSection.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
@@ -946,6 +947,9 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 <i class="pi pi-arrow-right" aria-hidden="true"></i> Advance to Next Stage
               </UiButton>
             </UiCard>
+
+            <!-- Linked property inspections (tasks/todo/PropertyInspection.md) -->
+            <BoughtDealLinkedInspectionsSection :bought-deal-id="editingDeal.id" :deal-type="editingDealType" />
 
             <!-- Top Section: Task & Basic Details -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -26,7 +26,7 @@ describe("AppSidebar", () => {
     const links = wrapper.findAll("nav a");
     expect(links.map((a) => a.attributes("data-testid"))).toEqual(NAV_ITEMS.map((i) => `shell.nav.${i.name}`));
     expect(links.map((a) => a.attributes("href"))).toEqual(NAV_ITEMS.map((i) => i.to));
-    expect(links.map((a) => a.attributes("aria-current"))).toEqual([undefined, undefined, undefined, undefined, "page", undefined]);
+    expect(links.map((a) => a.attributes("aria-current"))).toEqual([undefined, undefined, undefined, undefined, "page", undefined, undefined]);
     expect(wrapper.get('[data-part="active-indicator"]').attributes("style")).toContain("translateY(192px)");
   });
 
@@ -50,12 +50,12 @@ describe("AppSidebar", () => {
 });
 
 describe("AppMobileNav", () => {
-  it("is a second labelled primary nav with all six routes as stacked tabs", async () => {
+  it("is a second labelled primary nav with all seven routes as stacked tabs", async () => {
     const router = await routerAt("/analyze");
     const wrapper = mount(AppMobileNav, { global: { plugins: [router] } });
     expect(wrapper.attributes("data-testid")).toBe("shell.mobile-nav");
     expect(wrapper.attributes("aria-label")).toBe("Primary");
-    expect(wrapper.findAll("a")).toHaveLength(6);
+    expect(wrapper.findAll("a")).toHaveLength(7);
     expect(wrapper.get('[data-testid="shell.nav.analyze"]').attributes("aria-current")).toBe("page");
     expect(wrapper.classes()).toContain("pb-safe-b");
   });

@@ -4,6 +4,7 @@ import { useConnectionStore } from "./stores/connectionStore";
 import { useDealStore } from "./stores/dealStore";
 import { onMounted } from "vue";
 import { apiClient } from "./api";
+import router from "./router";
 import AppShell from "./components/shell/AppShell.vue";
 import AppKeyGate from "./components/shell/AppKeyGate.vue";
 import SecurityBar from "./components/shell/SecurityBar.vue";
@@ -41,8 +42,11 @@ onMounted(() => {
   // Wake up the backend immediately
   connectionStore.checkConnection();
 
-  // Fetch deals globally so portfolio stats are available on all pages
-  dealStore.fetchDeals();
+  // Fetch deals globally so portfolio stats are available on all pages --
+  // except on a public inspection page, where a visitor may not be logged in.
+  void router.isReady().then(() => {
+    if (router.currentRoute.value.meta.public !== true) dealStore.fetchDeals();
+  });
 });
 </script>
 
