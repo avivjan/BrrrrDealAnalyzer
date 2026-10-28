@@ -44,9 +44,8 @@ onMounted(() => {
 
   // Fetch deals globally so portfolio stats are available on all pages --
   // except on a public inspection page, where a visitor may not be logged in.
-  void router.isReady().then(() => {
-    if (router.currentRoute.value.meta.public !== true) dealStore.fetchDeals();
-  });
+  // The route is resolved from the address bar now, so the request order is unchanged.
+  if (router.resolve(window.location.pathname).meta.public !== true) dealStore.fetchDeals();
 });
 </script>
 

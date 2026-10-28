@@ -31,13 +31,17 @@
   animation: inspection-question-reveal 180ms var(--ease-standard, ease-out) both;
 }
 
-/* Card to card: a short slide in the direction of travel. */
-.inspection-card-forward-enter-active,
-.inspection-card-backward-enter-active {
-  transition: opacity 220ms var(--ease-standard, ease-out), transform 220ms var(--ease-standard, ease-out);
+/* Card to card: a short slide in the direction of travel (entrance only, so nothing waits on a leave). */
+@keyframes inspection-card-enter-forward {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
 }
-.inspection-card-forward-enter-from { opacity: 0; transform: translateX(24px); }
-.inspection-card-backward-enter-from { opacity: 0; transform: translateX(-24px); }
+@keyframes inspection-card-enter-backward {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+.inspection-card-enter-forward { animation: inspection-card-enter-forward 220ms var(--ease-standard, ease-out) both; }
+.inspection-card-enter-backward { animation: inspection-card-enter-backward 220ms var(--ease-standard, ease-out) both; }
 
 /* Level cleared: the ring pulses once and ten dots burst out of it. */
 @keyframes inspection-level-cleared {

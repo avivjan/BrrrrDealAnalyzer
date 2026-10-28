@@ -238,9 +238,10 @@ async function onLinkToDealPressed() {
         <template v-else>
           <div class="mx-auto max-w-2xl touch-pan-y" data-testid="inspection.card-area" @pointerdown="onPointerDown" @pointerup="onPointerUp" @pointercancel="swipeStart = null">
             <p class="numeric mb-3 text-center text-xs text-fg-muted">Item {{ itemPosition }} of {{ totalItemCount }}</p>
-            <Transition :name="`inspection-card-${cardDirection}`" mode="out-in">
-              <InspectionItemCard :key="currentItem.key" :item="currentItem" :level-label="currentSection?.label ?? ''" />
-            </Transition>
+            <!-- A CSS-only entrance: nothing waits on it, so a card change is never held back. -->
+            <div :key="currentItem.key" :class="`inspection-card-enter-${cardDirection}`">
+              <InspectionItemCard :item="currentItem" :level-label="currentSection?.label ?? ''" />
+            </div>
           </div>
         </template>
       </div>

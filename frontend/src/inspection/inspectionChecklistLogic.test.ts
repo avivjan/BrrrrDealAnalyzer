@@ -101,7 +101,8 @@ describe("revealing one question at a time", () => {
 
   it("skips straight to photos and notes when City needs no follow-up", () => {
     expect(revealedQuestionCount(sewer, answered("ok", { sewer_type: "city" }))).toBe(3);
-    expect(cardQuestionsOfItem(sewer, { sewer_type: "city" }).at(-1)).toEqual({ kind: "photos_and_notes" });
+    const cityQuestions = cardQuestionsOfItem(sewer, { sewer_type: "city" });
+    expect(cityQuestions[cityQuestions.length - 1]).toEqual({ kind: "photos_and_notes" });
   });
 });
 
