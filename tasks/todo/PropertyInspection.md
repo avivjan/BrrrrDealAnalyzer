@@ -189,13 +189,13 @@ The deal picker reuses the existing, authenticated `GET /bought-deals`.
 - [x] **5** (60 min): Photos: the Apps Script, the HMAC Drive client, upload validation, thumbnail and full routes, delete with trash.
 - [x] **6** (20 min): **MCP support:** `DESCRIPTIONS` for every new tool. `delete_inspection` and `unlink_inspection_from_deal` are destructive; GET tools are read-only. The binary photo routes are excluded from tool generation. MCP tests cover list, get with summary, create, update item, and link/unlink.
 - [x] **7** (15 min): Update `test_auth_gate.py` so it exempts only `/public/inspections`. Regenerate the goldens with `verify_regression.py snapshot` and review the diff.
-- [ ] **8** (40 min): Frontend logic module, API client, store, offline queue, recent-on-device.
-- [ ] **9** (30 min): Router, nav and shell changes, and the fixes so public routes skip global fetches and the login redirect.
-- [ ] **10** (150 min): Walkthrough UI: start screen, level map, item card with progressive questions, status picker, counter, swipe, photos (compress, upload, thumbnails, lightbox, delete), missions-left pill, celebrations, finish dialog. Write the design page spec first.
-- [ ] **11** (45 min): Summary page and Share. The deal-link drawer. The Bought Deal linked-inspections section and "New inspection".
-- [ ] **12** (40 min): Vitest unit and component tests.
-- [ ] **13** (45 min): Playwright E2E flow and its golden, in a separate `Golden update:` commit.
-- [ ] **14** (40 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
+- [x] **8** (40 min): Frontend logic module, API client, store, offline queue, recent-on-device.
+- [x] **9** (30 min): Router, nav and shell changes, and the fixes so public routes skip global fetches and the login redirect.
+- [x] **10** (150 min): Walkthrough UI: start screen, level map, item card with progressive questions, status picker, counter, swipe, photos (compress, upload, thumbnails, lightbox, delete), missions-left pill, celebrations, finish dialog. Write the design page spec first.
+- [x] **11** (45 min): Summary page and Share. The deal-link drawer. The Bought Deal linked-inspections section and "New inspection".
+- [x] **12** (40 min): Vitest unit and component tests.
+- [x] **13** (45 min): Playwright E2E flow and its golden, in a separate `Golden update:` commit.
+- [x] **14** (40 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
   - No public route lists inspections or leaks deal fields. Add a test that walks every public response for `deal`, `brrrr` and `flip` keys.
   - The id is uuid4 only.
   - Rate limits and size caps work.
@@ -204,7 +204,7 @@ The deal picker reuses the existing, authenticated `GET /bought-deals`.
   - No `v-html` with user text.
   - The 401 redirect change doesn't weaken protected routes.
   - Then a repo-wide pass, and bandit, pip-audit and npm audit come back clean.
-- [ ] **15** (20 min): README: the feature, the new env vars, and the Apps Script setup steps. The Review section in the task file.
+- [x] **15** (20 min): README: the feature, the new env vars, and the Apps Script setup steps. The Review section in the task file.
 - [ ] **16** (10 min): Push, open the PR, CI green.
 - [ ] **17** (you, ~10 min, guided): Deploy the Apps Script under bigwhalesllc. Set `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL` and `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` on Render.
 
@@ -259,3 +259,28 @@ The deal picker reuses the existing, authenticated `GET /bought-deals`.
 3. Manual: run the app, open `/inspections/new` in a phone-sized viewport in a private window (anonymous), play through, toggle offline in devtools and confirm the queue syncs, and open the same inspection in two windows to see the polling merge.
 4. MCP: `tests/mcp_helpers.call_json("get_inspection", inspection_id=...)` returns the summary.
 5. CI on the PR: backend pytest and the migration smoke test, security, and frontend Vitest and build are all green.
+
+## Review
+
+| Check | Result |
+|---|---|
+| Backend `pytest` (test Postgres) | 1,225 passed, including `test_inspection_api.py` (26), `test_inspection_checklist_config.py` (14) and `test_mcp_inspection.py` (3) |
+| Migration smoke test | Two `import main` boots on a fresh database: clean. The three tables come from `create_all`; no migration step needed |
+| `verify_regression.py` | Only `openapi` and `schema` changed, both purely additive (12 new paths, 3 new tables); regenerated |
+| Frontend `vitest` | 1,706 passed, including 32 new inspection tests |
+| Frontend `npm run build` | Passes (`vue-tsc` and Vite) |
+| Playwright | The new `inspection-walkthrough` flow passes on Chromium and Mobile Chrome; the full Chromium suite passes (121 passed, 4 skipped, as on `main`) |
+| Security (CI's own checks) | bandit clean, pip-audit clean, `npm audit --omit=dev` 0 vulnerabilities |
+
+**Deviations from the plan.**
+1. **Rate limits are in memory**, per process (`inspection_request_guards.py`), not counted from `audit_log`. The autosave sends a request on almost every tap, and an audit row each time would flood that table. Render runs one process, and a restart only resets the counts.
+2. **The card change is a CSS entrance**, not a Vue `<Transition mode="out-in">`. The out-in transition waited on animation frames before showing the next card. That is fragile, and it stalled completely under the E2E suite's frozen clock.
+3. **Year questions use one stepper plus "Unknown"**, and show "≈ N years old" next to the year, so "age or install year" is a single answer.
+4. **The MCP payload budget:** the MCP tools-list size budget in `test_mcp.py` went from 320 kB to 350 kB, recorded in that test's comment like the earlier raises.
+
+**Security notes.**
+1. **The per-IP limits see Netlify's address.** Production calls go through the Netlify `/api` proxy, so `client_ip()` (the last forwarded hop) is Netlify's egress address for everyone. That is true of every existing limit too (send-offer, ARV, member loan). The inspection limits are generous enough for two inspectors, but one abuser could use up the shared create limit (20 an hour) for a while. Fixing `client_ip()` for the proxy is a separate change.
+2. **Inspection ids appear in Render's access logs**, as with any capability link. Only the owners can read those logs, and they can already read the database.
+3. **Anyone with the link can edit the inspection and delete its photos**, as the spec intends. Only logged-in users can delete the inspection itself or change its deal link.
+4. **An inspection started from a Bought Deal copies the deal's address** into the inspection. The public page then shows that address as the inspection's own field. No deal id, type or number is ever in a public response, and a test walks every public response to check.
+5. **The Drive script** checks the HMAC and the timestamp, saves only `.jpg`, and reads or trashes only files under `property inspections`. Its secret exists only on Render and in the script's properties.
