@@ -1,0 +1,63 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/helloworld"
+    },
+    {
+      "method": "GET",
+      "path": "/inspections"
+    },
+    {
+      "method": "POST",
+      "path": "/public/inspections",
+      "body": {
+        "inspection_date": "2026-09-04",
+        "inspector_name": "Aviv",
+        "property_address": "12 Palm Ave, Tampa, FL"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/public/inspections/{id}"
+    },
+    {
+      "method": "PATCH",
+      "path": "/public/inspections/{id}/items/roof",
+      "body": {
+        "item_field_values": {
+          "roof_install_year": "unknown",
+          "roof_type": "shingle"
+        },
+        "item_status": "repair"
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/public/inspections/{id}/items/windows",
+      "body": {
+        "item_field_values": {
+          "windows_needing_replacement_count": 2
+        },
+        "item_status": "replace"
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/public/inspections/{id}/items/sewer",
+      "body": {
+        "item_field_values": {
+          "sewer_type": "city"
+        },
+        "item_status": "ok"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/public/inspections/{id}/complete",
+      "body": {
+        "completion_override_reason": "Utilities were shut off today"
+      }
+    }
+  ]
+}

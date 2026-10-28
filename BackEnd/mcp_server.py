@@ -261,6 +261,38 @@ DESCRIPTIONS: dict[str, str] = {
     "reps_create_activity_category": "Add a custom REPS activity category.",
     "reps_delete_activity_category": "Delete a REPS activity category.",
     "reps_config_status": "Whether the REPS Google Sheets / GCS integration is configured on the server.",
+    # --- Property inspections (tasks/todo/PropertyInspection.md) ---
+    "list_inspections": (
+        "List every property inspection (newest first) with its date, status, checked/total item counts, "
+        "how many items are marked Repair or Replace, photo count, and the linked Bought Deal, if any."
+    ),
+    "get_inspection": (
+        "Get one inspection by id: start info, every item's status, notes and field values, photo list, "
+        "and a summary (Replace, Repair and OK items with their fields, CRITICAL items still not checked, "
+        "windows to replace)."
+    ),
+    "create_inspection": (
+        "Start a new property inspection: property_address (required), inspection_date (default today), "
+        "inspector_name. Returns the inspection with its id; the walkthrough link is /inspections/<id>."
+    ),
+    "update_inspection_start_info": "Change an inspection's address, date or inspector name (only the fields sent change).",
+    "update_inspection_item": (
+        "Update one checklist item of an inspection: item_status (not_checked, ok, repair, replace), "
+        "item_notes, and item_field_values, which are merged into the stored values (null clears a field). "
+        "Item keys: roof, foundation, walls_and_siding, windows, hvac, electrical, plumbing, water_heater, "
+        "sewer, water_supply."
+    ),
+    "complete_inspection": (
+        "Finish an inspection. Refused (409) while a CRITICAL item is not checked, unless "
+        "completion_override_reason (at least 10 characters) explains why."
+    ),
+    "delete_inspection_photo": "Delete one photo of an inspection.",
+    "delete_inspection": "Delete an inspection with all its answers and photos.",
+    "get_inspection_deal_link": "Which Bought Deal (id, BRRRR or FLIP, address) an inspection is linked to, if any.",
+    "link_inspection_to_deal": "Link an inspection to a Bought Deal (bought_deal_id and deal_type BRRRR or FLIP); replaces any earlier link.",
+    "unlink_inspection_from_deal": "Remove an inspection's link to its Bought Deal (the inspection itself is kept).",
+    "list_bought_deal_inspections": "List the inspections linked to one Bought Deal, with status, date and Repair/Replace counts.",
+    "create_inspection_for_bought_deal": "Start a new inspection already linked to a Bought Deal, with the deal's address prefilled.",
 }
 
 BODY_ARG = "body"
@@ -270,13 +302,17 @@ BODY_ARG = "body"
 # its two members on a passkey (decision D12), so it is never a tool either.
 EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-loan")
 
+# Routes whose request or answer is a binary image: the camera upload and the
+# JPEG downloads of the inspection walkthrough are for the browser, not a tool.
+EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnail", "get_inspection_photo_full_image"}
+
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
 # site's own data; GET tools are read-only.
 OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
-DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template"}
+DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal"}
 
 
 def tool_annotations(name: str, method: str) -> t.ToolAnnotations:
@@ -453,7 +489,7 @@ def _build_tools(app: FastAPI) -> dict[str, dict[str, Any]]:
     tools: dict[str, dict[str, Any]] = {}
 
     for route in _api_routes(app.routes):
-        if not route.include_in_schema or route.path.startswith(EXCLUDED_PREFIXES):
+        if not route.include_in_schema or route.path.startswith(EXCLUDED_PREFIXES) or route.name in EXCLUDED_TOOL_NAMES:
             continue
         for method in route.methods:
             op = spec["paths"][route.path][method.lower()]

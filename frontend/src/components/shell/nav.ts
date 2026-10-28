@@ -2,13 +2,13 @@
  * The primary navigation, as data: one entry per route the router declares.
  *
  * The router itself is frozen (`src/router/index.ts`), so this file mirrors
- * its six routes for the sidebar, the bottom nav and the command palette, and
+ * its seven routes for the sidebar, the bottom nav and the command palette, and
  * `shell/nav.test.ts` holds the two in step. `name` doubles as the hook suffix
  * (`shell.nav.<name>`) and as the title the topbar shows for the route.
  */
 export interface NavItemData {
   /** Matches the router's route name. */
-  name: "home" | "analyze" | "my-deals" | "bought-deals" | "liquidity" | "reps";
+  name: "home" | "analyze" | "my-deals" | "bought-deals" | "liquidity" | "reps" | "inspections";
   label: string;
   to: string;
   /** A primeicons class. */
@@ -24,6 +24,7 @@ export const NAV_ITEMS: readonly NavItemData[] = [
   { name: "bought-deals", label: "Bought", to: "/bought-deals", icon: "pi pi-check-circle", title: "Bought Deals" },
   { name: "liquidity", label: "Liquidity", to: "/liquidity", icon: "pi pi-chart-line", title: "Liquidity" },
   { name: "reps", label: "REPS", to: "/reps", icon: "pi pi-clock", title: "REPS Tracker" },
+  { name: "inspections", label: "Inspect", to: "/inspections", icon: "pi pi-check-square", title: "Inspections" },
 ];
 
 export function navItemForPath(path: string): NavItemData | undefined {

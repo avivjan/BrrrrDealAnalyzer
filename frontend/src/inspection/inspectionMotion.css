@@ -1,0 +1,89 @@
+/*
+ * Motion for the inspection walkthrough (design-system/brrrr-deal-analyzer/pages/inspection.md).
+ * CSS only, on purpose: the reduced-motion neutraliser in `assets/main.css`
+ * (the OS setting and the in-app Motion switch) turns every one of these into
+ * an instant state change. Every entrance is at most 500 ms.
+ */
+
+/* A pressed big button gives back a little. */
+.inspection-press {
+  transition-property: transform, background-color, border-color, color, box-shadow;
+  transition-duration: var(--dur-fast, 120ms);
+}
+.inspection-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@keyframes inspection-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.inspection-fade-in {
+  animation: inspection-fade-in 160ms var(--ease-standard, ease-out) both;
+}
+
+/* The next question slides up into view. */
+@keyframes inspection-question-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.inspection-question-reveal {
+  animation: inspection-question-reveal 180ms var(--ease-standard, ease-out) both;
+}
+
+/* Card to card: a short slide in the direction of travel (entrance only, so nothing waits on a leave). */
+@keyframes inspection-card-enter-forward {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes inspection-card-enter-backward {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+.inspection-card-enter-forward { animation: inspection-card-enter-forward 220ms var(--ease-standard, ease-out) both; }
+.inspection-card-enter-backward { animation: inspection-card-enter-backward 220ms var(--ease-standard, ease-out) both; }
+
+/* Level cleared: the ring pulses once and ten dots burst out of it. */
+@keyframes inspection-level-cleared {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.inspection-level-cleared {
+  animation: inspection-level-cleared 420ms var(--ease-standard, ease-out) both;
+}
+
+.inspection-burst {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  pointer-events: none;
+}
+.inspection-burst i {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 9999px;
+  background: rgb(var(--color-positive));
+  opacity: 0;
+  animation: inspection-burst-dot 480ms var(--ease-standard, ease-out) both;
+}
+.inspection-burst i:nth-child(3n) { background: rgb(var(--color-accent)); }
+.inspection-burst i:nth-child(3n + 1) { background: rgb(var(--color-primary)); }
+@keyframes inspection-burst-dot {
+  0% { opacity: 1; transform: rotate(var(--burst-angle)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(-46px) scale(0.4); }
+}
+
+@keyframes inspection-finish-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.inspection-finish-rise {
+  animation: inspection-finish-rise 360ms var(--ease-standard, ease-out) both;
+}
+
+/* The overall progress bar fills smoothly. */
+.inspection-progress-fill {
+  transition: width 320ms var(--ease-standard, ease-out);
+}

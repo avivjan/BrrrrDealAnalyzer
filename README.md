@@ -736,6 +736,7 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_COMPANY_EMAIL` | Member Loan | The Borrower's notice address (`bigwhalesllc@gmail.com`); every signed copy goes to it too. Unset, the signed-copy e-mail fails and is retried |
 | `MEMBER_LOAN_LENDER_LEGAL_NAME`, `MEMBER_LOAN_YARDEN_LEGAL_NAME` | Member Loan | The full legal names typed to sign (default `Aviv Jan`, `Yarden Kelly`) |
 | `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
+| `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos in the Drive folder `property inspections`, and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
 | `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
 | `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
@@ -803,6 +804,48 @@ HMAC-signed and at most five minutes old, so the URL alone lets nobody write to 
 
 **Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
 only in this database.
+
+### Property inspections
+
+The pre-purchase walkthrough that replaces the PDF checklist (plan, decisions and tests:
+[`tasks/todo/PropertyInspection.md`](tasks/todo/PropertyInspection.md)). The **Inspect** tab.
+
+- **Public by link.** `/inspections/<id>` needs no login. The id is a random uuid4. There is
+  no public list: an inspector finds their inspections through the link or "Recent on this device"
+  (localStorage). The public routes live under `/public/inspections/...` in
+  `routers/public_inspection.py`, which protects itself: per-IP rate limits, CSRF headers on
+  writes, a 32 KB JSON cap, JPEG-only photos within size caps, and every field validated against
+  the checklist config. Public responses never carry deal data, only `linked: true/false`.
+- **Logged in** (the site's normal gates, `routers/inspection.py`): list every inspection, delete
+  one, link or unlink a Bought Deal (`PUT/DELETE /inspections/<id>/deal-link`), and the Bought Deal
+  modal's *Inspections* section with **New inspection** (linked, address prefilled).
+- **The checklist is config.** `BackEnd/BL/inspection/inspection_checklist_config.json` defines
+  sections (levels), items, CRITICAL flags, fields and follow-ups (`show_when`). The frontend
+  keeps a byte-identical copy; after editing the backend file run
+  `cp BackEnd/BL/inspection/inspection_checklist_config.json frontend/src/inspection/inspectionChecklistConfig.json`
+  (a backend test fails until you do). Adding the interior, lot or permits sections later is
+  a config change only.
+- **Finishing** is refused (409) while a CRITICAL item is *Not checked*, unless an override
+  reason of at least 10 characters is given; the reason is stored and shown on the summary.
+- **Saving.** Every answer is a PATCH of that one item, sent 600 ms after the last tap, with field
+  values merged key by key, so two people on two devices don't overwrite each other. Changes
+  wait in localStorage and photos in IndexedDB while offline, and sync when the signal returns.
+  The page polls every 10 s to show the other person's changes.
+- **Photos.** The browser shrinks each photo to at most 1600 px (JPEG 0.8, which also strips
+  EXIF and GPS) plus a 320 px thumbnail. Thumbnails are stored in Postgres; full photos go to
+  Google Drive, one folder per inspection under `property inspections`.
+- **MCP.** Every inspection route is a tool (`list_inspections`, `get_inspection` with its
+  summary, `create_inspection`, `update_inspection_item`, `link_inspection_to_deal`,
+  `unlink_inspection_from_deal`, …), except the three binary photo routes.
+
+**Saving photos to Google Drive (once).** Same pattern as the loan agreements, with its own
+script and secret: [`BackEnd/integrations/google_drive_inspection_photos.gs`](BackEnd/integrations/google_drive_inspection_photos.gs).
+Signed in as bigwhalesllc@gmail.com, paste it into a new project at script.google.com, add the
+script property `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET`, deploy it as a web app (execute as me,
+anyone may call it), and set the same secret and the web app URL (`…/exec`) on Render as
+`INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` and `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`. The script
+only reads or trashes files inside `property inspections`, and refuses any request that is not
+HMAC-signed and less than five minutes old.
 
 ## 🧩 Adding an input to the deal form
 

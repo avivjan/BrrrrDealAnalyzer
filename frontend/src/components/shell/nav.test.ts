@@ -8,14 +8,16 @@ const routerSource = readFileSync(new URL("../../router/index.ts", import.meta.u
 const AUTH_ROUTES = new Set(["login", "enroll", "pending", "connect", "devices"]);
 /** The Member Loan is for two members only: linked from the session strip, never the primary nav. */
 const MEMBER_LOAN_ROUTES = new Set(["member-loan", "member-loan-approval", "member-loan-sign"]);
+/** The pages inside one inspection belong to the Inspections tab, not the nav. */
+const INSPECTION_SUB_ROUTES = new Set(["inspection-new", "inspection-walkthrough", "inspection-item", "inspection-summary"]);
 const routes = [...routerSource.matchAll(/path:\s*['"]([^'"]+)['"],\s*name:\s*['"]([^'"]+)['"]/g)]
   .map((m) => ({ path: m[1]!, name: m[2]! }))
   // The auth routes (login, enroll, pending, connect, devices) are not navigation.
-  .filter((r) => !AUTH_ROUTES.has(r.name) && !MEMBER_LOAN_ROUTES.has(r.name));
+  .filter((r) => !AUTH_ROUTES.has(r.name) && !MEMBER_LOAN_ROUTES.has(r.name) && !INSPECTION_SUB_ROUTES.has(r.name));
 
 describe("the primary navigation", () => {
   it("mirrors every route the frozen router declares, by path and name", () => {
-    expect(routes.length).toBe(6);
+    expect(routes.length).toBe(7);
     expect(NAV_ITEMS.map((item) => ({ path: item.to, name: item.name }))).toEqual(routes);
   });
 

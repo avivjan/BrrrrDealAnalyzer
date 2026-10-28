@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { APP_KEY_DETAIL, APP_KEY_HEADER, appKeyRequired, readAppKey } from '../auth/appKey';
+import { isOnPublicRoute } from '../router/publicRoutes';
 import type {
   AnalyzeDealReq,
   AnalyzeDealRes,
@@ -105,7 +106,8 @@ apiClient.interceptors.response.use(
           return apiClient.request(config);
         }
         const { default: router } = await import('../router');
-        if (router.currentRoute.value.name !== 'login') {
+        // A public page (an inspection by link) stays put: only its logged-in extras fail.
+        if (router.currentRoute.value.name !== 'login' && !isOnPublicRoute.value) {
           router.push({ name: 'login', query: { next: router.currentRoute.value.fullPath } });
         }
       }
@@ -126,7 +128,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401 && error.response.data?.detail === APP_KEY_DETAIL) {
+    if (error?.response?.status === 401 && error.response.data?.detail === APP_KEY_DETAIL && !isOnPublicRoute.value) {
       appKeyRequired.value = true;
     }
     return Promise.reject(error);

@@ -11,13 +11,21 @@ import PendingApproval from '../views/PendingApproval.vue'
 import ConnectView from '../views/ConnectView.vue'
 import SettingsDevices from '../views/SettingsDevices.vue'
 import MemberLoan from '../views/MemberLoan.vue'
+import InspectionsHome from '../views/InspectionsHome.vue'
+import InspectionStart from '../views/InspectionStart.vue'
+import InspectionWalkthrough from '../views/InspectionWalkthrough.vue'
+import InspectionSummary from '../views/InspectionSummary.vue'
 import { useAuthStore } from '../stores/authStore'
+import { isOnPublicRoute } from './publicRoutes'
 
 /** Routes that never require a session, and are not in the primary nav. */
 export const AUTH_ROUTE_NAMES = ['login', 'enroll', 'pending', 'connect', 'devices'] as const
 
 /** The Member Loan (two members only): reached from the session strip and e-mails, not the primary nav. */
 export const MEMBER_LOAN_ROUTE_NAMES = ['member-loan', 'member-loan-approval', 'member-loan-sign'] as const
+
+/** The inspection pages under the Inspections tab: public by link (`meta.public`), never a login. */
+export const INSPECTION_SUB_ROUTE_NAMES = ['inspection-new', 'inspection-walkthrough', 'inspection-item', 'inspection-summary'] as const
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,6 +60,18 @@ const router = createRouter({
       name: 'reps',
       component: RepsTracker
     },
+    // Property inspections (tasks/todo/PropertyInspection.md): public, reached
+    // by an unguessable link. The API keeps listing and deal links behind login.
+    {
+      path: '/inspections',
+      name: 'inspections',
+      component: InspectionsHome,
+      meta: { public: true }
+    },
+    { path: '/inspections/new', name: 'inspection-new', component: InspectionStart, meta: { public: true } },
+    { path: '/inspections/:inspectionId', name: 'inspection-walkthrough', component: InspectionWalkthrough, props: true, meta: { public: true } },
+    { path: '/inspections/:inspectionId/items/:itemKey', name: 'inspection-item', component: InspectionWalkthrough, props: true, meta: { public: true } },
+    { path: '/inspections/:inspectionId/summary', name: 'inspection-summary', component: InspectionSummary, props: true, meta: { public: true } },
     // Authentication (SECURITY_PLAN.md §3.2). `meta.auth` marks them; they are
     // deliberately absent from `shell/nav.ts`.
     { path: '/login', name: 'login', component: LoginView, meta: { auth: true } },
@@ -71,7 +91,8 @@ const router = createRouter({
 // default) `load()` resolves to `off` and every route behaves exactly as
 // before -- no login screen ever appears.
 router.beforeEach(async (to) => {
-  if (to.meta.auth) return true
+  isOnPublicRoute.value = to.meta.public === true
+  if (to.meta.auth || to.meta.public) return true
   const auth = useAuthStore()
   const status = auth.status === 'unknown' ? await auth.load() : auth.status
   if (status === 'anon') return { name: 'login', query: { next: to.fullPath } }
