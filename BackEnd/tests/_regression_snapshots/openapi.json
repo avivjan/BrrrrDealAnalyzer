@@ -11275,6 +11275,23 @@
             "title": "Property Address",
             "type": "string"
           },
+          "report_delivery_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sending",
+                  "delivered",
+                  "will_retry"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The report of the last finish: e-mailed and saved to Drive, still sending, or failed and retrying. Null before the first finish.",
+            "title": "Report Delivery Status"
+          },
           "summary": {
             "$ref": "#/components/schemas/InspectionSummaryRes"
           },

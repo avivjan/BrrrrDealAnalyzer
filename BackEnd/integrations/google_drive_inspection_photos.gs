@@ -1,12 +1,14 @@
 /**
- * Big Whales Deal Analyzer: keep property inspection photos in Google Drive.
+ * Big Whales Deal Analyzer: keep property inspection photos and reports in Google Drive.
  *
  * Runs as a Google Apps Script web app owned by bigwhalesllc@gmail.com. The
  * web service (BL/inspection/common/inspection_photo_google_drive.py) POSTs here to:
- *   save   a JPEG into "property inspections/<inspection folder>", creating the folders
- *   read   a photo back (base64), by Drive file id
- *   trash  a photo, by Drive file id
- * `read` and `trash` only act on files inside the "property inspections" folder tree,
+ *   save          a photo (JPEG) into "inspections/<inspection folder>", creating the folders
+ *   save_report   the PDF report of a finished inspection, into the same folder
+ *   read          a photo back (base64), by Drive file id
+ *   trash         a photo, by Drive file id
+ * Each inspection gets its own folder under "inspections". `read` and `trash`
+ * only act on files inside the "inspections" folder tree,
  * so a leaked or forged file id can never reach any other file in this Drive.
  *
  * Every request must carry an HMAC-SHA256 signature made with the shared
@@ -28,8 +30,14 @@
  */
 
 var LARGEST_TIMESTAMP_AGE_SECONDS = 300;
-var PROPERTY_INSPECTIONS_FOLDER_NAME = 'property inspections';
+var INSPECTIONS_FOLDER_NAME = 'inspections';
 var LARGEST_IMAGE_BYTES = 4 * 1024 * 1024;
+var LARGEST_REPORT_BYTES = 20 * 1024 * 1024;
+// What each saving action accepts: the file extension, its type and its largest size.
+var SAVED_FILE_KINDS = {
+  save: { extension: '.jpg', mimeType: 'image/jpeg', largestBytes: LARGEST_IMAGE_BYTES },
+  save_report: { extension: '.pdf', mimeType: 'application/pdf', largestBytes: LARGEST_REPORT_BYTES }
+};
 
 function doPost(e) {
   try {
@@ -47,7 +55,7 @@ function doPost(e) {
     if (!equalInConstantTime_(expectedSignature, String(request.signature || ''))) {
       return answer_({ ok: false, error: 'wrong signature' });
     }
-    if (request.action === 'save') return savePhoto_(request);
+    if (SAVED_FILE_KINDS.hasOwnProperty(request.action)) return saveFile_(request, SAVED_FILE_KINDS[request.action]);
     if (request.action === 'read') return readPhoto_(request);
     if (request.action === 'trash') return trashPhoto_(request);
     return answer_({ ok: false, error: 'unknown action' });
@@ -56,25 +64,25 @@ function doPost(e) {
   }
 }
 
-function savePhoto_(request) {
+function saveFile_(request, kind) {
   var folderName = safeName_(request.inspection_folder_name);
   var fileName = safeName_(request.file_name);
   if (request.subject !== request.inspection_folder_name + '/' + request.file_name) {
     return answer_({ ok: false, error: 'the subject does not match the folder and file name' });
   }
-  if (fileName.slice(-4).toLowerCase() !== '.jpg') {
-    return answer_({ ok: false, error: 'only .jpg files are saved' });
+  if (fileName.slice(-kind.extension.length).toLowerCase() !== kind.extension) {
+    return answer_({ ok: false, error: 'only ' + kind.extension + ' files are saved by ' + request.action });
   }
-  var imageBytes = Utilities.base64Decode(request.image_base64);
-  if (imageBytes.length > LARGEST_IMAGE_BYTES) {
-    return answer_({ ok: false, error: 'the image is too large' });
+  var fileBytes = Utilities.base64Decode(request.image_base64);
+  if (fileBytes.length > kind.largestBytes) {
+    return answer_({ ok: false, error: 'the file is too large' });
   }
-  if (toHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, imageBytes)) !== request.image_sha256) {
-    return answer_({ ok: false, error: 'the image does not match its SHA-256' });
+  if (toHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, fileBytes)) !== request.image_sha256) {
+    return answer_({ ok: false, error: 'the file does not match its SHA-256' });
   }
-  var inspectionFolder = childFolder_(propertyInspectionsFolder_(), folderName);
-  var file = inspectionFolder.createFile(Utilities.newBlob(imageBytes, 'image/jpeg', fileName));
-  return answer_({ ok: true, file_id: file.getId() });
+  var inspectionFolder = childFolder_(inspectionsFolder_(), folderName);
+  var file = inspectionFolder.createFile(Utilities.newBlob(fileBytes, kind.mimeType, fileName));
+  return answer_({ ok: true, file_id: file.getId(), folder_url: inspectionFolder.getUrl() });
 }
 
 function readPhoto_(request) {
@@ -99,7 +107,7 @@ function fileInsidePropertyInspections_(request) {
     return null;
   }
   if (file.isTrashed()) return null;
-  var rootId = propertyInspectionsFolder_().getId();
+  var rootId = inspectionsFolder_().getId();
   var parents = file.getParents();
   while (parents.hasNext()) {
     var inspectionFolder = parents.next();
@@ -111,8 +119,8 @@ function fileInsidePropertyInspections_(request) {
   return null;
 }
 
-function propertyInspectionsFolder_() {
-  return childFolder_(DriveApp.getRootFolder(), PROPERTY_INSPECTIONS_FOLDER_NAME);
+function inspectionsFolder_() {
+  return childFolder_(DriveApp.getRootFolder(), INSPECTIONS_FOLDER_NAME);
 }
 
 function childFolder_(parent, folderName) {

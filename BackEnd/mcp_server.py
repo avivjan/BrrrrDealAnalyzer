@@ -269,7 +269,7 @@ DESCRIPTIONS: dict[str, str] = {
     "get_inspection": (
         "Get one inspection by id: start info, every item's status, notes and field values, photo list, "
         "and a summary (Replace, Repair and OK items with their fields, CRITICAL items still not checked, "
-        "windows to replace)."
+        "windows to replace), plus report_delivery_status for the last finish's e-mailed and Drive-saved report."
     ),
     "create_inspection": (
         "Start a new property inspection: property_address (required), inspection_date (default today), "
@@ -284,7 +284,8 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "complete_inspection": (
         "Finish an inspection. Refused (409) while a CRITICAL item is not checked, unless "
-        "completion_override_reason (at least 10 characters) explains why."
+        "completion_override_reason (at least 10 characters) explains why. Each finish e-mails a PDF report "
+        "to the company and saves it in the inspection's Drive folder (report_delivery_status tracks it)."
     ),
     "delete_inspection_photo": "Delete one photo of an inspection.",
     "delete_inspection": "Delete an inspection with all its answers and photos.",
@@ -310,7 +311,7 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
 # site's own data; GET tools are read-only.
-OPEN_WORLD_TOOLS = {"send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
+OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal"}
 

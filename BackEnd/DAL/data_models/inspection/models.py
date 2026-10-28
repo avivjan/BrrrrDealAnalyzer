@@ -86,3 +86,37 @@ class PropertyInspectionPhoto(Base):
     thumbnail_jpeg = Column(LargeBinary, nullable=False)
     full_image_byte_size = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+REPORT_DELIVERY_PENDING = "pending"
+REPORT_DELIVERY_DELIVERED = "delivered"
+REPORT_DELIVERY_FAILED = "failed"
+
+
+class PropertyInspectionReport(Base):
+    """The PDF report made each time an inspection is finished, and where it was sent.
+
+    The PDF is kept as it was at that finish, so a retry sends exactly what was
+    finished. E-mail and Drive are tracked separately: each is retried on its
+    own until delivered or out of attempts (BL/inspection/common/inspection_report_delivery.py).
+    """
+
+    __tablename__ = "property_inspection_reports"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    inspection_id = Column(
+        Uuid(as_uuid=True), ForeignKey("property_inspections.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    report_pdf = Column(LargeBinary, nullable=False)
+    report_file_name = Column(String, nullable=False)
+    email_delivery_status = Column(String, nullable=False, default=REPORT_DELIVERY_PENDING)
+    email_attempt_count = Column(Integer, nullable=False, default=0)
+    email_last_error_type = Column(String, nullable=True)
+    emailed_at = Column(DateTime(timezone=True), nullable=True)
+    drive_delivery_status = Column(String, nullable=False, default=REPORT_DELIVERY_PENDING)
+    drive_attempt_count = Column(Integer, nullable=False, default=0)
+    drive_last_error_type = Column(String, nullable=True)
+    drive_file_id = Column(String, nullable=True)
+    drive_folder_url = Column(String, nullable=True)
+    saved_to_drive_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -736,7 +736,8 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_COMPANY_EMAIL` | Member Loan | The Borrower's notice address (`bigwhalesllc@gmail.com`); every signed copy goes to it too. Unset, the signed-copy e-mail fails and is retried |
 | `MEMBER_LOAN_LENDER_LEGAL_NAME`, `MEMBER_LOAN_YARDEN_LEGAL_NAME` | Member Loan | The full legal names typed to sign (default `Aviv Jan`, `Yarden Kelly`) |
 | `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
-| `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos in the Drive folder `property inspections`, and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
+| `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos and finished reports in the Drive folder `inspections` (one sub-folder per inspection), and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
+| `INSPECTION_REPORT_EMAIL`, `INSPECTION_REPORT_SENDER`, `INSPECTION_APP_ORIGIN`, `INSPECTION_REPORT_RETRY_SCHEDULE` | `BackEnd/BL/inspection/common/inspection_report.py` | Where each finished inspection's PDF report is e-mailed and from which Gmail account (both default `bigwhalesllc@gmail.com`; the app password is `EMAIL_PASSWORD`), the site address for its links (default `AUTH_APP_ORIGIN`), and `off` to stop retrying failed deliveries |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
 | `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
 | `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
@@ -833,7 +834,17 @@ The pre-purchase walkthrough that replaces the PDF checklist (plan, decisions an
   The page polls every 10 s to show the other person's changes.
 - **Photos.** The browser shrinks each photo to at most 1600 px (JPEG 0.8, which also strips
   EXIF and GPS) plus a 320 px thumbnail. Thumbnails are stored in Postgres; full photos go to
-  Google Drive, one folder per inspection under `property inspections`.
+  Google Drive, one folder per inspection under `inspections`.
+- **Each finish sends a report** (`BL/inspection/common/inspection_report_delivery.py`). Finishing
+  stores a PDF of the inspection as it is then: start info, Replace and Repair items with their
+  fields, notes and photo thumbnails, windows to replace, OK and not-checked items, and the link.
+  It is e-mailed to `INSPECTION_REPORT_EMAIL` (default bigwhalesllc@gmail.com, subject
+  `Inspection completed – <address>`) and saved in the inspection's own Drive folder,
+  `inspections/<date> <address> (<id>)/Inspection report <date time>.pdf`, next to its photos.
+  It runs in the background, so a failure never undoes the finish. A failed channel is
+  retried every 30 minutes, three attempts in all. Finishing again sends a new report, at most
+  10 per inspection per day. The finish screen and the summary show "e-mailed and saved",
+  "sending" or "will retry".
 - **MCP.** Every inspection route is a tool (`list_inspections`, `get_inspection` with its
   summary, `create_inspection`, `update_inspection_item`, `link_inspection_to_deal`,
   `unlink_inspection_from_deal`, …), except the three binary photo routes.
@@ -844,7 +855,7 @@ Signed in as bigwhalesllc@gmail.com, paste it into a new project at script.googl
 script property `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET`, deploy it as a web app (execute as me,
 anyone may call it), and set the same secret and the web app URL (`…/exec`) on Render as
 `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` and `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`. The script
-only reads or trashes files inside `property inspections`, and refuses any request that is not
+only reads or trashes files inside `inspections`, and refuses any request that is not
 HMAC-signed and less than five minutes old.
 
 ## 🧩 Adding an input to the deal form

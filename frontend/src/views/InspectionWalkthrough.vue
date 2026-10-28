@@ -286,6 +286,7 @@ async function onLinkToDealPressed() {
         :repair-item-count="summaryCounts.repair"
         :replace-item-count="summaryCounts.replace"
         :photo-count="store.photos.length"
+        :report-delivery-status="store.inspection.report_delivery_status"
         @view-summary="router.push({ name: 'inspection-summary', params: { inspectionId } })"
       />
       <InspectionDealLinkDrawer v-if="isDealLinkDrawerOpen" :inspection-id="inspectionId" @close="isDealLinkDrawerOpen = false" />

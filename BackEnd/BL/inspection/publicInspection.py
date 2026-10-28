@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+from typing import Optional
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
@@ -18,6 +20,12 @@ from BL.inspection.common.inspection_lookup import (
     check_inspection_date_is_reasonable,
     find_checklist_item_or_404,
     find_inspection_or_404,
+)
+from BL.inspection.common.inspection_report_delivery import (
+    MAXIMUM_REPORTS_PER_INSPECTION_PER_DAY,
+    count_reports_of_inspection_today,
+    latest_report_delivery_status,
+    record_inspection_report,
 )
 from BL.inspection.common.inspection_views import (
     critical_item_keys_not_checked,
@@ -43,7 +51,12 @@ from ReqRes.common.inspection_schemas import (
 
 
 def load_public_inspection_response(db: Session, inspection: PropertyInspection) -> PublicInspectionRes:
-    return public_inspection_response(inspection, get_items_of_inspection(db, inspection.id), get_photos_of_inspection(db, inspection.id))
+    return public_inspection_response(
+        inspection,
+        get_items_of_inspection(db, inspection.id),
+        get_photos_of_inspection(db, inspection.id),
+        latest_report_delivery_status(db, inspection.id),
+    )
 
 
 def new_inspection(property_address: str, inspection_date: date | None, inspector_name: str | None) -> PropertyInspection:
@@ -128,7 +141,12 @@ def update_public_inspection_item(db: Session, raw_inspection_id: str, item_key:
     return inspection_item_response(item)
 
 
-def complete_public_inspection(db: Session, raw_inspection_id: str, request: InspectionCompleteReq) -> PublicInspectionRes:
+def complete_public_inspection(
+    db: Session, raw_inspection_id: str, request: InspectionCompleteReq
+) -> tuple[PublicInspectionRes, Optional[UUID]]:
+    """Finishes the inspection and records its report. Returns the response and the
+    report to deliver after the commit (none once today's report cap is reached)."""
+
     inspection = find_inspection_or_404(db, raw_inspection_id)
     items = get_items_of_inspection(db, inspection.id)
     missing_critical_item_keys = critical_item_keys_not_checked(items)
@@ -145,6 +163,10 @@ def complete_public_inspection(db: Session, raw_inspection_id: str, request: Ins
     inspection.inspection_status = INSPECTION_STATUS_COMPLETED
     inspection.completed_at = datetime.now(timezone.utc)
     inspection.completion_override_reason = request.completion_override_reason if missing_critical_item_keys else None
+    db.flush()
+    report = None
+    if count_reports_of_inspection_today(db, inspection.id) < MAXIMUM_REPORTS_PER_INSPECTION_PER_DAY:
+        report = record_inspection_report(db, inspection)
     db.commit()
     db.refresh(inspection)
-    return load_public_inspection_response(db, inspection)
+    return load_public_inspection_response(db, inspection), (report.id if report else None)

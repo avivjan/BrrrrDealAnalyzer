@@ -103,7 +103,10 @@ def inspection_item_response(item: PropertyInspectionItem) -> InspectionItemRes:
 
 
 def public_inspection_response(
-    inspection: PropertyInspection, items: List[PropertyInspectionItem], photos: List[PropertyInspectionPhoto]
+    inspection: PropertyInspection,
+    items: List[PropertyInspectionItem],
+    photos: List[PropertyInspectionPhoto],
+    report_delivery_status: Optional[str] = None,
 ) -> PublicInspectionRes:
     return PublicInspectionRes(
         id=inspection.id,
@@ -119,6 +122,7 @@ def public_inspection_response(
         items=[inspection_item_response(item) for item in items],
         photos=[InspectionPhotoRes(id=photo.id, item_key=photo.item_key, created_at=photo.created_at) for photo in photos],
         summary=build_inspection_summary(items, photos),
+        report_delivery_status=report_delivery_status,
     )
 
 

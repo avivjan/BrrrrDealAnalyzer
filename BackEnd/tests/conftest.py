@@ -159,6 +159,27 @@ def clean_database():
     yield
 
 
+@pytest.fixture(autouse=True)
+def inspection_reports_never_leave_the_test(monkeypatch):
+    """Finishing an inspection e-mails a report and saves it to Drive. No test may
+    reach real Gmail or Drive, even on a machine with EMAIL_PASSWORD set: both
+    channels fail as "not configured" unless a test installs its own fakes
+    (`tests/inspection_helpers.py::inspection_report_outbox`)."""
+
+    from BL.inspection.common import inspection_report_delivery
+    from BL.inspection.common.inspection_photo_google_drive import InspectionPhotoStorageUnavailable
+    from BL.memberLoan.common.member_loan_mail_transport import MemberLoanEmailNotSent
+
+    def email_not_configured(*args, **kwargs):
+        raise MemberLoanEmailNotSent("not configured in tests")
+
+    def drive_not_configured(*args, **kwargs):
+        raise InspectionPhotoStorageUnavailable("not configured in tests")
+
+    monkeypatch.setattr(inspection_report_delivery, "send_inspection_report_email", email_not_configured)
+    monkeypatch.setattr(inspection_report_delivery, "save_inspection_report_pdf_to_drive", drive_not_configured)
+
+
 @pytest.fixture
 def client():
     from fastapi.testclient import TestClient

@@ -41,6 +41,7 @@ from DAL.data_models.inspection.models import (
     PropertyInspection,
     PropertyInspectionItem,
     PropertyInspectionPhoto,
+    PropertyInspectionReport,
 )
 from DAL.data_models.reps.models import (
     RepsPerson,
@@ -78,6 +79,7 @@ __all__ = [
     "PropertyInspection",
     "PropertyInspectionItem",
     "PropertyInspectionPhoto",
+    "PropertyInspectionReport",
     "RepsPerson",
     "RepsProperty",
     "RepsActivityCategory",

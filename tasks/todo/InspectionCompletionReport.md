@@ -24,22 +24,22 @@ Today a completed inspection lives only in Postgres. Photos go to Drive under `p
 | D7 | **The UI** shows one line on the finish screen and the summary: "Report e-mailed and saved to Drive", "Sending report…" or "Report will retry". It comes from a new public field, `report_delivery_status`, which reports a status only, never an address or file id. |
 
 ## Todo (agent wall-clock)
-- [ ] **0** (5 min): Branch from the latest `main` and add this plan.
-- [ ] **1** (20 min): The `property_inspection_report_deliveries` model and its CRUD.
-- [ ] **2** (60 min): The PDF builder `BL/inspection/common/inspection_report_pdf.py`, with thumbnails.
-- [ ] **3** (40 min): Delivery: `inspection_report_delivery.py`, covering the e-mail through `deliver_member_loan_email`, Drive `save_report`, delivery rows, and background-task scheduling from `complete`.
-- [ ] **4** (20 min): The retry thread (production only, never under pytest), started from `main.py`.
-- [ ] **5** (20 min): The Apps Script: root renamed `inspections`, the `save_report` action, and the folder URL in the answer. The Python client gets `save_inspection_report_to_drive`.
-- [ ] **6** (20 min): The frontend status line on the finish screen and the summary.
-- [ ] **7** (10 min): **MCP support:** `get_inspection` and `complete_inspection` expose `report_delivery_status`. No new endpoint, so no new tool; update `DESCRIPTIONS` and add a test.
-- [ ] **8** (15 min): Regenerate the goldens (`verify_regression.py snapshot`); review the diff.
-- [ ] **9** (30 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
+- [x] **0** (5 min): Branch from the latest `main` and add this plan.
+- [x] **1** (20 min): The `property_inspection_report_deliveries` model and its CRUD.
+- [x] **2** (60 min): The PDF builder `BL/inspection/common/inspection_report_pdf.py`, with thumbnails.
+- [x] **3** (40 min): Delivery: `inspection_report_delivery.py`, covering the e-mail through `deliver_member_loan_email`, Drive `save_report`, delivery rows, and background-task scheduling from `complete`.
+- [x] **4** (20 min): The retry thread (production only, never under pytest), started from `main.py`.
+- [x] **5** (20 min): The Apps Script: root renamed `inspections`, the `save_report` action, and the folder URL in the answer. The Python client gets `save_inspection_report_to_drive`.
+- [x] **6** (20 min): The frontend status line on the finish screen and the summary.
+- [x] **7** (10 min): **MCP support:** `get_inspection` and `complete_inspection` expose `report_delivery_status`. No new endpoint, so no new tool; update `DESCRIPTIONS` and add a test.
+- [x] **8** (15 min): Regenerate the goldens (`verify_regression.py snapshot`); review the diff.
+- [x] **9** (30 min): **Security task** (from `.claude/security.md`): *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"*. Specific checks:
   - The e-mail address comes from env only and never reaches a response.
   - The PDF contains user text safely: reportlab paragraphs are escaped.
   - Error text from SMTP or Drive is never stored or returned (type names only).
   - Re-finishing can't be used to spam: a 60/h per-IP limit applies, plus at most 10 reports per inspection per day.
   - Then bandit, pip-audit and npm audit.
-- [ ] **10** (15 min): README and `.env.example` (`INSPECTION_REPORT_EMAIL`), the Apps Script steps updated, and the Review section.
+- [x] **10** (15 min): README and `.env.example` (`INSPECTION_REPORT_EMAIL`), the Apps Script steps updated, and the Review section.
 - [ ] **11** (10 min): Push, open the PR, CI green.
 - [ ] **12** (owner, about 10 min): Deploy the updated Apps Script and set the Render env vars (`INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET`; `EMAIL_PASSWORD` is already set).
 
@@ -68,3 +68,28 @@ Today a completed inspection lives only in Postgres. Photos go to Drive under `p
 ## Verification
 - Run backend `pytest`, `verify_regression.py verify`, frontend `npm test` and `npm run build`, and the inspection E2E.
 - Manual: with `EMAIL_PASSWORD` and the Drive settings pointed at a test script, finish an inspection. Check that the PDF arrives at bigwhalesllc@gmail.com and appears in `inspections/<folder>` next to its photos.
+
+## Review
+
+| Check | Result |
+|---|---|
+| Backend `pytest` | 1,235 passed, including `test_inspection_report.py` (9) and the new MCP tool test |
+| Migration smoke test | `import main` on a database from PR #108 adds `property_inspection_reports`; two boots on a fresh database are clean |
+| `verify_regression.py` | `openapi` (the new `report_delivery_status` field) and `schema` (the new table) changed, both additive; regenerated |
+| Frontend `vitest` and build | 1,710 passed; the build passes |
+| Playwright | The inspection walkthrough flow, which now also checks the report status line, and the Bought Deals flows pass on Chromium and Mobile Chrome. The network contract is unchanged, so no golden update was needed |
+| Security | bandit, pip-audit and `npm audit --omit=dev` are clean |
+| PDF | Rendered and checked by eye, with real thumbnails and a broken one (skipped, never a failed report) |
+
+**Deviations from the plan.**
+1. **One row per finished report, not per channel.** `property_inspection_reports` holds the PDF plus an e-mail status and a Drive status, so a retry sends exactly the PDF that was finished.
+2. **Stale "pending" reports are retried too.** A report whose background task never ran (a restart right after a finish) is picked up by the retry pass after 10 minutes.
+3. **Drive goes first**, so the e-mail can carry the folder link. If Drive fails, the e-mail still goes out, without the link.
+4. **`complete_inspection` is now an open-world MCP tool**, because it sends an e-mail.
+
+**Security notes.**
+1. Anyone with an inspection link can finish it and so trigger a report e-mail to the company inbox. That is bounded by the finish rate limit (60 an hour per IP), at most 10 reports per inspection per day, and 20 new inspections an hour per IP.
+2. The recipient address, the Drive file id and the folder URL never appear in a public response or in the MCP's public tools. A test checks the response.
+3. All user text is escaped in the PDF (ReportLab mini-markup) and in the e-mail's HTML, including link attributes in both quote styles.
+4. Only error type names are stored or logged for failed deliveries.
+5. Each report PDF is kept in Postgres (typically under 1 MB; at most about 20 MB with 150 photos). That is the "saved" copy, alongside the one in Drive.

@@ -28,6 +28,8 @@ export interface PublicInspectionRes {
   updated_at: string | null;
   items: InspectionItemRes[];
   photos: InspectionPhotoRes[];
+  /** The report of the last finish: e-mailed and saved to Drive, still sending, or retrying. Null before a finish. */
+  report_delivery_status?: "sending" | "delivered" | "will_retry" | null;
 }
 
 export interface InspectionCreateReq {

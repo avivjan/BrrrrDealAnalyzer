@@ -13,10 +13,11 @@ behind the normal gates.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from BL.inspection.common.inspection_report_delivery import deliver_inspection_report_after_commit
 from BL.inspection.common.inspection_request_guards import inspection_request_guard
 from BL.inspection.inspectionPhotos import (
     delete_photo,
@@ -89,8 +90,12 @@ def update_inspection_item(inspection_id: str, item_key: str, request: Inspectio
     response_model=PublicInspectionRes,
     dependencies=[Depends(inspection_request_guard("inspection_complete", is_json_write=True))],
 )
-def complete_inspection(inspection_id: str, request: InspectionCompleteReq, db: Session = Depends(get_db)):
-    return complete_public_inspection(db, inspection_id, request)
+def complete_inspection(inspection_id: str, request: InspectionCompleteReq, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    response, report_id = complete_public_inspection(db, inspection_id, request)
+    if report_id is not None:
+        # After the response: e-mail the report to the company and save it in the inspection's Drive folder.
+        background_tasks.add_task(deliver_inspection_report_after_commit, report_id)
+    return response
 
 
 @router.post(

@@ -183,6 +183,9 @@ class PublicInspectionRes(BaseModel):
     items: List[InspectionItemRes]
     photos: List[InspectionPhotoRes]
     summary: InspectionSummaryRes
+    report_delivery_status: Optional[Literal["sending", "delivered", "will_retry"]] = Field(
+        None, description="The report of the last finish: e-mailed and saved to Drive, still sending, or failed and retrying. Null before the first finish."
+    )
 
 
 class LinkedBoughtDealRes(BaseModel):
