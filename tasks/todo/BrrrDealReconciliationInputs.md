@@ -124,17 +124,17 @@ Flip keeps both exactly as before.
 - **Wiring:** types, defaults, impacts, phase tabs, copy-for-AI text, the store comment.
 
 ## Todo (≈ 9 h 30)
-- [ ] R1 (10 min) Branch from `main`, this plan.
-- [ ] R2 (90 min) Backend inputs, columns, migration rows, record fields, response fields with descriptions.
-- [ ] R3 (120 min) Engine: insurance a–d and the pickers, the tax bucket step, appraisal/survey, owner-held
+- [x] R1 (10 min) Branch from `main`, this plan.
+- [x] R2 (90 min) Backend inputs, columns, migration rows, record fields, response fields with descriptions.
+- [x] R3 (120 min) Engine: insurance a–d and the pickers, the tax bucket step, appraisal/survey, owner-held
   reserves + HYSA, 360-day DSCR, rehab completed date. Explain narration and guards for all of it.
-- [ ] R4 (30 min) Validation: new non-negative fields, the rehab ≤ rented rule.
-- [ ] R5 (30 min) Report inputs (`deal_input_sections.py`), MCP `INSTRUCTIONS` prose.
-- [ ] R6 (90 min) Backend tests (below), fixtures, the legacy parity overrides.
-- [ ] R7 (120 min) Frontend: auto-calc mirror, sections, types, defaults, validation, impacts, phase tabs,
+- [x] R4 (30 min) Validation: new non-negative fields, the rehab ≤ rented rule.
+- [x] R5 (30 min) Report inputs (`deal_input_sections.py`), MCP `INSTRUCTIONS` prose.
+- [x] R6 (90 min) Backend tests (below), fixtures, the legacy parity overrides.
+- [x] R7 (120 min) Frontend: auto-calc mirror, sections, types, defaults, validation, impacts, phase tabs,
   copy-for-AI, Vitest.
 - [ ] R8 (30 min) Golden update commits: backend snapshots, then the e2e network goldens if they move.
-- [ ] R9 (20 min) Security pass.
+- [x] R9 (20 min) Security pass.
 - [ ] R10 (10 min) Push the branch and open the PR.
 
 ## Tests
@@ -186,3 +186,48 @@ In this change specifically:
 - Every new input is sign- and range-checked server-side, not only in the UI.
 - The pickers are `Literal`-validated (422 on anything else).
 - Notes and labels carry no deal data into error messages.
+
+## Results
+
+**Gates**
+- Backend `pytest`: green.
+- `verify_regression.py verify`: green, after the `Golden update:` commit.
+- Nightly package unit tests: green.
+- Bandit: clean.
+- Frontend: Vitest green (1,720 tests), and `npm run build` succeeds.
+- E2E on chromium and chromium-motion: the new `deal-reconciliation-inputs.spec.ts` passes, and so does
+  the updated `seller-tax-credit-edit.spec.ts`.
+
+**Design decisions made while building**
+- **The Seller Tax Credit pencil** now writes `sellerTaxCreditAtPurchaseClosing`, and an "auto" button puts
+  the proration back. It no longer back-solves the tax bill, because the bill paid on Nov 30 is its own
+  figure. The pencil rules are unchanged: hidden when there is nothing to prorate, and the sign follows
+  "seller already paid".
+- **Legacy parity** still reproduces the pinned pre-lifecycle figures to the last digit, with the new
+  inputs neutralised (`tests/conftest.py::LEGACY_EQUIVALENT_OVERRIDES`):
+  - insurance becomes $100 a month until the refi, with no bill at either closing;
+  - the tax bill becomes $3,750, deposited at $300 a month.
+- **The current fixture's cash flow** moves by +$12 on purpose: a regular year's tax is now the bill × 0.96 / 12.
+- **Cash Needed** keeps the old total for the three old reserves. It is now split into the cash brought to
+  the refi table and `reserves_funded_from_own_pocket_at_lowest_arv`.
+
+**Found and fixed along the way**
+- **PDF bookmark a page early.** The PDF's zero-height named-destination marker could stay at the bottom of
+  one page while its step block moved to the next, so the bookmark landed a page early. The longer Cash
+  Needed breakdown exposed it. Fixed with a 0.01 pt marker.
+- **Unregistered skip reason.** The lowest-ARV shake test's skip reason was missing from
+  `.github/nightly/known_skips.json`. It is now registered together with the new rehab shake test.
+
+**Security pass**
+- Every new dollar input is checked for sign server-side, in the calculator and on save. The seller credit
+  is the exception: it may be negative.
+- `days_until_rehab_completed` is checked against the tenant date.
+- The three pickers are `Literal`s: anything else gets a 422.
+- Validation messages carry no deal numbers.
+- The month-by-month tax-bucket loop is bounded by the calendar (0.04 s at `date.max`).
+- Already in the code before this change, not introduced here: an absurd `daysUntilRefi`
+  (over ~2.9M days) overflows `timedelta` in `timeline_step`. It returns the generic 500 with no detail.
+
+**Not changed (out of scope)**
+- The portfolio equity on the dashboard (`stores/dealStore.ts`) still reads the deprecated `cashReserve`,
+  not `reserves_total`. That predates this change.
