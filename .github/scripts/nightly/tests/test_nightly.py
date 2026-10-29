@@ -98,12 +98,13 @@ class Allowlist(unittest.TestCase):
         self.assertIsNone(skips.match("performance entries are Chromium's; this test runs on firefox only", self.allowlist))
         self.assertIsNone(skips.match("something new", self.allowlist))
 
-    def test_expected_totals_sum_to_187_on_a_full_matrix(self):
+    def test_expected_totals_sum_to_195_on_a_full_matrix(self):
         # 181 before the passkey and Member Loan specs (3 skips each on webkit and Mobile Safari) were listed.
+        # 187 before the two invalid-input shake checks (4 reduced-motion projects each) were listed.
         total = 0
         for entry in self.allowlist["reasons"]:
             total += sum((entry.get("expected") or {}).values())
-        self.assertEqual(total, 187)
+        self.assertEqual(total, 195)
 
     def test_rules(self):
         axe = "the axe baseline is recorded and replayed on chromium only"
