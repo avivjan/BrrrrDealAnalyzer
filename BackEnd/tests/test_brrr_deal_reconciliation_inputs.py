@@ -141,13 +141,27 @@ class TestPropertyTaxBucket:
         assert results.property_tax_bucket_first_bill_deposit_count_until_refi == 4    # Dec 15 .. Mar 15, before the Mar 20 refi
         assert results.property_tax_bucket_shortfall_topped_up_on_november_30 == 0
 
-    @pytest.mark.parametrize("buy_closing_date", ["2026-07-01", "2026-11-10"])
-    def test_already_paid_targets_next_years_bill_whatever_the_closing_month(self, brrrr_payload, buy_closing_date):
-        results = _compute(brrrr_payload, buyClosingDate=buy_closing_date, daysUntilRefi=120, sellerPaidCurrentYearTaxes=True)
+    @pytest.mark.parametrize("buy_closing_date", ["2026-07-01", "2026-10-01", "2026-11-10"])
+    def test_already_paid_saves_nothing_until_dec_15_then_12_deposits_for_next_year(self, brrrr_payload, buy_closing_date):
+        results = _compute(brrrr_payload, buyClosingDate=buy_closing_date, daysUntilRefi=300, sellerPaidCurrentYearTaxes=True)
         assert results.first_property_tax_payment_date == date(2027, 11, 30)
+        assert results.property_tax_bucket_deposit_count_until_first_payment == 12    # Dec 15, 2026 .. Nov 15, 2027
+        assert results.property_tax_bucket_deposit == results.property_tax_bill_paid_on_november_30 / 12
+
+    def test_an_october_1_closing_has_the_bill_taken_at_closing_by_default(self, brrrr_payload):
+        # The owner's case: the title takes this year's bill at closing, so no Oct 15 or Nov 15 deposit.
+        results = _compute(brrrr_payload, buyClosingDate="2026-10-01", daysUntilRefi=120)   # refi 2027-01-29
+        assert results.seller_paid_current_year_taxes is True
+        assert results.property_tax_bucket_deposit_count_until_first_payment == 12
+        assert results.property_tax_bucket_first_bill_deposit_count_until_refi == 2    # Dec 15 and Jan 15, before the Jan 29 refi
+        assert results.property_tax_paid_into_bucket_until_refi == results.property_tax_bill_paid_on_november_30 / 12 * 2
+
+    def test_already_paid_after_dec_15_starts_on_the_next_15th(self, brrrr_payload):
+        results = _compute(brrrr_payload, buyClosingDate="2026-12-20", daysUntilRefi=120)
+        assert results.property_tax_bucket_deposit_count_until_first_payment == 11    # Jan 15 .. Nov 15, 2027
 
     def test_a_closing_with_no_15th_left_makes_one_deposit_on_nov_30(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate="2026-11-20", daysUntilRefi=120)
+        results = _compute(brrrr_payload, buyClosingDate="2026-11-20", daysUntilRefi=120, sellerPaidCurrentYearTaxes=False)
         assert results.property_tax_bucket_deposit_count_until_first_payment == 1
         assert results.property_tax_bucket_deposit == results.property_tax_bill_paid_on_november_30 - results.seller_tax_credit_set_aside_in_tax_bucket
         assert results.property_tax_bucket_first_bill_deposit_count_until_refi == 1

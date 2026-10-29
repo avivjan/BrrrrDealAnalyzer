@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional
 
 from BL.analyze.common.deal_math import (
     effective, recording_transfer_buy_default, deed_transfer_tax_buy_default, title_escrow_buy_default,
-    calc_seller_tax_credit, ONLINE_NOTARY_FEE,
+    calc_seller_tax_credit, seller_paid_current_year_taxes_by_default, ONLINE_NOTARY_FEE,
 )
 
 
@@ -36,7 +36,7 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
     if buy_closing_date is None:
         seller_paid_current_year_taxes, seller_tax_credit_formula = None, Decimal("0")
     else:
-        seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, buy_closing_date.month == 12)
+        seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, seller_paid_current_year_taxes_by_default(buy_closing_date))
         seller_tax_credit_formula = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
     # The figure on the settlement statement, when typed, wins over the proration.
     seller_tax_credit = effective(payload.seller_tax_credit_at_purchase_closing, seller_tax_credit_formula)

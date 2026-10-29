@@ -90,7 +90,7 @@ export interface BrrrAnalyzeReq {
   onlineNotaryFeeBuy?: number | null;
   otherClosingCostsBuy?: number;
   otherClosingCostsBuyNote?: string | null;
-  /** null → auto: true only for a December closing */
+  /** null → auto: true for an October to December closing */
   sellerPaidCurrentYearTaxes?: boolean | null;
   /** The settlement statement's tax proration (may be negative). null → this year's bill prorated by the closing date */
   sellerTaxCreditAtPurchaseClosing?: number | null;

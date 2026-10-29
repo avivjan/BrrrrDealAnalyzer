@@ -3,8 +3,10 @@
 How the owner works: at the purchase closing the seller's prorated credit goes straight into a tax
 bucket for this property. The bill is paid on Nov 30 with the 4% November discount (bill x 0.96). What
 the credit does not cover is split evenly over the 15ths left until that Nov 30 and auto-deposited on
-each one. When the seller already paid this year's bill (they are reimbursed at closing), the bucket
-fills toward next year's Nov 30 from the first 15th after closing: a Nov 20 closing deposits from Dec 15. A Nov 30 inside the hold is paid from the bucket (any shortfall topped up that day); the
+each one. When the seller already paid this year's bill (the title takes it at closing, by default from
+October, and the buyer reimburses the seller), nothing is put aside until that bill's Nov 30 has passed:
+the bucket fills toward next year's Nov 30 from Dec 15, 12 deposits of bill x 0.96 / 12 (fewer after a
+closing past Dec 15). A Nov 30 inside the hold is paid from the bucket (any shortfall topped up that day); the
 deposits after it are the next year's bill x 0.96 / 12. Without a buy closing date there are no
 15ths to count: the deposit defaults to bill x 0.96 / 12 for every 30 days until the refi.
 
@@ -19,7 +21,7 @@ from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from BL.analyze.common.deal_math import (
-    effective, property_tax_bucket_deposit_dates, first_property_tax_payment_date,
+    effective, property_tax_bucket_deposit_dates, first_property_tax_payment_date, first_property_tax_bucket_deposit_after,
     PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR, DAYS_PER_MONTH, MONTHS_PER_YEAR,
 )
 
@@ -55,7 +57,8 @@ def property_tax_bucket_step(payload, timeline, seller_tax_credit_set_aside_in_t
     else:
         refi_closing_date = timeline.refi_closing_date
         first_payment_date = first_property_tax_payment_date(timeline.buy_closing_date, seller_paid_current_year_taxes)
-        first_bill_deposit_dates = (property_tax_bucket_deposit_dates(timeline.buy_closing_date, first_payment_date)
+        first_deposit_after = first_property_tax_bucket_deposit_after(timeline.buy_closing_date, seller_paid_current_year_taxes, first_payment_date)
+        first_bill_deposit_dates = (property_tax_bucket_deposit_dates(first_deposit_after, first_payment_date)
                                     or [first_payment_date])
         deposit_count_until_first_payment = len(first_bill_deposit_dates)
         property_tax_bucket_deposit_default = max(

@@ -184,10 +184,21 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(brrrAutoCalc({ ...FIXTURE, arv_in_thousands: 0, lowestArv: 250 }).lowestArvEffective).toBe(250_000); // no ARV to compare against yet
   });
 
-  it("flips the tax credit in December and with the override", () => {
+  it("flips the tax credit from October (the title takes the bill at closing) and with the override", () => {
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCredit!).toBeLessThan(0);
-    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20" }).sellerTaxCredit!).toBeGreaterThan(0);
-    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: true }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-10-01" }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-09-30" }).sellerTaxCredit!).toBeGreaterThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-09-30", sellerPaidCurrentYearTaxes: true }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: false }).sellerTaxCredit!).toBeGreaterThan(0);
+  });
+
+  it("an October closing whose bill the title took deposits for next year from Dec 15, 12 times", () => {
+    const octoberFirst = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-10-01", daysUntilRefi: 120 });
+    expect(octoberFirst.sellerPaidCurrentYearTaxesEffective).toBe(true);
+    expect(octoberFirst.firstPropertyTaxPaymentDate).toBe("2027-11-30");
+    expect(octoberFirst.propertyTaxBucketDepositCountUntilFirstPayment).toBe(12); // Dec 15, 2026 .. Nov 15, 2027: no Oct 15 or Nov 15
+    expectCloseToTheCent(octoberFirst.propertyTaxBucketDepositEffective, (3600 * 0.96) / 12);
+    expect(octoberFirst.propertyTaxBucketFirstBillDepositCountUntilRefi).toBe(2); // Dec 15 and Jan 15, before the Jan 29 refi
   });
 
   it("counts the days the tax proration covers", () => {

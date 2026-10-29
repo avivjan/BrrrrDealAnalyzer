@@ -20,6 +20,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, Callable, Optional
 
+from BL.analyze.common.deal_math import seller_paid_current_year_taxes_by_default
 from BL.reports.common.deal_pdf import format_value_like_calculation_popup
 
 # -- the declarative map ---------------------------------------------------------------------------
@@ -92,7 +93,7 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
         DealInputGroup(None, (
             DealInputField("buyClosingDate", "Closing Date (Buy)", "date"),
             DealInputField("sellerPaidCurrentYearTaxes", "Seller already paid this year's taxes", "yes_no",
-                           formula_hint="Auto: yes only for a December closing", shown_when=_has_buy_closing_date),
+                           formula_hint="Auto: yes for an October to December closing", shown_when=_has_buy_closing_date),
             DealInputField("sellerTaxCreditAtPurchaseClosing", "Seller Tax Credit", "money",
                            effective_result_key="seller_tax_credit",
                            formula_hint="Formula: this year's tax bill prorated by the closing date"),
@@ -367,7 +368,7 @@ def _resolve_row(input_field: DealInputField, inputs: DealInputs, result: Calcul
         hint = input_field.formula_hint
     elif input_field.payload_key == "sellerPaidCurrentYearTaxes" and raw_value is None:
         closing_date = _as_date(inputs.get("buyClosingDate"))
-        automatic_value = bool(closing_date and closing_date.month == 12)
+        automatic_value = bool(closing_date and seller_paid_current_year_taxes_by_default(closing_date))
         value_text = format_deal_input_value("yes_no", automatic_value)
         chips.extend(["auto", "yes" if automatic_value else "no"])
         hint = input_field.formula_hint

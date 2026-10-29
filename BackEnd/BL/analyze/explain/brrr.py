@@ -22,6 +22,7 @@ from BL.analyze.common.deal_math import (
     calc_cash_on_cash,
     calc_roi,
     calc_seller_tax_credit,
+    seller_paid_current_year_taxes_by_default,
     recording_transfer_default,
     recording_transfer_buy_default,
     deed_transfer_tax_buy_default,
@@ -268,7 +269,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Insurance Bill (inside closing)", results.insurance_bill_at_purchase_inside_closing),
     ])
     if has_buy_closing_date:
-        check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else results.buy_closing_date.month == 12), "seller paid taxes")
+        check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else seller_paid_current_year_taxes_by_default(results.buy_closing_date)), "seller paid taxes")
         check(results.seller_tax_credit_formula == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
         tax_formula = (
             f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit_formula)}"

@@ -656,7 +656,7 @@ describe("DealInputsForm", () => {
     });
 
     it("resets the seller-paid-taxes override back to auto", async () => {
-      const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-11-20", annual_property_taxes: 3600 });
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-09-20", annual_property_taxes: 3600 });
       const wrapper = mountForm(deal, "BRRRR");
 
       await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] input').setValue(true);

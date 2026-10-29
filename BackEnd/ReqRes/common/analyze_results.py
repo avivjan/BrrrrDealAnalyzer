@@ -97,7 +97,7 @@ class analyzeBRRRRes(BaseModel):
     seller_tax_credit: Optional[float] = Field(None, description=(
         "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer "
         "for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer "
-        "credits the seller (December closing, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when "
+        "credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when "
         "given, else the proration (0 when no buy closing date is set). "
         "A positive credit is set aside in the property's tax bucket the day after closing, so it lowers "
         "cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost."))

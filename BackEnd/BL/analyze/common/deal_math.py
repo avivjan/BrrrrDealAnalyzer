@@ -30,6 +30,8 @@ DSCR_DAYS_PER_YEAR = Decimal("360")
 # the bill x 0.96 and the owner's tax bucket is filled with deposits on the 15th.
 PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = Decimal("0.96")
 PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15
+# From this closing month on, the title takes this year's bill at closing: the seller has paid it by default.
+SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH = 10
 
 # Default HYSA deposit at the refi: this many months of the DSCR loan's principal and interest.
 HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST = Decimal("3")
@@ -168,7 +170,7 @@ def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_already_paid
 
     Taxes are billed in November for the calendar year. Until then the seller owes the
     buyer for the days they owned (Jan 1 to the day before closing), because the buyer will
-    pay the whole bill. Once the seller has paid the bill (a December closing by default)
+    pay the whole bill. Once the seller has paid the bill (an October to December closing by default)
     it reverses: the buyer owes the seller for closing day through Dec 31.
     Calendar-day proration on the closing year's 365 or 366 days, divide last.
     """
@@ -189,6 +191,19 @@ def property_tax_bucket_deposit_dates(after_day: date, through_day: date) -> lis
         if deposit_date > after_day:
             deposit_dates.append(deposit_date)
         year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+def seller_paid_current_year_taxes_by_default(buy_closing_date: date) -> bool:
+    """From October the title takes this year's bill at closing, so the seller has paid it."""
+    return buy_closing_date.month >= SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH
+
+def first_property_tax_bucket_deposit_after(buy_closing_date: date, seller_already_paid_current_year_taxes: bool,
+                                            first_payment_date: date) -> date:
+    """The bucket's deposits are the 15ths strictly after this day. Normally the closing day; once the
+    seller has paid this year's bill, nothing is put aside until that bill's Nov 30 has passed, so the
+    deposits for next year's bill start on Dec 15 (or the first 15th after a later closing)."""
+    if not seller_already_paid_current_year_taxes:
+        return buy_closing_date
+    return max(buy_closing_date, date(first_payment_date.year - 1, 11, 30))
 
 def first_property_tax_payment_date(buy_closing_date: date, seller_already_paid_current_year_taxes: bool) -> date:
     """The first Nov 30 the owner pays: this year's, or next year's once the seller has paid this

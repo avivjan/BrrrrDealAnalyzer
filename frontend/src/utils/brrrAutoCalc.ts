@@ -31,6 +31,8 @@ export const DAYS_PER_MONTH = 30;
 export const PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = 0.96;
 export const PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15;
 export const HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST = 3;
+/** From this closing month (1-based) on, the title takes this year's bill at closing: the seller has paid it by default. */
+export const SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH = 10;
 
 const MS_PER_DAY = 86_400_000;
 
@@ -89,6 +91,16 @@ export function propertyTaxBucketDepositDates(afterDay: Date, throughDay: Date):
     if (depositDate.getTime() > afterDay.getTime()) depositDates.push(depositDate);
     [year, month] = month === 11 ? [year + 1, 0] : [year, month + 1];
   }
+}
+
+/**
+ * The bucket's deposits are the 15ths strictly after this day: the closing day, or, once the seller
+ * has paid this year's bill, that bill's Nov 30, so next year's deposits start on Dec 15.
+ */
+export function firstPropertyTaxBucketDepositAfter(buyClosingDay: Date, sellerAlreadyPaidCurrentYearTaxes: boolean, firstPaymentDay: Date): Date {
+  if (!sellerAlreadyPaidCurrentYearTaxes) return buyClosingDay;
+  const paidBillsPaymentDay = new Date(Date.UTC(firstPaymentDay.getUTCFullYear() - 1, 10, 30));
+  return buyClosingDay.getTime() > paidBillsPaymentDay.getTime() ? buyClosingDay : paidBillsPaymentDay;
 }
 
 /**
@@ -301,7 +313,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
 
   // -- Buy: the settlement -----------------------------------------------------
   const annualPropertyTaxes = numberOrNull(deal.annual_property_taxes);
-  const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() === 11) : null;
+  const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() + 1 >= SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH) : null;
   const sellerTaxCreditFormulaAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
   // The figure typed from the settlement statement wins over the proration.
   const sellerTaxCreditAmount = deal.sellerTaxCreditAtPurchaseClosing != null ? numberOrZero(deal.sellerTaxCreditAtPurchaseClosing) : sellerTaxCreditFormulaAmount;
@@ -337,8 +349,11 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const monthlyPropertyTaxAfterRefi = propertyTaxBillPaidOnNovember30 != null ? propertyTaxBillPaidOnNovember30 / 12 : null;
   const sellerTaxCreditSetAsideInTaxBucket = Math.max(0, sellerTaxCreditAmount ?? 0);
   const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective === true) : null;
-  const firstBillDepositDates = buyClosingDay && firstPaymentDay
-    ? (propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay).length ? propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay) : [firstPaymentDay])
+  const firstDepositAfter = buyClosingDay && firstPaymentDay
+    ? firstPropertyTaxBucketDepositAfter(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective === true, firstPaymentDay)
+    : null;
+  const firstBillDepositDates = firstDepositAfter && firstPaymentDay
+    ? (propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay).length ? propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay) : [firstPaymentDay])
     : null;
   const propertyTaxBucketDepositCountUntilFirstPayment = firstBillDepositDates ? firstBillDepositDates.length : null;
   const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 == null ? null

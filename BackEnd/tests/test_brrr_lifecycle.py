@@ -51,11 +51,16 @@ class TestTaxProration:
         # Jan 1 .. Jun 30 = 181 days of a 365-day year
         assert deal_math.calc_seller_tax_credit(self.T, date(2026, 7, 1), False) == self.T * 181 / 365
 
-    def test_november_defaults_to_unpaid_and_the_override_flips_it(self, brrrr_payload):
-        november_auto = _compute(brrrr_payload, buyClosingDate="2026-11-20")
-        assert november_auto.seller_paid_current_year_taxes is False and november_auto.seller_tax_credit > 0
-        november_paid_override = _compute(brrrr_payload, buyClosingDate="2026-11-20", sellerPaidCurrentYearTaxes=True)
-        assert november_paid_override.seller_paid_current_year_taxes is True and november_paid_override.seller_tax_credit < 0
+    def test_september_defaults_to_unpaid_october_to_paid_and_the_override_flips_it(self, brrrr_payload):
+        september_auto = _compute(brrrr_payload, buyClosingDate="2026-09-30")
+        assert september_auto.seller_paid_current_year_taxes is False and september_auto.seller_tax_credit > 0
+        # From October the title takes this year's bill at closing: the seller has paid it.
+        october_auto = _compute(brrrr_payload, buyClosingDate="2026-10-01")
+        assert october_auto.seller_paid_current_year_taxes is True and october_auto.seller_tax_credit < 0
+        september_paid_override = _compute(brrrr_payload, buyClosingDate="2026-09-30", sellerPaidCurrentYearTaxes=True)
+        assert september_paid_override.seller_paid_current_year_taxes is True and september_paid_override.seller_tax_credit < 0
+        november_unpaid_override = _compute(brrrr_payload, buyClosingDate="2026-11-20", sellerPaidCurrentYearTaxes=False)
+        assert november_unpaid_override.seller_paid_current_year_taxes is False and november_unpaid_override.seller_tax_credit > 0
 
     def test_december_reverses_the_credit(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-12-15")
