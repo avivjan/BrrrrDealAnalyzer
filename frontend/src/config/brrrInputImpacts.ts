@@ -37,12 +37,20 @@ export const BRRR_OUTPUT_LABELS: Partial<Record<BrrrOutputKey, string>> = {
   deed_transfer_tax_buy: "Deed Transfer Tax (Buy)",
   closing_costs_refi_total: "Closing Costs (Refi)",
   reserves_total: "Reserves",
+  reserves_funded_from_own_pocket_at_lowest_arv: "Reserves the Lowest-ARV Wire cannot fund",
+  property_tax_paid_into_bucket_until_refi: "Tax paid into the Bucket until Refi",
+  property_tax_bucket_balance_released_at_refi: "Tax Bucket Balance released at Refi",
+  appraisal_and_survey_paid_outside_closing: "Appraisal & Survey (paid outside closing)",
+  rehab_completed_date: "Rehab Completed Date",
 };
 
 const CASH_METRICS: BrrrOutputKey[] = ["total_cash_needed_for_deal", "cash_out", "net_profit", "roi", "cash_on_cash"];
 const BUY_CLOSING_LINE: BrrrOutputKey[] = ["closing_costs_buy_total", "cash_to_close_buy", ...CASH_METRICS];
 const REFI_CLOSING_LINE: BrrrOutputKey[] = ["closing_costs_refi_total", "cash_out_routi", "cash_out_routi_conservative", ...CASH_METRICS];
-const RESERVE: BrrrOutputKey[] = ["reserves_total", "cash_out_routi", "cash_out_routi_conservative", "equity", ...CASH_METRICS];
+// The reserves are the owner's own money: not taken off the wire, but they stay in the deal.
+const RESERVE: BrrrOutputKey[] = ["reserves_total", "equity", "reserves_funded_from_own_pocket_at_lowest_arv", ...CASH_METRICS];
+// A regular year after the refi only.
+const REGULAR_YEAR: BrrrOutputKey[] = ["cash_flow", "dscr", "cash_on_cash", "roi"];
 const HOLDING_ITEM: BrrrOutputKey[] = ["total_cash_invested", ...CASH_METRICS];
 
 export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
@@ -60,20 +68,26 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   onlineNotaryBuy: BUY_CLOSING_LINE,
   onlineNotaryFeeBuy: BUY_CLOSING_LINE,
   otherClosingCostsBuy: BUY_CLOSING_LINE,
-  sellerPaidCurrentYearTaxes: ["seller_tax_credit", "cash_to_close_buy", ...CASH_METRICS],
+  sellerPaidCurrentYearTaxes: ["seller_tax_credit", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
+  sellerTaxCreditAtPurchaseClosing: ["seller_tax_credit", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
+  insurancePurchaseBillPaymentTiming: ["closing_costs_buy_total", "cash_to_close_buy", "total_cash_invested", ...CASH_METRICS],
   // Rehab
   rehabCost: ["stolen_money", "total_cash_invested", ...CASH_METRICS],
   rehabContingency: ["stolen_money", "total_cash_invested", ...CASH_METRICS],
   constructionLoanBudget: ["hml_amount", "stolen_money", "closing_costs_buy_total", "total_hard_money_cost", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   rehabCushion: ["total_cash_needed_for_deal"],
+  // The date only, for now: the dated cash table will read it.
+  daysUntilRehabCompleted: ["rehab_completed_date"],
   // Rent & holding
   rent: ["pre_refi_rental_income", "reserves_total", "cash_flow", "dscr", "cash_out_routi", ...CASH_METRICS],
   daysUntilRented: ["pre_refi_rental_income", ...HOLDING_ITEM],
   monthlyUtilitiesUntilRented: HOLDING_ITEM,
   maintenanceBeforeRefi: HOLDING_ITEM,
   appliances: HOLDING_ITEM,
-  annual_property_taxes: ["seller_tax_credit", "cash_to_close_buy", "total_cash_invested", "cash_flow", "dscr", ...CASH_METRICS],
-  annual_insurance: ["total_cash_invested", "cash_flow", "dscr", ...CASH_METRICS],
+  annual_property_taxes: ["seller_tax_credit", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", "total_cash_invested", "cash_flow", "dscr", ...CASH_METRICS],
+  monthlyPropertyTaxBucketDeposit: ["property_tax_paid_into_bucket_until_refi", ...HOLDING_ITEM],
+  annual_insurance: ["closing_costs_buy_total", "cash_to_close_buy", "closing_costs_refi_total", "cash_out_routi", "cash_flow", "dscr", ...CASH_METRICS],
+  monthlyInsuranceUntilRefi: HOLDING_ITEM,
   montly_hoa: ["total_cash_invested", "cash_flow", "dscr", ...CASH_METRICS],
   vacancyPercent: ["cash_flow", "dscr", "cash_on_cash", "roi"],
   maintenancePercent: ["cash_flow", "dscr", "cash_on_cash", "roi"],
@@ -91,8 +105,13 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   titleEscrowRefi: REFI_CLOSING_LINE,
   onlineNotaryRefi: REFI_CLOSING_LINE,
   onlineNotaryFeeRefi: REFI_CLOSING_LINE,
-  appraisalFee: REFI_CLOSING_LINE,
-  surveyFee: REFI_CLOSING_LINE,
+  appraisalFee: ["appraisal_and_survey_paid_outside_closing", ...HOLDING_ITEM],
+  surveyFee: ["appraisal_and_survey_paid_outside_closing", ...HOLDING_ITEM],
+  insuranceBillAtRefiClosing: [...REFI_CLOSING_LINE, ...REGULAR_YEAR],
+  insuranceRefiBillPaymentTiming: [...REFI_CLOSING_LINE, "total_cash_invested"],
+  monthlyInsuranceAfterRefi: REGULAR_YEAR,
+  propertyTaxCollectionAtRefi: [...REFI_CLOSING_LINE, "property_tax_bucket_balance_released_at_refi", "total_cash_invested"],
+  propertyTaxLumpSumAtRefiClosing: REFI_CLOSING_LINE,
   refiUnderwritingFee: REFI_CLOSING_LINE,
   refiPoints: REFI_CLOSING_LINE,
   brokerProcessingFeeRefi: REFI_CLOSING_LINE,
@@ -100,6 +119,7 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   maintenanceReserve: RESERVE,
   vacancyReserve: RESERVE,
   capexReserve: RESERVE,
+  hysaDepositAtRefi: RESERVE,
 };
 
 /** "Affects: Cash to Close (Buy), Cash Needed, …" for the (i) icon of `field`. */

@@ -35,20 +35,21 @@ export const FLIP_PHASE_TABS: readonly PhaseTab[] = [
 
 export const DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
   buy: [
-    "purchasePrice", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
+    "sellerTaxCreditAtPurchaseClosing", "purchasePrice", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
     "loanChargesBuy", "recordingTransferBuy", "titleEscrowBuy", "onlineNotaryFeeBuy", "otherClosingCostsBuy",
   ],
-  rehab: ["rehabCost", "constructionLoanBudget", "rehabContingency", "rehabCushion"],
+  rehab: ["rehabCost", "constructionLoanBudget", "rehabContingency", "rehabCushion", "daysUntilRehabCompleted"],
   rentHolding: [
     "rent", "daysUntilRented", "monthlyUtilitiesUntilRented", "maintenanceBeforeRefi", "appliances",
-    "annual_property_taxes", "annual_insurance", "montly_hoa",
+    "annual_property_taxes", "monthlyPropertyTaxBucketDeposit", "annual_insurance", "monthlyInsuranceUntilRefi", "montly_hoa",
     "vacancyPercent", "maintenancePercent", "capexPercent", "property_managment_fee_precentages_from_rent",
   ],
   refinance: [
     "daysUntilRefi", "arv_in_thousands", "lowestArv", "ltv_as_precent", "interestRate", "loanTermYears",
-    "loanChargesRefi", "recordingTransferRefi", "titleEscrowRefi", "onlineNotaryFeeRefi", "appraisalFee", "surveyFee",
+    "loanChargesRefi", "recordingTransferRefi", "titleEscrowRefi", "onlineNotaryFeeRefi",
     "refiUnderwritingFee", "refiPoints", "brokerProcessingFeeRefi", "otherClosingCostsRefi",
-    "maintenanceReserve", "vacancyReserve", "capexReserve",
+    "insuranceBillAtRefiClosing", "propertyTaxLumpSumAtRefiClosing", "appraisalFee", "surveyFee", "monthlyInsuranceAfterRefi",
+    "maintenanceReserve", "vacancyReserve", "capexReserve", "hysaDepositAtRefi",
   ],
   buyRehab: ["purchasePrice", "rehabCost", "rehabContingency", "closingCostsBuy", "down_payment", "hmlPoints", "HMLInterestRate"],
   flipStrategy: ["salePrice", "holdingTime", "buyerAgentSellingFee", "sellerAgentSellingFee", "sellingClosingCosts", "capitalGainsTax"],

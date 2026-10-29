@@ -87,7 +87,26 @@ describe("validateDealInputFields", () => {
       "rehabCost@Rehab", "rehabContingency@Rehab", "down_payment@Buy", "hmlPoints@Buy", "HMLInterestRate@Buy",
       "annual_property_taxes@Rent & Holding", "annual_insurance@Rent & Holding", "montly_hoa@Rent & Holding",
       "ltv_as_precent@Refinance", "refiPoints@Refinance", "appraisalFee@Refinance", "constructionLoanBudget@Rehab",
-      "daysUntilRented@Rent & Holding", "interestRate@Refinance", "daysUntilRefi@Refinance",
+      // A tenant before the purchase also puts the 45-day rehab completion after the tenant.
+      "daysUntilRented@Rent & Holding", "daysUntilRehabCompleted@Rehab", "interestRate@Refinance", "daysUntilRefi@Refinance",
+    ]);
+  });
+
+  it("keeps the rehab completion between the purchase closing and the tenant", () => {
+    const messagesFor = (daysUntilRehabCompleted: number) =>
+      validateDealInputFields({ ...validBrrrr(), daysUntilRented: 90, daysUntilRehabCompleted }, "BRRRR").map((e) => `${e.fieldKey}@${e.phaseTabLabel}: ${e.message}`);
+    expect(messagesFor(0)).toEqual([]);
+    expect(messagesFor(90)).toEqual([]);
+    expect(messagesFor(91)).toEqual(["daysUntilRehabCompleted@Rehab: Rehab completion must be on or before the tenant-occupied date."]);
+    expect(messagesFor(-1)).toEqual(["daysUntilRehabCompleted@Rehab: Days until rehab completed cannot be negative."]);
+  });
+
+  it("refuses negative amounts on the new insurance, tax and HYSA inputs, but not a negative seller credit", () => {
+    const deal = { ...validBrrrr(), monthlyInsuranceUntilRefi: -1, monthlyPropertyTaxBucketDeposit: -1, insuranceBillAtRefiClosing: -1,
+                   monthlyInsuranceAfterRefi: -1, propertyTaxLumpSumAtRefiClosing: -1, hysaDepositAtRefi: -1, sellerTaxCreditAtPurchaseClosing: -50 };
+    expect(validateDealInputFields(deal, "BRRRR").map((e) => e.fieldKey)).toEqual([
+      "monthlyInsuranceUntilRefi", "monthlyPropertyTaxBucketDeposit", "insuranceBillAtRefiClosing", "monthlyInsuranceAfterRefi",
+      "propertyTaxLumpSumAtRefiClosing", "hysaDepositAtRefi",
     ]);
   });
 

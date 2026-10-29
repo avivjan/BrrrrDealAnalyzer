@@ -24,8 +24,13 @@ export const TITLE_REFI_RATE = 0.0045;
 export const DEED_TRANSFER_TAX_RATE_WE_PAY_ALL = 0.007;
 export const LOWEST_ARV_FACTOR = 0.9;
 export const HML_DAYS_PER_YEAR = 360;
-export const DSCR_DAYS_PER_YEAR = 365;
+/** The refi settlement statements quote the DSCR loan's per diem on a 360-day year too. */
+export const DSCR_DAYS_PER_YEAR = 360;
 export const DAYS_PER_MONTH = 30;
+/** Property taxes are paid on Nov 30 with the 4% November discount. */
+export const PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = 0.96;
+export const PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15;
+export const HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST = 3;
 
 const MS_PER_DAY = 86_400_000;
 
@@ -71,6 +76,35 @@ export function dayOfYear(day: Date): number {
 /** Days from `day` through the last day of its month, both inclusive (the prepaid window). */
 export function daysThroughMonthEnd(day: Date): number {
   return daysInMonth(day) - day.getUTCDate() + 1;
+}
+
+/** Every 15th of a month strictly after `afterDay` and on or before `throughDay`. */
+export function propertyTaxBucketDepositDates(afterDay: Date, throughDay: Date): Date[] {
+  const depositDates: Date[] = [];
+  let year = afterDay.getUTCFullYear();
+  let month = afterDay.getUTCMonth();
+  for (;;) {
+    const depositDate = new Date(Date.UTC(year, month, PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH));
+    if (depositDate.getTime() > throughDay.getTime()) return depositDates;
+    if (depositDate.getTime() > afterDay.getTime()) depositDates.push(depositDate);
+    [year, month] = month === 11 ? [year + 1, 0] : [year, month + 1];
+  }
+}
+
+/** The first Nov 30 the owner pays: this year's, or next year's after a December closing. */
+export function firstPropertyTaxPaymentDate(buyClosingDay: Date): Date {
+  const thisYearsPaymentDate = new Date(Date.UTC(buyClosingDay.getUTCFullYear(), 10, 30));
+  return buyClosingDay.getTime() <= thisYearsPaymentDate.getTime() ? thisYearsPaymentDate : new Date(Date.UTC(buyClosingDay.getUTCFullYear() + 1, 10, 30));
+}
+
+/** Monthly principal and interest of the DSCR loan (straight-line at 0%), as the backend's `calc_mortgage_payment`. */
+export function monthlyPrincipalAndInterest(loanAmount: number, annualInterestRatePercent: number, loanTermYears: number): number | null {
+  const totalPayments = loanTermYears * 12;
+  if (!(totalPayments > 0)) return null;
+  const monthlyInterestRate = annualInterestRatePercent / 100 / 12;
+  if (monthlyInterestRate === 0) return loanAmount / totalPayments;
+  const factor = (1 + monthlyInterestRate) ** totalPayments;
+  return (loanAmount * monthlyInterestRate * factor) / (factor - 1);
 }
 
 /** Refi: 0.55% of the loan recorded + $250. */
@@ -147,7 +181,11 @@ export interface BrrrAutoCalc {
   prepaidDaysBuy: number | null;
   prepaidInterestBuy: number | null;
   sellerPaidCurrentYearTaxesEffective: boolean | null;
+  /** The proration by the closing date (what the "auto" credit is). */
+  sellerTaxCreditFormula: number | null;
+  /** Effective: the typed settlement-statement credit, or the formula. */
   sellerTaxCredit: number | null;
+  insuranceBillAtPurchaseInsideClosing: number;
   /** Days the proration covers; 0 on a Jan 1 closing with unpaid taxes (nothing to back-solve). */
   sellerTaxCreditProratedDays: number | null;
   deedTransferTaxBuy: number | null;
@@ -164,8 +202,21 @@ export interface BrrrAutoCalc {
   rehabCostWithContingency: number | null;
   constructionBudget: number | null;
   stolenMoney: number | null;
+  rehabCompletedDate: string | null;
   // Rent & holding
   tenantOccupiedDate: string | null;
+  /** The bill × 0.96 paid on Nov 30. */
+  propertyTaxBillPaidOnNovember30: number | null;
+  firstPropertyTaxPaymentDate: string | null;
+  /** The 15ths after closing through the first Nov 30 (1 when none is left); null without a closing date. */
+  propertyTaxBucketDepositCountUntilFirstPayment: number | null;
+  propertyTaxBucketDepositDefault: number | null;
+  propertyTaxBucketDepositEffective: number | null;
+  /** Deposits of the first bill made on or before the refi (days ÷ 30 without a closing date). */
+  propertyTaxBucketFirstBillDepositCountUntilRefi: number | null;
+  /** The regular-year tax after the refi: bill × 0.96 ÷ 12. */
+  monthlyPropertyTaxAfterRefi: number | null;
+  insurancePaidMonthlyUntilRefi: number | null;
   daysRentedBeforeRefi: number | null;
   preRefiRentalIncome: number | null;
   utilitiesUntilRented: number | null;
@@ -182,6 +233,16 @@ export interface BrrrAutoCalc {
   titleEscrowRefiEffective: number | null;
   notaryRefi: number;
   closingCostsRefiTotal: number | null;
+  insuranceBillAtRefiDefault: number | null;
+  insuranceBillAtRefiEffective: number | null;
+  insuranceBillAtRefiInsideClosing: number;
+  monthlyInsuranceAfterRefiDefault: number | null;
+  propertyTaxLumpSumAtRefiClosingDefault: number | null;
+  propertyTaxLumpSumAtRefiClosingEffective: number;
+  appraisalAndSurveyPaidOutsideClosing: number;
+  monthlyPrincipalAndInterest: number | null;
+  hysaDepositAtRefiDefault: number | null;
+  hysaDepositAtRefiEffective: number | null;
   prepaidDaysRefi: number | null;
   prepaidInterestRefi: number | null;
   vacancyReserveDefault: number | null;
@@ -236,7 +297,11 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   // -- Buy: the settlement -----------------------------------------------------
   const annualPropertyTaxes = numberOrNull(deal.annual_property_taxes);
   const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() === 11) : null;
-  const sellerTaxCreditAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
+  const sellerTaxCreditFormulaAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
+  // The figure typed from the settlement statement wins over the proration.
+  const sellerTaxCreditAmount = deal.sellerTaxCreditAtPurchaseClosing != null ? numberOrZero(deal.sellerTaxCreditAtPurchaseClosing) : sellerTaxCreditFormulaAmount;
+  const insuranceBillAtPurchase = numberOrZero(deal.annual_insurance);
+  const insuranceBillAtPurchaseInsideClosing = deal.insurancePurchaseBillPaymentTiming === "outside_purchase_closing" ? 0 : insuranceBillAtPurchase;
   const sellerTaxCreditProratedDaysCount = buyClosingDay ? sellerTaxCreditProratedDays(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : null;
   const deedTransferTaxBuy = purchasePriceDollars != null ? deedTransferTaxBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
   const recordingTransferBuyDefaultAmount = hmlAmount != null && deedTransferTaxBuy != null ? recordingTransferBuyDefault(hmlAmount, deedTransferTaxBuy) : null;
@@ -248,6 +313,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const closingCostsBuyTotal =
     recordingTransferBuyEffectiveAmount != null && titleEscrowBuyEffectiveAmount != null
       ? numberOrZero(deal.loanChargesBuy) + recordingTransferBuyEffectiveAmount + titleEscrowBuyEffectiveAmount + notaryBuy + numberOrZero(deal.otherClosingCostsBuy)
+        + insuranceBillAtPurchaseInsideClosing
       : null;
   const cashToCloseBuy =
     downPaymentCash != null && closingCostsBuyTotal != null
@@ -258,6 +324,28 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
 
   // -- Rehab -------------------------------------------------------------------
   const stolenMoney = constructionBudget != null && rehabCostWithContingency != null ? constructionBudget - rehabCostWithContingency : null;
+  const daysUntilRehabCompleted = numberOrNull(deal.daysUntilRehabCompleted);
+  const rehabCompletedDate = buyClosingDay && daysUntilRehabCompleted != null ? addDays(deal.buyClosingDate!, daysUntilRehabCompleted) : null;
+
+  // -- The property's tax bucket until the refi ---------------------------------
+  const propertyTaxBillPaidOnNovember30 = annualPropertyTaxes != null ? annualPropertyTaxes * PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR : null;
+  const monthlyPropertyTaxAfterRefi = propertyTaxBillPaidOnNovember30 != null ? propertyTaxBillPaidOnNovember30 / 12 : null;
+  const sellerTaxCreditSetAsideInTaxBucket = Math.max(0, sellerTaxCreditAmount ?? 0);
+  const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay) : null;
+  const firstBillDepositDates = buyClosingDay && firstPaymentDay
+    ? (propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay).length ? propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay) : [firstPaymentDay])
+    : null;
+  const propertyTaxBucketDepositCountUntilFirstPayment = firstBillDepositDates ? firstBillDepositDates.length : null;
+  const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 == null ? null
+    : propertyTaxBucketDepositCountUntilFirstPayment != null
+      ? Math.max(0, (propertyTaxBillPaidOnNovember30 - sellerTaxCreditSetAsideInTaxBucket) / propertyTaxBucketDepositCountUntilFirstPayment)
+      : monthlyPropertyTaxAfterRefi;
+  const propertyTaxBucketDepositEffective = deal.monthlyPropertyTaxBucketDeposit != null ? numberOrZero(deal.monthlyPropertyTaxBucketDeposit) : propertyTaxBucketDepositDefault;
+  const refiClosingDayForTaxes = refiClosingDate ? parseIsoDate(refiClosingDate) : null;
+  const propertyTaxBucketFirstBillDepositCountUntilRefi = firstBillDepositDates
+    ? (refiClosingDayForTaxes ? firstBillDepositDates.filter((depositDate) => depositDate.getTime() <= refiClosingDayForTaxes.getTime()).length : null)
+    : daysUntilRefi != null ? daysUntilRefi / DAYS_PER_MONTH : null;
+  const insurancePaidMonthlyUntilRefi = daysUntilRefi != null ? (numberOrZero(deal.monthlyInsuranceUntilRefi) * daysUntilRefi) / DAYS_PER_MONTH : null;
 
   // -- Rent & holding -----------------------------------------------------------
   const daysRentedBeforeRefi = daysUntilRefi != null && daysUntilRented != null ? Math.max(0, daysUntilRefi - daysUntilRented) : null;
@@ -274,6 +362,16 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const lowestArvEffective = deal.lowestArv != null ? (lowestArvOverrideIsUsable ? lowestArvOverrideDollars : null) : lowestArvDefault;
   const conservativeRefiLoanAmount = lowestArvEffective != null && ltvPercent != null ? lowestArvEffective * (ltvPercent / 100) : null;
   const refiInterestRatePercent = numberOrNull(deal.interestRate);
+  const insuranceBillAtRefiDefault = insuranceBillAtPurchase;
+  const insuranceBillAtRefiEffective = deal.insuranceBillAtRefiClosing != null ? numberOrZero(deal.insuranceBillAtRefiClosing) : insuranceBillAtRefiDefault;
+  const insuranceBillAtRefiInsideClosing = deal.insuranceRefiBillPaymentTiming === "outside_refi_closing" ? 0 : insuranceBillAtRefiEffective;
+  const monthlyInsuranceAfterRefiDefault = insuranceBillAtRefiEffective / 12;
+  const propertyTaxLumpSumAtRefiClosingDefault = annualPropertyTaxes;
+  const propertyTaxLumpSumAtRefiClosingEffective = deal.propertyTaxCollectionAtRefi === "full_tax_bill_collected_at_refi"
+    ? (deal.propertyTaxLumpSumAtRefiClosing != null ? numberOrZero(deal.propertyTaxLumpSumAtRefiClosing) : numberOrZero(propertyTaxLumpSumAtRefiClosingDefault))
+    : 0;
+  // Paid outside the refi closing at the end of the rehab: not a settlement line.
+  const appraisalAndSurveyPaidOutsideClosing = numberOrZero(deal.appraisalFee) + numberOrZero(deal.surveyFee);
   const refiSettlementLinesFor = (refiLoanAmount: number | null) => {
     if (refiLoanAmount == null) return { brokerPoints: null, recordingTransfer: null, titleEscrow: null, closingCostsTotal: null, prepaidInterest: null };
     const brokerPoints = (numberOrZero(deal.refiPoints) / 100) * refiLoanAmount;
@@ -281,8 +379,8 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     const titleEscrow = deal.titleEscrowRefi != null ? numberOrZero(deal.titleEscrowRefi) : titleEscrowRefiDefault(refiLoanAmount);
     const notary = deal.onlineNotaryRefi === false ? 0 : (deal.onlineNotaryFeeRefi != null ? numberOrZero(deal.onlineNotaryFeeRefi) : NOTARY_FEE);
     const closingCostsTotal =
-      numberOrZero(deal.loanChargesRefi) + recordingTransfer + titleEscrow + notary + numberOrZero(deal.appraisalFee) + numberOrZero(deal.surveyFee) +
-      numberOrZero(deal.refiUnderwritingFee) + brokerPoints + numberOrZero(deal.brokerProcessingFeeRefi) + numberOrZero(deal.otherClosingCostsRefi);
+      numberOrZero(deal.loanChargesRefi) + recordingTransfer + titleEscrow + notary + numberOrZero(deal.refiUnderwritingFee) + brokerPoints +
+      numberOrZero(deal.brokerProcessingFeeRefi) + numberOrZero(deal.otherClosingCostsRefi) + insuranceBillAtRefiInsideClosing + propertyTaxLumpSumAtRefiClosingEffective;
     const prepaidInterest =
       refiInterestRatePercent != null && prepaidDaysRefi != null ? (refiLoanAmount * refiInterestRatePercent * prepaidDaysRefi) / DSCR_DAYS_PER_YEAR / 100 : null;
     return { brokerPoints, recordingTransfer, titleEscrow, closingCostsTotal, prepaidInterest };
@@ -291,28 +389,44 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const settlementAtLowestArv = refiSettlementLinesFor(conservativeRefiLoanAmount);
   const vacancyReserveDefault = monthlyRent;
   const vacancyReserveEffective = deal.vacancyReserve != null ? numberOrZero(deal.vacancyReserve) : vacancyReserveDefault;
-  const reservesTotal = vacancyReserveEffective != null ? numberOrZero(deal.maintenanceReserve) + vacancyReserveEffective + numberOrZero(deal.capexReserve) : null;
+  const loanTermYears = numberOrNull(deal.loanTermYears);
+  const principalAndInterest = refiLoanAmount != null && refiInterestRatePercent != null && loanTermYears != null
+    ? monthlyPrincipalAndInterest(refiLoanAmount, refiInterestRatePercent, loanTermYears)
+    : null;
+  const hysaDepositAtRefiDefault = principalAndInterest != null ? HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST * principalAndInterest : null;
+  const hysaDepositAtRefiEffective = deal.hysaDepositAtRefi != null ? numberOrZero(deal.hysaDepositAtRefi) : hysaDepositAtRefiDefault;
+  // The owner's own money set aside after the wire: never taken off it.
+  const reservesTotal = vacancyReserveEffective != null
+    ? numberOrZero(deal.maintenanceReserve) + vacancyReserveEffective + numberOrZero(deal.capexReserve) + (hysaDepositAtRefiEffective ?? 0)
+    : null;
   const hmlPayoff = hmlAmount != null ? hmlAmount + accruedInterestAtPayoff : null;
   const cashOutWireFor = (refiLoanAmount: number | null, settlementLines: ReturnType<typeof refiSettlementLinesFor>) =>
-    refiLoanAmount != null && hmlPayoff != null && settlementLines.closingCostsTotal != null && reservesTotal != null
-      ? refiLoanAmount - hmlPayoff - settlementLines.closingCostsTotal - (settlementLines.prepaidInterest ?? 0) - reservesTotal
+    refiLoanAmount != null && hmlPayoff != null && settlementLines.closingCostsTotal != null
+      ? refiLoanAmount - hmlPayoff - settlementLines.closingCostsTotal - (settlementLines.prepaidInterest ?? 0)
       : null;
 
   return {
     purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
-    prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective, sellerTaxCredit: sellerTaxCreditAmount,
+    prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective,
+    sellerTaxCreditFormula: sellerTaxCreditFormulaAmount, sellerTaxCredit: sellerTaxCreditAmount, insuranceBillAtPurchaseInsideClosing,
     sellerTaxCreditProratedDays: sellerTaxCreditProratedDaysCount,
     deedTransferTaxBuy, recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
     wePayAllExtraClosingCost: wePayAllExtra,
     recordingTransferBuyEffective: recordingTransferBuyEffectiveAmount, titleEscrowBuyEffective: titleEscrowBuyEffectiveAmount,
     notaryBuy, closingCostsBuyTotal, cashToCloseBuy, totalHardMoneyCost,
-    rehabCostWithContingency, constructionBudget, stolenMoney,
+    rehabCostWithContingency, constructionBudget, stolenMoney, rehabCompletedDate,
     tenantOccupiedDate, daysRentedBeforeRefi, preRefiRentalIncome, utilitiesUntilRented,
+    propertyTaxBillPaidOnNovember30, firstPropertyTaxPaymentDate: firstPaymentDay ? toIsoDate(firstPaymentDay) : null,
+    propertyTaxBucketDepositCountUntilFirstPayment, propertyTaxBucketDepositDefault, propertyTaxBucketDepositEffective,
+    propertyTaxBucketFirstBillDepositCountUntilRefi, monthlyPropertyTaxAfterRefi, insurancePaidMonthlyUntilRefi,
     refiClosingDate, refiLoanAmount, lowestArvDefault, lowestArvEffective, conservativeRefiLoanAmount,
     brokerPointsDollars: settlementAtArv.brokerPoints, recordingTransferRefiDefault: refiLoanAmount != null ? recordingTransferDefault(refiLoanAmount) : null,
     titleEscrowRefiDefault: refiLoanAmount != null ? titleEscrowRefiDefault(refiLoanAmount) : null,
     recordingTransferRefiEffective: settlementAtArv.recordingTransfer, titleEscrowRefiEffective: settlementAtArv.titleEscrow,
     notaryRefi: deal.onlineNotaryRefi === false ? 0 : (deal.onlineNotaryFeeRefi != null ? numberOrZero(deal.onlineNotaryFeeRefi) : NOTARY_FEE), closingCostsRefiTotal: settlementAtArv.closingCostsTotal,
+    insuranceBillAtRefiDefault, insuranceBillAtRefiEffective, insuranceBillAtRefiInsideClosing, monthlyInsuranceAfterRefiDefault,
+    propertyTaxLumpSumAtRefiClosingDefault, propertyTaxLumpSumAtRefiClosingEffective, appraisalAndSurveyPaidOutsideClosing,
+    monthlyPrincipalAndInterest: principalAndInterest, hysaDepositAtRefiDefault, hysaDepositAtRefiEffective,
     prepaidDaysRefi, prepaidInterestRefi: settlementAtArv.prepaidInterest,
     vacancyReserveDefault, vacancyReserveEffective, reservesTotal, hmlPayoff,
     cashOutWire: cashOutWireFor(refiLoanAmount, settlementAtArv), cashOutWireConservative: cashOutWireFor(conservativeRefiLoanAmount, settlementAtLowestArv),

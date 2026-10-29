@@ -3,7 +3,7 @@
 import { computed, useId } from "vue";
 import type { DealInputModel, TitleModeBuy } from "../../../types";
 import { useDealField, type NumericKey } from "../../../composables/useDealField";
-import { annualPropertyTaxesFromSellerTaxCredit, brrrAutoCalc, parseIsoDate } from "../../../utils/brrrAutoCalc";
+import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
@@ -60,20 +60,19 @@ const sellerTaxCreditHint = computed(() => {
     ? `buyer credits the seller for ${proratedDays} days (taxes already paid) · a real cost`
     : `seller credits the buyer for ${proratedDays} days owned · set aside for the tax bill after closing`;
 });
-/** The pencil only makes sense while the proration covers at least one day (a Jan 1 unpaid closing gives $0 for any tax). */
+/** The pencil only makes sense while the proration covers at least one day (a Jan 1 unpaid closing has no seller days). */
 const sellerTaxCreditIsEditable = computed(() => (autoCalc.value.sellerTaxCreditProratedDays ?? 0) > 0);
+const sellerTaxCreditIsTyped = computed(() => props.deal.sellerTaxCreditAtPurchaseClosing != null);
 /**
- * The credit typed over the figure is the one on the settlement statement: back-solve the
- * annual taxes that produce it and write them to the one shared field, so the figure, this
- * section's Annual Taxes clone and the Rent & Holding box all follow.
+ * The credit typed over the figure is the one on the settlement statement (the county-tax and
+ * assessment lines together). It overrides the proration and leaves this year's tax bill as
+ * typed: the bill paid on Nov 30 is its own figure. The direction comes from "seller already
+ * paid", so a December reimbursement reads negative whatever sign it is typed with.
  */
 const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
-  const closingDay = parseIsoDate(field.getStr("buyClosingDate"));
   const sellerAlreadyPaid = autoCalc.value.sellerPaidCurrentYearTaxesEffective;
-  if (!closingDay || sellerAlreadyPaid == null) return;
-  const derivedAnnualPropertyTaxes = annualPropertyTaxesFromSellerTaxCredit(sellerTaxCreditDollars, closingDay, sellerAlreadyPaid);
-  if (derivedAnnualPropertyTaxes == null) return;
-  field.set("annual_property_taxes", derivedAnnualPropertyTaxes);
+  const typedAmount = Math.abs(sellerTaxCreditDollars);
+  field.setNullable("sellerTaxCreditAtPurchaseClosing", sellerAlreadyPaid ? -typedAmount : typedAmount);
 };
 </script>
 
@@ -94,19 +93,24 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           data-testid="form.auto.sellerTaxCredit"
           label="Seller Tax Credit"
           :value="autoCalc.sellerTaxCredit"
-          :hint="sellerTaxCreditHint"
+          :hint="sellerTaxCreditIsTyped ? 'as on the settlement statement' : sellerTaxCreditHint"
           signed
           :editable="sellerTaxCreditIsEditable"
-          edit-aria-label="Type the seller tax credit received at closing; Annual Taxes will follow"
+          edit-aria-label="Type the seller tax credit on the settlement statement"
           @commit-edited-value="onSellerTaxCreditEdited"
         />
-        <!-- The same field as Rent & Holding's Annual Taxes, shown here so the credit and the taxes behind it are read together. -->
+        <div v-if="sellerTaxCreditIsTyped" class="flex items-center gap-2 text-xs text-fg-muted" data-testid="form.field.sellerTaxCreditAtPurchaseClosing">
+          <span>Typed from the settlement statement<template v-if="autoCalc.sellerTaxCreditFormula != null">; the proration gives {{ formatMoney(autoCalc.sellerTaxCreditFormula) }}</template></span>
+          <button type="button" data-part="reset" class="text-primary hover:text-primary-hover" @click="field.setNullable('sellerTaxCreditAtPurchaseClosing', null)">auto</button>
+          <InputInfo :content="impactText('sellerTaxCreditAtPurchaseClosing')" field-label="Seller Tax Credit" />
+        </div>
+        <!-- The same field as Rent & Holding's tax bill, shown here so the credit and the bill behind it are read together. -->
         <MoneyInput
           data-testid="form.field.annualPropertyTaxesBuyClone"
           :error-message="fieldErrorMessages?.annual_property_taxes"
           :model-value="field.get('annual_property_taxes')"
           @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
-          label="Annual Taxes"
+          label="Property Tax Bill (this year)"
           note="same field as Rent & Holding"
           :info="impactText('annual_property_taxes')"
         />
@@ -267,7 +271,8 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           </div>
         </div>
         <div class="mt-3">
-          <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="autoCalc.closingCostsBuyTotal" />
+          <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="autoCalc.closingCostsBuyTotal"
+                      :hint="autoCalc.insuranceBillAtPurchaseInsideClosing ? `includes the insurance bill ${formatMoney(autoCalc.insuranceBillAtPurchaseInsideClosing)}` : undefined" />
         </div>
       </div>
     </div>

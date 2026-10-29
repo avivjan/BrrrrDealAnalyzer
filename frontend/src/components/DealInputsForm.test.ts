@@ -114,24 +114,30 @@ describe("DealInputsForm", () => {
       for (const label of ["Purchase Price", "Earnest Money Deposit", "Down Payment", "Points", "Interest Rate",
                            "Loan Charges", "Recording & Transfer", "Title & Escrow / Settlement", "Other Closing Costs"])
         expect(rendered, label).toContain(label);
-      // Annual Taxes is rendered twice: the Rent & Holding input and its clone beside the Seller Tax Credit
-      expect(rendered.filter((label) => label === "Annual Taxes")).toHaveLength(2);
+      // The tax bill is rendered twice: the Rent & Holding input and its clone beside the Seller Tax Credit
+      expect(rendered.filter((label) => label === "Property Tax Bill (this year)")).toHaveLength(2);
       expect(wrapper.find('[data-testid="form.field.buyClosingDate"] input[type="date"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.field.titleModeBuy"] select').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.field.onlineNotaryBuy"] input[type="checkbox"]').exists()).toBe(true);
       // Rehab
-      for (const label of ["Actual Rehab Cost", "Construction Loan Budget", "Contingency", "Rehab Cushion"])
+      for (const label of ["Actual Rehab Cost", "Construction Loan Budget", "Contingency", "Rehab Cushion", "Until Rehab Completed"])
         expect(rendered, label).toContain(label);
       // Rent & Holding
       for (const label of ["Monthly Rent", "Until Tenant Occupied", "Utilities until Rented (per month)", "Maintenance before Refi",
-                           "Appliances", "Annual Taxes", "Annual Insurance", "Monthly HOA", "Vacancy", "Maint.", "CapEx", "Prop. Mgmt"])
+                           "Appliances", "Property Tax Bill (this year)", "Tax Bucket Deposit (each 15th)", "Insurance Bill at Purchase",
+                           "Insurance per Month until Refi", "Monthly HOA", "Vacancy", "Maint.", "CapEx", "Prop. Mgmt"])
         expect(rendered, label).toContain(label);
       // Refinance
       for (const label of ["Days to Refi", "ARV", "Lowest ARV Possible (stress test)", "LTV", "Long Term Interest Rate", "Loan Term",
                            "Loan Charges (Refi)", "Recording & Transfer (Refi)", "Title & Escrow / Settlement (Refi)", "Other Closing Costs (Refi)",
                            "Appraisal", "Survey", "Underwriting Fee", "Broker Points", "Broker Processing Fee",
-                           "Maintenance Reserve", "Vacancy Reserve (1 month rent)", "CapEx Reserve"])
+                           "Insurance Bill at Refi", "Insurance per Month after Refi",
+                           "Maintenance Reserve", "Vacancy Reserve (1 month rent)", "CapEx Reserve", "HYSA Deposit (3 months P&I)"])
         expect(rendered, label).toContain(label);
+      for (const pickerTestId of ["insurancePurchaseBillPaymentTiming", "insuranceRefiBillPaymentTiming", "propertyTaxCollectionAtRefi"])
+        expect(wrapper.find(`[data-testid="form.field.${pickerTestId}"] select`).exists(), pickerTestId).toBe(true);
+      // The lump appears only once the refi lender collects the whole tax bill.
+      expect(rendered).not.toContain("Tax Lump collected at Refi");
       expect(wrapper.find('[data-testid="form.field.onlineNotaryRefi"] input[type="checkbox"]').exists()).toBe(true);
       // Deprecated for BRRRR: the legacy lumps and the hard-money toggle are gone
       expect(rendered).not.toContain("Closing Costs (Buy)");
@@ -251,9 +257,9 @@ describe("DealInputsForm", () => {
       expect(dot("rentHolding")).toBe(true); // rent, taxes and insurance are all still 0
 
       await emitFrom(wrapper, "Monthly Rent", 2600);
-      await emitFrom(wrapper, "Annual Taxes", 3600);
+      await emitFrom(wrapper, "Property Tax Bill (this year)", 3600);
       expect(dot("rentHolding")).toBe(true); // insurance still missing
-      await emitFrom(wrapper, "Annual Insurance", 1200);
+      await emitFrom(wrapper, "Insurance Bill at Purchase", 1200);
       expect(dot("rentHolding")).toBe(false);
     });
 
@@ -279,14 +285,14 @@ describe("DealInputsForm", () => {
       expect(wrapper.find('[data-testid="form.tab.refinance.has-invalid-input"]').exists()).toBe(false);
     });
 
-    it("marks a wrong value on a hidden tab too, and both Annual Taxes boxes at once", async () => {
+    it("marks a wrong value on a hidden tab too, and both tax bill boxes at once", async () => {
       const deal = reactive({ ...createEmptyDealForm("BRRRR"), purchasePrice: 200, arv_in_thousands: 320, rent: 2600, down_payment: 150, annual_property_taxes: -1 });
       const wrapper = mountForm(deal, "BRRRR");
       await wrapper.find('[data-testid="form.tab.refinance"]').trigger("click");
       expect(wrapper.find('[data-testid="form.tab.buy.has-invalid-input"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="form.tab.rentHolding.has-invalid-input"]').exists()).toBe(true);
       const withMessage = wrapper.findAll("[data-error-message]").map((el) => el.attributes("data-label"));
-      expect(withMessage).toEqual(["Annual Taxes", "Down Payment", "Annual Taxes"]);
+      expect(withMessage).toEqual(["Property Tax Bill (this year)", "Down Payment", "Property Tax Bill (this year)"]);
     });
 
     it("gives a blank required field no inline message: the dot and the Analyze list already point at it", () => {
@@ -305,7 +311,7 @@ describe("DealInputsForm", () => {
       const needed = (wrapper: ReturnType<typeof mountForm>) =>
         wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.attributes("needed-to-run-analysis") === "true").map((c) => c.props("label"));
       expect(needed(mountForm(createEmptyDealForm("BRRRR"), "BRRRR"))).toEqual(
-        ["Purchase Price", "Actual Rehab Cost", "Monthly Rent", "Annual Taxes", "Annual Insurance", "ARV"],
+        ["Purchase Price", "Actual Rehab Cost", "Monthly Rent", "Property Tax Bill (this year)", "Insurance Bill at Purchase", "ARV"],
       );
       expect(needed(mountForm(createEmptyDealForm("FLIP"), "FLIP"))).toEqual(
         ["Purchase Price", "Rehab Cost", "Projected Sale Price", "Annual Taxes", "Annual Insurance"],
@@ -415,8 +421,8 @@ describe("DealInputsForm", () => {
       ["Days to Refi", 180],
       ["Broker Points", 1.5],
       ["Monthly Rent", 2600],
-      ["Annual Taxes", 3600],
-      ["Annual Insurance", 1200],
+      ["Property Tax Bill (this year)", 3600],
+      ["Insurance Bill at Purchase", 1200],
       ["Vacancy", 5],
       ["Prop. Mgmt", 8],
       ["Loan Term", 30],
@@ -602,10 +608,10 @@ describe("DealInputsForm", () => {
       expect(deal.otherClosingCostsBuyNote).toBeNull();
     });
 
-    it("keeps the two Annual Taxes boxes on one value, whichever is typed into", async () => {
+    it("keeps the two tax bill boxes on one value, whichever is typed into", async () => {
       const deal = reactive({ ...createEmptyDealForm("BRRRR"), annual_property_taxes: 3600 });
       const wrapper = mountForm(deal, "BRRRR");
-      const annualTaxesBoxes = () => wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Annual Taxes");
+      const annualTaxesBoxes = () => wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Property Tax Bill (this year)");
       expect(annualTaxesBoxes()).toHaveLength(2);
       expect(annualTaxesBoxes().map((c) => c.props("modelValue"))).toEqual([3600, 3600]);
 
@@ -617,7 +623,7 @@ describe("DealInputsForm", () => {
       expect(annualTaxesBoxes().map((c) => c.props("modelValue"))).toEqual([5100, 5100]);
     });
 
-    it("back-solves Annual Taxes from a seller tax credit typed over the figure", async () => {
+    it("overrides the proration with a seller tax credit typed over the figure, and keeps the tax bill", async () => {
       const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-01-10", annual_property_taxes: 3600 });
       const wrapper = mountForm(deal, "BRRRR");
       const sellerTaxCreditFigure = () => wrapper.findAllComponents({ name: "AutoFigure" }).find((c) => c.props("label") === "Seller Tax Credit")!;
@@ -625,10 +631,22 @@ describe("DealInputsForm", () => {
       expect(Number(sellerTaxCreditFigure().props("value"))).toBeCloseTo(88.77, 2);
 
       await sellerTaxCreditFigure().vm.$emit("commitEditedValue", 177.53);
-      expect(deal.annual_property_taxes).toBe(7199.83); // 177.53 × 365 ÷ 9 seller days
-      const annualTaxesBoxes = wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Annual Taxes");
-      expect(annualTaxesBoxes.map((c) => c.props("modelValue"))).toEqual([7199.83, 7199.83]);
+      expect(deal.sellerTaxCreditAtPurchaseClosing).toBe(177.53);
+      const annualTaxesBoxes = wrapper.findAllComponents({ name: "MoneyInput" }).filter((c) => c.props("label") === "Property Tax Bill (this year)");
+      expect(annualTaxesBoxes.map((c) => c.props("modelValue"))).toEqual([3600, 3600]);
       expect(Number(sellerTaxCreditFigure().props("value"))).toBeCloseTo(177.53, 2);
+    });
+
+    it("shows the tax lump only when the refi lender collects the whole bill", async () => {
+      const deal = reactive({ ...createEmptyDealForm("BRRRR"), annual_property_taxes: 3600 });
+      const wrapper = mountForm(deal, "BRRRR");
+      await wrapper.find('[data-testid="form.field.propertyTaxCollectionAtRefi"] select').setValue("full_tax_bill_collected_at_refi");
+      expect(deal.propertyTaxCollectionAtRefi).toBe("full_tax_bill_collected_at_refi");
+      expect(labels(wrapper)).toContain("Tax Lump collected at Refi");
+      await wrapper.find('[data-testid="form.field.insuranceRefiBillPaymentTiming"] select').setValue("outside_refi_closing");
+      expect(deal.insuranceRefiBillPaymentTiming).toBe("outside_refi_closing");
+      await wrapper.find('[data-testid="form.field.insurancePurchaseBillPaymentTiming"] select').setValue("outside_purchase_closing");
+      expect(deal.insurancePurchaseBillPaymentTiming).toBe("outside_purchase_closing");
     });
 
     it("turns the seller tax credit pencil off on a Jan 1 closing, where no tax gives a credit", () => {
