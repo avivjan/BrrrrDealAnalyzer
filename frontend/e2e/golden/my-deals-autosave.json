@@ -10,15 +10,32 @@
         "annual_property_taxes": "3600.00",
         "appliances": "630.00",
         "appraisalFee": "700.00",
+        "appraisal_and_survey_paid_outside_closing": 1085,
         "arv_in_thousands": "320.0000",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": {
           "cash_flow": [
             {
-              "formula": "Vacancy 5% of rent ($130) + Management 8% of rent ($208) + Maintenance 5% of rent ($130) + CapEx 5% of rent ($130) + Taxes ÷ 12 ($300) + Insurance ÷ 12 ($100) + HOA ($0) = $998",
+              "formula": "This year's bill ($3,600) × 0.96 = $3,456 paid on Nov 30 ÷ 12 = $288",
+              "label": "Property Tax per Month (regular year)",
+              "note": "Paid on Nov 30 with the 4% November discount. The refi never changes the tax, so a regular year costs the same bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "Insurance bill at the refi ($1,200) ÷ 12 = $100",
+              "label": "Insurance per Month (regular year)",
+              "note": "Formula default for the regular-year insurance per month; type a value to override. The insurance paid at the purchase, monthly until the refi and at the refi count in the cash out and Cash Needed only; the bill at the refi pays the first year, which this monthly figure still charges.",
+              "terms": null,
+              "unit": "money",
+              "value": 100
+            },
+            {
+              "formula": "Vacancy 5% of rent ($130) + Management 8% of rent ($208) + Maintenance 5% of rent ($130) + CapEx 5% of rent ($130) + Property Tax per Month ($288) + Insurance per Month ($100) + HOA ($0) = $986",
               "label": "Monthly Operating Expenses",
-              "note": null,
+              "note": "A regular year after the refi: steady monthly figures only, never a closing lump.",
               "terms": [
                 {
                   "label": "Vacancy 5% of rent",
@@ -45,15 +62,15 @@
                   "value": 130
                 },
                 {
-                  "label": "Taxes ÷ 12",
+                  "label": "Property Tax per Month",
                   "sign": "+",
-                  "step_label": null,
-                  "value": 300
+                  "step_label": "Property Tax per Month (regular year)",
+                  "value": 288
                 },
                 {
-                  "label": "Insurance ÷ 12",
+                  "label": "Insurance per Month",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "Insurance per Month (regular year)",
                   "value": 100
                 },
                 {
@@ -64,10 +81,10 @@
                 }
               ],
               "unit": "money",
-              "value": 998
+              "value": 986
             },
             {
-              "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602",
+              "formula": "Rent ($2,600) − Operating Expenses ($986) = $1,614",
               "label": "Net Operating Income (NOI)",
               "note": null,
               "terms": [
@@ -81,11 +98,11 @@
                   "label": "Operating Expenses",
                   "sign": "-",
                   "step_label": "Monthly Operating Expenses",
-                  "value": 998
+                  "value": 986
                 }
               ],
               "unit": "money",
-              "value": 1602
+              "value": 1614
             },
             {
               "formula": "Refi Loan ($240,000) amortized at 6.5%/yr over 30 years = $1,516.96",
@@ -96,7 +113,7 @@
               "value": 1516.963256383113
             },
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -104,7 +121,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -114,12 +131,12 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             }
           ],
           "cash_on_cash": [
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -127,7 +144,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -137,36 +154,42 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "Annual Cash Flow ($1,020.44) ÷ |Cash Out| ($47,862.50) × 100 = 2.13%",
+              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($54,141.39) × 100 = 2.15%",
               "label": "Cash on Cash",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 2.1320259564432376
+              "value": 2.1507407334160495
             }
           ],
           "cash_out": [
@@ -245,12 +268,125 @@
               "value": 0
             },
             {
+              "formula": "HOA ($0) × 12 × 180 days ÷ 360 = $0",
+              "label": "HOA until Refi",
+              "note": "Taxes and insurance are not accrued day by day: they are paid as the bills and deposits they really are (below).",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Paid through the purchase settlement → $0 here (inside Cash to Close (Buy))",
+              "label": "Insurance Bill at Purchase (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "$0/mo × 180 days ÷ 30 = $0",
+              "label": "Insurance paid monthly until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Paid through the refi settlement → $0 here (inside the refi closing costs)",
+              "label": "Insurance Bill at Refi (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "No buy closing date → Bill × 0.96 ($3,456) ÷ 12 = $288",
+              "label": "Tax Bucket Deposit (each 15th)",
+              "note": "Formula default for the deposit into the property's tax bucket; type a value to override. The seller's credit goes into the bucket at closing; the deposits fill it up to the Nov 30 bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "$288 × 6 months (180 days ÷ 30) = $1,728",
+              "label": "Tax paid into the Bucket until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1728
+            },
+            {
+              "formula": "The bucket covers any Nov 30 bill inside the hold → $0",
+              "label": "Tax Bucket Shortfall topped up on Nov 30",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The bucket keeps paying the Nov 30 bill → nothing comes back ($0)",
+              "label": "Tax Bucket Balance released at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "Rent ($2,600) × 90 days rented before the refi ÷ 30 = $7,800",
               "label": "Pre-Refi Rental Income",
               "note": "Rent collected between tenant placement and the refi offsets the holding costs.",
               "terms": null,
               "unit": "money",
               "value": 7800
+            },
+            {
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
+              "terms": [
+                {
+                  "label": "Maintenance Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 1500
+                },
+                {
+                  "label": "Vacancy Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2600
+                },
+                {
+                  "label": "CapEx Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
+                }
+              ],
+              "unit": "money",
+              "value": 11150.889769149338
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -274,7 +410,28 @@
               "value": 215000
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "Appraisal ($700) + Survey ($385) = $1,085",
+              "label": "Appraisal & Survey (paid outside closing)",
+              "note": "Paid on their own at the end of the rehab (POC on the refi settlement statement), so they are not refi closing costs.",
+              "terms": [
+                {
+                  "label": "Appraisal",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 700
+                },
+                {
+                  "label": "Survey",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 385
+                }
+              ],
+              "unit": "money",
+              "value": 1085
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Seller Tax Credit set aside in the tax bucket ($0) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,728) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $57,290.50",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -288,12 +445,18 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
                   "sign": "+",
                   "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
                   "value": 0
                 },
                 {
@@ -309,10 +472,28 @@
                   "value": 11825
                 },
                 {
-                  "label": "Holding Costs",
+                  "label": "HOA until Refi",
                   "sign": "+",
-                  "step_label": "Holding Costs (until refi)",
-                  "value": 2400
+                  "step_label": "HOA until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance paid monthly until Refi",
+                  "sign": "+",
+                  "step_label": "Insurance paid monthly until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Tax paid into the Bucket until Refi",
+                  "sign": "+",
+                  "step_label": "Tax paid into the Bucket until Refi",
+                  "value": 1728
+                },
+                {
+                  "label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "sign": "+",
+                  "step_label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "value": 0
                 },
                 {
                   "label": "Utilities until Rented",
@@ -333,19 +514,37 @@
                   "value": 630
                 },
                 {
+                  "label": "Appraisal & Survey",
+                  "sign": "+",
+                  "step_label": "Appraisal & Survey (paid outside closing)",
+                  "value": 1085
+                },
+                {
+                  "label": "Insurance Bill at Refi (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi (outside closing)",
+                  "value": 0
+                },
+                {
                   "label": "Pre-Refi Rental Income",
                   "sign": "-",
                   "step_label": "Pre-Refi Rental Income",
                   "value": 7800
+                },
+                {
+                  "label": "Tax Bucket Balance released at Refi",
+                  "sign": "-",
+                  "step_label": "Tax Bucket Balance released at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 55677.5
+              "value": 57290.5
             },
             {
-              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,585) − Prepaid Interest (Refi) ($0) − Reserves ($6,600) = $7,815",
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($0) = $14,300",
               "label": "Cash-Out Wire (Refi)",
-              "note": "The cash received at the refi closing table, before subtracting what was invested.",
+              "note": "The 'Due to Borrower' line of the refi settlement statement, before the reserves and what was invested.",
               "terms": [
                 {
                   "label": "Refi Loan",
@@ -363,44 +562,44 @@
                   "label": "Closing Costs (Refi)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi)",
-                  "value": 10585
+                  "value": 10700
                 },
                 {
                   "label": "Prepaid Interest (Refi)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": 7815
+              "value": 14300
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             }
           ],
           "cash_out_routi": [
@@ -434,6 +633,22 @@
               "value": 215000
             },
             {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "1.5% × Refi Loan ($240,000) = $3,600",
               "label": "Broker Points (Refi)",
               "note": null,
@@ -458,9 +673,9 @@
               "value": 1880
             },
             {
-              "formula": "Loan Charges ($200) + Recording & Transfer ($1,570) + Title & Escrow ($1,880) + Online Notary ($250) + Appraisal ($700) + Survey ($385) + Underwriting ($2,000) + Broker Points ($3,600) + Broker Processing ($0) + Other ($0) = $10,585",
+              "formula": "Loan Charges ($200) + Recording & Transfer ($1,570) + Title & Escrow ($1,880) + Online Notary ($250) + Underwriting ($2,000) + Broker Points ($3,600) + Broker Processing ($0) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Tax Lump collected at Refi ($0) = $10,700",
               "label": "Closing Costs (Refi)",
-              "note": null,
+              "note": "The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.",
               "terms": [
                 {
                   "label": "Loan Charges",
@@ -487,18 +702,6 @@
                   "value": 250
                 },
                 {
-                  "label": "Appraisal",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 700
-                },
-                {
-                  "label": "Survey",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 385
-                },
-                {
                   "label": "Underwriting",
                   "sign": "+",
                   "step_label": null,
@@ -521,45 +724,30 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi",
+                  "value": 1200
+                },
+                {
+                  "label": "Tax Lump collected at Refi",
+                  "sign": "+",
+                  "step_label": "Tax Lump collected at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 10585
+              "value": 10700
             },
             {
               "formula": "No buy closing date → no refi date, no prepaid interest is modelled ($0)",
               "label": "Prepaid Interest (Refi)",
-              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).",
+              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).",
               "terms": null,
               "unit": "money",
               "value": 0
-            },
-            {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
-              "terms": [
-                {
-                  "label": "Maintenance Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 1500
-                },
-                {
-                  "label": "Vacancy Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2600
-                },
-                {
-                  "label": "CapEx Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2500
-                }
-              ],
-              "unit": "money",
-              "value": 6600
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -583,9 +771,9 @@
               "value": 215000
             },
             {
-              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,585) − Prepaid Interest (Refi) ($0) − Reserves ($6,600) = $7,815",
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($0) = $14,300",
               "label": "Cash-Out Wire (Refi)",
-              "note": "The cash received at the refi closing table, before subtracting what was invested.",
+              "note": "The 'Due to Borrower' line of the refi settlement statement, before the reserves and what was invested.",
               "terms": [
                 {
                   "label": "Refi Loan",
@@ -603,26 +791,36 @@
                   "label": "Closing Costs (Refi)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi)",
-                  "value": 10585
+                  "value": 10700
                 },
                 {
                   "label": "Prepaid Interest (Refi)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": 7815
+              "value": 14300
             }
           ],
           "cash_out_routi_conservative": [
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
             {
               "formula": "1.5% × Refi Loan ($216,000) = $3,240",
               "label": "Broker Points (Refi) (Lowest ARV)",
@@ -648,9 +846,9 @@
               "value": 1772
             },
             {
-              "formula": "Loan Charges ($200) + Recording & Transfer ($1,438) + Title & Escrow ($1,772) + Online Notary ($250) + Appraisal ($700) + Survey ($385) + Underwriting ($2,000) + Broker Points ($3,240) + Broker Processing ($0) + Other ($0) = $9,985",
+              "formula": "Loan Charges ($200) + Recording & Transfer ($1,438) + Title & Escrow ($1,772) + Online Notary ($250) + Underwriting ($2,000) + Broker Points ($3,240) + Broker Processing ($0) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Tax Lump collected at Refi ($0) = $10,100",
               "label": "Closing Costs (Refi) (Lowest ARV)",
-              "note": null,
+              "note": "The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.",
               "terms": [
                 {
                   "label": "Loan Charges",
@@ -677,18 +875,6 @@
                   "value": 250
                 },
                 {
-                  "label": "Appraisal",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 700
-                },
-                {
-                  "label": "Survey",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 385
-                },
-                {
                   "label": "Underwriting",
                   "sign": "+",
                   "step_label": null,
@@ -711,45 +897,30 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi",
+                  "value": 1200
+                },
+                {
+                  "label": "Tax Lump collected at Refi",
+                  "sign": "+",
+                  "step_label": "Tax Lump collected at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 9985
+              "value": 10100
             },
             {
               "formula": "No buy closing date → no refi date, no prepaid interest is modelled ($0)",
               "label": "Prepaid Interest (Refi) (Lowest ARV)",
-              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).",
+              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).",
               "terms": null,
               "unit": "money",
               "value": 0
-            },
-            {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
-              "terms": [
-                {
-                  "label": "Maintenance Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 1500
-                },
-                {
-                  "label": "Vacancy Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2600
-                },
-                {
-                  "label": "CapEx Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2500
-                }
-              ],
-              "unit": "money",
-              "value": 6600
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -789,7 +960,7 @@
               "value": 216000
             },
             {
-              "formula": "Refi Loan (Lowest ARV) ($216,000) − HML Payoff ($215,000) − Closing Costs (Refi, Lowest ARV) ($9,985) − Prepaid Interest (Refi, Lowest ARV) ($0) − Reserves ($6,600) = -$15,585",
+              "formula": "Refi Loan (Lowest ARV) ($216,000) − HML Payoff ($215,000) − Closing Costs (Refi, Lowest ARV) ($10,100) − Prepaid Interest (Refi, Lowest ARV) ($0) = -$9,100",
               "label": "Cash-Out Wire (Lowest ARV)",
               "note": "The loan-dependent fees follow the lower loan; typed-in fees stay as entered.",
               "terms": [
@@ -809,31 +980,33 @@
                   "label": "Closing Costs (Refi, Lowest ARV)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi) (Lowest ARV)",
-                  "value": 9985
+                  "value": 10100
                 },
                 {
                   "label": "Prepaid Interest (Refi, Lowest ARV)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi) (Lowest ARV)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": -15585
+              "value": -9100
             },
             {
-              "formula": "Wire (-$15,585) is negative → $15,585 brought to the table",
+              "formula": "Wire (-$9,100) is negative → $9,100 brought to the table",
               "label": "Cash to Refi Table (Lowest ARV)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 15585
+              "value": 9100
+            },
+            {
+              "formula": "Reserves ($11,150.89) − what the wire brings ($0) = $11,150.89 from your pocket",
+              "label": "Reserves the Lowest-ARV Wire cannot fund",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 11150.889769149338
             }
           ],
           "cash_to_close_buy": [
@@ -902,7 +1075,15 @@
               "value": 250
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
+              "formula": "Paid through the purchase settlement → $1,200",
+              "label": "Insurance Bill at Purchase (inside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -935,10 +1116,16 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (inside closing)",
+                  "value": 1200
                 }
               ],
               "unit": "money",
-              "value": 3582.5
+              "value": 4782.5
             },
             {
               "formula": "No buy closing date → no tax proration is modelled ($0)",
@@ -949,7 +1136,7 @@
               "value": 0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $42,882.50",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $44,082.50",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -963,7 +1150,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 3582.5
+                  "value": 4782.5
                 },
                 {
                   "label": "HML Points",
@@ -991,10 +1178,26 @@
                 }
               ],
               "unit": "money",
-              "value": 42882.5
+              "value": 44082.5
             }
           ],
           "dscr": [
+            {
+              "formula": "This year's bill ($3,600) × 0.96 = $3,456 paid on Nov 30 ÷ 12 = $288",
+              "label": "Property Tax per Month (regular year)",
+              "note": "Paid on Nov 30 with the 4% November discount. The refi never changes the tax, so a regular year costs the same bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "Insurance bill at the refi ($1,200) ÷ 12 = $100",
+              "label": "Insurance per Month (regular year)",
+              "note": "Formula default for the regular-year insurance per month; type a value to override. The insurance paid at the purchase, monthly until the refi and at the refi count in the cash out and Cash Needed only; the bill at the refi pays the first year, which this monthly figure still charges.",
+              "terms": null,
+              "unit": "money",
+              "value": 100
+            },
             {
               "formula": "Refi Loan ($240,000) amortized at 6.5%/yr over 30 years = $1,516.96",
               "label": "Monthly Mortgage Payment",
@@ -1004,9 +1207,9 @@
               "value": 1516.963256383113
             },
             {
-              "formula": "Mortgage ($1,516.96) + Taxes ÷ 12 ($300) + Insurance ÷ 12 ($100) + HOA ($0) = $1,916.96",
+              "formula": "Mortgage ($1,516.96) + Property Tax per Month ($288) + Insurance per Month ($100) + HOA ($0) = $1,904.96",
               "label": "PITIA",
-              "note": "Principal, interest, taxes, insurance and association dues: the monthly debt service the rent must cover.",
+              "note": "Principal, interest, taxes, insurance and association dues of a regular year: the monthly debt service the rent must cover.",
               "terms": [
                 {
                   "label": "Mortgage",
@@ -1015,15 +1218,15 @@
                   "value": 1516.963256383113
                 },
                 {
-                  "label": "Taxes ÷ 12",
+                  "label": "Property Tax per Month",
                   "sign": "+",
-                  "step_label": null,
-                  "value": 300
+                  "step_label": "Property Tax per Month (regular year)",
+                  "value": 288
                 },
                 {
-                  "label": "Insurance ÷ 12",
+                  "label": "Insurance per Month",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "Insurance per Month (regular year)",
                   "value": 100
                 },
                 {
@@ -1034,15 +1237,15 @@
                 }
               ],
               "unit": "money",
-              "value": 1916.963256383113
+              "value": 1904.963256383113
             },
             {
-              "formula": "Rent ($2,600) ÷ PITIA ($1,916.96) = 1.36",
+              "formula": "Rent ($2,600) ÷ PITIA ($1,904.96) = 1.36",
               "label": "DSCR",
               "note": null,
               "terms": null,
               "unit": "ratio",
-              "value": 1.356311860095653
+              "value": 1.3648557216460588
             }
           ],
           "equity": [
@@ -1055,9 +1258,17 @@
               "value": 240000
             },
             {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
               "terms": [
                 {
                   "label": "Maintenance Reserve",
@@ -1076,52 +1287,64 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
                 }
               ],
               "unit": "money",
-              "value": 6600
+              "value": 11150.889769149338
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             }
           ],
           "net_profit": [
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$47,862.50) = $38,737.50",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,141.39) = $37,009.50",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1129,22 +1352,22 @@
                   "label": "Equity",
                   "sign": "+",
                   "step_label": "Equity (post-refi)",
-                  "value": 86600
+                  "value": 91150.88976914933
                 },
                 {
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -47862.5
+                  "value": -54141.38976914934
                 }
               ],
               "unit": "money",
-              "value": 38737.5
+              "value": 37009.5
             }
           ],
           "roi": [
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -1152,7 +1375,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -1162,39 +1385,45 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$47,862.50) = $38,737.50",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,141.39) = $37,009.50",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1202,25 +1431,25 @@
                   "label": "Equity",
                   "sign": "+",
                   "step_label": "Equity (post-refi)",
-                  "value": 86600
+                  "value": 91150.88976914933
                 },
                 {
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -47862.5
+                  "value": -54141.38976914934
                 }
               ],
               "unit": "money",
-              "value": 38737.5
+              "value": 37009.5
             },
             {
-              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($38,737.50)) ÷ |Cash Out| ($47,862.50) × 100 = 83.07%",
+              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($37,009.50)) ÷ |Cash Out| ($54,141.39) × 100 = 70.51%",
               "label": "ROI",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 83.06699592249181
+              "value": 70.50787038561539
             }
           ],
           "stolen_money": [
@@ -1285,7 +1514,7 @@
               "value": 11825
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -1318,10 +1547,16 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (inside closing)",
+                  "value": 1200
                 }
               ],
               "unit": "money",
-              "value": 3582.5
+              "value": 4782.5
             },
             {
               "formula": "No credit at closing → nothing to set aside ($0)",
@@ -1332,7 +1567,7 @@
               "value": 0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $42,882.50",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $44,082.50",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -1346,7 +1581,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 3582.5
+                  "value": 4782.5
                 },
                 {
                   "label": "HML Points",
@@ -1374,7 +1609,7 @@
                 }
               ],
               "unit": "money",
-              "value": 42882.5
+              "value": 44082.5
             },
             {
               "formula": "Actual Rehab ($55,000) − Construction Budget ($55,000) = $0",
@@ -1385,12 +1620,84 @@
               "value": 0
             },
             {
-              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) × 12) × 180 days ÷ 360 = $2,400",
-              "label": "Holding Costs (until refi)",
+              "formula": "HOA ($0) × 12 × 180 days ÷ 360 = $0",
+              "label": "HOA until Refi",
+              "note": "Taxes and insurance are not accrued day by day: they are paid as the bills and deposits they really are (below).",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Paid through the purchase settlement → $0 here (inside Cash to Close (Buy))",
+              "label": "Insurance Bill at Purchase (outside closing)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 2400
+              "value": 0
+            },
+            {
+              "formula": "$0/mo × 180 days ÷ 30 = $0",
+              "label": "Insurance paid monthly until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Paid through the refi settlement → $0 here (inside the refi closing costs)",
+              "label": "Insurance Bill at Refi (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "No buy closing date → Bill × 0.96 ($3,456) ÷ 12 = $288",
+              "label": "Tax Bucket Deposit (each 15th)",
+              "note": "Formula default for the deposit into the property's tax bucket; type a value to override. The seller's credit goes into the bucket at closing; the deposits fill it up to the Nov 30 bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "$288 × 6 months (180 days ÷ 30) = $1,728",
+              "label": "Tax paid into the Bucket until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1728
+            },
+            {
+              "formula": "The bucket covers any Nov 30 bill inside the hold → $0",
+              "label": "Tax Bucket Shortfall topped up on Nov 30",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The bucket keeps paying the Nov 30 bill → nothing comes back ($0)",
+              "label": "Tax Bucket Balance released at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
             },
             {
               "formula": "$80/mo × 90 days ÷ 30 = $240",
@@ -1409,7 +1716,69 @@
               "value": 7800
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
+              "terms": [
+                {
+                  "label": "Maintenance Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 1500
+                },
+                {
+                  "label": "Vacancy Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2600
+                },
+                {
+                  "label": "CapEx Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
+                }
+              ],
+              "unit": "money",
+              "value": 11150.889769149338
+            },
+            {
+              "formula": "Appraisal ($700) + Survey ($385) = $1,085",
+              "label": "Appraisal & Survey (paid outside closing)",
+              "note": "Paid on their own at the end of the rehab (POC on the refi settlement statement), so they are not refi closing costs.",
+              "terms": [
+                {
+                  "label": "Appraisal",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 700
+                },
+                {
+                  "label": "Survey",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 385
+                }
+              ],
+              "unit": "money",
+              "value": 1085
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Seller Tax Credit set aside in the tax bucket ($0) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,728) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $57,290.50",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -1423,12 +1792,18 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
                   "sign": "+",
                   "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
                   "value": 0
                 },
                 {
@@ -1444,10 +1819,28 @@
                   "value": 11825
                 },
                 {
-                  "label": "Holding Costs",
+                  "label": "HOA until Refi",
                   "sign": "+",
-                  "step_label": "Holding Costs (until refi)",
-                  "value": 2400
+                  "step_label": "HOA until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance paid monthly until Refi",
+                  "sign": "+",
+                  "step_label": "Insurance paid monthly until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Tax paid into the Bucket until Refi",
+                  "sign": "+",
+                  "step_label": "Tax paid into the Bucket until Refi",
+                  "value": 1728
+                },
+                {
+                  "label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "sign": "+",
+                  "step_label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "value": 0
                 },
                 {
                   "label": "Utilities until Rented",
@@ -1468,22 +1861,48 @@
                   "value": 630
                 },
                 {
+                  "label": "Appraisal & Survey",
+                  "sign": "+",
+                  "step_label": "Appraisal & Survey (paid outside closing)",
+                  "value": 1085
+                },
+                {
+                  "label": "Insurance Bill at Refi (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi (outside closing)",
+                  "value": 0
+                },
+                {
                   "label": "Pre-Refi Rental Income",
                   "sign": "-",
                   "step_label": "Pre-Refi Rental Income",
                   "value": 7800
+                },
+                {
+                  "label": "Tax Bucket Balance released at Refi",
+                  "sign": "-",
+                  "step_label": "Tax Bucket Balance released at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 55677.5
+              "value": 57290.5
             },
             {
-              "formula": "Wire (-$15,585) is negative → $15,585 brought to the table",
+              "formula": "Wire (-$9,100) is negative → $9,100 brought to the table",
               "label": "Cash to Refi Table (Lowest ARV)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 15585
+              "value": 9100
+            },
+            {
+              "formula": "Reserves ($11,150.89) − what the wire brings ($0) = $11,150.89 from your pocket",
+              "label": "Reserves the Lowest-ARV Wire cannot fund",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 11150.889769149338
             },
             {
               "formula": "Per diem ($65.69) × 30 days = $1,970.83",
@@ -1494,17 +1913,17 @@
               "value": 1970.8333333333333
             },
             {
-              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) × 12) × 30 days ÷ 360 = $400",
+              "formula": "HOA ($0) × 12 × 30 days ÷ 360 ($0) + Insurance per month until refi ($0) + one Tax Bucket Deposit ($288) = $288",
               "label": "Holding Costs (first month)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 400
+              "value": 288
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $55,333.33",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($288) = $56,421.33",
               "label": "Cash Needed Floor",
-              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the insurance bill when it is paid outside it, the cushion held for draws and surprises, and the first month of utilities, hard-money interest, HOA, insurance paid monthly and one tax-bucket deposit.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -1516,7 +1935,13 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
+                  "value": 0
                 },
                 {
                   "label": "Rehab Cushion",
@@ -1540,22 +1965,22 @@
                   "label": "Holding Costs (first month)",
                   "sign": "+",
                   "step_label": "Holding Costs (first month)",
-                  "value": 400
+                  "value": 288
                 }
               ],
               "unit": "money",
-              "value": 55333.333333333336
+              "value": 56421.333333333336
             },
             {
-              "formula": "Total Cash Invested ($55,677.50) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($15,585) = $76,262.50",
+              "formula": "Total Cash Invested ($57,290.50) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($9,100) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $82,541.39",
               "label": "Cash Needed through Refi",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
                   "sign": "+",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 },
                 {
                   "label": "Rehab Cushion",
@@ -1567,14 +1992,20 @@
                   "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
-                  "value": 15585
+                  "value": 9100
+                },
+                {
+                  "label": "Reserves the Lowest-ARV Wire cannot fund",
+                  "sign": "+",
+                  "step_label": "Reserves the Lowest-ARV Wire cannot fund",
+                  "value": 11150.889769149338
                 }
               ],
               "unit": "money",
-              "value": 76262.5
+              "value": 82541.38976914933
             },
             {
-              "formula": "Cash Needed through Refi ($76,262.50) already covers the floor ($55,333.33) → $0",
+              "formula": "Cash Needed through Refi ($82,541.39) already covers the floor ($56,421.33) → $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -1582,7 +2013,7 @@
               "value": 0
             },
             {
-              "formula": "Cash Needed through Refi ($76,262.50) + Floor Top-Up ($0) = $76,262.50",
+              "formula": "Cash Needed through Refi ($82,541.39) + Floor Top-Up ($0) = $82,541.39",
               "label": "Cash Needed",
               "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
               "terms": [
@@ -1590,7 +2021,7 @@
                   "label": "Cash Needed through Refi",
                   "sign": "+",
                   "step_label": "Cash Needed through Refi",
-                  "value": 76262.5
+                  "value": 82541.38976914933
                 },
                 {
                   "label": "Floor Top-Up",
@@ -1600,7 +2031,7 @@
                 }
               ],
               "unit": "money",
-              "value": 76262.5
+              "value": 82541.38976914933
             }
           ],
           "total_hard_money_cost": [
@@ -1683,34 +2114,41 @@
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
-        "cash_flow": 85.03674361688704,
-        "cash_on_cash": 2.1320259564432376,
-        "cash_out": -47862.5,
-        "cash_out_routi": 7815,
-        "cash_out_routi_conservative": -15585,
-        "cash_to_close_buy": 42882.5,
-        "cash_to_refi_table_conservative": 15585,
+        "cash_flow": 97.03674361688704,
+        "cash_on_cash": 2.1507407334160495,
+        "cash_out": -54141.38976914934,
+        "cash_out_routi": 14300,
+        "cash_out_routi_conservative": -9100,
+        "cash_to_close_buy": 44082.5,
+        "cash_to_refi_table_conservative": 9100,
         "closingCostsBuy": "5.0000",
         "closingCostsRefi": "6.0000",
-        "closing_costs_buy_total": 3582.5,
-        "closing_costs_refi_total": 10585,
+        "closing_costs_buy_total": 4782.5,
+        "closing_costs_refi_total": 10700,
         "constructionLoanBudget": "55.0000",
         "contact": null,
         "created_at": "<redacted>",
         "crime_rate": null,
         "daysUntilRefi": 180,
+        "daysUntilRehabCompleted": 45,
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0,
         "down_payment": "20.000",
-        "dscr": 1.356311860095653,
+        "dscr": 1.3648557216460588,
         "earnestMoneyDeposit": "5000.00",
-        "equity": 86600,
+        "equity": 91150.88976914933,
         "google_drive_link": null,
         "hmlPoints": "2.000",
         "hml_amount": 215000,
         "hml_payoff": 215000,
+        "hysaDepositAtRefi": null,
+        "hysa_deposit_at_refi_effective": 4550.8897691493385,
         "id": "<redacted>",
+        "insuranceBillAtRefiClosing": null,
+        "insurancePurchaseBillPaymentTiming": "inside_purchase_closing",
+        "insuranceRefiBillPaymentTiming": "inside_refi_closing",
+        "insurance_bill_at_refi_effective": 1200,
         "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
@@ -1722,9 +2160,14 @@
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
         "messages": null,
+        "monthlyInsuranceAfterRefi": null,
+        "monthlyInsuranceUntilRefi": "0.00",
+        "monthlyPropertyTaxBucketDeposit": null,
         "monthlyUtilitiesUntilRented": "80.00",
+        "monthly_insurance_after_refi_effective": 100,
+        "monthly_property_tax_after_refi": 288,
         "montly_hoa": "0.00",
-        "net_profit": 38737.5,
+        "net_profit": 37009.5,
         "niche": null,
         "notes": null,
         "onlineNotaryBuy": true,
@@ -1740,7 +2183,13 @@
         "pre_refi_rental_income": 7800,
         "prepaid_interest_buy": 0,
         "prepaid_interest_refi": 0,
+        "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
+        "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bucket_balance_released_at_refi": 0,
+        "property_tax_bucket_deposit_effective": 288,
+        "property_tax_lump_sum_at_refi_closing_effective": 0,
+        "property_tax_paid_into_bucket_until_refi": 1728,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000,
         "recordingTransferBuy": null,
@@ -1753,12 +2202,15 @@
         "rehabContingency": "10.00",
         "rehabCost": "50.0000",
         "rehabCushion": "5000.00",
+        "rehab_completed_date": null,
         "rent": "2600.00",
         "rent_comps": null,
-        "reserves_total": 6600,
-        "roi": 83.06699592249181,
+        "reserves_funded_from_own_pocket_at_lowest_arv": 11150.889769149338,
+        "reserves_total": 11150.889769149338,
+        "roi": 70.50787038561539,
         "section": 1,
         "sellerPaidCurrentYearTaxes": null,
+        "sellerTaxCreditAtPurchaseClosing": null,
         "seller_tax_credit": 0,
         "sold_comps": null,
         "sqft": null,
@@ -1772,8 +2224,8 @@
         "titleModeBuy": "standard",
         "title_escrow_buy_effective": 1000,
         "title_escrow_refi_effective": 1880,
-        "total_cash_invested": 55677.5,
-        "total_cash_needed_for_deal": 76262.5,
+        "total_cash_invested": 57290.5,
+        "total_cash_needed_for_deal": 82541.38976914933,
         "total_hard_money_cost": 17025,
         "updated_at": "<redacted>",
         "use_HM_for_rehab": true,
@@ -1793,15 +2245,32 @@
         "annual_property_taxes": "3600.00",
         "appliances": "630.00",
         "appraisalFee": "700.00",
+        "appraisal_and_survey_paid_outside_closing": 1085,
         "arv_in_thousands": "320.0000",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": {
           "cash_flow": [
             {
-              "formula": "Vacancy 5% of rent ($130) + Management 8% of rent ($208) + Maintenance 5% of rent ($130) + CapEx 5% of rent ($130) + Taxes ÷ 12 ($300) + Insurance ÷ 12 ($100) + HOA ($0) = $998",
+              "formula": "This year's bill ($3,600) × 0.96 = $3,456 paid on Nov 30 ÷ 12 = $288",
+              "label": "Property Tax per Month (regular year)",
+              "note": "Paid on Nov 30 with the 4% November discount. The refi never changes the tax, so a regular year costs the same bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "Insurance bill at the refi ($1,200) ÷ 12 = $100",
+              "label": "Insurance per Month (regular year)",
+              "note": "Formula default for the regular-year insurance per month; type a value to override. The insurance paid at the purchase, monthly until the refi and at the refi count in the cash out and Cash Needed only; the bill at the refi pays the first year, which this monthly figure still charges.",
+              "terms": null,
+              "unit": "money",
+              "value": 100
+            },
+            {
+              "formula": "Vacancy 5% of rent ($130) + Management 8% of rent ($208) + Maintenance 5% of rent ($130) + CapEx 5% of rent ($130) + Property Tax per Month ($288) + Insurance per Month ($100) + HOA ($0) = $986",
               "label": "Monthly Operating Expenses",
-              "note": null,
+              "note": "A regular year after the refi: steady monthly figures only, never a closing lump.",
               "terms": [
                 {
                   "label": "Vacancy 5% of rent",
@@ -1828,15 +2297,15 @@
                   "value": 130
                 },
                 {
-                  "label": "Taxes ÷ 12",
+                  "label": "Property Tax per Month",
                   "sign": "+",
-                  "step_label": null,
-                  "value": 300
+                  "step_label": "Property Tax per Month (regular year)",
+                  "value": 288
                 },
                 {
-                  "label": "Insurance ÷ 12",
+                  "label": "Insurance per Month",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "Insurance per Month (regular year)",
                   "value": 100
                 },
                 {
@@ -1847,10 +2316,10 @@
                 }
               ],
               "unit": "money",
-              "value": 998
+              "value": 986
             },
             {
-              "formula": "Rent ($2,600) − Operating Expenses ($998) = $1,602",
+              "formula": "Rent ($2,600) − Operating Expenses ($986) = $1,614",
               "label": "Net Operating Income (NOI)",
               "note": null,
               "terms": [
@@ -1864,11 +2333,11 @@
                   "label": "Operating Expenses",
                   "sign": "-",
                   "step_label": "Monthly Operating Expenses",
-                  "value": 998
+                  "value": 986
                 }
               ],
               "unit": "money",
-              "value": 1602
+              "value": 1614
             },
             {
               "formula": "Refi Loan ($240,000) amortized at 6.5%/yr over 30 years = $1,516.96",
@@ -1879,7 +2348,7 @@
               "value": 1516.963256383113
             },
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -1887,7 +2356,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -1897,12 +2366,12 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             }
           ],
           "cash_on_cash": [
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -1910,7 +2379,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -1920,36 +2389,42 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "Annual Cash Flow ($1,020.44) ÷ |Cash Out| ($47,862.50) × 100 = 2.13%",
+              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($54,141.39) × 100 = 2.15%",
               "label": "Cash on Cash",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 2.1320259564432376
+              "value": 2.1507407334160495
             }
           ],
           "cash_out": [
@@ -2028,12 +2503,125 @@
               "value": 0
             },
             {
+              "formula": "HOA ($0) × 12 × 180 days ÷ 360 = $0",
+              "label": "HOA until Refi",
+              "note": "Taxes and insurance are not accrued day by day: they are paid as the bills and deposits they really are (below).",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Paid through the purchase settlement → $0 here (inside Cash to Close (Buy))",
+              "label": "Insurance Bill at Purchase (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "$0/mo × 180 days ÷ 30 = $0",
+              "label": "Insurance paid monthly until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Paid through the refi settlement → $0 here (inside the refi closing costs)",
+              "label": "Insurance Bill at Refi (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "No buy closing date → Bill × 0.96 ($3,456) ÷ 12 = $288",
+              "label": "Tax Bucket Deposit (each 15th)",
+              "note": "Formula default for the deposit into the property's tax bucket; type a value to override. The seller's credit goes into the bucket at closing; the deposits fill it up to the Nov 30 bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "$288 × 6 months (180 days ÷ 30) = $1,728",
+              "label": "Tax paid into the Bucket until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1728
+            },
+            {
+              "formula": "The bucket covers any Nov 30 bill inside the hold → $0",
+              "label": "Tax Bucket Shortfall topped up on Nov 30",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The bucket keeps paying the Nov 30 bill → nothing comes back ($0)",
+              "label": "Tax Bucket Balance released at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "Rent ($2,600) × 90 days rented before the refi ÷ 30 = $7,800",
               "label": "Pre-Refi Rental Income",
               "note": "Rent collected between tenant placement and the refi offsets the holding costs.",
               "terms": null,
               "unit": "money",
               "value": 7800
+            },
+            {
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
+              "terms": [
+                {
+                  "label": "Maintenance Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 1500
+                },
+                {
+                  "label": "Vacancy Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2600
+                },
+                {
+                  "label": "CapEx Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
+                }
+              ],
+              "unit": "money",
+              "value": 11150.889769149338
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -2057,7 +2645,28 @@
               "value": 215000
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "Appraisal ($700) + Survey ($385) = $1,085",
+              "label": "Appraisal & Survey (paid outside closing)",
+              "note": "Paid on their own at the end of the rehab (POC on the refi settlement statement), so they are not refi closing costs.",
+              "terms": [
+                {
+                  "label": "Appraisal",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 700
+                },
+                {
+                  "label": "Survey",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 385
+                }
+              ],
+              "unit": "money",
+              "value": 1085
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Seller Tax Credit set aside in the tax bucket ($0) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,728) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $57,290.50",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -2071,12 +2680,18 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
                   "sign": "+",
                   "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
                   "value": 0
                 },
                 {
@@ -2092,10 +2707,28 @@
                   "value": 11825
                 },
                 {
-                  "label": "Holding Costs",
+                  "label": "HOA until Refi",
                   "sign": "+",
-                  "step_label": "Holding Costs (until refi)",
-                  "value": 2400
+                  "step_label": "HOA until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance paid monthly until Refi",
+                  "sign": "+",
+                  "step_label": "Insurance paid monthly until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Tax paid into the Bucket until Refi",
+                  "sign": "+",
+                  "step_label": "Tax paid into the Bucket until Refi",
+                  "value": 1728
+                },
+                {
+                  "label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "sign": "+",
+                  "step_label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "value": 0
                 },
                 {
                   "label": "Utilities until Rented",
@@ -2116,19 +2749,37 @@
                   "value": 630
                 },
                 {
+                  "label": "Appraisal & Survey",
+                  "sign": "+",
+                  "step_label": "Appraisal & Survey (paid outside closing)",
+                  "value": 1085
+                },
+                {
+                  "label": "Insurance Bill at Refi (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi (outside closing)",
+                  "value": 0
+                },
+                {
                   "label": "Pre-Refi Rental Income",
                   "sign": "-",
                   "step_label": "Pre-Refi Rental Income",
                   "value": 7800
+                },
+                {
+                  "label": "Tax Bucket Balance released at Refi",
+                  "sign": "-",
+                  "step_label": "Tax Bucket Balance released at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 55677.5
+              "value": 57290.5
             },
             {
-              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,585) − Prepaid Interest (Refi) ($0) − Reserves ($6,600) = $7,815",
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($0) = $14,300",
               "label": "Cash-Out Wire (Refi)",
-              "note": "The cash received at the refi closing table, before subtracting what was invested.",
+              "note": "The 'Due to Borrower' line of the refi settlement statement, before the reserves and what was invested.",
               "terms": [
                 {
                   "label": "Refi Loan",
@@ -2146,44 +2797,44 @@
                   "label": "Closing Costs (Refi)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi)",
-                  "value": 10585
+                  "value": 10700
                 },
                 {
                   "label": "Prepaid Interest (Refi)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": 7815
+              "value": 14300
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             }
           ],
           "cash_out_routi": [
@@ -2217,6 +2868,22 @@
               "value": 215000
             },
             {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
               "formula": "1.5% × Refi Loan ($240,000) = $3,600",
               "label": "Broker Points (Refi)",
               "note": null,
@@ -2241,9 +2908,9 @@
               "value": 1880
             },
             {
-              "formula": "Loan Charges ($200) + Recording & Transfer ($1,570) + Title & Escrow ($1,880) + Online Notary ($250) + Appraisal ($700) + Survey ($385) + Underwriting ($2,000) + Broker Points ($3,600) + Broker Processing ($0) + Other ($0) = $10,585",
+              "formula": "Loan Charges ($200) + Recording & Transfer ($1,570) + Title & Escrow ($1,880) + Online Notary ($250) + Underwriting ($2,000) + Broker Points ($3,600) + Broker Processing ($0) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Tax Lump collected at Refi ($0) = $10,700",
               "label": "Closing Costs (Refi)",
-              "note": null,
+              "note": "The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.",
               "terms": [
                 {
                   "label": "Loan Charges",
@@ -2270,18 +2937,6 @@
                   "value": 250
                 },
                 {
-                  "label": "Appraisal",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 700
-                },
-                {
-                  "label": "Survey",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 385
-                },
-                {
                   "label": "Underwriting",
                   "sign": "+",
                   "step_label": null,
@@ -2304,45 +2959,30 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi",
+                  "value": 1200
+                },
+                {
+                  "label": "Tax Lump collected at Refi",
+                  "sign": "+",
+                  "step_label": "Tax Lump collected at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 10585
+              "value": 10700
             },
             {
               "formula": "No buy closing date → no refi date, no prepaid interest is modelled ($0)",
               "label": "Prepaid Interest (Refi)",
-              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).",
+              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).",
               "terms": null,
               "unit": "money",
               "value": 0
-            },
-            {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
-              "terms": [
-                {
-                  "label": "Maintenance Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 1500
-                },
-                {
-                  "label": "Vacancy Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2600
-                },
-                {
-                  "label": "CapEx Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2500
-                }
-              ],
-              "unit": "money",
-              "value": 6600
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -2366,9 +3006,9 @@
               "value": 215000
             },
             {
-              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,585) − Prepaid Interest (Refi) ($0) − Reserves ($6,600) = $7,815",
+              "formula": "Refi Loan ($240,000) − HML Payoff ($215,000) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($0) = $14,300",
               "label": "Cash-Out Wire (Refi)",
-              "note": "The cash received at the refi closing table, before subtracting what was invested.",
+              "note": "The 'Due to Borrower' line of the refi settlement statement, before the reserves and what was invested.",
               "terms": [
                 {
                   "label": "Refi Loan",
@@ -2386,26 +3026,36 @@
                   "label": "Closing Costs (Refi)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi)",
-                  "value": 10585
+                  "value": 10700
                 },
                 {
                   "label": "Prepaid Interest (Refi)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": 7815
+              "value": 14300
             }
           ],
           "cash_out_routi_conservative": [
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
             {
               "formula": "1.5% × Refi Loan ($216,000) = $3,240",
               "label": "Broker Points (Refi) (Lowest ARV)",
@@ -2431,9 +3081,9 @@
               "value": 1772
             },
             {
-              "formula": "Loan Charges ($200) + Recording & Transfer ($1,438) + Title & Escrow ($1,772) + Online Notary ($250) + Appraisal ($700) + Survey ($385) + Underwriting ($2,000) + Broker Points ($3,240) + Broker Processing ($0) + Other ($0) = $9,985",
+              "formula": "Loan Charges ($200) + Recording & Transfer ($1,438) + Title & Escrow ($1,772) + Online Notary ($250) + Underwriting ($2,000) + Broker Points ($3,240) + Broker Processing ($0) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Tax Lump collected at Refi ($0) = $10,100",
               "label": "Closing Costs (Refi) (Lowest ARV)",
-              "note": null,
+              "note": "The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.",
               "terms": [
                 {
                   "label": "Loan Charges",
@@ -2460,18 +3110,6 @@
                   "value": 250
                 },
                 {
-                  "label": "Appraisal",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 700
-                },
-                {
-                  "label": "Survey",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 385
-                },
-                {
                   "label": "Underwriting",
                   "sign": "+",
                   "step_label": null,
@@ -2494,45 +3132,30 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi",
+                  "value": 1200
+                },
+                {
+                  "label": "Tax Lump collected at Refi",
+                  "sign": "+",
+                  "step_label": "Tax Lump collected at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 9985
+              "value": 10100
             },
             {
               "formula": "No buy closing date → no refi date, no prepaid interest is modelled ($0)",
               "label": "Prepaid Interest (Refi) (Lowest ARV)",
-              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).",
+              "note": "The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).",
               "terms": null,
               "unit": "money",
               "value": 0
-            },
-            {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
-              "terms": [
-                {
-                  "label": "Maintenance Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 1500
-                },
-                {
-                  "label": "Vacancy Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2600
-                },
-                {
-                  "label": "CapEx Reserve",
-                  "sign": "+",
-                  "step_label": null,
-                  "value": 2500
-                }
-              ],
-              "unit": "money",
-              "value": 6600
             },
             {
               "formula": "Hard Money Loan ($215,000) + Accrued Interest (1st of month → payoff) ($0) = $215,000",
@@ -2572,7 +3195,7 @@
               "value": 216000
             },
             {
-              "formula": "Refi Loan (Lowest ARV) ($216,000) − HML Payoff ($215,000) − Closing Costs (Refi, Lowest ARV) ($9,985) − Prepaid Interest (Refi, Lowest ARV) ($0) − Reserves ($6,600) = -$15,585",
+              "formula": "Refi Loan (Lowest ARV) ($216,000) − HML Payoff ($215,000) − Closing Costs (Refi, Lowest ARV) ($10,100) − Prepaid Interest (Refi, Lowest ARV) ($0) = -$9,100",
               "label": "Cash-Out Wire (Lowest ARV)",
               "note": "The loan-dependent fees follow the lower loan; typed-in fees stay as entered.",
               "terms": [
@@ -2592,31 +3215,33 @@
                   "label": "Closing Costs (Refi, Lowest ARV)",
                   "sign": "-",
                   "step_label": "Closing Costs (Refi) (Lowest ARV)",
-                  "value": 9985
+                  "value": 10100
                 },
                 {
                   "label": "Prepaid Interest (Refi, Lowest ARV)",
                   "sign": "-",
                   "step_label": "Prepaid Interest (Refi) (Lowest ARV)",
                   "value": 0
-                },
-                {
-                  "label": "Reserves",
-                  "sign": "-",
-                  "step_label": "Reserves Escrowed at Refi",
-                  "value": 6600
                 }
               ],
               "unit": "money",
-              "value": -15585
+              "value": -9100
             },
             {
-              "formula": "Wire (-$15,585) is negative → $15,585 brought to the table",
+              "formula": "Wire (-$9,100) is negative → $9,100 brought to the table",
               "label": "Cash to Refi Table (Lowest ARV)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 15585
+              "value": 9100
+            },
+            {
+              "formula": "Reserves ($11,150.89) − what the wire brings ($0) = $11,150.89 from your pocket",
+              "label": "Reserves the Lowest-ARV Wire cannot fund",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 11150.889769149338
             }
           ],
           "cash_to_close_buy": [
@@ -2685,7 +3310,15 @@
               "value": 250
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
+              "formula": "Paid through the purchase settlement → $1,200",
+              "label": "Insurance Bill at Purchase (inside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -2718,10 +3351,16 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (inside closing)",
+                  "value": 1200
                 }
               ],
               "unit": "money",
-              "value": 3582.5
+              "value": 4782.5
             },
             {
               "formula": "No buy closing date → no tax proration is modelled ($0)",
@@ -2732,7 +3371,7 @@
               "value": 0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $42,882.50",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $44,082.50",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -2746,7 +3385,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 3582.5
+                  "value": 4782.5
                 },
                 {
                   "label": "HML Points",
@@ -2774,10 +3413,26 @@
                 }
               ],
               "unit": "money",
-              "value": 42882.5
+              "value": 44082.5
             }
           ],
           "dscr": [
+            {
+              "formula": "This year's bill ($3,600) × 0.96 = $3,456 paid on Nov 30 ÷ 12 = $288",
+              "label": "Property Tax per Month (regular year)",
+              "note": "Paid on Nov 30 with the 4% November discount. The refi never changes the tax, so a regular year costs the same bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "Insurance bill at the refi ($1,200) ÷ 12 = $100",
+              "label": "Insurance per Month (regular year)",
+              "note": "Formula default for the regular-year insurance per month; type a value to override. The insurance paid at the purchase, monthly until the refi and at the refi count in the cash out and Cash Needed only; the bill at the refi pays the first year, which this monthly figure still charges.",
+              "terms": null,
+              "unit": "money",
+              "value": 100
+            },
             {
               "formula": "Refi Loan ($240,000) amortized at 6.5%/yr over 30 years = $1,516.96",
               "label": "Monthly Mortgage Payment",
@@ -2787,9 +3442,9 @@
               "value": 1516.963256383113
             },
             {
-              "formula": "Mortgage ($1,516.96) + Taxes ÷ 12 ($300) + Insurance ÷ 12 ($100) + HOA ($0) = $1,916.96",
+              "formula": "Mortgage ($1,516.96) + Property Tax per Month ($288) + Insurance per Month ($100) + HOA ($0) = $1,904.96",
               "label": "PITIA",
-              "note": "Principal, interest, taxes, insurance and association dues: the monthly debt service the rent must cover.",
+              "note": "Principal, interest, taxes, insurance and association dues of a regular year: the monthly debt service the rent must cover.",
               "terms": [
                 {
                   "label": "Mortgage",
@@ -2798,15 +3453,15 @@
                   "value": 1516.963256383113
                 },
                 {
-                  "label": "Taxes ÷ 12",
+                  "label": "Property Tax per Month",
                   "sign": "+",
-                  "step_label": null,
-                  "value": 300
+                  "step_label": "Property Tax per Month (regular year)",
+                  "value": 288
                 },
                 {
-                  "label": "Insurance ÷ 12",
+                  "label": "Insurance per Month",
                   "sign": "+",
-                  "step_label": null,
+                  "step_label": "Insurance per Month (regular year)",
                   "value": 100
                 },
                 {
@@ -2817,15 +3472,15 @@
                 }
               ],
               "unit": "money",
-              "value": 1916.963256383113
+              "value": 1904.963256383113
             },
             {
-              "formula": "Rent ($2,600) ÷ PITIA ($1,916.96) = 1.36",
+              "formula": "Rent ($2,600) ÷ PITIA ($1,904.96) = 1.36",
               "label": "DSCR",
               "note": null,
               "terms": null,
               "unit": "ratio",
-              "value": 1.356311860095653
+              "value": 1.3648557216460588
             }
           ],
           "equity": [
@@ -2838,9 +3493,17 @@
               "value": 240000
             },
             {
-              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) = $6,600",
-              "label": "Reserves Escrowed at Refi",
-              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Reserves are held by the lender and returned at exit, so they count as equity.",
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
               "terms": [
                 {
                   "label": "Maintenance Reserve",
@@ -2859,52 +3522,64 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
                 }
               ],
               "unit": "money",
-              "value": 6600
+              "value": 11150.889769149338
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             }
           ],
           "net_profit": [
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$47,862.50) = $38,737.50",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,141.39) = $37,009.50",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -2912,22 +3587,22 @@
                   "label": "Equity",
                   "sign": "+",
                   "step_label": "Equity (post-refi)",
-                  "value": 86600
+                  "value": 91150.88976914933
                 },
                 {
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -47862.5
+                  "value": -54141.38976914934
                 }
               ],
               "unit": "money",
-              "value": 38737.5
+              "value": 37009.5
             }
           ],
           "roi": [
             {
-              "formula": "NOI ($1,602) − Mortgage ($1,516.96) = $85.04",
+              "formula": "NOI ($1,614) − Mortgage ($1,516.96) = $97.04",
               "label": "Monthly Cash Flow",
               "note": null,
               "terms": [
@@ -2935,7 +3610,7 @@
                   "label": "NOI",
                   "sign": "+",
                   "step_label": "Net Operating Income (NOI)",
-                  "value": 1602
+                  "value": 1614
                 },
                 {
                   "label": "Mortgage",
@@ -2945,39 +3620,45 @@
                 }
               ],
               "unit": "money",
-              "value": 85.03674361688704
+              "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($7,815) − Total Cash Invested ($55,677.50) = -$47,862.50",
+              "formula": "Cash-Out Wire ($14,300) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($57,290.50) = -$54,141.39",
               "label": "Cash Out from Deal",
-              "note": "Negative: that much of your own money is still left in the deal after the refi.",
+              "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
                 {
                   "label": "Cash-Out Wire",
                   "sign": "+",
                   "step_label": "Cash-Out Wire (Refi)",
-                  "value": 7815
+                  "value": 14300
+                },
+                {
+                  "label": "Reserves set aside at Refi",
+                  "sign": "-",
+                  "step_label": "Reserves set aside at Refi",
+                  "value": 11150.889769149338
                 },
                 {
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 }
               ],
               "unit": "money",
-              "value": -47862.5
+              "value": -54141.38976914934
             },
             {
-              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($6,600) = $86,600",
+              "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
               "label": "Equity (post-refi)",
-              "note": "The reserves are escrowed at the refi and returned at exit, so they count as equity.",
+              "note": "The reserves you set aside at the refi are released with confidence at a sale, so they count as equity.",
               "terms": null,
               "unit": "money",
-              "value": 86600
+              "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($86,600) + Cash Out (-$47,862.50) = $38,737.50",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,141.39) = $37,009.50",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -2985,25 +3666,25 @@
                   "label": "Equity",
                   "sign": "+",
                   "step_label": "Equity (post-refi)",
-                  "value": 86600
+                  "value": 91150.88976914933
                 },
                 {
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -47862.5
+                  "value": -54141.38976914934
                 }
               ],
               "unit": "money",
-              "value": 38737.5
+              "value": 37009.5
             },
             {
-              "formula": "(Annual Cash Flow ($1,020.44) + Net Profit ($38,737.50)) ÷ |Cash Out| ($47,862.50) × 100 = 83.07%",
+              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($37,009.50)) ÷ |Cash Out| ($54,141.39) × 100 = 70.51%",
               "label": "ROI",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 83.06699592249181
+              "value": 70.50787038561539
             }
           ],
           "stolen_money": [
@@ -3068,7 +3749,7 @@
               "value": 11825
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) = $3,582.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -3101,10 +3782,16 @@
                   "sign": "+",
                   "step_label": null,
                   "value": 0
+                },
+                {
+                  "label": "Insurance Bill (inside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (inside closing)",
+                  "value": 1200
                 }
               ],
               "unit": "money",
-              "value": 3582.5
+              "value": 4782.5
             },
             {
               "formula": "No credit at closing → nothing to set aside ($0)",
@@ -3115,7 +3802,7 @@
               "value": 0
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($3,582.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $42,882.50",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($0) − Seller Tax Credit ($0) − Earnest Money Deposit ($5,000) = $44,082.50",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -3129,7 +3816,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 3582.5
+                  "value": 4782.5
                 },
                 {
                   "label": "HML Points",
@@ -3157,7 +3844,7 @@
                 }
               ],
               "unit": "money",
-              "value": 42882.5
+              "value": 44082.5
             },
             {
               "formula": "Actual Rehab ($55,000) − Construction Budget ($55,000) = $0",
@@ -3168,12 +3855,84 @@
               "value": 0
             },
             {
-              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) × 12) × 180 days ÷ 360 = $2,400",
-              "label": "Holding Costs (until refi)",
+              "formula": "HOA ($0) × 12 × 180 days ÷ 360 = $0",
+              "label": "HOA until Refi",
+              "note": "Taxes and insurance are not accrued day by day: they are paid as the bills and deposits they really are (below).",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Paid through the purchase settlement → $0 here (inside Cash to Close (Buy))",
+              "label": "Insurance Bill at Purchase (outside closing)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 2400
+              "value": 0
+            },
+            {
+              "formula": "$0/mo × 180 days ÷ 30 = $0",
+              "label": "Insurance paid monthly until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "Same as the bill at purchase: $1,200",
+              "label": "Insurance Bill at Refi",
+              "note": "Paid through the refi settlement: it comes off both cash-out wires.",
+              "terms": null,
+              "unit": "money",
+              "value": 1200
+            },
+            {
+              "formula": "Paid through the refi settlement → $0 here (inside the refi closing costs)",
+              "label": "Insurance Bill at Refi (outside closing)",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "No buy closing date → Bill × 0.96 ($3,456) ÷ 12 = $288",
+              "label": "Tax Bucket Deposit (each 15th)",
+              "note": "Formula default for the deposit into the property's tax bucket; type a value to override. The seller's credit goes into the bucket at closing; the deposits fill it up to the Nov 30 bill.",
+              "terms": null,
+              "unit": "money",
+              "value": 288
+            },
+            {
+              "formula": "$288 × 6 months (180 days ÷ 30) = $1,728",
+              "label": "Tax paid into the Bucket until Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 1728
+            },
+            {
+              "formula": "The bucket covers any Nov 30 bill inside the hold → $0",
+              "label": "Tax Bucket Shortfall topped up on Nov 30",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)",
+              "label": "Tax Lump collected at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "The bucket keeps paying the Nov 30 bill → nothing comes back ($0)",
+              "label": "Tax Bucket Balance released at Refi",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 0
             },
             {
               "formula": "$80/mo × 90 days ÷ 30 = $240",
@@ -3192,7 +3951,69 @@
               "value": 7800
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Seller Tax Credit set aside in the tax bucket ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + Holding Costs ($2,400) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) − Pre-Refi Rental Income ($7,800) = $55,677.50",
+              "formula": "3 months × Monthly Mortgage Payment ($1,516.96) = $4,550.89",
+              "label": "HYSA Deposit at Refi",
+              "note": "Formula default for the high-yield savings deposit (3 months of principal and interest); type a value to override.",
+              "terms": null,
+              "unit": "money",
+              "value": 4550.8897691493385
+            },
+            {
+              "formula": "Maintenance Reserve ($1,500) + Vacancy Reserve ($2,600) + CapEx Reserve ($2,500) + HYSA Deposit ($4,550.89) = $11,150.89",
+              "label": "Reserves set aside at Refi",
+              "note": "Vacancy reserve defaults to one month of rent; type a value to override. Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, because a sale releases it, counts as equity.",
+              "terms": [
+                {
+                  "label": "Maintenance Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 1500
+                },
+                {
+                  "label": "Vacancy Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2600
+                },
+                {
+                  "label": "CapEx Reserve",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 2500
+                },
+                {
+                  "label": "HYSA Deposit",
+                  "sign": "+",
+                  "step_label": "HYSA Deposit at Refi",
+                  "value": 4550.8897691493385
+                }
+              ],
+              "unit": "money",
+              "value": 11150.889769149338
+            },
+            {
+              "formula": "Appraisal ($700) + Survey ($385) = $1,085",
+              "label": "Appraisal & Survey (paid outside closing)",
+              "note": "Paid on their own at the end of the rehab (POC on the refi settlement statement), so they are not refi closing costs.",
+              "terms": [
+                {
+                  "label": "Appraisal",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 700
+                },
+                {
+                  "label": "Survey",
+                  "sign": "+",
+                  "step_label": null,
+                  "value": 385
+                }
+              ],
+              "unit": "money",
+              "value": 1085
+            },
+            {
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Seller Tax Credit set aside in the tax bucket ($0) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($11,825) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,728) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($240) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $57,290.50",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -3206,12 +4027,18 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
                   "sign": "+",
                   "step_label": "Seller Tax Credit set aside in the tax bucket",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
                   "value": 0
                 },
                 {
@@ -3227,10 +4054,28 @@
                   "value": 11825
                 },
                 {
-                  "label": "Holding Costs",
+                  "label": "HOA until Refi",
                   "sign": "+",
-                  "step_label": "Holding Costs (until refi)",
-                  "value": 2400
+                  "step_label": "HOA until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Insurance paid monthly until Refi",
+                  "sign": "+",
+                  "step_label": "Insurance paid monthly until Refi",
+                  "value": 0
+                },
+                {
+                  "label": "Tax paid into the Bucket until Refi",
+                  "sign": "+",
+                  "step_label": "Tax paid into the Bucket until Refi",
+                  "value": 1728
+                },
+                {
+                  "label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "sign": "+",
+                  "step_label": "Tax Bucket Shortfall topped up on Nov 30",
+                  "value": 0
                 },
                 {
                   "label": "Utilities until Rented",
@@ -3251,22 +4096,48 @@
                   "value": 630
                 },
                 {
+                  "label": "Appraisal & Survey",
+                  "sign": "+",
+                  "step_label": "Appraisal & Survey (paid outside closing)",
+                  "value": 1085
+                },
+                {
+                  "label": "Insurance Bill at Refi (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Refi (outside closing)",
+                  "value": 0
+                },
+                {
                   "label": "Pre-Refi Rental Income",
                   "sign": "-",
                   "step_label": "Pre-Refi Rental Income",
                   "value": 7800
+                },
+                {
+                  "label": "Tax Bucket Balance released at Refi",
+                  "sign": "-",
+                  "step_label": "Tax Bucket Balance released at Refi",
+                  "value": 0
                 }
               ],
               "unit": "money",
-              "value": 55677.5
+              "value": 57290.5
             },
             {
-              "formula": "Wire (-$15,585) is negative → $15,585 brought to the table",
+              "formula": "Wire (-$9,100) is negative → $9,100 brought to the table",
               "label": "Cash to Refi Table (Lowest ARV)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 15585
+              "value": 9100
+            },
+            {
+              "formula": "Reserves ($11,150.89) − what the wire brings ($0) = $11,150.89 from your pocket",
+              "label": "Reserves the Lowest-ARV Wire cannot fund",
+              "note": null,
+              "terms": null,
+              "unit": "money",
+              "value": 11150.889769149338
             },
             {
               "formula": "Per diem ($65.69) × 30 days = $1,970.83",
@@ -3277,17 +4148,17 @@
               "value": 1970.8333333333333
             },
             {
-              "formula": "(Taxes ($3,600) + Insurance ($1,200) + HOA ($0) × 12) × 30 days ÷ 360 = $400",
+              "formula": "HOA ($0) × 12 × 30 days ÷ 360 ($0) + Insurance per month until refi ($0) + one Tax Bucket Deposit ($288) = $288",
               "label": "Holding Costs (first month)",
               "note": null,
               "terms": null,
               "unit": "money",
-              "value": 400
+              "value": 288
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,882.50) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($400) = $55,333.33",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($44,082.50) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Cushion ($5,000) + Utilities (first month) ($80) + HML Interest (first month) ($1,970.83) + Holding Costs (first month) ($288) = $56,421.33",
               "label": "Cash Needed Floor",
-              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.",
+              "note": "The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the insurance bill when it is paid outside it, the cushion held for draws and surprises, and the first month of utilities, hard-money interest, HOA, insurance paid monthly and one tax-bucket deposit.",
               "terms": [
                 {
                   "label": "Earnest Money Deposit",
@@ -3299,7 +4170,13 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 42882.5
+                  "value": 44082.5
+                },
+                {
+                  "label": "Insurance Bill at Purchase (outside closing)",
+                  "sign": "+",
+                  "step_label": "Insurance Bill at Purchase (outside closing)",
+                  "value": 0
                 },
                 {
                   "label": "Rehab Cushion",
@@ -3323,22 +4200,22 @@
                   "label": "Holding Costs (first month)",
                   "sign": "+",
                   "step_label": "Holding Costs (first month)",
-                  "value": 400
+                  "value": 288
                 }
               ],
               "unit": "money",
-              "value": 55333.333333333336
+              "value": 56421.333333333336
             },
             {
-              "formula": "Total Cash Invested ($55,677.50) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($15,585) = $76,262.50",
+              "formula": "Total Cash Invested ($57,290.50) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($9,100) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $82,541.39",
               "label": "Cash Needed through Refi",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
                   "sign": "+",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 55677.5
+                  "value": 57290.5
                 },
                 {
                   "label": "Rehab Cushion",
@@ -3350,14 +4227,20 @@
                   "label": "Cash to Refi Table (Lowest ARV)",
                   "sign": "+",
                   "step_label": "Cash to Refi Table (Lowest ARV)",
-                  "value": 15585
+                  "value": 9100
+                },
+                {
+                  "label": "Reserves the Lowest-ARV Wire cannot fund",
+                  "sign": "+",
+                  "step_label": "Reserves the Lowest-ARV Wire cannot fund",
+                  "value": 11150.889769149338
                 }
               ],
               "unit": "money",
-              "value": 76262.5
+              "value": 82541.38976914933
             },
             {
-              "formula": "Cash Needed through Refi ($76,262.50) already covers the floor ($55,333.33) → $0",
+              "formula": "Cash Needed through Refi ($82,541.39) already covers the floor ($56,421.33) → $0",
               "label": "Floor Top-Up",
               "note": "Lifts Cash Needed to the floor when the draws, the rent collected and the refi wire would otherwise put it below what day one and the first month take.",
               "terms": null,
@@ -3365,7 +4248,7 @@
               "value": 0
             },
             {
-              "formula": "Cash Needed through Refi ($76,262.50) + Floor Top-Up ($0) = $76,262.50",
+              "formula": "Cash Needed through Refi ($82,541.39) + Floor Top-Up ($0) = $82,541.39",
               "label": "Cash Needed",
               "note": "The larger of the floor and the through-refi figure: the single out-of-pocket figure, planned on the lowest-ARV stress test and never below what day one and the first month take.",
               "terms": [
@@ -3373,7 +4256,7 @@
                   "label": "Cash Needed through Refi",
                   "sign": "+",
                   "step_label": "Cash Needed through Refi",
-                  "value": 76262.5
+                  "value": 82541.38976914933
                 },
                 {
                   "label": "Floor Top-Up",
@@ -3383,7 +4266,7 @@
                 }
               ],
               "unit": "money",
-              "value": 76262.5
+              "value": 82541.38976914933
             }
           ],
           "total_hard_money_cost": [
@@ -3466,34 +4349,41 @@
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
-        "cash_flow": 85.03674361688704,
-        "cash_on_cash": 2.1320259564432376,
-        "cash_out": -47862.5,
-        "cash_out_routi": 7815,
-        "cash_out_routi_conservative": -15585,
-        "cash_to_close_buy": 42882.5,
-        "cash_to_refi_table_conservative": 15585,
+        "cash_flow": 97.03674361688704,
+        "cash_on_cash": 2.1507407334160495,
+        "cash_out": -54141.38976914934,
+        "cash_out_routi": 14300,
+        "cash_out_routi_conservative": -9100,
+        "cash_to_close_buy": 44082.5,
+        "cash_to_refi_table_conservative": 9100,
         "closingCostsBuy": "5.0000",
         "closingCostsRefi": "6.0000",
-        "closing_costs_buy_total": 3582.5,
-        "closing_costs_refi_total": 10585,
+        "closing_costs_buy_total": 4782.5,
+        "closing_costs_refi_total": 10700,
         "constructionLoanBudget": "55.0000",
         "contact": null,
         "created_at": "<redacted>",
         "crime_rate": null,
         "daysUntilRefi": 180,
+        "daysUntilRehabCompleted": 45,
         "daysUntilRented": 90,
         "deal_type": "BRRRR",
         "deed_transfer_tax_buy": 0,
         "down_payment": "20.000",
-        "dscr": 1.356311860095653,
+        "dscr": 1.3648557216460588,
         "earnestMoneyDeposit": "5000.00",
-        "equity": 86600,
+        "equity": 91150.88976914933,
         "google_drive_link": null,
         "hmlPoints": "2.000",
         "hml_amount": 215000,
         "hml_payoff": 215000,
+        "hysaDepositAtRefi": null,
+        "hysa_deposit_at_refi_effective": 4550.8897691493385,
         "id": "<redacted>",
+        "insuranceBillAtRefiClosing": null,
+        "insurancePurchaseBillPaymentTiming": "inside_purchase_closing",
+        "insuranceRefiBillPaymentTiming": "inside_refi_closing",
+        "insurance_bill_at_refi_effective": 1200,
         "interestRate": "6.500",
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
@@ -3505,9 +4395,14 @@
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
         "messages": null,
+        "monthlyInsuranceAfterRefi": null,
+        "monthlyInsuranceUntilRefi": "0.00",
+        "monthlyPropertyTaxBucketDeposit": null,
         "monthlyUtilitiesUntilRented": "80.00",
+        "monthly_insurance_after_refi_effective": 100,
+        "monthly_property_tax_after_refi": 288,
         "montly_hoa": "0.00",
-        "net_profit": 38737.5,
+        "net_profit": 37009.5,
         "niche": null,
         "notes": null,
         "onlineNotaryBuy": true,
@@ -3523,7 +4418,13 @@
         "pre_refi_rental_income": 7800,
         "prepaid_interest_buy": 0,
         "prepaid_interest_refi": 0,
+        "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
+        "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bucket_balance_released_at_refi": 0,
+        "property_tax_bucket_deposit_effective": 288,
+        "property_tax_lump_sum_at_refi_closing_effective": 0,
+        "property_tax_paid_into_bucket_until_refi": 1728,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000,
         "recordingTransferBuy": null,
@@ -3536,12 +4437,15 @@
         "rehabContingency": "10.00",
         "rehabCost": "50.0000",
         "rehabCushion": "5000.00",
+        "rehab_completed_date": null,
         "rent": "2600.00",
         "rent_comps": null,
-        "reserves_total": 6600,
-        "roi": 83.06699592249181,
+        "reserves_funded_from_own_pocket_at_lowest_arv": 11150.889769149338,
+        "reserves_total": 11150.889769149338,
+        "roi": 70.50787038561539,
         "section": 1,
         "sellerPaidCurrentYearTaxes": null,
+        "sellerTaxCreditAtPurchaseClosing": null,
         "seller_tax_credit": 0,
         "sold_comps": null,
         "sqft": null,
@@ -3555,8 +4459,8 @@
         "titleModeBuy": "standard",
         "title_escrow_buy_effective": 1000,
         "title_escrow_refi_effective": 1880,
-        "total_cash_invested": 55677.5,
-        "total_cash_needed_for_deal": 76262.5,
+        "total_cash_invested": 57290.5,
+        "total_cash_needed_for_deal": 82541.38976914933,
         "total_hard_money_cost": 17025,
         "updated_at": "<redacted>",
         "use_HM_for_rehab": true,
