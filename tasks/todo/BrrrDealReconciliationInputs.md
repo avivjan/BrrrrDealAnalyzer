@@ -133,9 +133,9 @@ Flip keeps both exactly as before.
 - [x] R6 (90 min) Backend tests (below), fixtures, the legacy parity overrides.
 - [x] R7 (120 min) Frontend: auto-calc mirror, sections, types, defaults, validation, impacts, phase tabs,
   copy-for-AI, Vitest.
-- [ ] R8 (30 min) Golden update commits: backend snapshots, then the e2e network goldens if they move.
+- [x] R8 (30 min) Golden update commits: backend snapshots, then the e2e network goldens if they move.
 - [x] R9 (20 min) Security pass.
-- [ ] R10 (10 min) Push the branch and open the PR.
+- [x] R10 (10 min) Push the branch and open the PR (avivjan/BrrrrDealAnalyzer#110).
 
 ## Tests
 
