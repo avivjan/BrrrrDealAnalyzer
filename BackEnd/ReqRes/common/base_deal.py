@@ -22,8 +22,8 @@ class BaseDealReq(BaseModel):
     use_HM_for_rehab: Annotated[Optional[bool], Field(alias="use_HM_for_rehab", description="")] = False
     HML_points: Annotated[Optional[Decimal], Field(alias="hmlPoints", description="Hard money lender points (percentage)")] = Decimal("0.0")
     HML_interest_rate: Annotated[Optional[Decimal], Field(alias="HMLInterestRate", description="Interest paid during HML period (cash)")] = None
-    annual_property_taxes: Optional[Decimal] = Field(Decimal("0.0"), description="Annual property taxes")
-    annual_insurance: Optional[Decimal] = Field(Decimal("0.0"), description="Annual insurance expense")
+    annual_property_taxes: Optional[Decimal] = Field(Decimal("0.0"), description="Annual property taxes (BRRRR: this year's bill, paid on Nov 30)")
+    annual_insurance: Optional[Decimal] = Field(Decimal("0.0"), description="Annual insurance expense (BRRRR: the insurance bill at the purchase closing)")
     montly_hoa: Optional[Decimal] = Field(Decimal("0.0"), description="Monthly HOA dues")
 
     section: Optional[int] = Field(..., description="Section number")

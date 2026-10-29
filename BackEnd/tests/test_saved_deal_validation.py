@@ -23,6 +23,9 @@ REJECTED_SAVED_INPUTS = [
     ("vacancyPercent", 101, "Vacancy percentage must be between 0% and 100%"),
     ("daysUntilRefi", 0, "Days until refi must be a positive number"),
     ("constructionLoanBudget", -1, "Construction loan budget cannot be negative"),
+    ("daysUntilRehabCompleted", 91, "Rehab completion must be on or before the tenant-occupied date"),
+    ("daysUntilRehabCompleted", -1, "Days until rehab completed cannot be negative"),
+    ("hysaDepositAtRefi", -1, "HYSA deposit at refi cannot be negative"),
 ]
 
 
@@ -146,3 +149,16 @@ class TestFlipBoughtDealSaveValidation:
         board = client.get("/bought-deals")
         assert board.status_code == 200 and [deal["id"] for deal in board.json()] == [bought["id"]]
         assert board.json()[0]["holdingTime"] == bought["holdingTime"]
+
+
+class TestRehabCompletionFallsBetweenThePurchaseAndTheTenant:
+    @pytest.mark.parametrize("days_until_rehab_completed", [0, 45, 90])
+    def test_the_bounds_are_inclusive(self, client, brrrr_payload, days_until_rehab_completed):
+        response = _post_active(client, {**brrrr_payload, "daysUntilRented": 90, "daysUntilRehabCompleted": days_until_rehab_completed})
+        assert response.status_code == 200, response.text
+
+    def test_put_rejects_a_rehab_that_ends_after_the_tenant_moves_in(self, client, brrrr_payload):
+        deal = _post_active(client, brrrr_payload).json()
+        response = client.put(f"/active-deals/{deal['id']}", json={**brrrr_payload, "daysUntilRented": 30})
+        assert response.status_code == 400
+        assert "Rehab completion must be on or before the tenant-occupied date" in response.json()["detail"]

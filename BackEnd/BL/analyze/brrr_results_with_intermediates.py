@@ -38,6 +38,7 @@ class BrrrResultsWithIntermediates:
     buy_closing_date: Optional[date]
     refi_closing_date: Optional[date]
     tenant_occupied_date: Optional[date]
+    rehab_completed_date: Optional[date]
     hml_interest_days_prepaid_at_purchase_closing: int
     hml_interest_days_paid_monthly: int
     hml_interest_days_accrued_into_refi_payoff: int
@@ -51,9 +52,30 @@ class BrrrResultsWithIntermediates:
     prepaid_interest_buy: Decimal   # collected at the buy closing (closing day -> month end)
     hml_interest_paid_monthly: Decimal
     hml_interest_accrued_into_refi_payoff: Decimal   # 1st of the refi month -> day before payoff
-    holding_costs: Decimal          # taxes + insurance + HOA accrued until the refi
+    hoa_dues_until_refi: Decimal    # HOA accrued until the refi (taxes and insurance are paid as bills and deposits below)
     utilities_until_rented: Decimal
     pre_refi_rental_income: Decimal # rent from tenant placement to the refi
+
+    # -- insurance, purchase to refi ------------------------------------------
+    insurance_bill_at_purchase_inside_closing: Decimal    # a line of the purchase settlement
+    insurance_bill_at_purchase_outside_closing: Decimal   # paid separately; in Total Cash Invested
+    insurance_paid_monthly_until_refi: Decimal            # monthly x days until refi / 30
+    insurance_bill_at_refi: Decimal                       # effective: input or the bill at purchase
+    insurance_bill_at_refi_inside_closing: Decimal        # a line of the refi settlement (both wires)
+    insurance_bill_at_refi_outside_closing: Decimal       # paid separately; in Total Cash Invested
+
+    # -- the property's tax bucket, purchase to refi --------------------------
+    property_tax_bill_paid_on_november_30: Decimal        # this year's bill x 0.96
+    first_property_tax_payment_date: Optional[date]       # the first Nov 30 the owner pays; None without a closing date
+    property_tax_bucket_deposit_count_until_first_payment: int    # the 15ths after closing through it (1 when none is left); 0 without a date
+    property_tax_bucket_deposit: Decimal                  # effective: input or the formula
+    property_tax_bucket_first_bill_deposit_count_until_refi: Decimal   # of those deposits, the ones on or before the refi (days / 30 without a date)
+    property_tax_bucket_deposit_after_first_payment: Decimal      # bill x 0.96 / 12 after a Nov 30 inside the hold
+    property_tax_bucket_later_deposit_count_until_refi: int
+    property_tax_paid_into_bucket_until_refi: Decimal     # every deposit until the refi
+    property_tax_bucket_shortfall_topped_up_on_november_30: Decimal
+    property_tax_lump_sum_at_refi_closing: Decimal        # 0 unless the refi lender collects the whole bill
+    property_tax_bucket_balance_released_at_refi: Decimal # comes back with the lump; 0 otherwise
 
     # -- the purchase settlement -------------------------------------------------
     deed_transfer_tax_buy: Decimal  # $0 standard; 0.70% of the price when we pay all closing costs
@@ -62,7 +84,8 @@ class BrrrResultsWithIntermediates:
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
-    seller_tax_credit: Decimal      # positive = credit to the buyer
+    seller_tax_credit_formula: Decimal   # the proration by the closing date; 0 without a date
+    seller_tax_credit: Decimal      # effective: input or the formula; positive = credit to the buyer
     seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): in the tax bucket the day after closing
     cash_to_close_buy: Decimal      # the wire on purchase day
     total_hard_money_cost: Decimal  # points + interest + loan charges (buy)
@@ -87,28 +110,31 @@ class BrrrResultsWithIntermediates:
     prepaid_interest_refi: Decimal
     prepaid_interest_refi_conservative: Decimal
     vacancy_reserve: Decimal        # effective: input or one month of rent
-    reserves_total: Decimal         # maintenance + vacancy + capex; recoverable, counted as equity
+    hysa_deposit_at_refi: Decimal   # effective: input or 3 months of principal and interest
+    reserves_total: Decimal         # maintenance + vacancy + capex + HYSA; the owner's, counted as equity
 
     # -- cash out at the refinance --------------------------------------------
     hml_payoff: Decimal             # hml_amount + accrued interest
+    appraisal_and_survey_paid_outside_closing: Decimal   # at the end of the rehab, POC on the refi statement
     total_cash_invested: Decimal    # everything spent before the refi, plus the credit set aside in the tax bucket
-    cash_out_routi: Decimal         # the refi wire
+    cash_out_routi: Decimal         # the refi wire ("Due to Borrower"; the reserves are not taken off it)
     cash_out_routi_conservative: Decimal      # the wire at the lowest ARV
     cash_to_refi_table_conservative: Decimal  # max(0, -cash_out_routi_conservative)
-    cash_out: Decimal               # cash_out_routi - total_cash_invested
+    reserves_funded_from_own_pocket_at_lowest_arv: Decimal   # max(0, reserves - max(0, cash_out_routi_conservative))
+    cash_out: Decimal               # cash_out_routi - reserves_total - total_cash_invested
 
     # -- monthly, after the refinance -----------------------------------------
     vacancy: Decimal                # rent x vacancy %
     management_fee: Decimal         # rent x property management %
     maintenance: Decimal            # rent x maintenance %
     capex: Decimal                  # rent x capex %
-    monthly_taxes: Decimal
-    monthly_insurance: Decimal
+    monthly_taxes: Decimal          # this year's bill x 0.96 / 12: the refi never changes the tax
+    monthly_insurance: Decimal      # effective: input or the insurance bill at the refi / 12
     operating_expenses: Decimal     # the six above + HOA
     mortgage_payment: Decimal
     net_operating_income: Decimal   # rent minus operating expenses
     cash_flow: Decimal              # NOI minus mortgage payment
-    pitia: Decimal                  # mortgage + taxes/12 + insurance/12 + HOA
+    pitia: Decimal                  # mortgage + monthly taxes + monthly insurance + HOA
     dscr: Decimal                   # rent / pitia (0 when pitia is 0)
 
     # -- returns --------------------------------------------------------------
@@ -120,8 +146,8 @@ class BrrrResultsWithIntermediates:
     # -- cash needed -----------------------------------------------------------
     hml_interest_first_month_days: int   # 30 less the days prepaid at the purchase closing (30 without a closing date)
     hml_interest_first_month: Decimal    # the hard-money per diem over those days
-    holding_costs_first_month: Decimal   # taxes + insurance + HOA for 30 days
-    cash_needed_floor: Decimal           # EMD + cash to close + rehab cushion + one month of utilities and holding costs + the rest of the first month's interest
-    cash_needed_through_refi: Decimal    # total_cash_invested + rehab cushion + cash_to_refi_table_conservative
+    holding_costs_first_month: Decimal   # HOA for 30 days + one month of insurance until refi + one tax-bucket deposit
+    cash_needed_floor: Decimal           # EMD + cash to close + the insurance bill paid outside it + rehab cushion + one month of utilities and holding costs + the rest of the first month's interest
+    cash_needed_through_refi: Decimal    # total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv
     cash_needed_floor_top_up: Decimal    # max(0, cash_needed_floor - cash_needed_through_refi)
     total_cash_needed: Decimal           # max(cash_needed_floor, cash_needed_through_refi) = cash_needed_through_refi + cash_needed_floor_top_up

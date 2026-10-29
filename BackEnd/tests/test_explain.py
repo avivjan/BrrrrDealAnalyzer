@@ -220,11 +220,11 @@ class TestPdfRendersTheExplanation:
         response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"address": "1 Shared Form St"})
         assert response.status_code == 200, response.text
         text = self._text(response.content)
-        assert "How Cash Flow is calculated $85.04" in text    # headline value under the section title
+        assert "How Cash Flow is calculated $97.04" in text    # headline value under the section title
         assert "DSCR › 1.36x" in text                          # ratio unit in the summary table
         assert "+ Management 8% of rent $208" in text          # a stacked term
-        assert "- Operating Expenses › $998" in text           # a subtracted, drillable term
-        assert "= Net Operating Income (NOI) $1,602" in text   # the total line
+        assert "- Operating Expenses › $986" in text           # a subtracted, drillable term
+        assert "= Net Operating Income (NOI) $1,614" in text   # the total line
         assert "still left in the deal" in text                # a note
         # the lifecycle sections
         assert "How Cash to Close (Buy) is calculated" in text
@@ -357,11 +357,13 @@ class TestTermsLinkToTheirSourceStep:
             "Total Cash Invested": "Total Cash Invested (pre-refi)",
             "Rehab Cushion": None,
             "Cash to Refi Table (Lowest ARV)": "Cash to Refi Table (Lowest ARV)",
+            "Reserves the Lowest-ARV Wire cannot fund": "Reserves the Lowest-ARV Wire cannot fund",
         }
         floor = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed Floor")
         assert floor == {
             "Earnest Money Deposit": None,
             "Cash to Close (Buy)": "Cash to Close (Buy)",
+            "Insurance Bill at Purchase (outside closing)": "Insurance Bill at Purchase (outside closing)",
             "Rehab Cushion": None,
             "Utilities (first month)": None,
             "HML Interest (first month)": "HML Interest (first month)",
@@ -370,7 +372,10 @@ class TestTermsLinkToTheirSourceStep:
         invested = _term_links(breakdowns, "total_cash_needed_for_deal", "Total Cash Invested")
         assert invested["Cash to Close (Buy)"] == "Cash to Close (Buy)"
         assert invested["Seller Tax Credit set aside in the tax bucket"] == "Seller Tax Credit set aside in the tax bucket"
-        assert invested["Holding Costs"] == "Holding Costs (until refi)"
+        assert invested["HOA until Refi"] == "HOA until Refi"
+        assert invested["Tax paid into the Bucket until Refi"] == "Tax paid into the Bucket until Refi"
+        assert invested["Appraisal & Survey"] == "Appraisal & Survey (paid outside closing)"
+        assert invested["Insurance paid monthly until Refi"] == "Insurance paid monthly until Refi"
         assert invested["Pre-Refi Rental Income"] == "Pre-Refi Rental Income"
         assert invested["Earnest Money Deposit"] is None
         assert invested["HML Interest paid monthly"] == "HML Interest paid monthly"
@@ -389,8 +394,12 @@ class TestTermsLinkToTheirSourceStep:
         assert wire == {
             "Refi Loan": "Refi Loan Amount", "HML Payoff": "HML Payoff at Refi",
             "Closing Costs (Refi)": "Closing Costs (Refi)", "Prepaid Interest (Refi)": "Prepaid Interest (Refi)",
-            "Reserves": "Reserves Escrowed at Refi",
         }
+        assert _term_links(breakdowns, "cash_out", "Cash Out from Deal")["Reserves set aside at Refi"] == "Reserves set aside at Refi"
+        assert _term_links(breakdowns, "cash_out", "Reserves set aside at Refi")["HYSA Deposit"] == "HYSA Deposit at Refi"
+        assert _term_links(breakdowns, "cash_out_routi", "Closing Costs (Refi)")["Insurance Bill (inside closing)"] == "Insurance Bill at Refi"
+        assert _term_links(breakdowns, "cash_flow", "Monthly Operating Expenses")["Property Tax per Month"] == "Property Tax per Month (regular year)"
+        assert _term_links(breakdowns, "cash_flow", "Monthly Operating Expenses")["Insurance per Month"] == "Insurance per Month (regular year)"
         noi = _term_links(breakdowns, "cash_flow", "Net Operating Income")
         assert noi == {"Rent": None, "Operating Expenses": "Monthly Operating Expenses"}
         assert _term_links(breakdowns, "cash_flow", "Monthly Cash Flow") == {"NOI": "Net Operating Income (NOI)", "Mortgage": "Monthly Mortgage Payment"}

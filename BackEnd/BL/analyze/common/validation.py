@@ -28,6 +28,8 @@ _BRRR_NON_NEGATIVE_DOLLARS = [
     ("monthly_utilities_until_rented", "Monthly utilities until rented"),
     ("maintenance_before_refi", "Maintenance before refi"),
     ("appliances", "Appliances"),
+    ("monthly_insurance_until_refi", "Monthly insurance until refi"),
+    ("monthly_property_tax_bucket_deposit", "Monthly property tax bucket deposit"),
     ("loan_charges_refi", "Loan charges (refi)"),
     ("recording_transfer_refi", "Recording and transfer charges (refi)"),
     ("title_escrow_refi", "Title and escrow charges (refi)"),
@@ -37,9 +39,13 @@ _BRRR_NON_NEGATIVE_DOLLARS = [
     ("broker_processing_fee_refi", "Broker processing fee (refi)"),
     ("other_closing_costs_refi", "Other closing costs (refi)"),
     ("online_notary_fee_refi", "Online notary fee (refi)"),
+    ("insurance_bill_at_refi_closing", "Insurance bill at refi"),
+    ("monthly_insurance_after_refi", "Monthly insurance after refi"),
+    ("property_tax_lump_sum_at_refi_closing", "Property tax lump sum at refi"),
     ("maintenance_reserve", "Maintenance reserve"),
     ("vacancy_reserve", "Vacancy reserve"),
     ("capex_reserve", "CapEx reserve"),
+    ("hysa_deposit_at_refi", "HYSA deposit at refi"),
 ]
 
 
@@ -76,6 +82,10 @@ def _brrr_range_and_sign_errors(payload) -> list[str]:
         validation_errors.append("Construction loan budget cannot be negative.")
     if _is_negative(payload.days_until_rented):
         validation_errors.append("Days until rented cannot be negative.")
+    if _is_negative(payload.days_until_rehab_completed):
+        validation_errors.append("Days until rehab completed cannot be negative.")
+    elif _rehab_completes_after_the_tenant_moves_in(payload):
+        validation_errors.append("Rehab completion must be on or before the tenant-occupied date.")
     if payload.lowest_arv_in_thousands is not None and payload.lowest_arv_in_thousands <= 0:
         validation_errors.append("Lowest ARV must be greater than 0.")
     if _is_negative(payload.annual_property_taxes):
@@ -116,6 +126,12 @@ def _brrr_range_and_sign_errors(payload) -> list[str]:
         validation_errors.append("CapEx percentage must be between 0% and 100%.")
 
     return validation_errors
+
+
+def _rehab_completes_after_the_tenant_moves_in(payload) -> bool:
+    """The rehab ends between the purchase closing and the tenant-occupied day; checked only once both counts are set."""
+    return (payload.days_until_rehab_completed is not None and payload.days_until_rented is not None
+            and payload.days_until_rehab_completed > payload.days_until_rented)
 
 
 def _lowest_arv_exceeds_arv(payload) -> bool:

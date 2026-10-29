@@ -16,8 +16,12 @@ import pytest
 from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment, days_through_month_end
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 
-# Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures.
-EXPECTED_BRRRR_CASH_FLOW = 85.03674361688704
+# Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures. The legacy payload
+# (`legacy_brrrr_payload`, the new inputs neutralised) still reproduces it to the last digit.
+EXPECTED_LEGACY_BRRRR_CASH_FLOW = 85.03674361688704
+# The same deal moved once on purpose: a regular year's tax is the bill x 0.96 / 12 (paid on
+# Nov 30 with the November discount), so the $3,600 bill costs $288 a month instead of $300.
+EXPECTED_BRRRR_CASH_FLOW = EXPECTED_LEGACY_BRRRR_CASH_FLOW + 12
 EXPECTED_FLIP_NET_PROFIT = 12620.0
 # Verified identical under the old month-based formulas at 6 months and the
 # per-diem ones at 180 days — the two agree to the last digit, which is what
@@ -170,7 +174,7 @@ class TestRefiTiming:
         # this asserting the pinned cash-flow *and* the cash figures below is
         # the proof the per-diem switch changed nothing for existing deals.
         result = client.post("/analyze/brrr", json=legacy_brrrr_payload).json()
-        assert result["cash_flow"] == pytest.approx(EXPECTED_BRRRR_CASH_FLOW, abs=1e-9)
+        assert result["cash_flow"] == pytest.approx(EXPECTED_LEGACY_BRRRR_CASH_FLOW, abs=1e-9)
         # 6 months of HML interest + holding costs, priced per diem.
         assert result["total_cash_needed_for_deal"] == pytest.approx(
             EXPECTED_LEGACY_BRRRR_CASH_NEEDED, abs=1e-9
@@ -311,15 +315,19 @@ class TestAuditFixes:
             json={**brrrr_payload, "arv_in_thousands": 250, "ltv_as_precent": 70, "maintenanceReserve": 30000},
         ).json()
         extra_cash_to_table = short["cash_to_refi_table_conservative"] - base["cash_to_refi_table_conservative"]
-        assert extra_cash_to_table > 0
-        # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole increase is
-        # the extra cash the investor wires at the refi table under the lowest ARV...
+        extra_reserves_from_pocket = (short["reserves_funded_from_own_pocket_at_lowest_arv"]
+                                      - base["reserves_funded_from_own_pocket_at_lowest_arv"])
+        assert extra_cash_to_table > 0 and extra_reserves_from_pocket > 0
+        # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole increase is the extra
+        # cash the investor wires at the refi table, and the reserves the wire cannot fund, under
+        # the lowest ARV...
         assert short["total_cash_needed_for_deal"] == pytest.approx(
-            base["total_cash_needed_for_deal"] + extra_cash_to_table, abs=1e-6
+            base["total_cash_needed_for_deal"] + extra_cash_to_table + extra_reserves_from_pocket, abs=1e-6
         )
-        # ...and Cash Needed is invested + cushion + cash to the refi table (this deal sits above the floor).
+        # ...and Cash Needed is invested + cushion + both of those (this deal sits above the floor).
         assert short["total_cash_needed_for_deal"] == pytest.approx(
-            short["total_cash_invested"] + brrrr_payload["rehabCushion"] + short["cash_to_refi_table_conservative"], abs=1e-6
+            short["total_cash_invested"] + brrrr_payload["rehabCushion"] + short["cash_to_refi_table_conservative"]
+            + short["reserves_funded_from_own_pocket_at_lowest_arv"], abs=1e-6
         )
         labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
         assert "Cash to Refi Table (Lowest ARV)" in labels
@@ -336,9 +344,9 @@ class TestAuditFixes:
         # floor adds only the remaining 8 days of the first month.
         days_prepaid_at_closing = days_through_month_end(date.fromisoformat(brrrr_payload["buyClosingDate"]))
         rest_of_first_month_of_hml_interest = result["hml_amount"] * brrrr_payload["HMLInterestRate"] / 100 * (30 - days_prepaid_at_closing) / 360
-        one_month_of_taxes_insurance_and_hoa = float(calc_holding_costs(
-            Decimal(brrrr_payload["annual_property_taxes"]), Decimal(brrrr_payload["annual_insurance"]), Decimal(brrrr_payload["montly_hoa"]), 30,
-        ))
+        # One month of HOA, of insurance paid monthly and one deposit into the tax bucket.
+        one_month_of_taxes_insurance_and_hoa = (float(calc_holding_costs(Decimal("0"), Decimal("0"), Decimal(brrrr_payload["montly_hoa"]), 30))
+                                                + brrrr_payload["monthlyInsuranceUntilRefi"] + result["property_tax_bucket_deposit_effective"])
         floor = (brrrr_payload["earnestMoneyDeposit"] + result["cash_to_close_buy"] + brrrr_payload["rehabCushion"]
                  + brrrr_payload["monthlyUtilitiesUntilRented"] + rest_of_first_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa)
         through_refi = result["total_cash_invested"] + brrrr_payload["rehabCushion"] + result["cash_to_refi_table_conservative"]

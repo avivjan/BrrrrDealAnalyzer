@@ -58,6 +58,8 @@ BRRRR_ONLY_FIELDS = [
     "otherClosingCostsRefi",
     "maintenanceReserve",
     "capexReserve",
+    "daysUntilRehabCompleted",
+    "monthlyInsuranceUntilRefi",
 ]
 FLIP_ONLY_FIELDS = [
     "salePrice",
@@ -136,6 +138,30 @@ class TestLifecycleFieldsRoundTrip:
         deal_reset_to_formula = client.put(f"/active-deals/{deal['id']}", json={**deal_with_typed_overrides, "recordingTransferBuy": None}).json()
         assert deal_reset_to_formula["recordingTransferBuy"] is None
         assert float(deal_reset_to_formula["recording_transfer_buy_effective"]) != pytest.approx(1234.5)
+
+    def test_deal_reconciliation_inputs_round_trip(self, client, brrrr_payload):
+        typed_inputs = {
+            "sellerTaxCreditAtPurchaseClosing": -42.5, "insurancePurchaseBillPaymentTiming": "outside_purchase_closing",
+            "monthlyPropertyTaxBucketDeposit": 250, "insuranceBillAtRefiClosing": 2410.01,
+            "insuranceRefiBillPaymentTiming": "outside_refi_closing", "monthlyInsuranceAfterRefi": 200.83,
+            "propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi", "propertyTaxLumpSumAtRefiClosing": 3087.96,
+            "hysaDepositAtRefi": 3662.83, "daysUntilRehabCompleted": 60,
+        }
+        deal = _create(client, {**brrrr_payload, **typed_inputs})
+        for field, value in typed_inputs.items():
+            saved = deal[field]
+            assert (float(saved) == pytest.approx(value)) if isinstance(value, (int, float)) else saved == value, field
+        assert deal["rehab_completed_date"] == "2026-03-11"  # 2026-01-10 + 60 days
+        assert float(deal["insurance_bill_at_refi_effective"]) == pytest.approx(2410.01)
+        assert float(deal["property_tax_lump_sum_at_refi_closing_effective"]) == pytest.approx(3087.96)
+        reloaded = client.get("/active-deals").json()[0]
+        assert reloaded["insuranceRefiBillPaymentTiming"] == "outside_refi_closing"
+        assert reloaded["propertyTaxCollectionAtRefi"] == "full_tax_bill_collected_at_refi"
+        untouched = _create(client, brrrr_payload)
+        for field in ("sellerTaxCreditAtPurchaseClosing", "monthlyPropertyTaxBucketDeposit", "insuranceBillAtRefiClosing",
+                      "monthlyInsuranceAfterRefi", "propertyTaxLumpSumAtRefiClosing", "hysaDepositAtRefi"):
+            assert untouched[field] is None, field
+        assert client.post("/active-deals", json={**brrrr_payload, "insuranceRefiBillPaymentTiming": "at_the_bank"}).status_code == 422
 
     def test_notary_fees_and_closing_cost_notes_round_trip(self, client, brrrr_payload):
         long_note = "x" * 500

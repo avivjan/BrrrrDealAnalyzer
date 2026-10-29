@@ -75,8 +75,13 @@ class analyzeBRRRReq(BrrrLifecycleInputs):
 
     capex_percent_of_rent: Annotated[Decimal, Field(alias="capexPercent", description="Capital expenditures reserve as a percentage of rent")] = Decimal("0.0")
 
-    annual_property_taxes: Decimal = Field(Decimal("0.0"), description="Annual property taxes")
-    annual_insurance: Decimal = Field(Decimal("0.0"), description="Annual insurance expense")
+    annual_property_taxes: Decimal = Field(Decimal("0.0"), description=(
+        "This year's property tax bill (ad valorem + non-ad valorem), in dollars. Paid on Nov 30 with the 4% "
+        "November discount: drives the seller tax credit, the tax-bucket deposits until the refi and, x 0.96 / 12, "
+        "the regular-year monthly tax after it."))
+    annual_insurance: Decimal = Field(Decimal("0.0"), description=(
+        "The insurance bill at the purchase closing (the annual premium), in dollars. Where it is paid is set by "
+        "insurancePurchaseBillPaymentTiming; it is also the default of the bill at the refi."))
     montly_hoa: Decimal = Field(Decimal("0.0"), description="Monthly HOA dues")
 
 

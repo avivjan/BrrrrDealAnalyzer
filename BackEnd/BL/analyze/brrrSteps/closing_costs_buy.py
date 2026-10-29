@@ -1,4 +1,5 @@
-"""BRRRR step: the purchase settlement -- closing-cost lines, seller tax credit, cash to close."""
+"""BRRRR step: the purchase settlement -- closing-cost lines (the insurance bill when paid at closing),
+seller tax credit, cash to close."""
 
 from decimal import Decimal
 from typing import NamedTuple, Optional
@@ -16,25 +17,29 @@ class BuySettlement(NamedTuple):
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
-    seller_tax_credit: Decimal        # positive = credit to the buyer
+    seller_tax_credit_formula: Decimal   # the proration by the closing date; 0 without a date
+    seller_tax_credit: Decimal        # effective: input or the formula; positive = credit to the buyer
     seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): put in the property's tax bucket the day after closing
     cash_to_close_buy: Decimal        # the wire to the title company
     total_hard_money_cost: Decimal
 
 
-def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline) -> BuySettlement:
+def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline, insurance) -> BuySettlement:
     deed_transfer_tax_buy = deed_transfer_tax_buy_default(payload.title_mode_buy, purchase_price)
     recording_transfer_buy = effective(payload.recording_transfer_buy, recording_transfer_buy_default(hml_amount, deed_transfer_tax_buy))
     title_escrow_buy = effective(payload.title_escrow_buy, title_escrow_buy_default(payload.title_mode_buy, purchase_price))
     notary_buy = effective(payload.online_notary_fee_buy, ONLINE_NOTARY_FEE) if payload.online_notary_buy else Decimal("0")
-    closing_costs_buy_total = payload.loan_charges_buy + recording_transfer_buy + title_escrow_buy + notary_buy + payload.other_closing_costs_buy
+    closing_costs_buy_total = (payload.loan_charges_buy + recording_transfer_buy + title_escrow_buy + notary_buy + payload.other_closing_costs_buy
+                               + insurance.insurance_bill_at_purchase_inside_closing)
 
     buy_closing_date = timeline.buy_closing_date
     if buy_closing_date is None:
-        seller_paid_current_year_taxes, seller_tax_credit = None, Decimal("0")
+        seller_paid_current_year_taxes, seller_tax_credit_formula = None, Decimal("0")
     else:
         seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, buy_closing_date.month == 12)
-        seller_tax_credit = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
+        seller_tax_credit_formula = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
+    # The figure on the settlement statement, when typed, wins over the proration.
+    seller_tax_credit = effective(payload.seller_tax_credit_at_purchase_closing, seller_tax_credit_formula)
     # A positive credit is the seller's share of this year's bill, which the buyer pays in November: it
     # comes off the wire today and goes into the property's tax bucket the day after, so Cash Needed never
     # keeps it. A negative credit (seller already paid) is the buyer's reimbursement, a real cost that stays.
@@ -50,6 +55,7 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
         notary_buy=notary_buy,
         closing_costs_buy_total=closing_costs_buy_total,
         seller_paid_current_year_taxes=seller_paid_current_year_taxes,
+        seller_tax_credit_formula=seller_tax_credit_formula,
         seller_tax_credit=seller_tax_credit,
         seller_tax_credit_set_aside_in_tax_bucket=seller_tax_credit_set_aside_in_tax_bucket,
         cash_to_close_buy=cash_to_close_buy,

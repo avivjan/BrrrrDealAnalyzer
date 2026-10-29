@@ -190,7 +190,9 @@ class TestEveryToolSchema:
         # which inline the deal bodies like the PDF report tools do.
         # 338 kB after the 13 property inspection tools (tasks/todo/PropertyInspection.md),
         # whose inspection and summary output schemas are inlined into each of them.
-        assert len(payload) < 350_000, f"tools/list is {len(payload)} bytes"
+        # 400 kB after the deal-reconciliation inputs and outputs (tasks/todo/BrrrDealReconciliationInputs.md:
+        # 11 described inputs and 11 described outputs, inlined into every deal-body tool).
+        assert len(payload) < 420_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

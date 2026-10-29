@@ -29,6 +29,8 @@ from BL.analyze.common.deal_math import (
     title_escrow_refi_default,
     lowest_arv_default,
     DAYS_PER_MONTH,
+    HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST,
+    PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR,
     TITLE_ESCROW_BUY_STANDARD,
     TITLE_ESCROW_BUY_WE_PAY_ALL,
     TITLE_ESCROW_BUY_WE_PAY_ALL_TOP,
@@ -93,17 +95,35 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     # The derived dates read as text wherever they are known.
     refi_date_suffix = f" on {results.refi_closing_date.isoformat()}" if results.refi_closing_date is not None else ""
     tenant_date_suffix = f" (tenant from {results.tenant_occupied_date.isoformat()})" if results.tenant_occupied_date is not None else ""
+    rehab_completed_date_suffix = f" on {results.rehab_completed_date.isoformat()}" if results.rehab_completed_date is not None else ""
 
-    # -- monthly cash flow -----------------------------------------------------
+    # -- monthly cash flow: a regular year after the refi -------------------------
+    check(results.property_tax_bill_paid_on_november_30 == payload.annual_property_taxes * PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR, "property tax bill paid on Nov 30")
+    check(results.monthly_taxes == results.property_tax_bill_paid_on_november_30 / 12, "monthly property tax")
+    breakdown.add(
+        ["cash_flow", "dscr"], "Property Tax per Month (regular year)", results.monthly_taxes,
+        f"This year's bill ({fmt_money(payload.annual_property_taxes)}) × 0.96 = {fmt_money(results.property_tax_bill_paid_on_november_30)} paid on Nov 30 ÷ 12 = {fmt_money(results.monthly_taxes)}",
+        note="Paid on Nov 30 with the 4% November discount. The refi never changes the tax, so a regular year costs the same bill.",
+    )
+    check(results.insurance_bill_at_refi == (payload.annual_insurance if payload.insurance_bill_at_refi_closing is None else payload.insurance_bill_at_refi_closing), "insurance bill at refi")
+    check(results.monthly_insurance == (results.insurance_bill_at_refi / 12 if payload.monthly_insurance_after_refi is None else payload.monthly_insurance_after_refi), "monthly insurance after refi")
+    breakdown.add(
+        ["cash_flow", "dscr"], "Insurance per Month (regular year)", results.monthly_insurance,
+        (f"Insurance bill at the refi ({fmt_money(results.insurance_bill_at_refi)}) ÷ 12 = {fmt_money(results.monthly_insurance)}"
+         if payload.monthly_insurance_after_refi is None else f"As entered: {fmt_money(results.monthly_insurance)}"),
+        note=_default_note(payload.monthly_insurance_after_refi, "the regular-year insurance per month")
+             + " The insurance paid at the purchase, monthly until the refi and at the refi count in the cash out and Cash Needed only;"
+               " the bill at the refi pays the first year, which this monthly figure still charges.",
+    )
     breakdown.add_sum("cash_flow", "Monthly Operating Expenses", results.operating_expenses, [
         (f"Vacancy {fmt_pct(payload.vacancy_percent)} of rent", results.vacancy),
         (f"Management {fmt_pct(payload.property_managment_fee_precentages_from_rent)} of rent", results.management_fee),
         (f"Maintenance {fmt_pct(payload.maintenance_percent)} of rent", results.maintenance),
         (f"CapEx {fmt_pct(payload.capex_percent_of_rent)} of rent", results.capex),
-        ("Taxes ÷ 12", results.monthly_taxes),
-        ("Insurance ÷ 12", results.monthly_insurance),
+        ("Property Tax per Month", results.monthly_taxes),
+        ("Insurance per Month", results.monthly_insurance),
         ("HOA", payload.montly_hoa),
-    ])
+    ], note="A regular year after the refi: steady monthly figures only, never a closing lump.")
     breakdown.add_sum("cash_flow", "Net Operating Income (NOI)", results.net_operating_income, [
         ("Rent", payload.rent),
         ("Operating Expenses", results.operating_expenses, "-"),
@@ -127,10 +147,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     # -- DSCR ------------------------------------------------------------------
     breakdown.add_sum("dscr", "PITIA", results.pitia, [
         ("Mortgage", results.mortgage_payment),
-        ("Taxes ÷ 12", results.monthly_taxes),
-        ("Insurance ÷ 12", results.monthly_insurance),
+        ("Property Tax per Month", results.monthly_taxes),
+        ("Insurance per Month", results.monthly_insurance),
         ("HOA", payload.montly_hoa),
-    ], note="Principal, interest, taxes, insurance and association dues: the monthly debt service the rent must cover.")
+    ], note="Principal, interest, taxes, insurance and association dues of a regular year: the monthly debt service the rent must cover.")
     check(results.dscr == (payload.rent / results.pitia if results.pitia else Decimal("0")), "DSCR")
     breakdown.add(
         "dscr", "DSCR", results.dscr,
@@ -231,24 +251,36 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add(CLOSE, "Online Notary (Buy)", results.notary_buy,
                   f"Remote closing → {fmt_money(results.notary_buy)}" if payload.online_notary_buy else "Not a remote closing → $0",
                   note=(None if not payload.online_notary_buy else _default_note(payload.online_notary_fee_buy, "the $250 notary fee")))
+    insurance_bill_at_purchase_is_inside_closing = payload.insurance_purchase_bill_payment_timing == "inside_purchase_closing"
+    check(results.insurance_bill_at_purchase_inside_closing == (payload.annual_insurance if insurance_bill_at_purchase_is_inside_closing else 0), "insurance at purchase (inside closing)")
+    check(results.insurance_bill_at_purchase_outside_closing == (0 if insurance_bill_at_purchase_is_inside_closing else payload.annual_insurance), "insurance at purchase (outside closing)")
+    breakdown.add(
+        CLOSE, "Insurance Bill at Purchase (inside closing)", results.insurance_bill_at_purchase_inside_closing,
+        (f"Paid through the purchase settlement → {fmt_money(results.insurance_bill_at_purchase_inside_closing)}" if insurance_bill_at_purchase_is_inside_closing
+         else "Paid outside the purchase closing → $0 here (in Total Cash Invested instead)"),
+    )
     breakdown.add_sum([CLOSE, CASH_NEEDED], "Closing Costs (Buy)", results.closing_costs_buy_total, [
         ("Loan Charges", payload.loan_charges_buy),
         ("Recording & Transfer", results.recording_transfer_buy),
         ("Title & Escrow", results.title_escrow_buy),
         ("Online Notary", results.notary_buy),
         ("Other", payload.other_closing_costs_buy),
+        ("Insurance Bill (inside closing)", results.insurance_bill_at_purchase_inside_closing),
     ])
     if has_buy_closing_date:
         check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else results.buy_closing_date.month == 12), "seller paid taxes")
-        check(results.seller_tax_credit == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
+        check(results.seller_tax_credit_formula == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
         tax_formula = (
-            f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit)}"
+            f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit_formula)}"
             if results.seller_paid_current_year_taxes else
-            f"Taxes ({fmt_money(payload.annual_property_taxes)}) × seller's days (Jan 1 to the day before {results.buy_closing_date.isoformat()}) ÷ days in the year = {fmt_money(results.seller_tax_credit)}"
+            f"Taxes ({fmt_money(payload.annual_property_taxes)}) × seller's days (Jan 1 to the day before {results.buy_closing_date.isoformat()}) ÷ days in the year = {fmt_money(results.seller_tax_credit_formula)}"
         )
     else:
-        check(results.seller_paid_current_year_taxes is None and results.seller_tax_credit == 0, "seller tax credit without date")
+        check(results.seller_paid_current_year_taxes is None and results.seller_tax_credit_formula == 0, "seller tax credit without date")
         tax_formula = "No buy closing date → no tax proration is modelled ($0)"
+    check(results.seller_tax_credit == (results.seller_tax_credit_formula if payload.seller_tax_credit_at_purchase_closing is None else payload.seller_tax_credit_at_purchase_closing), "seller tax credit (effective)")
+    if payload.seller_tax_credit_at_purchase_closing is not None:
+        tax_formula = f"As entered from the settlement statement: {fmt_money(results.seller_tax_credit)} (the proration would give {fmt_money(results.seller_tax_credit_formula)})"
     breakdown.add(CLOSE, "Seller Tax Credit", results.seller_tax_credit, tax_formula,
            note="Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement, "
                 "and that credit is set aside in the property's tax bucket the day after closing.")
@@ -290,10 +322,89 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     )
 
     # -- RENT / HOLDING ------------------------------------------------------------
-    check(results.holding_costs == calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.days_until_refi), "holding costs")
+    check(results.hoa_dues_until_refi == calc_holding_costs(Decimal("0"), Decimal("0"), payload.montly_hoa, payload.days_until_refi), "HOA until refi")
     breakdown.add(
-        CASH_NEEDED, "Holding Costs (until refi)", results.holding_costs,
-        f"(Taxes ({fmt_money(payload.annual_property_taxes)}) + Insurance ({fmt_money(payload.annual_insurance)}) + HOA ({fmt_money(payload.montly_hoa)}) × 12) × {payload.days_until_refi} days ÷ 360 = {fmt_money(results.holding_costs)}",
+        [CASH_NEEDED, "cash_out"], "HOA until Refi", results.hoa_dues_until_refi,
+        f"HOA ({fmt_money(payload.montly_hoa)}) × 12 × {payload.days_until_refi} days ÷ 360 = {fmt_money(results.hoa_dues_until_refi)}",
+        note="Taxes and insurance are not accrued day by day: they are paid as the bills and deposits they really are (below).",
+    )
+    # -- insurance, purchase to refi ---------------------------------------------------
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Insurance Bill at Purchase (outside closing)", results.insurance_bill_at_purchase_outside_closing,
+        (f"Paid separately from the purchase settlement → {fmt_money(results.insurance_bill_at_purchase_outside_closing)}" if not insurance_bill_at_purchase_is_inside_closing
+         else "Paid through the purchase settlement → $0 here (inside Cash to Close (Buy))"),
+    )
+    check(results.insurance_paid_monthly_until_refi == payload.monthly_insurance_until_refi * Decimal(payload.days_until_refi) / DAYS_PER_MONTH, "insurance paid monthly until refi")
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Insurance paid monthly until Refi", results.insurance_paid_monthly_until_refi,
+        f"{fmt_money(payload.monthly_insurance_until_refi)}/mo × {payload.days_until_refi} days ÷ 30 = {fmt_money(results.insurance_paid_monthly_until_refi)}",
+    )
+    insurance_bill_at_refi_is_inside_closing = payload.insurance_refi_bill_payment_timing == "inside_refi_closing"
+    check(results.insurance_bill_at_refi_inside_closing == (results.insurance_bill_at_refi if insurance_bill_at_refi_is_inside_closing else 0), "insurance at refi (inside closing)")
+    check(results.insurance_bill_at_refi_outside_closing == (0 if insurance_bill_at_refi_is_inside_closing else results.insurance_bill_at_refi), "insurance at refi (outside closing)")
+    breakdown.add(
+        [WIRE, WIRE_LOW, CASH_NEEDED, "cash_out"], "Insurance Bill at Refi", results.insurance_bill_at_refi,
+        (f"Same as the bill at purchase: {fmt_money(results.insurance_bill_at_refi)}" if payload.insurance_bill_at_refi_closing is None
+         else f"As entered: {fmt_money(results.insurance_bill_at_refi)}"),
+        note=("Paid through the refi settlement: it comes off both cash-out wires." if insurance_bill_at_refi_is_inside_closing
+              else "Paid outside the refi closing: in Total Cash Invested, the wires are untouched."),
+    )
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Insurance Bill at Refi (outside closing)", results.insurance_bill_at_refi_outside_closing,
+        (f"Paid separately from the refi settlement → {fmt_money(results.insurance_bill_at_refi_outside_closing)}" if not insurance_bill_at_refi_is_inside_closing
+         else "Paid through the refi settlement → $0 here (inside the refi closing costs)"),
+    )
+    # -- the property's tax bucket, purchase to refi --------------------------------------
+    full_tax_bill_collected_at_refi = payload.property_tax_collection_at_refi == "full_tax_bill_collected_at_refi"
+    if results.first_property_tax_payment_date is not None:
+        check(results.property_tax_bucket_deposit_count_until_first_payment >= 1, "tax bucket deposit count")
+        deposit_formula = (
+            f"(Bill × 0.96 ({fmt_money(results.property_tax_bill_paid_on_november_30)}) − Seller Tax Credit set aside ({fmt_money(results.seller_tax_credit_set_aside_in_tax_bucket)})) "
+            f"÷ {results.property_tax_bucket_deposit_count_until_first_payment} deposits on the 15ths through {results.first_property_tax_payment_date.isoformat()} = {fmt_money(results.property_tax_bucket_deposit)}"
+        )
+    else:
+        check(results.property_tax_bucket_deposit_count_until_first_payment == 0, "tax bucket deposit count without date")
+        deposit_formula = f"No buy closing date → Bill × 0.96 ({fmt_money(results.property_tax_bill_paid_on_november_30)}) ÷ 12 = {fmt_money(results.property_tax_bucket_deposit)}"
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Tax Bucket Deposit (each 15th)", results.property_tax_bucket_deposit,
+        deposit_formula if payload.monthly_property_tax_bucket_deposit is None else f"As entered: {fmt_money(results.property_tax_bucket_deposit)}",
+        note=_default_note(payload.monthly_property_tax_bucket_deposit, "the deposit into the property's tax bucket")
+             + " The seller's credit goes into the bucket at closing; the deposits fill it up to the Nov 30 bill.",
+    )
+    check(results.property_tax_bucket_deposit_after_first_payment == results.monthly_taxes, "tax bucket deposit after Nov 30")
+    check(results.property_tax_paid_into_bucket_until_refi
+          == results.property_tax_bucket_deposit * results.property_tax_bucket_first_bill_deposit_count_until_refi
+          + results.property_tax_bucket_deposit_after_first_payment * Decimal(results.property_tax_bucket_later_deposit_count_until_refi), "tax paid into the bucket")
+    first_bill_deposit_count_text = (f"{int(results.property_tax_bucket_first_bill_deposit_count_until_refi)} deposits on the 15ths until the refi{refi_date_suffix}"
+                                     if results.first_property_tax_payment_date is not None
+                                     else f"{_fmt_months(results.property_tax_bucket_first_bill_deposit_count_until_refi)} months ({payload.days_until_refi} days ÷ 30)")
+    later_deposits_text = (f" + {results.property_tax_bucket_later_deposit_count_until_refi} deposits of {fmt_money(results.property_tax_bucket_deposit_after_first_payment)} after the Nov 30 bill"
+                           if results.property_tax_bucket_later_deposit_count_until_refi else "")
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Tax paid into the Bucket until Refi", results.property_tax_paid_into_bucket_until_refi,
+        f"{fmt_money(results.property_tax_bucket_deposit)} × {first_bill_deposit_count_text}{later_deposits_text} = {fmt_money(results.property_tax_paid_into_bucket_until_refi)}",
+    )
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Tax Bucket Shortfall topped up on Nov 30", results.property_tax_bucket_shortfall_topped_up_on_november_30,
+        (f"The Nov 30 bill ({fmt_money(results.property_tax_bill_paid_on_november_30)}) fell inside the hold and the bucket was short → {fmt_money(results.property_tax_bucket_shortfall_topped_up_on_november_30)} topped up"
+         if results.property_tax_bucket_shortfall_topped_up_on_november_30 > 0 else "The bucket covers any Nov 30 bill inside the hold → $0"),
+    )
+    if full_tax_bill_collected_at_refi:
+        check(results.property_tax_lump_sum_at_refi_closing == (payload.annual_property_taxes if payload.property_tax_lump_sum_at_refi_closing is None else payload.property_tax_lump_sum_at_refi_closing), "tax lump at refi")
+    else:
+        check(results.property_tax_lump_sum_at_refi_closing == 0 and results.property_tax_bucket_balance_released_at_refi == 0, "no tax lump at refi")
+    breakdown.add(
+        [WIRE, WIRE_LOW, CASH_NEEDED], "Tax Lump collected at Refi", results.property_tax_lump_sum_at_refi_closing,
+        ((f"The refi lender collects the whole bill: {fmt_money(results.property_tax_lump_sum_at_refi_closing)}" if payload.property_tax_lump_sum_at_refi_closing is None
+          else f"As entered: {fmt_money(results.property_tax_lump_sum_at_refi_closing)}")
+         if full_tax_bill_collected_at_refi else "The owner's bucket pays the Nov 30 bill → no lump at the refi ($0)"),
+        note="A refi settlement line: it comes off both cash-out wires." if full_tax_bill_collected_at_refi else None,
+    )
+    breakdown.add(
+        [CASH_NEEDED, "cash_out"], "Tax Bucket Balance released at Refi", results.property_tax_bucket_balance_released_at_refi,
+        (f"Seller Tax Credit set aside + deposits until the refi + any shortfall topped up − any Nov 30 bill already paid = {fmt_money(results.property_tax_bucket_balance_released_at_refi)} back to you"
+         if full_tax_bill_collected_at_refi else "The bucket keeps paying the Nov 30 bill → nothing comes back ($0)"),
+        note="The refi lender now pays the Nov 30 bill, so the bucket is no longer needed." if full_tax_bill_collected_at_refi else None,
     )
     check(results.utilities_until_rented == payload.monthly_utilities_until_rented * Decimal(payload.days_until_rented) / DAYS_PER_MONTH, "utilities until rented")
     breakdown.add(
@@ -332,43 +443,64 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
             ("Recording & Transfer", recording_transfer),
             ("Title & Escrow", title_escrow),
             ("Online Notary", results.notary_refi),
-            ("Appraisal", payload.appraisal_fee),
-            ("Survey", payload.survey_fee),
             ("Underwriting", payload.refi_underwriting_fee),
             ("Broker Points", broker_points),
             ("Broker Processing", payload.broker_processing_fee_refi),
             ("Other", payload.other_closing_costs_refi),
-        ])
+            ("Insurance Bill (inside closing)", results.insurance_bill_at_refi_inside_closing),
+            ("Tax Lump collected at Refi", results.property_tax_lump_sum_at_refi_closing),
+        ], note="The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.")
         check(prepaid_interest == calc_prepaid_interest_refi(refi_loan, payload.interest_rate, results.dscr_interest_days_prepaid_at_refi_closing), f"prepaid interest (refi){arv_label}")
         breakdown.add(section_key, f"Prepaid Interest (Refi){arv_label}", prepaid_interest,
-               (f"Refi Loan ({fmt_money(refi_loan)}) × {fmt_pct(payload.interest_rate)}/yr ÷ 365 × {results.dscr_interest_days_prepaid_at_refi_closing} days from {results.refi_closing_date.isoformat()} through month end = {fmt_money(prepaid_interest)}"
+               (f"Refi Loan ({fmt_money(refi_loan)}) × {fmt_pct(payload.interest_rate)}/yr ÷ 360 × {results.dscr_interest_days_prepaid_at_refi_closing} days from {results.refi_closing_date.isoformat()} through month end = {fmt_money(prepaid_interest)}"
                 if has_buy_closing_date else "No buy closing date → no refi date, no prepaid interest is modelled ($0)"),
-               note="The DSCR loan's per-diem interest is collected at closing through the end of the month (365-day year).")
+               note="The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).")
     check(results.notary_refi == ((Decimal("250") if payload.online_notary_fee_refi is None else payload.online_notary_fee_refi) if payload.online_notary_refi else Decimal("0")), "notary (refi)")
     check(results.vacancy_reserve == (payload.rent if payload.vacancy_reserve is None else payload.vacancy_reserve), "vacancy reserve")
-    breakdown.add_sum([WIRE, WIRE_LOW, "equity"], "Reserves Escrowed at Refi", results.reserves_total, [
+    check(results.hysa_deposit_at_refi == (HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST * results.mortgage_payment if payload.hysa_deposit_at_refi is None else payload.hysa_deposit_at_refi), "HYSA deposit")
+    breakdown.add(
+        ["cash_out", "equity", CASH_NEEDED], "HYSA Deposit at Refi", results.hysa_deposit_at_refi,
+        (f"3 months × Monthly Mortgage Payment ({fmt_money(results.mortgage_payment)}) = {fmt_money(results.hysa_deposit_at_refi)}"
+         if payload.hysa_deposit_at_refi is None else f"As entered: {fmt_money(results.hysa_deposit_at_refi)}"),
+        note=_default_note(payload.hysa_deposit_at_refi, "the high-yield savings deposit (3 months of principal and interest)"),
+    )
+    breakdown.add_sum(["cash_out", "equity", CASH_NEEDED], "Reserves set aside at Refi", results.reserves_total, [
         ("Maintenance Reserve", payload.maintenance_reserve),
         ("Vacancy Reserve", results.vacancy_reserve),
         ("CapEx Reserve", payload.capex_reserve),
+        ("HYSA Deposit", results.hysa_deposit_at_refi),
     ], note=("Vacancy reserve defaults to one month of rent; type a value to override. " if payload.vacancy_reserve is None else "")
-            + "Reserves are held by the lender and returned at exit, so they count as equity.")
+            + "Your own money set aside after the wire, not the lender's escrow: it stays in the deal (lowers the cash out) and, "
+              "because a sale releases it, counts as equity.")
     breakdown.add_sum([WIRE, WIRE_LOW, "cash_out"], "HML Payoff at Refi", results.hml_payoff, [
         ("Hard Money Loan", results.hml_amount),
         ("Accrued Interest (1st of month → payoff)", results.hml_interest_accrued_into_refi_payoff),
     ])
 
     # -- REFINANCE: the wires -------------------------------------------------------
+    check(results.appraisal_and_survey_paid_outside_closing == payload.appraisal_fee + payload.survey_fee, "appraisal and survey")
+    breakdown.add_sum([CASH_NEEDED, "cash_out"], "Appraisal & Survey (paid outside closing)", results.appraisal_and_survey_paid_outside_closing, [
+        ("Appraisal", payload.appraisal_fee),
+        ("Survey", payload.survey_fee),
+    ], note=f"Paid on their own at the end of the rehab{rehab_completed_date_suffix} (POC on the refi settlement statement), so they are not refi closing costs.")
     breakdown.add_sum(["cash_out", CASH_NEEDED], "Total Cash Invested (pre-refi)", results.total_cash_invested, [
         ("Earnest Money Deposit", payload.earnest_money_deposit),
         ("Cash to Close (Buy)", results.cash_to_close_buy),
         ("Seller Tax Credit set aside in the tax bucket", results.seller_tax_credit_set_aside_in_tax_bucket),
+        ("Insurance Bill at Purchase (outside closing)", results.insurance_bill_at_purchase_outside_closing),
         ("Rehab Out-of-Pocket", results.rehab_paid_cash_out_of_pocket),
         ("HML Interest paid monthly", results.hml_interest_paid_monthly),
-        ("Holding Costs", results.holding_costs),
+        ("HOA until Refi", results.hoa_dues_until_refi),
+        ("Insurance paid monthly until Refi", results.insurance_paid_monthly_until_refi),
+        ("Tax paid into the Bucket until Refi", results.property_tax_paid_into_bucket_until_refi),
+        ("Tax Bucket Shortfall topped up on Nov 30", results.property_tax_bucket_shortfall_topped_up_on_november_30),
         ("Utilities until Rented", results.utilities_until_rented),
         ("Maintenance before Refi", payload.maintenance_before_refi),
         ("Appliances", payload.appliances),
+        ("Appraisal & Survey", results.appraisal_and_survey_paid_outside_closing),
+        ("Insurance Bill at Refi (outside closing)", results.insurance_bill_at_refi_outside_closing),
         ("Pre-Refi Rental Income", results.pre_refi_rental_income, "-"),
+        ("Tax Bucket Balance released at Refi", results.property_tax_bucket_balance_released_at_refi, "-"),
     ], note="Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; "
             "the rehab cushion is held, not spent, so it is not here.")
     breakdown.add_sum([WIRE, "cash_out"], f"Cash-Out Wire (Refi{refi_date_suffix})", results.cash_out_routi, [
@@ -376,9 +508,8 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("HML Payoff", results.hml_payoff, "-"),
         ("Closing Costs (Refi)", results.closing_costs_refi_total, "-"),
         ("Prepaid Interest (Refi)", results.prepaid_interest_refi, "-"),
-        ("Reserves", results.reserves_total, "-"),
     ], note=("Negative: that much cash is brought to the refi closing table." if results.cash_out_routi < 0
-             else "The cash received at the refi closing table, before subtracting what was invested."))
+             else "The 'Due to Borrower' line of the refi settlement statement, before the reserves and what was invested."))
     check(results.lowest_arv == (lowest_arv_default(results.arv) if payload.lowest_arv_in_thousands is None else payload.lowest_arv_in_thousands * Decimal("1000.0")), "lowest ARV")
     breakdown.add(WIRE_LOW, "Lowest ARV (stress test)", results.lowest_arv,
            f"90% × ARV ({fmt_money(results.arv)}) = {fmt_money(results.lowest_arv)}" if payload.lowest_arv_in_thousands is None else f"As entered: {fmt_money(results.lowest_arv)}",
@@ -391,17 +522,21 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("HML Payoff", results.hml_payoff, "-"),
         ("Closing Costs (Refi, Lowest ARV)", results.closing_costs_refi_total_conservative, "-"),
         ("Prepaid Interest (Refi, Lowest ARV)", results.prepaid_interest_refi_conservative, "-"),
-        ("Reserves", results.reserves_total, "-"),
     ], note="The loan-dependent fees follow the lower loan; typed-in fees stay as entered.")
     check(results.cash_to_refi_table_conservative == max(Decimal("0"), -results.cash_out_routi_conservative), "cash to refi table (conservative)")
     breakdown.add([WIRE_LOW, CASH_NEEDED], "Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative,
            (f"Wire ({fmt_money(results.cash_out_routi_conservative)}) is negative → {fmt_money(results.cash_to_refi_table_conservative)} brought to the table"
             if results.cash_to_refi_table_conservative > 0 else f"Wire ({fmt_money(results.cash_out_routi_conservative)}) is not negative → nothing to bring"))
+    check(results.reserves_funded_from_own_pocket_at_lowest_arv == max(Decimal("0"), results.reserves_total - max(Decimal("0"), results.cash_out_routi_conservative)), "reserves from own pocket (conservative)")
+    breakdown.add([WIRE_LOW, CASH_NEEDED], "Reserves the Lowest-ARV Wire cannot fund", results.reserves_funded_from_own_pocket_at_lowest_arv,
+           (f"Reserves ({fmt_money(results.reserves_total)}) − what the wire brings ({fmt_money(max(Decimal('0'), results.cash_out_routi_conservative))}) = {fmt_money(results.reserves_funded_from_own_pocket_at_lowest_arv)} from your pocket"
+            if results.reserves_funded_from_own_pocket_at_lowest_arv > 0 else f"The lowest-ARV wire covers the reserves ({fmt_money(results.reserves_total)}) → $0"))
     breakdown.add_sum(["net_profit", "roi", "cash_on_cash", "cash_out"], "Cash Out from Deal", results.cash_out, [
         ("Cash-Out Wire", results.cash_out_routi),
+        ("Reserves set aside at Refi", results.reserves_total, "-"),
         ("Total Cash Invested", results.total_cash_invested, "-"),
-    ], note=("Negative: that much of your own money is still left in the deal after the refi."
-             if results.cash_out < 0 else "Positive: the refi returns more than was invested."))
+    ], note=("Negative: that much of your own money is still left in the deal after the refi, the reserves included."
+             if results.cash_out < 0 else "Positive: the refi returns more than was invested and set aside."))
 
     # -- returns ---------------------------------------------------------------
     check(results.cash_on_cash == calc_cash_on_cash(results.cash_out, results.cash_flow), "cash on cash")
@@ -417,7 +552,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add(
         ["net_profit", "roi", "equity"], "Equity (post-refi)", results.equity,
         f"ARV ({fmt_money(results.arv)}) × (1 − LTV {fmt_pct(payload.ltv_as_precent)}) + Reserves ({fmt_money(results.reserves_total)}) = {fmt_money(results.equity)}",
-        note="The reserves are escrowed at the refi and returned at exit, so they count as equity." if results.reserves_total else None,
+        note="The reserves you set aside at the refi are released with confidence at a sale, so they count as equity." if results.reserves_total else None,
     )
     breakdown.add_sum(["net_profit", "roi"], "Net Profit", results.net_profit, [
         ("Equity", results.equity),
@@ -443,24 +578,28 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         note=("The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here."
               if has_buy_closing_date else "Without a closing date nothing is prepaid, so the whole first month counts here."),
     )
-    check(results.holding_costs_first_month == calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, DAYS_PER_MONTH), "holding costs (first month)")
+    hoa_dues_first_month = calc_holding_costs(Decimal("0"), Decimal("0"), payload.montly_hoa, DAYS_PER_MONTH)
+    check(results.holding_costs_first_month == hoa_dues_first_month + payload.monthly_insurance_until_refi + results.property_tax_bucket_deposit, "holding costs (first month)")
     breakdown.add(
         CASH_NEEDED, "Holding Costs (first month)", results.holding_costs_first_month,
-        f"(Taxes ({fmt_money(payload.annual_property_taxes)}) + Insurance ({fmt_money(payload.annual_insurance)}) + HOA ({fmt_money(payload.montly_hoa)}) × 12) × 30 days ÷ 360 = {fmt_money(results.holding_costs_first_month)}",
+        (f"HOA ({fmt_money(payload.montly_hoa)}) × 12 × 30 days ÷ 360 ({fmt_money(hoa_dues_first_month)}) + Insurance per month until refi ({fmt_money(payload.monthly_insurance_until_refi)}) "
+         f"+ one Tax Bucket Deposit ({fmt_money(results.property_tax_bucket_deposit)}) = {fmt_money(results.holding_costs_first_month)}"),
     )
     breakdown.add_sum(CASH_NEEDED, "Cash Needed Floor", results.cash_needed_floor, [
         ("Earnest Money Deposit", payload.earnest_money_deposit),
         ("Cash to Close (Buy)", results.cash_to_close_buy),
+        ("Insurance Bill at Purchase (outside closing)", results.insurance_bill_at_purchase_outside_closing),
         ("Rehab Cushion", payload.rehab_cushion),
         ("Utilities (first month)", payload.monthly_utilities_until_rented),
         ("HML Interest (first month)", results.hml_interest_first_month),
         ("Holding Costs (first month)", results.holding_costs_first_month),
-    ], note="The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the cushion held for draws and surprises, and the first month of utilities, hard-money interest and taxes, insurance and HOA.")
+    ], note="The least the deal can take whatever the draws, the rent and the refi wire later give back: the deposit, the purchase wire, the insurance bill when it is paid outside it, the cushion held for draws and surprises, and the first month of utilities, hard-money interest, HOA, insurance paid monthly and one tax-bucket deposit.")
     breakdown.add_sum(CASH_NEEDED, "Cash Needed through Refi", results.cash_needed_through_refi, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),
         ("Cash to Refi Table (Lowest ARV)", results.cash_to_refi_table_conservative),
-    ], note="Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table if the appraisal comes in at the lowest ARV.")
+        ("Reserves the Lowest-ARV Wire cannot fund", results.reserves_funded_from_own_pocket_at_lowest_arv),
+    ], note="Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV.")
     check(results.cash_needed_floor_top_up == max(Decimal("0"), results.cash_needed_floor - results.cash_needed_through_refi), "cash needed floor top-up")
     breakdown.add(
         CASH_NEEDED, "Floor Top-Up", results.cash_needed_floor_top_up,

@@ -229,12 +229,17 @@ def brrrr_payload() -> dict:
         "otherClosingCostsBuy": 0,
         "otherClosingCostsBuyNote": None,
         "sellerPaidCurrentYearTaxes": None,
+        "sellerTaxCreditAtPurchaseClosing": None,
+        "insurancePurchaseBillPaymentTiming": "inside_purchase_closing",
         "constructionLoanBudget": 55,
         "rehabCushion": 5000,
+        "daysUntilRehabCompleted": 45,
         "daysUntilRented": 90,
         "monthlyUtilitiesUntilRented": 80,
         "maintenanceBeforeRefi": 500,
         "appliances": 630,
+        "monthlyInsuranceUntilRefi": 0,
+        "monthlyPropertyTaxBucketDeposit": None,
         "loanChargesRefi": 200,
         "recordingTransferRefi": None,
         "titleEscrowRefi": None,
@@ -246,9 +251,15 @@ def brrrr_payload() -> dict:
         "brokerProcessingFeeRefi": 395,
         "otherClosingCostsRefi": 0,
         "otherClosingCostsRefiNote": None,
+        "insuranceBillAtRefiClosing": None,
+        "insuranceRefiBillPaymentTiming": "inside_refi_closing",
+        "monthlyInsuranceAfterRefi": None,
+        "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
+        "propertyTaxLumpSumAtRefiClosing": None,
         "maintenanceReserve": 1500,
         "vacancyReserve": None,
         "capexReserve": 2500,
+        "hysaDepositAtRefi": None,
         "lowestArv": None,
         "address": "1 Shared Form St",
         "section": 2,
@@ -260,7 +271,9 @@ def brrrr_payload() -> dict:
 # dates, the legacy lumps as the only settlement lines, no holding items, no rent offset,
 # no cushion, no reserves, the budget = the hard-money-funded rehab (50k x 1.10), and the
 # lowest ARV = the ARV (the old engine had no stress test, so Cash Needed is planned on
-# the baseline wire).
+# the baseline wire). The old engine accrued $1,200/yr of insurance and $3,600/yr of taxes
+# per diem and charged them / 12 after the refi: that is insurance paid $100 a month with no
+# bill at either closing, and a $3,750 bill (x 0.96 = $3,600) deposited at $300 a month.
 LEGACY_EQUIVALENT_OVERRIDES = {
     "lowestArv": 320,
     "buyClosingDate": None, "earnestMoneyDeposit": 0, "loanChargesBuy": 0, "recordingTransferBuy": 0,
@@ -270,6 +283,8 @@ LEGACY_EQUIVALENT_OVERRIDES = {
     "appraisalFee": 0, "surveyFee": 0, "refiUnderwritingFee": 0, "brokerProcessingFeeRefi": 0,
     "otherClosingCostsRefi": 6000, "maintenanceReserve": 0, "vacancyReserve": 0, "capexReserve": 0,
     "constructionLoanBudget": 55,
+    "annual_insurance": 0, "monthlyInsuranceUntilRefi": 100, "insuranceBillAtRefiClosing": 0, "monthlyInsuranceAfterRefi": 100,
+    "annual_property_taxes": 3750, "monthlyPropertyTaxBucketDeposit": 300, "hysaDepositAtRefi": 0,
 }
 
 

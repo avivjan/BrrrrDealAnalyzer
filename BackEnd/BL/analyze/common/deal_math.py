@@ -21,9 +21,18 @@ DAYS_PER_YEAR = Decimal("360")
 DAYS_PER_MONTH = Decimal("30")
 MONTHS_PER_YEAR = Decimal("12")
 
-# The DSCR (refinance) loan quotes per-diem interest on a calendar year, as the
-# Closing Disclosure does; hard money keeps the 360-day banking year above.
-DSCR_DAYS_PER_YEAR = Decimal("365")
+# The DSCR (refinance) loan's per-diem interest on the refi settlement statement is on a
+# 360-day year too: 10th St $212,300 x 6.75% / 360 = $39.8063/day, Ridgeway $172,500 x
+# 7.625% / 360 = $36.54/day (on 365 both rates would have to be odd figures).
+DSCR_DAYS_PER_YEAR = Decimal("360")
+
+# Property taxes are paid on Nov 30 with the 4% November discount; a regular year costs
+# the bill x 0.96 and the owner's tax bucket is filled with deposits on the 15th.
+PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = Decimal("0.96")
+PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15
+
+# Default HYSA deposit at the refi: this many months of the DSCR loan's principal and interest.
+HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST = Decimal("3")
 
 # Fixed fees and formula defaults of the BRRRR settlement lines. A `None` input on
 # the matching field means "use the formula"; see ReqRes/common/brrr_lifecycle_inputs.py.
@@ -134,7 +143,7 @@ def calc_hml_interest(hml_amount, HML_interest_rate, days):
     return hml_amount * HML_interest_rate * Decimal(days) / DAYS_PER_YEAR / Decimal("100.0")
 
 def calc_prepaid_interest_refi(loan_amount, interest_rate, days):
-    """DSCR-loan per-diem interest over `days` on a 365-day year. Divide last."""
+    """DSCR-loan per-diem interest over `days` on a 360-day year. Divide last."""
     return loan_amount * interest_rate * Decimal(days) / DSCR_DAYS_PER_YEAR / Decimal("100.0")
 
 
@@ -168,6 +177,23 @@ def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_already_paid
     if seller_already_paid_current_year_taxes:
         return -annual_taxes * Decimal(days_in_closing_year - closing_day_of_year + 1) / Decimal(days_in_closing_year)
     return annual_taxes * Decimal(closing_day_of_year - 1) / Decimal(days_in_closing_year)
+
+def property_tax_bucket_deposit_dates(after_day: date, through_day: date) -> list[date]:
+    """Every 15th of a month strictly after `after_day` and on or before `through_day`."""
+    deposit_dates = []
+    year, month = after_day.year, after_day.month
+    while True:
+        deposit_date = date(year, month, PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH)
+        if deposit_date > through_day:
+            return deposit_dates
+        if deposit_date > after_day:
+            deposit_dates.append(deposit_date)
+        year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+def first_property_tax_payment_date(buy_closing_date: date) -> date:
+    """The first Nov 30 the owner pays: this year's, or next year's after a December closing."""
+    this_years_payment_date = date(buy_closing_date.year, 11, 30)
+    return this_years_payment_date if buy_closing_date <= this_years_payment_date else date(buy_closing_date.year + 1, 11, 30)
 
 def recording_transfer_default(loan_amount):
     """Government recording & transfer charges at refi: 0.55% of the loan recorded + $250."""

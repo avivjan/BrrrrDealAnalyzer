@@ -40,6 +40,8 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("other_closing_costs_buy", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_buy_note", "VARCHAR(500)", None),
     ("seller_paid_current_year_taxes", "BOOLEAN", None),
+    ("seller_tax_credit_at_purchase_closing", "NUMERIC(12,2)", None),
+    ("insurance_purchase_bill_payment_timing", "VARCHAR(30) DEFAULT 'inside_purchase_closing'", "'inside_purchase_closing'"),
     # Rehab
     # Added WITHOUT a DDL default on purpose: Postgres fills existing rows with the default at
     # ADD COLUMN time, which would leave nothing for the CASE backfill to do. The default is
@@ -47,11 +49,16 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("construction_loan_budget_in_thousands", "NUMERIC(14,4)",
      'CASE WHEN "use_HM_for_rehab" THEN rehab_cost_in_thousands * (1 + rehab_contingency_percent / 100) ELSE 0 END'),
     ("rehab_cushion", "NUMERIC(12,2) DEFAULT 5000", "5000"),
+    # Owner's decision: every existing deal takes 45, even one rented sooner; such a deal
+    # fails validation on its next save until the owner fixes the date.
+    ("days_until_rehab_completed", "INTEGER DEFAULT 45", "45"),
     # Rent & holding
     ("days_until_rented", "INTEGER DEFAULT 90", "90"),
     ("monthly_utilities_until_rented", "NUMERIC(12,2) DEFAULT 80", "80"),
     ("maintenance_before_refi", "NUMERIC(12,2) DEFAULT 500", "500"),
     ("appliances", "NUMERIC(12,2) DEFAULT 630", "630"),
+    ("monthly_insurance_until_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
+    ("monthly_property_tax_bucket_deposit", "NUMERIC(12,2)", None),
     # Refinance
     ("loan_charges_refi", "NUMERIC(12,2) DEFAULT 200", "200"),
     ("recording_transfer_refi", "NUMERIC(12,2)", None),
@@ -64,9 +71,15 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("broker_processing_fee_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_refi", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_refi_note", "VARCHAR(500)", None),
+    ("insurance_bill_at_refi_closing", "NUMERIC(12,2)", None),
+    ("insurance_refi_bill_payment_timing", "VARCHAR(30) DEFAULT 'inside_refi_closing'", "'inside_refi_closing'"),
+    ("monthly_insurance_after_refi", "NUMERIC(12,2)", None),
+    ("property_tax_collection_at_refi", "VARCHAR(40) DEFAULT 'no_tax_collected_at_refi'", "'no_tax_collected_at_refi'"),
+    ("property_tax_lump_sum_at_refi_closing", "NUMERIC(12,2)", None),
     ("maintenance_reserve", "NUMERIC(12,2) DEFAULT 1500", "1500"),
     ("vacancy_reserve", "NUMERIC(12,2)", None),
     ("capex_reserve", "NUMERIC(12,2) DEFAULT 2500", "2500"),
+    ("hysa_deposit_at_refi", "NUMERIC(12,2)", None),
     ("lowest_arv_in_thousands", "NUMERIC(14,4)", None),
 )
 
