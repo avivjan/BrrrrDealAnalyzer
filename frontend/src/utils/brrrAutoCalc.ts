@@ -91,10 +91,15 @@ export function propertyTaxBucketDepositDates(afterDay: Date, throughDay: Date):
   }
 }
 
-/** The first Nov 30 the owner pays: this year's, or next year's after a December closing. */
-export function firstPropertyTaxPaymentDate(buyClosingDay: Date): Date {
+/**
+ * The first Nov 30 the owner pays: this year's, or next year's once the seller has paid this year's
+ * bill (whatever the closing month) or after a December closing.
+ */
+export function firstPropertyTaxPaymentDate(buyClosingDay: Date, sellerAlreadyPaidCurrentYearTaxes: boolean): Date {
   const thisYearsPaymentDate = new Date(Date.UTC(buyClosingDay.getUTCFullYear(), 10, 30));
-  return buyClosingDay.getTime() <= thisYearsPaymentDate.getTime() ? thisYearsPaymentDate : new Date(Date.UTC(buyClosingDay.getUTCFullYear() + 1, 10, 30));
+  return sellerAlreadyPaidCurrentYearTaxes || buyClosingDay.getTime() > thisYearsPaymentDate.getTime()
+    ? new Date(Date.UTC(buyClosingDay.getUTCFullYear() + 1, 10, 30))
+    : thisYearsPaymentDate;
 }
 
 /** Monthly principal and interest of the DSCR loan (straight-line at 0%), as the backend's `calc_mortgage_payment`. */
@@ -331,7 +336,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const propertyTaxBillPaidOnNovember30 = annualPropertyTaxes != null ? annualPropertyTaxes * PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR : null;
   const monthlyPropertyTaxAfterRefi = propertyTaxBillPaidOnNovember30 != null ? propertyTaxBillPaidOnNovember30 / 12 : null;
   const sellerTaxCreditSetAsideInTaxBucket = Math.max(0, sellerTaxCreditAmount ?? 0);
-  const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay) : null;
+  const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective === true) : null;
   const firstBillDepositDates = buyClosingDay && firstPaymentDay
     ? (propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay).length ? propertyTaxBucketDepositDates(buyClosingDay, firstPaymentDay) : [firstPaymentDay])
     : null;

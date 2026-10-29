@@ -108,6 +108,17 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
     expect(brrrAutoCalc({ ...FIXTURE, propertyTaxLumpSumAtRefiClosing: 3000 }).propertyTaxLumpSumAtRefiClosingEffective).toBe(0); // only with the lender option
   });
 
+  it("a seller who already paid this year's bill sends the bucket to next year's Nov 30, from Dec 15", () => {
+    const alreadyPaid = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: true, daysUntilRefi: 120 });
+    expect(alreadyPaid.firstPropertyTaxPaymentDate).toBe("2027-11-30");
+    expect(alreadyPaid.propertyTaxBucketDepositCountUntilFirstPayment).toBe(12);
+    expectCloseToTheCent(alreadyPaid.propertyTaxBucketDepositEffective, (3600 * 0.96) / 12);
+    expect(alreadyPaid.propertyTaxBucketFirstBillDepositCountUntilRefi).toBe(4); // Dec 15 .. Mar 15, before the Mar 20 refi
+    const notPaid = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: false, daysUntilRefi: 120 });
+    expect(notPaid.firstPropertyTaxPaymentDate).toBe("2026-11-30");
+    expect(notPaid.propertyTaxBucketDepositCountUntilFirstPayment).toBe(1);
+  });
+
   it("the settlement-statement seller credit overrides the proration and feeds the deposit", () => {
     const typedCredit = brrrAutoCalc({ ...FIXTURE, sellerTaxCreditAtPurchaseClosing: 120.45 });
     expectCloseToTheCent(typedCredit.sellerTaxCreditFormula, 88.77);

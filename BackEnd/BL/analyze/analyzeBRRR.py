@@ -97,7 +97,8 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
     insurance = insurance_step(payload)
     buy_settlement = closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline, insurance)
-    property_tax_bucket = property_tax_bucket_step(payload, timeline, buy_settlement.seller_tax_credit_set_aside_in_tax_bucket)
+    property_tax_bucket = property_tax_bucket_step(payload, timeline, buy_settlement.seller_tax_credit_set_aside_in_tax_bucket,
+                                                   buy_settlement.seller_paid_current_year_taxes)
     # Rehab
     stolen_money, rehab_paid_cash_out_of_pocket = rehab_draw_step(rehab_cost, construction_budget)
     # Rent: a regular year after the refi

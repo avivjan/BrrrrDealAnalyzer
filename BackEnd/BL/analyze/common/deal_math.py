@@ -190,10 +190,13 @@ def property_tax_bucket_deposit_dates(after_day: date, through_day: date) -> lis
             deposit_dates.append(deposit_date)
         year, month = (year + 1, 1) if month == 12 else (year, month + 1)
 
-def first_property_tax_payment_date(buy_closing_date: date) -> date:
-    """The first Nov 30 the owner pays: this year's, or next year's after a December closing."""
+def first_property_tax_payment_date(buy_closing_date: date, seller_already_paid_current_year_taxes: bool) -> date:
+    """The first Nov 30 the owner pays: this year's, or next year's once the seller has paid this
+    year's bill (whatever the closing month) or after a December closing."""
     this_years_payment_date = date(buy_closing_date.year, 11, 30)
-    return this_years_payment_date if buy_closing_date <= this_years_payment_date else date(buy_closing_date.year + 1, 11, 30)
+    if seller_already_paid_current_year_taxes or buy_closing_date > this_years_payment_date:
+        return date(buy_closing_date.year + 1, 11, 30)
+    return this_years_payment_date
 
 def recording_transfer_default(loan_amount):
     """Government recording & transfer charges at refi: 0.55% of the loan recorded + $250."""
