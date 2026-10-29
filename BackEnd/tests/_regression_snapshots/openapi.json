@@ -1677,7 +1677,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
           },
           "sellerTaxCreditAtPurchaseClosing": {
@@ -3176,7 +3176,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
           },
           "sellerTaxCreditAtPurchaseClosing": {
@@ -3201,7 +3201,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "sold_comps": {
@@ -5596,7 +5596,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
           },
           "sellerTaxCreditAtPurchaseClosing": {
@@ -7055,7 +7055,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
           },
           "sellerTaxCreditAtPurchaseClosing": {
@@ -7080,7 +7080,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "sold_comps": {
@@ -14230,7 +14230,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
           },
           "sellerTaxCreditAtPurchaseClosing": {
@@ -14826,7 +14826,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "stolen_money": {
