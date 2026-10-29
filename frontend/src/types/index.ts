@@ -90,17 +90,26 @@ export interface BrrrAnalyzeReq {
   onlineNotaryFeeBuy?: number | null;
   otherClosingCostsBuy?: number;
   otherClosingCostsBuyNote?: string | null;
-  /** null → auto: true only for a December closing */
+  /** null → auto: true for an October to December closing */
   sellerPaidCurrentYearTaxes?: boolean | null;
+  /** The settlement statement's tax proration (may be negative). null → this year's bill prorated by the closing date */
+  sellerTaxCreditAtPurchaseClosing?: number | null;
+  /** Where the insurance bill at purchase (annual_insurance) is paid. */
+  insurancePurchaseBillPaymentTiming?: InsurancePurchaseBillPaymentTiming;
   // Rehab
   /** In thousands. 0 = cash rehab. */
   constructionLoanBudget?: number;
   rehabCushion?: number;
+  /** Whole days from the purchase close; 0 ≤ days ≤ daysUntilRented. */
+  daysUntilRehabCompleted?: number;
   // Rent & holding
   daysUntilRented?: number;
   monthlyUtilitiesUntilRented?: number;
   maintenanceBeforeRefi?: number;
   appliances?: number;
+  monthlyInsuranceUntilRefi?: number;
+  /** null → (bill × 0.96 − the seller credit set aside) ÷ the 15ths left until Nov 30 */
+  monthlyPropertyTaxBucketDeposit?: number | null;
   // Refinance
   loanChargesRefi?: number;
   /** null → 0.55% × refi loan + $250 */
@@ -116,15 +125,28 @@ export interface BrrrAnalyzeReq {
   brokerProcessingFeeRefi?: number;
   otherClosingCostsRefi?: number;
   otherClosingCostsRefiNote?: string | null;
+  /** null → the insurance bill at purchase */
+  insuranceBillAtRefiClosing?: number | null;
+  insuranceRefiBillPaymentTiming?: InsuranceRefiBillPaymentTiming;
+  /** null → the insurance bill at refi ÷ 12 (the regular year after the refi) */
+  monthlyInsuranceAfterRefi?: number | null;
+  propertyTaxCollectionAtRefi?: PropertyTaxCollectionAtRefi;
+  /** Used only when the refi lender collects the whole bill; null → this year's bill */
+  propertyTaxLumpSumAtRefiClosing?: number | null;
   maintenanceReserve?: number;
   /** null → one month of rent */
   vacancyReserve?: number | null;
   capexReserve?: number;
+  /** The fourth reserve. null → 3 months of the DSCR loan's principal and interest */
+  hysaDepositAtRefi?: number | null;
   /** In thousands. null → 90% of ARV. Never changes the baseline ARV. */
   lowestArv?: number | null;
 }
 
 export type TitleModeBuy = "standard" | "we_pay_all";
+export type InsurancePurchaseBillPaymentTiming = "inside_purchase_closing" | "outside_purchase_closing";
+export type InsuranceRefiBillPaymentTiming = "inside_refi_closing" | "outside_refi_closing";
+export type PropertyTaxCollectionAtRefi = "no_tax_collected_at_refi" | "full_tax_bill_collected_at_refi";
 
 /** One operand of a sum-type calculation step, in dollars. */
 export interface CalcTerm {
@@ -166,7 +188,7 @@ export interface BrrrAnalyzeRes {
   roi?: number;
   equity?: number;
   net_profit?: number;
-  /** Cash Needed: max(total_cash_invested + rehab cushion + refi shortfall, the day-one floor of EMD + cash to close + cushion + one month of utilities, HML interest and taxes/insurance/HOA). */
+  /** Cash Needed: max(total_cash_invested + rehab cushion + refi shortfall + reserves the lowest-ARV wire cannot fund, the day-one floor of EMD + cash to close + an insurance bill paid outside it + cushion + one month of utilities, HML interest, HOA, insurance and one tax deposit). */
   total_cash_needed_for_deal?: number;
   total_cash_invested?: number;
   cash_to_close_buy?: number;
@@ -187,6 +209,17 @@ export interface BrrrAnalyzeRes {
   cash_to_refi_table_conservative?: number;
   refi_closing_date?: string | null;
   tenant_occupied_date?: string | null;
+  rehab_completed_date?: string | null;
+  appraisal_and_survey_paid_outside_closing?: number;
+  insurance_bill_at_refi_effective?: number;
+  monthly_insurance_after_refi_effective?: number;
+  property_tax_bucket_deposit_effective?: number;
+  property_tax_paid_into_bucket_until_refi?: number;
+  property_tax_lump_sum_at_refi_closing_effective?: number;
+  property_tax_bucket_balance_released_at_refi?: number;
+  monthly_property_tax_after_refi?: number;
+  hysa_deposit_at_refi_effective?: number;
+  reserves_funded_from_own_pocket_at_lowest_arv?: number;
   recording_transfer_buy_effective?: number;
   title_escrow_buy_effective?: number;
   recording_transfer_refi_effective?: number;

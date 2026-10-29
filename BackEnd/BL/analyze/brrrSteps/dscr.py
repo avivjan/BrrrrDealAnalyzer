@@ -1,9 +1,9 @@
-"""BRRRR step: debt service coverage ratio."""
+"""BRRRR step: debt service coverage ratio, on the regular-year monthly taxes and insurance."""
 
-from BL.analyze.common.deal_math import calc_pitia, calcDSCR
+from decimal import Decimal
 
 
-def dscr_step(payload, mortgage_payment):
-    pitia = calc_pitia(mortgage_payment, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa)
-    dscr = calcDSCR(payload.rent, payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, mortgage_payment)
+def dscr_step(payload, mortgage_payment, monthly_property_tax_after_refi, monthly_insurance_after_refi):
+    pitia = mortgage_payment + monthly_property_tax_after_refi + monthly_insurance_after_refi + payload.montly_hoa
+    dscr = Decimal("0") if pitia == 0 else payload.rent / pitia
     return pitia, dscr

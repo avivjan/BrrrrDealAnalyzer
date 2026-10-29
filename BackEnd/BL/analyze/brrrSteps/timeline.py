@@ -19,6 +19,7 @@ class Timeline(NamedTuple):
     buy_closing_date: Optional[date]
     refi_closing_date: Optional[date]
     tenant_occupied_date: Optional[date]
+    rehab_completed_date: Optional[date]
     # Hard-money interest: the days until the refi, split by when they are paid.
     hml_interest_days_prepaid_at_purchase_closing: int   # closing day through the end of that month
     hml_interest_days_paid_monthly: int                   # paid on the 1st of each month in between
@@ -40,6 +41,7 @@ def timeline_step(payload) -> Timeline:
             buy_closing_date=None,
             refi_closing_date=None,
             tenant_occupied_date=None,
+            rehab_completed_date=None,
             hml_interest_days_prepaid_at_purchase_closing=0,
             hml_interest_days_paid_monthly=days_until_refi,
             hml_interest_days_accrued_into_refi_payoff=0,
@@ -49,6 +51,7 @@ def timeline_step(payload) -> Timeline:
 
     refi_closing_date = buy_closing_date + timedelta(days=days_until_refi)
     tenant_occupied_date = buy_closing_date + timedelta(days=days_until_rented)
+    rehab_completed_date = buy_closing_date + timedelta(days=int(payload.days_until_rehab_completed))
 
     hml_interest_days_prepaid_at_purchase_closing = min(days_through_month_end(buy_closing_date), days_until_refi)
     refi_closes_in_purchase_month = (refi_closing_date.year, refi_closing_date.month) == (buy_closing_date.year, buy_closing_date.month)
@@ -59,6 +62,7 @@ def timeline_step(payload) -> Timeline:
         buy_closing_date=buy_closing_date,
         refi_closing_date=refi_closing_date,
         tenant_occupied_date=tenant_occupied_date,
+        rehab_completed_date=rehab_completed_date,
         hml_interest_days_prepaid_at_purchase_closing=hml_interest_days_prepaid_at_purchase_closing,
         hml_interest_days_paid_monthly=hml_interest_days_paid_monthly,
         hml_interest_days_accrued_into_refi_payoff=hml_interest_days_accrued_into_refi_payoff,

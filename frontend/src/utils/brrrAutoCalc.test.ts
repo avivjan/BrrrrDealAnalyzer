@@ -28,7 +28,7 @@ const FIXTURE: DealInputModel = {
   property_managment_fee_precentages_from_rent: 8, maintenancePercent: 5, capexPercent: 5,
   buyClosingDate: "2026-01-10", earnestMoneyDeposit: 5000, loanChargesBuy: 900, recordingTransferBuy: null,
   titleModeBuy: "standard", titleEscrowBuy: null, onlineNotaryBuy: true, otherClosingCostsBuy: 0,
-  sellerPaidCurrentYearTaxes: null, constructionLoanBudget: 55, rehabCushion: 5000, daysUntilRented: 90,
+  sellerPaidCurrentYearTaxes: null, constructionLoanBudget: 55, rehabCushion: 5000, daysUntilRehabCompleted: 45, daysUntilRented: 90,
   monthlyUtilitiesUntilRented: 80, maintenanceBeforeRefi: 500, appliances: 630, loanChargesRefi: 200,
   recordingTransferRefi: null, titleEscrowRefi: null, onlineNotaryRefi: true, appraisalFee: 700, surveyFee: 385,
   refiUnderwritingFee: 2000, brokerProcessingFeeRefi: 395, otherClosingCostsRefi: 0, maintenanceReserve: 1500,
@@ -54,7 +54,8 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
     expect(autoCalc.tenantOccupiedDate).toBe("2026-04-10");
     expectCloseToTheCent(autoCalc.prepaidInterestBuy, 1445.28);
     expect(autoCalc.prepaidDaysRefi).toBe(22);
-    expectCloseToTheCent(autoCalc.prepaidInterestRefi, 940.27);
+    expectCloseToTheCent(autoCalc.prepaidInterestRefi, 953.33); // 240,000 × 6.5% ÷ 360 × 22: the 360-day year of the refi statements
+    expect(autoCalc.rehabCompletedDate).toBe("2026-02-24");
   });
 
   it("the purchase settlement", () => {
@@ -63,8 +64,17 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
     expectCloseToTheCent(autoCalc.deedTransferTaxBuy, 0);
     expectCloseToTheCent(autoCalc.recordingTransferBuyEffective, 250 + 0.0055 * 215_000); // the WHOLE hard-money loan
     expectCloseToTheCent(autoCalc.titleEscrowBuyEffective, 1000);
-    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 3582.5);
-    expectCloseToTheCent(autoCalc.cashToCloseBuy, 44239.01);
+    expectCloseToTheCent(autoCalc.insuranceBillAtPurchaseInsideClosing, 1200);
+    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 4782.5); // includes the $1,200 insurance bill paid inside the closing
+    expectCloseToTheCent(autoCalc.cashToCloseBuy, 45439.01);
+  });
+
+  it("the tax bucket and the regular-year tax", () => {
+    expect(autoCalc.firstPropertyTaxPaymentDate).toBe("2026-11-30");
+    expect(autoCalc.propertyTaxBucketDepositCountUntilFirstPayment).toBe(11); // Jan 15 .. Nov 15
+    expect(autoCalc.propertyTaxBucketFirstBillDepositCountUntilRefi).toBe(6); // Jan 15 .. Jun 15, before the Jul 10 refi
+    expectCloseToTheCent(autoCalc.propertyTaxBucketDepositEffective, 306.11);
+    expectCloseToTheCent(autoCalc.monthlyPropertyTaxAfterRefi, 288);
   });
 
   it("the rehab draws and the holding period", () => {
@@ -75,11 +85,45 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
 
   it("the refinance settlement and the two wires", () => {
     expectCloseToTheCent(autoCalc.refiLoanAmount, 240_000);
-    expectCloseToTheCent(autoCalc.closingCostsRefiTotal, 10_980);
-    expectCloseToTheCent(autoCalc.reservesTotal, 6_600);
+    // Appraisal and survey are paid outside the closing; the $1,200 insurance bill is paid inside it.
+    expectCloseToTheCent(autoCalc.closingCostsRefiTotal, 11_095);
+    expectCloseToTheCent(autoCalc.appraisalAndSurveyPaidOutsideClosing, 1085);
+    expectCloseToTheCent(autoCalc.monthlyPrincipalAndInterest, 1516.96);
+    expectCloseToTheCent(autoCalc.hysaDepositAtRefiEffective, 4550.89);
+    expectCloseToTheCent(autoCalc.reservesTotal, 11_150.89);
+    expectCloseToTheCent(autoCalc.monthlyInsuranceAfterRefiDefault, 100);
     expectCloseToTheCent(autoCalc.lowestArvEffective, 288_000);
-    expectCloseToTheCent(autoCalc.cashOutWire, 5888.48);
-    expectCloseToTheCent(autoCalc.cashOutWireConservative, -17417.5);
+    // The settlement statement's "Due to Borrower": the reserves are not taken off it.
+    expectCloseToTheCent(autoCalc.cashOutWire, 12360.42);
+    expectCloseToTheCent(autoCalc.cashOutWireConservative, -10944.25);
+  });
+
+  it("the insurance and tax pickers move the bills between the settlements and the pocket", () => {
+    const outside = brrrAutoCalc({ ...FIXTURE, insurancePurchaseBillPaymentTiming: "outside_purchase_closing", insuranceRefiBillPaymentTiming: "outside_refi_closing" });
+    expectCloseToTheCent(outside.closingCostsBuyTotal, 3582.5);
+    expectCloseToTheCent(outside.cashOutWire, 12360.42 + 1200);
+    const lenderCollectsTheTax = brrrAutoCalc({ ...FIXTURE, propertyTaxCollectionAtRefi: "full_tax_bill_collected_at_refi" });
+    expectCloseToTheCent(lenderCollectsTheTax.propertyTaxLumpSumAtRefiClosingEffective, 3600);
+    expectCloseToTheCent(lenderCollectsTheTax.cashOutWire, 12360.42 - 3600);
+    expect(brrrAutoCalc({ ...FIXTURE, propertyTaxLumpSumAtRefiClosing: 3000 }).propertyTaxLumpSumAtRefiClosingEffective).toBe(0); // only with the lender option
+  });
+
+  it("a seller who already paid this year's bill sends the bucket to next year's Nov 30, from Dec 15", () => {
+    const alreadyPaid = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: true, daysUntilRefi: 120 });
+    expect(alreadyPaid.firstPropertyTaxPaymentDate).toBe("2027-11-30");
+    expect(alreadyPaid.propertyTaxBucketDepositCountUntilFirstPayment).toBe(12);
+    expectCloseToTheCent(alreadyPaid.propertyTaxBucketDepositEffective, (3600 * 0.96) / 12);
+    expect(alreadyPaid.propertyTaxBucketFirstBillDepositCountUntilRefi).toBe(4); // Dec 15 .. Mar 15, before the Mar 20 refi
+    const notPaid = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: false, daysUntilRefi: 120 });
+    expect(notPaid.firstPropertyTaxPaymentDate).toBe("2026-11-30");
+    expect(notPaid.propertyTaxBucketDepositCountUntilFirstPayment).toBe(1);
+  });
+
+  it("the settlement-statement seller credit overrides the proration and feeds the deposit", () => {
+    const typedCredit = brrrAutoCalc({ ...FIXTURE, sellerTaxCreditAtPurchaseClosing: 120.45 });
+    expectCloseToTheCent(typedCredit.sellerTaxCreditFormula, 88.77);
+    expectCloseToTheCent(typedCredit.sellerTaxCredit, 120.45);
+    expectCloseToTheCent(typedCredit.propertyTaxBucketDepositEffective, (3600 * 0.96 - 120.45) / 11);
   });
 });
 
@@ -140,10 +184,21 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(brrrAutoCalc({ ...FIXTURE, arv_in_thousands: 0, lowestArv: 250 }).lowestArvEffective).toBe(250_000); // no ARV to compare against yet
   });
 
-  it("flips the tax credit in December and with the override", () => {
+  it("flips the tax credit from October (the title takes the bill at closing) and with the override", () => {
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCredit!).toBeLessThan(0);
-    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20" }).sellerTaxCredit!).toBeGreaterThan(0);
-    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: true }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-10-01" }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-09-30" }).sellerTaxCredit!).toBeGreaterThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-09-30", sellerPaidCurrentYearTaxes: true }).sellerTaxCredit!).toBeLessThan(0);
+    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-11-20", sellerPaidCurrentYearTaxes: false }).sellerTaxCredit!).toBeGreaterThan(0);
+  });
+
+  it("an October closing whose bill the title took deposits for next year from Dec 15, 12 times", () => {
+    const octoberFirst = brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-10-01", daysUntilRefi: 120 });
+    expect(octoberFirst.sellerPaidCurrentYearTaxesEffective).toBe(true);
+    expect(octoberFirst.firstPropertyTaxPaymentDate).toBe("2027-11-30");
+    expect(octoberFirst.propertyTaxBucketDepositCountUntilFirstPayment).toBe(12); // Dec 15, 2026 .. Nov 15, 2027: no Oct 15 or Nov 15
+    expectCloseToTheCent(octoberFirst.propertyTaxBucketDepositEffective, (3600 * 0.96) / 12);
+    expect(octoberFirst.propertyTaxBucketFirstBillDepositCountUntilRefi).toBe(2); // Dec 15 and Jan 15, before the Jan 29 refi
   });
 
   it("counts the days the tax proration covers", () => {

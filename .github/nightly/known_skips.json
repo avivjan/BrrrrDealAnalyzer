@@ -75,6 +75,14 @@
       "expected": {"chromium": 1, "webkit": 1, "Mobile Safari": 1, "Mobile Chrome": 1}
     },
     {
+      "id": "invalid-input-shake-motion",
+      "match": "the shake is a GSAP tween; the other projects run with animations off",
+      "category": "Motion-only project",
+      "explain": "An invalid input's shake is a GSAP tween, inert under reducedMotion: reduce, so the two shake checks (lowest ARV, rehab completion) run on the motion-enabled project only.",
+      "files": ["flows/deal-modal-invalid-input.spec.ts", "flows/deal-reconciliation-inputs.spec.ts"],
+      "expected": {"chromium": 2, "webkit": 2, "Mobile Safari": 2, "Mobile Chrome": 2}
+    },
+    {
       "id": "wheel-emulation-chromium",
       "match": "wheel emulation is Chromium-only",
       "category": "Chromium-only browser feature",

@@ -43,6 +43,8 @@ const BRRR_NON_NEGATIVE_DOLLAR_FIELDS: ReadonlyArray<[NumericKey, string]> = [
   ["monthlyUtilitiesUntilRented", "Monthly utilities until rented"],
   ["maintenanceBeforeRefi", "Maintenance before refi"],
   ["appliances", "Appliances"],
+  ["monthlyInsuranceUntilRefi", "Monthly insurance until refi"],
+  ["monthlyPropertyTaxBucketDeposit", "Monthly property tax bucket deposit"],
   ["loanChargesRefi", "Loan charges (refi)"],
   ["recordingTransferRefi", "Recording and transfer charges (refi)"],
   ["titleEscrowRefi", "Title and escrow charges (refi)"],
@@ -52,9 +54,13 @@ const BRRR_NON_NEGATIVE_DOLLAR_FIELDS: ReadonlyArray<[NumericKey, string]> = [
   ["brokerProcessingFeeRefi", "Broker processing fee (refi)"],
   ["otherClosingCostsRefi", "Other closing costs (refi)"],
   ["onlineNotaryFeeRefi", "Online notary fee (refi)"],
+  ["insuranceBillAtRefiClosing", "Insurance bill at refi"],
+  ["monthlyInsuranceAfterRefi", "Monthly insurance after refi"],
+  ["propertyTaxLumpSumAtRefiClosing", "Property tax lump sum at refi"],
   ["maintenanceReserve", "Maintenance reserve"],
   ["vacancyReserve", "Vacancy reserve"],
   ["capexReserve", "CapEx reserve"],
+  ["hysaDepositAtRefi", "HYSA deposit at refi"],
 ];
 
 /** A deal field as a number; empty, null, or non-numeric reads as 0 (the backend default). */
@@ -110,6 +116,13 @@ export function validateDealInputFields(deal: DealInputModel, dealType: "BRRRR" 
     }
     reportIfNegative("constructionLoanBudget", "Construction loan budget cannot be negative.");
     reportIfNegative("daysUntilRented", "Days until rented cannot be negative.");
+    // The rehab ends between the purchase closing and the tenant moving in; the backend refuses the row otherwise.
+    if (dealRecord.daysUntilRehabCompleted != null && dealRecord.daysUntilRehabCompleted !== "") {
+      if (numberOf("daysUntilRehabCompleted") < 0) report("daysUntilRehabCompleted", "invalid", "Days until rehab completed cannot be negative.");
+      else if (dealRecord.daysUntilRented != null && dealRecord.daysUntilRented !== "" && numberOf("daysUntilRehabCompleted") > numberOf("daysUntilRented")) {
+        report("daysUntilRehabCompleted", "invalid", "Rehab completion must be on or before the tenant-occupied date.");
+      }
+    }
     if (dealRecord.lowestArv != null) {
       const lowestArvThousands = numberOf("lowestArv");
       const arvThousands = numberOf("arv_in_thousands");

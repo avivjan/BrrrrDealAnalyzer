@@ -1,7 +1,12 @@
 <script setup lang="ts">
-/** BRRRR › Refinance: the new loan, its settlement lines, the reserves, and the two wires. */
+/**
+ * BRRRR › Refinance: the new loan, its settlement lines (the insurance bill and the tax lump when
+ * the lender collects them), what is paid outside the closing, the regular-year insurance, the
+ * reserves the owner sets aside, and the two wires. The wires are the settlement statement's
+ * "Due to Borrower": the reserves are the owner's own money and never come off them.
+ */
 import { computed, useId } from "vue";
-import type { DealInputModel } from "../../../types";
+import type { DealInputModel, InsuranceRefiBillPaymentTiming, PropertyTaxCollectionAtRefi } from "../../../types";
 import { useDealField, type NumericKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
@@ -33,6 +38,15 @@ const UNDERWRITING_PRESETS = [
 
 const notaryId = useId();
 const otherClosingCostsNoteId = useId();
+const insuranceRefiBillPaymentTimingId = useId();
+const propertyTaxCollectionAtRefiId = useId();
+const onInsuranceRefiBillPaymentTiming = (event: Event) => {
+  props.deal.insuranceRefiBillPaymentTiming = (event.target as HTMLSelectElement).value as InsuranceRefiBillPaymentTiming;
+};
+const onPropertyTaxCollectionAtRefi = (event: Event) => {
+  props.deal.propertyTaxCollectionAtRefi = (event.target as HTMLSelectElement).value as PropertyTaxCollectionAtRefi;
+};
+const fullTaxBillCollectedAtRefi = computed(() => props.deal.propertyTaxCollectionAtRefi === "full_tax_bill_collected_at_refi");
 const NOTARY_FEE_DEFAULT = 250;
 /** $0 by default (the owner's brokers rarely charge one); this quick button sets the typical fee. */
 const BROKER_PROCESSING_FEE_TYPICAL = 395;
@@ -170,23 +184,6 @@ const prepaidInterestHint = computed(() =>
               :info="impactText('onlineNotaryFeeRefi')"
             />
           </div>
-          <MoneyInput
-            data-testid="form.field.appraisalFee"
-            :error-message="fieldErrorMessages?.appraisalFee"
-            :model-value="field.get('appraisalFee')"
-            @update:model-value="(v: number | null) => field.set('appraisalFee', v)"
-            label="Appraisal"
-            :info="impactText('appraisalFee')"
-          />
-          <MoneyInput
-            data-testid="form.field.surveyFee"
-            :error-message="fieldErrorMessages?.surveyFee"
-            :model-value="field.get('surveyFee')"
-            @update:model-value="(v: number | null) => field.set('surveyFee', v)"
-            label="Survey"
-            :info="impactText('surveyFee')"
-            note="$385 · $450 · $485 seen"
-          />
           <PresetSelectInput
             data-testid="form.field.refiUnderwritingFee"
             :error-message="fieldErrorMessages?.refiUnderwritingFee"
@@ -239,16 +236,98 @@ const prepaidInterestHint = computed(() =>
               @change="field.setStr('otherClosingCostsRefiNote', ($event.target as HTMLInputElement).value || null)"
             />
           </div>
+          <AutoDefaultMoneyInput
+            data-testid="form.field.insuranceBillAtRefiClosing"
+            :error-message="fieldErrorMessages?.insuranceBillAtRefiClosing"
+            :model-value="field.getNullable('insuranceBillAtRefiClosing')"
+            :computed-default="autoCalc.insuranceBillAtRefiDefault"
+            @update:model-value="(v: number | null) => field.setNullable('insuranceBillAtRefiClosing', v)"
+            label="Insurance Bill at Refi"
+            :info="impactText('insuranceBillAtRefiClosing')"
+          />
+          <div class="flex flex-col gap-1.5" data-testid="form.field.insuranceRefiBillPaymentTiming">
+            <div data-part="label-row" class="flex h-5 items-center gap-1">
+              <label :for="insuranceRefiBillPaymentTimingId" data-part="label" class="text-sm font-medium leading-5 text-fg">Insurance Bill at Refi Paid</label>
+              <InputInfo :content="impactText('insuranceRefiBillPaymentTiming')" field-label="Insurance Bill at Refi Paid" />
+            </div>
+            <select :id="insuranceRefiBillPaymentTimingId" data-part="select" class="ui-select"
+                    :value="deal.insuranceRefiBillPaymentTiming ?? 'inside_refi_closing'" @change="onInsuranceRefiBillPaymentTiming">
+              <option value="inside_refi_closing">Inside the refi closing</option>
+              <option value="outside_refi_closing">Outside the refi closing</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1.5" data-testid="form.field.propertyTaxCollectionAtRefi">
+            <div data-part="label-row" class="flex h-5 items-center gap-1">
+              <label :for="propertyTaxCollectionAtRefiId" data-part="label" class="text-sm font-medium leading-5 text-fg">Property Tax at Refi</label>
+              <InputInfo :content="impactText('propertyTaxCollectionAtRefi')" field-label="Property Tax at Refi" />
+            </div>
+            <select :id="propertyTaxCollectionAtRefiId" data-part="select" class="ui-select"
+                    :value="deal.propertyTaxCollectionAtRefi ?? 'no_tax_collected_at_refi'" @change="onPropertyTaxCollectionAtRefi">
+              <option value="no_tax_collected_at_refi">My tax bucket pays the Nov 30 bill</option>
+              <option value="full_tax_bill_collected_at_refi">The refi lender collects the whole bill</option>
+            </select>
+          </div>
+          <AutoDefaultMoneyInput
+            v-if="fullTaxBillCollectedAtRefi"
+            data-testid="form.field.propertyTaxLumpSumAtRefiClosing"
+            :error-message="fieldErrorMessages?.propertyTaxLumpSumAtRefiClosing"
+            :model-value="field.getNullable('propertyTaxLumpSumAtRefiClosing')"
+            :computed-default="autoCalc.propertyTaxLumpSumAtRefiClosingDefault"
+            @update:model-value="(v: number | null) => field.setNullable('propertyTaxLumpSumAtRefiClosing', v)"
+            label="Tax Lump collected at Refi"
+            :info="impactText('propertyTaxLumpSumAtRefiClosing')"
+          />
         </div>
         <div class="mt-3">
           <AutoFigure data-testid="form.auto.closingCostsRefiTotal" label="Total closing costs (Refi)" :value="autoCalc.closingCostsRefiTotal" />
         </div>
       </div>
 
+      <!-- Paid outside the refi closing -->
+      <div class="my-2 border-t border-line pt-4 md:col-span-2">
+        <UiSectionHeader as="h4" class="mb-3">Paid outside closing (end of rehab)</UiSectionHeader>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <MoneyInput
+            data-testid="form.field.appraisalFee"
+            :error-message="fieldErrorMessages?.appraisalFee"
+            :model-value="field.get('appraisalFee')"
+            @update:model-value="(v: number | null) => field.set('appraisalFee', v)"
+            label="Appraisal"
+            :info="impactText('appraisalFee')"
+          />
+          <MoneyInput
+            data-testid="form.field.surveyFee"
+            :error-message="fieldErrorMessages?.surveyFee"
+            :model-value="field.get('surveyFee')"
+            @update:model-value="(v: number | null) => field.set('surveyFee', v)"
+            label="Survey"
+            :info="impactText('surveyFee')"
+            note="$385 · $450 · $485 seen"
+          />
+        </div>
+      </div>
+
+      <!-- A regular year after the refi -->
+      <div class="my-2 border-t border-line pt-4 md:col-span-2">
+        <UiSectionHeader as="h4" class="mb-3">Regular year after the refi</UiSectionHeader>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AutoDefaultMoneyInput
+            data-testid="form.field.monthlyInsuranceAfterRefi"
+            :error-message="fieldErrorMessages?.monthlyInsuranceAfterRefi"
+            :model-value="field.getNullable('monthlyInsuranceAfterRefi')"
+            :computed-default="autoCalc.monthlyInsuranceAfterRefiDefault"
+            @update:model-value="(v: number | null) => field.setNullable('monthlyInsuranceAfterRefi', v)"
+            label="Insurance per Month after Refi"
+            :info="impactText('monthlyInsuranceAfterRefi')"
+          />
+          <AutoFigure data-testid="form.auto.monthlyPropertyTaxAfterRefi" label="Property tax per month" :value="autoCalc.monthlyPropertyTaxAfterRefi" hint="this year's bill × 0.96 ÷ 12" />
+        </div>
+      </div>
+
       <!-- Reserves -->
       <div class="my-2 border-t border-line pt-4 md:col-span-2">
-        <UiSectionHeader as="h4" class="mb-3">Reserves escrowed at refi</UiSectionHeader>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <UiSectionHeader as="h4" class="mb-3">Reserves you set aside at refi</UiSectionHeader>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <MoneyInput
             data-testid="form.field.maintenanceReserve"
             :error-message="fieldErrorMessages?.maintenanceReserve"
@@ -274,15 +353,24 @@ const prepaidInterestHint = computed(() =>
             label="CapEx Reserve"
             :info="impactText('capexReserve')"
           />
+          <AutoDefaultMoneyInput
+            data-testid="form.field.hysaDepositAtRefi"
+            :error-message="fieldErrorMessages?.hysaDepositAtRefi"
+            :model-value="field.getNullable('hysaDepositAtRefi')"
+            :computed-default="autoCalc.hysaDepositAtRefiDefault"
+            @update:model-value="(v: number | null) => field.setNullable('hysaDepositAtRefi', v)"
+            label="HYSA Deposit (3 months P&I)"
+            :info="impactText('hysaDepositAtRefi')"
+          />
         </div>
         <div class="mt-3">
-          <AutoFigure data-testid="form.auto.reservesTotal" label="Total reserves" :value="autoCalc.reservesTotal" />
+          <AutoFigure data-testid="form.auto.reservesTotal" label="Total reserves" :value="autoCalc.reservesTotal" hint="your money, kept in the deal: not taken off the wire" />
         </div>
       </div>
     </div>
     <template #footer>
       <AutoFigure data-testid="form.auto.hmlPayoff" label="HML payoff at refi" :value="autoCalc.hmlPayoff" hint="principal + interest accrued since the 1st" />
-      <AutoFigure data-testid="form.auto.cashOutWire" label="Cash-Out Routi" :value="autoCalc.cashOutWire" hint="negative = cash brought to the table" signed />
+      <AutoFigure data-testid="form.auto.cashOutWire" label="Cash-Out Routi" :value="autoCalc.cashOutWire" hint="the statement's Due to Borrower; negative = cash brought to the table" signed />
       <AutoFigure data-testid="form.auto.cashOutWireConservative" label="Cash-Out Routi (Lowest ARV)" :value="autoCalc.cashOutWireConservative" signed />
     </template>
   </LifecycleSection>

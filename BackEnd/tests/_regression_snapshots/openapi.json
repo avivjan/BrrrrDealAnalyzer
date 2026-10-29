@@ -697,7 +697,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -714,7 +714,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "appliances": {
@@ -742,7 +742,7 @@
               }
             ],
             "default": "700",
-            "description": "Refi appraisal, in dollars.",
+            "description": "Refi appraisal, in dollars. Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Appraisalfee"
           },
           "arv_in_thousands": {
@@ -857,7 +857,7 @@
               }
             ],
             "default": "2500",
-            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "description": "CapEx reserve the owner sets aside at the refi, in dollars.",
             "title": "Capexreserve"
           },
           "cashReserve": {
@@ -974,6 +974,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRehabCompleted": {
+            "default": 45,
+            "description": "Whole days from the purchase close until the rehab is complete. Must fall between the purchase close and the tenant-occupied day (0 <= days <= daysUntilRented).",
+            "title": "Daysuntilrehabcompleted",
+            "type": "integer"
+          },
           "daysUntilRented": {
             "default": 90,
             "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
@@ -1044,6 +1050,58 @@
             "default": "0.0",
             "description": "Hard money lender points (percentage)",
             "title": "Hmlpoints"
+          },
+          "hysaDepositAtRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the high-yield savings account at the refi, the fourth reserve, in dollars. None = formula: 3 months of the DSCR loan's principal and interest.",
+            "title": "Hysadepositatrefi"
+          },
+          "insuranceBillAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill paid at the refi, in dollars. None = the insurance bill at purchase (annual_insurance).",
+            "title": "Insurancebillatreficlosing"
+          },
+          "insurancePurchaseBillPaymentTiming": {
+            "default": "inside_purchase_closing",
+            "description": "Where the insurance bill at purchase (annual_insurance) is paid: 'inside_purchase_closing' = a line of the purchase settlement, in Cash to Close (Buy); 'outside_purchase_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_purchase_closing",
+              "outside_purchase_closing"
+            ],
+            "title": "Insurancepurchasebillpaymenttiming",
+            "type": "string"
+          },
+          "insuranceRefiBillPaymentTiming": {
+            "default": "inside_refi_closing",
+            "description": "Where the insurance bill at the refi is paid: 'inside_refi_closing' = a line of the refi settlement, off both cash-out wires; 'outside_refi_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_refi_closing",
+              "outside_refi_closing"
+            ],
+            "title": "Insurancerefibillpaymenttiming",
+            "type": "string"
           },
           "interestRate": {
             "anyOf": [
@@ -1173,8 +1231,54 @@
               }
             ],
             "default": "1500",
-            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
+          },
+          "monthlyInsuranceAfterRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi (cash flow, PITIA, DSCR), in dollars. None = the insurance bill at the refi / 12.",
+            "title": "Monthlyinsuranceafterrefi"
+          },
+          "monthlyInsuranceUntilRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
+            "title": "Monthlyinsuranceuntilrefi"
+          },
+          "monthlyPropertyTaxBucketDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deposit into the property's tax bucket on each 15th until the refi, in dollars. None = formula: (this year's bill x 0.96 - the seller tax credit already in the bucket) / the 15ths left until Nov 30.",
+            "title": "Monthlypropertytaxbucketdeposit"
           },
           "monthlyUtilitiesUntilRented": {
             "anyOf": [
@@ -1352,6 +1456,32 @@
               }
             ],
             "title": "Pics Link"
+          },
+          "propertyTaxCollectionAtRefi": {
+            "default": "no_tax_collected_at_refi",
+            "description": "'no_tax_collected_at_refi' = the owner's tax bucket keeps paying the Nov 30 bill; 'full_tax_bill_collected_at_refi' = the refi lender collects the whole bill as a lump (off both wires) and the bucket balance at the refi comes back to the owner.",
+            "enum": [
+              "no_tax_collected_at_refi",
+              "full_tax_bill_collected_at_refi"
+            ],
+            "title": "Propertytaxcollectionatrefi",
+            "type": "string"
+          },
+          "propertyTaxLumpSumAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. None = this year's bill (annual_property_taxes).",
+            "title": "Propertytaxlumpsumatreficlosing"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -1547,8 +1677,24 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "sellerTaxCreditAtPurchaseClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. None = formula: this year's bill (annual_property_taxes) prorated by the closing date.",
+            "title": "Sellertaxcreditatpurchaseclosing"
           },
           "sold_comps": {
             "anyOf": [
@@ -1616,7 +1762,7 @@
               }
             ],
             "default": "385",
-            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common). Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Surveyfee"
           },
           "task": {
@@ -1715,7 +1861,7 @@
                 "type": "null"
               }
             ],
-            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "description": "Vacancy reserve the owner sets aside at the refi, in dollars. None = formula: one month of gross rent.",
             "title": "Vacancyreserve"
           },
           "zillow_link": {
@@ -1779,7 +1925,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -1793,7 +1939,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "appliances": {
@@ -1805,10 +1951,22 @@
           },
           "appraisalFee": {
             "default": "700",
-            "description": "Refi appraisal, in dollars.",
+            "description": "Refi appraisal, in dollars. Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Appraisalfee",
             "type": "string"
+          },
+          "appraisal_and_survey_paid_outside_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Appraisal + survey, in dollars: paid outside the refi closing at the end of the rehab, so in total_cash_invested and not in the refi closing costs.",
+            "title": "Appraisal And Survey Paid Outside Closing"
           },
           "arv_in_thousands": {
             "anyOf": [
@@ -1915,7 +2073,7 @@
           },
           "capexReserve": {
             "default": "2500",
-            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "description": "CapEx reserve the owner sets aside at the refi, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Capexreserve",
             "type": "string"
@@ -1934,7 +2092,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
-            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
+            "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -1959,7 +2117,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the reserves the owner sets aside at the refi (reserves_total: money that stays in the deal) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -1971,7 +2129,7 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs and refi prepaid interest: the 'Due to Borrower' line of the refi settlement statement. The reserves are the owner's own money and are not taken off it. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
           },
           "cash_out_routi_conservative": {
@@ -1995,7 +2153,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs (including the insurance bill when paid inside the closing) + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
             "title": "Cash To Close Buy"
           },
           "cash_to_refi_table_conservative": {
@@ -2046,7 +2204,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other + the insurance bill when paid inside the purchase closing.",
             "title": "Closing Costs Buy Total"
           },
           "closing_costs_refi_total": {
@@ -2058,7 +2216,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + underwriting + broker points + processing + other + the insurance bill when paid inside the refi closing + the tax lump when the refi lender collects the whole bill. The appraisal and the survey are paid outside the closing and are not here.",
             "title": "Closing Costs Refi Total"
           },
           "completedSubstages": {
@@ -2123,6 +2281,12 @@
             ],
             "default": 180,
             "title": "Daysuntilrefi"
+          },
+          "daysUntilRehabCompleted": {
+            "default": 45,
+            "description": "Whole days from the purchase close until the rehab is complete. Must fall between the purchase close and the tenant-occupied day (0 <= days <= daysUntilRented).",
+            "title": "Daysuntilrehabcompleted",
+            "type": "integer"
           },
           "daysUntilRented": {
             "default": 90,
@@ -2189,7 +2353,7 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the reserves the owner set aside (released with confidence at a sale).",
             "title": "Equity"
           },
           "google_drive_link": {
@@ -2242,10 +2406,80 @@
             "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
             "title": "Hml Payoff"
           },
+          "hysaDepositAtRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the high-yield savings account at the refi, the fourth reserve, in dollars. None = formula: 3 months of the DSCR loan's principal and interest.",
+            "title": "Hysadepositatrefi"
+          },
+          "hysa_deposit_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "HYSA deposit at the refi actually used, in dollars: the input, or 3 months of the DSCR loan's principal and interest when null.",
+            "title": "Hysa Deposit At Refi Effective"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "insuranceBillAtRefiClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill paid at the refi, in dollars. None = the insurance bill at purchase (annual_insurance).",
+            "title": "Insurancebillatreficlosing"
+          },
+          "insurancePurchaseBillPaymentTiming": {
+            "default": "inside_purchase_closing",
+            "description": "Where the insurance bill at purchase (annual_insurance) is paid: 'inside_purchase_closing' = a line of the purchase settlement, in Cash to Close (Buy); 'outside_purchase_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_purchase_closing",
+              "outside_purchase_closing"
+            ],
+            "title": "Insurancepurchasebillpaymenttiming",
+            "type": "string"
+          },
+          "insuranceRefiBillPaymentTiming": {
+            "default": "inside_refi_closing",
+            "description": "Where the insurance bill at the refi is paid: 'inside_refi_closing' = a line of the refi settlement, off both cash-out wires; 'outside_refi_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_refi_closing",
+              "outside_refi_closing"
+            ],
+            "title": "Insurancerefibillpaymenttiming",
+            "type": "string"
+          },
+          "insurance_bill_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill at the refi actually used, in dollars: the input, or the insurance bill at purchase when null.",
+            "title": "Insurance Bill At Refi Effective"
           },
           "interestRate": {
             "anyOf": [
@@ -2345,7 +2579,7 @@
           },
           "maintenanceReserve": {
             "default": "1500",
-            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Maintenancereserve",
             "type": "string"
@@ -2365,12 +2599,69 @@
             "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
             "title": "Messages"
           },
+          "monthlyInsuranceAfterRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi (cash flow, PITIA, DSCR), in dollars. None = the insurance bill at the refi / 12.",
+            "title": "Monthlyinsuranceafterrefi"
+          },
+          "monthlyInsuranceUntilRefi": {
+            "default": "0",
+            "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthlyinsuranceuntilrefi",
+            "type": "string"
+          },
+          "monthlyPropertyTaxBucketDeposit": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deposit into the property's tax bucket on each 15th until the refi, in dollars. None = formula: (this year's bill x 0.96 - the seller tax credit already in the bucket) / the 15ths left until Nov 30.",
+            "title": "Monthlypropertytaxbucketdeposit"
+          },
           "monthlyUtilitiesUntilRented": {
             "default": "80",
             "description": "Electric, water and lawn per month while vacant, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monthlyutilitiesuntilrented",
             "type": "string"
+          },
+          "monthly_insurance_after_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi actually used, in dollars: the input, or the insurance bill at the refi / 12 when null.",
+            "title": "Monthly Insurance After Refi Effective"
+          },
+          "monthly_property_tax_after_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property tax per month in a regular year after the refi, in dollars: this year's bill x 0.96 / 12 (paid on Nov 30 with the November discount).",
+            "title": "Monthly Property Tax After Refi"
           },
           "montly_hoa": {
             "anyOf": [
@@ -2557,8 +2848,31 @@
                 "type": "null"
               }
             ],
-            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
             "title": "Prepaid Interest Refi"
+          },
+          "propertyTaxCollectionAtRefi": {
+            "default": "no_tax_collected_at_refi",
+            "description": "'no_tax_collected_at_refi' = the owner's tax bucket keeps paying the Nov 30 bill; 'full_tax_bill_collected_at_refi' = the refi lender collects the whole bill as a lump (off both wires) and the bucket balance at the refi comes back to the owner.",
+            "enum": [
+              "no_tax_collected_at_refi",
+              "full_tax_bill_collected_at_refi"
+            ],
+            "title": "Propertytaxcollectionatrefi",
+            "type": "string"
+          },
+          "propertyTaxLumpSumAtRefiClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. None = this year's bill (annual_property_taxes).",
+            "title": "Propertytaxlumpsumatreficlosing"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -2572,6 +2886,54 @@
             ],
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
+          },
+          "property_tax_bucket_balance_released_at_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax bucket's balance that comes back to the owner when the refi lender collects the whole bill, in dollars (lowers total_cash_invested). 0 otherwise.",
+            "title": "Property Tax Bucket Balance Released At Refi"
+          },
+          "property_tax_bucket_deposit_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the property's tax bucket on each 15th until the refi actually used, in dollars: the input, or (this year's bill x 0.96 - the seller credit set aside) / the 15ths left until Nov 30 when null.",
+            "title": "Property Tax Bucket Deposit Effective"
+          },
+          "property_tax_lump_sum_at_refi_closing_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi lender collects, in dollars: 0 unless the full bill is collected at the refi; then the input, or this year's bill when null.",
+            "title": "Property Tax Lump Sum At Refi Closing Effective"
+          },
+          "property_tax_paid_into_bucket_until_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Every deposit into the property's tax bucket from the purchase to the refi, in dollars.",
+            "title": "Property Tax Paid Into Bucket Until Refi"
           },
           "purchasePrice": {
             "anyOf": [
@@ -2716,6 +3078,19 @@
             "title": "Rehabcushion",
             "type": "string"
           },
+          "rehab_completed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
+            "title": "Rehab Completed Date"
+          },
           "rent": {
             "anyOf": [
               {
@@ -2744,6 +3119,18 @@
             ],
             "title": "Rent Comps"
           },
+          "reserves_funded_from_own_pocket_at_lowest_arv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reserves the lowest-ARV wire cannot fund, in dollars: max(0, reserves_total - max(0, cash_out_routi_conservative)). Part of Cash Needed.",
+            "title": "Reserves Funded From Own Pocket At Lowest Arv"
+          },
           "reserves_total": {
             "anyOf": [
               {
@@ -2753,7 +3140,7 @@
                 "type": "null"
               }
             ],
-            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "description": "Reserves the owner sets aside at the refi, in dollars: maintenance + vacancy + capex + the HYSA deposit. Not taken off the wire; they lower cash_out (money that stays in the deal) and count as equity.",
             "title": "Reserves Total"
           },
           "roi": {
@@ -2789,8 +3176,21 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "sellerTaxCreditAtPurchaseClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. None = formula: this year's bill (annual_property_taxes) prorated by the closing date.",
+            "title": "Sellertaxcreditatpurchaseclosing"
           },
           "seller_tax_credit": {
             "anyOf": [
@@ -2801,7 +3201,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "sold_comps": {
@@ -2870,7 +3270,7 @@
           },
           "surveyFee": {
             "default": "385",
-            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common). Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Surveyfee",
             "type": "string"
@@ -2969,7 +3369,7 @@
                 "type": "null"
               }
             ],
-            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase when paid outside the closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + HOA until refi + insurance paid monthly until refi + the tax-bucket deposits until refi + any Nov 30 shortfall topped up + utilities until rented + maintenance before refi + appliances + appraisal and survey (paid outside the refi closing) + the insurance bill at refi when paid outside the closing - pre-refi rent - the tax-bucket balance released when the refi lender collects the whole bill.",
             "title": "Total Cash Invested"
           },
           "total_cash_needed_for_deal": {
@@ -2981,7 +3381,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -3037,7 +3437,7 @@
                 "type": "null"
               }
             ],
-            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "description": "Vacancy reserve the owner sets aside at the refi, in dollars. None = formula: one month of gross rent.",
             "title": "Vacancyreserve"
           },
           "vacancy_reserve_effective": {
@@ -3123,7 +3523,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -3140,7 +3540,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "bathrooms": {
@@ -3670,7 +4070,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -3684,7 +4084,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
@@ -4244,7 +4644,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -4261,7 +4661,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "appliances": {
@@ -4289,7 +4689,7 @@
               }
             ],
             "default": "700",
-            "description": "Refi appraisal, in dollars.",
+            "description": "Refi appraisal, in dollars. Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Appraisalfee"
           },
           "arv_in_thousands": {
@@ -4391,7 +4791,7 @@
               }
             ],
             "default": "2500",
-            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "description": "CapEx reserve the owner sets aside at the refi, in dollars.",
             "title": "Capexreserve"
           },
           "cashReserve": {
@@ -4493,6 +4893,12 @@
             "default": 180,
             "title": "Daysuntilrefi"
           },
+          "daysUntilRehabCompleted": {
+            "default": 45,
+            "description": "Whole days from the purchase close until the rehab is complete. Must fall between the purchase close and the tenant-occupied day (0 <= days <= daysUntilRented).",
+            "title": "Daysuntilrehabcompleted",
+            "type": "integer"
+          },
           "daysUntilRented": {
             "default": 90,
             "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
@@ -4563,6 +4969,58 @@
             "default": "0.0",
             "description": "Hard money lender points (percentage)",
             "title": "Hmlpoints"
+          },
+          "hysaDepositAtRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the high-yield savings account at the refi, the fourth reserve, in dollars. None = formula: 3 months of the DSCR loan's principal and interest.",
+            "title": "Hysadepositatrefi"
+          },
+          "insuranceBillAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill paid at the refi, in dollars. None = the insurance bill at purchase (annual_insurance).",
+            "title": "Insurancebillatreficlosing"
+          },
+          "insurancePurchaseBillPaymentTiming": {
+            "default": "inside_purchase_closing",
+            "description": "Where the insurance bill at purchase (annual_insurance) is paid: 'inside_purchase_closing' = a line of the purchase settlement, in Cash to Close (Buy); 'outside_purchase_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_purchase_closing",
+              "outside_purchase_closing"
+            ],
+            "title": "Insurancepurchasebillpaymenttiming",
+            "type": "string"
+          },
+          "insuranceRefiBillPaymentTiming": {
+            "default": "inside_refi_closing",
+            "description": "Where the insurance bill at the refi is paid: 'inside_refi_closing' = a line of the refi settlement, off both cash-out wires; 'outside_refi_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_refi_closing",
+              "outside_refi_closing"
+            ],
+            "title": "Insurancerefibillpaymenttiming",
+            "type": "string"
           },
           "interestRate": {
             "anyOf": [
@@ -4692,8 +5150,54 @@
               }
             ],
             "default": "1500",
-            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
+          },
+          "monthlyInsuranceAfterRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi (cash flow, PITIA, DSCR), in dollars. None = the insurance bill at the refi / 12.",
+            "title": "Monthlyinsuranceafterrefi"
+          },
+          "monthlyInsuranceUntilRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
+            "title": "Monthlyinsuranceuntilrefi"
+          },
+          "monthlyPropertyTaxBucketDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deposit into the property's tax bucket on each 15th until the refi, in dollars. None = formula: (this year's bill x 0.96 - the seller tax credit already in the bucket) / the 15ths left until Nov 30.",
+            "title": "Monthlypropertytaxbucketdeposit"
           },
           "monthlyUtilitiesUntilRented": {
             "anyOf": [
@@ -4871,6 +5375,32 @@
               }
             ],
             "title": "Pics Link"
+          },
+          "propertyTaxCollectionAtRefi": {
+            "default": "no_tax_collected_at_refi",
+            "description": "'no_tax_collected_at_refi' = the owner's tax bucket keeps paying the Nov 30 bill; 'full_tax_bill_collected_at_refi' = the refi lender collects the whole bill as a lump (off both wires) and the bucket balance at the refi comes back to the owner.",
+            "enum": [
+              "no_tax_collected_at_refi",
+              "full_tax_bill_collected_at_refi"
+            ],
+            "title": "Propertytaxcollectionatrefi",
+            "type": "string"
+          },
+          "propertyTaxLumpSumAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. None = this year's bill (annual_property_taxes).",
+            "title": "Propertytaxlumpsumatreficlosing"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -5066,8 +5596,24 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "sellerTaxCreditAtPurchaseClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. None = formula: this year's bill (annual_property_taxes) prorated by the closing date.",
+            "title": "Sellertaxcreditatpurchaseclosing"
           },
           "sold_comps": {
             "anyOf": [
@@ -5123,7 +5669,7 @@
               }
             ],
             "default": "385",
-            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common). Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Surveyfee"
           },
           "task": {
@@ -5222,7 +5768,7 @@
                 "type": "null"
               }
             ],
-            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "description": "Vacancy reserve the owner sets aside at the refi, in dollars. None = formula: one month of gross rent.",
             "title": "Vacancyreserve"
           },
           "zillow_link": {
@@ -5286,7 +5832,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -5300,7 +5846,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "appliances": {
@@ -5312,10 +5858,22 @@
           },
           "appraisalFee": {
             "default": "700",
-            "description": "Refi appraisal, in dollars.",
+            "description": "Refi appraisal, in dollars. Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Appraisalfee",
             "type": "string"
+          },
+          "appraisal_and_survey_paid_outside_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Appraisal + survey, in dollars: paid outside the refi closing at the end of the rehab, so in total_cash_invested and not in the refi closing costs.",
+            "title": "Appraisal And Survey Paid Outside Closing"
           },
           "arv_in_thousands": {
             "anyOf": [
@@ -5409,7 +5967,7 @@
           },
           "capexReserve": {
             "default": "2500",
-            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "description": "CapEx reserve the owner sets aside at the refi, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Capexreserve",
             "type": "string"
@@ -5428,7 +5986,7 @@
             "title": "Cashreserve"
           },
           "cash_flow": {
-            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
+            "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -5453,7 +6011,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the reserves the owner sets aside at the refi (reserves_total: money that stays in the deal) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -5465,7 +6023,7 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs and refi prepaid interest: the 'Due to Borrower' line of the refi settlement statement. The reserves are the owner's own money and are not taken off it. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
           },
           "cash_out_routi_conservative": {
@@ -5489,7 +6047,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs (including the insurance bill when paid inside the closing) + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
             "title": "Cash To Close Buy"
           },
           "cash_to_refi_table_conservative": {
@@ -5540,7 +6098,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other + the insurance bill when paid inside the purchase closing.",
             "title": "Closing Costs Buy Total"
           },
           "closing_costs_refi_total": {
@@ -5552,7 +6110,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + underwriting + broker points + processing + other + the insurance bill when paid inside the refi closing + the tax lump when the refi lender collects the whole bill. The appraisal and the survey are paid outside the closing and are not here.",
             "title": "Closing Costs Refi Total"
           },
           "constructionLoanBudget": {
@@ -5602,6 +6160,12 @@
             ],
             "default": 180,
             "title": "Daysuntilrefi"
+          },
+          "daysUntilRehabCompleted": {
+            "default": 45,
+            "description": "Whole days from the purchase close until the rehab is complete. Must fall between the purchase close and the tenant-occupied day (0 <= days <= daysUntilRented).",
+            "title": "Daysuntilrehabcompleted",
+            "type": "integer"
           },
           "daysUntilRented": {
             "default": 90,
@@ -5668,7 +6232,7 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the reserves the owner set aside (released with confidence at a sale).",
             "title": "Equity"
           },
           "google_drive_link": {
@@ -5721,10 +6285,80 @@
             "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
             "title": "Hml Payoff"
           },
+          "hysaDepositAtRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the high-yield savings account at the refi, the fourth reserve, in dollars. None = formula: 3 months of the DSCR loan's principal and interest.",
+            "title": "Hysadepositatrefi"
+          },
+          "hysa_deposit_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "HYSA deposit at the refi actually used, in dollars: the input, or 3 months of the DSCR loan's principal and interest when null.",
+            "title": "Hysa Deposit At Refi Effective"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "insuranceBillAtRefiClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill paid at the refi, in dollars. None = the insurance bill at purchase (annual_insurance).",
+            "title": "Insurancebillatreficlosing"
+          },
+          "insurancePurchaseBillPaymentTiming": {
+            "default": "inside_purchase_closing",
+            "description": "Where the insurance bill at purchase (annual_insurance) is paid: 'inside_purchase_closing' = a line of the purchase settlement, in Cash to Close (Buy); 'outside_purchase_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_purchase_closing",
+              "outside_purchase_closing"
+            ],
+            "title": "Insurancepurchasebillpaymenttiming",
+            "type": "string"
+          },
+          "insuranceRefiBillPaymentTiming": {
+            "default": "inside_refi_closing",
+            "description": "Where the insurance bill at the refi is paid: 'inside_refi_closing' = a line of the refi settlement, off both cash-out wires; 'outside_refi_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_refi_closing",
+              "outside_refi_closing"
+            ],
+            "title": "Insurancerefibillpaymenttiming",
+            "type": "string"
+          },
+          "insurance_bill_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill at the refi actually used, in dollars: the input, or the insurance bill at purchase when null.",
+            "title": "Insurance Bill At Refi Effective"
           },
           "interestRate": {
             "anyOf": [
@@ -5824,7 +6458,7 @@
           },
           "maintenanceReserve": {
             "default": "1500",
-            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Maintenancereserve",
             "type": "string"
@@ -5844,12 +6478,69 @@
             "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
             "title": "Messages"
           },
+          "monthlyInsuranceAfterRefi": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi (cash flow, PITIA, DSCR), in dollars. None = the insurance bill at the refi / 12.",
+            "title": "Monthlyinsuranceafterrefi"
+          },
+          "monthlyInsuranceUntilRefi": {
+            "default": "0",
+            "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthlyinsuranceuntilrefi",
+            "type": "string"
+          },
+          "monthlyPropertyTaxBucketDeposit": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deposit into the property's tax bucket on each 15th until the refi, in dollars. None = formula: (this year's bill x 0.96 - the seller tax credit already in the bucket) / the 15ths left until Nov 30.",
+            "title": "Monthlypropertytaxbucketdeposit"
+          },
           "monthlyUtilitiesUntilRented": {
             "default": "80",
             "description": "Electric, water and lawn per month while vacant, in dollars.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monthlyutilitiesuntilrented",
             "type": "string"
+          },
+          "monthly_insurance_after_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi actually used, in dollars: the input, or the insurance bill at the refi / 12 when null.",
+            "title": "Monthly Insurance After Refi Effective"
+          },
+          "monthly_property_tax_after_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property tax per month in a regular year after the refi, in dollars: this year's bill x 0.96 / 12 (paid on Nov 30 with the November discount).",
+            "title": "Monthly Property Tax After Refi"
           },
           "montly_hoa": {
             "anyOf": [
@@ -6036,8 +6727,31 @@
                 "type": "null"
               }
             ],
-            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
             "title": "Prepaid Interest Refi"
+          },
+          "propertyTaxCollectionAtRefi": {
+            "default": "no_tax_collected_at_refi",
+            "description": "'no_tax_collected_at_refi' = the owner's tax bucket keeps paying the Nov 30 bill; 'full_tax_bill_collected_at_refi' = the refi lender collects the whole bill as a lump (off both wires) and the bucket balance at the refi comes back to the owner.",
+            "enum": [
+              "no_tax_collected_at_refi",
+              "full_tax_bill_collected_at_refi"
+            ],
+            "title": "Propertytaxcollectionatrefi",
+            "type": "string"
+          },
+          "propertyTaxLumpSumAtRefiClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. None = this year's bill (annual_property_taxes).",
+            "title": "Propertytaxlumpsumatreficlosing"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -6051,6 +6765,54 @@
             ],
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
+          },
+          "property_tax_bucket_balance_released_at_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax bucket's balance that comes back to the owner when the refi lender collects the whole bill, in dollars (lowers total_cash_invested). 0 otherwise.",
+            "title": "Property Tax Bucket Balance Released At Refi"
+          },
+          "property_tax_bucket_deposit_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the property's tax bucket on each 15th until the refi actually used, in dollars: the input, or (this year's bill x 0.96 - the seller credit set aside) / the 15ths left until Nov 30 when null.",
+            "title": "Property Tax Bucket Deposit Effective"
+          },
+          "property_tax_lump_sum_at_refi_closing_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi lender collects, in dollars: 0 unless the full bill is collected at the refi; then the input, or this year's bill when null.",
+            "title": "Property Tax Lump Sum At Refi Closing Effective"
+          },
+          "property_tax_paid_into_bucket_until_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Every deposit into the property's tax bucket from the purchase to the refi, in dollars.",
+            "title": "Property Tax Paid Into Bucket Until Refi"
           },
           "purchasePrice": {
             "anyOf": [
@@ -6195,6 +6957,19 @@
             "title": "Rehabcushion",
             "type": "string"
           },
+          "rehab_completed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
+            "title": "Rehab Completed Date"
+          },
           "rent": {
             "anyOf": [
               {
@@ -6223,6 +6998,18 @@
             ],
             "title": "Rent Comps"
           },
+          "reserves_funded_from_own_pocket_at_lowest_arv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reserves the lowest-ARV wire cannot fund, in dollars: max(0, reserves_total - max(0, cash_out_routi_conservative)). Part of Cash Needed.",
+            "title": "Reserves Funded From Own Pocket At Lowest Arv"
+          },
           "reserves_total": {
             "anyOf": [
               {
@@ -6232,7 +7019,7 @@
                 "type": "null"
               }
             ],
-            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "description": "Reserves the owner sets aside at the refi, in dollars: maintenance + vacancy + capex + the HYSA deposit. Not taken off the wire; they lower cash_out (money that stays in the deal) and count as equity.",
             "title": "Reserves Total"
           },
           "roi": {
@@ -6268,8 +7055,21 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "sellerTaxCreditAtPurchaseClosing": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. None = formula: this year's bill (annual_property_taxes) prorated by the closing date.",
+            "title": "Sellertaxcreditatpurchaseclosing"
           },
           "seller_tax_credit": {
             "anyOf": [
@@ -6280,7 +7080,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "sold_comps": {
@@ -6337,7 +7137,7 @@
           },
           "surveyFee": {
             "default": "385",
-            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common). Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Surveyfee",
             "type": "string"
@@ -6436,7 +7236,7 @@
                 "type": "null"
               }
             ],
-            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase when paid outside the closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + HOA until refi + insurance paid monthly until refi + the tax-bucket deposits until refi + any Nov 30 shortfall topped up + utilities until rented + maintenance before refi + appliances + appraisal and survey (paid outside the refi closing) + the insurance bill at refi when paid outside the closing - pre-refi rent - the tax-bucket balance released when the refi lender collects the whole bill.",
             "title": "Total Cash Invested"
           },
           "total_cash_needed_for_deal": {
@@ -6448,7 +7248,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -6504,7 +7304,7 @@
                 "type": "null"
               }
             ],
-            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "description": "Vacancy reserve the owner sets aside at the refi, in dollars. None = formula: one month of gross rent.",
             "title": "Vacancyreserve"
           },
           "vacancy_reserve_effective": {
@@ -7280,7 +8080,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -7297,7 +8097,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "bathrooms": {
@@ -7787,7 +8587,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "Annual insurance expense (BRRRR: the insurance bill at the purchase closing)",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -7801,7 +8601,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "Annual property taxes (BRRRR: this year's bill, paid on Nov 30)",
             "title": "Annual Property Taxes"
           },
           "annualized_roi": {
@@ -12684,7 +13484,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual insurance expense",
+            "description": "The insurance bill at the purchase closing (the annual premium), in dollars. Where it is paid is set by insurancePurchaseBillPaymentTiming; it is also the default of the bill at the refi.",
             "title": "Annual Insurance"
           },
           "annual_property_taxes": {
@@ -12698,7 +13498,7 @@
               }
             ],
             "default": "0.0",
-            "description": "Annual property taxes",
+            "description": "This year's property tax bill (ad valorem + non-ad valorem), in dollars. Paid on Nov 30 with the 4% November discount: drives the seller tax credit, the tax-bucket deposits until the refi and, x 0.96 / 12, the regular-year monthly tax after it.",
             "title": "Annual Property Taxes"
           },
           "appliances": {
@@ -12726,7 +13526,7 @@
               }
             ],
             "default": "700",
-            "description": "Refi appraisal, in dollars.",
+            "description": "Refi appraisal, in dollars. Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Appraisalfee"
           },
           "arv_in_thousands": {
@@ -12794,7 +13594,7 @@
               }
             ],
             "default": "2500",
-            "description": "CapEx reserve escrowed at refi, in dollars.",
+            "description": "CapEx reserve the owner sets aside at the refi, in dollars.",
             "title": "Capexreserve"
           },
           "cashReserve": {
@@ -12859,6 +13659,12 @@
             "title": "Daysuntilrefi",
             "type": "integer"
           },
+          "daysUntilRehabCompleted": {
+            "default": 45,
+            "description": "Whole days from the purchase close until the rehab is complete. Must fall between the purchase close and the tenant-occupied day (0 <= days <= daysUntilRented).",
+            "title": "Daysuntilrehabcompleted",
+            "type": "integer"
+          },
           "daysUntilRented": {
             "default": 90,
             "description": "Whole days from the purchase close until a tenant occupies. Rent from then to the refi offsets holding costs.",
@@ -12905,6 +13711,58 @@
             "default": "0.0",
             "description": "Hard money lender points (percentage)",
             "title": "Hmlpoints"
+          },
+          "hysaDepositAtRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the high-yield savings account at the refi, the fourth reserve, in dollars. None = formula: 3 months of the DSCR loan's principal and interest.",
+            "title": "Hysadepositatrefi"
+          },
+          "insuranceBillAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill paid at the refi, in dollars. None = the insurance bill at purchase (annual_insurance).",
+            "title": "Insurancebillatreficlosing"
+          },
+          "insurancePurchaseBillPaymentTiming": {
+            "default": "inside_purchase_closing",
+            "description": "Where the insurance bill at purchase (annual_insurance) is paid: 'inside_purchase_closing' = a line of the purchase settlement, in Cash to Close (Buy); 'outside_purchase_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_purchase_closing",
+              "outside_purchase_closing"
+            ],
+            "title": "Insurancepurchasebillpaymenttiming",
+            "type": "string"
+          },
+          "insuranceRefiBillPaymentTiming": {
+            "default": "inside_refi_closing",
+            "description": "Where the insurance bill at the refi is paid: 'inside_refi_closing' = a line of the refi settlement, off both cash-out wires; 'outside_refi_closing' = paid separately, in Total Cash Invested.",
+            "enum": [
+              "inside_refi_closing",
+              "outside_refi_closing"
+            ],
+            "title": "Insurancerefibillpaymenttiming",
+            "type": "string"
           },
           "interestRate": {
             "anyOf": [
@@ -13020,8 +13878,54 @@
               }
             ],
             "default": "1500",
-            "description": "Maintenance reserve escrowed by the refi lender, in dollars. Recoverable: reduces the wire, counts as equity.",
+            "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
+          },
+          "monthlyInsuranceAfterRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi (cash flow, PITIA, DSCR), in dollars. None = the insurance bill at the refi / 12.",
+            "title": "Monthlyinsuranceafterrefi"
+          },
+          "monthlyInsuranceUntilRefi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
+            "title": "Monthlyinsuranceuntilrefi"
+          },
+          "monthlyPropertyTaxBucketDeposit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deposit into the property's tax bucket on each 15th until the refi, in dollars. None = formula: (this year's bill x 0.96 - the seller tax credit already in the bucket) / the 15ths left until Nov 30.",
+            "title": "Monthlypropertytaxbucketdeposit"
           },
           "monthlyUtilitiesUntilRented": {
             "anyOf": [
@@ -13148,6 +14052,32 @@
             ],
             "description": "What the other refi closing costs are for (free text).",
             "title": "Otherclosingcostsrefinote"
+          },
+          "propertyTaxCollectionAtRefi": {
+            "default": "no_tax_collected_at_refi",
+            "description": "'no_tax_collected_at_refi' = the owner's tax bucket keeps paying the Nov 30 bill; 'full_tax_bill_collected_at_refi' = the refi lender collects the whole bill as a lump (off both wires) and the bucket balance at the refi comes back to the owner.",
+            "enum": [
+              "no_tax_collected_at_refi",
+              "full_tax_bill_collected_at_refi"
+            ],
+            "title": "Propertytaxcollectionatrefi",
+            "type": "string"
+          },
+          "propertyTaxLumpSumAtRefiClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. None = this year's bill (annual_property_taxes).",
+            "title": "Propertytaxlumpsumatreficlosing"
           },
           "property_managment_fee_precentages_from_rent": {
             "anyOf": [
@@ -13300,8 +14230,24 @@
                 "type": "null"
               }
             ],
-            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true only for a December closing. Sets the direction of the seller tax credit.",
+            "description": "Whether the seller already paid this year's property tax bill (billed in November). None = auto: true for an October to December closing (the title takes this year's bill at closing). Sets the direction of the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15.",
             "title": "Sellerpaidcurrentyeartaxes"
+          },
+          "sellerTaxCreditAtPurchaseClosing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. None = formula: this year's bill (annual_property_taxes) prorated by the closing date.",
+            "title": "Sellertaxcreditatpurchaseclosing"
           },
           "surveyFee": {
             "anyOf": [
@@ -13314,7 +14260,7 @@
               }
             ],
             "default": "385",
-            "description": "Survey, in dollars ($385 / $450 / $485 are common).",
+            "description": "Survey, in dollars ($385 / $450 / $485 are common). Paid outside the refi closing at the end of the rehab: in Total Cash Invested, not in the refi closing costs.",
             "title": "Surveyfee"
           },
           "titleEscrowBuy": {
@@ -13392,7 +14338,7 @@
                 "type": "null"
               }
             ],
-            "description": "Vacancy reserve escrowed at refi, in dollars. None = formula: one month of gross rent.",
+            "description": "Vacancy reserve the owner sets aside at the refi, in dollars. None = formula: one month of gross rent.",
             "title": "Vacancyreserve"
           }
         },
@@ -13411,6 +14357,18 @@
       "analyzeBRRRRes": {
         "description": "Result of the BRRRR (buy, rehab, rent, refinance, repeat) calculation. All money in plain dollars.",
         "properties": {
+          "appraisal_and_survey_paid_outside_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Appraisal + survey, in dollars: paid outside the refi closing at the end of the rehab, so in total_cash_invested and not in the refi closing costs.",
+            "title": "Appraisal And Survey Paid Outside Closing"
+          },
           "breakdowns": {
             "anyOf": [
               {
@@ -13430,7 +14388,7 @@
             "title": "Breakdowns"
           },
           "cash_flow": {
-            "description": "Monthly cash flow after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes, insurance, HOA and the new mortgage payment. Negative = the property costs money every month.",
+            "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
           },
@@ -13455,7 +14413,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
+            "description": "Cash out from the deal, in dollars: the total cash received from the deal (the refinance wire, see cash_out_routi) MINUS the reserves the owner sets aside at the refi (reserves_total: money that stays in the deal) MINUS the total cash put into it before the refinance (total_cash_invested). Negative means that much of your own money is still left in the deal (e.g. -26587 = $26,587 left in); positive means you took out more than you invested.",
             "title": "Cash Out"
           },
           "cash_out_routi": {
@@ -13467,7 +14425,7 @@
                 "type": "null"
               }
             ],
-            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs, refi prepaid interest and the reserves. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
+            "description": "'Routi': the cash wire received at the refinance closing table, in dollars: the new loan (ARV x LTV) minus the hard-money payoff, refi closing costs and refi prepaid interest: the 'Due to Borrower' line of the refi settlement statement. The reserves are the owner's own money and are not taken off it. Gross, before subtracting what was invested (that subtraction is cash_out). Negative = cash brought to the table.",
             "title": "Cash Out Routi"
           },
           "cash_out_routi_conservative": {
@@ -13491,7 +14449,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
+            "description": "Cash wired to the title company on purchase day, in dollars: down payment + buy closing costs (including the insurance bill when paid inside the closing) + hard-money points + prepaid interest (buy) - seller tax credit - earnest money deposit.",
             "title": "Cash To Close Buy"
           },
           "cash_to_refi_table_conservative": {
@@ -13515,7 +14473,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other.",
+            "description": "Sum of the buy closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + other + the insurance bill when paid inside the purchase closing.",
             "title": "Closing Costs Buy Total"
           },
           "closing_costs_refi_total": {
@@ -13527,7 +14485,7 @@
                 "type": "null"
               }
             ],
-            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + appraisal + survey + underwriting + broker points + processing + other.",
+            "description": "Sum of the refi closing-cost lines, in dollars: loan charges + recording/transfer + title/escrow + online notary + underwriting + broker points + processing + other + the insurance bill when paid inside the refi closing + the tax lump when the refi lender collects the whole bill. The appraisal and the survey are paid outside the closing and are not here.",
             "title": "Closing Costs Refi Total"
           },
           "deed_transfer_tax_buy": {
@@ -13563,7 +14521,7 @@
                 "type": "null"
               }
             ],
-            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the recoverable reserves.",
+            "description": "Equity after the refinance, in dollars: ARV minus the new loan balance, plus the reserves the owner set aside (released with confidence at a sale).",
             "title": "Equity"
           },
           "hml_amount": {
@@ -13589,6 +14547,30 @@
             ],
             "description": "Hard-money payoff at the refi, in dollars: principal plus the interest accrued since the 1st of the refi month.",
             "title": "Hml Payoff"
+          },
+          "hysa_deposit_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "HYSA deposit at the refi actually used, in dollars: the input, or 3 months of the DSCR loan's principal and interest when null.",
+            "title": "Hysa Deposit At Refi Effective"
+          },
+          "insurance_bill_at_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance bill at the refi actually used, in dollars: the input, or the insurance bill at purchase when null.",
+            "title": "Insurance Bill At Refi Effective"
           },
           "lowest_arv_effective": {
             "anyOf": [
@@ -13616,6 +14598,30 @@
             ],
             "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
             "title": "Messages"
+          },
+          "monthly_insurance_after_refi_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Insurance per month in a regular year after the refi actually used, in dollars: the input, or the insurance bill at the refi / 12 when null.",
+            "title": "Monthly Insurance After Refi Effective"
+          },
+          "monthly_property_tax_after_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Property tax per month in a regular year after the refi, in dollars: this year's bill x 0.96 / 12 (paid on Nov 30 with the November discount).",
+            "title": "Monthly Property Tax After Refi"
           },
           "net_profit": {
             "anyOf": [
@@ -13662,8 +14668,56 @@
                 "type": "null"
               }
             ],
-            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (365-day year). 0 when no buy closing date is set.",
+            "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
             "title": "Prepaid Interest Refi"
+          },
+          "property_tax_bucket_balance_released_at_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax bucket's balance that comes back to the owner when the refi lender collects the whole bill, in dollars (lowers total_cash_invested). 0 otherwise.",
+            "title": "Property Tax Bucket Balance Released At Refi"
+          },
+          "property_tax_bucket_deposit_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deposit into the property's tax bucket on each 15th until the refi actually used, in dollars: the input, or (this year's bill x 0.96 - the seller credit set aside) / the 15ths left until Nov 30 when null.",
+            "title": "Property Tax Bucket Deposit Effective"
+          },
+          "property_tax_lump_sum_at_refi_closing_effective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tax lump the refi lender collects, in dollars: 0 unless the full bill is collected at the refi; then the input, or this year's bill when null.",
+            "title": "Property Tax Lump Sum At Refi Closing Effective"
+          },
+          "property_tax_paid_into_bucket_until_refi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Every deposit into the property's tax bucket from the purchase to the refi, in dollars.",
+            "title": "Property Tax Paid Into Bucket Until Refi"
           },
           "purchase_loan_amount": {
             "anyOf": [
@@ -13714,6 +14768,31 @@
             "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
             "title": "Refi Closing Date"
           },
+          "rehab_completed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
+            "title": "Rehab Completed Date"
+          },
+          "reserves_funded_from_own_pocket_at_lowest_arv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reserves the lowest-ARV wire cannot fund, in dollars: max(0, reserves_total - max(0, cash_out_routi_conservative)). Part of Cash Needed.",
+            "title": "Reserves Funded From Own Pocket At Lowest Arv"
+          },
           "reserves_total": {
             "anyOf": [
               {
@@ -13723,7 +14802,7 @@
                 "type": "null"
               }
             ],
-            "description": "Reserves escrowed at refi, in dollars: maintenance + vacancy + capex. Recoverable, counted as equity.",
+            "description": "Reserves the owner sets aside at the refi, in dollars: maintenance + vacancy + capex + the HYSA deposit. Not taken off the wire; they lower cash_out (money that stays in the deal) and count as equity.",
             "title": "Reserves Total"
           },
           "roi": {
@@ -13747,7 +14826,7 @@
                 "type": "null"
               }
             ],
-            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (December closing, taxes already paid). 0 when no buy closing date is set. A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
+            "description": "Property-tax proration on the purchase settlement, in dollars. Positive = the seller credits the buyer for the days they owned this year (taxes still unpaid, billed in November); negative = the buyer credits the seller (an October to December closing by default, taxes already paid). The typed sellerTaxCreditAtPurchaseClosing when given, else the proration (0 when no buy closing date is set). A positive credit is set aside in the property's tax bucket the day after closing, so it lowers cash_to_close_buy but not total_cash_invested or Cash Needed; a negative one is a real cost.",
             "title": "Seller Tax Credit"
           },
           "stolen_money": {
@@ -13808,7 +14887,7 @@
                 "type": "null"
               }
             ],
-            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + holding costs + utilities until rented + maintenance before refi + appliances - pre-refi rent.",
+            "description": "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase when paid outside the closing + rehab paid beyond the construction budget (negative when the budget exceeds the rehab) + monthly hard-money interest + HOA until refi + insurance paid monthly until refi + the tax-bucket deposits until refi + any Nov 30 shortfall topped up + utilities until rented + maintenance before refi + appliances + appraisal and survey (paid outside the refi closing) + the insurance bill at refi when paid outside the closing - pre-refi rent - the tax-bucket balance released when the refi lender collects the whole bill.",
             "title": "Total Cash Invested"
           },
           "total_cash_needed_for_deal": {
@@ -13820,7 +14899,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative (the cash brought to the refi table if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + rehab cushion + one month of utilities and of taxes, insurance and HOA (30 days) + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {

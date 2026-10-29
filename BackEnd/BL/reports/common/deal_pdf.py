@@ -216,13 +216,18 @@ def _link(destination: str, text_markup: str) -> str:
 class _NamedDestinationsFlowable(Flowable):
     """Zero-size marker: registers PDF named destinations at this spot, the targets of links and bookmarks."""
 
+    # Not 0: ReportLab fits a zero-height flowable into a full frame, so the marker stayed at the
+    # bottom of one page while the block it names moved to the next, and the bookmark landed a page early.
+    HEIGHT_THAT_MOVES_WITH_THE_BLOCK = 0.01
+
     def __init__(self, destination_names: list[str]):
         super().__init__()
         self.destination_names = destination_names
-        self.width = self.height = 0
+        self.width = 0
+        self.height = self.HEIGHT_THAT_MOVES_WITH_THE_BLOCK
 
     def wrap(self, available_width, available_height):
-        return 0, 0
+        return 0, self.HEIGHT_THAT_MOVES_WITH_THE_BLOCK
 
     def draw(self):
         for destination_name in self.destination_names:

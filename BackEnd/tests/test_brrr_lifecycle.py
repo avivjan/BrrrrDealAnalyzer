@@ -51,11 +51,16 @@ class TestTaxProration:
         # Jan 1 .. Jun 30 = 181 days of a 365-day year
         assert deal_math.calc_seller_tax_credit(self.T, date(2026, 7, 1), False) == self.T * 181 / 365
 
-    def test_november_defaults_to_unpaid_and_the_override_flips_it(self, brrrr_payload):
-        november_auto = _compute(brrrr_payload, buyClosingDate="2026-11-20")
-        assert november_auto.seller_paid_current_year_taxes is False and november_auto.seller_tax_credit > 0
-        november_paid_override = _compute(brrrr_payload, buyClosingDate="2026-11-20", sellerPaidCurrentYearTaxes=True)
-        assert november_paid_override.seller_paid_current_year_taxes is True and november_paid_override.seller_tax_credit < 0
+    def test_september_defaults_to_unpaid_october_to_paid_and_the_override_flips_it(self, brrrr_payload):
+        september_auto = _compute(brrrr_payload, buyClosingDate="2026-09-30")
+        assert september_auto.seller_paid_current_year_taxes is False and september_auto.seller_tax_credit > 0
+        # From October the title takes this year's bill at closing: the seller has paid it.
+        october_auto = _compute(brrrr_payload, buyClosingDate="2026-10-01")
+        assert october_auto.seller_paid_current_year_taxes is True and october_auto.seller_tax_credit < 0
+        september_paid_override = _compute(brrrr_payload, buyClosingDate="2026-09-30", sellerPaidCurrentYearTaxes=True)
+        assert september_paid_override.seller_paid_current_year_taxes is True and september_paid_override.seller_tax_credit < 0
+        november_unpaid_override = _compute(brrrr_payload, buyClosingDate="2026-11-20", sellerPaidCurrentYearTaxes=False)
+        assert november_unpaid_override.seller_paid_current_year_taxes is False and november_unpaid_override.seller_tax_credit > 0
 
     def test_december_reverses_the_credit(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-12-15")
@@ -74,15 +79,16 @@ class TestTaxProration:
 
     def test_a_positive_seller_tax_credit_lowers_cash_to_close_but_not_cash_needed(self, brrrr_payload):
         # The seller's share comes off the wire and goes into the property's tax bucket the day after,
-        # so taxes reach Cash Needed only through the holding costs, never through the credit.
+        # so taxes reach Cash Needed only through the bucket deposits, never through the credit.
         with_taxes = _compute(brrrr_payload, buyClosingDate="2026-07-01")
         without_taxes = _compute(brrrr_payload, buyClosingDate="2026-07-01", annual_property_taxes=0)
         assert with_taxes.seller_tax_credit > 0 and without_taxes.seller_tax_credit == 0
         assert with_taxes.seller_tax_credit_set_aside_in_tax_bucket == with_taxes.seller_tax_credit
         assert with_taxes.cash_to_close_buy == without_taxes.cash_to_close_buy - with_taxes.seller_tax_credit
-        holding_costs_of_the_taxes = with_taxes.holding_costs - without_taxes.holding_costs
-        assert with_taxes.total_cash_invested == without_taxes.total_cash_invested + holding_costs_of_the_taxes
-        assert with_taxes.total_cash_needed == without_taxes.total_cash_needed + holding_costs_of_the_taxes
+        tax_deposits_until_refi = with_taxes.property_tax_paid_into_bucket_until_refi
+        assert tax_deposits_until_refi > 0 and without_taxes.property_tax_paid_into_bucket_until_refi == 0
+        _assert_equal_to_the_cent(with_taxes.total_cash_invested, without_taxes.total_cash_invested + tax_deposits_until_refi)
+        _assert_equal_to_the_cent(with_taxes.total_cash_needed, without_taxes.total_cash_needed + tax_deposits_until_refi)
 
     def test_a_december_reimbursement_stays_in_cash_needed(self, brrrr_payload):
         seller_paid = _compute(brrrr_payload, buyClosingDate="2026-12-15")
@@ -93,8 +99,10 @@ class TestTaxProration:
         # The reimbursement raises the wire by |credit| and the unpaid credit lowers it by its own amount...
         assert seller_paid.cash_to_close_buy == seller_unpaid.cash_to_close_buy + both_prorations
         # ...but only the reimbursement reaches Cash Needed: the unpaid credit is put back into the bucket.
-        assert seller_paid.total_cash_invested == seller_unpaid.total_cash_invested - seller_paid.seller_tax_credit
-        assert seller_paid.total_cash_needed == seller_unpaid.total_cash_needed - seller_paid.seller_tax_credit
+        # (Each bucket fills to the same next Nov 30 bill, so the deposits differ by the credit already in it.)
+        deposits_difference = seller_paid.property_tax_paid_into_bucket_until_refi - seller_unpaid.property_tax_paid_into_bucket_until_refi
+        _assert_equal_to_the_cent(seller_paid.total_cash_invested,
+                                  seller_unpaid.total_cash_invested - seller_paid.seller_tax_credit + deposits_difference)
 
     def test_the_tax_bucket_is_zero_without_a_closing_date(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate=None)
@@ -125,10 +133,18 @@ class TestInterestTimeline:
         assert results.hml_interest_paid_monthly == results.hml_interest
         assert results.refi_closing_date is None and results.prepaid_interest_refi == 0 and results.seller_tax_credit == 0
 
-    def test_refi_prepaid_interest_uses_the_refi_loan_and_a_365_day_year(self, brrrr_payload):
+    def test_refi_prepaid_interest_uses_the_refi_loan_and_a_360_day_year(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=181)  # refi Jul 10 -> 22 days
         assert results.dscr_interest_days_prepaid_at_refi_closing == 22
-        assert results.prepaid_interest_refi == results.refi_loan_amount * Decimal(brrrr_payload["interestRate"]) * 22 / 365 / 100
+        assert results.prepaid_interest_refi == results.refi_loan_amount * Decimal(brrrr_payload["interestRate"]) * 22 / 360 / 100
+
+    @pytest.mark.parametrize("refi_loan_amount, interest_rate, days, expected_prepaid_interest", [
+        (Decimal("212300"), Decimal("6.75"), 15, Decimal("597.09")),    # 10th St: refi 07/17, $39.8063/day
+        (Decimal("172500"), Decimal("7.625"), 1, Decimal("36.54")),     # Ridgeway: refi 08/31, $36.54/day
+    ])
+    def test_refi_prepaid_interest_matches_the_refi_settlement_statements(self, refi_loan_amount, interest_rate, days, expected_prepaid_interest):
+        prepaid_interest = deal_math.calc_prepaid_interest_refi(refi_loan_amount, interest_rate, days)
+        assert prepaid_interest.quantize(Decimal("0.01")) == expected_prepaid_interest
 
     def test_the_payoff_carries_the_accrued_interest(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=181)
@@ -177,7 +193,8 @@ class TestBuySettlementLines:
     def test_closing_costs_total_and_cash_to_close(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10")
         assert results.closing_costs_buy_total == (Decimal(brrrr_payload["loanChargesBuy"]) + results.recording_transfer_buy
-                                             + results.title_escrow_buy + results.notary_buy + Decimal(brrrr_payload["otherClosingCostsBuy"]))
+                                             + results.title_escrow_buy + results.notary_buy + Decimal(brrrr_payload["otherClosingCostsBuy"])
+                                             + Decimal(brrrr_payload["annual_insurance"]))
         assert results.cash_to_close_buy == (results.down_payment_cash + results.closing_costs_buy_total + results.hml_points
                                        + results.prepaid_interest_buy - results.seller_tax_credit - Decimal(brrrr_payload["earnestMoneyDeposit"]))
 
@@ -228,11 +245,13 @@ class TestHoldingIncomeAndCosts:
 
     def test_rent_offsets_and_items_add_to_the_cash_invested(self, brrrr_payload):
         results = _compute(brrrr_payload)
-        assert results.total_cash_invested == (Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy
-                                         + results.seller_tax_credit_set_aside_in_tax_bucket + results.rehab_paid_cash_out_of_pocket
-                                         + results.hml_interest_paid_monthly + results.holding_costs + results.utilities_until_rented
-                                         + Decimal(brrrr_payload["maintenanceBeforeRefi"]) + Decimal(brrrr_payload["appliances"])
-                                         - results.pre_refi_rental_income)
+        _assert_equal_to_the_cent(results.total_cash_invested, (
+            Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy
+            + results.seller_tax_credit_set_aside_in_tax_bucket + results.rehab_paid_cash_out_of_pocket
+            + results.hml_interest_paid_monthly + results.hoa_dues_until_refi + results.property_tax_paid_into_bucket_until_refi
+            + results.utilities_until_rented + Decimal(brrrr_payload["maintenanceBeforeRefi"]) + Decimal(brrrr_payload["appliances"])
+            + Decimal(brrrr_payload["appraisalFee"]) + Decimal(brrrr_payload["surveyFee"])
+            - results.pre_refi_rental_income))
 
 
 class TestLegacyHardMoneyFlagShim:
@@ -260,8 +279,9 @@ class TestRefinanceSettlement:
         results = _compute(brrrr_payload)
         payload = brrrr_payload
         assert results.closing_costs_refi_total == (Decimal(payload["loanChargesRefi"]) + results.recording_transfer_refi + results.title_escrow_refi
-                                              + results.notary_refi + Decimal(payload["appraisalFee"]) + Decimal(payload["surveyFee"]) + Decimal(payload["refiUnderwritingFee"])
-                                              + results.broker_points_refi + Decimal(payload["brokerProcessingFeeRefi"]) + Decimal(payload["otherClosingCostsRefi"]))
+                                              + results.notary_refi + Decimal(payload["refiUnderwritingFee"])
+                                              + results.broker_points_refi + Decimal(payload["brokerProcessingFeeRefi"]) + Decimal(payload["otherClosingCostsRefi"])
+                                              + results.insurance_bill_at_refi_inside_closing)
         assert results.recording_transfer_refi == Decimal("0.0055") * results.refi_loan_amount + 250
         assert results.title_escrow_refi == 800 + Decimal("0.0045") * results.refi_loan_amount
         assert results.broker_points_refi == Decimal(payload["refiPoints"]) / 100 * results.refi_loan_amount
@@ -276,9 +296,10 @@ class TestRefinanceSettlement:
         assert _compute(brrrr_payload, vacancyReserve=None).vacancy_reserve == Decimal(brrrr_payload["rent"])
         assert _compute(brrrr_payload, vacancyReserve=0).vacancy_reserve == 0
 
-    def test_reserves_reduce_the_wire_and_count_as_equity(self, brrrr_payload):
+    def test_reserves_stay_off_the_wire_lower_the_cash_out_and_count_as_equity(self, brrrr_payload):
         without_capex_reserve, with_capex_reserve = _compute(brrrr_payload, capexReserve=0), _compute(brrrr_payload, capexReserve=4000)
-        assert with_capex_reserve.cash_out_routi == without_capex_reserve.cash_out_routi - 4000
+        assert with_capex_reserve.cash_out_routi == without_capex_reserve.cash_out_routi
+        assert with_capex_reserve.cash_out == without_capex_reserve.cash_out - 4000
         assert with_capex_reserve.equity == without_capex_reserve.equity + 4000
         assert with_capex_reserve.net_profit == without_capex_reserve.net_profit
 
@@ -307,7 +328,8 @@ class TestLowestArvStressTest:
         results = _compute(brrrr_payload)
         assert results.cash_out_routi_conservative <= results.cash_out_routi
         assert results.cash_to_refi_table_conservative == max(Decimal(0), -results.cash_out_routi_conservative)
-        assert results.cash_needed_through_refi == results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
+        assert results.cash_needed_through_refi == (results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
+                                                    + results.reserves_funded_from_own_pocket_at_lowest_arv)
 
 
 SCENARIOS = {
@@ -318,7 +340,14 @@ SCENARIOS = {
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
     "shortfall": {"arv_in_thousands": 250, "maintenanceReserve": 30_000},
     "tenant_after_refi": {"daysUntilRented": 400},
-    "same_month": {"buyClosingDate": "2026-03-20", "daysUntilRefi": 5, "daysUntilRented": 0},
+    "same_month": {"buyClosingDate": "2026-03-20", "daysUntilRefi": 5, "daysUntilRented": 0, "daysUntilRehabCompleted": 0},
+    "insurance_and_taxes_outside_and_lump": {"insurancePurchaseBillPaymentTiming": "outside_purchase_closing",
+                                             "insuranceRefiBillPaymentTiming": "outside_refi_closing", "monthlyInsuranceUntilRefi": 90,
+                                             "propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi"},
+    "hold_spans_november_30": {"buyClosingDate": "2026-08-20", "daysUntilRefi": 200,
+                               "propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi"},
+    "typed_tax_and_insurance": {"sellerTaxCreditAtPurchaseClosing": 120.45, "monthlyPropertyTaxBucketDeposit": 250,
+                                "insuranceBillAtRefiClosing": 2410.01, "monthlyInsuranceAfterRefi": 200.83, "hysaDepositAtRefi": 3000},
 }
 
 
@@ -348,15 +377,20 @@ class TestReconcileIdentities:
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
     def test_refi_settlement_reconciles(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
-        _assert_equal_to_the_cent(results.refi_loan_amount, results.hml_payoff + results.closing_costs_refi_total + results.prepaid_interest_refi + results.reserves_total + results.cash_out_routi)
+        # The wire is the settlement statement's "Due to Borrower": the reserves are not a settlement line.
+        _assert_equal_to_the_cent(results.refi_loan_amount, results.hml_payoff + results.closing_costs_refi_total + results.prepaid_interest_refi + results.cash_out_routi)
         _assert_equal_to_the_cent(results.conservative_refi_loan_amount, results.hml_payoff + results.closing_costs_refi_total_conservative
-              + results.prepaid_interest_refi_conservative + results.reserves_total + results.cash_out_routi_conservative)
+              + results.prepaid_interest_refi_conservative + results.cash_out_routi_conservative)
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
     def test_cash_identities(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
-        _assert_equal_to_the_cent(results.cash_out, results.cash_out_routi - results.total_cash_invested)
-        _assert_equal_to_the_cent(results.cash_needed_through_refi - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative, results.total_cash_invested)
+        _assert_equal_to_the_cent(results.cash_out, results.cash_out_routi - results.reserves_total - results.total_cash_invested)
+        _assert_equal_to_the_cent(results.cash_needed_through_refi - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative
+                                  - results.reserves_funded_from_own_pocket_at_lowest_arv, results.total_cash_invested)
+        # The old engine took the reserves off the lowest-ARV wire; the cash it then needed is unchanged.
+        _assert_equal_to_the_cent(results.cash_to_refi_table_conservative + results.reserves_funded_from_own_pocket_at_lowest_arv,
+                                  max(Decimal(0), results.reserves_total - results.cash_out_routi_conservative))
         _assert_equal_to_the_cent(results.total_cash_needed, max(results.cash_needed_floor, results.cash_needed_through_refi))
         assert results.stolen_money == results.construction_budget - results.rehab_cost == -results.rehab_paid_cash_out_of_pocket
 
@@ -381,7 +415,8 @@ class TestCashNeededFloor:
         assert results.hml_interest_days_prepaid_at_purchase_closing == 22
         assert results.hml_interest_first_month_days == 8
         rest_of_first_month_of_hml_interest = results.hml_per_diem * 8
-        one_month_of_taxes_insurance_and_hoa = results.monthly_taxes + results.monthly_insurance + Decimal(brrrr_payload["montly_hoa"])
+        one_month_of_taxes_insurance_and_hoa = (results.property_tax_bucket_deposit + Decimal(brrrr_payload.get("monthlyInsuranceUntilRefi", 0))
+                                                + Decimal(brrrr_payload["montly_hoa"]))
         _assert_equal_to_the_cent(results.hml_interest_first_month, rest_of_first_month_of_hml_interest)
         _assert_equal_to_the_cent(results.holding_costs_first_month, one_month_of_taxes_insurance_and_hoa)
         _assert_equal_to_the_cent(

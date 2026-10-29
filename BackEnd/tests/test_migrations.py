@@ -95,13 +95,22 @@ class TestBrrrLifecycleMigration:
             assert migrated_row["maintenance_reserve"] == Decimal("1500")
             assert migrated_row["capex_reserve"] == Decimal("2500")
             assert migrated_row["other_closing_costs_buy"] == 0 and migrated_row["other_closing_costs_refi"] == 0
+            # Deal reconciliation inputs: every existing deal takes 45 days to the rehab completion,
+            # pays its insurance bills through the closings and keeps its own tax bucket.
+            assert migrated_row["days_until_rehab_completed"] == 45
+            assert migrated_row["monthly_insurance_until_refi"] == 0
+            assert migrated_row["insurance_purchase_bill_payment_timing"] == "inside_purchase_closing"
+            assert migrated_row["insurance_refi_bill_payment_timing"] == "inside_refi_closing"
+            assert migrated_row["property_tax_collection_at_refi"] == "no_tax_collected_at_refi"
 
     def test_formula_defaults_stay_null_and_the_date_stays_unknown(self, legacy_rows):
         run_migrations(app_db.engine)
         migrated_row = _row_by_address("active_deals", "HM Rehab")
         for column in ("buy_closing_date", "recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
                        "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands",
-                       "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note"):
+                       "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note",
+                       "seller_tax_credit_at_purchase_closing", "monthly_property_tax_bucket_deposit", "insurance_bill_at_refi_closing",
+                       "monthly_insurance_after_refi", "property_tax_lump_sum_at_refi_closing", "hysa_deposit_at_refi"):
             assert migrated_row[column] is None, column
 
     def test_construction_budget_mirrors_the_legacy_hard_money_flag(self, legacy_rows, brrrr_payload):

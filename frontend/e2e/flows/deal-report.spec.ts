@@ -82,7 +82,7 @@ test('generating a report with every result previews the interactive report, who
 
   const report = page.frameLocator('[data-testid="mydeals.report-modal.iframe"]');
   await expect(report.locator('h2').first()).toHaveText('How Cash Flow is calculated');
-  await expect(report.locator('#result-0 .headline')).toHaveText('$85.04');
+  await expect(report.locator('#result-0 .headline')).toHaveText('$97.04'); // a regular year's tax is the bill × 0.96 ÷ 12
   // A second-level row starts closed, as in the popup; a tap opens it in place, another closes it.
   // The row's own <details>: the parent of the summary whose label is Operating Expenses.
   const operatingExpenses = report.locator('#result-0 summary', { has: report.locator('.label', { hasText: /^Operating Expenses$/ }) }).first().locator('..');

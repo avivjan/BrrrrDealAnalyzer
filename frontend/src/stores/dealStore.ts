@@ -35,7 +35,7 @@ export const useDealStore = defineStore('deals', () => {
     const numDoors = broughtBrrr.length;
     let totalValue = 0;
     let totalDebt = 0;
-    // Cash escrowed at refi is recoverable, so per-deal equity is
+    // The reserves the owner sets aside at refi are released at a sale, so per-deal equity is
     // ARV × (1 − LTV) + reserve (see brrrSteps/equity_and_net_profit.py);
     // the portfolio total counts it the same way.
     let totalReserve = 0;

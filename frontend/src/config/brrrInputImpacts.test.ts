@@ -22,6 +22,8 @@ const RESULT_KEYS: Array<keyof BrrrAnalyzeRes> = [
   "total_cash_invested", "cash_to_close_buy", "purchase_loan_amount", "hml_amount", "hml_payoff", "total_hard_money_cost",
   "prepaid_interest_buy", "seller_tax_credit", "closing_costs_buy_total", "deed_transfer_tax_buy", "stolen_money", "pre_refi_rental_income",
   "closing_costs_refi_total", "prepaid_interest_refi", "reserves_total",
+  "reserves_funded_from_own_pocket_at_lowest_arv", "property_tax_paid_into_bucket_until_refi",
+  "property_tax_bucket_balance_released_at_refi", "appraisal_and_survey_paid_outside_closing", "rehab_completed_date",
 ];
 
 describe("brrrInputImpacts", () => {

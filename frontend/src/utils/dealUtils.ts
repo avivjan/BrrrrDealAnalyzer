@@ -115,12 +115,17 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   otherClosingCostsBuy: 0,
   otherClosingCostsBuyNote: null,
   sellerPaidCurrentYearTaxes: null,
+  sellerTaxCreditAtPurchaseClosing: null,
+  insurancePurchaseBillPaymentTiming: "inside_purchase_closing" as const,
   constructionLoanBudget: 0,
   rehabCushion: 5000,
+  daysUntilRehabCompleted: 45,
   daysUntilRented: 90,
   monthlyUtilitiesUntilRented: 80,
   maintenanceBeforeRefi: 500,
   appliances: 630,
+  monthlyInsuranceUntilRefi: 0,
+  monthlyPropertyTaxBucketDeposit: null,
   loanChargesRefi: 200,
   recordingTransferRefi: null,
   titleEscrowRefi: null,
@@ -132,9 +137,15 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   brokerProcessingFeeRefi: 0,
   otherClosingCostsRefi: 0,
   otherClosingCostsRefiNote: null,
+  insuranceBillAtRefiClosing: null,
+  insuranceRefiBillPaymentTiming: "inside_refi_closing" as const,
+  monthlyInsuranceAfterRefi: null,
+  propertyTaxCollectionAtRefi: "no_tax_collected_at_refi" as const,
+  propertyTaxLumpSumAtRefiClosing: null,
   maintenanceReserve: 1500,
   vacancyReserve: null,
   capexReserve: 2500,
+  hysaDepositAtRefi: null,
   lowestArv: null,
 };
 
@@ -261,12 +272,16 @@ Closing Costs (Buy): ${formatMoney(brrr.closing_costs_buy_total)} (loan charges 
 Actual Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}
 Construction Loan Budget: ${formatMoney(toNumber(brrr.constructionLoanBudget) !== undefined ? Number(brrr.constructionLoanBudget) * 1000 : undefined)}
 Rehab Cushion: ${formatMoney(brrr.rehabCushion)}
+Days until Rehab Completed: ${brrr.daysUntilRehabCompleted ?? "-"} (completed ${brrr.rehab_completed_date || "-"})
 Days until Rented: ${brrr.daysUntilRented ?? "-"} (utilities ${formatMoney(brrr.monthlyUtilitiesUntilRented)}/mo, maintenance before refi ${formatMoney(brrr.maintenanceBeforeRefi)}, appliances ${formatMoney(brrr.appliances)})
+Property Tax Bill (this year): ${formatMoney(brrr.annual_property_taxes)} (bucket deposit ${formatMoney(brrr.property_tax_bucket_deposit_effective)} each 15th, ${formatMoney(brrr.property_tax_paid_into_bucket_until_refi)} until refi; at refi: ${brrr.propertyTaxCollectionAtRefi === "full_tax_bill_collected_at_refi" ? `lender collects ${formatMoney(brrr.property_tax_lump_sum_at_refi_closing_effective)}, bucket returns ${formatMoney(brrr.property_tax_bucket_balance_released_at_refi)}` : "my bucket pays Nov 30"}; regular year ${formatMoney(brrr.monthly_property_tax_after_refi)}/mo)
+Insurance: bill at purchase ${formatMoney(brrr.annual_insurance)} (${brrr.insurancePurchaseBillPaymentTiming === "outside_purchase_closing" ? "outside" : "inside"} the closing), ${formatMoney(brrr.monthlyInsuranceUntilRefi)}/mo until refi, bill at refi ${formatMoney(brrr.insurance_bill_at_refi_effective)} (${brrr.insuranceRefiBillPaymentTiming === "outside_refi_closing" ? "outside" : "inside"} the closing), regular year ${formatMoney(brrr.monthly_insurance_after_refi_effective)}/mo
 Rent: ${formatMoney(brrr.rent)}
 Days until Refi: ${brrr.daysUntilRefi ?? "-"} (refi ${brrr.refi_closing_date || "-"})
 ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)} (lowest ${formatMoney(brrr.lowest_arv_effective)})
-Closing Costs (Refi): ${formatMoney(brrr.closing_costs_refi_total)} (broker points ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts, appraisal ${formatMoney(brrr.appraisalFee)}, survey ${formatMoney(brrr.surveyFee)}, underwriting ${formatMoney(brrr.refiUnderwritingFee)}, processing ${formatMoney(brrr.brokerProcessingFeeRefi)})
-Reserves at Refi: ${formatMoney(brrr.reserves_total)} (maintenance ${formatMoney(brrr.maintenanceReserve)}, vacancy ${formatMoney(brrr.vacancy_reserve_effective)}, capex ${formatMoney(brrr.capexReserve)})
+Closing Costs (Refi): ${formatMoney(brrr.closing_costs_refi_total)} (broker points ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts, underwriting ${formatMoney(brrr.refiUnderwritingFee)}, processing ${formatMoney(brrr.brokerProcessingFeeRefi)})
+Paid outside the refi closing: appraisal ${formatMoney(brrr.appraisalFee)}, survey ${formatMoney(brrr.surveyFee)}
+Reserves set aside at Refi: ${formatMoney(brrr.reserves_total)} (maintenance ${formatMoney(brrr.maintenanceReserve)}, vacancy ${formatMoney(brrr.vacancy_reserve_effective)}, capex ${formatMoney(brrr.capexReserve)}, HYSA ${formatMoney(brrr.hysa_deposit_at_refi_effective)})
 `;
       analysis = `
 Analysis Results (BRRRR)

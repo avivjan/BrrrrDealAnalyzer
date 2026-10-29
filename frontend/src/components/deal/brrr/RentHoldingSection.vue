@@ -1,13 +1,21 @@
 <script setup lang="ts">
-/** BRRRR › Rent & Holding: the tenant, the pre-refi rent, and the carrying costs. */
-import { computed } from "vue";
-import type { DealInputModel } from "../../../types";
+/**
+ * BRRRR › Rent & Holding: the tenant, the pre-refi rent, and the carrying costs until the refi.
+ *
+ * Taxes and insurance are paid as the bills and deposits they really are: this year's tax bill
+ * fills the property's tax bucket on each 15th, and the insurance bill at purchase is paid inside
+ * or outside that closing. Their regular-year monthly figures (after the refi) are on Refinance.
+ */
+import { computed, useId } from "vue";
+import type { DealInputModel, InsurancePurchaseBillPaymentTiming } from "../../../types";
 import { useDealField, type NumericKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
 import NumberInput from "../../ui/NumberInput.vue";
+import AutoDefaultMoneyInput from "../../ui/AutoDefaultMoneyInput.vue";
+import InputInfo from "../../ui/InputInfo.vue";
 import DaysOrDateField from "../../ui/DaysOrDateField.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
@@ -20,6 +28,21 @@ const props = defineProps<{
 }>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
+
+const insurancePurchaseBillPaymentTimingId = useId();
+const onInsurancePurchaseBillPaymentTiming = (event: Event) => {
+  props.deal.insurancePurchaseBillPaymentTiming = (event.target as HTMLSelectElement).value as InsurancePurchaseBillPaymentTiming;
+};
+const taxBucketDepositHint = computed(() => {
+  const depositsUntilRefi = autoCalc.value.propertyTaxBucketFirstBillDepositCountUntilRefi;
+  const depositsUntilNovember30 = autoCalc.value.propertyTaxBucketDepositCountUntilFirstPayment;
+  if (depositsUntilRefi == null) return undefined;
+  if (depositsUntilNovember30 == null) return `no closing date: one deposit every 30 days until the refi`;
+  return `${depositsUntilRefi} of ${depositsUntilNovember30} deposits (each 15th to Nov 30) fall before the refi`;
+});
+const insuranceUntilRefiNote = computed(() =>
+  autoCalc.value.insurancePaidMonthlyUntilRefi ? `= ${formatMoney(autoCalc.value.insurancePaidMonthlyUntilRefi)}` : undefined,
+);
 
 const preRefiRentHint = computed(() =>
   autoCalc.value.daysRentedBeforeRefi == null ? undefined
@@ -83,18 +106,51 @@ const preRefiRentHint = computed(() =>
         :error-message="fieldErrorMessages?.annual_property_taxes"
         :model-value="field.get('annual_property_taxes')"
         @update:model-value="(v: number | null) => field.set('annual_property_taxes', v)"
-        label="Annual Taxes"
+        label="Property Tax Bill (this year)"
         :needed-to-run-analysis="true"
         :info="impactText('annual_property_taxes')"
+        :note="autoCalc.monthlyPropertyTaxAfterRefi == null ? undefined : `× 0.96 on Nov 30`"
       />
+      <div class="flex flex-col gap-1">
+        <AutoDefaultMoneyInput
+          data-testid="form.field.monthlyPropertyTaxBucketDeposit"
+          :error-message="fieldErrorMessages?.monthlyPropertyTaxBucketDeposit"
+          :model-value="field.getNullable('monthlyPropertyTaxBucketDeposit')"
+          :computed-default="autoCalc.propertyTaxBucketDepositDefault"
+          @update:model-value="(v: number | null) => field.setNullable('monthlyPropertyTaxBucketDeposit', v)"
+          label="Tax Bucket Deposit (each 15th)"
+          :info="impactText('monthlyPropertyTaxBucketDeposit')"
+        />
+        <p v-if="taxBucketDepositHint" data-testid="form.auto.taxBucketDepositCount" class="numeric text-xs text-fg-muted">{{ taxBucketDepositHint }}</p>
+      </div>
       <MoneyInput
         data-testid="form.field.annual_insurance"
         :error-message="fieldErrorMessages?.annual_insurance"
         :model-value="field.get('annual_insurance')"
         @update:model-value="(v: number | null) => field.set('annual_insurance', v)"
-        label="Annual Insurance"
+        label="Insurance Bill at Purchase"
         :needed-to-run-analysis="true"
         :info="impactText('annual_insurance')"
+      />
+      <div class="flex flex-col gap-1.5" data-testid="form.field.insurancePurchaseBillPaymentTiming">
+        <div data-part="label-row" class="flex h-5 items-center gap-1">
+          <label :for="insurancePurchaseBillPaymentTimingId" data-part="label" class="text-sm font-medium leading-5 text-fg">Insurance Bill Paid</label>
+          <InputInfo :content="impactText('insurancePurchaseBillPaymentTiming')" field-label="Insurance Bill Paid" />
+        </div>
+        <select :id="insurancePurchaseBillPaymentTimingId" data-part="select" class="ui-select"
+                :value="deal.insurancePurchaseBillPaymentTiming ?? 'inside_purchase_closing'" @change="onInsurancePurchaseBillPaymentTiming">
+          <option value="inside_purchase_closing">Inside the purchase closing</option>
+          <option value="outside_purchase_closing">Outside the purchase closing</option>
+        </select>
+      </div>
+      <MoneyInput
+        data-testid="form.field.monthlyInsuranceUntilRefi"
+        :error-message="fieldErrorMessages?.monthlyInsuranceUntilRefi"
+        :model-value="field.get('monthlyInsuranceUntilRefi')"
+        @update:model-value="(v: number | null) => field.set('monthlyInsuranceUntilRefi', v)"
+        label="Insurance per Month until Refi"
+        :info="impactText('monthlyInsuranceUntilRefi')"
+        :note="insuranceUntilRefiNote"
       />
       <MoneyInput
         data-testid="form.field.montly_hoa"

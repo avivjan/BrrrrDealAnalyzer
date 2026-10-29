@@ -21,6 +21,7 @@ import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
 import NumberInput from "../../ui/NumberInput.vue";
+import DaysOrDateField from "../../ui/DaysOrDateField.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
 
@@ -103,6 +104,18 @@ const stolenLabel = computed(() =>
         @update:model-value="(v: number | null) => field.set('rehabCushion', v)"
         label="Rehab Cushion"
         :info="impactText('rehabCushion')"
+      />
+      <DaysOrDateField
+        data-testid="form.field.daysUntilRehabCompleted"
+        :error-message="fieldErrorMessages?.daysUntilRehabCompleted"
+        :model-value="field.get('daysUntilRehabCompleted')"
+        @update:model-value="(v: number | null) => field.set('daysUntilRehabCompleted', v)"
+        label="Until Rehab Completed"
+        date-label="Rehab completed"
+        :anchor-date="field.getStr('buyClosingDate')"
+        :min="0"
+        :info="impactText('daysUntilRehabCompleted')"
+        note="≤ tenant occupied"
       />
     </div>
     <template #footer>

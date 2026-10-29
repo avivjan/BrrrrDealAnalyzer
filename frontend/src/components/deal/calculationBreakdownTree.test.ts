@@ -144,7 +144,8 @@ describe("calculationBreakdownTree against the backend's recorded breakdown", ()
     // The top-up is a max(), not a sum: it expands into its formula, which names the floor.
     const floorTopUp = byLabel(rows, "Floor Top-Up");
     expect(floorTopUp.linkedStep?.terms).toBeFalsy();
-    expect(floorTopUp.linkedStep?.formula).toContain("the floor ($55,244.57)");
+    // The $1,200 insurance bill sits in Cash to Close; the first month carries one $306.11 tax deposit, not $400 of per-diem taxes and insurance.
+    expect(floorTopUp.linkedStep?.formula).toContain("the floor ($56,350.68)");
     const throughRefi = byLabel(rows, "Cash Needed through Refi");
     expect(throughRefi.linkedStep?.label).toBe("Cash Needed through Refi");
     const throughRefiRows = rowsOfStep(throughRefi.linkedStep!, breakdowns, section, throughRefi.path, new Set());

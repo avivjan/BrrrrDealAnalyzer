@@ -1,5 +1,6 @@
-"""BRRRR step: hard-money points and interest (with its three-way split), and every holding-period
-cost and income accrued before the refi."""
+"""BRRRR step: hard-money points and interest (with its three-way split), and the holding-period
+costs and income accrued day by day before the refi. Taxes and insurance are not accrued here: they
+are paid as the bills and deposits they really are (`property_tax_bucket.py`, `insurance.py`)."""
 
 from decimal import Decimal
 from typing import NamedTuple
@@ -14,7 +15,7 @@ class HmlAndHoldingCosts(NamedTuple):
     prepaid_interest_buy: Decimal         # collected at the buy closing
     hml_interest_paid_monthly: Decimal    # paid on the 1st of each month
     hml_interest_accrued_into_refi_payoff: Decimal
-    holding_costs: Decimal                # taxes + insurance + HOA until the refi
+    hoa_dues_until_refi: Decimal          # HOA, accrued per diem until the refi
     utilities_until_rented: Decimal
     pre_refi_rental_income: Decimal
 
@@ -28,7 +29,7 @@ def hml_and_holding_costs_step(payload, hml_amount, timeline) -> HmlAndHoldingCo
     hml_interest_accrued_into_refi_payoff = calc_hml_interest(hml_amount, hml_annual_interest_rate_percent, timeline.hml_interest_days_accrued_into_refi_payoff)
     # The remainder, so the three slices always add back to the total exactly.
     hml_interest_paid_monthly = hml_interest - prepaid_interest_buy - hml_interest_accrued_into_refi_payoff
-    holding_costs = calc_holding_costs(payload.annual_property_taxes, payload.annual_insurance, payload.montly_hoa, payload.days_until_refi)
+    hoa_dues_until_refi = calc_holding_costs(Decimal("0"), Decimal("0"), payload.montly_hoa, payload.days_until_refi)
     utilities_until_rented = payload.monthly_utilities_until_rented * Decimal(payload.days_until_rented) / DAYS_PER_MONTH
     pre_refi_rental_income = payload.rent * Decimal(timeline.days_tenant_occupied_before_refi) / DAYS_PER_MONTH
     return HmlAndHoldingCosts(
@@ -38,7 +39,7 @@ def hml_and_holding_costs_step(payload, hml_amount, timeline) -> HmlAndHoldingCo
         prepaid_interest_buy=prepaid_interest_buy,
         hml_interest_paid_monthly=hml_interest_paid_monthly,
         hml_interest_accrued_into_refi_payoff=hml_interest_accrued_into_refi_payoff,
-        holding_costs=holding_costs,
+        hoa_dues_until_refi=hoa_dues_until_refi,
         utilities_until_rented=utilities_until_rented,
         pre_refi_rental_income=pre_refi_rental_income,
     )

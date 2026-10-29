@@ -9,13 +9,14 @@ import { fieldInput, openTabOf } from '../fixtures/form';
 
 /**
  * The Seller Tax Credit is a result with a pencil: typing the credit off the
- * settlement statement back-solves Annual Taxes, and the one shared field is
- * read in two places (the Buy clone beside the credit, the Rent & Holding box).
- * The fixture closes on 2026-09-04 (see `fixtures/clock.ts`): 246 seller days
- * of 365, so $3,600 of taxes is a $2,426.30 credit and a typed $4,852.60 is
- * $7,200 of taxes.
+ * settlement statement overrides the proration, and this year's tax bill (one
+ * shared field, read on the Buy tab beside the credit and on Rent & Holding)
+ * stays as typed, because the bill paid on Nov 30 is its own figure. "auto"
+ * puts the proration back. The fixture closes on 2026-09-04 (see
+ * `fixtures/clock.ts`): 246 seller days of 365, so a $3,600 bill prorates to a
+ * $2,426.30 credit.
  */
-test('typing the seller tax credit adjusts Annual Taxes in both places', async ({
+test('typing the seller tax credit overrides the proration and keeps the tax bill', async ({
   page,
 }) => {
   await page.goto('/analyze');
@@ -31,13 +32,20 @@ test('typing the seller tax credit adjusts Annual Taxes in both places', async (
   const box = figure.locator('[data-part="edit-input"]');
   await expect(box).toBeFocused();
   await box.press('ControlOrMeta+a');
-  await box.pressSequentially('4852.60');
+  await box.pressSequentially('2410.45');
   await box.press('Enter');
 
-  await expect(figure.locator('[data-part="value"]')).toHaveText('$4,852.60');
-  await expect(fieldInput(page, 'annualPropertyTaxesBuyClone')).toHaveValue('$7,200');
+  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,410.45');
+  await expect(fieldInput(page, 'annualPropertyTaxesBuyClone')).toHaveValue('$3,600');
+  const override = page.getByTestId('form.field.sellerTaxCreditAtPurchaseClosing');
+  await expect(override).toContainText('the proration gives $2,426.30');
 
-  // The Rent & Holding box is the same field, on another (hidden) tab.
+  // The Rent & Holding box is the same field, on another (hidden) tab: untouched.
   await openTabOf(page, 'annual_property_taxes');
-  await expect(fieldInput(page, 'annual_property_taxes')).toHaveValue('$7,200');
+  await expect(fieldInput(page, 'annual_property_taxes')).toHaveValue('$3,600');
+
+  await openTabOf(page, 'purchasePrice');
+  await override.locator('[data-part="reset"]').click();
+  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,426.30');
+  await expect(override).toHaveCount(0);
 });

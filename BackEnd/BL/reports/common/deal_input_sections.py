@@ -20,6 +20,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, Callable, Optional
 
+from BL.analyze.common.deal_math import seller_paid_current_year_taxes_by_default
 from BL.reports.common.deal_pdf import format_value_like_calculation_popup
 
 # -- the declarative map ---------------------------------------------------------------------------
@@ -76,13 +77,26 @@ def _has_buy_closing_date(inputs: DealInputs) -> bool:
 
 
 TITLE_MODE_BUY_LABELS = {"standard": "Standard (lender's policy)", "we_pay_all": "We pay all closing costs"}
+INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS = {"inside_purchase_closing": "Inside the purchase closing",
+                                                 "outside_purchase_closing": "Outside the purchase closing"}
+INSURANCE_REFI_BILL_PAYMENT_TIMING_LABELS = {"inside_refi_closing": "Inside the refi closing",
+                                             "outside_refi_closing": "Outside the refi closing"}
+PROPERTY_TAX_COLLECTION_AT_REFI_LABELS = {"no_tax_collected_at_refi": "My tax bucket pays the Nov 30 bill",
+                                          "full_tax_bill_collected_at_refi": "The refi lender collects the whole bill"}
+
+
+def _full_tax_bill_collected_at_refi(inputs: DealInputs) -> bool:
+    return inputs.get("propertyTaxCollectionAtRefi") == "full_tax_bill_collected_at_refi"
 
 BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
     DealInputSection("buy", "Buy", "home", (
         DealInputGroup(None, (
             DealInputField("buyClosingDate", "Closing Date (Buy)", "date"),
             DealInputField("sellerPaidCurrentYearTaxes", "Seller already paid this year's taxes", "yes_no",
-                           formula_hint="Auto: yes only for a December closing", shown_when=_has_buy_closing_date),
+                           formula_hint="Auto: yes for an October to December closing", shown_when=_has_buy_closing_date),
+            DealInputField("sellerTaxCreditAtPurchaseClosing", "Seller Tax Credit", "money",
+                           effective_result_key="seller_tax_credit",
+                           formula_hint="Formula: this year's tax bill prorated by the closing date"),
             DealInputField("purchasePrice", "Purchase Price", "money_in_thousands"),
             DealInputField("earnestMoneyDeposit", "Earnest Money Deposit", "money"),
         )),
@@ -114,6 +128,8 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
             DealInputField("constructionLoanBudget", "Construction Loan Budget", "money_in_thousands"),
             DealInputField("rehabContingency", "Contingency", "percent"),
             DealInputField("rehabCushion", "Rehab Cushion", "money"),
+            DealInputField("daysUntilRehabCompleted", "Until Rehab Completed", "days",
+                           linked_date_result_key="rehab_completed_date", linked_date_label="Rehab completed"),
         )),
     )),
     DealInputSection("rentHolding", "Rent & Holding", "key", (
@@ -125,9 +141,15 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
             DealInputField("maintenanceBeforeRefi", "Maintenance before Refi", "money"),
             DealInputField("appliances", "Appliances", "money"),
         )),
-        DealInputGroup("Holding Costs", (
-            DealInputField("annual_property_taxes", "Annual Taxes", "money", value_suffix="/yr"),
-            DealInputField("annual_insurance", "Annual Insurance", "money", value_suffix="/yr"),
+        DealInputGroup("Taxes, Insurance & HOA until Refi", (
+            DealInputField("annual_property_taxes", "Property Tax Bill (this year)", "money", value_suffix="/yr"),
+            DealInputField("monthlyPropertyTaxBucketDeposit", "Tax Bucket Deposit (each 15th)", "money", value_suffix="/mo",
+                           effective_result_key="property_tax_bucket_deposit_effective",
+                           formula_hint="Formula: (bill x 0.96 - the seller credit) / the 15ths left until Nov 30"),
+            DealInputField("annual_insurance", "Insurance Bill at Purchase", "money"),
+            DealInputField("insurancePurchaseBillPaymentTiming", "Insurance Bill Paid", "choice",
+                           choice_labels=INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS),
+            DealInputField("monthlyInsuranceUntilRefi", "Insurance per Month until Refi", "money", value_suffix="/mo"),
             DealInputField("montly_hoa", "Monthly HOA", "money", value_suffix="/mo"),
         )),
         DealInputGroup("Operating Expenses (% of rent)", (
@@ -159,20 +181,37 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
             DealInputField("onlineNotaryRefi", "Online notary", "yes_no"),
             DealInputField("onlineNotaryFeeRefi", "Notary fee", "money", constant_default_when_blank=250,
                            formula_hint="Default: $250", shown_when=_is_on("onlineNotaryRefi")),
-            DealInputField("appraisalFee", "Appraisal", "money"),
-            DealInputField("surveyFee", "Survey", "money"),
             DealInputField("refiUnderwritingFee", "Underwriting Fee", "money"),
             DealInputField("refiPoints", "Broker Points", "points"),
             DealInputField("brokerProcessingFeeRefi", "Broker Processing Fee", "money"),
             DealInputField("otherClosingCostsRefi", "Other Closing Costs (Refi)", "money"),
             DealInputField("otherClosingCostsRefiNote", "What the other refi closing costs are for", "text",
                            shown_when=_has_text("otherClosingCostsRefiNote")),
+            DealInputField("insuranceBillAtRefiClosing", "Insurance Bill at Refi", "money",
+                           effective_result_key="insurance_bill_at_refi_effective", formula_hint="Default: the insurance bill at purchase"),
+            DealInputField("insuranceRefiBillPaymentTiming", "Insurance Bill at Refi Paid", "choice",
+                           choice_labels=INSURANCE_REFI_BILL_PAYMENT_TIMING_LABELS),
+            DealInputField("propertyTaxCollectionAtRefi", "Property Tax at Refi", "choice",
+                           choice_labels=PROPERTY_TAX_COLLECTION_AT_REFI_LABELS),
+            DealInputField("propertyTaxLumpSumAtRefiClosing", "Tax Lump collected at Refi", "money",
+                           effective_result_key="property_tax_lump_sum_at_refi_closing_effective", formula_hint="Default: this year's tax bill",
+                           shown_when=_full_tax_bill_collected_at_refi),
         )),
-        DealInputGroup("Reserves escrowed at refi", (
+        DealInputGroup("Paid outside closing (end of rehab)", (
+            DealInputField("appraisalFee", "Appraisal", "money"),
+            DealInputField("surveyFee", "Survey", "money"),
+        )),
+        DealInputGroup("Regular year after the refi", (
+            DealInputField("monthlyInsuranceAfterRefi", "Insurance per Month after Refi", "money", value_suffix="/mo",
+                           effective_result_key="monthly_insurance_after_refi_effective", formula_hint="Default: the insurance bill at refi / 12"),
+        )),
+        DealInputGroup("Reserves you set aside at refi", (
             DealInputField("maintenanceReserve", "Maintenance Reserve", "money"),
             DealInputField("vacancyReserve", "Vacancy Reserve (1 month rent)", "money",
                            effective_result_key="vacancy_reserve_effective", formula_hint="Formula: one month of rent"),
             DealInputField("capexReserve", "CapEx Reserve", "money"),
+            DealInputField("hysaDepositAtRefi", "HYSA Deposit", "money",
+                           effective_result_key="hysa_deposit_at_refi_effective", formula_hint="Formula: 3 months of principal and interest"),
         )),
     )),
 )
@@ -329,7 +368,7 @@ def _resolve_row(input_field: DealInputField, inputs: DealInputs, result: Calcul
         hint = input_field.formula_hint
     elif input_field.payload_key == "sellerPaidCurrentYearTaxes" and raw_value is None:
         closing_date = _as_date(inputs.get("buyClosingDate"))
-        automatic_value = bool(closing_date and closing_date.month == 12)
+        automatic_value = bool(closing_date and seller_paid_current_year_taxes_by_default(closing_date))
         value_text = format_deal_input_value("yes_no", automatic_value)
         chips.extend(["auto", "yes" if automatic_value else "no"])
         hint = input_field.formula_hint
