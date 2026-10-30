@@ -8,7 +8,7 @@
  */
 import { computed, useId } from "vue";
 import type { DealInputModel, InsurancePurchaseBillPaymentTiming } from "../../../types";
-import { useDealField, type NumericKey } from "../../../composables/useDealField";
+import { useDealField, type DealInputFieldKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -24,7 +24,7 @@ const props = defineProps<{
   deal: DealInputModel;
   surface: "card" | "panel";
   /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
-  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+  fieldErrorMessages?: Partial<Record<DealInputFieldKey, string>>;
 }>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));

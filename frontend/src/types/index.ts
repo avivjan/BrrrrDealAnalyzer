@@ -76,7 +76,9 @@ export interface BrrrAnalyzeReq {
   // the formula"; the backend reports the value it used as `*_effective`.
 
   // Buy
-  /** ISO date of the purchase closing; null = unknown (date-driven figures left out). */
+  /** ISO date of the purchase contract (the earnest money is paid on it); required for BRRRR, on or before the buy closing. */
+  contractDate?: string | null;
+  /** ISO date of the purchase closing; required for BRRRR (every date of the deal derives from it). */
   buyClosingDate?: string | null;
   earnestMoneyDeposit?: number;
   loanChargesBuy?: number;

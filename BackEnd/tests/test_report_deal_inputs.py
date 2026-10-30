@@ -109,13 +109,11 @@ class TestResolvingTheUsersValues:
         rows = _resolved_rows("BRRRR", {"lowestArv": 250}, {"lowest_arv_effective": 250000})
         assert rows[("Refinance", "Lowest ARV Possible (stress test)")] == ("$250,000", (), None)
 
-    def test_seller_paid_taxes_is_auto_from_the_closing_month_and_hidden_without_a_date(self):
+    def test_seller_paid_taxes_is_auto_from_the_closing_month(self):
         december = _resolved_rows("BRRRR", {"buyClosingDate": "2026-12-15", "sellerPaidCurrentYearTaxes": None}, {})
         assert december[("Buy", "Seller already paid this year's taxes")][:2] == ("Yes", ("auto", "yes"))
         typed = _resolved_rows("BRRRR", {"buyClosingDate": "2026-03-01", "sellerPaidCurrentYearTaxes": True}, {})
         assert typed[("Buy", "Seller already paid this year's taxes")][:2] == ("Yes", ("yes",))
-        undated = _resolved_rows("BRRRR", {"buyClosingDate": None}, {})
-        assert ("Buy", "Seller already paid this year's taxes") not in undated
 
     def test_the_form_hides_a_notary_fee_with_the_notary_off_and_an_empty_note(self):
         rows = _resolved_rows("BRRRR", {"onlineNotaryBuy": False, "onlineNotaryRefi": True, "otherClosingCostsBuyNote": "",

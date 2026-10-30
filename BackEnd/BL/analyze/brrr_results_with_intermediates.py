@@ -6,7 +6,7 @@ only (inputs stay on the request payload). The explanation layer
 `tests/test_explain.py` fails if a field is added here and not explained there.
 
 All money is in plain dollars, as `Decimal`, unrounded. Day counts are ints, dates are
-`datetime.date` (None when the deal has no buy closing date). "Effective" means the user's
+`datetime.date` (every deal has a buy closing date). "Effective" means the user's
 value or the formula default when the input was left None.
 """
 
@@ -15,7 +15,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -35,10 +34,10 @@ class BrrrResultsWithIntermediates:
     hml_amount: Decimal             # purchase loan + construction budget; principal at payoff
 
     # -- timeline ---------------------------------------------------------------
-    buy_closing_date: Optional[date]
-    refi_closing_date: Optional[date]
-    tenant_occupied_date: Optional[date]
-    rehab_completed_date: Optional[date]
+    buy_closing_date: date
+    refi_closing_date: date
+    tenant_occupied_date: date
+    rehab_completed_date: date
     hml_interest_days_prepaid_at_purchase_closing: int
     hml_interest_days_paid_monthly: int
     hml_interest_days_accrued_into_refi_payoff: int
@@ -66,10 +65,10 @@ class BrrrResultsWithIntermediates:
 
     # -- the property's tax bucket, purchase to refi --------------------------
     property_tax_bill_paid_on_november_30: Decimal        # this year's bill x 0.96
-    first_property_tax_payment_date: Optional[date]       # the first Nov 30 the owner pays; None without a closing date
-    property_tax_bucket_deposit_count_until_first_payment: int    # the 15ths after closing through it (1 when none is left); 0 without a date
+    first_property_tax_payment_date: date                 # the first Nov 30 the owner pays
+    property_tax_bucket_deposit_count_until_first_payment: int    # the 15ths after closing through it (1 when none is left)
     property_tax_bucket_deposit: Decimal                  # effective: input or the formula
-    property_tax_bucket_first_bill_deposit_count_until_refi: Decimal   # of those deposits, the ones on or before the refi (days / 30 without a date)
+    property_tax_bucket_first_bill_deposit_count_until_refi: Decimal   # of those deposits, the ones on or before the refi
     property_tax_bucket_deposit_after_first_payment: Decimal      # bill x 0.96 / 12 after a Nov 30 inside the hold
     property_tax_bucket_later_deposit_count_until_refi: int
     property_tax_paid_into_bucket_until_refi: Decimal     # every deposit until the refi
@@ -83,8 +82,8 @@ class BrrrResultsWithIntermediates:
     title_escrow_buy: Decimal       # effective
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
-    seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
-    seller_tax_credit_formula: Decimal   # the proration by the closing date; 0 without a date
+    seller_paid_current_year_taxes: bool   # effective
+    seller_tax_credit_formula: Decimal   # the proration by the closing date
     seller_tax_credit: Decimal      # effective: input or the formula; positive = credit to the buyer
     seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): in the tax bucket the day after closing
     cash_to_close_buy: Decimal      # the wire on purchase day

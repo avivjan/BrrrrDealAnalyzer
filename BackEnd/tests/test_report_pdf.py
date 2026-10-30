@@ -480,7 +480,6 @@ class TestReportPdfRendersThePopups:
 BRRRR_BREAKDOWN_SCENARIOS = {
     "standard_with_closing_date": {},
     "we_pay_all_closing_costs": {"titleModeBuy": "we_pay_all"},
-    "no_buy_closing_date": {"buyClosingDate": None},
 }
 
 
@@ -502,7 +501,7 @@ def _step_by_label(breakdowns: dict, label: str) -> dict:
 class TestBreakdownExplanationsFromPr83ReachThePdf:
     """HML Interest paid monthly (a new step, now drillable from Total Cash Invested), the deed transfer
     tax's who-pays explanation and the title & escrow price tier: each in the PDF, word for word as the
-    popup shows it, for a standard deal, a we-pay-all deal and a deal without a buy closing date."""
+    popup shows it, for a standard deal, and a we-pay-all deal."""
 
     @pytest.mark.parametrize("scenario", list(BRRRR_BREAKDOWN_SCENARIOS))
     def test_hml_interest_paid_monthly_is_a_link_under_total_cash_invested_with_its_own_block(self, client, brrrr_payload, scenario):
@@ -518,10 +517,7 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         assert _normalize_like_pdf_text(step["formula"]) in text
         assert _normalize_like_pdf_text(step["note"]) in text
         assert "Monthly HML interest: per diem" in step["formula"]
-        if scenario == "no_buy_closing_date":
-            assert step["note"].startswith("No buy closing date")
-        else:
-            assert "paid from your pocket on the 1st of each month" in step["note"]
+        assert "paid from your pocket on the 1st of each month" in step["note"]
         # The bookmark tree nests it under Total Cash Invested.
         for index, (level, title) in enumerate(outline):
             if title == f"+ HML Interest paid monthly · {value_text}":

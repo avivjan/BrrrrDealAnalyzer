@@ -51,7 +51,7 @@ INSTRUCTIONS = (
     "(250 = $250k); rent, taxes, insurance, HOA, utilities and every BRRRR settlement line, holding "
     "item and reserve (earnestMoneyDeposit, loanChargesBuy, appraisalFee, maintenanceReserve...) are "
     "plain dollars; rates and fees are percentages (75 = 75%). Deal bodies use the camelCase aliases "
-    "shown in each schema. A BRRRR field described as 'None = formula' takes its formula default "
+    "shown in each schema. A BRRRR deal requires two ISO dates, contractDate and buyClosingDate (a missing one is a 422); they must hold contract <= buy closing <= rehab completed (buyClosingDate + daysUntilRehabCompleted) <= refi closing (buyClosingDate + daysUntilRefi), and rehab completed <= tenant occupied (buyClosingDate + daysUntilRented). A BRRRR field described as 'None = formula' takes its formula default "
     "when null (the result reports the value used as *_effective). For BRRRR deals closingCostsBuy, "
     "closingCostsRefi, cashReserve and use_HM_for_rehab are deprecated and ignored: use the granular "
     "closing-cost fields, the four reserves and constructionLoanBudget. "

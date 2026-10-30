@@ -123,12 +123,9 @@ class analyzeBRRRRes(BaseModel):
     reserves_total: Optional[float] = Field(None, description=(
         "Reserves the owner sets aside at the refi, in dollars: maintenance + vacancy + capex + the HYSA deposit. Not "
         "taken off the wire; they lower cash_out (money that stays in the deal) and count as equity."))
-    refi_closing_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until refi (ISO). Absent when no buy closing date is set."))
-    tenant_occupied_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until rented (ISO). Absent when no buy closing date is set."))
-    rehab_completed_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set."))
+    refi_closing_date: date = Field(..., description="Buy closing date + days until refi (ISO).")
+    tenant_occupied_date: date = Field(..., description="Buy closing date + days until rented (ISO).")
+    rehab_completed_date: date = Field(..., description="Buy closing date + days until rehab completed (ISO).")
     appraisal_and_survey_paid_outside_closing: Optional[float] = Field(None, description=(
         "Appraisal + survey, in dollars: paid outside the refi closing at the end of the rehab, so in "
         "total_cash_invested and not in the refi closing costs."))

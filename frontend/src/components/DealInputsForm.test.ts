@@ -11,6 +11,7 @@ import {
   DEFAULT_LTV_PERCENT,
   DEFAULT_REFI_POINTS,
   createEmptyDealForm,
+  defaultBuyClosingIsoDate,
   ensureBrrrLegacyDefaults,
   todayIsoDate,
 } from "../utils/dealUtils";
@@ -728,8 +729,10 @@ describe("DealInputsForm", () => {
       // Money defaults are in thousands: $5,000 buy / $10,000 refi closing.
       expect(deal.closingCostsBuy).toBe(5);
       expect(deal.closingCostsRefi).toBe(10);
-      // Lifecycle defaults (plain dollars unless noted), closing date = today.
-      expect(deal.buyClosingDate).toBe(todayIsoDate());
+      // Lifecycle defaults (plain dollars unless noted), contract = today, closing = today + 7.
+      expect(deal.contractDate).toBe(todayIsoDate());
+      expect(deal.buyClosingDate).toBe(defaultBuyClosingIsoDate());
+      expect(defaultBuyClosingIsoDate(new Date(2026, 11, 28))).toBe("2027-01-04");
       expect(deal).toMatchObject(BRRR_LIFECYCLE_DEFAULTS);
       expect(deal.recordingTransferBuy).toBeNull();
       expect(deal.lowestArv).toBeNull();

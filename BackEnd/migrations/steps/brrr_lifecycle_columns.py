@@ -12,8 +12,8 @@ model), with two exceptions that preserve what the deal already said:
 * `construction_loan_budget_in_thousands` mirrors the legacy `use_HM_for_rehab` flag: a
   hard-money-funded rehab becomes a budget equal to the rehab with its contingency, so the
   leverage (and the payoff at refi) is unchanged; a cash rehab becomes a 0 budget.
-* `buy_closing_date` stays NULL (unknown), which leaves every date-driven figure out until
-  the owner types the date.
+* `buy_closing_date` is added NULL here; `brrr_contract_date_and_required_buy_closing_date.py`
+  (run right after) fills it with the creation day + 7 and makes it mandatory.
 
 The backfill literal must equal the SQLAlchemy `default=` in
 `DAL/data_models/common/brrr_lifecycle.py` and the Pydantic default in

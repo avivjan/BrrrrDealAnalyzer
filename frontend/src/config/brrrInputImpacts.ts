@@ -55,6 +55,8 @@ const HOLDING_ITEM: BrrrOutputKey[] = ["total_cash_invested", ...CASH_METRICS];
 
 export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   // Buy
+  // The contract date moves no amount: it dates the earnest-money row of the Cash Needed schedule.
+  contractDate: ["total_cash_needed_for_deal"],
   buyClosingDate: ["prepaid_interest_buy", "seller_tax_credit", "cash_to_close_buy", "hml_payoff", "prepaid_interest_refi", "cash_out_routi", ...CASH_METRICS],
   purchasePrice: ["purchase_loan_amount", "hml_amount", "deed_transfer_tax_buy", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   down_payment: ["purchase_loan_amount", "hml_amount", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],

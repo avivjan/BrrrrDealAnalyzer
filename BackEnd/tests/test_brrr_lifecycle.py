@@ -23,17 +23,7 @@ def _compute(payload: dict, **overrides):
     return compute_brrr_with_intermediates(analyzeBRRRReq.model_validate({**payload, **overrides}))
 
 
-class TestLegacyParity:
-    """The refactor kept the core math: neutralise every new input and the legacy fixture
-    reproduces the figures pinned before the lifecycle engine, to the last digit."""
-
-    def test_reproduces_the_pinned_legacy_figures(self, legacy_brrrr_payload):
-        results = _compute(legacy_brrrr_payload)
-        assert results.total_cash_needed == Decimal("63525.0000")
-        assert results.cash_out_routi == Decimal("15400.000000")
-        assert results.cash_out == Decimal("-48125.000000")
-        assert float(results.cash_flow) == pytest.approx(85.03674361688704)
-
+class TestConstructionBudget:
     def test_zero_budget_is_the_cash_rehab_case(self, brrrr_payload):
         results = _compute(brrrr_payload, constructionLoanBudget=0)
         assert results.hml_amount == results.purchase_loan_amount
@@ -104,9 +94,6 @@ class TestTaxProration:
         _assert_equal_to_the_cent(seller_paid.total_cash_invested,
                                   seller_unpaid.total_cash_invested - seller_paid.seller_tax_credit + deposits_difference)
 
-    def test_the_tax_bucket_is_zero_without_a_closing_date(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate=None)
-        assert results.seller_tax_credit == 0 and results.seller_tax_credit_set_aside_in_tax_bucket == 0
 
 
 class TestInterestTimeline:
@@ -126,12 +113,6 @@ class TestInterestTimeline:
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=10, daysUntilRented=5)
         assert (results.hml_interest_days_prepaid_at_purchase_closing, results.hml_interest_days_paid_monthly, results.hml_interest_days_accrued_into_refi_payoff) == (10, 0, 0)
         assert results.hml_interest_paid_monthly == 0
-
-    def test_without_a_date_everything_is_paid_monthly(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate=None)
-        assert results.prepaid_interest_buy == 0 and results.hml_interest_accrued_into_refi_payoff == 0
-        assert results.hml_interest_paid_monthly == results.hml_interest
-        assert results.refi_closing_date is None and results.prepaid_interest_refi == 0 and results.seller_tax_credit == 0
 
     def test_refi_prepaid_interest_uses_the_refi_loan_and_a_360_day_year(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=181)  # refi Jul 10 -> 22 days
@@ -267,7 +248,8 @@ class TestLegacyHardMoneyFlagShim:
             current = {**self.STALE_PAYLOAD, lifecycle_key: 0}
             assert construction_budget_from_legacy_hm_flag(current) is current
         assert _compute({**self.STALE_PAYLOAD, "purchasePrice": 200, "arv_in_thousands": 320, "down_payment": 20, "HMLInterestRate": 11,
-                         "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600, "earnestMoneyDeposit": 5000}).construction_budget == 0
+                         "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600, "earnestMoneyDeposit": 5000,
+                         "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10"}).construction_budget == 0
 
     def test_an_explicit_budget_always_wins(self):
         with_budget = {**self.STALE_PAYLOAD, "constructionLoanBudget": 0}
@@ -334,7 +316,6 @@ class TestLowestArvStressTest:
 
 SCENARIOS = {
     "dated": {"buyClosingDate": "2026-01-10", "daysUntilRefi": 181},
-    "no_date": {"buyClosingDate": None},
     "december_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
     "cash_rehab": {"constructionLoanBudget": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
@@ -434,9 +415,6 @@ class TestCashNeededFloor:
         _assert_equal_to_the_cent(dated.prepaid_interest_buy + dated.hml_interest_first_month, dated.hml_per_diem * 30)
         closing_on_the_first = _compute(brrrr_payload, buyClosingDate="2026-03-01")   # 31 days prepaid: more than a month
         assert closing_on_the_first.hml_interest_first_month_days == 0 and closing_on_the_first.hml_interest_first_month == 0
-        undated = _compute(brrrr_payload, buyClosingDate=None)
-        assert undated.hml_interest_first_month_days == 30
-        _assert_equal_to_the_cent(undated.hml_interest_first_month, undated.hml_per_diem * 30)
 
     def test_cash_needed_is_unchanged_while_the_through_refi_figure_is_above_the_floor(self, brrrr_payload):
         results = _compute(brrrr_payload)

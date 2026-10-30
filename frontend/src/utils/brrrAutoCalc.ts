@@ -225,11 +225,11 @@ export interface BrrrAutoCalc {
   /** The bill × 0.96 paid on Nov 30. */
   propertyTaxBillPaidOnNovember30: number | null;
   firstPropertyTaxPaymentDate: string | null;
-  /** The 15ths after closing through the first Nov 30 (1 when none is left); null without a closing date. */
+  /** The 15ths after closing through the first Nov 30 (1 when none is left); null until the closing date is typed. */
   propertyTaxBucketDepositCountUntilFirstPayment: number | null;
   propertyTaxBucketDepositDefault: number | null;
   propertyTaxBucketDepositEffective: number | null;
-  /** Deposits of the first bill made on or before the refi (days ÷ 30 without a closing date). */
+  /** Deposits of the first bill made on or before the refi; null until the closing date is typed. */
   propertyTaxBucketFirstBillDepositCountUntilRefi: number | null;
   /** The regular-year tax after the refi: bill × 0.96 ÷ 12. */
   monthlyPropertyTaxAfterRefi: number | null;
@@ -356,15 +356,14 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     ? (propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay).length ? propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay) : [firstPaymentDay])
     : null;
   const propertyTaxBucketDepositCountUntilFirstPayment = firstBillDepositDates ? firstBillDepositDates.length : null;
-  const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 == null ? null
-    : propertyTaxBucketDepositCountUntilFirstPayment != null
-      ? Math.max(0, (propertyTaxBillPaidOnNovember30 - sellerTaxCreditSetAsideInTaxBucket) / propertyTaxBucketDepositCountUntilFirstPayment)
-      : monthlyPropertyTaxAfterRefi;
+  const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 != null && propertyTaxBucketDepositCountUntilFirstPayment != null
+    ? Math.max(0, (propertyTaxBillPaidOnNovember30 - sellerTaxCreditSetAsideInTaxBucket) / propertyTaxBucketDepositCountUntilFirstPayment)
+    : null;
   const propertyTaxBucketDepositEffective = deal.monthlyPropertyTaxBucketDeposit != null ? numberOrZero(deal.monthlyPropertyTaxBucketDeposit) : propertyTaxBucketDepositDefault;
   const refiClosingDayForTaxes = refiClosingDate ? parseIsoDate(refiClosingDate) : null;
-  const propertyTaxBucketFirstBillDepositCountUntilRefi = firstBillDepositDates
-    ? (refiClosingDayForTaxes ? firstBillDepositDates.filter((depositDate) => depositDate.getTime() <= refiClosingDayForTaxes.getTime()).length : null)
-    : daysUntilRefi != null ? daysUntilRefi / DAYS_PER_MONTH : null;
+  const propertyTaxBucketFirstBillDepositCountUntilRefi = firstBillDepositDates && refiClosingDayForTaxes
+    ? firstBillDepositDates.filter((depositDate) => depositDate.getTime() <= refiClosingDayForTaxes.getTime()).length
+    : null;
   const insurancePaidMonthlyUntilRefi = daysUntilRefi != null ? (numberOrZero(deal.monthlyInsuranceUntilRefi) * daysUntilRefi) / DAYS_PER_MONTH : null;
 
   // -- Rent & holding -----------------------------------------------------------

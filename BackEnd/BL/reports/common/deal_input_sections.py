@@ -72,10 +72,6 @@ def _is_on(payload_key: str) -> Callable[[DealInputs], bool]:
     return lambda inputs: bool(inputs.get(payload_key))
 
 
-def _has_buy_closing_date(inputs: DealInputs) -> bool:
-    return bool(inputs.get("buyClosingDate"))
-
-
 TITLE_MODE_BUY_LABELS = {"standard": "Standard (lender's policy)", "we_pay_all": "We pay all closing costs"}
 INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS = {"inside_purchase_closing": "Inside the purchase closing",
                                                  "outside_purchase_closing": "Outside the purchase closing"}
@@ -91,9 +87,10 @@ def _full_tax_bill_collected_at_refi(inputs: DealInputs) -> bool:
 BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
     DealInputSection("buy", "Buy", "home", (
         DealInputGroup(None, (
+            DealInputField("contractDate", "Contract Date", "date"),
             DealInputField("buyClosingDate", "Closing Date (Buy)", "date"),
             DealInputField("sellerPaidCurrentYearTaxes", "Seller already paid this year's taxes", "yes_no",
-                           formula_hint="Auto: yes for an October to December closing", shown_when=_has_buy_closing_date),
+                           formula_hint="Auto: yes for an October to December closing"),
             DealInputField("sellerTaxCreditAtPurchaseClosing", "Seller Tax Credit", "money",
                            effective_result_key="seller_tax_credit",
                            formula_hint="Formula: this year's tax bill prorated by the closing date"),

@@ -44,7 +44,6 @@ BRRRR_SCENARIOS = {
     "big_reserve": {"maintenanceReserve": 45000},
     "pitia_zero": {"arv_in_thousands": 0, "annual_property_taxes": 0, "annual_insurance": 0, "montly_hoa": 0},
     # lifecycle branches
-    "no_date": {"buyClosingDate": None},
     "december_paid_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
     "same_month_refi": {"buyClosingDate": "2026-03-20", "daysUntilRefi": 5, "daysUntilRented": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
@@ -474,7 +473,7 @@ def _step_by_label(breakdowns: dict, section_key: str, step_label: str) -> dict:
 class TestHmlInterestPaidMonthlyIsExplained:
     """The Total Cash Invested operand opens onto its own step: a month's interest × the months paid monthly."""
 
-    @pytest.mark.parametrize("scenario", ["base", "no_date", "same_month_refi"])
+    @pytest.mark.parametrize("scenario", ["base", "same_month_refi"])
     def test_monthly_interest_times_months(self, brrrr_payload, scenario):
         req, results_w_intermediates = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
         breakdowns = explain_brrr(req, results_w_intermediates)

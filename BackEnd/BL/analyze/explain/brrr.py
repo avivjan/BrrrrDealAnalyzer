@@ -92,11 +92,10 @@ def _default_note(user_value, what_it_is: str) -> str:
 
 def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, list[dict]]:
     breakdown = CalcBreakdown(results)
-    has_buy_closing_date = results.buy_closing_date is not None
-    # The derived dates read as text wherever they are known.
-    refi_date_suffix = f" on {results.refi_closing_date.isoformat()}" if results.refi_closing_date is not None else ""
-    tenant_date_suffix = f" (tenant from {results.tenant_occupied_date.isoformat()})" if results.tenant_occupied_date is not None else ""
-    rehab_completed_date_suffix = f" on {results.rehab_completed_date.isoformat()}" if results.rehab_completed_date is not None else ""
+    # The derived dates, as text.
+    refi_date_suffix = f" on {results.refi_closing_date.isoformat()}"
+    tenant_date_suffix = f" (tenant from {results.tenant_occupied_date.isoformat()})"
+    rehab_completed_date_suffix = f" on {results.rehab_completed_date.isoformat()}"
 
     # -- monthly cash flow: a regular year after the refi -------------------------
     check(results.property_tax_bill_paid_on_november_30 == payload.annual_property_taxes * PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR, "property tax bill paid on Nov 30")
@@ -194,11 +193,9 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     check(results.hml_interest_paid_monthly == results.hml_interest - results.prepaid_interest_buy - results.hml_interest_accrued_into_refi_payoff, "interest split")
     breakdown.add(
         CLOSE, "Prepaid Interest (Buy)", results.prepaid_interest_buy,
-        (f"Per diem ({fmt_money(results.hml_per_diem)}) × {results.hml_interest_days_prepaid_at_purchase_closing} days from {results.buy_closing_date.isoformat()} through month end = {fmt_money(results.prepaid_interest_buy)}"
-         if has_buy_closing_date else "No buy closing date → no prepaid interest is modelled ($0)"),
+        f"Per diem ({fmt_money(results.hml_per_diem)}) × {results.hml_interest_days_prepaid_at_purchase_closing} days from {results.buy_closing_date.isoformat()} through month end = {fmt_money(results.prepaid_interest_buy)}",
         note=(f"Interest is paid in arrears on the 1st: {results.hml_interest_days_prepaid_at_purchase_closing} days prepaid here, {results.hml_interest_days_paid_monthly} days paid monthly "
-              f"({fmt_money(results.hml_interest_paid_monthly)}), {results.hml_interest_days_accrued_into_refi_payoff} days inside the payoff ({fmt_money(results.hml_interest_accrued_into_refi_payoff)})."
-              if has_buy_closing_date else f"Without a closing date all {results.hml_interest_days_paid_monthly} days of interest are treated as paid monthly ({fmt_money(results.hml_interest_paid_monthly)})."),
+              f"({fmt_money(results.hml_interest_paid_monthly)}), {results.hml_interest_days_accrued_into_refi_payoff} days inside the payoff ({fmt_money(results.hml_interest_accrued_into_refi_payoff)})."),
     )
     # The part of the HML interest paid out of pocket on the 1st of each month: a month's interest
     # times the months it is paid for. Filed under the Total Cash Invested sections so that sum links it.
@@ -212,9 +209,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         note=(f"Of the HML Interest until refi ({fmt_money(results.hml_interest)}, {payload.days_until_refi} days): "
               f"− Prepaid Interest (Buy) {fmt_money(results.prepaid_interest_buy)} ({results.hml_interest_days_prepaid_at_purchase_closing} days, already in Cash to Close) "
               f"− Accrued Interest inside the HML payoff {fmt_money(results.hml_interest_accrued_into_refi_payoff)} ({results.hml_interest_days_accrued_into_refi_payoff} days, paid by the refi wire) "
-              f"= {fmt_money(results.hml_interest_paid_monthly)} paid from your pocket on the 1st of each month."
-              if has_buy_closing_date else
-              f"No buy closing date → all {results.hml_interest_days_paid_monthly} days of the HML Interest until refi ({fmt_money(results.hml_interest)}) are treated as paid monthly."),
+              f"= {fmt_money(results.hml_interest_paid_monthly)} paid from your pocket on the 1st of each month."),
     )
     breakdown.add_sum(HM_COST, "Total Hard Money Cost", results.total_hard_money_cost, [
         ("HML Points", results.hml_points),
@@ -268,17 +263,13 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Other", payload.other_closing_costs_buy),
         ("Insurance Bill (inside closing)", results.insurance_bill_at_purchase_inside_closing),
     ])
-    if has_buy_closing_date:
-        check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else seller_paid_current_year_taxes_by_default(results.buy_closing_date)), "seller paid taxes")
-        check(results.seller_tax_credit_formula == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
-        tax_formula = (
-            f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit_formula)}"
-            if results.seller_paid_current_year_taxes else
-            f"Taxes ({fmt_money(payload.annual_property_taxes)}) × seller's days (Jan 1 to the day before {results.buy_closing_date.isoformat()}) ÷ days in the year = {fmt_money(results.seller_tax_credit_formula)}"
-        )
-    else:
-        check(results.seller_paid_current_year_taxes is None and results.seller_tax_credit_formula == 0, "seller tax credit without date")
-        tax_formula = "No buy closing date → no tax proration is modelled ($0)"
+    check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else seller_paid_current_year_taxes_by_default(results.buy_closing_date)), "seller paid taxes")
+    check(results.seller_tax_credit_formula == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
+    tax_formula = (
+        f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit_formula)}"
+        if results.seller_paid_current_year_taxes else
+        f"Taxes ({fmt_money(payload.annual_property_taxes)}) × seller's days (Jan 1 to the day before {results.buy_closing_date.isoformat()}) ÷ days in the year = {fmt_money(results.seller_tax_credit_formula)}"
+    )
     check(results.seller_tax_credit == (results.seller_tax_credit_formula if payload.seller_tax_credit_at_purchase_closing is None else payload.seller_tax_credit_at_purchase_closing), "seller tax credit (effective)")
     if payload.seller_tax_credit_at_purchase_closing is not None:
         tax_formula = f"As entered from the settlement statement: {fmt_money(results.seller_tax_credit)} (the proration would give {fmt_money(results.seller_tax_credit_formula)})"
@@ -357,15 +348,11 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     )
     # -- the property's tax bucket, purchase to refi --------------------------------------
     full_tax_bill_collected_at_refi = payload.property_tax_collection_at_refi == "full_tax_bill_collected_at_refi"
-    if results.first_property_tax_payment_date is not None:
-        check(results.property_tax_bucket_deposit_count_until_first_payment >= 1, "tax bucket deposit count")
-        deposit_formula = (
-            f"(Bill × 0.96 ({fmt_money(results.property_tax_bill_paid_on_november_30)}) − Seller Tax Credit set aside ({fmt_money(results.seller_tax_credit_set_aside_in_tax_bucket)})) "
-            f"÷ {results.property_tax_bucket_deposit_count_until_first_payment} deposits on the 15ths through {results.first_property_tax_payment_date.isoformat()} = {fmt_money(results.property_tax_bucket_deposit)}"
-        )
-    else:
-        check(results.property_tax_bucket_deposit_count_until_first_payment == 0, "tax bucket deposit count without date")
-        deposit_formula = f"No buy closing date → Bill × 0.96 ({fmt_money(results.property_tax_bill_paid_on_november_30)}) ÷ 12 = {fmt_money(results.property_tax_bucket_deposit)}"
+    check(results.property_tax_bucket_deposit_count_until_first_payment >= 1, "tax bucket deposit count")
+    deposit_formula = (
+        f"(Bill × 0.96 ({fmt_money(results.property_tax_bill_paid_on_november_30)}) − Seller Tax Credit set aside ({fmt_money(results.seller_tax_credit_set_aside_in_tax_bucket)})) "
+        f"÷ {results.property_tax_bucket_deposit_count_until_first_payment} deposits on the 15ths through {results.first_property_tax_payment_date.isoformat()} = {fmt_money(results.property_tax_bucket_deposit)}"
+    )
     breakdown.add(
         [CASH_NEEDED, "cash_out"], "Tax Bucket Deposit (each 15th)", results.property_tax_bucket_deposit,
         deposit_formula if payload.monthly_property_tax_bucket_deposit is None else f"As entered: {fmt_money(results.property_tax_bucket_deposit)}",
@@ -376,9 +363,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     check(results.property_tax_paid_into_bucket_until_refi
           == results.property_tax_bucket_deposit * results.property_tax_bucket_first_bill_deposit_count_until_refi
           + results.property_tax_bucket_deposit_after_first_payment * Decimal(results.property_tax_bucket_later_deposit_count_until_refi), "tax paid into the bucket")
-    first_bill_deposit_count_text = (f"{int(results.property_tax_bucket_first_bill_deposit_count_until_refi)} deposits on the 15ths until the refi{refi_date_suffix}"
-                                     if results.first_property_tax_payment_date is not None
-                                     else f"{_fmt_months(results.property_tax_bucket_first_bill_deposit_count_until_refi)} months ({payload.days_until_refi} days ÷ 30)")
+    first_bill_deposit_count_text = f"{int(results.property_tax_bucket_first_bill_deposit_count_until_refi)} deposits on the 15ths until the refi{refi_date_suffix}"
     later_deposits_text = (f" + {results.property_tax_bucket_later_deposit_count_until_refi} deposits of {fmt_money(results.property_tax_bucket_deposit_after_first_payment)} after the Nov 30 bill"
                            if results.property_tax_bucket_later_deposit_count_until_refi else "")
     breakdown.add(
@@ -453,8 +438,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ], note="The appraisal and the survey are paid outside the refi closing (POC), so they are in Total Cash Invested, not here.")
         check(prepaid_interest == calc_prepaid_interest_refi(refi_loan, payload.interest_rate, results.dscr_interest_days_prepaid_at_refi_closing), f"prepaid interest (refi){arv_label}")
         breakdown.add(section_key, f"Prepaid Interest (Refi){arv_label}", prepaid_interest,
-               (f"Refi Loan ({fmt_money(refi_loan)}) × {fmt_pct(payload.interest_rate)}/yr ÷ 360 × {results.dscr_interest_days_prepaid_at_refi_closing} days from {results.refi_closing_date.isoformat()} through month end = {fmt_money(prepaid_interest)}"
-                if has_buy_closing_date else "No buy closing date → no refi date, no prepaid interest is modelled ($0)"),
+               f"Refi Loan ({fmt_money(refi_loan)}) × {fmt_pct(payload.interest_rate)}/yr ÷ 360 × {results.dscr_interest_days_prepaid_at_refi_closing} days from {results.refi_closing_date.isoformat()} through month end = {fmt_money(prepaid_interest)}",
                note="The DSCR loan's per-diem interest is collected at closing through the end of the month (360-day year, as the refi settlement statements quote it).")
     check(results.notary_refi == ((Decimal("250") if payload.online_notary_fee_refi is None else payload.online_notary_fee_refi) if payload.online_notary_refi else Decimal("0")), "notary (refi)")
     check(results.vacancy_reserve == (payload.rent if payload.vacancy_reserve is None else payload.vacancy_reserve), "vacancy reserve")
@@ -574,10 +558,8 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add(
         CASH_NEEDED, "HML Interest (first month)", results.hml_interest_first_month,
         (f"Per diem ({fmt_money(results.hml_per_diem)}) × (30 − {results.hml_interest_days_prepaid_at_purchase_closing} days already prepaid in Cash to Close) = "
-         f"{results.hml_interest_first_month_days} days = {fmt_money(results.hml_interest_first_month)}"
-         if has_buy_closing_date else f"Per diem ({fmt_money(results.hml_per_diem)}) × 30 days = {fmt_money(results.hml_interest_first_month)}"),
-        note=("The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here."
-              if has_buy_closing_date else "Without a closing date nothing is prepaid, so the whole first month counts here."),
+         f"{results.hml_interest_first_month_days} days = {fmt_money(results.hml_interest_first_month)}"),
+        note="The interest from the closing day through month end is prepaid inside Cash to Close (Buy), so only the rest of the first month is added here.",
     )
     hoa_dues_first_month = calc_holding_costs(Decimal("0"), Decimal("0"), payload.montly_hoa, DAYS_PER_MONTH)
     check(results.holding_costs_first_month == hoa_dues_first_month + payload.monthly_insurance_until_refi + results.property_tax_bucket_deposit, "holding costs (first month)")

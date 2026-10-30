@@ -286,6 +286,7 @@ BRRRR_PAYLOAD: dict[str, Any] = {
     "maintenancePercent": 5,
     "capexPercent": 5,
     # BRRRR lifecycle inputs (dates, settlement lines, construction budget, holding items, reserves)
+    "contractDate": "2026-01-03",
     "buyClosingDate": "2026-01-10",
     "earnestMoneyDeposit": 5000,
     "loanChargesBuy": 900,
@@ -354,7 +355,7 @@ BRRRR_CASES: list[tuple[str, dict[str, Any]]] = [
     ("contingency_100", _brrr(rehabContingency=100)),
     ("ltv_100", _brrr(ltv_as_precent=100)),
     ("ltv_1", _brrr(ltv_as_precent=1)),
-    ("one_day_refi", _brrr(daysUntilRefi=1)),
+    ("one_day_refi", _brrr(daysUntilRefi=1, daysUntilRehabCompleted=1)),
     ("year_refi", _brrr(daysUntilRefi=365)),
     ("ten_year_refi", _brrr(daysUntilRefi=3650)),
     ("cash_out_positive_sentinel", _brrr(arv_in_thousands=900, ltv_as_precent=90)),
@@ -363,7 +364,7 @@ BRRRR_CASES: list[tuple[str, dict[str, Any]]] = [
     ("all_cash", _brrr(down_payment=100, use_HM_for_rehab=False)),
     ("big_reserve", _brrr(maintenanceReserve=45000)),
     ("dated_december_we_pay_all", _brrr(buyClosingDate="2026-12-15", titleModeBuy="we_pay_all", lowestArv=280)),
-    ("no_date_cash_rehab", _brrr(buyClosingDate=None, constructionLoanBudget=0)),
+    ("cash_rehab_dated", _brrr(buyClosingDate="2026-04-15", contractDate="2026-04-01", constructionLoanBudget=0)),
     ("stolen_money", _brrr(constructionLoanBudget=70, rehabContingency=0)),
     ("notary_amounts_and_notes", _brrr(onlineNotaryFeeBuy=175, onlineNotaryRefi=False, otherClosingCostsBuy=320, otherClosingCostsBuyNote="HOA transfer + home warranty")),
     ("high_expenses", _brrr(vacancyPercent=25, maintenancePercent=25, capexPercent=25,
@@ -653,6 +654,10 @@ def _model_case(model: Any, payload: Any) -> dict[str, Any]:
     }
 
 
+# The three dates every BRRRR result carries (the buy closing date is mandatory).
+_BRRRR_RESULT_DATES = {"refi_closing_date": "2026-07-09", "tenant_occupied_date": "2026-04-10", "rehab_completed_date": "2026-02-24"}
+
+
 def capture_models() -> dict[str, Any]:
     today = "2024-03-05"
     cases: list[tuple[str, Any, Any]] = [
@@ -661,6 +666,7 @@ def capture_models() -> dict[str, Any]:
         ("analyzeBRRRReq/minimal", analyzeBRRRReq, {
             "arv_in_thousands": 320, "purchasePrice": 200, "down_payment": 20,
             "HMLInterestRate": 11, "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600,
+            "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10",
         }),
         ("analyzeBRRRReq/legacy_months_camel", analyzeBRRRReq, {
             k: v for k, v in _brrr().items() if k != "daysUntilRefi"
@@ -690,8 +696,9 @@ def capture_models() -> dict[str, Any]:
             "cash_to_close_buy": 40000.0, "stolen_money": 0.0,
             "messages": ["a note"],
             "breakdowns": {"cash_flow": [{"label": "x", "value": 1.5, "formula": "1 + 0.5"}]},
+            **_BRRRR_RESULT_DATES,
         }),
-        ("analyzeBRRRRes/minimal", analyzeBRRRRes, {"cash_flow": 0.0}),
+        ("analyzeBRRRRes/minimal", analyzeBRRRRes, {"cash_flow": 0.0, **_BRRRR_RESULT_DATES}),
         ("analyzeFlipRes/full", analyzeFlipRes, {
             "net_profit": 12620.0, "roi": 20.0, "annualized_roi": 40.0,
             "total_cash_needed": 63525.0, "total_cash_needed_with_buffer": 75000.0,
@@ -714,10 +721,11 @@ def capture_models() -> dict[str, Any]:
             "HML_points": 2, "HML_interest_rate": 11,
             "ltv_as_precent": 75, "days_until_refi": 180, "refi_points": 2,
             "cash_reserve_in_thousands": 0, "loan_term_years": 30,
+            "contract_date": "2026-01-03", "buy_closing_date": "2026-01-10",
         }),
         ("BrrrActiveDealCreate/defaults_only", BrrrActiveDealCreate, {
             "address": "1 Default St", "section": None, "stage": None,
-            "ltv_as_precent": None,
+            "ltv_as_precent": None, "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10",
         }),
         ("BrrrActiveDealCreate/legacy_months", BrrrActiveDealCreate,
          {k: v for k, v in _brrr().items() if k != "daysUntilRefi"} | {"monthsUntilRefi": 6}),
@@ -733,7 +741,7 @@ def capture_models() -> dict[str, Any]:
             id="11111111-1111-1111-1111-111111111111",
             created_at="2024-01-02T03:04:05+00:00",
             updated_at="2024-01-02T03:04:06+00:00",
-            cash_flow=85.03674361688704,
+            cash_flow=85.03674361688704, **_BRRRR_RESULT_DATES,
         )),
         ("FlipActiveDealRes", FlipActiveDealRes, _flip(
             id="22222222-2222-2222-2222-222222222222",
@@ -753,7 +761,7 @@ def capture_models() -> dict[str, Any]:
             id="44444444-4444-4444-4444-444444444444",
             created_at="2024-01-02T03:04:05+00:00",
             updated_at="2024-01-02T03:04:06+00:00",
-            cash_flow=1.0, boughtStage="purchase",
+            cash_flow=1.0, boughtStage="purchase", **_BRRRR_RESULT_DATES,
         )),
         ("BoughtFlipDealRes", BoughtFlipDealRes, _flip(
             id="55555555-5555-5555-5555-555555555555",

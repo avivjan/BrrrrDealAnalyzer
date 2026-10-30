@@ -16,19 +16,10 @@ import pytest
 from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment, days_through_month_end
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 
-# Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures. The legacy payload
-# (`legacy_brrrr_payload`, the new inputs neutralised) still reproduces it to the last digit.
-EXPECTED_LEGACY_BRRRR_CASH_FLOW = 85.03674361688704
-# The same deal moved once on purpose: a regular year's tax is the bill x 0.96 / 12 (paid on
-# Nov 30 with the November discount), so the $3,600 bill costs $288 a month instead of $300.
-EXPECTED_BRRRR_CASH_FLOW = EXPECTED_LEGACY_BRRRR_CASH_FLOW + 12
+# Pinned for the `brrrr_payload` fixture: a regular year's tax is the bill x 0.96 / 12 (paid on
+# Nov 30 with the November discount).
+EXPECTED_BRRRR_CASH_FLOW = 97.03674361688704
 EXPECTED_FLIP_NET_PROFIT = 12620.0
-# Verified identical under the old month-based formulas at 6 months and the
-# per-diem ones at 180 days — the two agree to the last digit, which is what
-# `monthsUntilRefi` -> `daysUntilRefi` was designed to guarantee. Pinned for the
-# `legacy_brrrr_payload` fixture (the lifecycle inputs neutralised): the lifecycle
-# engine must still reproduce it, which proves the core math survived the refactor.
-EXPECTED_LEGACY_BRRRR_CASH_NEEDED = 63525.0
 
 BRRRR_METRIC_KEYS = {
     "cash_flow",
@@ -168,17 +159,6 @@ class TestRefiTiming:
     year. A month is exactly 30 days under that convention, which is what makes
     the migration (`days = months * 30`) leave every saved deal's numbers alone.
     """
-
-    def test_180_days_reproduces_the_old_6_month_result(self, client, legacy_brrrr_payload):
-        # The fixture is the pre-rename payload translated by that same *30, so
-        # this asserting the pinned cash-flow *and* the cash figures below is
-        # the proof the per-diem switch changed nothing for existing deals.
-        result = client.post("/analyze/brrr", json=legacy_brrrr_payload).json()
-        assert result["cash_flow"] == pytest.approx(EXPECTED_LEGACY_BRRRR_CASH_FLOW, abs=1e-9)
-        # 6 months of HML interest + holding costs, priced per diem.
-        assert result["total_cash_needed_for_deal"] == pytest.approx(
-            EXPECTED_LEGACY_BRRRR_CASH_NEEDED, abs=1e-9
-        )
 
     def test_a_legacy_months_payload_is_converted_not_read_as_days(
         self, client, brrrr_payload
@@ -434,3 +414,22 @@ class TestAuditFixes:
         response = client.post("/analyze/flip", json={**flip_payload, field: value})
         assert response.status_code == 400
         assert message.lower() in response.json()["detail"].lower()
+
+
+class TestBrrrDateOrder:
+    """contract <= buy closing <= rehab completed <= refi closing; rehab completed <= tenant occupied. Each break is a 400."""
+
+    @pytest.mark.parametrize("overrides, message", [
+        ({"contractDate": "2026-01-11"}, "Contract date must be on or before the buy closing date."),
+        ({"daysUntilRehabCompleted": 181, "daysUntilRented": 200}, "Rehab completion must be on or before the refi closing date."),
+        ({"daysUntilRehabCompleted": 91}, "Rehab completion must be on or before the tenant-occupied date."),
+        ({"daysUntilRehabCompleted": -1}, "Days until rehab completed cannot be negative."),
+    ])
+    def test_a_date_out_of_order_is_a_400(self, client, brrrr_payload, overrides, message):
+        response = client.post("/analyze/brrr", json={**brrrr_payload, **overrides})
+        assert response.status_code == 400
+        assert message in response.json()["detail"]
+
+    def test_the_boundaries_are_inclusive(self, client, brrrr_payload):
+        same_day = {"contractDate": brrrr_payload["buyClosingDate"], "daysUntilRehabCompleted": 180, "daysUntilRented": 180}
+        assert client.post("/analyze/brrr", json={**brrrr_payload, **same_day}).status_code == 200

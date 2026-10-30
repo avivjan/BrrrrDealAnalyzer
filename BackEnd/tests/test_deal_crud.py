@@ -174,14 +174,9 @@ class TestLifecycleFieldsRoundTrip:
         untouched = _create(client, brrrr_payload)
         assert untouched["onlineNotaryFeeBuy"] is None and untouched["otherClosingCostsBuyNote"] is None
 
-    def test_no_date_leaves_the_date_driven_figures_out(self, client, brrrr_payload):
-        deal = _create(client, {**brrrr_payload, "buyClosingDate": None})
-        assert deal["buyClosingDate"] is None and deal["refi_closing_date"] is None
-        assert deal["prepaid_interest_buy"] == 0 and deal["seller_tax_credit"] == 0 and deal["prepaid_interest_refi"] == 0
-
     def test_a_stale_client_sending_the_hm_flag_gets_a_construction_budget(self, client, brrrr_payload):
-        """A stale client speaks the pre-lifecycle model: no lifecycle field at all, just the boolean."""
-        lifecycle_aliases = {field.alias or name for name, field in BrrrLifecycleInputs.model_fields.items()}
+        """A stale client speaks the pre-lifecycle model: no lifecycle field but the two mandatory dates, just the boolean."""
+        lifecycle_aliases = {field.alias or name for name, field in BrrrLifecycleInputs.model_fields.items()} - {"contractDate", "buyClosingDate"}
         stale_payload = {key: value for key, value in brrrr_payload.items() if key not in lifecycle_aliases}
         hard_money_rehab_deal = _create(client, {**stale_payload, "use_HM_for_rehab": True, "rehabCost": 50, "rehabContingency": 10})
         assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55)
