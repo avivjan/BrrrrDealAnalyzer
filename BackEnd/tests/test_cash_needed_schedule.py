@@ -236,3 +236,16 @@ class TestTheScheduleOnTheApi:
         listed = client.get("/active-deals").json()[0]
         assert deal["cash_needed_schedule_at_lowest_arv"] == listed["cash_needed_schedule_at_lowest_arv"]
         assert listed["cash_needed_schedule_at_lowest_arv"]["dated_cash_rows"]
+
+    def test_the_mcp_analyze_brrr_tool_returns_the_schedule_and_it_adds_up(self, client, brrrr_payload):
+        from tests.mcp_helpers import call_json
+        analyzed = call_json("analyze_brrr", body=brrrr_payload)
+        schedule = analyzed["cash_needed_schedule_at_lowest_arv"]
+        net_outflow = -sum(Decimal(row["signed_amount_dollars"]) for row in schedule["dated_cash_rows"])
+        assert net_outflow + Decimal(schedule["cash_that_must_stay_in_account_total_dollars"]) == Decimal(schedule["total_cash_needed_dollars"])
+        assert float(schedule["total_cash_needed_dollars"]) == analyzed["total_cash_needed_for_deal"]
+
+    def test_the_mcp_instructions_say_the_dates_are_required_and_describe_the_schedule(self):
+        import mcp_server
+        assert "contractDate and buyClosingDate" in mcp_server.INSTRUCTIONS and "a missing one is a 422" in mcp_server.INSTRUCTIONS
+        assert "cash_needed_schedule_at_lowest_arv" in mcp_server.INSTRUCTIONS
