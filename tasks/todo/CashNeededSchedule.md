@@ -185,7 +185,7 @@ The single entry is `rehab_cushion`: the amount, from buy_closing_date to rehab_
   - the new date inputs are validated by Pydantic
   - no secrets in the frontend
   - run `bandit -q -r . -x ./tests,./verify_regression.py -ll -ii` and `npm audit`
-- [ ] S14 (15 min) Final: `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`, `npm run e2e`; push `-u origin claude/blissful-clarke-t18u4a`; open the PR.
+- [x] S14 (15 min) Final: `pytest`, `verify_regression.py verify`, `npm test`, `npm run build`, `npm run e2e`; push `-u origin claude/blissful-clarke-t18u4a`; open the PR.
 
 ## Tests by layer
 **Unit** (`tests/test_cash_needed_schedule.py` new, plus `test_brrr_lifecycle.py` and `test_brrr_deal_reconciliation_inputs.py`):
@@ -255,3 +255,15 @@ The single entry is `rehab_cushion`: the amount, from buy_closing_date to rehab_
   - the Lowest-ARV refi rows on Jul 9
 
   Then check: the cushion shows under "Must stay in the account" (Jan 10 → Feb 24), and rows total + cushion = Cash Needed to the cent. The same blocks appear in the HTML report and the PDF.
+
+## Review
+
+- **Dates:** `contractDate` and `buyClosingDate` are mandatory (422 when missing; 400 for contract > closing or rehab > refi). Both columns are NOT NULL. The migration fills a missing closing with created_at + 7 first, then sets contract = the earlier of created_at and the closing. A new deal starts at today / today + 7. The no-date mode is gone from the engine, explain, reports, brrrAutoCalc and the tests.
+- **Engine:**
+  - HOA, insurance paid monthly, utilities (plus one arrears bill) and pre-refi rent are n x the monthly amount on real 1sts.
+  - A refi on a 1st puts the month before it inside the HML payoff.
+  - The floor is gone: Cash Needed = the four-term sum, to the cent, never clamped.
+  - Golden deltas match the plan's list (base +$80 utilities; all_cash / no_rehab / ten_year_refi off the floor; year_refi and ten_year_refi rent; one_day_refi -$240).
+- **Schedule:** `cash_needed_schedule_at_lowest_arv` sits on the analyze and saved-deal responses, the MCP tools, the HTML report, the PDF and the popup. Rows are whole cents, rounded on the running total item by item, so they add up exactly to Cash Needed less the cushion. The cushion is a "must stay in the account" window. 18 reconciliation scenarios check the totals exactly and each item within a cent; a mutation of the appliances amount was caught.
+- **Also fixed:** the PDF result bookmark landed a page early once the Cash Needed tree got shorter, so the destination is now an anchor in the title. The all-steps list no longer sits in a KeepTogether that could leave a blank page.
+- **Verification:** pytest green; `verify_regression.py verify` identical; vitest 1730 passed; build OK; Playwright chromium 123 passed (5 skipped; WebKit isn't installed here); bandit clean; npm audit 0.
