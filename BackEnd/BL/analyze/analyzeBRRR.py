@@ -24,6 +24,7 @@ which reads the finished `BrrrResultsWithIntermediates` and never recomputes any
 
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 from ReqRes.common.analyze_results import analyzeBRRRRes
+from ReqRes.common.cash_needed_schedule import CashNeededScheduleAtLowestArvRes
 from BL.analyze.common.validation import validate_brrr_inputs
 from BL.analyze.brrr_results_with_intermediates import BrrrResultsWithIntermediates
 from BL.analyze.explain.brrr import explain_brrr
@@ -45,6 +46,7 @@ from BL.analyze.brrrSteps.cash_on_cash import cash_on_cash_step
 from BL.analyze.brrrSteps.equity_and_net_profit import equity_and_net_profit_step
 from BL.analyze.brrrSteps.roi import roi_step
 from BL.analyze.brrrSteps.total_cash_needed import total_cash_needed_step
+from BL.analyze.brrrSteps.cash_needed_schedule import cash_needed_schedule_step
 
 
 def analyze_brrr(payload: analyzeBRRRReq) -> analyzeBRRRRes:
@@ -61,6 +63,7 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         cash_to_refi_table_conservative=results.cash_to_refi_table_conservative,
         cash_on_cash=results.cash_on_cash, roi=results.roi, equity=results.equity, net_profit=results.net_profit,
         total_cash_needed_for_deal=results.total_cash_needed,
+        cash_needed_schedule_at_lowest_arv=cash_needed_schedule_response(results.cash_needed_schedule_at_lowest_arv),
         total_cash_invested=results.total_cash_invested, cash_to_close_buy=results.cash_to_close_buy,
         purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
@@ -85,6 +88,17 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         vacancy_reserve_effective=results.vacancy_reserve, lowest_arv_effective=results.lowest_arv,
         messages=None,
         breakdowns=explain_brrr(payload, results),
+    )
+
+
+def cash_needed_schedule_response(schedule) -> CashNeededScheduleAtLowestArvRes:
+    """The engine's schedule (NamedTuples) as the response model."""
+    return CashNeededScheduleAtLowestArvRes(
+        dated_cash_rows=[row._asdict() for row in schedule.dated_cash_rows],
+        cash_that_must_stay_in_account=[held._asdict() for held in schedule.cash_that_must_stay_in_account],
+        dated_cash_rows_net_outflow_dollars=schedule.dated_cash_rows_net_outflow_dollars,
+        cash_that_must_stay_in_account_total_dollars=schedule.cash_that_must_stay_in_account_total_dollars,
+        total_cash_needed_dollars=schedule.total_cash_needed_dollars,
     )
 
 
@@ -114,6 +128,8 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     equity, net_profit = equity_and_net_profit_step(arv, refi_terms.ltv, refi_terms.reserves_total, cash_out_figures.cash_out)
     roi = roi_step(cash_out_figures.cash_out, cash_flow, net_profit)
     total_cash_needed = total_cash_needed_step(payload, cash_out_figures)
+    cash_needed_schedule_at_lowest_arv = cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, buy_settlement, insurance,
+                                                                   property_tax_bucket, stolen_money, cash_out_figures, total_cash_needed)
 
     return BrrrResultsWithIntermediates(
         arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
@@ -176,5 +192,5 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         operating_expenses=operating_expenses.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
-        total_cash_needed=total_cash_needed,
+        total_cash_needed=total_cash_needed, cash_needed_schedule_at_lowest_arv=cash_needed_schedule_at_lowest_arv,
     )

@@ -12,6 +12,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from ReqRes.common.calc_step import CalcStep
+from ReqRes.common.cash_needed_schedule import CashNeededScheduleAtLowestArvRes
 
 _BREAKDOWNS = (
     "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', "
@@ -69,6 +70,10 @@ class analyzeBRRRRes(BaseModel):
         "(the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the "
         "lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives "
         "back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it."))
+    cash_needed_schedule_at_lowest_arv: Optional[CashNeededScheduleAtLowestArvRes] = Field(None, description=(
+        "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item "
+        "(signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase "
+        "closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
         "seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase "

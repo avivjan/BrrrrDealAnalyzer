@@ -566,6 +566,26 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add("roi", "ROI", results.roi, roi_formula, unit="pct")
 
     # -- cash needed -----------------------------------------------------------
+    # The dated schedule (Lowest ARV) must account for every dollar of Cash Needed: its rows add up to
+    # Cash Needed less the cushion, which is held (not spent) from the purchase closing to the rehab completion.
+    schedule = results.cash_needed_schedule_at_lowest_arv
+    check(schedule.dated_cash_rows_net_outflow_dollars == -sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")),
+          "cash needed schedule net outflow")
+    check(schedule.cash_that_must_stay_in_account_total_dollars == payload.rehab_cushion
+          and schedule.cash_that_must_stay_in_account_total_dollars == sum((held.amount_dollars for held in schedule.cash_that_must_stay_in_account), Decimal("0")),
+          "cash that must stay in the account")
+    check(schedule.total_cash_needed_dollars == results.total_cash_needed
+          and abs(schedule.dated_cash_rows_net_outflow_dollars + schedule.cash_that_must_stay_in_account_total_dollars - results.total_cash_needed) < Decimal("0.01"),
+          "cash needed schedule reconciles")
+    check(all(row.signed_amount_dollars >= 0 or row.date <= results.refi_closing_date for row in schedule.dated_cash_rows),
+          "no money out after the refi")
+    check(all(row.signed_amount_dollars == row.signed_amount_dollars.quantize(Decimal("0.01")) for row in schedule.dated_cash_rows),
+          "schedule rows are whole cents")
+    held_text = "".join(
+        f" + {held.description.split(':')[0]} {fmt_money(held.amount_dollars)} held {held.reserve_starts_on_date.isoformat()} → {held.reserve_ends_on_date.isoformat()}"
+        for held in schedule.cash_that_must_stay_in_account)
+    schedule_note = (f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, net {fmt_money(schedule.dated_cash_rows_net_outflow_dollars)} out"
+                     f"{held_text} = {fmt_money(schedule.total_cash_needed_dollars)}.")
     breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),
@@ -573,5 +593,6 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Reserves the Lowest-ARV Wire cannot fund", results.reserves_funded_from_own_pocket_at_lowest_arv),
     ], rounded_to_cents=True,
        note="Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire "
-            "cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.")
+            "cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped."
+            + schedule_note)
     return breakdown.to_dict()

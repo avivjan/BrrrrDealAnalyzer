@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
+from BL.analyze.brrrSteps.cash_needed_schedule import CashNeededScheduleAtLowestArv
+
 
 @dataclass(frozen=True)
 class BrrrResultsWithIntermediates:
@@ -148,4 +150,5 @@ class BrrrResultsWithIntermediates:
     roi: Decimal                    # percent; -1 = infinite, -2 = undefined
 
     # -- cash needed -----------------------------------------------------------
+    cash_needed_schedule_at_lowest_arv: CashNeededScheduleAtLowestArv   # the dated rows behind it + the cushion that must stay in the account
     total_cash_needed: Decimal      # total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv, to the cent
