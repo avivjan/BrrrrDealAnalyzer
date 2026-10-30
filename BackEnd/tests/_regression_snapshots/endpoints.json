@@ -1904,7 +1904,7 @@
           {
             "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -2016,6 +2016,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "79022.06",
+        "total_cash_needed_dollars": "84022.06"
+      },
       "cash_on_cash": 2.0897429891296957,
       "cash_out": -55721.72891402273,
       "cash_out_routi": 12382.777777777777,
@@ -4695,7 +4928,7 @@
           {
             "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -4807,6 +5040,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "79022.06",
+        "total_cash_needed_dollars": "84022.06"
+      },
       "cash_on_cash": 2.0897429891296957,
       "cash_out": -55721.72891402273,
       "cash_out_routi": 12382.777777777777,
@@ -6842,7 +7308,7 @@
             {
               "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -6954,6 +7420,239 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
+        "cash_needed_schedule_at_lowest_arv": {
+          "cash_that_must_stay_in_account": [
+            {
+              "amount_dollars": "5000.00",
+              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+              "item_key": "rehab_cushion",
+              "reserve_ends_on_date": "2026-02-24",
+              "reserve_starts_on_date": "2026-01-10"
+            }
+          ],
+          "cash_that_must_stay_in_account_total_dollars": "5000.00",
+          "dated_cash_rows": [
+            {
+              "date": "2026-01-03",
+              "description": "Earnest money deposit",
+              "item_key": "earnest_money_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-5000.00"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Cash to close (the purchase wire)",
+              "item_key": "cash_to_close_buy",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-11",
+              "description": "Seller tax credit set aside in the tax bucket",
+              "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-88.77"
+            },
+            {
+              "date": "2026-01-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-02-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Appraisal (paid outside the refi closing)",
+              "item_key": "appraisal_fee",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-700.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Survey (paid outside the refi closing)",
+              "item_key": "survey_fee",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "HML interest for February 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1839.44"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Maintenance before refi (share 1 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-03-10",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-03-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "HML interest for March 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.53"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Maintenance before refi (share 2 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-04-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.12"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "HML interest for April 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Maintenance before refi (share 3 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-05-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "HML interest for May 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.52"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Maintenance before refi (share 4 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-06-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "HML interest for June 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Maintenance before refi (share 5 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Cash to the refi table (Lowest-ARV refi)",
+              "item_key": "cash_to_refi_table_conservative",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-10917.55"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+              "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "dated_cash_rows_net_outflow_dollars": "79022.06",
+          "total_cash_needed_dollars": "84022.06"
+        },
         "cash_on_cash": 2.0897429891296957,
         "cash_out": -55721.72891402273,
         "cash_out_routi": 12382.777777777777,
@@ -9609,7 +10308,7 @@
           {
             "formula": "Total Cash Invested ($59,128.06) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($18,937.11) + Reserves the Lowest-ARV Wire cannot fund ($11,300.89) = $94,366.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $89,366.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $94,366.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -9721,6 +10420,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 212.53674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-47696.79"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1907.89"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2112.30"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2044.17"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2750.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2112.30"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2750.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2044.17"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2750.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-18937.11"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11300.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "89366.06",
+        "total_cash_needed_dollars": "94366.06"
+      },
       "cash_on_cash": 3.860459825883042,
       "cash_out": -66065.72891402274,
       "cash_out_routi": 4363.222222222223,
@@ -11749,7 +12681,7 @@
           {
             "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -11861,6 +12793,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "79022.06",
+        "total_cash_needed_dollars": "84022.06"
+      },
       "cash_on_cash": 2.0897429891296957,
       "cash_out": -55721.72891402273,
       "cash_out_routi": 12382.777777777777,
@@ -14522,7 +15687,7 @@
           {
             "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -14634,6 +15799,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "79022.06",
+        "total_cash_needed_dollars": "84022.06"
+      },
       "cash_on_cash": 2.0897429891296957,
       "cash_out": -55721.72891402273,
       "cash_out_routi": 12382.777777777777,
@@ -16693,7 +18091,7 @@
           {
             "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -16805,6 +18203,239 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "79022.06",
+        "total_cash_needed_dollars": "84022.06"
+      },
       "cash_on_cash": 2.0897429891296957,
       "cash_out": -55721.72891402273,
       "cash_out_routi": 12382.777777777777,
@@ -19477,7 +21108,7 @@
             {
               "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -19589,6 +21220,239 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
+        "cash_needed_schedule_at_lowest_arv": {
+          "cash_that_must_stay_in_account": [
+            {
+              "amount_dollars": "5000.00",
+              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+              "item_key": "rehab_cushion",
+              "reserve_ends_on_date": "2026-02-24",
+              "reserve_starts_on_date": "2026-01-10"
+            }
+          ],
+          "cash_that_must_stay_in_account_total_dollars": "5000.00",
+          "dated_cash_rows": [
+            {
+              "date": "2026-01-03",
+              "description": "Earnest money deposit",
+              "item_key": "earnest_money_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-5000.00"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Cash to close (the purchase wire)",
+              "item_key": "cash_to_close_buy",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-11",
+              "description": "Seller tax credit set aside in the tax bucket",
+              "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-88.77"
+            },
+            {
+              "date": "2026-01-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-02-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Appraisal (paid outside the refi closing)",
+              "item_key": "appraisal_fee",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-700.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Survey (paid outside the refi closing)",
+              "item_key": "survey_fee",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "HML interest for February 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1839.44"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Maintenance before refi (share 1 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-03-10",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-03-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "HML interest for March 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.53"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Maintenance before refi (share 2 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-04-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.12"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "HML interest for April 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Maintenance before refi (share 3 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-05-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "HML interest for May 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.52"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Maintenance before refi (share 4 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-06-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "HML interest for June 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Maintenance before refi (share 5 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Cash to the refi table (Lowest-ARV refi)",
+              "item_key": "cash_to_refi_table_conservative",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-10917.55"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+              "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "dated_cash_rows_net_outflow_dollars": "79022.06",
+          "total_cash_needed_dollars": "84022.06"
+        },
         "cash_on_cash": 2.0897429891296957,
         "cash_out": -55721.72891402273,
         "cash_out_routi": 12382.777777777777,
@@ -22250,7 +24114,7 @@
           {
             "formula": "Total Cash Invested ($73,453.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $100,522.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, net $95,522.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $100,522.06.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -22362,6 +24226,246 @@
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
       "cash_flow": 97.03674361688704,
+      "cash_needed_schedule_at_lowest_arv": {
+        "cash_that_must_stay_in_account": [
+          {
+            "amount_dollars": "5000.00",
+            "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+            "item_key": "rehab_cushion",
+            "reserve_ends_on_date": "2026-02-24",
+            "reserve_starts_on_date": "2026-01-10"
+          }
+        ],
+        "cash_that_must_stay_in_account_total_dollars": "5000.00",
+        "dated_cash_rows": [
+          {
+            "date": "2026-01-03",
+            "description": "Earnest money deposit",
+            "item_key": "earnest_money_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-5000.00"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Cash to close (the purchase wire)",
+            "item_key": "cash_to_close_buy",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-45439.01"
+          },
+          {
+            "date": "2026-01-10",
+            "description": "Rehab beyond the construction budget, funded by you",
+            "item_key": "stolen_money",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-16500.00"
+          },
+          {
+            "date": "2026-01-11",
+            "description": "Seller tax credit set aside in the tax bucket",
+            "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-88.77"
+          },
+          {
+            "date": "2026-01-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-02-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Appraisal (paid outside the refi closing)",
+            "item_key": "appraisal_fee",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-700.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Survey (paid outside the refi closing)",
+            "item_key": "survey_fee",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "HML interest for February 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1839.44"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-03-01",
+            "description": "Maintenance before refi (share 1 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-03-10",
+            "description": "Appliances",
+            "item_key": "appliances",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-630.00"
+          },
+          {
+            "date": "2026-03-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "HML interest for March 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.53"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-04-01",
+            "description": "Maintenance before refi (share 2 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-04-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.12"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "HML interest for April 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Utilities",
+            "item_key": "utilities",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-80.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Maintenance before refi (share 3 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-05-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-05-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "HML interest for May 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-2036.52"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Maintenance before refi (share 4 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-06-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-06-15",
+            "description": "Tax bucket deposit",
+            "item_key": "property_tax_bucket_deposit",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-306.11"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "HML interest for June 2026",
+            "item_key": "hml_interest_paid_monthly",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-1970.84"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Maintenance before refi (share 5 of 5)",
+            "item_key": "maintenance_before_refi",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-100.00"
+          },
+          {
+            "date": "2026-07-01",
+            "description": "Rent collected",
+            "item_key": "pre_refi_rental_income",
+            "sequence_within_day": 2,
+            "signed_amount_dollars": "2600.00"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Cash to the refi table (Lowest-ARV refi)",
+            "item_key": "cash_to_refi_table_conservative",
+            "sequence_within_day": 0,
+            "signed_amount_dollars": "-10917.55"
+          },
+          {
+            "date": "2026-07-09",
+            "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+            "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+            "sequence_within_day": 1,
+            "signed_amount_dollars": "-11150.89"
+          }
+        ],
+        "dated_cash_rows_net_outflow_dollars": "95522.06",
+        "total_cash_needed_dollars": "100522.06"
+      },
       "cash_on_cash": 1.6123138298016486,
       "cash_out": -72221.72891402274,
       "cash_out_routi": 12382.777777777777,
@@ -25299,7 +27403,7 @@
             {
               "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -25411,6 +27515,239 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
+        "cash_needed_schedule_at_lowest_arv": {
+          "cash_that_must_stay_in_account": [
+            {
+              "amount_dollars": "5000.00",
+              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+              "item_key": "rehab_cushion",
+              "reserve_ends_on_date": "2026-02-24",
+              "reserve_starts_on_date": "2026-01-10"
+            }
+          ],
+          "cash_that_must_stay_in_account_total_dollars": "5000.00",
+          "dated_cash_rows": [
+            {
+              "date": "2026-01-03",
+              "description": "Earnest money deposit",
+              "item_key": "earnest_money_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-5000.00"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Cash to close (the purchase wire)",
+              "item_key": "cash_to_close_buy",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-11",
+              "description": "Seller tax credit set aside in the tax bucket",
+              "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-88.77"
+            },
+            {
+              "date": "2026-01-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-02-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Appraisal (paid outside the refi closing)",
+              "item_key": "appraisal_fee",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-700.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Survey (paid outside the refi closing)",
+              "item_key": "survey_fee",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "HML interest for February 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1839.44"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Maintenance before refi (share 1 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-03-10",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-03-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "HML interest for March 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.53"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Maintenance before refi (share 2 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-04-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.12"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "HML interest for April 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Maintenance before refi (share 3 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-05-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "HML interest for May 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.52"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Maintenance before refi (share 4 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-06-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "HML interest for June 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Maintenance before refi (share 5 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Cash to the refi table (Lowest-ARV refi)",
+              "item_key": "cash_to_refi_table_conservative",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-10917.55"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+              "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "dated_cash_rows_net_outflow_dollars": "79022.06",
+          "total_cash_needed_dollars": "84022.06"
+        },
         "cash_on_cash": 2.0897429891296957,
         "cash_out": -55721.72891402273,
         "cash_out_routi": 12382.777777777777,
@@ -28063,7 +30400,7 @@
             {
               "formula": "Total Cash Invested ($73,453.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $100,522.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, net $95,522.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $100,522.06.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -28175,6 +30512,246 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
+        "cash_needed_schedule_at_lowest_arv": {
+          "cash_that_must_stay_in_account": [
+            {
+              "amount_dollars": "5000.00",
+              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+              "item_key": "rehab_cushion",
+              "reserve_ends_on_date": "2026-02-24",
+              "reserve_starts_on_date": "2026-01-10"
+            }
+          ],
+          "cash_that_must_stay_in_account_total_dollars": "5000.00",
+          "dated_cash_rows": [
+            {
+              "date": "2026-01-03",
+              "description": "Earnest money deposit",
+              "item_key": "earnest_money_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-5000.00"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Cash to close (the purchase wire)",
+              "item_key": "cash_to_close_buy",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Rehab beyond the construction budget, funded by you",
+              "item_key": "stolen_money",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-16500.00"
+            },
+            {
+              "date": "2026-01-11",
+              "description": "Seller tax credit set aside in the tax bucket",
+              "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-88.77"
+            },
+            {
+              "date": "2026-01-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-02-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Appraisal (paid outside the refi closing)",
+              "item_key": "appraisal_fee",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-700.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Survey (paid outside the refi closing)",
+              "item_key": "survey_fee",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "HML interest for February 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1839.44"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Maintenance before refi (share 1 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-03-10",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-03-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "HML interest for March 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.53"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Maintenance before refi (share 2 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-04-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.12"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "HML interest for April 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Maintenance before refi (share 3 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-05-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "HML interest for May 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.52"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Maintenance before refi (share 4 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-06-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "HML interest for June 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Maintenance before refi (share 5 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Cash to the refi table (Lowest-ARV refi)",
+              "item_key": "cash_to_refi_table_conservative",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-10917.55"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+              "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "dated_cash_rows_net_outflow_dollars": "95522.06",
+          "total_cash_needed_dollars": "100522.06"
+        },
         "cash_on_cash": 1.6123138298016486,
         "cash_out": -72221.72891402274,
         "cash_out_routi": 12382.777777777777,
@@ -30204,7 +32781,7 @@
             {
               "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $84,022.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $79,022.06 out + Rehab cushion $5,000 held 2026-01-10 \u2192 2026-02-24 = $84,022.06.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -30316,6 +32893,239 @@
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
+        "cash_needed_schedule_at_lowest_arv": {
+          "cash_that_must_stay_in_account": [
+            {
+              "amount_dollars": "5000.00",
+              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+              "item_key": "rehab_cushion",
+              "reserve_ends_on_date": "2026-02-24",
+              "reserve_starts_on_date": "2026-01-10"
+            }
+          ],
+          "cash_that_must_stay_in_account_total_dollars": "5000.00",
+          "dated_cash_rows": [
+            {
+              "date": "2026-01-03",
+              "description": "Earnest money deposit",
+              "item_key": "earnest_money_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-5000.00"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Cash to close (the purchase wire)",
+              "item_key": "cash_to_close_buy",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-11",
+              "description": "Seller tax credit set aside in the tax bucket",
+              "item_key": "seller_tax_credit_set_aside_in_tax_bucket",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-88.77"
+            },
+            {
+              "date": "2026-01-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-02-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Appraisal (paid outside the refi closing)",
+              "item_key": "appraisal_fee",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-700.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Survey (paid outside the refi closing)",
+              "item_key": "survey_fee",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "HML interest for February 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1839.44"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-03-01",
+              "description": "Maintenance before refi (share 1 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-03-10",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-03-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "HML interest for March 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.53"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-04-01",
+              "description": "Maintenance before refi (share 2 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-04-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.12"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "HML interest for April 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Utilities",
+              "item_key": "utilities",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-80.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Maintenance before refi (share 3 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-05-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-05-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "HML interest for May 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-2036.52"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Maintenance before refi (share 4 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-06-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-06-15",
+              "description": "Tax bucket deposit",
+              "item_key": "property_tax_bucket_deposit",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-306.11"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "HML interest for June 2026",
+              "item_key": "hml_interest_paid_monthly",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-1970.84"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Maintenance before refi (share 5 of 5)",
+              "item_key": "maintenance_before_refi",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-100.00"
+            },
+            {
+              "date": "2026-07-01",
+              "description": "Rent collected",
+              "item_key": "pre_refi_rental_income",
+              "sequence_within_day": 2,
+              "signed_amount_dollars": "2600.00"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Cash to the refi table (Lowest-ARV refi)",
+              "item_key": "cash_to_refi_table_conservative",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-10917.55"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Reserves the wire cannot fund (Lowest-ARV refi)",
+              "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "dated_cash_rows_net_outflow_dollars": "79022.06",
+          "total_cash_needed_dollars": "84022.06"
+        },
         "cash_on_cash": 2.0897429891296957,
         "cash_out": -55721.72891402273,
         "cash_out_routi": 12382.777777777777,
