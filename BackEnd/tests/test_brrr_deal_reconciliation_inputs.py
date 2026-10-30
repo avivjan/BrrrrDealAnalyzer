@@ -46,8 +46,7 @@ class TestInsuranceAcrossTheDeal:
         _assert_equal_to_the_cent(inside.cash_to_close_buy, outside.cash_to_close_buy + Decimal("1454.46"))
         _assert_equal_to_the_cent(inside.total_cash_invested, outside.total_cash_invested)
         _assert_equal_to_the_cent(inside.cash_out, outside.cash_out)
-        # The floor carries it either way: inside the purchase wire, or as its own term.
-        _assert_equal_to_the_cent(inside.cash_needed_floor, outside.cash_needed_floor)
+        assert inside.total_cash_needed == outside.total_cash_needed
 
     def test_the_bill_at_refi_comes_off_both_wires_or_goes_into_cash_invested_and_cash_out_is_the_same(self, brrrr_payload):
         inside = _compute(brrrr_payload, insuranceBillAtRefiClosing=2410.01)
@@ -81,9 +80,9 @@ class TestInsuranceAcrossTheDeal:
         assert (low.cash_out, low.total_cash_needed, low.cash_out_routi) == (high.cash_out, high.total_cash_needed, high.cash_out_routi)
         _assert_equal_to_the_cent(low.cash_flow, high.cash_flow + 150)
 
-    def test_the_monthly_until_refi_is_paid_every_30_days_until_the_refi(self, brrrr_payload):
-        results = _compute(brrrr_payload, monthlyInsuranceUntilRefi=120, daysUntilRefi=182)
-        assert results.insurance_paid_monthly_until_refi == Decimal(120) * 182 / 30
+    def test_the_monthly_until_refi_is_paid_on_every_1st_through_the_refi(self, brrrr_payload):
+        results = _compute(brrrr_payload, monthlyInsuranceUntilRefi=120, daysUntilRefi=182)   # 2026-01-10 -> 2026-07-11: Feb 1 .. Jul 1
+        assert results.insurance_paid_monthly_until_refi == Decimal(120) * 6
 
 
 class TestPropertyTaxBucket:
@@ -229,8 +228,8 @@ class TestReservesSetAsideByTheOwner:
         short = _compute(brrrr_payload, arv_in_thousands=250, maintenanceReserve=30_000)
         assert short.reserves_funded_from_own_pocket_at_lowest_arv == max(Decimal(0), short.reserves_total - max(Decimal(0), short.cash_out_routi_conservative))
         assert short.reserves_funded_from_own_pocket_at_lowest_arv > 0
-        _assert_equal_to_the_cent(short.cash_needed_through_refi, short.total_cash_invested + Decimal(brrrr_payload["rehabCushion"])
-                                  + short.cash_to_refi_table_conservative + short.reserves_funded_from_own_pocket_at_lowest_arv)
+        assert short.total_cash_needed == deal_math.round_to_cents(short.total_cash_invested + Decimal(brrrr_payload["rehabCushion"])
+                                                                   + short.cash_to_refi_table_conservative + short.reserves_funded_from_own_pocket_at_lowest_arv)
 
 
 class TestRehabCompletionDate:

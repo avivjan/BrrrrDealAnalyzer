@@ -52,7 +52,9 @@ class TestTheFieldMapIsTheForms:
         frontend_keys_by_tab = _frontend_field_keys_by_tab()
         for section in sections:
             numeric_keys = [f.payload_key for g in section.groups for f in g.fields if f.display_kind not in NON_NUMERIC_KINDS]
-            assert sorted(numeric_keys) == sorted(frontend_keys_by_tab[section.tab_key]), section.tab_key
+            # The two mandatory BRRRR dates are listed on the frontend's Buy tab for its validation messages; here they are date rows.
+            frontend_numeric_keys = [key for key in frontend_keys_by_tab[section.tab_key] if key not in ("contractDate", "buyClosingDate")]
+            assert sorted(numeric_keys) == sorted(frontend_numeric_keys), section.tab_key
 
     def test_no_deprecated_or_hidden_brrrr_key_is_listed(self):
         listed = {f.payload_key for s in BRRRR_DEAL_INPUT_SECTIONS for g in s.groups for f in g.fields}

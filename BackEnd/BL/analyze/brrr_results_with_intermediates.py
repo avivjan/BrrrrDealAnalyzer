@@ -41,8 +41,11 @@ class BrrrResultsWithIntermediates:
     hml_interest_days_prepaid_at_purchase_closing: int
     hml_interest_days_paid_monthly: int
     hml_interest_days_accrued_into_refi_payoff: int
+    hml_interest_monthly_payment_dates: tuple[date, ...]   # each 1st paying the month before it, strictly before the refi
     dscr_interest_days_prepaid_at_refi_closing: int
-    days_tenant_occupied_before_refi: int
+    first_of_month_dates_after_closing_through_refi: tuple[date, ...]   # HOA and insurance paid monthly: the 1sts in (closing, refi]
+    utility_bill_dates_until_refi: tuple[date, ...]       # the 1sts in (closing, min(tenant, refi)] + the arrears bill if on or before the refi
+    rent_collection_dates_before_refi: tuple[date, ...]   # the 1sts in (tenant occupied, refi]
 
     # -- hard money and holding, until the refinance --------------------------
     hml_points: Decimal             # points paid in cash on hml_amount
@@ -51,14 +54,14 @@ class BrrrResultsWithIntermediates:
     prepaid_interest_buy: Decimal   # collected at the buy closing (closing day -> month end)
     hml_interest_paid_monthly: Decimal
     hml_interest_accrued_into_refi_payoff: Decimal   # 1st of the refi month -> day before payoff
-    hoa_dues_until_refi: Decimal    # HOA accrued until the refi (taxes and insurance are paid as bills and deposits below)
-    utilities_until_rented: Decimal
-    pre_refi_rental_income: Decimal # rent from tenant placement to the refi
+    hoa_dues_until_refi: Decimal    # HOA x the 1sts in (closing, refi] (taxes and insurance are paid as bills and deposits below)
+    utilities_until_rented: Decimal # utilities x the utility bill 1sts
+    pre_refi_rental_income: Decimal # rent x the 1sts in (tenant occupied, refi]
 
     # -- insurance, purchase to refi ------------------------------------------
     insurance_bill_at_purchase_inside_closing: Decimal    # a line of the purchase settlement
     insurance_bill_at_purchase_outside_closing: Decimal   # paid separately; in Total Cash Invested
-    insurance_paid_monthly_until_refi: Decimal            # monthly x days until refi / 30
+    insurance_paid_monthly_until_refi: Decimal            # monthly x the 1sts in (closing, refi]
     insurance_bill_at_refi: Decimal                       # effective: input or the bill at purchase
     insurance_bill_at_refi_inside_closing: Decimal        # a line of the refi settlement (both wires)
     insurance_bill_at_refi_outside_closing: Decimal       # paid separately; in Total Cash Invested
@@ -68,8 +71,10 @@ class BrrrResultsWithIntermediates:
     first_property_tax_payment_date: date                 # the first Nov 30 the owner pays
     property_tax_bucket_deposit_count_until_first_payment: int    # the 15ths after closing through it (1 when none is left)
     property_tax_bucket_deposit: Decimal                  # effective: input or the formula
+    property_tax_bucket_first_bill_deposit_dates_until_refi: tuple[date, ...]
     property_tax_bucket_first_bill_deposit_count_until_refi: Decimal   # of those deposits, the ones on or before the refi
     property_tax_bucket_deposit_after_first_payment: Decimal      # bill x 0.96 / 12 after a Nov 30 inside the hold
+    property_tax_bucket_later_deposit_dates_until_refi: tuple[date, ...]
     property_tax_bucket_later_deposit_count_until_refi: int
     property_tax_paid_into_bucket_until_refi: Decimal     # every deposit until the refi
     property_tax_bucket_shortfall_topped_up_on_november_30: Decimal
@@ -143,10 +148,4 @@ class BrrrResultsWithIntermediates:
     roi: Decimal                    # percent; -1 = infinite, -2 = undefined
 
     # -- cash needed -----------------------------------------------------------
-    hml_interest_first_month_days: int   # 30 less the days prepaid at the purchase closing (30 without a closing date)
-    hml_interest_first_month: Decimal    # the hard-money per diem over those days
-    holding_costs_first_month: Decimal   # HOA for 30 days + one month of insurance until refi + one tax-bucket deposit
-    cash_needed_floor: Decimal           # EMD + cash to close + the insurance bill paid outside it + rehab cushion + one month of utilities and holding costs + the rest of the first month's interest
-    cash_needed_through_refi: Decimal    # total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv
-    cash_needed_floor_top_up: Decimal    # max(0, cash_needed_floor - cash_needed_through_refi)
-    total_cash_needed: Decimal           # max(cash_needed_floor, cash_needed_through_refi) = cash_needed_through_refi + cash_needed_floor_top_up
+    total_cash_needed: Decimal      # total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv, to the cent

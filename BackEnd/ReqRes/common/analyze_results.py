@@ -64,13 +64,11 @@ class analyzeBRRRRes(BaseModel):
         "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money "
         "left in, reduces it)."))
     total_cash_needed_for_deal: Optional[float] = Field(None, description=(
-        "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of "
+        "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars, rounded to the cent: "
         "total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv "
         "(the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the "
-        "lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the "
-        "insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), "
-        "of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days "
-        "less the days already prepaid inside cash_to_close_buy)."))
+        "lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives "
+        "back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
         "seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase "

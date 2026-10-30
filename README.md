@@ -518,9 +518,10 @@ The BRRRR steps follow the deal's lifecycle — **Buy → Rehab → Rent/Holding
 the engine has two modes with no switch: with the defaults untouched it is a quick estimator;
 with the real closing date and settlement lines typed in, **Cash to Close (Buy)** and the
 **Cash-Out Wire** reconcile to the settlement statements, and **Cash Needed** (=
-total cash invested + rehab cushion + the cash brought to the refi table at the lowest ARV, never below
-the day-one floor of EMD + cash to close + rehab cushion + one month of utilities, hard-money interest
-and taxes, insurance and HOA) is the single out-of-pocket figure, planned on the stress test.
+total cash invested + rehab cushion + the cash brought to the refi table and the reserves the wire cannot
+fund at the lowest ARV, to the cent, no floor and no clamping) is the single out-of-pocket figure, planned on
+the stress test. The monthly items (HOA, insurance, utilities, rent, hard-money interest) are paid on real
+1sts, never prorated; the contract and buy closing dates are mandatory.
 A field left `null` where the schema says "None = formula" takes its formula default and the
 result reports the value used as `*_effective`.
 

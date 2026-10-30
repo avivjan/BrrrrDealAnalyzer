@@ -34,6 +34,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
     Flowable,
+    CondPageBreak,
     KeepTogether,
     Paragraph,
     SimpleDocTemplate,
@@ -70,6 +71,9 @@ BRAND_BORDER = colors.HexColor("#E5E7EB")
 # Decimal(float) is that exact value, so ROUND_HALF_UP here reproduces them digit for digit.
 _CENTS = Decimal("0.01")
 
+
+# Room the "all N steps" heading needs with its first rows before it may start at the bottom of a page.
+ALL_STEPS_HEADING_AND_FIRST_ROWS_HEIGHT = 1.5 * inch
 
 def _round_half_away_from_zero_to_cents(value: float) -> Decimal:
     return Decimal(value).quantize(_CENTS, rounding=ROUND_HALF_UP)
@@ -475,9 +479,9 @@ def _results_summary_table(sections: list[_ReportResultSection], result: dict, s
 
 def _result_section_flowables(section: _ReportResultSection, registry: _ReportLinkRegistry, styles) -> list[Any]:
     """One result, laid out like its `CalculationBreakdownPopup`."""
+    # The destination is an anchor inside the title itself, so the bookmark can never land on the page before it.
     heading = [
-        _NamedDestinationsFlowable([_result_destination(section.result_index)]),
-        Paragraph(escape(section.title), styles["section_title"]),
+        Paragraph(f'<a name="{_result_destination(section.result_index)}"/>{escape(section.title)}', styles["section_title"]),
     ]
     headline_step = section.headline_step
     if headline_step is None:
@@ -579,7 +583,9 @@ def _all_steps_flowables(section: _ReportResultSection, registry: _ReportLinkReg
     if tree.cells:
         flow.append(tree.build())
     flow.append(Paragraph(_link(_result_destination(section.result_index), f"← Back to {escape(section.title)}"), styles["link"]))
-    return [KeepTogether(flow[:3]), *flow[3:]]
+    # The list can be longer than a page, which a KeepTogether around it would push onto a page of its own and
+    # leave the one before it blank: start a new page only when the heading and its first rows do not fit.
+    return [CondPageBreak(ALL_STEPS_HEADING_AND_FIRST_ROWS_HEIGHT), *flow]
 
 
 def _header_block(address: str, deal_type: str, styles: dict[str, ParagraphStyle]) -> Table:

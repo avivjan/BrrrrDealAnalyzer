@@ -95,7 +95,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price, construction_budget)
     timeline = timeline_step(payload)
     hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
-    insurance = insurance_step(payload)
+    insurance = insurance_step(payload, timeline)
     buy_settlement = closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline, insurance)
     property_tax_bucket = property_tax_bucket_step(payload, timeline, buy_settlement.seller_tax_credit_set_aside_in_tax_bucket,
                                                    buy_settlement.seller_paid_current_year_taxes)
@@ -113,7 +113,7 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     cash_on_cash = cash_on_cash_step(cash_out_figures.cash_out, cash_flow)
     equity, net_profit = equity_and_net_profit_step(arv, refi_terms.ltv, refi_terms.reserves_total, cash_out_figures.cash_out)
     roi = roi_step(cash_out_figures.cash_out, cash_flow, net_profit)
-    cash_needed = total_cash_needed_step(payload, hml_amount, buy_settlement, cash_out_figures, timeline, insurance, property_tax_bucket)
+    total_cash_needed = total_cash_needed_step(payload, cash_out_figures)
 
     return BrrrResultsWithIntermediates(
         arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
@@ -123,7 +123,10 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         tenant_occupied_date=timeline.tenant_occupied_date, rehab_completed_date=timeline.rehab_completed_date,
         hml_interest_days_prepaid_at_purchase_closing=timeline.hml_interest_days_prepaid_at_purchase_closing,
         hml_interest_days_paid_monthly=timeline.hml_interest_days_paid_monthly, hml_interest_days_accrued_into_refi_payoff=timeline.hml_interest_days_accrued_into_refi_payoff,
-        dscr_interest_days_prepaid_at_refi_closing=timeline.dscr_interest_days_prepaid_at_refi_closing, days_tenant_occupied_before_refi=timeline.days_tenant_occupied_before_refi,
+        hml_interest_monthly_payment_dates=timeline.hml_interest_monthly_payment_dates,
+        dscr_interest_days_prepaid_at_refi_closing=timeline.dscr_interest_days_prepaid_at_refi_closing,
+        first_of_month_dates_after_closing_through_refi=timeline.first_of_month_dates_after_closing_through_refi,
+        utility_bill_dates_until_refi=timeline.utility_bill_dates_until_refi, rent_collection_dates_before_refi=timeline.rent_collection_dates_before_refi,
         hml_points=hml_and_holding.hml_points, hml_per_diem=hml_and_holding.hml_per_diem, hml_interest=hml_and_holding.hml_interest,
         prepaid_interest_buy=hml_and_holding.prepaid_interest_buy, hml_interest_paid_monthly=hml_and_holding.hml_interest_paid_monthly,
         hml_interest_accrued_into_refi_payoff=hml_and_holding.hml_interest_accrued_into_refi_payoff, hoa_dues_until_refi=hml_and_holding.hoa_dues_until_refi,
@@ -138,8 +141,10 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         first_property_tax_payment_date=property_tax_bucket.first_property_tax_payment_date,
         property_tax_bucket_deposit_count_until_first_payment=property_tax_bucket.property_tax_bucket_deposit_count_until_first_payment,
         property_tax_bucket_deposit=property_tax_bucket.property_tax_bucket_deposit,
+        property_tax_bucket_first_bill_deposit_dates_until_refi=property_tax_bucket.property_tax_bucket_first_bill_deposit_dates_until_refi,
         property_tax_bucket_first_bill_deposit_count_until_refi=property_tax_bucket.property_tax_bucket_first_bill_deposit_count_until_refi,
         property_tax_bucket_deposit_after_first_payment=property_tax_bucket.property_tax_bucket_deposit_after_first_payment,
+        property_tax_bucket_later_deposit_dates_until_refi=property_tax_bucket.property_tax_bucket_later_deposit_dates_until_refi,
         property_tax_bucket_later_deposit_count_until_refi=property_tax_bucket.property_tax_bucket_later_deposit_count_until_refi,
         property_tax_paid_into_bucket_until_refi=property_tax_bucket.property_tax_paid_into_bucket_until_refi,
         property_tax_bucket_shortfall_topped_up_on_november_30=property_tax_bucket.property_tax_bucket_shortfall_topped_up_on_november_30,
@@ -171,8 +176,5 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         operating_expenses=operating_expenses.total, mortgage_payment=mortgage_payment,
         net_operating_income=net_operating_income, cash_flow=cash_flow, pitia=pitia, dscr=dscr,
         cash_on_cash=cash_on_cash, equity=equity, net_profit=net_profit, roi=roi,
-        hml_interest_first_month_days=cash_needed.hml_interest_first_month_days, hml_interest_first_month=cash_needed.hml_interest_first_month,
-        holding_costs_first_month=cash_needed.holding_costs_first_month,
-        cash_needed_floor=cash_needed.cash_needed_floor, cash_needed_through_refi=cash_needed.cash_needed_through_refi,
-        cash_needed_floor_top_up=cash_needed.cash_needed_floor_top_up, total_cash_needed=cash_needed.total_cash_needed,
+        total_cash_needed=total_cash_needed,
     )

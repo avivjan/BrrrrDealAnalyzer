@@ -516,7 +516,7 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         assert f"HML Interest paid monthly · {value_text}" in text
         assert _normalize_like_pdf_text(step["formula"]) in text
         assert _normalize_like_pdf_text(step["note"]) in text
-        assert "Monthly HML interest: per diem" in step["formula"]
+        assert step["formula"].startswith("Per diem (") and "paid on the 1st after it" in step["formula"]
         assert "paid from your pocket on the 1st of each month" in step["note"]
         # The bookmark tree nests it under Total Cash Invested.
         for index, (level, title) in enumerate(outline):

@@ -79,8 +79,10 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
 
   it("the rehab draws and the holding period", () => {
     expectCloseToTheCent(autoCalc.stolenMoney, 0);
-    expectCloseToTheCent(autoCalc.preRefiRentalIncome, 7886.67);
-    expectCloseToTheCent(autoCalc.utilitiesUntilRented, 240);
+    // Rent on May 1, Jun 1 and Jul 1 (tenant Apr 10, refi Jul 10); utilities on Feb 1 .. Apr 1 plus May 1 in arrears.
+    expect(autoCalc.rentCollectionCountBeforeRefi).toBe(3);
+    expectCloseToTheCent(autoCalc.preRefiRentalIncome, 7800);
+    expectCloseToTheCent(autoCalc.utilitiesUntilRented, 320);
   });
 
   it("the refinance settlement and the two wires", () => {
@@ -136,6 +138,18 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(autoCalc.sellerTaxCredit).toBeNull();
     expect(autoCalc.cashOutWire).toBeNull();
     expect(autoCalc.refiClosingDate).toBeNull();
+  });
+
+  it("a refi on a 1st carries the month before it inside the payoff, and the monthly items count real 1sts", () => {
+    // Closing Jan 10, refi Jul 1 (172 days): Feb .. May are paid on Mar 1 .. Jun 1; June's 30 days are in the payoff.
+    const refiOnTheFirst = brrrAutoCalc({ ...FIXTURE, daysUntilRefi: 172, monthlyInsuranceUntilRefi: 90 });
+    expectCloseToTheCent(refiOnTheFirst.hmlPayoff, refiOnTheFirst.hmlAmount! + refiOnTheFirst.hmlPerDiem! * 30);
+    // Insurance on Feb 1 .. Jul 1 (the refi day counts).
+    expectCloseToTheCent(refiOnTheFirst.insurancePaidMonthlyUntilRefi, 90 * 6);
+    // A tenant after the refi: no rent, and utilities stop at the refi (Feb 1 .. Jul 1, no bill after it).
+    const tenantAfterRefi = brrrAutoCalc({ ...FIXTURE, daysUntilRefi: 172, daysUntilRented: 200 });
+    expect(tenantAfterRefi.rentCollectionCountBeforeRefi).toBe(0);
+    expectCloseToTheCent(tenantAfterRefi.utilitiesUntilRented, 80 * 6);
   });
 
   it("needs rent for the rent-driven figures", () => {

@@ -13,6 +13,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Iterable, Literal, Optional, Union
 
+from BL.analyze.common.deal_math import round_to_cents
 from ReqRes.common.calc_step import CalcStep, CalcTerm
 
 Number = Union[Decimal, float, int]
@@ -126,6 +127,7 @@ class CalcBreakdown:
         total: Number,
         terms: Iterable[Term],
         note: Optional[str] = None,
+        rounded_to_cents: bool = False,
     ) -> None:
         """A sum-type step: guard, formula text and structured terms in one go.
 
@@ -134,13 +136,15 @@ class CalcBreakdown:
         in that order with plain `==` on the unrounded Decimals. So if the
         calculation gains, drops or reorders an operand and this list is not
         updated, the mismatch raises here instead of printing a wrong formula.
+        `rounded_to_cents` is for a total the calculator rounds to the cent (Cash Needed): the
+        fold is rounded the same way before the comparison.
         """
         sum_step_keys = frozenset((keys,) if isinstance(keys, str) else keys)
         norm = [(t[0], t[1], t[2] if len(t) > 2 else "+") for t in terms]
         acc = norm[0][1] if norm[0][2] == "+" else -norm[0][1]
         for _, value, sign in norm[1:]:
             acc = acc + value if sign == "+" else acc - value
-        check(acc == total, label)
+        check((round_to_cents(acc) if rounded_to_cents else acc) == total, label)
 
         text = f"{norm[0][0]} ({fmt_money(norm[0][1])})"
         for name, value, sign in norm[1:]:

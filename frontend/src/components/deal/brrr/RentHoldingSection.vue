@@ -45,8 +45,8 @@ const insuranceUntilRefiNote = computed(() =>
 );
 
 const preRefiRentHint = computed(() =>
-  autoCalc.value.daysRentedBeforeRefi == null ? undefined
-    : autoCalc.value.daysRentedBeforeRefi > 0 ? `${autoCalc.value.daysRentedBeforeRefi} days rented before the refi` : "tenant placed at or after the refi",
+  autoCalc.value.rentCollectionCountBeforeRefi == null ? undefined
+    : autoCalc.value.rentCollectionCountBeforeRefi > 0 ? `${autoCalc.value.rentCollectionCountBeforeRefi} rent payments on the 1sts before the refi` : "no 1st between the tenant and the refi",
 );
 </script>
 
