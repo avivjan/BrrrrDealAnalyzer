@@ -42,6 +42,7 @@ export const BRRR_OUTPUT_LABELS: Partial<Record<BrrrOutputKey, string>> = {
   property_tax_bucket_balance_released_at_refi: "Tax Bucket Balance released at Refi",
   appraisal_and_survey_paid_outside_closing: "Appraisal & Survey (paid outside closing)",
   rehab_completed_date: "Rehab Completed Date",
+  cash_needed_schedule_at_lowest_arv: "Cash Needed schedule (its dates)",
 };
 
 const CASH_METRICS: BrrrOutputKey[] = ["total_cash_needed_for_deal", "cash_out", "net_profit", "roi", "cash_on_cash"];
@@ -56,7 +57,7 @@ const HOLDING_ITEM: BrrrOutputKey[] = ["total_cash_invested", ...CASH_METRICS];
 export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   // Buy
   // The contract date moves no amount: it dates the earnest-money row of the Cash Needed schedule.
-  contractDate: ["total_cash_needed_for_deal"],
+  contractDate: ["cash_needed_schedule_at_lowest_arv"],
   buyClosingDate: ["prepaid_interest_buy", "seller_tax_credit", "cash_to_close_buy", "hml_payoff", "prepaid_interest_refi", "cash_out_routi", ...CASH_METRICS],
   purchasePrice: ["purchase_loan_amount", "hml_amount", "deed_transfer_tax_buy", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   down_payment: ["purchase_loan_amount", "hml_amount", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],

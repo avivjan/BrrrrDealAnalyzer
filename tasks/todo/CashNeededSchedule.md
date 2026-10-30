@@ -172,10 +172,10 @@ The single entry is `rehab_cushion`: the amount, from buy_closing_date to rehab_
 - [x] S4 (15 min) `Golden update:` the models/OpenAPI/calculations snapshots for the dates alone.
 - [x] S5 (60 min) Engine: real 1sts (timeline dates, HOA/utilities/insurance B/rent), refi-on-1st HML into the payoff, floor deleted, Cash Needed rounded; explain texts; descriptions; `brrrAutoCalc.ts` mirror.
 - [x] S6 (15 min) `Golden update:` calculations + OpenAPI after the engine change (deltas reviewed against the list above).
-- [ ] S7 (75 min) Schedule step + record + API models + explain guard.
-- [ ] S8 (75 min) Backend tests (below).
-- [ ] S9 (50 min) HTML report + PDF blocks and their tests.
-- [ ] S10 (60 min) Frontend popup table + types + vitest.
+- [x] S7 (75 min) Schedule step + record + API models + explain guard.
+- [x] S8 (75 min) Backend tests (below).
+- [x] S9 (50 min) HTML report + PDF blocks and their tests.
+- [x] S10 (60 min) Frontend popup table + types + vitest.
 - [ ] S11 (20 min) `Golden update:` regression snapshots with the schedule; Playwright re-record.
 - [ ] S12 (15 min) **MCP:** no new tool or endpoint. `analyze_brrr` / `get_deal` output schemas carry `cash_needed_schedule_at_lowest_arv` with field descriptions (`test_mcp.py` undocumented-field check). Instructions: both dates required and the schedule glossary. Manual `analyze_brrr` call checks that the rows add up.
 - [ ] S13 (20 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):

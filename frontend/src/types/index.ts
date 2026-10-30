@@ -181,6 +181,37 @@ export interface CalcStep {
  */
 export type CalcBreakdowns = Record<string, CalcStep[]>;
 
+/**
+ * One individual cash item of Cash Needed on the day it moves (`BackEnd/ReqRes/common/cash_needed_schedule.py`).
+ * Maps 1:1 to a future liquidity transaction (`types/liquidity.ts`). Amounts are exact dollars in whole cents,
+ * sent as a decimal string ("-5000.00"); positive = money in, negative = money out.
+ */
+export interface CashNeededScheduleRow {
+  date: string;
+  sequence_within_day: number;
+  description: string;
+  signed_amount_dollars: string;
+  item_key: string;
+}
+
+/** Money held, not spent, for a window (the rehab cushion): a future dated raise of the liquidity reserve line. */
+export interface CashThatMustStayInAccount {
+  item_key: string;
+  description: string;
+  amount_dollars: string;
+  reserve_starts_on_date: string;
+  reserve_ends_on_date: string;
+}
+
+/** When every dollar of Cash Needed moves, at the lowest ARV: dated rows' net outflow + what must stay = Cash Needed. */
+export interface CashNeededScheduleAtLowestArv {
+  dated_cash_rows: CashNeededScheduleRow[];
+  cash_that_must_stay_in_account: CashThatMustStayInAccount[];
+  dated_cash_rows_net_outflow_dollars: string;
+  cash_that_must_stay_in_account_total_dollars: string;
+  total_cash_needed_dollars: string;
+}
+
 export interface BrrrAnalyzeRes {
   cash_flow: number;
   dscr?: number;
@@ -192,6 +223,8 @@ export interface BrrrAnalyzeRes {
   net_profit?: number;
   /** Cash Needed, to the cent: total_cash_invested + rehab cushion + refi shortfall + reserves the lowest-ARV wire cannot fund. No floor, no clamp. */
   total_cash_needed_for_deal?: number;
+  /** The dated Lowest-ARV schedule behind Cash Needed. */
+  cash_needed_schedule_at_lowest_arv?: CashNeededScheduleAtLowestArv | null;
   total_cash_invested?: number;
   cash_to_close_buy?: number;
   purchase_loan_amount?: number;

@@ -1483,6 +1483,7 @@ console.groupEnd();
       :metric-label="pressedResultTileForCalculationBreakdown?.metricLabel ?? ''"
       :breakdowns="currentAnalysis?.breakdowns"
       :metric-value="pressedResultTileValue"
+      :cash-needed-schedule="currentAnalysis && 'cash_needed_schedule_at_lowest_arv' in currentAnalysis ? currentAnalysis.cash_needed_schedule_at_lowest_arv : null"
       @close="pressedResultTileForCalculationBreakdown = null"
     />
   </div>

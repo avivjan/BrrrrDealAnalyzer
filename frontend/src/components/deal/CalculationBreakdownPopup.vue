@@ -11,8 +11,9 @@
  * is not a sum (DSCR, the returns) shows its formula first and the section's
  * earlier steps as its inputs beneath. Steps the section derives *after* the
  * headline (the cash to the refi table from the lowest-ARV wire) follow under
- * their own caption, and a collapsed "All steps" list keeps the calculation
- * order at hand.
+ * their own caption, Cash Needed adds its dated Lowest-ARV cash schedule
+ * (`CashNeededScheduleTable`), and a collapsed "All steps" list keeps the
+ * calculation order at hand.
  *
  * It computes nothing: the numbers are the engine's own, and every equation
  * in the text was verified against the engine before the response left the
@@ -28,7 +29,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 
-import type { CalcBreakdowns, CalcStep } from "../../types";
+import type { CalcBreakdowns, CalcStep, CashNeededScheduleAtLowestArv } from "../../types";
 import { inertOutside } from "../ui/inertOutside";
 import {
   allExpandableRowPaths,
@@ -40,6 +41,7 @@ import {
   topLevelRowsForHeadline,
 } from "./calculationBreakdownTree";
 import CalculationBreakdownTreeRow from "./CalculationBreakdownTreeRow.vue";
+import CashNeededScheduleTable from "./CashNeededScheduleTable.vue";
 import { formatCalculationStepValueByUnit } from "./calculationStepFormat";
 
 const props = withDefaults(
@@ -53,11 +55,16 @@ const props = withDefaults(
     breakdowns?: CalcBreakdowns;
     /** The number on the tile (`analysis[metricKey]`); picks the headline step, since a section may end on a derived reading. */
     metricValue?: number;
+    /** The dated Lowest-ARV schedule behind Cash Needed; shown under the Cash Needed breakdown only. */
+    cashNeededSchedule?: CashNeededScheduleAtLowestArv | null;
   }>(),
-  { breakdowns: undefined, metricValue: undefined },
+  { breakdowns: undefined, metricValue: undefined, cashNeededSchedule: undefined },
 );
 
 const emit = defineEmits<{ close: [] }>();
+
+const CASH_NEEDED_METRIC_KEY = "total_cash_needed_for_deal";
+const shownCashNeededSchedule = computed(() => (props.metricKey === CASH_NEEDED_METRIC_KEY ? props.cashNeededSchedule ?? null : null));
 
 const headingId = useId();
 const overlayRoot = ref<HTMLElement | null>(null);
@@ -282,6 +289,8 @@ watch(
                 />
               </ul>
             </template>
+
+            <CashNeededScheduleTable v-if="shownCashNeededSchedule" :schedule="shownCashNeededSchedule" />
 
             <details data-part="all-steps" class="mt-4">
               <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-fg-muted">

@@ -4,7 +4,7 @@ import { mount, type VueWrapper } from "@vue/test-utils";
 import { nextTick } from "vue";
 
 import CalculationBreakdownPopup from "./CalculationBreakdownPopup.vue";
-import type { CalcBreakdowns, CalcStep } from "../../types";
+import type { CalcBreakdowns, CalcStep, CashNeededScheduleAtLowestArv } from "../../types";
 
 let wrapper: VueWrapper | null = null;
 
@@ -284,5 +284,55 @@ describe("CalculationBreakdownPopup", () => {
     await nextTick();
     expect(pressedTile.hasAttribute("inert")).toBe(false);
     expect(document.activeElement?.id).toBe("pressed-tile");
+  });
+});
+
+describe("CalculationBreakdownPopup — the Cash Needed schedule", () => {
+  const SCHEDULE: CashNeededScheduleAtLowestArv = {
+    dated_cash_rows: [
+      { date: "2026-01-03", sequence_within_day: 0, description: "Earnest money deposit", signed_amount_dollars: "-5000.00", item_key: "earnest_money_deposit" },
+      { date: "2026-01-10", sequence_within_day: 0, description: "Cash to close (the purchase wire)", signed_amount_dollars: "-38220.00", item_key: "cash_to_close_buy" },
+      { date: "2026-05-01", sequence_within_day: 0, description: "HML interest for April 2026", signed_amount_dollars: "-2400.00", item_key: "hml_interest_paid_monthly" },
+      { date: "2026-05-01", sequence_within_day: 1, description: "Rent collected", signed_amount_dollars: "2600.00", item_key: "pre_refi_rental_income" },
+      { date: "2026-07-09", sequence_within_day: 0, description: "Cash to the refi table (Lowest-ARV refi)", signed_amount_dollars: "-2600.00", item_key: "cash_to_refi_table_conservative" },
+    ],
+    cash_that_must_stay_in_account: [
+      { item_key: "rehab_cushion", description: "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
+        amount_dollars: "5000", reserve_starts_on_date: "2026-01-10", reserve_ends_on_date: "2026-02-24" },
+    ],
+    dated_cash_rows_net_outflow_dollars: "45620.00",
+    cash_that_must_stay_in_account_total_dollars: "5000",
+    total_cash_needed_dollars: "50620.00",
+  };
+  const schedule = () => document.querySelector('[data-testid="cash-needed-schedule"]');
+
+  it("shows one row per cash item, the cushion's window and the summary under the Cash Needed breakdown", async () => {
+    wrapper = mountPopup({ cashNeededSchedule: SCHEDULE });
+    await nextTick();
+    const rows = [...schedule()!.querySelectorAll('[data-part="schedule-row"]')].map((row) =>
+      [...row.querySelectorAll("td")].map((cell) => cell.textContent!.trim()).join(" "));
+    expect(rows).toEqual([
+      "Jan 3, 2026 Earnest money deposit -$5,000",
+      "Jan 10, 2026 Cash to close (the purchase wire) -$38,220",
+      "May 1, 2026 HML interest for April 2026 -$2,400",
+      "May 1, 2026 Rent collected $2,600",
+      "Jul 9, 2026 Cash to the refi table (Lowest-ARV refi) -$2,600",
+    ]);
+    expect(schedule()!.querySelector('[data-item-key="pre_refi_rental_income"] td:last-child')!.className).toContain("text-positive");
+    expect(schedule()!.querySelector('[data-part="must-stay-in-account"]')!.textContent).toContain("Jan 10, 2026 → Feb 24, 2026");
+    const summary = schedule()!.querySelector('[data-part="schedule-summary"]')!.textContent!.replace(/\s+/g, " ");
+    expect(summary).toContain("Dated rows total (net out)$45,620");
+    expect(summary).toContain("+ Rehab cushion (must stay in the account)$5,000");
+    expect(summary).toContain("= Total Cash Needed$50,620");
+  });
+
+  it("is shown for Cash Needed only, and not without a schedule", async () => {
+    wrapper = mountPopup({ cashNeededSchedule: SCHEDULE, metricKey: "cash_to_close_buy", metricLabel: "Cash to Close", metricValue: 43220 });
+    await nextTick();
+    expect(schedule()).toBeNull();
+    wrapper.unmount();
+    wrapper = mountPopup({ cashNeededSchedule: null });
+    await nextTick();
+    expect(schedule()).toBeNull();
   });
 });
