@@ -38,6 +38,10 @@ from BL.reports.common.breakdown_tree import (
     steps_after_headline,
     top_level_rows_for_headline,
 )
+from BL.reports.common.cash_needed_schedule_report import (
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE, CashNeededScheduleReport,
+    resolve_cash_needed_schedule_report,
+)
 from BL.reports.common.deal_input_sections import ResolvedDealInputSection, resolve_deal_input_sections
 from BL.reports.common.deal_pdf import format_value_like_calculation_popup
 from BL.reports.common.report_result_tiles import ReportResultTile, select_report_result_tiles
@@ -141,7 +145,39 @@ def _rows_markup(
     return "".join(parts)
 
 
-def _result_card_markup(section: _HtmlReportResultSection, result_count: int, breakdowns: dict) -> str:
+_NOTHING_MUST_STAY_IN_ACCOUNT_MARKUP = '<li><span class="label">Nothing</span></li>'
+
+
+def _cash_needed_schedule_markup(schedule_report: CashNeededScheduleReport) -> str:
+    """The popup's Cash Needed schedule: the dated rows, what must stay in the account, and the summary."""
+    dated_rows = "".join(
+        f'<tr class="{"in" if row.is_money_in else "out"}"><td class="date">{_text(row.date_text)}</td>'
+        f'<td>{_text(row.description)}</td><td class="val">{_text(row.signed_amount_text)}</td></tr>'
+        for row in schedule_report.dated_rows
+    )
+    held_rows = "".join(
+        f'<li><span class="label">{_text(held.description)}</span><span class="val">{_text(held.amount_text)}</span>'
+        f'<span class="window">{_text(held.window_text)}</span></li>'
+        for held in schedule_report.cash_that_must_stay_in_account
+    )
+    summary = "".join(
+        f'<div class="summary-line"><span class="label">{_text(label)}</span><span class="val">{_text(value)}</span></div>'
+        for label, value in schedule_report.summary_lines
+    )
+    return (
+        f'<section class="schedule" aria-label="{_text(CASH_NEEDED_SCHEDULE_TITLE)}">'
+        f'<p class="caption">{_text(CASH_NEEDED_SCHEDULE_TITLE)}</p>'
+        '<div class="schedule-scroll"><table class="schedule-table"><thead><tr><th>Date</th><th>Item</th><th class="val">Amount</th></tr></thead>'
+        f'<tbody>{dated_rows}</tbody></table></div>'
+        f'<p class="caption">{_text(CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE)}</p>'
+        f'<ul class="held">{held_rows or _NOTHING_MUST_STAY_IN_ACCOUNT_MARKUP}</ul>'
+        f'<div class="schedule-summary">{summary}</div>'
+        '</section>'
+    )
+
+
+def _result_card_markup(section: _HtmlReportResultSection, result_count: int, breakdowns: dict,
+                        cash_needed_schedule_report: Optional[CashNeededScheduleReport] = None) -> str:
     """One result, laid out like its `CalculationBreakdownPopup`."""
     tile = section.tile
     header = (
@@ -179,6 +215,8 @@ def _result_card_markup(section: _HtmlReportResultSection, result_count: int, br
     if section.derived_rows:
         body.append('<p class="caption">Derived from this</p>')
         body.append(f'<ul class="tree root">{_rows_markup(section.derived_rows, breakdowns, tile.result_key, frozenset(), 0)}</ul>')
+    if section.tile.result_key == CASH_NEEDED_RESULT_KEY and cash_needed_schedule_report is not None:
+        body.append(_cash_needed_schedule_markup(cash_needed_schedule_report))
     all_steps = "".join(
         f'<li><div class="step-head"><span class="label">{_text(step.get("label", ""))}</span>'
         f'<span class="val">{_formatted(step.get("unit"), step.get("value"))}</span></div>'
@@ -433,6 +471,19 @@ details[open] > summary .chev::before { transform: rotate(45deg); left: 5px; top
 .total { border-top: 1px solid var(--line); font-weight: 650; }
 .headline-total { border-top: 2px solid rgba(34,211,238,0.55); font-weight: 800; font-size: 15px; }
 .headline-total .val { color: var(--cyan); }
+.schedule { margin-top: 16px; }
+.schedule-scroll { overflow-x: auto; }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.schedule-table th { text-align: left; font: 700 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line-strong); }
+.schedule-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.schedule-table td.date { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.schedule-table tr.in .val { color: var(--cyan); }
+.held { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.held li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
+.held .window { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.schedule-summary { margin-top: 10px; display: grid; gap: 4px; }
+.summary-line { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+.summary-line:last-child { font-weight: 700; border-top: 1px solid var(--line-strong); padding-top: 4px; }
 .all-steps { margin-top: 16px; }
 .all-steps > summary {
   cursor: pointer; font: 700 10.5px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
@@ -603,7 +654,8 @@ def build_deal_html_report(
         f'<span class="tile-value">{_formatted(section.tile.unit, result.get(section.tile.result_key))}</span></a>'
         for section in sections
     )
-    cards = "".join(_result_card_markup(section, len(sections), breakdowns) for section in sections)
+    cash_needed_schedule_report = resolve_cash_needed_schedule_report(result)
+    cards = "".join(_result_card_markup(section, len(sections), breakdowns, cash_needed_schedule_report) for section in sections)
     deal_inputs_section = ""
     if deal_inputs is not None:
         deal_inputs_section = _deal_inputs_markup(resolve_deal_input_sections(deal_type, deal_inputs, result))

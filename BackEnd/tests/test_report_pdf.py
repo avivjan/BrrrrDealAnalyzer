@@ -549,3 +549,19 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         title_value_text = format_value_like_calculation_popup("money", title_step["value"])
         assert f"+ Title & Escrow › {title_value_text}" in text
         assert f"Title & Escrow (Buy) · {title_value_text}" in text
+
+
+class TestTheCashNeededSectionCarriesItsSchedule:
+    def test_the_schedule_rows_the_cushion_and_the_summary(self, client, brrrr_payload):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]})
+        text = _pdf_text(response.content)
+        assert "CASH SCHEDULE (LOWEST ARV)" in text
+        assert "Jan 3, 2026 Earnest money deposit -$5,000" in text
+        assert "Must stay in the account (not spent):" in text and "Jan 10, 2026 → Feb 24, 2026" in text
+        total_text = format_value_like_calculation_popup("money", body["total_cash_needed_for_deal"])
+        assert f"= Total Cash Needed {total_text}" in text
+
+    def test_only_the_cash_needed_section_has_it(self, client, brrrr_payload):
+        response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["cash_flow"]})
+        assert "CASH SCHEDULE (LOWEST ARV)" not in _pdf_text(response.content)
