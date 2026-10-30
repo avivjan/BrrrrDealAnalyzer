@@ -169,7 +169,7 @@ The single entry is `rehab_cushion`: the amount, from buy_closing_date to rehab_
 - [x] S1 (5 min) Commit this plan as `tasks/todo/CashNeededSchedule.md`.
 - [x] S2 (60 min) Mandatory dates, backend: model, migration, validation, removal of the no-date branches in the engine, explain and report inputs, the MCP instructions; remove the undated and legacy tests and fixtures; add `contractDate` to the payloads.
 - [x] S3 (45 min) Mandatory dates, frontend: Contract Date field, defaults (today / +7), validation mirror with red + shake + block, `brrrAutoCalc.ts` no-date removal, phase tab, impacts.
-- [ ] S4 (15 min) `Golden update:` the models/OpenAPI/calculations snapshots for the dates alone.
+- [x] S4 (15 min) `Golden update:` the models/OpenAPI/calculations snapshots for the dates alone.
 - [ ] S5 (60 min) Engine: real 1sts (timeline dates, HOA/utilities/insurance B/rent), refi-on-1st HML into the payoff, floor deleted, Cash Needed rounded; explain texts; descriptions; `brrrAutoCalc.ts` mirror.
 - [ ] S6 (15 min) `Golden update:` calculations + OpenAPI after the engine change (deltas reviewed against the list above).
 - [ ] S7 (75 min) Schedule step + record + API models + explain guard.

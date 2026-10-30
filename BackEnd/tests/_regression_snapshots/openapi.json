@@ -818,17 +818,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -949,6 +942,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "crime_rate": {
             "anyOf": [
@@ -1878,6 +1877,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -2046,17 +2047,10 @@
             "type": "string"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -2252,6 +2246,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "created_at": {
             "format": "date-time",
@@ -3031,17 +3031,10 @@
             "type": "string"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehabContingency": {
             "anyOf": [
@@ -3079,17 +3072,10 @@
             "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "rent": {
             "anyOf": [
@@ -3288,17 +3274,10 @@
             "title": "Task"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "titleEscrowBuy": {
             "anyOf": [
@@ -3467,6 +3446,11 @@
         },
         "required": [
           "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date",
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -4752,17 +4736,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -4868,6 +4845,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "crime_rate": {
             "anyOf": [
@@ -5785,6 +5768,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -5940,17 +5925,10 @@
             "type": "string"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -6131,6 +6109,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "created_at": {
             "format": "date-time",
@@ -6910,17 +6894,10 @@
             "type": "string"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehabContingency": {
             "anyOf": [
@@ -6958,17 +6935,10 @@
             "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "rent": {
             "anyOf": [
@@ -7155,17 +7125,10 @@
             "title": "Task"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "titleEscrowBuy": {
             "anyOf": [
@@ -7334,6 +7297,11 @@
         },
         "required": [
           "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date",
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -13557,17 +13525,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -13652,6 +13613,12 @@
             "default": "0",
             "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
             "title": "Constructionloanbudget"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "daysUntilRefi": {
             "default": 180,
@@ -14343,6 +14310,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "arv_in_thousands",
           "purchasePrice",
           "down_payment",
@@ -14756,30 +14725,16 @@
             "title": "Recording Transfer Refi Effective"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "reserves_funded_from_own_pocket_at_lowest_arv": {
             "anyOf": [
@@ -14842,17 +14797,10 @@
             "title": "Stolen Money"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "title_escrow_buy_effective": {
             "anyOf": [
@@ -14928,7 +14876,10 @@
           }
         },
         "required": [
-          "cash_flow"
+          "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date"
         ],
         "title": "analyzeBRRRRes",
         "type": "object"
