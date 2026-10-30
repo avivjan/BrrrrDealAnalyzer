@@ -480,7 +480,6 @@ class TestReportPdfRendersThePopups:
 BRRRR_BREAKDOWN_SCENARIOS = {
     "standard_with_closing_date": {},
     "we_pay_all_closing_costs": {"titleModeBuy": "we_pay_all"},
-    "no_buy_closing_date": {"buyClosingDate": None},
 }
 
 
@@ -502,7 +501,7 @@ def _step_by_label(breakdowns: dict, label: str) -> dict:
 class TestBreakdownExplanationsFromPr83ReachThePdf:
     """HML Interest paid monthly (a new step, now drillable from Total Cash Invested), the deed transfer
     tax's who-pays explanation and the title & escrow price tier: each in the PDF, word for word as the
-    popup shows it, for a standard deal, a we-pay-all deal and a deal without a buy closing date."""
+    popup shows it, for a standard deal, and a we-pay-all deal."""
 
     @pytest.mark.parametrize("scenario", list(BRRRR_BREAKDOWN_SCENARIOS))
     def test_hml_interest_paid_monthly_is_a_link_under_total_cash_invested_with_its_own_block(self, client, brrrr_payload, scenario):
@@ -517,11 +516,8 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         assert f"HML Interest paid monthly · {value_text}" in text
         assert _normalize_like_pdf_text(step["formula"]) in text
         assert _normalize_like_pdf_text(step["note"]) in text
-        assert "Monthly HML interest: per diem" in step["formula"]
-        if scenario == "no_buy_closing_date":
-            assert step["note"].startswith("No buy closing date")
-        else:
-            assert "paid from your pocket on the 1st of each month" in step["note"]
+        assert step["formula"].startswith("Per diem (") and "paid on the 1st after it" in step["formula"]
+        assert "paid from your pocket on the 1st of each month" in step["note"]
         # The bookmark tree nests it under Total Cash Invested.
         for index, (level, title) in enumerate(outline):
             if title == f"+ HML Interest paid monthly · {value_text}":
@@ -553,3 +549,19 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         title_value_text = format_value_like_calculation_popup("money", title_step["value"])
         assert f"+ Title & Escrow › {title_value_text}" in text
         assert f"Title & Escrow (Buy) · {title_value_text}" in text
+
+
+class TestTheCashNeededSectionCarriesItsSchedule:
+    def test_the_schedule_rows_the_cushion_and_the_summary(self, client, brrrr_payload):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]})
+        text = _pdf_text(response.content)
+        assert "CASH SCHEDULE (LOWEST ARV)" in text
+        assert "Jan 3, 2026 Earnest money deposit -$5,000" in text
+        assert "Must stay in the account (not spent):" in text and "Jan 10, 2026 → Feb 24, 2026" in text
+        total_text = format_value_like_calculation_popup("money", body["total_cash_needed_for_deal"])
+        assert f"= Total Cash Needed {total_text}" in text
+
+    def test_only_the_cash_needed_section_has_it(self, client, brrrr_payload):
+        response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["cash_flow"]})
+        assert "CASH SCHEDULE (LOWEST ARV)" not in _pdf_text(response.content)

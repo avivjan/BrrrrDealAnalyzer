@@ -23,6 +23,7 @@ from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
 from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
+from migrations.steps.brrr_contract_date_and_required_buy_closing_date import require_brrr_contract_date_and_buy_closing_date
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
 
@@ -153,6 +154,8 @@ def _run_migrations_locked(engine):
     # budget, holding items, reserves, lowest ARV). Reflects fresh: the steps
     # above may have altered these tables. Idempotent.
     add_brrr_lifecycle_columns(engine, sa_inspect(engine))
+    # Both BRRRR dates are mandatory: contract_date is added and every missing date filled. Idempotent.
+    require_brrr_contract_date_and_buy_closing_date(engine, sa_inspect(engine))
 
     # Widen the money columns so a thousands value can hold an exact dollar.
     widen_money_columns(engine)

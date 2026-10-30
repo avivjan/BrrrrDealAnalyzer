@@ -37,6 +37,9 @@ export const BRRRR_PAYLOAD = {
   property_managment_fee_precentages_from_rent: 8,
   maintenancePercent: 5,
   capexPercent: 5,
+  // Mandatory on a BRRRR deal (the backend answers a missing one with a 422).
+  contractDate: '2026-01-03',
+  buyClosingDate: '2026-01-10',
   address: '1 Shared Form St',
   section: 2,
   stage: 2,

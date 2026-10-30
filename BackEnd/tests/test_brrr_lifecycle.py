@@ -23,17 +23,7 @@ def _compute(payload: dict, **overrides):
     return compute_brrr_with_intermediates(analyzeBRRRReq.model_validate({**payload, **overrides}))
 
 
-class TestLegacyParity:
-    """The refactor kept the core math: neutralise every new input and the legacy fixture
-    reproduces the figures pinned before the lifecycle engine, to the last digit."""
-
-    def test_reproduces_the_pinned_legacy_figures(self, legacy_brrrr_payload):
-        results = _compute(legacy_brrrr_payload)
-        assert results.total_cash_needed == Decimal("63525.0000")
-        assert results.cash_out_routi == Decimal("15400.000000")
-        assert results.cash_out == Decimal("-48125.000000")
-        assert float(results.cash_flow) == pytest.approx(85.03674361688704)
-
+class TestConstructionBudget:
     def test_zero_budget_is_the_cash_rehab_case(self, brrrr_payload):
         results = _compute(brrrr_payload, constructionLoanBudget=0)
         assert results.hml_amount == results.purchase_loan_amount
@@ -88,7 +78,8 @@ class TestTaxProration:
         tax_deposits_until_refi = with_taxes.property_tax_paid_into_bucket_until_refi
         assert tax_deposits_until_refi > 0 and without_taxes.property_tax_paid_into_bucket_until_refi == 0
         _assert_equal_to_the_cent(with_taxes.total_cash_invested, without_taxes.total_cash_invested + tax_deposits_until_refi)
-        _assert_equal_to_the_cent(with_taxes.total_cash_needed, without_taxes.total_cash_needed + tax_deposits_until_refi)
+        # Cash Needed is rounded to the cent on each side.
+        assert abs(with_taxes.total_cash_needed - (without_taxes.total_cash_needed + tax_deposits_until_refi)) <= Decimal("0.01")
 
     def test_a_december_reimbursement_stays_in_cash_needed(self, brrrr_payload):
         seller_paid = _compute(brrrr_payload, buyClosingDate="2026-12-15")
@@ -104,9 +95,6 @@ class TestTaxProration:
         _assert_equal_to_the_cent(seller_paid.total_cash_invested,
                                   seller_unpaid.total_cash_invested - seller_paid.seller_tax_credit + deposits_difference)
 
-    def test_the_tax_bucket_is_zero_without_a_closing_date(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate=None)
-        assert results.seller_tax_credit == 0 and results.seller_tax_credit_set_aside_in_tax_bucket == 0
 
 
 class TestInterestTimeline:
@@ -126,12 +114,6 @@ class TestInterestTimeline:
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=10, daysUntilRented=5)
         assert (results.hml_interest_days_prepaid_at_purchase_closing, results.hml_interest_days_paid_monthly, results.hml_interest_days_accrued_into_refi_payoff) == (10, 0, 0)
         assert results.hml_interest_paid_monthly == 0
-
-    def test_without_a_date_everything_is_paid_monthly(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate=None)
-        assert results.prepaid_interest_buy == 0 and results.hml_interest_accrued_into_refi_payoff == 0
-        assert results.hml_interest_paid_monthly == results.hml_interest
-        assert results.refi_closing_date is None and results.prepaid_interest_refi == 0 and results.seller_tax_credit == 0
 
     def test_refi_prepaid_interest_uses_the_refi_loan_and_a_360_day_year(self, brrrr_payload):
         results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=181)  # refi Jul 10 -> 22 days
@@ -230,18 +212,41 @@ class TestRehabDraws:
 
 
 class TestHoldingIncomeAndCosts:
-    def test_pre_refi_rent_covers_placement_to_refi(self, brrrr_payload):
-        results = _compute(brrrr_payload, daysUntilRefi=180, daysUntilRented=90)
-        assert results.days_tenant_occupied_before_refi == 90
-        assert results.pre_refi_rental_income == Decimal(brrrr_payload["rent"]) * 90 / 30
+    """Every monthly item is a whole monthly amount on each real 1st of its window, never days / 30."""
+
+    def test_pre_refi_rent_is_collected_on_the_1sts_after_the_tenant_through_the_refi(self, brrrr_payload):
+        results = _compute(brrrr_payload, daysUntilRefi=180, daysUntilRented=90)   # tenant 2026-04-10, refi 2026-07-09
+        assert results.rent_collection_dates_before_refi == (date(2026, 5, 1), date(2026, 6, 1), date(2026, 7, 1))
+        assert results.pre_refi_rental_income == Decimal(brrrr_payload["rent"]) * 3
+
+    def test_rent_on_the_refi_day_counts_and_a_tenant_moving_in_on_a_1st_pays_from_the_next_1st(self, brrrr_payload):
+        results = _compute(brrrr_payload, buyClosingDate="2026-01-10", daysUntilRefi=172, daysUntilRented=81)   # tenant 2026-04-01, refi 2026-07-01
+        assert results.rent_collection_dates_before_refi == (date(2026, 5, 1), date(2026, 6, 1), date(2026, 7, 1))
 
     def test_tenant_after_refi_earns_nothing(self, brrrr_payload):
         results = _compute(brrrr_payload, daysUntilRefi=90, daysUntilRented=120)
-        assert results.days_tenant_occupied_before_refi == 0 and results.pre_refi_rental_income == 0
+        assert results.rent_collection_dates_before_refi == () and results.pre_refi_rental_income == 0
 
-    def test_utilities_run_until_the_tenant(self, brrrr_payload):
-        results = _compute(brrrr_payload, daysUntilRented=45, monthlyUtilitiesUntilRented=80)
-        assert results.utilities_until_rented == Decimal(80) * 45 / 30
+    def test_utilities_run_until_the_tenant_plus_one_bill_in_arrears(self, brrrr_payload):
+        results = _compute(brrrr_payload, daysUntilRented=45, monthlyUtilitiesUntilRented=80)   # closing 2026-01-10, tenant 2026-02-24
+        assert results.utility_bill_dates_until_refi == (date(2026, 2, 1), date(2026, 3, 1))
+        assert results.utilities_until_rented == Decimal(80) * 2
+
+    def test_utilities_never_run_past_the_refi(self, brrrr_payload):
+        tenant_after_refi = _compute(brrrr_payload, daysUntilRefi=60, daysUntilRented=120, daysUntilRehabCompleted=45)   # refi 2026-03-11
+        assert tenant_after_refi.utility_bill_dates_until_refi == (date(2026, 2, 1), date(2026, 3, 1))
+        refi_inside_the_first_month = _compute(brrrr_payload, daysUntilRefi=15, daysUntilRented=15, daysUntilRehabCompleted=0)   # refi 2026-01-25
+        assert refi_inside_the_first_month.utility_bill_dates_until_refi == () and refi_inside_the_first_month.utilities_until_rented == 0
+
+    def test_a_tenant_on_closing_day_still_gets_the_one_arrears_bill(self, brrrr_payload):
+        results = _compute(brrrr_payload, daysUntilRented=0, daysUntilRehabCompleted=0)
+        assert results.utility_bill_dates_until_refi == (date(2026, 2, 1),)
+
+    def test_hoa_and_insurance_are_paid_on_every_1st_through_the_refi(self, brrrr_payload):
+        results = _compute(brrrr_payload, montly_hoa=450, monthlyInsuranceUntilRefi=90)   # closing 2026-01-10, refi 2026-07-09
+        assert results.first_of_month_dates_after_closing_through_refi == tuple(date(2026, month, 1) for month in range(2, 8))
+        assert results.hoa_dues_until_refi == Decimal(450) * 6
+        assert results.insurance_paid_monthly_until_refi == Decimal(90) * 6
 
     def test_rent_offsets_and_items_add_to_the_cash_invested(self, brrrr_payload):
         results = _compute(brrrr_payload)
@@ -267,7 +272,8 @@ class TestLegacyHardMoneyFlagShim:
             current = {**self.STALE_PAYLOAD, lifecycle_key: 0}
             assert construction_budget_from_legacy_hm_flag(current) is current
         assert _compute({**self.STALE_PAYLOAD, "purchasePrice": 200, "arv_in_thousands": 320, "down_payment": 20, "HMLInterestRate": 11,
-                         "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600, "earnestMoneyDeposit": 5000}).construction_budget == 0
+                         "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600, "earnestMoneyDeposit": 5000,
+                         "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10"}).construction_budget == 0
 
     def test_an_explicit_budget_always_wins(self):
         with_budget = {**self.STALE_PAYLOAD, "constructionLoanBudget": 0}
@@ -328,13 +334,12 @@ class TestLowestArvStressTest:
         results = _compute(brrrr_payload)
         assert results.cash_out_routi_conservative <= results.cash_out_routi
         assert results.cash_to_refi_table_conservative == max(Decimal(0), -results.cash_out_routi_conservative)
-        assert results.cash_needed_through_refi == (results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
-                                                    + results.reserves_funded_from_own_pocket_at_lowest_arv)
+        assert results.total_cash_needed == deal_math.round_to_cents(results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"])
+                                                                     + results.cash_to_refi_table_conservative + results.reserves_funded_from_own_pocket_at_lowest_arv)
 
 
 SCENARIOS = {
     "dated": {"buyClosingDate": "2026-01-10", "daysUntilRefi": 181},
-    "no_date": {"buyClosingDate": None},
     "december_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
     "cash_rehab": {"constructionLoanBudget": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
@@ -386,12 +391,12 @@ class TestReconcileIdentities:
     def test_cash_identities(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
         _assert_equal_to_the_cent(results.cash_out, results.cash_out_routi - results.reserves_total - results.total_cash_invested)
-        _assert_equal_to_the_cent(results.cash_needed_through_refi - Decimal(brrrr_payload["rehabCushion"]) - results.cash_to_refi_table_conservative
-                                  - results.reserves_funded_from_own_pocket_at_lowest_arv, results.total_cash_invested)
+        cash_needed_before_rounding = (results.total_cash_invested + Decimal(brrrr_payload["rehabCushion"]) + results.cash_to_refi_table_conservative
+                                       + results.reserves_funded_from_own_pocket_at_lowest_arv)
+        assert results.total_cash_needed == deal_math.round_to_cents(cash_needed_before_rounding)
         # The old engine took the reserves off the lowest-ARV wire; the cash it then needed is unchanged.
         _assert_equal_to_the_cent(results.cash_to_refi_table_conservative + results.reserves_funded_from_own_pocket_at_lowest_arv,
                                   max(Decimal(0), results.reserves_total - results.cash_out_routi_conservative))
-        _assert_equal_to_the_cent(results.total_cash_needed, max(results.cash_needed_floor, results.cash_needed_through_refi))
         assert results.stolen_money == results.construction_budget - results.rehab_cost == -results.rehab_paid_cash_out_of_pocket
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
@@ -399,71 +404,6 @@ class TestReconcileIdentities:
         # every `check` and `add_sum` guard in explain/brrr.py runs here
         result = calculate_brrr_results(analyzeBRRRReq.model_validate({**brrrr_payload, **SCENARIOS[scenario]}))
         assert result.breakdowns and "cash_to_close_buy" in result.breakdowns
-
-
-class TestCashNeededFloor:
-    """Cash Needed never drops below what day one and the first month take, whatever the draws,
-    the rent collected and the refi wire later give back."""
-
-    # A budget 20k above the rehab (draws return 20k) and an ARV high enough that the lowest-ARV wire
-    # covers everything: the through-refi figure falls below the floor.
-    FLOOR_WINS = {"constructionLoanBudget": 70, "rehabContingency": 0, "arv_in_thousands": 400}
-
-    def test_the_floor_is_the_deposit_the_wire_the_cushion_and_one_month_of_carrying(self, brrrr_payload):
-        results = _compute(brrrr_payload)
-        # Closing 2026-01-10: 22 days are prepaid inside Cash to Close, so the floor adds the other 8.
-        assert results.hml_interest_days_prepaid_at_purchase_closing == 22
-        assert results.hml_interest_first_month_days == 8
-        rest_of_first_month_of_hml_interest = results.hml_per_diem * 8
-        one_month_of_taxes_insurance_and_hoa = (results.property_tax_bucket_deposit + Decimal(brrrr_payload.get("monthlyInsuranceUntilRefi", 0))
-                                                + Decimal(brrrr_payload["montly_hoa"]))
-        _assert_equal_to_the_cent(results.hml_interest_first_month, rest_of_first_month_of_hml_interest)
-        _assert_equal_to_the_cent(results.holding_costs_first_month, one_month_of_taxes_insurance_and_hoa)
-        _assert_equal_to_the_cent(
-            results.cash_needed_floor,
-            Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy + Decimal(brrrr_payload["rehabCushion"])
-            + Decimal(brrrr_payload["monthlyUtilitiesUntilRented"]) + rest_of_first_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa,
-        )
-
-    def test_the_floor_counts_the_first_month_of_interest_once(self, brrrr_payload):
-        """Prepaid (closing day through month end) plus the floor's share is exactly 30 days when the
-        prepaid window is shorter than a month; without a closing date nothing is prepaid and the
-        floor carries the whole 30 days, which is what keeps the pinned legacy Cash Needed intact."""
-        dated = _compute(brrrr_payload, buyClosingDate="2026-01-10")
-        assert dated.hml_interest_days_prepaid_at_purchase_closing + dated.hml_interest_first_month_days == 30
-        _assert_equal_to_the_cent(dated.prepaid_interest_buy + dated.hml_interest_first_month, dated.hml_per_diem * 30)
-        closing_on_the_first = _compute(brrrr_payload, buyClosingDate="2026-03-01")   # 31 days prepaid: more than a month
-        assert closing_on_the_first.hml_interest_first_month_days == 0 and closing_on_the_first.hml_interest_first_month == 0
-        undated = _compute(brrrr_payload, buyClosingDate=None)
-        assert undated.hml_interest_first_month_days == 30
-        _assert_equal_to_the_cent(undated.hml_interest_first_month, undated.hml_per_diem * 30)
-
-    def test_cash_needed_is_unchanged_while_the_through_refi_figure_is_above_the_floor(self, brrrr_payload):
-        results = _compute(brrrr_payload)
-        assert results.cash_needed_floor < results.cash_needed_through_refi
-        assert results.cash_needed_floor_top_up == 0
-        assert results.total_cash_needed == results.cash_needed_through_refi
-
-    def test_the_floor_wins_when_the_draws_and_the_refi_wire_give_back_more_than_the_first_month_takes(self, brrrr_payload):
-        results = _compute(brrrr_payload, **self.FLOOR_WINS)
-        assert results.cash_to_refi_table_conservative == 0 and results.stolen_money == 20_000
-        assert results.cash_needed_through_refi < results.cash_needed_floor
-        _assert_equal_to_the_cent(results.cash_needed_floor_top_up, results.cash_needed_floor - results.cash_needed_through_refi)
-        _assert_equal_to_the_cent(results.total_cash_needed, results.cash_needed_floor)
-
-    @pytest.mark.parametrize("scenario", list(SCENARIOS))
-    def test_cash_needed_is_the_larger_of_the_floor_and_the_through_refi_figure(self, brrrr_payload, scenario):
-        results = _compute(brrrr_payload, **SCENARIOS[scenario])
-        assert results.total_cash_needed >= results.cash_needed_floor
-        assert results.total_cash_needed >= results.cash_needed_through_refi
-        _assert_equal_to_the_cent(results.total_cash_needed, max(results.cash_needed_floor, results.cash_needed_through_refi))
-
-    def test_the_explanation_holds_when_the_floor_wins(self, brrrr_payload):
-        result = calculate_brrr_results(analyzeBRRRReq.model_validate({**brrrr_payload, **self.FLOOR_WINS}))
-        steps = {step.label: step for step in result.breakdowns["total_cash_needed_for_deal"]}
-        assert steps["Floor Top-Up"].value > 0
-        assert [term.label for term in steps["Cash Needed"].terms] == ["Cash Needed through Refi", "Floor Top-Up"]
-        assert steps["Cash Needed"].value == pytest.approx(steps["Cash Needed Floor"].value)
 
 
 class TestApiShapeAndValidation:

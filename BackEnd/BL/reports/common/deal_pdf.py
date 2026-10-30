@@ -34,6 +34,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
     Flowable,
+    CondPageBreak,
     KeepTogether,
     Paragraph,
     SimpleDocTemplate,
@@ -42,6 +43,10 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from BL.reports.common.cash_needed_schedule_report import (
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE, CashNeededScheduleReport,
+    resolve_cash_needed_schedule_report,
+)
 from BL.reports.common.breakdown_tree import (
     CalculationBreakdownRow,
     child_ancestor_step_labels,
@@ -70,6 +75,9 @@ BRAND_BORDER = colors.HexColor("#E5E7EB")
 # Decimal(float) is that exact value, so ROUND_HALF_UP here reproduces them digit for digit.
 _CENTS = Decimal("0.01")
 
+
+# Room the "all N steps" heading needs with its first rows before it may start at the bottom of a page.
+ALL_STEPS_HEADING_AND_FIRST_ROWS_HEIGHT = 1.5 * inch
 
 def _round_half_away_from_zero_to_cents(value: float) -> Decimal:
     return Decimal(value).quantize(_CENTS, rounding=ROUND_HALF_UP)
@@ -473,11 +481,48 @@ def _results_summary_table(sections: list[_ReportResultSection], result: dict, s
     return table
 
 
-def _result_section_flowables(section: _ReportResultSection, registry: _ReportLinkRegistry, styles) -> list[Any]:
+def _cash_needed_schedule_flowables(schedule_report: CashNeededScheduleReport, styles) -> list[Any]:
+    """The popup's Cash Needed schedule: the dated rows, what must stay in the account, and the summary."""
+    date_column_width, amount_column_width = 1.05 * inch, 1.35 * inch
+    item_column_width = sum(_TREE_COLUMN_WIDTHS) - date_column_width - amount_column_width
+    cells: list[list[Any]] = [[
+        Paragraph("<b>Date</b>", styles["term"]), Paragraph("<b>Item</b>", styles["term"]), Paragraph("<b>Amount</b>", styles["row_value"]),
+    ]]
+    for row in schedule_report.dated_rows:
+        cells.append([
+            Paragraph(escape(row.date_text), styles["term"]),
+            Paragraph(escape(row.description), styles["term"]),
+            Paragraph(escape(row.signed_amount_text), styles["row_value"]),
+        ])
+    for held in schedule_report.cash_that_must_stay_in_account:
+        cells.append([
+            Paragraph(escape(held.window_text), styles["term"]),
+            Paragraph(f"<i>{escape(CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE)}:</i> {escape(held.description)}", styles["term"]),
+            Paragraph(escape(held.amount_text), styles["row_value"]),
+        ])
+    summary_start_row = len(cells)
+    for label, value in schedule_report.summary_lines:
+        cells.append([Paragraph(f"<b>{escape(label)}</b>", styles["term"]), "", Paragraph(f"<b>{escape(value)}</b>", styles["row_value"])])
+    style_commands = [
+        ("LINEBELOW", (0, 0), (-1, 0), 0.75, BRAND_NAVY),
+        ("LINEBELOW", (0, 1), (-1, summary_start_row - 1), 0.25, BRAND_BORDER),
+        ("LINEABOVE", (0, summary_start_row), (-1, summary_start_row), 0.75, BRAND_NAVY),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+    ]
+    style_commands += [("SPAN", (0, row_index), (1, row_index)) for row_index in range(summary_start_row, len(cells))]
+    table = Table(cells, colWidths=[date_column_width, item_column_width, amount_column_width], repeatRows=1)
+    table.setStyle(TableStyle(style_commands))
+    return [Paragraph(escape(CASH_NEEDED_SCHEDULE_TITLE).upper(), styles["caption"]), table]
+
+
+def _result_section_flowables(section: _ReportResultSection, registry: _ReportLinkRegistry, styles,
+                              cash_needed_schedule_report: Optional[CashNeededScheduleReport] = None) -> list[Any]:
     """One result, laid out like its `CalculationBreakdownPopup`."""
+    # The destination is an anchor inside the title itself, so the bookmark can never land on the page before it.
     heading = [
-        _NamedDestinationsFlowable([_result_destination(section.result_index)]),
-        Paragraph(escape(section.title), styles["section_title"]),
+        Paragraph(f'<a name="{_result_destination(section.result_index)}"/>{escape(section.title)}', styles["section_title"]),
     ]
     headline_step = section.headline_step
     if headline_step is None:
@@ -513,6 +558,9 @@ def _result_section_flowables(section: _ReportResultSection, registry: _ReportLi
         derived_tree = _TreeTableBuilder(styles, registry)
         derived_tree.add_rows_expanding_first_level(section.derived_rows, section, frozenset())
         flow.append(derived_tree.build())
+
+    if section.tile.result_key == CASH_NEEDED_RESULT_KEY and cash_needed_schedule_report is not None:
+        flow.extend(_cash_needed_schedule_flowables(cash_needed_schedule_report, styles))
 
     flow.append(Paragraph(
         _link(_all_steps_destination(section.result_index), f"All {len(section.steps)} steps in calculation order ›"),
@@ -579,7 +627,9 @@ def _all_steps_flowables(section: _ReportResultSection, registry: _ReportLinkReg
     if tree.cells:
         flow.append(tree.build())
     flow.append(Paragraph(_link(_result_destination(section.result_index), f"← Back to {escape(section.title)}"), styles["link"]))
-    return [KeepTogether(flow[:3]), *flow[3:]]
+    # The list can be longer than a page, which a KeepTogether around it would push onto a page of its own and
+    # leave the one before it blank: start a new page only when the heading and its first rows do not fit.
+    return [CondPageBreak(ALL_STEPS_HEADING_AND_FIRST_ROWS_HEIGHT), *flow]
 
 
 def _header_block(address: str, deal_type: str, styles: dict[str, ParagraphStyle]) -> Table:
@@ -699,8 +749,9 @@ def build_deal_pdf(
         styles["note"],
     ))
 
+    cash_needed_schedule_report = resolve_cash_needed_schedule_report(result)
     for section in sections:
-        flow.extend(_result_section_flowables(section, registry, styles))
+        flow.extend(_result_section_flowables(section, registry, styles, cash_needed_schedule_report))
 
     reachable_steps = sorted(registry.reachable_step_by_object_id.values(), key=lambda reachable: reachable.step_index)
     if reachable_steps:

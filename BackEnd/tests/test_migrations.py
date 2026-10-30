@@ -8,6 +8,7 @@ must be a no-op, and the migrated rows must still serve through the API.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -25,7 +26,7 @@ ALL_DEAL_TABLES = ("active_deals", "flip_deals", "bought_brrrr_deals", "bought_f
 def _drop_lifecycle_columns() -> None:
     with app_db.engine.begin() as conn:
         for table in BRRR_TABLES:
-            for column in NEW_COLUMNS:
+            for column in [*NEW_COLUMNS, "contract_date"]:
                 conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS {column}"))
 
 
@@ -103,10 +104,10 @@ class TestBrrrLifecycleMigration:
             assert migrated_row["insurance_refi_bill_payment_timing"] == "inside_refi_closing"
             assert migrated_row["property_tax_collection_at_refi"] == "no_tax_collected_at_refi"
 
-    def test_formula_defaults_stay_null_and_the_date_stays_unknown(self, legacy_rows):
+    def test_formula_defaults_stay_null(self, legacy_rows):
         run_migrations(app_db.engine)
         migrated_row = _row_by_address("active_deals", "HM Rehab")
-        for column in ("buy_closing_date", "recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
+        for column in ("recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
                        "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands",
                        "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note",
                        "seller_tax_credit_at_purchase_closing", "monthly_property_tax_bucket_deposit", "insurance_bill_at_refi_closing",
@@ -128,11 +129,47 @@ class TestBrrrLifecycleMigration:
         hard_money_rehab_deal = by_address["HM Rehab"]
         assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55.0)
         assert float(hard_money_rehab_deal["earnestMoneyDeposit"]) == pytest.approx(5000.0)
-        assert hard_money_rehab_deal["buyClosingDate"] is None and hard_money_rehab_deal["prepaid_interest_buy"] == 0
+        assert hard_money_rehab_deal["buyClosingDate"] is not None and hard_money_rehab_deal["contractDate"] is not None
         assert hard_money_rehab_deal["total_cash_needed_for_deal"] is not None
         bought = client.get("/bought-deals")
         assert bought.status_code == 200, bought.text
         assert any(d["address"] == "HM Rehab" for d in bought.json())
+
+
+class TestContractDateAndRequiredBuyClosingDateMigration:
+    """Existing BRRRR rows get both mandatory dates: a missing closing becomes the creation day + 7, and the
+    contract date is the creation day, or the closing date when the deal was entered after it closed."""
+
+    def test_a_missing_closing_date_becomes_creation_plus_seven_and_the_contract_the_creation_day(self, legacy_rows):
+        run_migrations(app_db.engine)
+        for table in BRRR_TABLES:
+            migrated_row = _row_by_address(table, "HM Rehab")
+            creation_day = migrated_row["created_at"].date()
+            assert migrated_row["buy_closing_date"] == creation_day + timedelta(days=7)
+            assert migrated_row["contract_date"] == creation_day
+
+    def test_a_closing_date_before_the_creation_day_becomes_the_contract_date(self, client, brrrr_payload):
+        """A deal entered after it closed: contract = created_at would break contract <= buy closing."""
+        client.post("/active-deals", json={**brrrr_payload, "address": "Entered After Closing", "buyClosingDate": "2020-03-05",
+                                            "contractDate": "2020-02-20"})
+        with app_db.engine.begin() as conn:
+            for table in BRRR_TABLES:
+                conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS contract_date"))
+        run_migrations(app_db.engine)
+        migrated_row = _row_by_address("active_deals", "Entered After Closing")
+        assert migrated_row["buy_closing_date"] == date(2020, 3, 5)
+        assert migrated_row["contract_date"] == date(2020, 3, 5)
+
+    def test_both_dates_are_not_null_and_the_migration_is_idempotent(self, legacy_rows):
+        run_migrations(app_db.engine)
+        run_migrations(app_db.engine)
+        with app_db.engine.connect() as conn:
+            for table in BRRR_TABLES:
+                nullability = dict(conn.execute(text(
+                    "SELECT column_name, is_nullable FROM information_schema.columns "
+                    "WHERE table_name = :t AND column_name IN ('contract_date', 'buy_closing_date')"
+                ), {"t": table}).all())
+                assert nullability == {"contract_date": "NO", "buy_closing_date": "NO"}, table
 
 
 class TestBrokerProcessingFeeDefault:

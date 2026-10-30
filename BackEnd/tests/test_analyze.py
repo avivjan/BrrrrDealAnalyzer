@@ -8,27 +8,17 @@ silently different number on someone's deal board.
 
 from __future__ import annotations
 
-from datetime import date
 from decimal import Decimal
 
 import pytest
 
-from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment, days_through_month_end
+from BL.analyze.common.deal_math import calc_holding_costs, calc_mortgage_payment
 from ReqRes.common.analyze_inputs import analyzeBRRRReq
 
-# Captured pre-refactor for the `brrrr_payload` / `flip_payload` fixtures. The legacy payload
-# (`legacy_brrrr_payload`, the new inputs neutralised) still reproduces it to the last digit.
-EXPECTED_LEGACY_BRRRR_CASH_FLOW = 85.03674361688704
-# The same deal moved once on purpose: a regular year's tax is the bill x 0.96 / 12 (paid on
-# Nov 30 with the November discount), so the $3,600 bill costs $288 a month instead of $300.
-EXPECTED_BRRRR_CASH_FLOW = EXPECTED_LEGACY_BRRRR_CASH_FLOW + 12
+# Pinned for the `brrrr_payload` fixture: a regular year's tax is the bill x 0.96 / 12 (paid on
+# Nov 30 with the November discount).
+EXPECTED_BRRRR_CASH_FLOW = 97.03674361688704
 EXPECTED_FLIP_NET_PROFIT = 12620.0
-# Verified identical under the old month-based formulas at 6 months and the
-# per-diem ones at 180 days — the two agree to the last digit, which is what
-# `monthsUntilRefi` -> `daysUntilRefi` was designed to guarantee. Pinned for the
-# `legacy_brrrr_payload` fixture (the lifecycle inputs neutralised): the lifecycle
-# engine must still reproduce it, which proves the core math survived the refactor.
-EXPECTED_LEGACY_BRRRR_CASH_NEEDED = 63525.0
 
 BRRRR_METRIC_KEYS = {
     "cash_flow",
@@ -168,17 +158,6 @@ class TestRefiTiming:
     year. A month is exactly 30 days under that convention, which is what makes
     the migration (`days = months * 30`) leave every saved deal's numbers alone.
     """
-
-    def test_180_days_reproduces_the_old_6_month_result(self, client, legacy_brrrr_payload):
-        # The fixture is the pre-rename payload translated by that same *30, so
-        # this asserting the pinned cash-flow *and* the cash figures below is
-        # the proof the per-diem switch changed nothing for existing deals.
-        result = client.post("/analyze/brrr", json=legacy_brrrr_payload).json()
-        assert result["cash_flow"] == pytest.approx(EXPECTED_LEGACY_BRRRR_CASH_FLOW, abs=1e-9)
-        # 6 months of HML interest + holding costs, priced per diem.
-        assert result["total_cash_needed_for_deal"] == pytest.approx(
-            EXPECTED_LEGACY_BRRRR_CASH_NEEDED, abs=1e-9
-        )
 
     def test_a_legacy_months_payload_is_converted_not_read_as_days(
         self, client, brrrr_payload
@@ -321,40 +300,40 @@ class TestAuditFixes:
         # Pre-refi cash is untouched by ARV / LTV / reserve, so the whole increase is the extra
         # cash the investor wires at the refi table, and the reserves the wire cannot fund, under
         # the lowest ARV...
+        # (Cash Needed is rounded to the cent, so the two sides agree within a cent.)
         assert short["total_cash_needed_for_deal"] == pytest.approx(
-            base["total_cash_needed_for_deal"] + extra_cash_to_table + extra_reserves_from_pocket, abs=1e-6
+            base["total_cash_needed_for_deal"] + extra_cash_to_table + extra_reserves_from_pocket, abs=0.01
         )
-        # ...and Cash Needed is invested + cushion + both of those (this deal sits above the floor).
+        # ...and Cash Needed is invested + cushion + both of those, to the cent.
         assert short["total_cash_needed_for_deal"] == pytest.approx(
             short["total_cash_invested"] + brrrr_payload["rehabCushion"] + short["cash_to_refi_table_conservative"]
-            + short["reserves_funded_from_own_pocket_at_lowest_arv"], abs=1e-6
+            + short["reserves_funded_from_own_pocket_at_lowest_arv"], abs=0.005
         )
         labels = [s["label"] for s in short["breakdowns"]["total_cash_needed_for_deal"]]
         assert "Cash to Refi Table (Lowest ARV)" in labels
 
-    def test_cash_needed_never_drops_below_the_day_one_floor(self, client, brrrr_payload):
-        # Draws give back 20k and the lowest-ARV wire covers everything, so the through-refi figure
-        # falls below what day one and the first month take: Cash Needed is that floor.
+    def test_cash_needed_has_no_floor_and_is_shown_as_it_is(self, client, brrrr_payload):
+        # Draws give back 20k and the lowest-ARV wire covers everything: Cash Needed is the plain
+        # four-term sum, even below what day one takes (the EMD and the purchase wire). No floor, no clamp.
         result = client.post(
             "/analyze/brrr",
             json={**brrrr_payload, "constructionLoanBudget": 70, "rehabContingency": 0, "arv_in_thousands": 400},
         ).json()
-        assert result["cash_to_refi_table_conservative"] == 0
-        # The fixture closes on 2026-01-10: 22 days of interest are prepaid inside Cash to Close, so the
-        # floor adds only the remaining 8 days of the first month.
-        days_prepaid_at_closing = days_through_month_end(date.fromisoformat(brrrr_payload["buyClosingDate"]))
-        rest_of_first_month_of_hml_interest = result["hml_amount"] * brrrr_payload["HMLInterestRate"] / 100 * (30 - days_prepaid_at_closing) / 360
-        # One month of HOA, of insurance paid monthly and one deposit into the tax bucket.
-        one_month_of_taxes_insurance_and_hoa = (float(calc_holding_costs(Decimal("0"), Decimal("0"), Decimal(brrrr_payload["montly_hoa"]), 30))
-                                                + brrrr_payload["monthlyInsuranceUntilRefi"] + result["property_tax_bucket_deposit_effective"])
-        floor = (brrrr_payload["earnestMoneyDeposit"] + result["cash_to_close_buy"] + brrrr_payload["rehabCushion"]
-                 + brrrr_payload["monthlyUtilitiesUntilRented"] + rest_of_first_month_of_hml_interest + one_month_of_taxes_insurance_and_hoa)
-        through_refi = result["total_cash_invested"] + brrrr_payload["rehabCushion"] + result["cash_to_refi_table_conservative"]
-        assert through_refi < floor
-        assert result["total_cash_needed_for_deal"] == pytest.approx(floor, abs=1e-6)
-        steps = {s["label"]: s for s in result["breakdowns"]["total_cash_needed_for_deal"]}
-        assert steps["Cash Needed Floor"]["value"] == pytest.approx(floor, abs=1e-6)
-        assert steps["Floor Top-Up"]["value"] == pytest.approx(floor - through_refi, abs=1e-6)
+        assert result["cash_to_refi_table_conservative"] == 0 and result["stolen_money"] == 20_000
+        four_term_sum = (result["total_cash_invested"] + brrrr_payload["rehabCushion"] + result["cash_to_refi_table_conservative"]
+                         + result["reserves_funded_from_own_pocket_at_lowest_arv"])
+        assert result["total_cash_needed_for_deal"] == pytest.approx(four_term_sum, abs=0.005)
+        assert result["total_cash_needed_for_deal"] < brrrr_payload["earnestMoneyDeposit"] + result["cash_to_close_buy"]
+        assert round(result["total_cash_needed_for_deal"], 2) == result["total_cash_needed_for_deal"]
+        labels = {s["label"] for s in result["breakdowns"]["total_cash_needed_for_deal"]}
+        assert "Cash Needed" in labels and not labels & {"Cash Needed Floor", "Floor Top-Up", "Cash Needed through Refi"}
+
+    def test_cash_needed_may_be_negative(self, client, brrrr_payload):
+        result = client.post(
+            "/analyze/brrr",
+            json={**brrrr_payload, "constructionLoanBudget": 200, "rehabContingency": 0, "arv_in_thousands": 600, "rehabCushion": 0},
+        ).json()
+        assert result["total_cash_needed_for_deal"] < 0
 
     # F1 -- the buffered breakdown now lists every component it sums (Flip only:
     # the BRRRR engine replaced the buffer with the rehab cushion).
@@ -434,3 +413,22 @@ class TestAuditFixes:
         response = client.post("/analyze/flip", json={**flip_payload, field: value})
         assert response.status_code == 400
         assert message.lower() in response.json()["detail"].lower()
+
+
+class TestBrrrDateOrder:
+    """contract <= buy closing <= rehab completed <= refi closing; rehab completed <= tenant occupied. Each break is a 400."""
+
+    @pytest.mark.parametrize("overrides, message", [
+        ({"contractDate": "2026-01-11"}, "Contract date must be on or before the buy closing date."),
+        ({"daysUntilRehabCompleted": 181, "daysUntilRented": 200}, "Rehab completion must be on or before the refi closing date."),
+        ({"daysUntilRehabCompleted": 91}, "Rehab completion must be on or before the tenant-occupied date."),
+        ({"daysUntilRehabCompleted": -1}, "Days until rehab completed cannot be negative."),
+    ])
+    def test_a_date_out_of_order_is_a_400(self, client, brrrr_payload, overrides, message):
+        response = client.post("/analyze/brrr", json={**brrrr_payload, **overrides})
+        assert response.status_code == 400
+        assert message in response.json()["detail"]
+
+    def test_the_boundaries_are_inclusive(self, client, brrrr_payload):
+        same_day = {"contractDate": brrrr_payload["buyClosingDate"], "daysUntilRehabCompleted": 180, "daysUntilRented": 180}
+        assert client.post("/analyze/brrr", json={**brrrr_payload, **same_day}).status_code == 200

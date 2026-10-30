@@ -8,7 +8,7 @@
  * A field that appears twice (Annual Taxes has a clone on the Buy tab) is listed once,
  * on its home tab.
  */
-import type { NumericKey } from "../composables/useDealField";
+import type { DealInputFieldKey } from "../composables/useDealField";
 
 /** One tab per phase of the deal; `key` is also the `data-form-tab` the e2e fixture reads. */
 export type PhaseTabKey = "buy" | "rehab" | "rentHolding" | "refinance" | "buyRehab" | "flipStrategy" | "expenses";
@@ -33,9 +33,9 @@ export const FLIP_PHASE_TABS: readonly PhaseTab[] = [
   { key: "expenses", label: "Expenses", icon: "pi-wallet" },
 ];
 
-export const DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
+export const DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB: Record<PhaseTabKey, readonly DealInputFieldKey[]> = {
   buy: [
-    "sellerTaxCreditAtPurchaseClosing", "purchasePrice", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
+    "contractDate", "buyClosingDate", "sellerTaxCreditAtPurchaseClosing", "purchasePrice", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
     "loanChargesBuy", "recordingTransferBuy", "titleEscrowBuy", "onlineNotaryFeeBuy", "otherClosingCostsBuy",
   ],
   rehab: ["rehabCost", "constructionLoanBudget", "rehabContingency", "rehabCushion", "daysUntilRehabCompleted"],
@@ -61,6 +61,6 @@ export function phaseTabsForDealType(dealType: "BRRRR" | "FLIP"): readonly Phase
 }
 
 /** The tab that holds `fieldKey` for this deal type, or `null` for a field the form does not render. */
-export function phaseTabForDealInputField(fieldKey: NumericKey, dealType: "BRRRR" | "FLIP"): PhaseTab | null {
+export function phaseTabForDealInputField(fieldKey: DealInputFieldKey, dealType: "BRRRR" | "FLIP"): PhaseTab | null {
   return phaseTabsForDealType(dealType).find((tab) => DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB[tab.key].includes(fieldKey)) ?? null;
 }

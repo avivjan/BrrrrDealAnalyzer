@@ -26,7 +26,7 @@ const FIXTURE: DealInputModel = {
   annual_property_taxes: 3600, annual_insurance: 1200, montly_hoa: 0, arv_in_thousands: 320, daysUntilRefi: 181,
   refiPoints: 1.5, loanTermYears: 30, ltv_as_precent: 75, interestRate: 6.5, rent: 2600, vacancyPercent: 5,
   property_managment_fee_precentages_from_rent: 8, maintenancePercent: 5, capexPercent: 5,
-  buyClosingDate: "2026-01-10", earnestMoneyDeposit: 5000, loanChargesBuy: 900, recordingTransferBuy: null,
+  contractDate: "2026-01-03", buyClosingDate: "2026-01-10", earnestMoneyDeposit: 5000, loanChargesBuy: 900, recordingTransferBuy: null,
   titleModeBuy: "standard", titleEscrowBuy: null, onlineNotaryBuy: true, otherClosingCostsBuy: 0,
   sellerPaidCurrentYearTaxes: null, constructionLoanBudget: 55, rehabCushion: 5000, daysUntilRehabCompleted: 45, daysUntilRented: 90,
   monthlyUtilitiesUntilRented: 80, maintenanceBeforeRefi: 500, appliances: 630, loanChargesRefi: 200,
@@ -79,8 +79,10 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
 
   it("the rehab draws and the holding period", () => {
     expectCloseToTheCent(autoCalc.stolenMoney, 0);
-    expectCloseToTheCent(autoCalc.preRefiRentalIncome, 7886.67);
-    expectCloseToTheCent(autoCalc.utilitiesUntilRented, 240);
+    // Rent on May 1, Jun 1 and Jul 1 (tenant Apr 10, refi Jul 10); utilities on Feb 1 .. Apr 1 plus May 1 in arrears.
+    expect(autoCalc.rentCollectionCountBeforeRefi).toBe(3);
+    expectCloseToTheCent(autoCalc.preRefiRentalIncome, 7800);
+    expectCloseToTheCent(autoCalc.utilitiesUntilRented, 320);
   });
 
   it("the refinance settlement and the two wires", () => {
@@ -138,12 +140,19 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(autoCalc.refiClosingDate).toBeNull();
   });
 
-  it("needs a closing date for the date-driven figures, and rent for the rent-driven ones", () => {
-    const withoutClosingDate = brrrAutoCalc({ ...FIXTURE, buyClosingDate: null });
-    expect(withoutClosingDate.prepaidInterestBuy).toBeNull();
-    expect(withoutClosingDate.sellerTaxCredit).toBeNull();
-    expect(withoutClosingDate.refiClosingDate).toBeNull();
-    expect(withoutClosingDate.cashToCloseBuy).not.toBeNull(); // the wire still shows, without the dated lines
+  it("a refi on a 1st carries the month before it inside the payoff, and the monthly items count real 1sts", () => {
+    // Closing Jan 10, refi Jul 1 (172 days): Feb .. May are paid on Mar 1 .. Jun 1; June's 30 days are in the payoff.
+    const refiOnTheFirst = brrrAutoCalc({ ...FIXTURE, daysUntilRefi: 172, monthlyInsuranceUntilRefi: 90 });
+    expectCloseToTheCent(refiOnTheFirst.hmlPayoff, refiOnTheFirst.hmlAmount! + refiOnTheFirst.hmlPerDiem! * 30);
+    // Insurance on Feb 1 .. Jul 1 (the refi day counts).
+    expectCloseToTheCent(refiOnTheFirst.insurancePaidMonthlyUntilRefi, 90 * 6);
+    // A tenant after the refi: no rent, and utilities stop at the refi (Feb 1 .. Jul 1, no bill after it).
+    const tenantAfterRefi = brrrAutoCalc({ ...FIXTURE, daysUntilRefi: 172, daysUntilRented: 200 });
+    expect(tenantAfterRefi.rentCollectionCountBeforeRefi).toBe(0);
+    expectCloseToTheCent(tenantAfterRefi.utilitiesUntilRented, 80 * 6);
+  });
+
+  it("needs rent for the rent-driven figures", () => {
     expect(brrrAutoCalc({ ...FIXTURE, rent: 0 }).preRefiRentalIncome).toBeNull();
   });
 
@@ -205,7 +214,6 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(brrrAutoCalc(FIXTURE).sellerTaxCreditProratedDays).toBe(9); // Jan 1 .. Jan 9
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-12-15" }).sellerTaxCreditProratedDays).toBe(17); // Dec 15 .. Dec 31, seller paid
     expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: "2026-01-01" }).sellerTaxCreditProratedDays).toBe(0);
-    expect(brrrAutoCalc({ ...FIXTURE, buyClosingDate: null }).sellerTaxCreditProratedDays).toBeNull();
   });
 });
 

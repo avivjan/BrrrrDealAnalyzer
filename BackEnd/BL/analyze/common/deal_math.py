@@ -6,8 +6,8 @@ for why: it is the zero-risk choice for a pure structural refactor).
 """
 
 import calendar
-from datetime import date
-from decimal import Decimal
+from datetime import date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from typing import NamedTuple, Optional
 
 from fastapi import HTTPException
@@ -30,6 +30,10 @@ DSCR_DAYS_PER_YEAR = Decimal("360")
 # the bill x 0.96 and the owner's tax bucket is filled with deposits on the 15th.
 PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = Decimal("0.96")
 PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15
+# Every monthly item before the refi (hard-money interest, HOA, insurance, utilities, rent) is paid on the 1st.
+MONTHLY_PAYMENT_DAY_OF_MONTH = 1
+# Cash Needed and every row of its schedule are whole cents.
+ONE_CENT = Decimal("0.01")
 # From this closing month on, the title takes this year's bill at closing: the seller has paid it by default.
 SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH = 10
 
@@ -180,17 +184,43 @@ def calc_seller_tax_credit(annual_taxes, closing_date: date, seller_already_paid
         return -annual_taxes * Decimal(days_in_closing_year - closing_day_of_year + 1) / Decimal(days_in_closing_year)
     return annual_taxes * Decimal(closing_day_of_year - 1) / Decimal(days_in_closing_year)
 
-def property_tax_bucket_deposit_dates(after_day: date, through_day: date) -> list[date]:
-    """Every 15th of a month strictly after `after_day` and on or before `through_day`."""
-    deposit_dates = []
+def day_of_month_dates(after_day: date, through_day: date, day_of_month: int) -> list[date]:
+    """Every `day_of_month` of a month strictly after `after_day` and on or before `through_day`: the window (after, through]."""
+    window_dates = []
     year, month = after_day.year, after_day.month
     while True:
-        deposit_date = date(year, month, PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH)
-        if deposit_date > through_day:
-            return deposit_dates
-        if deposit_date > after_day:
-            deposit_dates.append(deposit_date)
+        window_date = date(year, month, day_of_month)
+        if window_date > through_day:
+            return window_dates
+        if window_date > after_day:
+            window_dates.append(window_date)
         year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+def property_tax_bucket_deposit_dates(after_day: date, through_day: date) -> list[date]:
+    """Every 15th of a month strictly after `after_day` and on or before `through_day`."""
+    return day_of_month_dates(after_day, through_day, PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH)
+
+def first_of_month_dates(after_day: date, through_day: date) -> list[date]:
+    """Every 1st of a month strictly after `after_day` and on or before `through_day`: the window (after, through]."""
+    return day_of_month_dates(after_day, through_day, MONTHLY_PAYMENT_DAY_OF_MONTH)
+
+def first_of_next_month(day: date) -> date:
+    """The first 1st strictly after `day`."""
+    return date(day.year + 1, 1, 1) if day.month == 12 else date(day.year, day.month + 1, 1)
+
+def last_day_of_previous_month(day: date) -> date:
+    """The day before the 1st of `day`'s month: on a monthly payment date, the last day of the month it pays for."""
+    return date(day.year, day.month, 1) - timedelta(days=1)
+
+def add_calendar_months_clamped(day: date, months: int) -> date:
+    """The same day `months` calendar months later, clamped to the last day of a shorter month (Dec 31 + 2 = Feb 28/29)."""
+    month_index = day.month - 1 + months
+    year, month = day.year + month_index // 12, month_index % 12 + 1
+    return date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+def round_to_cents(value: Decimal) -> Decimal:
+    """Half away from zero, to the cent: the rounding of Cash Needed and of every schedule row."""
+    return value.quantize(ONE_CENT, rounding=ROUND_HALF_UP)
 
 def seller_paid_current_year_taxes_by_default(buy_closing_date: date) -> bool:
     """From October the title takes this year's bill at closing, so the seller has paid it."""

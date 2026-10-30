@@ -8,7 +8,7 @@
  */
 import { computed, useId } from "vue";
 import type { DealInputModel, InsurancePurchaseBillPaymentTiming } from "../../../types";
-import { useDealField, type NumericKey } from "../../../composables/useDealField";
+import { useDealField, type DealInputFieldKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -24,7 +24,7 @@ const props = defineProps<{
   deal: DealInputModel;
   surface: "card" | "panel";
   /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
-  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+  fieldErrorMessages?: Partial<Record<DealInputFieldKey, string>>;
 }>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
@@ -45,8 +45,8 @@ const insuranceUntilRefiNote = computed(() =>
 );
 
 const preRefiRentHint = computed(() =>
-  autoCalc.value.daysRentedBeforeRefi == null ? undefined
-    : autoCalc.value.daysRentedBeforeRefi > 0 ? `${autoCalc.value.daysRentedBeforeRefi} days rented before the refi` : "tenant placed at or after the refi",
+  autoCalc.value.rentCollectionCountBeforeRefi == null ? undefined
+    : autoCalc.value.rentCollectionCountBeforeRefi > 0 ? `${autoCalc.value.rentCollectionCountBeforeRefi} rent payments on the 1sts before the refi` : "no 1st between the tenant and the refi",
 );
 </script>
 

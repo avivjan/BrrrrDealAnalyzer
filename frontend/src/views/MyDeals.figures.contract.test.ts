@@ -40,6 +40,8 @@ const getActiveDeals = vi.mocked(api.getActiveDeals);
 function brrrDealWithCashOnCash(id: string, cashOnCash: number): ActiveDealRes {
   return {
     deal_type: "BRRRR",
+    contractDate: "2026-01-03",
+    buyClosingDate: "2026-01-10",
     id,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",

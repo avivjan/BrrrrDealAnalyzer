@@ -12,9 +12,9 @@ import { fieldInput, openTabOf } from '../fixtures/form';
  * settlement statement overrides the proration, and this year's tax bill (one
  * shared field, read on the Buy tab beside the credit and on Rent & Holding)
  * stays as typed, because the bill paid on Nov 30 is its own figure. "auto"
- * puts the proration back. The fixture closes on 2026-09-04 (see
- * `fixtures/clock.ts`): 246 seller days of 365, so a $3,600 bill prorates to a
- * $2,426.30 credit.
+ * puts the proration back. The fixture clock reads 2026-09-04 (see
+ * `fixtures/clock.ts`) and a new deal closes a week after today, on 2026-09-11:
+ * 253 seller days of 365, so a $3,600 bill prorates to a $2,495.34 credit.
  */
 test('typing the seller tax credit overrides the proration and keeps the tax bill', async ({
   page,
@@ -25,7 +25,7 @@ test('typing the seller tax credit overrides the proration and keeps the tax bil
 
   await openTabOf(page, 'purchasePrice'); // the Buy tab
   const figure = page.getByTestId('form.auto.sellerTaxCredit');
-  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,426.30');
+  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,495.34');
   await expect(fieldInput(page, 'annualPropertyTaxesBuyClone')).toHaveValue('$3,600');
 
   await figure.locator('[data-part="edit"]').click();
@@ -38,7 +38,7 @@ test('typing the seller tax credit overrides the proration and keeps the tax bil
   await expect(figure.locator('[data-part="value"]')).toHaveText('$2,410.45');
   await expect(fieldInput(page, 'annualPropertyTaxesBuyClone')).toHaveValue('$3,600');
   const override = page.getByTestId('form.field.sellerTaxCreditAtPurchaseClosing');
-  await expect(override).toContainText('the proration gives $2,426.30');
+  await expect(override).toContainText('the proration gives $2,495.34');
 
   // The Rent & Holding box is the same field, on another (hidden) tab: untouched.
   await openTabOf(page, 'annual_property_taxes');
@@ -46,6 +46,6 @@ test('typing the seller tax credit overrides the proration and keeps the tax bil
 
   await openTabOf(page, 'purchasePrice');
   await override.locator('[data-part="reset"]').click();
-  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,426.30');
+  await expect(figure.locator('[data-part="value"]')).toHaveText('$2,495.34');
   await expect(override).toHaveCount(0);
 });

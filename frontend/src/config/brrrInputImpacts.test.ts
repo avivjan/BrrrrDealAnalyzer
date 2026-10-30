@@ -24,6 +24,7 @@ const RESULT_KEYS: Array<keyof BrrrAnalyzeRes> = [
   "closing_costs_refi_total", "prepaid_interest_refi", "reserves_total",
   "reserves_funded_from_own_pocket_at_lowest_arv", "property_tax_paid_into_bucket_until_refi",
   "property_tax_bucket_balance_released_at_refi", "appraisal_and_survey_paid_outside_closing", "rehab_completed_date",
+  "cash_needed_schedule_at_lowest_arv",
 ];
 
 describe("brrrInputImpacts", () => {

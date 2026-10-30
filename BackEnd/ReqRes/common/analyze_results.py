@@ -12,6 +12,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from ReqRes.common.calc_step import CalcStep
+from ReqRes.common.cash_needed_schedule import CashNeededScheduleAtLowestArvRes
 
 _BREAKDOWNS = (
     "Step-by-step calculation per headline metric, keyed by metric name (e.g. 'cash_flow', "
@@ -64,13 +65,15 @@ class analyzeBRRRRes(BaseModel):
         "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money "
         "left in, reduces it)."))
     total_cash_needed_for_deal: Optional[float] = Field(None, description=(
-        "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of "
+        "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars, rounded to the cent: "
         "total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv "
         "(the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the "
-        "lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the "
-        "insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), "
-        "of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days "
-        "less the days already prepaid inside cash_to_close_buy)."))
+        "lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives "
+        "back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it."))
+    cash_needed_schedule_at_lowest_arv: Optional[CashNeededScheduleAtLowestArvRes] = Field(None, description=(
+        "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item "
+        "(signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase "
+        "closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
         "seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase "
@@ -123,12 +126,9 @@ class analyzeBRRRRes(BaseModel):
     reserves_total: Optional[float] = Field(None, description=(
         "Reserves the owner sets aside at the refi, in dollars: maintenance + vacancy + capex + the HYSA deposit. Not "
         "taken off the wire; they lower cash_out (money that stays in the deal) and count as equity."))
-    refi_closing_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until refi (ISO). Absent when no buy closing date is set."))
-    tenant_occupied_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until rented (ISO). Absent when no buy closing date is set."))
-    rehab_completed_date: Optional[date] = Field(None, description=(
-        "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set."))
+    refi_closing_date: date = Field(..., description="Buy closing date + days until refi (ISO).")
+    tenant_occupied_date: date = Field(..., description="Buy closing date + days until rented (ISO).")
+    rehab_completed_date: date = Field(..., description="Buy closing date + days until rehab completed (ISO).")
     appraisal_and_survey_paid_outside_closing: Optional[float] = Field(None, description=(
         "Appraisal + survey, in dollars: paid outside the refi closing at the end of the rehab, so in "
         "total_cash_invested and not in the refi closing costs."))

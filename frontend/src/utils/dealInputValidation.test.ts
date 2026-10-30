@@ -88,8 +88,33 @@ describe("validateDealInputFields", () => {
       "annual_property_taxes@Rent & Holding", "annual_insurance@Rent & Holding", "montly_hoa@Rent & Holding",
       "ltv_as_precent@Refinance", "refiPoints@Refinance", "appraisalFee@Refinance", "constructionLoanBudget@Rehab",
       // A tenant before the purchase also puts the 45-day rehab completion after the tenant.
-      "daysUntilRented@Rent & Holding", "daysUntilRehabCompleted@Rehab", "interestRate@Refinance", "daysUntilRefi@Refinance",
+      // ...and a refi on day 0 puts it after the refi too.
+      "daysUntilRented@Rent & Holding", "daysUntilRehabCompleted@Rehab", "daysUntilRehabCompleted@Rehab", "interestRate@Refinance",
+      "daysUntilRefi@Refinance",
     ]);
+  });
+
+  it("requires both BRRRR dates, on the Buy tab", () => {
+    const messages = validateDealInputFields({ ...validBrrrr(), contractDate: null, buyClosingDate: "" }, "BRRRR")
+      .map((e) => `${e.fieldKey}:${e.kind}@${e.phaseTabLabel}: ${e.message}`);
+    expect(messages).toEqual([
+      "contractDate:invalid@Buy: Contract date is required.",
+      "buyClosingDate:invalid@Buy: Buy closing date is required.",
+    ]);
+  });
+
+  it("keeps the contract on or before the buy closing", () => {
+    const messagesFor = (contractDate: string) =>
+      validateDealInputFields({ ...validBrrrr(), contractDate, buyClosingDate: "2026-01-10" }, "BRRRR").map((e) => `${e.fieldKey}: ${e.message}`);
+    expect(messagesFor("2026-01-10")).toEqual([]);
+    expect(messagesFor("2026-01-11")).toEqual(["contractDate: Contract date must be on or before the buy closing date."]);
+  });
+
+  it("keeps the rehab completion on or before the refi closing", () => {
+    const messagesFor = (daysUntilRefi: number) =>
+      validateDealInputFields({ ...validBrrrr(), daysUntilRehabCompleted: 45, daysUntilRented: 45, daysUntilRefi }, "BRRRR").map((e) => `${e.fieldKey}: ${e.message}`);
+    expect(messagesFor(45)).toEqual([]);
+    expect(messagesFor(44)).toEqual(["daysUntilRehabCompleted: Rehab completion must be on or before the refi closing date."]);
   });
 
   it("keeps the rehab completion between the purchase closing and the tenant", () => {

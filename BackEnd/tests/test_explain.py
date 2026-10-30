@@ -44,9 +44,8 @@ BRRRR_SCENARIOS = {
     "big_reserve": {"maintenanceReserve": 45000},
     "pitia_zero": {"arv_in_thousands": 0, "annual_property_taxes": 0, "annual_insurance": 0, "montly_hoa": 0},
     # lifecycle branches
-    "no_date": {"buyClosingDate": None},
     "december_paid_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
-    "same_month_refi": {"buyClosingDate": "2026-03-20", "daysUntilRefi": 5, "daysUntilRented": 0},
+    "same_month_refi": {"buyClosingDate": "2026-03-20", "contractDate": "2026-03-01", "daysUntilRefi": 5, "daysUntilRented": 0, "daysUntilRehabCompleted": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
     "tenant_after_refi": {"daysUntilRented": 400},
     "typed_overrides": {"recordingTransferBuy": 1000, "titleEscrowBuy": 900, "recordingTransferRefi": 1000,
@@ -122,11 +121,11 @@ class TestEveryFieldIsExplained:
 
 
 def _numeric_field_values(record) -> set[float]:
-    """Every number on the record (dates, booleans and Nones are not step values)."""
+    """Every number on the record (dates, date lists, the Cash Needed schedule, booleans and Nones are not step values)."""
     numeric_values = set()
     for record_field in dataclasses.fields(record):
         field_value = getattr(record, record_field.name)
-        if isinstance(field_value, bool) or field_value is None or isinstance(field_value, date):
+        if isinstance(field_value, (bool, date, tuple)) or field_value is None:
             continue
         numeric_values.add(float(field_value))
     return numeric_values
@@ -164,7 +163,9 @@ def _assert_terms_add_up(steps: list[dict]) -> None:
         if step.get("terms"):
             summed += 1
             total = sum(t["value"] if t["sign"] == "+" else -t["value"] for t in step["terms"])
-            assert total == pytest.approx(step["value"], abs=1e-6), step["label"]
+            # Cash Needed is the one total the calculator rounds to the cent.
+            tolerance = 0.005 + 1e-9 if step["label"] == "Cash Needed" else 1e-6
+            assert total == pytest.approx(step["value"], abs=tolerance), step["label"]
     assert summed >= 5, "sum-type steps went missing"
 
 
@@ -349,26 +350,13 @@ class TestTermsLinkToTheirSourceStep:
         breakdowns = explain_brrr(req, results_w_intermediates)
         cash_needed = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed")
         assert cash_needed == {
-            "Cash Needed through Refi": "Cash Needed through Refi",
-            "Floor Top-Up": "Floor Top-Up",
-        }
-        through_refi = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed through Refi")
-        assert through_refi == {
             "Total Cash Invested": "Total Cash Invested (pre-refi)",
             "Rehab Cushion": None,
             "Cash to Refi Table (Lowest ARV)": "Cash to Refi Table (Lowest ARV)",
             "Reserves the Lowest-ARV Wire cannot fund": "Reserves the Lowest-ARV Wire cannot fund",
         }
-        floor = _term_links(breakdowns, "total_cash_needed_for_deal", "Cash Needed Floor")
-        assert floor == {
-            "Earnest Money Deposit": None,
-            "Cash to Close (Buy)": "Cash to Close (Buy)",
-            "Insurance Bill at Purchase (outside closing)": "Insurance Bill at Purchase (outside closing)",
-            "Rehab Cushion": None,
-            "Utilities (first month)": None,
-            "HML Interest (first month)": "HML Interest (first month)",
-            "Holding Costs (first month)": "Holding Costs (first month)",
-        }
+        all_labels = {step["label"] for steps in breakdowns.values() for step in steps}
+        assert not all_labels & {"Cash Needed Floor", "Floor Top-Up", "Cash Needed through Refi", "HML Interest (first month)", "Holding Costs (first month)"}
         invested = _term_links(breakdowns, "total_cash_needed_for_deal", "Total Cash Invested")
         assert invested["Cash to Close (Buy)"] == "Cash to Close (Buy)"
         assert invested["Seller Tax Credit set aside in the tax bucket"] == "Seller Tax Credit set aside in the tax bucket"
@@ -472,9 +460,9 @@ def _step_by_label(breakdowns: dict, section_key: str, step_label: str) -> dict:
 
 
 class TestHmlInterestPaidMonthlyIsExplained:
-    """The Total Cash Invested operand opens onto its own step: a month's interest × the months paid monthly."""
+    """The Total Cash Invested operand opens onto its own step: the per diem × the real days of each month paid on a 1st."""
 
-    @pytest.mark.parametrize("scenario", ["base", "no_date", "same_month_refi"])
+    @pytest.mark.parametrize("scenario", ["base", "same_month_refi"])
     def test_monthly_interest_times_months(self, brrrr_payload, scenario):
         req, results_w_intermediates = _brrr(brrrr_payload, BRRRR_SCENARIOS[scenario])
         breakdowns = explain_brrr(req, results_w_intermediates)
@@ -482,18 +470,17 @@ class TestHmlInterestPaidMonthlyIsExplained:
         assert invested["HML Interest paid monthly"] == "HML Interest paid monthly"
         step = _step_by_label(breakdowns, "total_cash_needed_for_deal", "HML Interest paid monthly")
 
-        monthly_interest = results_w_intermediates.hml_per_diem * 30
-        months_paid_monthly = Decimal(results_w_intermediates.hml_interest_days_paid_monthly) / 30
-        assert abs(monthly_interest * months_paid_monthly - results_w_intermediates.hml_interest_paid_monthly) < Decimal("0.005")
+        assert abs(results_w_intermediates.hml_per_diem * results_w_intermediates.hml_interest_days_paid_monthly
+                   - results_w_intermediates.hml_interest_paid_monthly) < Decimal("0.005")
         assert step["value"] == float(results_w_intermediates.hml_interest_paid_monthly)
-        assert "× 30 days = " in step["formula"] and "/month × " in step["formula"]
-        assert f"({results_w_intermediates.hml_interest_days_paid_monthly} days paid monthly ÷ 30)" in step["formula"]
+        assert step["formula"].startswith("Per diem (") and "paid on the 1st after it" in step["formula"]
+        assert f"({results_w_intermediates.hml_interest_days_paid_monthly} days)" in step["formula"]
 
-    def test_base_deal_reads_five_whole_months(self, brrrr_payload):
+    def test_base_deal_reads_five_real_months(self, brrrr_payload):
         req, results_w_intermediates = _brrr(brrrr_payload, {})
         step = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_out", "HML Interest paid monthly")
-        # $215,000 × 11% ÷ 360 × 30 = $1,970.83 a month; Jan 10 → Jul 9 leaves 150 days paid monthly.
-        assert step["formula"].endswith("= $1,970.83/month × 5 months (150 days paid monthly ÷ 30) = $9,854.17")
+        # $215,000 × 11% ÷ 360 = $65.69 a day; Jan 10 → Jul 9: Feb to Jun (150 days) paid on Mar 1 .. Jul 1.
+        assert step["formula"].endswith("5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17")
         assert "Prepaid Interest (Buy)" in step["note"] and "Accrued Interest inside the HML payoff" in step["note"]
 
 
