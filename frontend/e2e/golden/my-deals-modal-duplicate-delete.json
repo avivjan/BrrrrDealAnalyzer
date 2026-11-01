@@ -16,6 +16,20 @@
       }
     },
     {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    },
+    {
       "method": "DELETE",
       "path": "/active-deals/{id}",
       "query": {
