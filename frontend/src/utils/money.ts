@@ -97,6 +97,11 @@ export function formatMoney(dollars: number | null | undefined): string {
   });
 }
 
+/** A signed amount with an explicit `+` on money in: `2600` -> `"+$2,600"`, `-1970.83` -> `"-$1,970.83"`. */
+export function formatSignedMoney(dollars: number): string {
+  return (dollars > 0 ? "+" : "") + formatMoney(dollars);
+}
+
 /**
  * The editable text shown when a money field takes focus: plain digits, no `$`
  * and no separators, so the caret can move without fighting a format mask.

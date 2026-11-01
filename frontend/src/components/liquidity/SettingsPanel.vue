@@ -7,30 +7,33 @@ const props = defineProps<{
   settings: LiquiditySettings
 }>()
 
+/** The soft-warning threshold of a fresh install (the backend's default). */
+const DEFAULT_RESERVE_DOLLARS = 5000
+
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', data: { opening_balance_k: number; opening_balance_date: string; reserve_k: number }): void
+  (e: 'save', data: { opening_balance_dollars: number; opening_balance_date: string; reserve_dollars: number }): void
 }>()
 
-const balanceK = ref('')
+const openingBalanceDollars = ref('')
 const balanceDate = ref('')
-const reserveK = ref('')
+const reserveDollars = ref('')
 
 watch(() => props.open, (open) => {
   if (!open) return
-  balanceK.value = props.settings.opening_balance_k.toString()
+  openingBalanceDollars.value = props.settings.opening_balance_dollars.toString()
   balanceDate.value = props.settings.opening_balance_date
-  reserveK.value = props.settings.reserve_k.toString()
+  reserveDollars.value = props.settings.reserve_dollars.toString()
 })
 
 function onSave() {
-  const b = parseFloat(balanceK.value)
-  const r = parseFloat(reserveK.value)
+  const b = parseFloat(openingBalanceDollars.value)
+  const r = parseFloat(reserveDollars.value)
   if (isNaN(b) || !balanceDate.value) return
   emit('save', {
-    opening_balance_k: b,
+    opening_balance_dollars: b,
     opening_balance_date: balanceDate.value,
-    reserve_k: isNaN(r) ? 5 : r,
+    reserve_dollars: isNaN(r) ? DEFAULT_RESERVE_DOLLARS : r,
   })
 }
 </script>
@@ -50,22 +53,22 @@ function onSave() {
 
           <div class="space-y-4">
             <UiField>
-              <template #label>Opening Balance ($k)</template>
+              <template #label>Opening Balance ($)</template>
               <template #default="{ id, describedBy }">
                 <div class="relative">
                   <input
                     data-testid="settings.balance"
-                    v-model="balanceK"
+                    v-model="openingBalanceDollars"
                     :id="id"
                     :aria-describedby="describedBy"
                     type="number"
                     step="0.01"
-                    class="ui-input numeric pr-10"
+                    class="ui-input numeric pl-7"
                   />
-                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
+                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted">$</span>
                 </div>
               </template>
-              <template #helper>Balance at start of the anchor date. e.g. 49 = $49,000</template>
+              <template #helper>Balance at start of the anchor date, in exact dollars (e.g. 49000)</template>
             </UiField>
 
             <UiField>
@@ -83,23 +86,23 @@ function onSave() {
             </UiField>
 
             <UiField>
-              <template #label>Reserve Threshold ($k)</template>
+              <template #label>Reserve Threshold ($)</template>
               <template #default="{ id, describedBy }">
                 <div class="relative">
                   <input
                     data-testid="settings.reserve"
-                    v-model="reserveK"
+                    v-model="reserveDollars"
                     :id="id"
                     :aria-describedby="describedBy"
                     type="number"
-                    step="0.1"
+                    step="1"
                     min="0"
-                    class="ui-input numeric pr-10"
+                    class="ui-input numeric pl-7"
                   />
-                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
+                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted">$</span>
                 </div>
               </template>
-              <template #helper>Soft warning if balance drops below this. Default: 5k</template>
+              <template #helper>Soft warning if balance drops below this. Default: $5,000</template>
             </UiField>
           </div>
 

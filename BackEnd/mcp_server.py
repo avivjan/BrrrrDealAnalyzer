@@ -45,7 +45,7 @@ INSTRUCTIONS = (
     "niche, contact); then get_deal for one deal's full inputs, metrics and calculation "
     "breakdown. get_active_deals and get_bought_deals return every deal with its full "
     "breakdown and are very large; use them only when you truly need everything. "
-    "Conventions: every field whose name ends in _in_thousands or _k, or whose alias is "
+    "Conventions: every field whose name ends in _in_thousands, or whose alias is "
     "purchasePrice, rehabCost, constructionLoanBudget, lowestArv, closingCostsBuy, closingCostsRefi, "
     "cashReserve, salePrice, sellingClosingCosts or arv_in_thousands, is in THOUSANDS of dollars "
     "(250 = $250k); rent, taxes, insurance, HOA, utilities and every BRRRR settlement line, holding "
@@ -102,7 +102,8 @@ INSTRUCTIONS = (
     "plus cash out. cash_flow = monthly, in a regular year after the refinance. cash_on_cash = yearly cash flow / cash left "
     "in the deal and roi = (yearly cash flow + net_profit) / cash left in the deal, both in percent; "
     "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
-    "_in_thousands or _k are thousands of dollars; every other money field is plain dollars. "
+    "_in_thousands are thousands of dollars; every other money field is plain dollars (the liquidity "
+    "timeline is in exact dollars: amount_dollars, opening_balance_dollars, reserve_dollars). "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
     "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
@@ -229,7 +230,7 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     # --- Liquidity timeline ---
     "list_liquidity_transactions": (
-        "List one-off cash events on the Liquidity timeline (amount_k in thousands, positive "
+        "List one-off cash events on the Liquidity timeline (amount_dollars in exact dollars, positive "
         "= inflow, negative = outflow)."
     ),
     "create_liquidity_transaction": "Add a one-off cash event to the Liquidity timeline.",
@@ -239,13 +240,13 @@ DESCRIPTIONS: dict[str, str] = {
         "List recurring cash-flow rules (frequency daily/weekly/biweekly/monthly/quarterly/"
         "yearly, interval, and either end_date or occurrences)."
     ),
-    "create_liquidity_recurring": "Add a recurring cash-flow rule (amount_k must not be 0).",
+    "create_liquidity_recurring": "Add a recurring cash-flow rule (amount_dollars must not be 0).",
     "update_liquidity_recurring": "Change a recurring rule (partial update; re-projects all its events).",
     "delete_liquidity_recurring": "Remove a recurring rule.",
-    "get_liquidity_settings": "Read the Liquidity settings: opening balance (k), its date and the reserve (k).",
+    "get_liquidity_settings": "Read the Liquidity settings: opening balance, its date and the reserve, in dollars.",
     "update_liquidity_settings": "Change the opening balance, its date and/or the reserve.",
     "get_mercury_balance": (
-        "Live bank balance: the total cash across the Mercury bank accounts in $k, used to "
+        "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "
         "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
         "on the server)."
     ),

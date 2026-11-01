@@ -110,7 +110,7 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
 @router.get("/liquidity/mercury-balance")
 def get_mercury_balance(request: Request):
     """
-    Fetch the live sum of all active Mercury account balances, in $k.
+    Fetch the live sum of all active Mercury account balances, in dollars.
 
     The frontend uses this to re-anchor the liquidity timeline's opening
     balance to today on page load. Every call leaves an audit row (who, from

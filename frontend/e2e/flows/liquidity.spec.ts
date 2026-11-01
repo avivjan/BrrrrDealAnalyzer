@@ -16,15 +16,15 @@ const MERCURY_OFFLINE_DETAIL =
   '(e.g. MERCURY_API_TOKEN_AJYK, MERCURY_API_TOKEN_AY) to BackEnd/.env.';
 
 const MERCURY_SUCCESS = {
-  total_balance_k: 61.5,
-  total_available_k: 61.5,
+  total_balance_dollars: 61500,
+  total_available_dollars: 61500,
   account_count: 2,
   workspace_count: 1,
   workspaces: [
     {
       workspace: 'BigWhales',
-      total_balance_k: 61.5,
-      total_available_k: 61.5,
+      total_balance_dollars: 61500,
+      total_available_dollars: 61500,
       account_count: 2,
       accounts: [
         {
@@ -32,8 +32,8 @@ const MERCURY_SUCCESS = {
           name: 'Operating',
           type: 'checking',
           status: 'active',
-          current_balance_k: 49.2,
-          available_balance_k: 49.2,
+          current_balance_dollars: 49200,
+          available_balance_dollars: 49200,
           workspace: 'BigWhales',
         },
         {
@@ -41,8 +41,8 @@ const MERCURY_SUCCESS = {
           name: 'Reserve',
           type: 'savings',
           status: 'active',
-          current_balance_k: 12.3,
-          available_balance_k: 12.3,
+          current_balance_dollars: 12300,
+          available_balance_dollars: 12300,
           workspace: 'BigWhales',
         },
       ],
@@ -135,9 +135,9 @@ async function annotateHeaderWidth(page: Page): Promise<void> {
 async function openSettingsAndSave(page: Page, settle: Settle): Promise<void> {
   await page.getByTestId('liquidity.empty.settings').click();
   await expect(page.getByTestId('settings.root')).toBeVisible();
-  await page.getByTestId('settings.balance').fill('50');
+  await page.getByTestId('settings.balance').fill('50000');
   await page.getByTestId('settings.date').fill('2026-09-04');
-  await page.getByTestId('settings.reserve').fill('5');
+  await page.getByTestId('settings.reserve').fill('5000');
   await page.getByTestId('settings.save').click();
   await settle(TRANSITION_MS);
   await expect(page.getByTestId('settings.root')).toHaveCount(0);
@@ -182,7 +182,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
   await page.getByTestId('liquidity.add-flow').click();
   await expect(page.getByTestId('txnform.root')).toBeVisible();
   await page.getByTestId('txnform.inflow').click();
-  await page.getByTestId('txnform.amount').fill('12.5');
+  await page.getByTestId('txnform.amount').fill('12500');
   await page.getByTestId('txnform.date').fill('2026-09-10');
   await page.getByTestId('txnform.description').fill('Refi proceeds');
   await page.getByTestId('txnform.save').click();
@@ -195,7 +195,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
   await expect(page.getByTestId('txnform.root')).toBeVisible();
   await page.getByTestId('txnform.mode-recurring').click();
   await page.getByTestId('txnform.inflow').click();
-  await page.getByTestId('txnform.amount').fill('2.6');
+  await page.getByTestId('txnform.amount').fill('2600');
   await page.getByTestId('txnform.start-date').fill('2026-09-05');
   await page.getByTestId('txnform.frequency').selectOption('monthly');
   await page.getByTestId('txnform.description').fill('Unit A rent');
@@ -223,7 +223,7 @@ test('deleting a recurring series names it in the confirm', async ({
   await page.getByTestId('liquidity.add-flow').click();
   await page.getByTestId('txnform.mode-recurring').click();
   await page.getByTestId('txnform.inflow').click();
-  await page.getByTestId('txnform.amount').fill('2.6');
+  await page.getByTestId('txnform.amount').fill('2600');
   await page.getByTestId('txnform.start-date').fill('2026-09-05');
   await page.getByTestId('txnform.description').fill('Unit A rent');
   await page.getByTestId('txnform.save').click();
@@ -292,6 +292,6 @@ test('a successful Mercury sync renders the per-workspace breakdown', async ({
     'Operating',
   );
   await expect(page.getByTestId('sidebar.account.acct-reserve')).toContainText(
-    '12.3k',
+    '$12,300',
   );
 });

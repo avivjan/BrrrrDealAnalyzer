@@ -7,7 +7,7 @@ import type { SimulationResult } from "../../types/liquidity";
 
 function result(overrides: Partial<SimulationResult> = {}): SimulationResult {
   return {
-    min: -12.5,
+    min: -12500,
     minDates: ["2026-05-01"],
     firstNegativeDate: "2026-04-20",
     negativeDates: ["2026-04-20", "2026-05-01"],
@@ -87,7 +87,7 @@ describe("SimulationWarning", () => {
 
       expect(body()).toContain("Negative on 2 dates:");
       expect(at("simwarn.negative-date.2026-04-20").text()).toBe("Apr 20, 2026");
-      expect(body()).toContain("-12.50k");
+      expect(body()).toContain("-$12,500");
     });
 
     it("truncates a long list of negative dates", () => {

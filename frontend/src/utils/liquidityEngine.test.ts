@@ -9,8 +9,8 @@ import {
 } from './liquidityEngine'
 import type { LiquidityTransaction } from '../types/liquidity'
 
-function txn(id: string, date: string, amount_k: number, description = 'test'): LiquidityTransaction {
-  return { id, effective_date: date, description, amount_k }
+function txn(id: string, date: string, amount_dollars: number, description = 'test'): LiquidityTransaction {
+  return { id, effective_date: date, description, amount_dollars }
 }
 
 describe('addDays', () => {
@@ -33,9 +33,9 @@ describe('aggregateNetByDay', () => {
       txn('c', '2025-06-16', 5),
     ]
     const map = aggregateNetByDay(txns)
-    expect(map.get('2025-06-15')?.net_k).toBe(7)
+    expect(map.get('2025-06-15')?.net_dollars).toBe(7)
     expect(map.get('2025-06-15')?.txns).toHaveLength(2)
-    expect(map.get('2025-06-16')?.net_k).toBe(5)
+    expect(map.get('2025-06-16')?.net_dollars).toBe(5)
   })
 
   it('returns empty map for no txns', () => {
@@ -53,20 +53,20 @@ describe('buildDailyLiquiditySeries', () => {
     const series = buildDailyLiquiditySeries(txns, 49, '2025-06-01', '2025-06-01', '2025-06-05')
     expect(series.days).toHaveLength(5)
 
-    expect(series.days[0]?.balance_k).toBe(59)
-    expect(series.days[1]?.balance_k).toBe(59)
-    expect(series.days[2]?.balance_k).toBe(54)
-    expect(series.days[3]?.balance_k).toBe(54)
-    expect(series.days[4]?.balance_k).toBe(54)
+    expect(series.days[0]?.balance_dollars).toBe(59)
+    expect(series.days[1]?.balance_dollars).toBe(59)
+    expect(series.days[2]?.balance_dollars).toBe(54)
+    expect(series.days[3]?.balance_dollars).toBe(54)
+    expect(series.days[4]?.balance_dollars).toBe(54)
   })
 
   it('flat before opening balance date', () => {
     const txns = [txn('a', '2025-06-03', 10)]
     const series = buildDailyLiquiditySeries(txns, 20, '2025-06-02', '2025-06-01', '2025-06-04')
 
-    expect(series.days[0]?.balance_k).toBe(20)
-    expect(series.days[1]?.balance_k).toBe(20)
-    expect(series.days[2]?.balance_k).toBe(30)
+    expect(series.days[0]?.balance_dollars).toBe(20)
+    expect(series.days[1]?.balance_dollars).toBe(20)
+    expect(series.days[2]?.balance_dollars).toBe(30)
   })
 
   it('tracks globalMin and globalMinDates correctly', () => {
@@ -113,9 +113,9 @@ describe('buildDailyLiquiditySeries', () => {
   it('handles empty transactions', () => {
     const series = buildDailyLiquiditySeries([], 49, '2025-06-01', '2025-06-01', '2025-06-03')
     expect(series.days).toHaveLength(3)
-    expect(series.days[0]?.balance_k).toBe(49)
-    expect(series.days[1]?.balance_k).toBe(49)
-    expect(series.days[2]?.balance_k).toBe(49)
+    expect(series.days[0]?.balance_dollars).toBe(49)
+    expect(series.days[1]?.balance_dollars).toBe(49)
+    expect(series.days[2]?.balance_dollars).toBe(49)
     expect(series.globalMin).toBe(49)
   })
 
@@ -126,9 +126,9 @@ describe('buildDailyLiquiditySeries', () => {
     ]
     const series = buildDailyLiquiditySeries(txns, 100, '2025-06-01', '2025-06-05', '2025-06-07')
 
-    expect(series.days[0]?.balance_k).toBe(80)
-    expect(series.days[1]?.balance_k).toBe(85)
-    expect(series.days[2]?.balance_k).toBe(85)
+    expect(series.days[0]?.balance_dollars).toBe(80)
+    expect(series.days[1]?.balance_dollars).toBe(85)
+    expect(series.days[2]?.balance_dollars).toBe(85)
   })
 })
 

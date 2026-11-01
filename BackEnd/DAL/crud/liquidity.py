@@ -25,7 +25,7 @@ def add_transaction(db: Session, data: LiquidityTransactionCreate) -> LiquidityT
     txn = LiquidityTransaction(
         effective_date=data.effective_date,
         description=data.description,
-        amount_k=data.amount_k,
+        amount_dollars=data.amount_dollars,
     )
     db.add(txn)
     return txn
@@ -39,8 +39,8 @@ def update_transaction(db: Session, txn_id: str, data: LiquidityTransactionUpdat
         txn.effective_date = data.effective_date
     if data.description is not None:
         txn.description = data.description
-    if data.amount_k is not None:
-        txn.amount_k = data.amount_k
+    if data.amount_dollars is not None:
+        txn.amount_dollars = data.amount_dollars
     return txn
 
 
@@ -76,7 +76,7 @@ def insert_recurring(
 ) -> LiquidityRecurringTransaction:
     rule = LiquidityRecurringTransaction(
         description=data.description,
-        amount_k=data.amount_k,
+        amount_dollars=data.amount_dollars,
         start_date=data.start_date,
         end_date=data.end_date,
         occurrences=data.occurrences,
@@ -106,13 +106,13 @@ def get_settings(db: Session) -> LiquiditySettings | None:
 
 
 def insert_settings(
-    db: Session, *, opening_balance_k, opening_balance_date, reserve_k
+    db: Session, *, opening_balance_dollars, opening_balance_date, reserve_dollars
 ) -> LiquiditySettings:
     settings = LiquiditySettings(
         id=1,
-        opening_balance_k=opening_balance_k,
+        opening_balance_dollars=opening_balance_dollars,
         opening_balance_date=opening_balance_date,
-        reserve_k=reserve_k,
+        reserve_dollars=reserve_dollars,
     )
     db.add(settings)
     return settings

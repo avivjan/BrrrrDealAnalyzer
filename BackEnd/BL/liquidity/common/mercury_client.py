@@ -5,8 +5,8 @@ Reads any environment variable matching `MERCURY_API_TOKEN` or
 `MERCURY_API_TOKEN_<LABEL>` and treats each as a separate Mercury workspace.
 Account balances from all workspaces are aggregated.
 
-All amounts are returned in $k (thousands of dollars) to match the
-liquidity feature's internal representation.
+All amounts are returned in exact dollars, rounded to the cent, like the
+rest of the liquidity feature.
 """
 
 from __future__ import annotations
@@ -130,15 +130,15 @@ def _summarize_workspace(label: str, raw_accounts: list[dict[str, Any]]) -> dict
             "name": str(acct.get("name") or acct.get("nickname") or ""),
             "type": str(acct.get("type") or ""),
             "status": status,
-            "current_balance_k": round(current / 1000.0, 4),
-            "available_balance_k": round(available / 1000.0, 4),
+            "current_balance_dollars": round(current, 2),
+            "available_balance_dollars": round(available, 2),
             "workspace": label,
         })
 
     return {
         "workspace": label,
-        "total_balance_k": round(total_current / 1000.0, 4),
-        "total_available_k": round(total_available / 1000.0, 4),
+        "total_balance_dollars": round(total_current, 2),
+        "total_available_dollars": round(total_available, 2),
         "account_count": counted,
         "accounts": accounts,
     }
@@ -166,15 +166,15 @@ def summarize_balance() -> dict[str, Any]:
 
     Returns:
         {
-            "total_balance_k": float,        # sum across all successful workspaces, in $k
-            "total_available_k": float,
+            "total_balance_dollars": float,        # sum across all successful workspaces, in dollars
+            "total_available_dollars": float,
             "account_count": int,
             "workspace_count": int,          # number of workspaces that succeeded
             "workspaces": [                  # per-workspace breakdown (successes)
                 {
                     "workspace": "AJYK",
-                    "total_balance_k": ...,
-                    "total_available_k": ...,
+                    "total_balance_dollars": ...,
+                    "total_available_dollars": ...,
                     "account_count": ...,
                     "accounts": [...],
                 },
@@ -221,8 +221,8 @@ def summarize_balance() -> dict[str, Any]:
         ws = _summarize_workspace(label, raw)
         workspaces.append(ws)
         flat_accounts.extend(ws["accounts"])
-        total_current += ws["total_balance_k"]
-        total_available += ws["total_available_k"]
+        total_current += ws["total_balance_dollars"]
+        total_available += ws["total_available_dollars"]
         counted += ws["account_count"]
 
     if not workspaces and errors:
@@ -232,8 +232,8 @@ def summarize_balance() -> dict[str, Any]:
         raise MercuryApiError(joined)
 
     result = {
-        "total_balance_k": round(total_current, 4),
-        "total_available_k": round(total_available, 4),
+        "total_balance_dollars": round(total_current, 2),
+        "total_available_dollars": round(total_available, 2),
         "account_count": counted,
         "workspace_count": len(workspaces),
         "workspaces": workspaces,

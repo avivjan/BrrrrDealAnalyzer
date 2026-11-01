@@ -1,11 +1,11 @@
-/** All monetary amounts on the liquidity feature are in $k (thousands of dollars). */
+/** All monetary amounts on the liquidity feature are in exact dollars (to the cent). */
 
 export interface LiquidityTransaction {
   id: string
   effective_date: string // ISO date YYYY-MM-DD
   description: string
-  /** Signed: positive = inflow, negative = outflow. In $k. */
-  amount_k: number
+  /** Signed: positive = inflow, negative = outflow. In exact dollars. */
+  amount_dollars: number
   created_at?: string
   updated_at?: string
   /**
@@ -21,13 +21,13 @@ export interface LiquidityTransaction {
 export interface LiquidityTransactionCreate {
   effective_date: string
   description: string
-  amount_k: number
+  amount_dollars: number
 }
 
 export interface LiquidityTransactionUpdate {
   effective_date?: string
   description?: string
-  amount_k?: number
+  amount_dollars?: number
 }
 
 /**
@@ -48,8 +48,8 @@ export type LiquidityRecurringFrequency =
 export interface LiquidityRecurringTransaction {
   id: string
   description: string
-  /** Signed amount in $k (positive=inflow, negative=outflow). */
-  amount_k: number
+  /** Signed amount in exact dollars (positive=inflow, negative=outflow). */
+  amount_dollars: number
   start_date: string
   end_date: string | null
   occurrences: number | null
@@ -61,7 +61,7 @@ export interface LiquidityRecurringTransaction {
 
 export interface LiquidityRecurringTransactionCreate {
   description: string
-  amount_k: number
+  amount_dollars: number
   start_date: string
   end_date?: string | null
   occurrences?: number | null
@@ -71,7 +71,7 @@ export interface LiquidityRecurringTransactionCreate {
 
 export interface LiquidityRecurringTransactionUpdate {
   description?: string
-  amount_k?: number
+  amount_dollars?: number
   start_date?: string
   end_date?: string | null
   occurrences?: number | null
@@ -80,23 +80,23 @@ export interface LiquidityRecurringTransactionUpdate {
 }
 
 export interface LiquiditySettings {
-  opening_balance_k: number
+  opening_balance_dollars: number
   opening_balance_date: string // ISO date
-  reserve_k: number
+  reserve_dollars: number
   updated_at?: string
 }
 
 export interface LiquiditySettingsUpdate {
-  opening_balance_k?: number
+  opening_balance_dollars?: number
   opening_balance_date?: string
-  reserve_k?: number
+  reserve_dollars?: number
 }
 
 export interface DayBucket {
   date: string // YYYY-MM-DD
   transactions: LiquidityTransaction[]
-  net_k: number
-  balance_k: number
+  net_dollars: number
+  balance_dollars: number
 }
 
 export interface LiquiditySeries {
@@ -120,15 +120,15 @@ export interface MercuryAccountSummary {
   name: string
   type: string
   status: string
-  current_balance_k: number
-  available_balance_k: number
+  current_balance_dollars: number
+  available_balance_dollars: number
   workspace: string
 }
 
 export interface MercuryWorkspaceSummary {
   workspace: string
-  total_balance_k: number
-  total_available_k: number
+  total_balance_dollars: number
+  total_available_dollars: number
   account_count: number
   accounts: MercuryAccountSummary[]
 }
@@ -139,8 +139,8 @@ export interface MercuryWorkspaceError {
 }
 
 export interface MercuryBalanceResponse {
-  total_balance_k: number
-  total_available_k: number
+  total_balance_dollars: number
+  total_available_dollars: number
   account_count: number
   workspace_count: number
   workspaces: MercuryWorkspaceSummary[]

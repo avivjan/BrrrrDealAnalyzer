@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from sqlalchemy import text, inspect as sa_inspect
 
 from DAL.data_models import (
+    LiquidityTransaction,
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
@@ -23,6 +24,7 @@ from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
 from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
+from migrations.steps.liquidity_amounts_in_dollars import convert_liquidity_amounts_to_dollars
 from migrations.steps.brrr_contract_date_and_required_buy_closing_date import require_brrr_contract_date_and_buy_closing_date
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
@@ -109,8 +111,9 @@ def _run_migrations_locked(engine):
                     ))
                 columns = [c for c in columns if c != old_name]
 
-        # Drop any leftover columns not in the current model
-        expected = {"id", "effective_date", "description", "amount_k", "created_at", "updated_at"}
+        # Drop any leftover columns not in the current model. Read from the model, so a column
+        # added to it is never dropped here; `amount_k` is kept for the dollars step below.
+        expected = {column.name for column in LiquidityTransaction.__table__.columns} | {"amount_k"}
         for col in columns:
             if col not in expected:
                 with engine.begin() as conn:
@@ -130,16 +133,20 @@ def _run_migrations_locked(engine):
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_date DATE DEFAULT CURRENT_DATE NOT NULL"
                 ))
-        if "reserve_k" not in columns:
+        if "reserve_k" not in columns and "reserve_dollars" not in columns:
             with engine.begin() as conn:
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN reserve_k NUMERIC(14,4) DEFAULT 5 NOT NULL"
                 ))
-        if "opening_balance_k" not in columns:
+        if "opening_balance_k" not in columns and "opening_balance_dollars" not in columns:
             with engine.begin() as conn:
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
+
+    # The liquidity amounts move from thousands to exact dollars. Reflects fresh: the
+    # block above may have added a `_k` column. Idempotent.
+    convert_liquidity_amounts_to_dollars(engine, sa_inspect(engine))
 
     # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
     # to the stable slug IDs used by the default pipeline template. Idempotent.

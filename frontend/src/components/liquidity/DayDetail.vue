@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DayBucket } from '../../types/liquidity'
+import { formatMoney, formatSignedMoney } from '../../utils/money'
 
 defineProps<{
   bucket: DayBucket | null
@@ -36,14 +37,14 @@ function formatDate(iso: string): string {
     <div class="mb-3 flex gap-4 text-xs">
       <div>
         <span class="text-fg-muted">Net: </span>
-        <span class="numeric font-semibold" :class="bucket.net_k > 0 ? 'text-positive' : bucket.net_k < 0 ? 'text-negative' : 'text-fg-muted'">
-          {{ bucket.net_k > 0 ? '+' : '' }}{{ bucket.net_k.toFixed(2) }}k
+        <span class="numeric font-semibold" :class="bucket.net_dollars > 0 ? 'text-positive' : bucket.net_dollars < 0 ? 'text-negative' : 'text-fg-muted'">
+          {{ formatSignedMoney(bucket.net_dollars) }}
         </span>
       </div>
       <div>
         <span class="text-fg-muted">EOD: </span>
-        <span :class="bucket.balance_k < 0 ? 'text-negative' : 'text-primary'" class="numeric font-bold">
-          {{ bucket.balance_k.toFixed(2) }}k
+        <span :class="bucket.balance_dollars < 0 ? 'text-negative' : 'text-primary'" class="numeric font-bold">
+          {{ formatMoney(bucket.balance_dollars) }}
         </span>
       </div>
     </div>
@@ -62,7 +63,7 @@ function formatDate(iso: string): string {
         :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
       >
         <div class="h-1.5 w-1.5 shrink-0 rounded-full"
-          :class="txn.amount_k > 0 ? 'bg-positive' : 'bg-negative'"
+          :class="txn.amount_dollars > 0 ? 'bg-positive' : 'bg-negative'"
         />
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
@@ -79,9 +80,9 @@ function formatDate(iso: string): string {
           </div>
         </div>
         <div class="shrink-0 text-xs font-bold numeric"
-          :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'"
+          :class="txn.amount_dollars > 0 ? 'text-positive' : 'text-negative'"
         >
-          {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(2) }}k
+          {{ formatSignedMoney(txn.amount_dollars) }}
         </div>
         <div class="flex shrink-0 gap-2 opacity-0 transition-opacity duration-fast ease-standard focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
           <UiIconButton

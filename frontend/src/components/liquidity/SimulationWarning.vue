@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SimulationResult } from '../../types/liquidity'
+import { formatMoney } from '../../utils/money'
 
 defineProps<{
   open: boolean
@@ -66,7 +67,7 @@ function formatDate(iso: string): string {
             </div>
 
             <div class="mb-5 space-y-1 rounded-card bg-surface-2 p-3 text-xs text-fg">
-              <div>Window minimum: <span class="font-bold numeric text-negative">{{ result.min.toFixed(2) }}k</span></div>
+              <div>Window minimum: <span class="font-bold numeric text-negative">{{ formatMoney(result.min) }}</span></div>
               <div>First negative: <span class="tabular text-negative">{{ result.firstNegativeDate ? formatDate(result.firstNegativeDate) : '—' }}</span></div>
               <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}{{ result.minDates.length > 3 ? ' +more' : '' }}</span></div>
             </div>
@@ -102,7 +103,7 @@ function formatDate(iso: string): string {
             </div>
 
             <div class="mb-5 space-y-1 rounded-card bg-surface-2 p-3 text-xs text-fg">
-              <div>Window minimum: <span class="font-bold numeric text-warning">{{ result.min.toFixed(2) }}k</span></div>
+              <div>Window minimum: <span class="font-bold numeric text-warning">{{ formatMoney(result.min) }}</span></div>
               <div>Min reached on: <span class="tabular text-fg">{{ result.minDates.slice(0, 3).map(formatDate).join(', ') }}</span></div>
               <div>Dates below reserve: <span class="tabular text-warning">{{ result.reserveBreachDates.length }}</span></div>
             </div>

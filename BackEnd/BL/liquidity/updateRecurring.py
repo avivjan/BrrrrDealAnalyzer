@@ -19,10 +19,10 @@ def update_recurring(db: Session, rule_id: str, data: LiquidityRecurringTransact
 
     if data.description is not None:
         rule.description = data.description
-    if data.amount_k is not None:
-        if data.amount_k == 0:
-            raise ValueError("amount_k must be non-zero.")
-        rule.amount_k = data.amount_k
+    if data.amount_dollars is not None:
+        if data.amount_dollars == 0:
+            raise ValueError("amount_dollars must be non-zero.")
+        rule.amount_dollars = data.amount_dollars
     if data.start_date is not None:
         rule.start_date = data.start_date
     # `end_date` is intentionally allowed to be set back to NULL via PATCH,

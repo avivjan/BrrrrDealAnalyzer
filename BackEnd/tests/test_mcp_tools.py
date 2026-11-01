@@ -140,19 +140,19 @@ class TestPipelineTemplates:
 class TestLiquidity:
     def test_transactions_crud(self, client):
         created = call_json("create_liquidity_transaction",
-                            body={"effective_date": "2026-10-01", "description": "Rent in", "amount_k": 2.5})
-        assert created["amount_k"] == 2.5
+                            body={"effective_date": "2026-10-01", "description": "Rent in", "amount_dollars": 2500.75})
+        assert created["amount_dollars"] == 2500.75
         assert [t["id"] for t in call_json("list_liquidity_transactions")] == [created["id"]]
 
-        updated = call_json("update_liquidity_transaction", txn_id=created["id"], body={"amount_k": 3})
-        assert updated["amount_k"] == 3.0 and updated["description"] == "Rent in"
+        updated = call_json("update_liquidity_transaction", txn_id=created["id"], body={"amount_dollars": 3000})
+        assert updated["amount_dollars"] == 3000.0 and updated["description"] == "Rent in"
 
         assert call_json("delete_liquidity_transaction", txn_id=created["id"]) == {"message": "Transaction deleted"}
         assert call_json("list_liquidity_transactions") == []
 
     def test_recurring_rules_crud_and_validation(self, client):
         rule = call_json("create_liquidity_recurring", body={
-            "description": "Mortgage", "amount_k": -1.2, "start_date": "2026-10-01",
+            "description": "Mortgage", "amount_dollars": -1200, "start_date": "2026-10-01",
             "frequency": "monthly", "occurrences": 6,
         })
         assert rule["frequency"] == "monthly" and rule["occurrences"] == 6
@@ -161,15 +161,15 @@ class TestLiquidity:
         assert call_json("update_liquidity_recurring", rule_id=rule["id"], body={"interval": 2})["interval"] == 2
 
         with pytest.raises(RuntimeError, match="HTTP 422"):
-            call("create_liquidity_recurring", body={"description": "Zero", "amount_k": 0,
+            call("create_liquidity_recurring", body={"description": "Zero", "amount_dollars": 0,
                                                      "start_date": "2026-10-01", "frequency": "weekly"})
 
         assert call_json("delete_liquidity_recurring", rule_id=rule["id"]) == {"message": "Recurring rule deleted"}
 
     def test_settings_update_and_read(self, client):
         updated = call_json("update_liquidity_settings",
-                            body={"opening_balance_k": 50, "opening_balance_date": "2026-09-01", "reserve_k": 10})
-        assert (updated["opening_balance_k"], updated["reserve_k"]) == (50.0, 10.0)
+                            body={"opening_balance_dollars": 50000, "opening_balance_date": "2026-09-01", "reserve_dollars": 10000})
+        assert (updated["opening_balance_dollars"], updated["reserve_dollars"]) == (50000.0, 10000.0)
         assert call_json("get_liquidity_settings")["opening_balance_date"] == "2026-09-01"
 
     def test_mercury_unconfigured_is_a_503(self, client, no_integrations):

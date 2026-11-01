@@ -6,9 +6,9 @@ import SettingsPanel from "./SettingsPanel.vue";
 import type { LiquiditySettings } from "../../types/liquidity";
 
 const SETTINGS: LiquiditySettings = {
-  opening_balance_k: 49,
+  opening_balance_dollars: 49000,
   opening_balance_date: "2026-01-01",
-  reserve_k: 5,
+  reserve_dollars: 5000,
 };
 
 /** Teleports to `<body>`, and the seeding watcher hangs off `open`. */
@@ -43,38 +43,38 @@ describe("SettingsPanel", () => {
 
   it("seeds the three fields from the current settings", async () => {
     await openPanel({
-      opening_balance_k: 123.5,
+      opening_balance_dollars: 123500,
       opening_balance_date: "2026-03-09",
-      reserve_k: 7.25,
+      reserve_dollars: 7250,
     });
 
-    expect(value("settings.balance")).toBe("123.5");
+    expect(value("settings.balance")).toBe("123500");
     expect(value("settings.date")).toBe("2026-03-09");
-    expect(value("settings.reserve")).toBe("7.25");
+    expect(value("settings.reserve")).toBe("7250");
   });
 
   it("saves exactly what is in the three fields", async () => {
     const wrapper = await openPanel();
-    await at("settings.balance").setValue("80.5");
+    await at("settings.balance").setValue("80500");
     await at("settings.date").setValue("2026-02-01");
-    await at("settings.reserve").setValue("10");
+    await at("settings.reserve").setValue("10000");
 
     await at("settings.save").trigger("click");
 
     expect(lastSave(wrapper)).toEqual({
-      opening_balance_k: 80.5,
+      opening_balance_dollars: 80500,
       opening_balance_date: "2026-02-01",
-      reserve_k: 10,
+      reserve_dollars: 10000,
     });
   });
 
   it("accepts a negative opening balance", async () => {
     const wrapper = await openPanel();
-    await at("settings.balance").setValue("-12");
+    await at("settings.balance").setValue("-12000");
 
     await at("settings.save").trigger("click");
 
-    expect(lastSave(wrapper)).toMatchObject({ opening_balance_k: -12 });
+    expect(lastSave(wrapper)).toMatchObject({ opening_balance_dollars: -12000 });
   });
 
   describe("refusing to save", () => {
@@ -97,13 +97,13 @@ describe("SettingsPanel", () => {
     });
   });
 
-  it("falls back to a 5k reserve when the reserve box is emptied", async () => {
+  it("falls back to a $5,000 reserve when the reserve box is emptied", async () => {
     const wrapper = await openPanel();
     await at("settings.reserve").setValue("");
 
     await at("settings.save").trigger("click");
 
-    expect(lastSave(wrapper)).toMatchObject({ reserve_k: 5 });
+    expect(lastSave(wrapper)).toMatchObject({ reserve_dollars: 5000 });
   });
 
   it("keeps a deliberate zero reserve rather than defaulting it", async () => {
@@ -112,7 +112,7 @@ describe("SettingsPanel", () => {
 
     await at("settings.save").trigger("click");
 
-    expect(lastSave(wrapper)).toMatchObject({ reserve_k: 0 });
+    expect(lastSave(wrapper)).toMatchObject({ reserve_dollars: 0 });
   });
 
   it("closes from Cancel and from the backdrop without saving", async () => {

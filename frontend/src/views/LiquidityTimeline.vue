@@ -8,6 +8,7 @@ import type {
   SimulationResult,
 } from '../types/liquidity'
 import { requiresSimulation, todayISO } from '../utils/liquidityEngine'
+import { formatMoney } from '../utils/money'
 import TimelineChart from '../components/liquidity/TimelineChart.vue'
 import LiquiditySidebar from '../components/liquidity/LiquiditySidebar.vue'
 import DayDetail from '../components/liquidity/DayDetail.vue'
@@ -25,14 +26,14 @@ type OneOffSavePayload = {
   id?: string
   effective_date: string
   description: string
-  amount_k: number
+  amount_dollars: number
 }
 
 type RecurringSavePayload = {
   kind: 'recurring'
   id?: string
   description: string
-  amount_k: number
+  amount_dollars: number
   start_date: string
   end_date: string | null
   occurrences: number | null
@@ -67,20 +68,16 @@ const kpis = computed(() => {
   const daysToNegative = firstNeg
     ? Math.round((new Date(firstNeg + 'T00:00:00').getTime() - new Date(todayIso + 'T00:00:00').getTime()) / 86_400_000)
     : null
-  const fmt = (v: number) => {
-    const sign = v < 0 ? '-' : ''
-    const a = Math.abs(v)
-    return a >= 1000 ? `${sign}$${(a / 1000).toFixed(1)}M` : `${sign}$${a.toFixed(1)}k`
-  }
+  const fmt = (v: number) => formatMoney(Math.round(v))
   return {
-    balance: todayBucket ? fmt(todayBucket.balance_k) : '—',
-    balanceTone: todayBucket && todayBucket.balance_k < 0 ? 'negative' : 'neutral',
+    balance: todayBucket ? fmt(todayBucket.balance_dollars) : '—',
+    balanceTone: todayBucket && todayBucket.balance_dollars < 0 ? 'negative' : 'neutral',
     min: fmt(store.series.globalMin),
-    minTone: store.series.globalMin < 0 ? 'negative' : store.series.globalMin < store.settings.reserve_k ? 'warning' : 'positive',
+    minTone: store.series.globalMin < 0 ? 'negative' : store.series.globalMin < store.settings.reserve_dollars ? 'warning' : 'positive',
     minDate: store.series.globalMinDates[0] ?? null,
     daysToNegative: daysToNegative === null ? 'None' : daysToNegative <= 0 ? 'Now' : `${daysToNegative}d`,
     daysTone: daysToNegative === null ? 'positive' : daysToNegative <= 30 ? 'negative' : 'warning',
-    reserve: fmt(store.settings.reserve_k),
+    reserve: fmt(store.settings.reserve_dollars),
   } as const
 })
 
@@ -105,7 +102,7 @@ const selectedBucket = computed(() => {
 const hasData = computed(() =>
   store.transactions.length > 0 ||
   store.recurringRules.length > 0 ||
-  store.settings.opening_balance_k !== 0 ||
+  store.settings.opening_balance_dollars !== 0 ||
   !!store.mercuryBalance
 )
 
@@ -122,9 +119,9 @@ async function refreshFromMercury() {
   if (store.mercuryError) {
     showToast('Mercury sync failed: ' + store.mercuryError)
   } else if (store.mercuryBalance) {
-    const sum = store.mercuryBalance.total_balance_k
+    const sum = store.mercuryBalance.total_balance_dollars
     const n = store.mercuryBalance.account_count
-    showToast(`Synced from Mercury: ${sum.toFixed(1)}k across ${n} account${n === 1 ? '' : 's'}.`)
+    showToast(`Synced from Mercury: ${formatMoney(sum)} across ${n} account${n === 1 ? '' : 's'}.`)
   }
 }
 
@@ -172,15 +169,15 @@ async function onFormSave(data: SavePayload) {
   }
 
   const needsSim = data.id
-    ? requiresSimulation(store.transactions.find(t => t.id === data.id)!, data.amount_k, data.effective_date)
-    : requiresSimulation(null, data.amount_k, data.effective_date)
+    ? requiresSimulation(store.transactions.find(t => t.id === data.id)!, data.amount_dollars, data.effective_date)
+    : requiresSimulation(null, data.amount_dollars, data.effective_date)
 
   if (needsSim) {
     const fakeTxn: LiquidityTransaction = {
       id: data.id || '__candidate__',
       effective_date: data.effective_date,
       description: data.description,
-      amount_k: data.amount_k,
+      amount_dollars: data.amount_dollars,
     }
     const action = data.id ? 'edit' : 'add'
     const candidateList = store.buildCandidateList(action, fakeTxn, data.id)
@@ -203,7 +200,7 @@ async function onFormSave(data: SavePayload) {
     }
 
     await doSave(data)
-    showToast(`Saved. Window min: ${result.min.toFixed(1)}k on ${result.minDates[0]}`)
+    showToast(`Saved. Window min: ${formatMoney(result.min)} on ${result.minDates[0]}`)
     return
   }
 
@@ -221,7 +218,7 @@ async function handleRecurringSave(data: RecurringSavePayload) {
   const candidateRule: LiquidityRecurringTransaction = {
     id: data.id || '__candidate__',
     description: data.description,
-    amount_k: data.amount_k,
+    amount_dollars: data.amount_dollars,
     start_date: data.start_date,
     end_date: data.end_date,
     occurrences: data.occurrences,
@@ -231,7 +228,7 @@ async function handleRecurringSave(data: RecurringSavePayload) {
 
   // Always simulate outflows — a recurring outflow can sink the timeline
   // far in the future even if amount-per-occurrence is small.
-  const needsSim = data.amount_k < 0 || !!data.id
+  const needsSim = data.amount_dollars < 0 || !!data.id
   if (needsSim) {
     const action: 'add' | 'edit' = data.id ? 'edit' : 'add'
     const candidateList = store.buildRecurringCandidateList(action, candidateRule, data.id)
@@ -253,7 +250,7 @@ async function handleRecurringSave(data: RecurringSavePayload) {
     }
 
     await doSaveRecurring(data)
-    showToast(`Series saved. Window min: ${result.min.toFixed(1)}k on ${result.minDates[0]}`)
+    showToast(`Series saved. Window min: ${formatMoney(result.min)} on ${result.minDates[0]}`)
     return
   }
 
@@ -284,13 +281,13 @@ async function doSave(data: OneOffSavePayload) {
       await store.updateTransaction(data.id, {
         effective_date: data.effective_date,
         description: data.description,
-        amount_k: data.amount_k,
+        amount_dollars: data.amount_dollars,
       })
     } else {
       await store.addTransaction({
         effective_date: data.effective_date,
         description: data.description,
-        amount_k: data.amount_k,
+        amount_dollars: data.amount_dollars,
       })
     }
   } catch (e: any) {
@@ -303,7 +300,7 @@ async function doSaveRecurring(data: RecurringSavePayload) {
     if (data.id) {
       await store.updateRecurring(data.id, {
         description: data.description,
-        amount_k: data.amount_k,
+        amount_dollars: data.amount_dollars,
         start_date: data.start_date,
         end_date: data.end_date,
         occurrences: data.occurrences,
@@ -313,7 +310,7 @@ async function doSaveRecurring(data: RecurringSavePayload) {
     } else {
       await store.addRecurring({
         description: data.description,
-        amount_k: data.amount_k,
+        amount_dollars: data.amount_dollars,
         start_date: data.start_date,
         end_date: data.end_date,
         occurrences: data.occurrences,
@@ -381,7 +378,7 @@ async function onDeleteTxn(txnId: string) {
   }
 }
 
-async function onSettingsSave(data: { opening_balance_k: number; opening_balance_date: string; reserve_k: number }) {
+async function onSettingsSave(data: { opening_balance_dollars: number; opening_balance_date: string; reserve_dollars: number }) {
   settingsOpen.value = false
   try {
     await store.updateSettings(data)
@@ -533,7 +530,7 @@ function showToast(msg: string) {
               <div v-for="ws in store.mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
                 <div class="flex items-center justify-between gap-2 text-[10px]">
                   <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
-                  <span class="whitespace-nowrap numeric text-fg">{{ ws.total_balance_k.toFixed(1) }}k</span>
+                  <span class="whitespace-nowrap numeric text-fg">{{ formatMoney(ws.total_balance_dollars) }}</span>
                 </div>
                 <div
                   v-for="a in ws.accounts"
@@ -542,7 +539,7 @@ function showToast(msg: string) {
                   class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
                 >
                   <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-                  <span class="whitespace-nowrap numeric text-fg-muted">{{ a.current_balance_k.toFixed(1) }}k</span>
+                  <span class="whitespace-nowrap numeric text-fg-muted">{{ formatMoney(a.current_balance_dollars) }}</span>
                 </div>
               </div>
             </div>
@@ -585,7 +582,7 @@ function showToast(msg: string) {
                 :global-min="store.series.globalMin"
                 :global-min-dates="store.series.globalMinDates"
                 :first-negative-date="store.series.firstNegativeDate"
-                :reserve-k="store.settings.reserve_k"
+                :reserve-k="store.settings.reserve_dollars"
                 @select-day="onSelectDay"
               />
             </div>

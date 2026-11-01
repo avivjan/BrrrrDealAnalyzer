@@ -131,7 +131,7 @@ test.beforeAll(async ({ playwright }, testInfo) => {
   // `resetDb` restores the snapshot afterwards.
   const settings = await api.put(`${API_ORIGIN}/liquidity/settings`, {
     headers: SEED_HEADERS,
-    data: { opening_balance_k: 50, opening_balance_date: '2026-09-04', reserve_k: 5 },
+    data: { opening_balance_dollars: 50000, opening_balance_date: '2026-09-04', reserve_dollars: 5000 },
   });
   if (!settings.ok()) {
     throw new Error(`PUT /liquidity/settings failed: ${settings.status()} ${await settings.text()}`);

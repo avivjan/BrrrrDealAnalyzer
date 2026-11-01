@@ -52,7 +52,7 @@ def test_tokens_are_secrets_and_only_accounts_is_called(monkeypatch):
     assert [c[0] for c in calls] == [mc.ACCOUNTS_URL]
     assert calls[0][1]["Authorization"] == "Bearer sekrit-token-ajyk-0001"
     assert calls[0][2] == mc.MERCURY_TIMEOUT_SECONDS
-    assert summary["total_balance_k"] == 12.0 and summary["workspace_count"] == 1
+    assert summary["total_balance_dollars"] == 12000.0 and summary["workspace_count"] == 1
     assert "sekrit" not in repr(summary)
 
 

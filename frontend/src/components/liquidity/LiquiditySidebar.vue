@@ -8,6 +8,7 @@ import type {
   MercuryBalanceResponse,
 } from '../../types/liquidity'
 import { todayISO, addDays, describeRecurrence } from '../../utils/liquidityEngine'
+import { formatMoney, formatSignedMoney } from '../../utils/money'
 
 const props = defineProps<{
   series: LiquiditySeries
@@ -44,7 +45,7 @@ const next90dMin = computed(() => {
   let minDate = ''
   for (const d of props.series.days) {
     if (d.date >= today && d.date <= end) {
-      if (d.balance_k < min) { min = d.balance_k; minDate = d.date }
+      if (d.balance_dollars < min) { min = d.balance_dollars; minDate = d.date }
     }
   }
   return min === Infinity ? null : { value: min, date: minDate }
@@ -52,14 +53,14 @@ const next90dMin = computed(() => {
 
 const nextOutflow = computed(() => {
   const future = props.transactions
-    .filter(t => t.amount_k < 0 && t.effective_date >= today)
+    .filter(t => t.amount_dollars < 0 && t.effective_date >= today)
     .sort((a, b) => a.effective_date.localeCompare(b.effective_date))
   return future[0] ?? null
 })
 
 const nextInflow = computed(() => {
   const future = props.transactions
-    .filter(t => t.amount_k > 0 && t.effective_date >= today)
+    .filter(t => t.amount_dollars > 0 && t.effective_date >= today)
     .sort((a, b) => a.effective_date.localeCompare(b.effective_date))
   return future[0] ?? null
 })
@@ -69,8 +70,8 @@ const activeRecurringRules = computed(() => {
   // Sort outflows first so the most "interesting" series (HM interest,
   // mortgage payments) bubble up. Inside each group keep start-date order.
   return [...list].sort((a, b) => {
-    const aOut = a.amount_k < 0 ? 0 : 1
-    const bOut = b.amount_k < 0 ? 0 : 1
+    const aOut = a.amount_dollars < 0 ? 0 : 1
+    const bOut = b.amount_dollars < 0 ? 0 : 1
     if (aOut !== bOut) return aOut - bOut
     return a.start_date.localeCompare(b.start_date)
   })
@@ -102,7 +103,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Next outflow -->
     <UiCard v-if="nextOutflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
-      <div class="font-bold numeric text-negative">{{ nextOutflow.amount_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-negative">{{ formatMoney(nextOutflow.amount_dollars) }}</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextOutflow.description }}</div>
       <div class="text-fg-muted">{{ formatDate(nextOutflow.effective_date) }}</div>
     </UiCard>
@@ -110,7 +111,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Next inflow -->
     <UiCard v-if="nextInflow" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Next Inflow</UiSectionHeader>
-      <div class="font-bold numeric text-positive">+{{ nextInflow.amount_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-positive">{{ formatSignedMoney(nextInflow.amount_dollars) }}</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
       <div class="text-fg-muted">{{ formatDate(nextInflow.effective_date) }}</div>
     </UiCard>
@@ -142,9 +143,9 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
             </div>
             <div
               class="shrink-0 text-[11px] font-bold numeric"
-              :class="rule.amount_k > 0 ? 'text-positive' : 'text-negative'"
+              :class="rule.amount_dollars > 0 ? 'text-positive' : 'text-negative'"
             >
-              {{ rule.amount_k > 0 ? '+' : '' }}{{ rule.amount_k.toFixed(1) }}k
+              {{ formatSignedMoney(rule.amount_dollars) }}
             </div>
           </div>
           <div class="mt-0.5 flex items-center justify-between gap-2">
@@ -179,7 +180,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <UiCard v-if="next90dMin" data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Low (next 90d)</UiSectionHeader>
       <div class="font-bold numeric" :class="next90dMin.value < 0 ? 'text-negative' : 'text-fg'">
-        {{ next90dMin.value.toFixed(1) }}k
+        {{ formatMoney(next90dMin.value) }}
       </div>
       <div class="mt-0.5 text-fg-muted">{{ formatDate(next90dMin.date) }}</div>
     </UiCard>
@@ -187,7 +188,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
     <!-- Reserve -->
     <UiCard data-reveal padding="sm">
       <UiSectionHeader as="h4" class="mb-1">Reserve Threshold</UiSectionHeader>
-      <div class="font-bold numeric text-fg">{{ settings.reserve_k.toFixed(1) }}k</div>
+      <div class="font-bold numeric text-fg">{{ formatMoney(settings.reserve_dollars) }}</div>
     </UiCard>
   </div>
 </template>

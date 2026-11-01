@@ -13,20 +13,20 @@ LiquidityFrequency = Literal[
 class LiquidityTransactionCreate(BaseModel):
     effective_date: date
     description: str = Field(..., min_length=1, max_length=500)
-    amount_k: Decimal = Field(..., description="Signed amount in $k (positive=inflow, negative=outflow)")
+    amount_dollars: Decimal = Field(..., description="Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)")
 
 
 class LiquidityTransactionUpdate(BaseModel):
     effective_date: Optional[date] = None
     description: Optional[str] = Field(None, min_length=1, max_length=500)
-    amount_k: Optional[Decimal] = None
+    amount_dollars: Optional[Decimal] = None
 
 
 class LiquidityTransactionRes(BaseModel):
     id: str
     effective_date: date
     description: str
-    amount_k: float
+    amount_dollars: float
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -42,8 +42,8 @@ class LiquidityRecurringTransactionCreate(BaseModel):
     """
 
     description: str = Field(..., min_length=1, max_length=500)
-    amount_k: Decimal = Field(
-        ..., description="Signed amount in $k (positive=inflow, negative=outflow)"
+    amount_dollars: Decimal = Field(
+        ..., description="Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)"
     )
     start_date: date
     end_date: Optional[date] = None
@@ -58,11 +58,11 @@ class LiquidityRecurringTransactionCreate(BaseModel):
         1, ge=1, le=365, description="'Every N units' multiplier on top of frequency."
     )
 
-    @field_validator("amount_k")
+    @field_validator("amount_dollars")
     @classmethod
     def _amount_not_zero(cls, v: Decimal) -> Decimal:
         if v == 0:
-            raise ValueError("amount_k must be non-zero.")
+            raise ValueError("amount_dollars must be non-zero.")
         return v
 
     @model_validator(mode="after")
@@ -76,7 +76,7 @@ class LiquidityRecurringTransactionUpdate(BaseModel):
     """Partial update — only provided fields are written."""
 
     description: Optional[str] = Field(None, min_length=1, max_length=500)
-    amount_k: Optional[Decimal] = None
+    amount_dollars: Optional[Decimal] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     occurrences: Optional[int] = Field(None, ge=1, le=2000)
@@ -91,7 +91,7 @@ class LiquidityRecurringTransactionUpdate(BaseModel):
 class LiquidityRecurringTransactionRes(BaseModel):
     id: str
     description: str
-    amount_k: float
+    amount_dollars: float
     start_date: date
     end_date: Optional[date] = None
     occurrences: Optional[int] = None
@@ -104,15 +104,15 @@ class LiquidityRecurringTransactionRes(BaseModel):
 
 
 class LiquiditySettingsUpdate(BaseModel):
-    opening_balance_k: Optional[Decimal] = None
+    opening_balance_dollars: Optional[Decimal] = None
     opening_balance_date: Optional[date] = None
-    reserve_k: Optional[Decimal] = None
+    reserve_dollars: Optional[Decimal] = None
 
 
 class LiquiditySettingsRes(BaseModel):
-    opening_balance_k: float
+    opening_balance_dollars: float
     opening_balance_date: date
-    reserve_k: float
+    reserve_dollars: float
     updated_at: Optional[str] = None
 
     model_config = {"from_attributes": True}

@@ -75,7 +75,7 @@ describe("TransactionForm", () => {
         id: undefined,
         effective_date: "2026-04-01",
         description: "Rehab draw #2",
-        amount_k: -49.2,
+        amount_dollars: -49.2,
       });
     });
 
@@ -89,7 +89,7 @@ describe("TransactionForm", () => {
 
       expect(lastSave(wrapper)).toMatchObject({
         kind: "transaction",
-        amount_k: 12.5,
+        amount_dollars: 12.5,
       });
     });
 
@@ -119,7 +119,7 @@ describe("TransactionForm", () => {
           id: "txn-9",
           effective_date: "2026-02-14",
           description: "HM interest",
-          amount_k: -3.25,
+          amount_dollars: -3.25,
         },
       });
 
@@ -134,7 +134,7 @@ describe("TransactionForm", () => {
       expect(lastSave(wrapper)).toMatchObject({
         kind: "transaction",
         id: "txn-9",
-        amount_k: -3.25,
+        amount_dollars: -3.25,
       });
     });
 
@@ -143,7 +143,7 @@ describe("TransactionForm", () => {
         editRecurring: {
           id: "rule-3",
           description: "Insurance",
-          amount_k: -1.1,
+          amount_dollars: -1.1,
           start_date: "2026-01-15",
           end_date: null,
           occurrences: 6,
@@ -164,7 +164,7 @@ describe("TransactionForm", () => {
         editRecurring: {
           id: "rule-4",
           description: "Loan",
-          amount_k: 5,
+          amount_dollars: 5,
           start_date: "2026-01-15",
           end_date: "2026-12-31",
           occurrences: null,
@@ -194,7 +194,7 @@ describe("TransactionForm", () => {
         kind: "recurring",
         id: undefined,
         description: "HOA",
-        amount_k: -2.5,
+        amount_dollars: -2.5,
         start_date: "2026-03-01",
         end_date: null,
         occurrences: null,

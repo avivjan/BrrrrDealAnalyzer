@@ -773,61 +773,61 @@ def capture_models() -> dict[str, Any]:
         )),
         # -- liquidity
         ("LiquidityTransactionCreate", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "HM draw", "amount_k": "-12.5",
+            "effective_date": today, "description": "HM draw", "amount_dollars": "-12500",
         }),
         ("LiquidityTransactionCreate/blank_description", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "", "amount_k": 1,
+            "effective_date": today, "description": "", "amount_dollars": 1000,
         }),
         ("LiquidityTransactionCreate/long_description", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "x" * 501, "amount_k": 1,
+            "effective_date": today, "description": "x" * 501, "amount_dollars": 1000,
         }),
         ("LiquidityTransactionUpdate/empty", LiquidityTransactionUpdate, {}),
         ("LiquidityTransactionRes", LiquidityTransactionRes, {
-            "id": "abc", "effective_date": today, "description": "d", "amount_k": 1.5,
+            "id": "abc", "effective_date": today, "description": "d", "amount_dollars": 1500,
             "created_at": "2024-01-01T00:00:00", "updated_at": None,
         }),
         ("LiquidityRecurringCreate", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": "2.6", "start_date": today,
+            "description": "rent", "amount_dollars": "2600", "start_date": today,
             "end_date": "2025-03-05", "occurrences": 12, "frequency": "monthly",
             "interval": 1,
         }),
         ("LiquidityRecurringCreate/defaults", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/zero_amount", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 0, "start_date": today,
+            "description": "rent", "amount_dollars": 0, "start_date": today,
             "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/end_before_start", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "end_date": "2020-01-01", "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/bad_frequency", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "frequency": "fortnightly",
         }),
         ("LiquidityRecurringCreate/interval_out_of_range",
          LiquidityRecurringTransactionCreate, {
-             "description": "rent", "amount_k": 1, "start_date": today,
+             "description": "rent", "amount_dollars": 1000, "start_date": today,
              "frequency": "weekly", "interval": 366,
          }),
         ("LiquidityRecurringCreate/occurrences_out_of_range",
          LiquidityRecurringTransactionCreate, {
-             "description": "rent", "amount_k": 1, "start_date": today,
+             "description": "rent", "amount_dollars": 1000, "start_date": today,
              "frequency": "weekly", "occurrences": 2001,
          }),
         ("LiquidityRecurringUpdate/empty", LiquidityRecurringTransactionUpdate, {}),
         ("LiquidityRecurringRes", LiquidityRecurringTransactionRes, {
-            "id": "abc", "description": "d", "amount_k": 1.5, "start_date": today,
+            "id": "abc", "description": "d", "amount_dollars": 1500, "start_date": today,
             "frequency": "monthly", "interval": 2,
         }),
         ("LiquiditySettingsUpdate/empty", LiquiditySettingsUpdate, {}),
         ("LiquiditySettingsUpdate/full", LiquiditySettingsUpdate, {
-            "opening_balance_k": "12.3456", "opening_balance_date": today, "reserve_k": "5",
+            "opening_balance_dollars": "12345.6", "opening_balance_date": today, "reserve_dollars": "5000",
         }),
         ("LiquiditySettingsRes", LiquiditySettingsRes, {
-            "opening_balance_k": 12.3456, "opening_balance_date": today, "reserve_k": 5.0,
+            "opening_balance_dollars": 12345.6, "opening_balance_date": today, "reserve_dollars": 5000,
         }),
         # -- pipeline templates
         ("PipelineSubStage", PipelineSubStage, {"id": "  a  ", "label": "  Label  "}),
@@ -1326,15 +1326,15 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity transactions ------------------------------------------------
     r.get("liquidity/txn_list_empty", "/liquidity/transactions")
     txn = client.post("/liquidity/transactions", json={
-        "effective_date": "2024-03-05", "description": "HM draw", "amount_k": -12.5,
+        "effective_date": "2024-03-05", "description": "HM draw", "amount_dollars": -12500,
     }).json()
     r.results["liquidity/txn_create"] = {"status": 201, "body": _redact(txn)}
     r.post("liquidity/txn_create_blank_description", "/liquidity/transactions", json={
-        "effective_date": "2024-03-05", "description": "", "amount_k": 1,
+        "effective_date": "2024-03-05", "description": "", "amount_dollars": 1000,
     })
     r.get("liquidity/txn_list", "/liquidity/transactions")
     r.put("liquidity/txn_update", f"/liquidity/transactions/{txn['id']}",
-          json={"description": "HM draw (revised)", "amount_k": -13.25})
+          json={"description": "HM draw (revised)", "amount_dollars": -13250})
     r.put("liquidity/txn_update_empty", f"/liquidity/transactions/{txn['id']}", json={})
     r.put("liquidity/txn_update_missing", f"/liquidity/transactions/{MISSING_ID}",
           json={"description": "x"})
@@ -1344,20 +1344,20 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity recurring ------------------------------------------------
     r.get("liquidity/recurring_list_empty", "/liquidity/recurring")
     rule = client.post("/liquidity/recurring", json={
-        "description": "Rent", "amount_k": 2.6, "start_date": "2024-03-05",
+        "description": "Rent", "amount_dollars": 2600, "start_date": "2024-03-05",
         "end_date": "2025-03-05", "occurrences": 12, "frequency": "monthly", "interval": 1,
     }).json()
     r.results["liquidity/recurring_create"] = {"status": 201, "body": _redact(rule)}
     r.post("liquidity/recurring_create_zero_amount", "/liquidity/recurring", json={
-        "description": "Zero", "amount_k": 0, "start_date": "2024-03-05",
+        "description": "Zero", "amount_dollars": 0, "start_date": "2024-03-05",
         "frequency": "monthly",
     })
     r.post("liquidity/recurring_create_bad_window", "/liquidity/recurring", json={
-        "description": "Bad", "amount_k": 1, "start_date": "2024-03-05",
+        "description": "Bad", "amount_dollars": 1000, "start_date": "2024-03-05",
         "end_date": "2020-01-01", "frequency": "monthly",
     })
     r.post("liquidity/recurring_create_bad_frequency", "/liquidity/recurring", json={
-        "description": "Bad", "amount_k": 1, "start_date": "2024-03-05",
+        "description": "Bad", "amount_dollars": 1000, "start_date": "2024-03-05",
         "frequency": "fortnightly",
     })
     r.get("liquidity/recurring_list", "/liquidity/recurring")
@@ -1366,7 +1366,7 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     r.put("liquidity/recurring_update_bad_window", f"/liquidity/recurring/{rule['id']}",
           json={"end_date": "2020-01-01"})
     r.put("liquidity/recurring_update_zero_amount", f"/liquidity/recurring/{rule['id']}",
-          json={"amount_k": 0})
+          json={"amount_dollars": 0})
     r.put("liquidity/recurring_update_missing", f"/liquidity/recurring/{MISSING_ID}",
           json={"description": "x"})
     r.get("liquidity/recurring_after_updates", "/liquidity/recurring")
@@ -1376,10 +1376,10 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity settings + mercury --------------------------------------
     r.get("liquidity/settings_autocreate", "/liquidity/settings")
     r.put("liquidity/settings_update", "/liquidity/settings",
-          json={"opening_balance_k": 123.4567, "opening_balance_date": "2024-03-05",
-                "reserve_k": 7.5})
+          json={"opening_balance_dollars": 123456.7, "opening_balance_date": "2024-03-05",
+                "reserve_dollars": 7500})
     r.get("liquidity/settings_after_update", "/liquidity/settings")
-    r.put("liquidity/settings_partial", "/liquidity/settings", json={"reserve_k": 9})
+    r.put("liquidity/settings_partial", "/liquidity/settings", json={"reserve_dollars": 9000})
     r.get("liquidity/mercury_balance_unconfigured", "/liquidity/mercury-balance")
 
     # -- email ------------------------------------------------------------

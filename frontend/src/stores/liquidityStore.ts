@@ -27,9 +27,9 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const transactions = ref<LiquidityTransaction[]>([])
   const recurringRules = ref<LiquidityRecurringTransaction[]>([])
   const settings = ref<LiquiditySettings>({
-    opening_balance_k: 0,
+    opening_balance_dollars: 0,
     opening_balance_date: todayISO(),
-    reserve_k: 5,
+    reserve_dollars: 5,
   })
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -66,7 +66,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     )
     return buildDailyLiquiditySeries(
       effectiveTransactions.value,
-      settings.value.opening_balance_k,
+      settings.value.opening_balance_dollars,
       settings.value.opening_balance_date,
       rangeStart,
       rangeEnd,
@@ -101,11 +101,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     )
     return simulateImpact(
       candidateTxns,
-      settings.value.opening_balance_k,
+      settings.value.opening_balance_dollars,
       settings.value.opening_balance_date,
       rangeStart,
       rangeEnd,
-      settings.value.reserve_k,
+      settings.value.reserve_dollars,
     )
   }
 
@@ -245,11 +245,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
 
       const today = todayISO()
       const needsUpdate =
-        settings.value.opening_balance_k !== balance.total_balance_k ||
+        settings.value.opening_balance_dollars !== balance.total_balance_dollars ||
         settings.value.opening_balance_date !== today
       if (needsUpdate) {
         await updateSettings({
-          opening_balance_k: balance.total_balance_k,
+          opening_balance_dollars: balance.total_balance_dollars,
           opening_balance_date: today,
         })
       }

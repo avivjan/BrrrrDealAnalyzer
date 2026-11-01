@@ -6,7 +6,7 @@ import {
   areaPath,
   balanceRange,
   clampScroll,
-  formatK,
+  formatDollarsCompact,
   indexForOffsetX,
   linePath,
   nextIndex,
@@ -73,8 +73,9 @@ describe("chart geometry", () => {
     expect(wide[1]! - wide[0]!).toBe(20);
     expect(wide[wide.length - 1]).toBeLessThanOrEqual(250);
     expect(niceGridSteps(5, 5, 6)).toEqual([0]);
-    expect(formatK(12.34)).toBe("12.3k");
-    expect(formatK(1500)).toBe("1.5M");
+    expect(formatDollarsCompact(12340)).toBe("12.3k");
+    expect(formatDollarsCompact(1_500_000)).toBe("1.5M");
+    expect(formatDollarsCompact(-850.4)).toBe("-850");
   });
 });
 
