@@ -147,9 +147,9 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
 - [x] T5 (2 h 30) Phase 3, Done / overdue: columns + migration, endpoints, engine with today, UX (row actions, overdue strip, bulk, Undo).
 - [x] T6 (1 h) Phase 4, the cushion row, appliances on the rehab completion, the reconciliation block removed; reports, popup, MCP glossary.
 - [x] T7 (15 min) `Golden update:` the schedule change.
-- [ ] T8 (3 h 30) Phase 5, milestones: columns, the date mapping, preview/apply endpoints, the diff with the per-field overrides and their conflicts, the Deals panel, the persisted late-refi rows and their refresh.
-- [ ] T9 (3 h) Phase 6, import: preview modal + insights, import/re-import endpoints with identity, the deal tag/filter, the active → bought re-pointing and the no-double-import rule, delete/dead handling.
-- [ ] T10 (30 min) MCP: new endpoints become tools (`DESCRIPTIONS` entries, destructive annotations on import/apply/bulk); `INSTRUCTIONS` cover dollars, Done/overdue, milestones and import.
+- [x] T8 (3 h 30) Phase 5, milestones: columns, the date mapping, preview/apply endpoints, the diff with the per-field overrides and their conflicts, the Deals panel, the persisted late-refi rows and their refresh.
+- [x] T9 (3 h) Phase 6, import: preview modal + insights, import/re-import endpoints with identity, the deal tag/filter, the active → bought re-pointing and the no-double-import rule, delete/dead handling.
+- [x] T10 (30 min) MCP: new endpoints become tools (`DESCRIPTIONS` entries, destructive annotations on import/apply/bulk); `INSTRUCTIONS` cover dollars, Done/overdue, milestones and import.
 - [ ] T11 (20 min) Security task (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
   - the new endpoints sit behind the existing auth gate and are audited (`BL/auth/common/audit.record`);
   - dates and amounts are validated by Pydantic;
@@ -159,6 +159,19 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
   - migration SQL is static;
   - run bandit and `npm audit`.
 - [ ] T12 (1 h) Playwright flows + re-record; final gates; push; PR.
+
+### As built (T8–T10)
+- **Endpoints** (`routers/liquidity_deals.py`, logic in `BL/liquidity/dealCashRows/`):
+  - `GET /liquidity/deals`
+  - `POST /liquidity/deals/refresh-late-refis`
+  - `POST /liquidity/deals/{board}/{id}/import-preview` and `.../import`. The import is also the Re-sync.
+  - `.../milestones/preview` and `.../milestones/apply`
+  - `.../remove-open-rows`, for a dead deal, with an optional EMD refund.
+- **The late-refi refresh** is an explicit POST, not a side effect of `GET /liquidity/transactions`. That keeps the GET read-only for MCP.
+  - The timeline calls it on load with the browser's date.
+  - The MCP instructions tell an agent to call it before reading. Without a date, it uses the settings' `timezone_name`.
+- **The provisional refi** is set to the day after the first 1st after today. That 1st is then a payment day (its HML interest included), not a day inside the payoff.
+- **The out-of-date check** after a deal save ignores the late-refi months still to be added, since the refresh adds those.
 
 ## Tests by layer
 **Unit:**
