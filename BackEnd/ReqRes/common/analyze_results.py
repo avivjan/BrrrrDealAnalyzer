@@ -72,8 +72,7 @@ class analyzeBRRRRes(BaseModel):
         "back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it."))
     cash_needed_schedule_at_lowest_arv: Optional[CashNeededScheduleAtLowestArvRes] = Field(None, description=(
         "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item "
-        "(signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase "
-        "closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."))
+        "(signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."))
     total_cash_invested: Optional[float] = Field(None, description=(
         "Everything actually spent before the refinance, in dollars: EMD + cash to close (buy) + the positive "
         "seller tax credit set aside in the property's tax bucket the day after closing + the insurance bill at purchase "

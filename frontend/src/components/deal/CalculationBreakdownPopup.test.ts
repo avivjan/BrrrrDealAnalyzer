@@ -292,21 +292,15 @@ describe("CalculationBreakdownPopup — the Cash Needed schedule", () => {
     dated_cash_rows: [
       { date: "2026-01-03", sequence_within_day: 0, description: "Earnest money deposit", signed_amount_dollars: "-5000.00", item_key: "earnest_money_deposit" },
       { date: "2026-01-10", sequence_within_day: 0, description: "Cash to close (the purchase wire)", signed_amount_dollars: "-38220.00", item_key: "cash_to_close_buy" },
+      { date: "2026-01-10", sequence_within_day: 1, description: "Rehab cushion (a hold: mark it done when you no longer need it)", signed_amount_dollars: "-5000.00", item_key: "rehab_cushion" },
       { date: "2026-05-01", sequence_within_day: 0, description: "HML interest for April 2026", signed_amount_dollars: "-2400.00", item_key: "hml_interest_paid_monthly" },
       { date: "2026-05-01", sequence_within_day: 1, description: "Rent collected", signed_amount_dollars: "2600.00", item_key: "pre_refi_rental_income" },
       { date: "2026-07-09", sequence_within_day: 0, description: "Cash to the refi table (Lowest-ARV refi)", signed_amount_dollars: "-2600.00", item_key: "cash_to_refi_table_conservative" },
     ],
-    cash_that_must_stay_in_account: [
-      { item_key: "rehab_cushion", description: "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
-        amount_dollars: "5000", reserve_starts_on_date: "2026-01-10", reserve_ends_on_date: "2026-02-24" },
-    ],
-    dated_cash_rows_net_outflow_dollars: "45620.00",
-    cash_that_must_stay_in_account_total_dollars: "5000",
-    total_cash_needed_dollars: "50620.00",
   };
   const schedule = () => document.querySelector('[data-testid="cash-needed-schedule"]');
 
-  it("shows one row per cash item, the cushion's window and the summary under the Cash Needed breakdown", async () => {
+  it("shows one row per cash item, the cushion among them, under the Cash Needed breakdown", async () => {
     wrapper = mountPopup({ cashNeededSchedule: SCHEDULE });
     await nextTick();
     const rows = [...schedule()!.querySelectorAll('[data-part="schedule-row"]')].map((row) =>
@@ -314,16 +308,13 @@ describe("CalculationBreakdownPopup — the Cash Needed schedule", () => {
     expect(rows).toEqual([
       "Jan 3, 2026 Earnest money deposit -$5,000",
       "Jan 10, 2026 Cash to close (the purchase wire) -$38,220",
+      "Jan 10, 2026 Rehab cushion (a hold: mark it done when you no longer need it) -$5,000",
       "May 1, 2026 HML interest for April 2026 -$2,400",
       "May 1, 2026 Rent collected $2,600",
       "Jul 9, 2026 Cash to the refi table (Lowest-ARV refi) -$2,600",
     ]);
     expect(schedule()!.querySelector('[data-item-key="pre_refi_rental_income"] td:last-child')!.className).toContain("text-positive");
-    expect(schedule()!.querySelector('[data-part="must-stay-in-account"]')!.textContent).toContain("Jan 10, 2026 → Feb 24, 2026");
-    const summary = schedule()!.querySelector('[data-part="schedule-summary"]')!.textContent!.replace(/\s+/g, " ");
-    expect(summary).toContain("Dated rows total (net out)$45,620");
-    expect(summary).toContain("+ Rehab cushion (must stay in the account)$5,000");
-    expect(summary).toContain("= Total Cash Needed$50,620");
+    expect(schedule()!.textContent).not.toContain("Must stay in the account");
   });
 
   it("is shown for Cash Needed only, and not without a schedule", async () => {

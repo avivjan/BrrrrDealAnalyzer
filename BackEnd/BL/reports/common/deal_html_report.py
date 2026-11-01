@@ -39,7 +39,7 @@ from BL.reports.common.breakdown_tree import (
     top_level_rows_for_headline,
 )
 from BL.reports.common.cash_needed_schedule_report import (
-    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE, CashNeededScheduleReport,
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport,
     resolve_cash_needed_schedule_report,
 )
 from BL.reports.common.deal_input_sections import ResolvedDealInputSection, resolve_deal_input_sections
@@ -145,33 +145,18 @@ def _rows_markup(
     return "".join(parts)
 
 
-_NOTHING_MUST_STAY_IN_ACCOUNT_MARKUP = '<li><span class="label">Nothing</span></li>'
-
-
 def _cash_needed_schedule_markup(schedule_report: CashNeededScheduleReport) -> str:
-    """The popup's Cash Needed schedule: the dated rows, what must stay in the account, and the summary."""
+    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them."""
     dated_rows = "".join(
         f'<tr class="{"in" if row.is_money_in else "out"}"><td class="date">{_text(row.date_text)}</td>'
         f'<td>{_text(row.description)}</td><td class="val">{_text(row.signed_amount_text)}</td></tr>'
         for row in schedule_report.dated_rows
-    )
-    held_rows = "".join(
-        f'<li><span class="label">{_text(held.description)}</span><span class="val">{_text(held.amount_text)}</span>'
-        f'<span class="window">{_text(held.window_text)}</span></li>'
-        for held in schedule_report.cash_that_must_stay_in_account
-    )
-    summary = "".join(
-        f'<div class="summary-line"><span class="label">{_text(label)}</span><span class="val">{_text(value)}</span></div>'
-        for label, value in schedule_report.summary_lines
     )
     return (
         f'<section class="schedule" aria-label="{_text(CASH_NEEDED_SCHEDULE_TITLE)}">'
         f'<p class="caption">{_text(CASH_NEEDED_SCHEDULE_TITLE)}</p>'
         '<div class="schedule-scroll"><table class="schedule-table"><thead><tr><th>Date</th><th>Item</th><th class="val">Amount</th></tr></thead>'
         f'<tbody>{dated_rows}</tbody></table></div>'
-        f'<p class="caption">{_text(CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE)}</p>'
-        f'<ul class="held">{held_rows or _NOTHING_MUST_STAY_IN_ACCOUNT_MARKUP}</ul>'
-        f'<div class="schedule-summary">{summary}</div>'
         '</section>'
     )
 
@@ -478,12 +463,6 @@ details[open] > summary .chev::before { transform: rotate(45deg); left: 5px; top
 .schedule-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .schedule-table td.date { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .schedule-table tr.in .val { color: var(--cyan); }
-.held { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.held li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
-.held .window { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
-.schedule-summary { margin-top: 10px; display: grid; gap: 4px; }
-.summary-line { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; }
-.summary-line:last-child { font-weight: 700; border-top: 1px solid var(--line-strong); padding-top: 4px; }
 .all-steps { margin-top: 16px; }
 .all-steps > summary {
   cursor: pointer; font: 700 10.5px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);

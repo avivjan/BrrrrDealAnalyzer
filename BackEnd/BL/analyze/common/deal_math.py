@@ -212,12 +212,6 @@ def last_day_of_previous_month(day: date) -> date:
     """The day before the 1st of `day`'s month: on a monthly payment date, the last day of the month it pays for."""
     return date(day.year, day.month, 1) - timedelta(days=1)
 
-def add_calendar_months_clamped(day: date, months: int) -> date:
-    """The same day `months` calendar months later, clamped to the last day of a shorter month (Dec 31 + 2 = Feb 28/29)."""
-    month_index = day.month - 1 + months
-    year, month = day.year + month_index // 12, month_index % 12 + 1
-    return date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
-
 def round_to_cents(value: Decimal) -> Decimal:
     """Half away from zero, to the cent: the rounding of Cash Needed and of every schedule row."""
     return value.quantize(ONE_CENT, rounding=ROUND_HALF_UP)

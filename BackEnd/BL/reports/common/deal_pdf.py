@@ -44,7 +44,7 @@ from reportlab.platypus import (
 )
 
 from BL.reports.common.cash_needed_schedule_report import (
-    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE, CashNeededScheduleReport,
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport,
     resolve_cash_needed_schedule_report,
 )
 from BL.reports.common.breakdown_tree import (
@@ -482,7 +482,7 @@ def _results_summary_table(sections: list[_ReportResultSection], result: dict, s
 
 
 def _cash_needed_schedule_flowables(schedule_report: CashNeededScheduleReport, styles) -> list[Any]:
-    """The popup's Cash Needed schedule: the dated rows, what must stay in the account, and the summary."""
+    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them."""
     date_column_width, amount_column_width = 1.05 * inch, 1.35 * inch
     item_column_width = sum(_TREE_COLUMN_WIDTHS) - date_column_width - amount_column_width
     cells: list[list[Any]] = [[
@@ -494,26 +494,14 @@ def _cash_needed_schedule_flowables(schedule_report: CashNeededScheduleReport, s
             Paragraph(escape(row.description), styles["term"]),
             Paragraph(escape(row.signed_amount_text), styles["row_value"]),
         ])
-    for held in schedule_report.cash_that_must_stay_in_account:
-        cells.append([
-            Paragraph(escape(held.window_text), styles["term"]),
-            Paragraph(f"<i>{escape(CASH_THAT_MUST_STAY_IN_ACCOUNT_TITLE)}:</i> {escape(held.description)}", styles["term"]),
-            Paragraph(escape(held.amount_text), styles["row_value"]),
-        ])
-    summary_start_row = len(cells)
-    for label, value in schedule_report.summary_lines:
-        cells.append([Paragraph(f"<b>{escape(label)}</b>", styles["term"]), "", Paragraph(f"<b>{escape(value)}</b>", styles["row_value"])])
-    style_commands = [
+    table = Table(cells, colWidths=[date_column_width, item_column_width, amount_column_width], repeatRows=1)
+    table.setStyle(TableStyle([
         ("LINEBELOW", (0, 0), (-1, 0), 0.75, BRAND_NAVY),
-        ("LINEBELOW", (0, 1), (-1, summary_start_row - 1), 0.25, BRAND_BORDER),
-        ("LINEABOVE", (0, summary_start_row), (-1, summary_start_row), 0.75, BRAND_NAVY),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.25, BRAND_BORDER),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 2),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-    ]
-    style_commands += [("SPAN", (0, row_index), (1, row_index)) for row_index in range(summary_start_row, len(cells))]
-    table = Table(cells, colWidths=[date_column_width, item_column_width, amount_column_width], repeatRows=1)
-    table.setStyle(TableStyle(style_commands))
+    ]))
     return [Paragraph(escape(CASH_NEEDED_SCHEDULE_TITLE).upper(), styles["caption"]), table]
 
 

@@ -2,9 +2,9 @@
 
 One row per individual cash item, never grouped by date: each row is one future transaction of the
 liquidity timeline (its date, a description, a signed amount in dollars, a stable item key). Positive
-= money in, negative = money out. Every row counts toward Cash Needed, and the rows add up exactly to
--(total_cash_needed - rehab cushion): the cushion is not a transaction, it is money that must stay in
-the account from the purchase closing to the rehab completion (a reserve window, its own section).
+= money in, negative = money out. Every row counts toward Cash Needed. The rehab cushion is an ordinary
+row on the purchase closing date: in the liquidity timeline you postpone it until you mark it done
+(that is its release), like any other row.
 
 Timing rule: money in as late as reasonable, money out as early as reasonable, so an error in the
 estimate only makes the timeline look worse than reality, never better. No money-out row falls after
@@ -18,9 +18,8 @@ bill A paid inside the closing, the closing costs), the construction draws and t
 money moves from the lender to the GC; only the spread is ours).
 
 Rounding: every row is whole cents. The rows are rounded on their running total, item by item in
-catalogue order then by date, and the last running total is pinned to the rounded target; so each
-row is within a cent of its exact amount, each item's rows add up to its exact total within a cent,
-and all the rows add up exactly to -(total_cash_needed - rehab cushion).
+catalogue order then by date, and the last running total is pinned to -total_cash_needed; so each
+row is within a cent of its exact amount and each item's rows add up to its exact total within a cent.
 """
 
 from datetime import date, timedelta
@@ -28,10 +27,9 @@ from decimal import Decimal
 from typing import NamedTuple
 
 from BL.analyze.common.deal_math import (
-    add_calendar_months_clamped, calc_hml_interest, days_in_month, first_of_month_dates, last_day_of_previous_month, round_to_cents,
+    calc_hml_interest, days_in_month, first_of_month_dates, last_day_of_previous_month, round_to_cents,
 )
 
-APPLIANCES_BOUGHT_MONTHS_AFTER_BUY_CLOSING = 2
 SELLER_TAX_CREDIT_SET_ASIDE_DAYS_AFTER_BUY_CLOSING = 1
 
 # The catalogue: every item a row can be, in the order rows sharing a date and a direction are listed.
@@ -39,6 +37,7 @@ CASH_NEEDED_SCHEDULE_ITEM_KEYS = (
     "earnest_money_deposit",
     "cash_to_close_buy",
     "insurance_bill_at_purchase_outside_closing",
+    "rehab_cushion",
     "seller_tax_credit_set_aside_in_tax_bucket",
     "property_tax_bucket_deposit",
     "property_tax_bucket_deposit_after_first_payment",
@@ -70,20 +69,8 @@ class CashNeededScheduleRow(NamedTuple):
     item_key: str                     # one of CASH_NEEDED_SCHEDULE_ITEM_KEYS; (item_key, date) is unique
 
 
-class CashThatMustStayInAccount(NamedTuple):
-    item_key: str
-    description: str
-    amount_dollars: Decimal
-    reserve_starts_on_date: date      # the money must be in the account from this day...
-    reserve_ends_on_date: date        # ...through this day, when it is released
-
-
 class CashNeededScheduleAtLowestArv(NamedTuple):
     dated_cash_rows: tuple[CashNeededScheduleRow, ...]
-    cash_that_must_stay_in_account: tuple[CashThatMustStayInAccount, ...]
-    dated_cash_rows_net_outflow_dollars: Decimal                 # -(the sum of the signed rows)
-    cash_that_must_stay_in_account_total_dollars: Decimal
-    total_cash_needed_dollars: Decimal                           # net outflow + must stay in the account
 
 
 def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, buy_settlement, insurance, property_tax_bucket,
@@ -105,6 +92,8 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
     money_out(buy_closing_date, "cash_to_close_buy", "Cash to close (the purchase wire)", buy_settlement.cash_to_close_buy)
     money_out(buy_closing_date, "insurance_bill_at_purchase_outside_closing", "Insurance bill at purchase (paid outside the closing)",
               insurance.insurance_bill_at_purchase_outside_closing)
+    # Held, not spent: postponed in the liquidity timeline until it is no longer needed (marked done).
+    money_out(buy_closing_date, "rehab_cushion", "Rehab cushion (a hold: mark it done when you no longer need it)", payload.rehab_cushion)
     money_out(buy_closing_date + timedelta(days=SELLER_TAX_CREDIT_SET_ASIDE_DAYS_AFTER_BUY_CLOSING), "seller_tax_credit_set_aside_in_tax_bucket",
               "Seller tax credit set aside in the tax bucket", buy_settlement.seller_tax_credit_set_aside_in_tax_bucket)
 
@@ -136,8 +125,7 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
         share_amount = payload.maintenance_before_refi - maintenance_share * (len(maintenance_dates) - 1) if is_last_share else maintenance_share
         share_text = f" (share {share_number} of {len(maintenance_dates)})" if len(maintenance_dates) > 1 else ""
         money_out(maintenance_date, "maintenance_before_refi", f"Maintenance before refi{share_text}", share_amount)
-    money_out(min(add_calendar_months_clamped(buy_closing_date, APPLIANCES_BOUGHT_MONTHS_AFTER_BUY_CLOSING), refi_closing_date),
-              "appliances", "Appliances", payload.appliances)
+    money_out(rehab_completed_date, "appliances", "Appliances", payload.appliances)
     money_out(rehab_completed_date, "appraisal_fee", "Appraisal (paid outside the refi closing)", payload.appraisal_fee)
     money_out(rehab_completed_date, "survey_fee", "Survey (paid outside the refi closing)", payload.survey_fee)
     # Stolen money: one row. The draws and the GC payments move lender -> GC and are never tracked.
@@ -161,9 +149,7 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
              property_tax_bucket.property_tax_bucket_balance_released_at_refi)
 
     non_zero_exact_rows = [row for row in exact_rows if row[3] != 0]
-    cash_that_must_stay_in_account_total_dollars = payload.rehab_cushion
-    rounded_amount_by_exact_row = _rounded_on_the_running_total(
-        non_zero_exact_rows, target_signed_total=-(total_cash_needed - cash_that_must_stay_in_account_total_dollars))
+    rounded_amount_by_exact_row = _rounded_on_the_running_total(non_zero_exact_rows, target_signed_total=-total_cash_needed)
 
     rows_in_date_order = sorted(
         non_zero_exact_rows,
@@ -177,19 +163,7 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
         sequence_within_day = dated_cash_rows[-1].sequence_within_day + 1 if dated_cash_rows and dated_cash_rows[-1].date == row_date else 0
         dated_cash_rows.append(CashNeededScheduleRow(row_date, sequence_within_day, description, rounded_amount_by_exact_row[id(row)], item_key))
 
-    return CashNeededScheduleAtLowestArv(
-        dated_cash_rows=tuple(dated_cash_rows),
-        cash_that_must_stay_in_account=(CashThatMustStayInAccount(
-            item_key="rehab_cushion",
-            description="Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
-            amount_dollars=payload.rehab_cushion,
-            reserve_starts_on_date=buy_closing_date,
-            reserve_ends_on_date=rehab_completed_date,
-        ),) if payload.rehab_cushion else (),
-        dated_cash_rows_net_outflow_dollars=-sum((row.signed_amount_dollars for row in dated_cash_rows), Decimal("0")),
-        cash_that_must_stay_in_account_total_dollars=cash_that_must_stay_in_account_total_dollars,
-        total_cash_needed_dollars=total_cash_needed,
-    )
+    return CashNeededScheduleAtLowestArv(dated_cash_rows=tuple(dated_cash_rows))
 
 
 def _rounded_on_the_running_total(exact_rows: list[tuple[date, str, str, Decimal]], target_signed_total: Decimal) -> dict[int, Decimal]:

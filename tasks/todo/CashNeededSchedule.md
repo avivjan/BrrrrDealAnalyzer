@@ -267,3 +267,7 @@ The single entry is `rehab_cushion`: the amount, from buy_closing_date to rehab_
 - **Schedule:** `cash_needed_schedule_at_lowest_arv` sits on the analyze and saved-deal responses, the MCP tools, the HTML report, the PDF and the popup. Rows are whole cents, rounded on the running total item by item, so they add up exactly to Cash Needed less the cushion. The cushion is a "must stay in the account" window. 18 reconciliation scenarios check the totals exactly and each item within a cent; a mutation of the appliances amount was caught.
 - **Also fixed:** the PDF result bookmark landed a page early once the Cash Needed tree got shorter, so the destination is now an anchor in the title. The all-steps list no longer sits in a KeepTogether that could leave a blank page.
 - **Verification:** pytest green; `verify_regression.py verify` identical; vitest 1730 passed; build OK; Playwright chromium 123 passed (5 skipped; WebKit isn't installed here); bandit clean; npm audit 0.
+
+## Later change (tasks/todo/DealCashInLiquidity.md)
+- Appliances move to the rehab completion date (instead of closing + 2 calendar months, capped at the refi).
+- The rehab cushion is an ordinary row on the purchase closing date (a hold you postpone in the liquidity timeline until you mark it done). The "Must stay in the account" section and the summary (dated rows + cushion = Cash Needed) are gone; the rows now add up to Cash Needed on their own (an internal check only). The single Cash Needed number stays.

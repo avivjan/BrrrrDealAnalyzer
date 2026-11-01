@@ -194,22 +194,9 @@ export interface CashNeededScheduleRow {
   item_key: string;
 }
 
-/** Money held, not spent, for a window (the rehab cushion): a future dated raise of the liquidity reserve line. */
-export interface CashThatMustStayInAccount {
-  item_key: string;
-  description: string;
-  amount_dollars: string;
-  reserve_starts_on_date: string;
-  reserve_ends_on_date: string;
-}
-
-/** When every dollar of Cash Needed moves, at the lowest ARV: dated rows' net outflow + what must stay = Cash Needed. */
+/** When every dollar of Cash Needed moves, at the lowest ARV: one row per cash item, the rehab cushion among them (a hold). */
 export interface CashNeededScheduleAtLowestArv {
   dated_cash_rows: CashNeededScheduleRow[];
-  cash_that_must_stay_in_account: CashThatMustStayInAccount[];
-  dated_cash_rows_net_outflow_dollars: string;
-  cash_that_must_stay_in_account_total_dollars: string;
-  total_cash_needed_dollars: string;
 }
 
 export interface BrrrAnalyzeRes {

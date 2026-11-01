@@ -95,10 +95,6 @@ def cash_needed_schedule_response(schedule) -> CashNeededScheduleAtLowestArvRes:
     """The engine's schedule (NamedTuples) as the response model."""
     return CashNeededScheduleAtLowestArvRes(
         dated_cash_rows=[row._asdict() for row in schedule.dated_cash_rows],
-        cash_that_must_stay_in_account=[held._asdict() for held in schedule.cash_that_must_stay_in_account],
-        dated_cash_rows_net_outflow_dollars=schedule.dated_cash_rows_net_outflow_dollars,
-        cash_that_must_stay_in_account_total_dollars=schedule.cash_that_must_stay_in_account_total_dollars,
-        total_cash_needed_dollars=schedule.total_cash_needed_dollars,
     )
 
 
