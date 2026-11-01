@@ -150,7 +150,7 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
 - [x] T8 (3 h 30) Phase 5, milestones: columns, the date mapping, preview/apply endpoints, the diff with the per-field overrides and their conflicts, the Deals panel, the persisted late-refi rows and their refresh.
 - [x] T9 (3 h) Phase 6, import: preview modal + insights, import/re-import endpoints with identity, the deal tag/filter, the active → bought re-pointing and the no-double-import rule, delete/dead handling.
 - [x] T10 (30 min) MCP: new endpoints become tools (`DESCRIPTIONS` entries, destructive annotations on import/apply/bulk); `INSTRUCTIONS` cover dollars, Done/overdue, milestones and import.
-- [ ] T11 (20 min) Security task (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
+- [x] T11 (20 min) Security task (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
   - the new endpoints sit behind the existing auth gate and are audited (`BL/auth/common/audit.record`);
   - dates and amounts are validated by Pydantic;
   - deal references are UUIDs checked to exist;
@@ -159,6 +159,23 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
   - migration SQL is static;
   - run bandit and `npm audit`.
 - [ ] T12 (1 h) Playwright flows + re-record; final gates; push; PR.
+
+### Security pass (T11)
+- **Auth:** the new router is behind the app-key and session gates (it is not in `PUBLIC_ROUTERS`).
+- **Audit:** import, milestone apply, remove-open-rows and the late-refi rows are audited with counts and ids, never amounts.
+- **Inputs:**
+  - deal ids are parsed as UUIDs (404 otherwise);
+  - the board is a Literal (422);
+  - `timezone_name` must be an IANA zone;
+  - `use_deal_value_for` is bounded and only compared against existing ids;
+  - a milestone writes only its mapped columns, through the saved-deal validator.
+- **Fixed during the pass:** the late-refi months were unbounded, so a far-future `today` could create thousands of rows. They now stop 24 months after the planned refi, with a test.
+- **Frontend:**
+  - no `v-html`, no secrets;
+  - the user strings (addresses, descriptions) go through Vue interpolation only.
+- **Tools:**
+  - bandit finds nothing in the new backend code;
+  - `npm audit` flagged `follow-redirects` 1.16.1 (GHSA-mrwp-f3q8-3g9p; it runs only under Node, not in the browser bundle). It is bumped to 1.16.2 in the lockfile, and the audit is now clean.
 
 ### As built (T8–T10)
 - **Endpoints** (`routers/liquidity_deals.py`, logic in `BL/liquidity/dealCashRows/`):

@@ -33,6 +33,9 @@ DEAL_BOARD_MY_DEALS: DealBoard = "my_deals"
 DEAL_BOARD_BOUGHT: DealBoard = "bought"
 DEAL_MODEL_BY_BOARD = {DEAL_BOARD_MY_DEALS: BrrrActiveDeal, DEAL_BOARD_BOUGHT: BoughtBrrrDeal}
 
+# A refi this late is a deal to re-plan, not more rows: the late months stop here (it also bounds a far-future "today").
+MAX_LATE_REFI_MONTHS_ADDED = 24
+
 # The monthly money-out items that keep coming while the refi is late.
 LATE_REFI_CARRYING_COST_ITEM_KEYS = frozenset({"hml_interest_paid_monthly", "hoa_dues", "insurance_paid_monthly_until_refi", "utilities"})
 
@@ -103,7 +106,8 @@ def planned_cash_rows_including_late_refi_months(deal, today: date) -> list[Plan
     if not refi_is_late(deal, today):
         return planned_rows
     planned_refi_date = refi_closing_date_of_deal(deal)
-    provisional_refi_date = first_of_next_month(today) + timedelta(days=1)
+    latest_provisional_refi_date = _months_after(planned_refi_date, MAX_LATE_REFI_MONTHS_ADDED)
+    provisional_refi_date = min(first_of_next_month(today), latest_provisional_refi_date) + timedelta(days=1)
     provisional_deal = deal_as_attributes(deal, days_until_refi=(provisional_refi_date - deal.buy_closing_date).days)
     identities_of_the_deal = {row.identity for row in planned_rows}
     late_refi_rows = [
@@ -113,6 +117,12 @@ def planned_cash_rows_including_late_refi_months(deal, today: date) -> list[Plan
         and row.identity not in identities_of_the_deal
     ]
     return sorted(planned_rows + late_refi_rows, key=lambda row: (row.effective_date, row.sequence_within_day))
+
+
+def _months_after(day: date, months: int) -> date:
+    """The 1st of the month `months` after `day`'s month."""
+    month_index = day.year * 12 + day.month - 1 + months
+    return date(month_index // 12, month_index % 12 + 1, 1)
 
 
 def _planned_rows_from_schedule(schedule) -> list[PlannedDealCashRow]:

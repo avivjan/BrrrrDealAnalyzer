@@ -202,6 +202,13 @@ class TestLateRefi:
         assert max(row["effective_date"] for row in late_rows) == "2026-10-01"   # up to the first 1st after today
         assert self._refresh(client)["added_row_count"] == 0
 
+    def test_the_late_months_stop_after_two_years_whatever_today_says(self, client, brrrr_payload):
+        deal = _create_my_deals_deal(client, brrrr_payload)
+        _import(client, deal["id"])
+        self._refresh(client, today="2099-01-01")
+        late_rows = [row for row in _deal_rows(client, deal["id"]) if row["created_because_refi_is_late"]]
+        assert max(row["effective_date"] for row in late_rows) == "2028-07-01"   # 24 months after the planned 2026-07 refi
+
     def test_approving_the_refi_updates_the_late_rows_instead_of_duplicating_them(self, client, brrrr_payload):
         deal = _create_my_deals_deal(client, brrrr_payload)
         _import(client, deal["id"])
