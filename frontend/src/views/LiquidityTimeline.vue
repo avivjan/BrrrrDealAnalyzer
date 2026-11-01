@@ -16,6 +16,7 @@ import DayDetail from '../components/liquidity/DayDetail.vue'
 import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
+import OverdueTransactionsStrip from '../components/liquidity/OverdueTransactionsStrip.vue'
 
 const store = useLiquidityStore()
 
@@ -93,6 +94,8 @@ const mercurySyncedTime = computed(() => {
 
 const toastMessage = ref('')
 const toastVisible = ref(false)
+/** The toast's "Undo" for a quick row action (Done, a move, an amount); null = no Undo button. */
+const toastUndo = ref<(() => Promise<void>) | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
 const selectedBucket = computed(() => {
@@ -393,8 +396,68 @@ async function onSettingsSave(data: LiquiditySettingsUpdate) {
   }
 }
 
-function showToast(msg: string) {
+// -- quick row actions: one tap each, an Undo on the toast ---------------------------------
+function findOneOffTransaction(id: string) {
+  return store.transactions.find(t => t.id === id) ?? null
+}
+
+async function runQuickAction(action: () => Promise<void>, message: string, undo: (() => Promise<void>) | null) {
+  try {
+    await action()
+    showToast(message, undo)
+  } catch (e: any) {
+    showToast('Error: ' + (e?.response?.data?.detail || e.message))
+  }
+}
+
+async function onMarkTransactionDone(id: string) {
+  await runQuickAction(() => store.markTransactionDone(id), 'Marked done.', () => store.markTransactionNotDone(id))
+}
+
+async function onMoveTransactionToDate(id: string, newEffectiveDate: string) {
+  const previousDate = findOneOffTransaction(id)?.effective_date
+  await runQuickAction(
+    async () => { await store.updateTransaction(id, { effective_date: newEffectiveDate }) },
+    `Moved to ${newEffectiveDate}.`,
+    previousDate ? async () => { await store.updateTransaction(id, { effective_date: previousDate }) } : null,
+  )
+}
+
+async function onChangeTransactionAmount(id: string, newAmountDollars: number) {
+  const previousAmount = findOneOffTransaction(id)?.amount_dollars
+  await runQuickAction(
+    async () => { await store.updateTransaction(id, { amount_dollars: newAmountDollars }) },
+    `Amount changed to ${formatMoney(newAmountDollars)}.`,
+    previousAmount !== undefined ? async () => { await store.updateTransaction(id, { amount_dollars: previousAmount }) } : null,
+  )
+}
+
+async function onBulkMarkDone(ids: string[]) {
+  await runQuickAction(
+    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'mark_done' }),
+    `${ids.length} marked done.`,
+    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'mark_not_done' }),
+  )
+}
+
+async function onBulkMoveToDate(ids: string[], newEffectiveDate: string) {
+  await runQuickAction(
+    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'move_to_date', new_effective_date: newEffectiveDate }),
+    `${ids.length} moved to ${newEffectiveDate}.`,
+    null,
+  )
+}
+
+async function onUndo() {
+  const undo = toastUndo.value
+  toastUndo.value = null
+  toastVisible.value = false
+  if (undo) await runQuickAction(undo, 'Undone.', null)
+}
+
+function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
   toastMessage.value = msg
+  toastUndo.value = undo
   toastVisible.value = true
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toastVisible.value = false }, 4000)
@@ -577,8 +640,17 @@ function showToast(msg: string) {
       </div>
 
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <!-- Chart + day detail -->
+        <!-- Overdue strip + chart + day detail -->
         <div class="flex min-w-0 flex-col gap-4">
+          <OverdueTransactionsStrip
+            :overdue-money-out="store.overdueMoneyOut"
+            :expected-money-in-not-counted="store.expectedMoneyInNotCounted"
+            @mark-done="onMarkTransactionDone"
+            @move-to-date="onMoveTransactionToDate"
+            @change-amount="onChangeTransactionAmount"
+            @bulk-mark-done="onBulkMarkDone"
+            @bulk-move-to-date="onBulkMoveToDate"
+          />
           <UiSurface :level="1" padding="none" class="overflow-hidden">
             <div class="grid h-[340px] min-h-[320px] sm:h-[380px]">
               <TimelineChart
@@ -600,6 +672,9 @@ function showToast(msg: string) {
               @edit-txn="openEditForm"
               @delete-txn="onDeleteTxn"
               @add-on-date="openAddForm"
+              @mark-done="onMarkTransactionDone"
+              @move-to-date="onMoveTransactionToDate"
+              @change-amount="onChangeTransactionAmount"
             />
             <UiSurface v-else :level="2" padding="md" class="text-center text-xs text-fg-muted">
               Click or arrow-key to a day to see details
@@ -672,7 +747,14 @@ function showToast(msg: string) {
         data-testid="liquidity.toast"
         class="fixed inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-50 mx-auto w-fit max-w-[min(28rem,calc(100%-2rem))] rounded-card border-ui border-line bg-surface px-4 py-2.5 text-xs text-fg shadow-3"
       >
-        {{ toastMessage }}
+        <span>{{ toastMessage }}</span>
+        <button
+          v-if="toastUndo"
+          type="button"
+          data-testid="liquidity.toast.undo"
+          class="ml-3 font-semibold text-primary hover:text-primary-hover"
+          @click="onUndo"
+        >Undo</button>
       </div>
     </Transition>
   </div>

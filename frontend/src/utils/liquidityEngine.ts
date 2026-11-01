@@ -10,6 +10,7 @@ import type {
   DayBucket,
   LiquiditySeries,
   SimulationResult,
+  TransactionsAsOfToday,
 } from '../types/liquidity'
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,51 @@ function daysBetween(from: string, to: string): number {
   const a = new Date(from + 'T00:00:00').getTime()
   const b = new Date(to + 'T00:00:00').getTime()
   return Math.round((b - a) / 86_400_000)
+}
+
+// ---------------------------------------------------------------------------
+// Done and overdue: a row leaves the timeline only when it is marked done
+// ---------------------------------------------------------------------------
+
+/**
+ * The transactions as the timeline counts them on `todayIsoDate` (the browser's local date).
+ *
+ * A passed date never removes a row: only `done_at` does.
+ * - a done row is left out (the money moved, or the hold was released);
+ * - an open money-out row dated before today is counted on today, the safe side: today's projected
+ *   balance is the bank balance minus what is still owed;
+ * - an open money-in row dated before today is shown but not counted, until it is re-dated or marked done;
+ * - recurring occurrences (`recurring_rule_id`) keep their old behaviour: they cannot be marked done.
+ */
+export function projectTransactionsOntoToday(
+  transactions: LiquidityTransaction[],
+  todayIsoDate: string,
+): TransactionsAsOfToday {
+  const countedTransactions: LiquidityTransaction[] = []
+  const overdueMoneyOut: LiquidityTransaction[] = []
+  const expectedMoneyInNotCounted: LiquidityTransaction[] = []
+  for (const txn of transactions) {
+    if (txn.recurring_rule_id) {
+      countedTransactions.push(txn)
+      continue
+    }
+    if (txn.done_at) continue
+    if (txn.effective_date >= todayIsoDate) {
+      countedTransactions.push(txn)
+    } else if (txn.amount_dollars < 0) {
+      overdueMoneyOut.push(txn)
+      countedTransactions.push({ ...txn, effective_date: todayIsoDate, overdue_since_date: txn.effective_date })
+    } else {
+      expectedMoneyInNotCounted.push(txn)
+    }
+  }
+  return { countedTransactions, overdueMoneyOut, expectedMoneyInNotCounted }
+}
+
+/** The first 1st strictly after `isoDate` (the "next 1st" postpone chip). */
+export function firstOfNextMonth(isoDate: string): string {
+  const [year, month] = isoDate.split('-').map(Number) as [number, number]
+  return month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`
 }
 
 // ---------------------------------------------------------------------------

@@ -192,7 +192,9 @@ class TestEveryToolSchema:
         # whose inspection and summary output schemas are inlined into each of them.
         # 400 kB after the deal-reconciliation inputs and outputs (tasks/todo/BrrrDealReconciliationInputs.md:
         # 11 described inputs and 11 described outputs, inlined into every deal-body tool).
-        assert len(payload) < 420_000, f"tools/list is {len(payload)} bytes"
+        # 440 kB with the Cash Needed schedule and the liquidity Done / overdue / bulk tools
+        # (tasks/todo/CashNeededSchedule.md, tasks/todo/DealCashInLiquidity.md).
+        assert len(payload) < 440_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

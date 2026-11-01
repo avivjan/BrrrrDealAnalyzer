@@ -236,6 +236,16 @@ DESCRIPTIONS: dict[str, str] = {
     "create_liquidity_transaction": "Add a one-off cash event to the Liquidity timeline.",
     "update_liquidity_transaction": "Change a one-off cash event (partial update).",
     "delete_liquidity_transaction": "Remove a one-off cash event.",
+    "mark_liquidity_transaction_done": (
+        "Mark a one-off cash event done: the money moved (or the hold was released), so it leaves the timeline. "
+        "A row never leaves because its date passed: an open money-out row dated before today counts on today (overdue), "
+        "an open money-in row dated before today is not counted until it is re-dated or marked done."
+    ),
+    "mark_liquidity_transaction_not_done": "Undo 'done' on a one-off cash event: it is open again.",
+    "apply_liquidity_transaction_bulk_action": (
+        "One action on several one-off cash events: mark_done, mark_not_done, move_to_date (new_effective_date) or "
+        "postpone_by_days. All or nothing: an unknown id is a 404 and nothing changes."
+    ),
     "list_liquidity_recurring": (
         "List recurring cash-flow rules (frequency daily/weekly/biweekly/monthly/quarterly/"
         "yearly, interval, and either end_date or occurrences)."
@@ -346,7 +356,8 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 # site's own data; GET tools are read-only.
 OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
-DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal"}
+DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
+                     "apply_liquidity_transaction_bulk_action"}
 
 
 def tool_annotations(name: str, method: str) -> t.ToolAnnotations:

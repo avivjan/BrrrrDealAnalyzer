@@ -27,10 +27,36 @@ class LiquidityTransactionRes(BaseModel):
     effective_date: date
     description: str
     amount_dollars: float
+    done_at: Optional[str] = Field(None, description=(
+        "When the row was marked done (the money moved, or the hold was released); null = still open. An open row dated "
+        "before today is overdue: money out counts on today, money in is not counted until it is re-dated or done."))
+    originally_planned_date: Optional[date] = Field(None, description="The date the row was first created or imported with.")
+    user_overrode_date: bool = Field(False, description="The date was changed by hand; a re-sync from a deal keeps it.")
+    user_overrode_amount: bool = Field(False, description="The amount was changed by hand; a re-sync from a deal keeps it.")
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+LiquidityTransactionBulkAction = Literal["mark_done", "mark_not_done", "move_to_date", "postpone_by_days"]
+
+
+class LiquidityTransactionBulkActionReq(BaseModel):
+    """One action on several one-off transactions at once (the timeline's bulk select)."""
+
+    transaction_ids: list[str] = Field(..., min_length=1, max_length=500)
+    action: LiquidityTransactionBulkAction
+    new_effective_date: Optional[date] = Field(None, description="For move_to_date: the date every row moves to.")
+    postpone_by_days: Optional[int] = Field(None, ge=1, le=3660, description="For postpone_by_days: how many days each row moves later.")
+
+    @model_validator(mode="after")
+    def _each_action_has_its_value(self) -> "LiquidityTransactionBulkActionReq":
+        if self.action == "move_to_date" and self.new_effective_date is None:
+            raise ValueError("move_to_date needs new_effective_date.")
+        if self.action == "postpone_by_days" and self.postpone_by_days is None:
+            raise ValueError("postpone_by_days needs postpone_by_days.")
+        return self
 
 
 class LiquidityRecurringTransactionCreate(BaseModel):

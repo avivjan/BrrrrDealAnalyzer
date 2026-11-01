@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, func, Numeric, Uuid, JSON
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, Date, func, Numeric, Uuid, JSON
 import uuid
 
 from db import Base
@@ -7,6 +7,10 @@ from db import Base
 class LiquidityTransaction(Base):
     """A single cash flow event on the liquidity timeline.
     amount_dollars is signed: positive = inflow, negative = outflow, in exact dollars.
+
+    A row leaves the timeline only when it is marked done (`done_at`), never because its date
+    passed: an open row dated before today is overdue (money out counts on today, money in is
+    expected but not counted until it is re-dated or marked done).
     """
     __tablename__ = "liquidity_transactions"
 
@@ -14,6 +18,13 @@ class LiquidityTransaction(Base):
     effective_date = Column(Date, nullable=False, index=True)
     description = Column(String, nullable=False)
     amount_dollars = Column(Numeric(16, 2), nullable=False)
+    # Set when the money really moved (or a hold is released); NULL = still open.
+    done_at = Column(DateTime(timezone=True), nullable=True)
+    # The date the row was first created or imported with, for the "moved from ..." text.
+    originally_planned_date = Column(Date, nullable=True)
+    # The user changed the date / the amount by hand; a re-sync from a deal keeps that field.
+    user_overrode_date = Column(Boolean, nullable=False, default=False, server_default="false")
+    user_overrode_amount = Column(Boolean, nullable=False, default=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

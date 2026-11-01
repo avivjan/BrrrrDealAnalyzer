@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import type { DayBucket } from '../../types/liquidity'
 import { formatMoney, formatSignedMoney } from '../../utils/money'
+import InlineAmountEditor from './InlineAmountEditor.vue'
+import TransactionRowActions from './TransactionRowActions.vue'
 
 defineProps<{
   bucket: DayBucket | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'editTxn', id: string): void
   (e: 'deleteTxn', id: string): void
   (e: 'addOnDate', date: string): void
+  (e: 'markDone', id: string): void
+  (e: 'moveToDate', id: string, newEffectiveDate: string): void
+  (e: 'changeAmount', id: string, newAmountDollars: number): void
 }>()
 
 function formatDate(iso: string): string {
@@ -28,7 +33,7 @@ function formatDate(iso: string): string {
         variant="ghost"
         size="sm"
         class="min-h-9 touch:min-h-11 shrink-0 text-primary hover:text-primary-hover"
-        @click="$emit('addOnDate', bucket.date)"
+        @click="emit('addOnDate', bucket.date)"
       >
         + Add flow
       </UiButton>
@@ -59,9 +64,10 @@ function formatDate(iso: string): string {
         v-for="txn in bucket.transactions"
         :key="txn.id"
         :data-testid="`daydetail.txn.${txn.id}`"
-        class="group flex items-center gap-2 rounded-ctl bg-surface-2 px-3 py-2"
+        class="group rounded-ctl bg-surface-2 px-3 py-2"
         :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
       >
+        <div class="flex items-center gap-2">
         <div class="h-1.5 w-1.5 shrink-0 rounded-full"
           :class="txn.amount_dollars > 0 ? 'bg-positive' : 'bg-negative'"
         />
@@ -77,19 +83,28 @@ function formatDate(iso: string): string {
               <i class="pi pi-refresh text-[8px]" aria-hidden="true"></i>
               recurring
             </UiBadge>
+            <UiBadge
+              v-if="txn.overdue_since_date"
+              :data-testid="`daydetail.txn.${txn.id}.overdue`"
+              tone="warning"
+              class="shrink-0 px-1 py-0.5 text-[9px]"
+              title="Not marked done yet: counted on today"
+            >
+              overdue since {{ formatDate(txn.overdue_since_date) }}
+            </UiBadge>
           </div>
         </div>
         <div class="shrink-0 text-xs font-bold numeric"
           :class="txn.amount_dollars > 0 ? 'text-positive' : 'text-negative'"
         >
-          {{ formatSignedMoney(txn.amount_dollars) }}
+          <InlineAmountEditor :txn="txn" @change-amount="(id, dollars) => emit('changeAmount', id, dollars)" />
         </div>
         <div class="flex shrink-0 gap-2 opacity-0 transition-opacity duration-fast ease-standard focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
           <UiIconButton
             :data-testid="`daydetail.txn.${txn.id}.edit`"
             :title="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
             :label="txn.recurring_rule_id ? 'Edit recurring series' : 'Edit'"
-            @click="$emit('editTxn', txn.id)"
+            @click="emit('editTxn', txn.id)"
           >
             <i class="pi pi-pencil text-[10px]" aria-hidden="true"></i>
           </UiIconButton>
@@ -98,11 +113,18 @@ function formatDate(iso: string): string {
             variant="danger"
             :title="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
             :label="txn.recurring_rule_id ? 'Delete recurring series' : 'Delete'"
-            @click="$emit('deleteTxn', txn.id)"
+            @click="emit('deleteTxn', txn.id)"
           >
             <i class="pi pi-trash text-[10px]" aria-hidden="true"></i>
           </UiIconButton>
         </div>
+        </div>
+        <TransactionRowActions
+          class="mt-1.5 pl-3.5"
+          :txn="txn"
+          @mark-done="(id) => emit('markDone', id)"
+          @move-to-date="(id, date) => emit('moveToDate', id, date)"
+        />
       </div>
     </UiTransitionGroup>
   </div>

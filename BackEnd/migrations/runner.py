@@ -147,6 +147,16 @@ def _run_migrations_locked(engine):
     # The Mercury accounts counted as cash on hand (NULL = every active account).
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
 
+    # Done / overdue on the one-off transactions. Every row already dated in the past was
+    # treated as gone by the old timeline, so it starts done: the history never turns overdue.
+    for column_name, column_ddl, backfill_value in (
+        ("done_at", "TIMESTAMP WITH TIME ZONE", "CASE WHEN effective_date < CURRENT_DATE THEN now() ELSE NULL END"),
+        ("originally_planned_date", "DATE", "effective_date"),
+        ("user_overrode_date", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        ("user_overrode_amount", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+    ):
+        add_column_if_missing(engine, sa_inspect(engine), "liquidity_transactions", column_name, column_ddl, backfill_value)
+
     # The liquidity amounts move from thousands to exact dollars. Reflects fresh: the
     # block above may have added a `_k` column. Idempotent.
     convert_liquidity_amounts_to_dollars(engine, sa_inspect(engine))

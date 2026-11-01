@@ -6,6 +6,8 @@ import {
   simulateImpact,
   requiresSimulation,
   computeDefaultRange,
+  projectTransactionsOntoToday,
+  firstOfNextMonth,
 } from './liquidityEngine'
 import type { LiquidityTransaction } from '../types/liquidity'
 
@@ -220,3 +222,56 @@ describe('computeDefaultRange', () => {
     expect(rangeEnd > '2025-06-15').toBe(true)
   })
 })
+
+describe("projectTransactionsOntoToday — a row leaves only when marked done", () => {
+  const TODAY = "2026-11-04";
+  const row = (over: Partial<LiquidityTransaction>): LiquidityTransaction => ({
+    id: "t", effective_date: TODAY, description: "row", amount_dollars: -100, ...over,
+  });
+
+  it("counts open rows from today on as they are", () => {
+    const result = projectTransactionsOntoToday([row({ id: "today" }), row({ id: "later", effective_date: "2026-12-01" })], TODAY);
+    expect(result.countedTransactions.map((t) => [t.id, t.effective_date])).toEqual([["today", TODAY], ["later", "2026-12-01"]]);
+    expect(result.overdueMoneyOut).toEqual([]);
+  });
+
+  it("moves overdue money out onto today and keeps counting it", () => {
+    const result = projectTransactionsOntoToday([row({ id: "hml", effective_date: "2026-11-01", amount_dollars: -1970.83 })], TODAY);
+    expect(result.countedTransactions).toEqual([
+      expect.objectContaining({ id: "hml", effective_date: TODAY, overdue_since_date: "2026-11-01", amount_dollars: -1970.83 }),
+    ]);
+    expect(result.overdueMoneyOut.map((t) => t.effective_date)).toEqual(["2026-11-01"]);
+  });
+
+  it("sets overdue money in aside, shown but not counted", () => {
+    const result = projectTransactionsOntoToday([row({ id: "rent", effective_date: "2026-11-01", amount_dollars: 2600 })], TODAY);
+    expect(result.countedTransactions).toEqual([]);
+    expect(result.expectedMoneyInNotCounted.map((t) => t.id)).toEqual(["rent"]);
+  });
+
+  it("leaves done rows out wherever they are dated", () => {
+    const result = projectTransactionsOntoToday([
+      row({ id: "paid", effective_date: "2026-11-01", done_at: "2026-11-02T10:00:00Z" }),
+      row({ id: "released-early", effective_date: "2026-12-01", done_at: "2026-11-03T10:00:00Z" }),
+    ], TODAY);
+    expect(result).toEqual({ countedTransactions: [], overdueMoneyOut: [], expectedMoneyInNotCounted: [] });
+  });
+
+  it("keeps recurring occurrences as before (they cannot be marked done)", () => {
+    const occurrence = row({ id: "rule-1:0", effective_date: "2026-10-01", recurring_rule_id: "rule-1", recurring_index: 0 });
+    expect(projectTransactionsOntoToday([occurrence], TODAY).countedTransactions).toEqual([occurrence]);
+  });
+
+  it("lowers today's balance by what is still owed", () => {
+    const { countedTransactions } = projectTransactionsOntoToday([row({ effective_date: "2026-11-01", amount_dollars: -500 })], TODAY);
+    const series = buildDailyLiquiditySeries(countedTransactions, 10_000, TODAY, TODAY, "2026-11-10");
+    expect(series.days[0]!.balance_dollars).toBe(9_500);
+  });
+});
+
+describe("firstOfNextMonth", () => {
+  it("is the first 1st strictly after the date", () => {
+    expect(firstOfNextMonth("2026-11-04")).toBe("2026-12-01");
+    expect(firstOfNextMonth("2026-12-01")).toBe("2027-01-01");
+  });
+});

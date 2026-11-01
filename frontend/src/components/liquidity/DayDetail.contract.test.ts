@@ -127,3 +127,19 @@ describe("DayDetail", () => {
     });
   });
 });
+
+describe("DayDetail — the quick row actions", () => {
+  it("tags an overdue row and forwards Done, a move and an amount change", async () => {
+    const overdue = txn({ effective_date: "2026-04-20", overdue_since_date: "2026-04-01" });
+    const wrapper = mountDetail(bucket({ transactions: [overdue] }));
+    expect(wrapper.find('[data-testid="daydetail.txn.t1.overdue"]').text()).toBe("overdue since Apr 1, 2026");
+    await wrapper.find('[data-testid="rowactions.t1.done"]').trigger("click");
+    await wrapper.find('[data-testid="rowactions.t1.date"]').setValue("2026-05-01");
+    await wrapper.find('[data-testid="amount.t1"]').trigger("click");
+    await wrapper.find('[data-testid="amount.t1.input"]').setValue("10000");
+    await wrapper.find('[data-testid="amount.t1.input"]').trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("markDone")).toEqual([["t1"]]);
+    expect(wrapper.emitted("moveToDate")).toEqual([["t1", "2026-05-01"]]);
+    expect(wrapper.emitted("changeAmount")).toEqual([["t1", -10000]]);
+  });
+});

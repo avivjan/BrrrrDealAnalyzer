@@ -144,7 +144,7 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
 - [x] T2 (2 h) Phase 1, dollars: migration, models, schemas, CRUD, Mercury summary, engine, store, components, MCP text; tests.
 - [x] T3 (15 min) `Golden update:` liquidity endpoints/OpenAPI/models + Playwright liquidity goldens for dollars.
 - [x] T4 (1 h) Phase 2, the Mercury accounts counted as cash (setting, panel, sync).
-- [ ] T5 (2 h 30) Phase 3, Done / overdue: columns + migration, endpoints, engine with today, UX (row actions, overdue strip, bulk, Undo).
+- [x] T5 (2 h 30) Phase 3, Done / overdue: columns + migration, endpoints, engine with today, UX (row actions, overdue strip, bulk, Undo).
 - [ ] T6 (1 h) Phase 4, the cushion row, appliances on the rehab completion, the reconciliation block removed; reports, popup, MCP glossary.
 - [ ] T7 (15 min) `Golden update:` the schedule change.
 - [ ] T8 (3 h 30) Phase 5, milestones: columns, the date mapping, preview/apply endpoints, the diff with the per-field overrides and their conflicts, the Deals panel, the persisted late-refi rows and their refresh.

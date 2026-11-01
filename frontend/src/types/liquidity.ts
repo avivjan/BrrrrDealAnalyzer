@@ -16,6 +16,37 @@ export interface LiquidityTransaction {
   recurring_rule_id?: string
   /** 0-based occurrence index within the rule. Only set when recurring_rule_id is set. */
   recurring_index?: number
+  /** When the row was marked done (the money moved, or the hold was released); null = still open. */
+  done_at?: string | null
+  /** The date the row was first created or imported with. */
+  originally_planned_date?: string | null
+  /** The date / the amount was changed by hand; a re-sync from a deal keeps that field. */
+  user_overrode_date?: boolean
+  user_overrode_amount?: boolean
+  /**
+   * Client-only, set by `projectTransactionsOntoToday`: an open money-out row dated before today
+   * is counted on today and carries its original date here.
+   */
+  overdue_since_date?: string
+}
+
+/** The one-off transactions as the timeline counts them today (see `projectTransactionsOntoToday`). */
+export interface TransactionsAsOfToday {
+  /** Every row the balance counts: open rows, overdue money out moved onto today, recurring occurrences. */
+  countedTransactions: LiquidityTransaction[]
+  /** Open money-out rows dated before today (their original dates), counted on today. */
+  overdueMoneyOut: LiquidityTransaction[]
+  /** Open money-in rows dated before today: shown, but not counted until re-dated or marked done. */
+  expectedMoneyInNotCounted: LiquidityTransaction[]
+}
+
+export type LiquidityTransactionBulkAction = 'mark_done' | 'mark_not_done' | 'move_to_date' | 'postpone_by_days'
+
+export interface LiquidityTransactionBulkActionReq {
+  transaction_ids: string[]
+  action: LiquidityTransactionBulkAction
+  new_effective_date?: string
+  postpone_by_days?: number
 }
 
 export interface LiquidityTransactionCreate {

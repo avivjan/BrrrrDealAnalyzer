@@ -3,6 +3,7 @@ import type {
   LiquidityTransaction,
   LiquidityTransactionCreate,
   LiquidityTransactionUpdate,
+  LiquidityTransactionBulkActionReq,
   LiquidityRecurringTransaction,
   LiquidityRecurringTransactionCreate,
   LiquidityRecurringTransactionUpdate,
@@ -29,6 +30,21 @@ export const liquidityApi = {
 
   async deleteTransaction(id: string): Promise<void> {
     await apiClient.delete(`/liquidity/transactions/${id}`)
+  },
+
+  async markTransactionDone(id: string): Promise<LiquidityTransaction> {
+    const res = await apiClient.post<LiquidityTransaction>(`/liquidity/transactions/${id}/done`)
+    return res.data
+  },
+
+  async markTransactionNotDone(id: string): Promise<LiquidityTransaction> {
+    const res = await apiClient.post<LiquidityTransaction>(`/liquidity/transactions/${id}/not-done`)
+    return res.data
+  },
+
+  async applyBulkTransactionAction(data: LiquidityTransactionBulkActionReq): Promise<LiquidityTransaction[]> {
+    const res = await apiClient.post<LiquidityTransaction[]>('/liquidity/transactions/bulk', data)
+    return res.data
   },
 
   async getRecurring(): Promise<LiquidityRecurringTransaction[]> {

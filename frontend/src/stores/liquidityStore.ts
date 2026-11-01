@@ -5,6 +5,7 @@ import type {
   LiquidityTransaction,
   LiquidityTransactionCreate,
   LiquidityTransactionUpdate,
+  LiquidityTransactionBulkActionReq,
   LiquidityRecurringTransaction,
   LiquidityRecurringTransactionCreate,
   LiquidityRecurringTransactionUpdate,
@@ -12,11 +13,13 @@ import type {
   LiquiditySettingsUpdate,
   LiquiditySeries,
   MercuryBalanceResponse,
+  TransactionsAsOfToday,
 } from '../types/liquidity'
 import {
   buildDailyLiquiditySeries,
   computeDefaultRange,
   expandAllRecurringRules,
+  projectTransactionsOntoToday,
   simulateImpact,
   requiresSimulation,
   todayISO,
@@ -29,7 +32,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const settings = ref<LiquiditySettings>({
     opening_balance_dollars: 0,
     opening_balance_date: todayISO(),
-    reserve_dollars: 5,
+    reserve_dollars: 5000,
   })
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -40,11 +43,9 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const mercuryError = ref<string | null>(null)
   const mercuryLastSyncedAt = ref<string | null>(null)
 
-  // Effective transaction list = real one-off transactions + every virtual
-  // instance projected from a recurring rule across the visible window.
-  // The list is reused for the chart series and for simulation candidates
-  // so both stay perfectly aligned.
-  const effectiveTransactions = computed<LiquidityTransaction[]>(() => {
+  // Every row in the visible window: the one-off transactions + every virtual
+  // instance projected from a recurring rule.
+  const transactionsInWindow = computed<LiquidityTransaction[]>(() => {
     void _version.value
     const { rangeStart, rangeEnd } = computeDefaultRange(
       transactions.value,
@@ -57,6 +58,18 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     )
     return [...transactions.value, ...projected]
   })
+
+  // The rows as the timeline counts them today: done rows out, overdue money out on
+  // today, overdue money in set aside (not counted). "Today" is the browser's local date.
+  const transactionsAsOfToday = computed<TransactionsAsOfToday>(() =>
+    projectTransactionsOntoToday(transactionsInWindow.value, todayISO()),
+  )
+
+  // Effective transaction list: what the balance counts. Reused for the chart series
+  // and for simulation candidates so both stay perfectly aligned.
+  const effectiveTransactions = computed<LiquidityTransaction[]>(() => transactionsAsOfToday.value.countedTransactions)
+  const overdueMoneyOut = computed(() => transactionsAsOfToday.value.overdueMoneyOut)
+  const expectedMoneyInNotCounted = computed(() => transactionsAsOfToday.value.expectedMoneyInNotCounted)
 
   const series = computed<LiquiditySeries>(() => {
     void _version.value
@@ -122,14 +135,13 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     txn: LiquidityTransaction,
     oldTxnId?: string,
   ): LiquidityTransaction[] {
-    const base = [...effectiveTransactions.value]
-    if (action === 'add') {
-      return [...base, txn]
-    } else if (action === 'edit') {
-      return base.map(t => t.id === oldTxnId ? txn : t)
-    } else {
-      return base.filter(t => t.id !== txn.id)
-    }
+    const base = [...transactionsInWindow.value]
+    const candidates = action === 'add'
+      ? [...base, txn]
+      : action === 'edit'
+        ? base.map(t => t.id === oldTxnId ? { ...t, ...txn, id: t.id } : t)
+        : base.filter(t => t.id !== txn.id)
+    return projectTransactionsOntoToday(candidates, todayISO()).countedTransactions
   }
 
   /**
@@ -158,10 +170,10 @@ export const useLiquidityStore = defineStore('liquidity', () => {
       base,
       settings.value.opening_balance_date,
     )
-    return [
+    return projectTransactionsOntoToday([
       ...base,
       ...expandAllRecurringRules(rulesAfter, rangeStart, rangeEnd),
-    ]
+    ], todayISO()).countedTransactions
   }
 
   async function addTransaction(data: LiquidityTransactionCreate): Promise<LiquidityTransaction> {
@@ -176,6 +188,26 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     transactions.value = await liquidityApi.getTransactions()
     _version.value++
     return updated
+  }
+
+  /** Done: the money moved (or the hold was released), so the row leaves the timeline. */
+  async function markTransactionDone(id: string): Promise<void> {
+    await liquidityApi.markTransactionDone(id)
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
+  }
+
+  /** Undo of Done: the row is open again. */
+  async function markTransactionNotDone(id: string): Promise<void> {
+    await liquidityApi.markTransactionNotDone(id)
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
+  }
+
+  async function applyBulkTransactionAction(data: LiquidityTransactionBulkActionReq): Promise<void> {
+    await liquidityApi.applyBulkTransactionAction(data)
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
   }
 
   async function deleteTransaction(id: string): Promise<void> {
@@ -266,6 +298,8 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     transactions,
     recurringRules,
     effectiveTransactions,
+    overdueMoneyOut,
+    expectedMoneyInNotCounted,
     settings,
     loading,
     error,
@@ -281,6 +315,9 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    markTransactionDone,
+    markTransactionNotDone,
+    applyBulkTransactionAction,
     addRecurring,
     updateRecurring,
     deleteRecurring,

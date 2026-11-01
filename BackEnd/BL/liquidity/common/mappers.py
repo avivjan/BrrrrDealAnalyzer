@@ -12,6 +12,10 @@ def txn_to_res(txn: LiquidityTransaction) -> LiquidityTransactionRes:
         effective_date=txn.effective_date,
         description=txn.description,
         amount_dollars=float(txn.amount_dollars),
+        done_at=txn.done_at.isoformat() if txn.done_at else None,
+        originally_planned_date=txn.originally_planned_date,
+        user_overrode_date=bool(txn.user_overrode_date),
+        user_overrode_amount=bool(txn.user_overrode_amount),
         created_at=txn.created_at.isoformat() if txn.created_at else None,
         updated_at=txn.updated_at.isoformat() if txn.updated_at else None,
     )

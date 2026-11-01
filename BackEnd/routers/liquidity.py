@@ -11,7 +11,10 @@ from ReqRes.common.liquidity_schemas import (
     LiquidityRecurringTransactionCreate, LiquidityRecurringTransactionUpdate,
     LiquidityRecurringTransactionRes,
     LiquiditySettingsUpdate, LiquiditySettingsRes,
+    LiquidityTransactionBulkActionReq,
 )
+from BL.liquidity.markTransactionDone import mark_transaction_done as mark_transaction_done_bl
+from BL.liquidity.bulkTransactionAction import apply_bulk_transaction_action as apply_bulk_transaction_action_bl, UnknownLiquidityTransactionError
 from BL.liquidity.listTransactions import list_transactions as list_transactions_bl
 from BL.liquidity.createTransaction import create_transaction as create_transaction_bl
 from BL.liquidity.updateTransaction import update_transaction as update_transaction_bl
@@ -43,6 +46,27 @@ def update_liquidity_transaction(txn_id: str, data: LiquidityTransactionUpdate, 
     if not result:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return result
+
+@router.post("/liquidity/transactions/{txn_id}/done", response_model=LiquidityTransactionRes)
+def mark_liquidity_transaction_done(txn_id: str, db: Session = Depends(get_db)):
+    result = mark_transaction_done_bl(db, txn_id, is_done=True)
+    if not result:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return result
+
+@router.post("/liquidity/transactions/{txn_id}/not-done", response_model=LiquidityTransactionRes)
+def mark_liquidity_transaction_not_done(txn_id: str, db: Session = Depends(get_db)):
+    result = mark_transaction_done_bl(db, txn_id, is_done=False)
+    if not result:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return result
+
+@router.post("/liquidity/transactions/bulk", response_model=List[LiquidityTransactionRes])
+def apply_liquidity_transaction_bulk_action(data: LiquidityTransactionBulkActionReq, db: Session = Depends(get_db)):
+    try:
+        return apply_bulk_transaction_action_bl(db, data)
+    except UnknownLiquidityTransactionError:
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
 @router.delete("/liquidity/transactions/{txn_id}")
 def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
