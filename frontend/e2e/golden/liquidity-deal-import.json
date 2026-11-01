@@ -1,0 +1,64 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/refresh-late-refis",
+      "body": {
+        "today": "2026-09-04"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/transactions"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/recurring"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/settings"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/my_deals/{id}/import-preview",
+      "body": {
+        "today": "2026-09-04",
+        "use_deal_value_for": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/my_deals/{id}/import",
+      "body": {
+        "today": "2026-09-04",
+        "use_deal_value_for": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/transactions"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    }
+  ]
+}

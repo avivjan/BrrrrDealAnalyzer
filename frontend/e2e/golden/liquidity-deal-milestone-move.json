@@ -1,0 +1,48 @@
+{
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/my_deals/{id}/milestones/preview",
+      "body": {
+        "approve": false,
+        "milestone": "purchase_closed",
+        "new_date": "2026-09-10",
+        "today": "2026-09-04",
+        "use_deal_value_for": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/my_deals/{id}/milestones/preview",
+      "body": {
+        "approve": false,
+        "milestone": "purchase_closed",
+        "new_date": "2026-09-14",
+        "today": "2026-09-04",
+        "use_deal_value_for": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/deals/my_deals/{id}/milestones/apply",
+      "body": {
+        "approve": false,
+        "milestone": "purchase_closed",
+        "new_date": "2026-09-14",
+        "today": "2026-09-04",
+        "use_deal_value_for": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/transactions"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
+    }
+  ]
+}
