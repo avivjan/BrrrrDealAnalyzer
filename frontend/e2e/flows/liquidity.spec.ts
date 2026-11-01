@@ -35,6 +35,7 @@ const MERCURY_SUCCESS = {
           current_balance_dollars: 49200,
           available_balance_dollars: 49200,
           workspace: 'BigWhales',
+          is_counted_as_cash: true,
         },
         {
           id: 'acct-reserve',
@@ -44,12 +45,15 @@ const MERCURY_SUCCESS = {
           current_balance_dollars: 12300,
           available_balance_dollars: 12300,
           workspace: 'BigWhales',
+          is_counted_as_cash: true,
         },
       ],
     },
   ],
   workspace_errors: [],
   accounts: [],
+  counted_as_cash_balance_dollars: 61500,
+  mercury_account_ids_counted_as_cash: null,
 };
 
 type Page = import('@playwright/test').Page;

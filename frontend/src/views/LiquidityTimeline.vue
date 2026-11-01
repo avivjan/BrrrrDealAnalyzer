@@ -5,6 +5,7 @@ import type {
   LiquidityTransaction,
   LiquidityRecurringTransaction,
   LiquidityRecurringFrequency,
+  LiquiditySettingsUpdate,
   SimulationResult,
 } from '../types/liquidity'
 import { requiresSimulation, todayISO } from '../utils/liquidityEngine'
@@ -378,10 +379,14 @@ async function onDeleteTxn(txnId: string) {
   }
 }
 
-async function onSettingsSave(data: { opening_balance_dollars: number; opening_balance_date: string; reserve_dollars: number }) {
+async function onSettingsSave(data: LiquiditySettingsUpdate) {
   settingsOpen.value = false
   try {
+    const countedAccountsChanged = data.mercury_account_ids_counted_as_cash !== undefined
+      && JSON.stringify(data.mercury_account_ids_counted_as_cash) !== JSON.stringify(store.settings.mercury_account_ids_counted_as_cash ?? null)
     await store.updateSettings(data)
+    // A new choice of accounts re-anchors today's balance on them.
+    if (countedAccountsChanged) await store.syncFromMercury()
     showToast('Settings saved.')
   } catch (e: any) {
     showToast('Error: ' + (e?.response?.data?.detail || e.message))
@@ -655,6 +660,7 @@ function showToast(msg: string) {
     <SettingsPanel
       :open="settingsOpen"
       :settings="store.settings"
+      :mercury-accounts="store.mercuryBalance?.accounts ?? []"
       @close="settingsOpen = false"
       @save="onSettingsSave"
     />

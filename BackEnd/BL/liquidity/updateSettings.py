@@ -25,6 +25,9 @@ def update_settings(db: Session, data: LiquiditySettingsUpdate):
             settings.opening_balance_date = data.opening_balance_date
         if data.reserve_dollars is not None:
             settings.reserve_dollars = data.reserve_dollars
+    # Sent explicitly (a list, or null for "every active account"): stored as sent.
+    if "mercury_account_ids_counted_as_cash" in data.model_fields_set:
+        settings.mercury_account_ids_counted_as_cash = data.mercury_account_ids_counted_as_cash
     db.commit()
     db.refresh(settings)
     return settings_to_res(settings)

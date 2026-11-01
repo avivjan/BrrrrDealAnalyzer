@@ -108,16 +108,17 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
 
 
 @router.get("/liquidity/mercury-balance")
-def get_mercury_balance(request: Request):
+def get_mercury_balance(request: Request, db: Session = Depends(get_db)):
     """
-    Fetch the live sum of all active Mercury account balances, in dollars.
+    Fetch the live Mercury account balances, in dollars, and the cash on hand among them
+    (`counted_as_cash_balance_dollars`: the accounts chosen in the liquidity settings).
 
     The frontend uses this to re-anchor the liquidity timeline's opening
     balance to today on page load. Every call leaves an audit row (who, from
     where, which workspaces answered) -- never a token.
     """
     try:
-        result = get_mercury_balance_bl()
+        result = get_mercury_balance_bl(db)
     except MercuryConfigError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except MercuryApiError as e:

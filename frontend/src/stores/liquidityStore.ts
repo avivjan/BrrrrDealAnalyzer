@@ -220,8 +220,9 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   }
 
   /**
-   * Fetch the live sum of Mercury account balances across every configured
-   * workspace and re-anchor the liquidity timeline's opening balance to today.
+   * Fetch the live Mercury balances across every configured workspace and re-anchor the
+   * liquidity timeline's opening balance to today on the accounts counted as cash (the
+   * settings' choice; every active account until one is made).
    *
    * Only rebases when ALL workspaces succeeded — a partial sum would
    * understate true cash on hand and is unsafe to anchor against. On partial
@@ -245,11 +246,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
 
       const today = todayISO()
       const needsUpdate =
-        settings.value.opening_balance_dollars !== balance.total_balance_dollars ||
+        settings.value.opening_balance_dollars !== balance.counted_as_cash_balance_dollars ||
         settings.value.opening_balance_date !== today
       if (needsUpdate) {
         await updateSettings({
-          opening_balance_dollars: balance.total_balance_dollars,
+          opening_balance_dollars: balance.counted_as_cash_balance_dollars,
           opening_balance_date: today,
         })
       }

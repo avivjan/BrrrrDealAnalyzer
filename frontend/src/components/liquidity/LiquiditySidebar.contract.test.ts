@@ -86,12 +86,15 @@ const mercury = (
           current_balance_dollars: 30000,
           available_balance_dollars: 30000,
           workspace: "brrrr",
+          is_counted_as_cash: true,
         },
       ],
     },
   ],
   workspace_errors: [],
   accounts: [],
+  counted_as_cash_balance_dollars: 42500,
+  mercury_account_ids_counted_as_cash: null,
   ...over,
 });
 

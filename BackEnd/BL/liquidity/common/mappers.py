@@ -37,5 +37,6 @@ def settings_to_res(settings: LiquiditySettings) -> LiquiditySettingsRes:
         opening_balance_dollars=float(settings.opening_balance_dollars),
         opening_balance_date=settings.opening_balance_date,
         reserve_dollars=float(settings.reserve_dollars),
+        mercury_account_ids_counted_as_cash=settings.mercury_account_ids_counted_as_cash,
         updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
     )

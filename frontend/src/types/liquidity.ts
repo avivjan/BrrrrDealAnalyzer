@@ -83,6 +83,8 @@ export interface LiquiditySettings {
   opening_balance_dollars: number
   opening_balance_date: string // ISO date
   reserve_dollars: number
+  /** The Mercury accounts whose balance is cash on hand; null = every active account. */
+  mercury_account_ids_counted_as_cash?: string[] | null
   updated_at?: string
 }
 
@@ -90,6 +92,8 @@ export interface LiquiditySettingsUpdate {
   opening_balance_dollars?: number
   opening_balance_date?: string
   reserve_dollars?: number
+  /** Null = count every active account again. */
+  mercury_account_ids_counted_as_cash?: string[] | null
 }
 
 export interface DayBucket {
@@ -123,6 +127,8 @@ export interface MercuryAccountSummary {
   current_balance_dollars: number
   available_balance_dollars: number
   workspace: string
+  /** Whether this account's balance is cash on hand for the liquidity timeline (chosen in the settings). */
+  is_counted_as_cash: boolean
 }
 
 export interface MercuryWorkspaceSummary {
@@ -146,4 +152,7 @@ export interface MercuryBalanceResponse {
   workspaces: MercuryWorkspaceSummary[]
   workspace_errors: MercuryWorkspaceError[]
   accounts: MercuryAccountSummary[]
+  /** The balance the timeline anchors on: only the accounts counted as cash. */
+  counted_as_cash_balance_dollars: number
+  mercury_account_ids_counted_as_cash: string[] | null
 }

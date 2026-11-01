@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import date
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 from decimal import Decimal
 
 
@@ -103,16 +103,29 @@ class LiquidityRecurringTransactionRes(BaseModel):
     model_config = {"from_attributes": True}
 
 
+MercuryAccountId = Annotated[str, Field(min_length=1, max_length=100)]
+_MERCURY_ACCOUNTS_COUNTED_AS_CASH = (
+    "The Mercury account ids whose balance counts as cash on hand (the operating accounts). "
+    "Null = every active account. Leave the tax bucket and the HYSA out, so the deposits into them read as money out."
+)
+
+
 class LiquiditySettingsUpdate(BaseModel):
+    """Partial update: only the fields sent change. Sending mercury_account_ids_counted_as_cash as null
+    counts every active account again."""
+
     opening_balance_dollars: Optional[Decimal] = None
     opening_balance_date: Optional[date] = None
     reserve_dollars: Optional[Decimal] = None
+    mercury_account_ids_counted_as_cash: Optional[list[MercuryAccountId]] = Field(
+        None, max_length=100, description=_MERCURY_ACCOUNTS_COUNTED_AS_CASH)
 
 
 class LiquiditySettingsRes(BaseModel):
     opening_balance_dollars: float
     opening_balance_date: date
     reserve_dollars: float
+    mercury_account_ids_counted_as_cash: Optional[list[str]] = Field(None, description=_MERCURY_ACCOUNTS_COUNTED_AS_CASH)
     updated_at: Optional[str] = None
 
     model_config = {"from_attributes": True}

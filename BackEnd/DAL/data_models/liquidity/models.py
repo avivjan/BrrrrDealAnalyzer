@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, func, Numeric, Uuid
+from sqlalchemy import Column, Integer, String, DateTime, Date, func, Numeric, Uuid, JSON
 import uuid
 
 from db import Base
@@ -55,6 +55,9 @@ class LiquiditySettings(Base):
     """Singleton row (id=1) holding the opening balance anchor and user prefs.
     opening_balance_dollars: balance at start-of-day on opening_balance_date, in dollars.
     reserve_dollars: soft-warning threshold, in dollars.
+    mercury_account_ids_counted_as_cash: the Mercury account ids whose balance is cash on hand (the
+    operating accounts); NULL = every active account. The tax bucket and the HYSA are left out so
+    the deposits into them read as money out.
     """
     __tablename__ = "liquidity_settings"
 
@@ -62,4 +65,5 @@ class LiquiditySettings(Base):
     opening_balance_dollars = Column(Numeric(16, 2), nullable=False, default=0)
     opening_balance_date = Column(Date, nullable=False)
     reserve_dollars = Column(Numeric(16, 2), nullable=False, default=5000)
+    mercury_account_ids_counted_as_cash = Column(JSON, nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

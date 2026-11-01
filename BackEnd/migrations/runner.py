@@ -144,6 +144,9 @@ def _run_migrations_locked(engine):
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
 
+    # The Mercury accounts counted as cash on hand (NULL = every active account).
+    add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
+
     # The liquidity amounts move from thousands to exact dollars. Reflects fresh: the
     # block above may have added a `_k` column. Idempotent.
     convert_liquidity_amounts_to_dollars(engine, sa_inspect(engine))

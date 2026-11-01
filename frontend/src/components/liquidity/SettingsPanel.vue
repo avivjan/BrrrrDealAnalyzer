@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { LiquiditySettings } from '../../types/liquidity'
+import { computed, ref, watch } from 'vue'
+import type { LiquiditySettings, MercuryAccountSummary } from '../../types/liquidity'
+import { formatMoney } from '../../utils/money'
 
 const props = defineProps<{
   open: boolean
   settings: LiquiditySettings
+  /** The Mercury accounts of the last sync; empty when Mercury is not configured. */
+  mercuryAccounts?: MercuryAccountSummary[]
 }>()
 
 /** The soft-warning threshold of a fresh install (the backend's default). */
@@ -12,18 +15,28 @@ const DEFAULT_RESERVE_DOLLARS = 5000
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', data: { opening_balance_dollars: number; opening_balance_date: string; reserve_dollars: number }): void
+  (e: 'save', data: {
+    opening_balance_dollars: number
+    opening_balance_date: string
+    reserve_dollars: number
+    mercury_account_ids_counted_as_cash?: string[] | null
+  }): void
 }>()
 
 const openingBalanceDollars = ref('')
 const balanceDate = ref('')
 const reserveDollars = ref('')
+/** The ids ticked in the "Counted as cash" list; seeded from the settings (null = every active account). */
+const mercuryAccountIdsCountedAsCash = ref<string[]>([])
+const activeMercuryAccounts = computed(() => (props.mercuryAccounts ?? []).filter((account) => account.status === 'active'))
 
 watch(() => props.open, (open) => {
   if (!open) return
   openingBalanceDollars.value = props.settings.opening_balance_dollars.toString()
   balanceDate.value = props.settings.opening_balance_date
   reserveDollars.value = props.settings.reserve_dollars.toString()
+  mercuryAccountIdsCountedAsCash.value = props.settings.mercury_account_ids_counted_as_cash
+    ?? activeMercuryAccounts.value.map((account) => account.id)
 })
 
 function onSave() {
@@ -34,6 +47,8 @@ function onSave() {
     opening_balance_dollars: b,
     opening_balance_date: balanceDate.value,
     reserve_dollars: isNaN(r) ? DEFAULT_RESERVE_DOLLARS : r,
+    // Only sent once there are accounts to choose from, so a save without Mercury keeps the stored choice.
+    ...(activeMercuryAccounts.value.length ? { mercury_account_ids_counted_as_cash: [...mercuryAccountIdsCountedAsCash.value] } : {}),
   })
 }
 </script>
@@ -104,6 +119,24 @@ function onSave() {
               </template>
               <template #helper>Soft warning if balance drops below this. Default: $5,000</template>
             </UiField>
+
+            <fieldset v-if="activeMercuryAccounts.length" data-testid="settings.mercury-accounts" class="flex flex-col gap-2">
+              <legend class="mb-1 text-sm font-medium text-fg">Counted as cash (Mercury)</legend>
+              <label
+                v-for="account in activeMercuryAccounts"
+                :key="account.id"
+                :data-testid="`settings.mercury-account.${account.id}`"
+                class="flex items-center justify-between gap-3 rounded-ctl border border-line px-3 py-2 text-sm"
+              >
+                <span class="flex items-center gap-2">
+                  <input v-model="mercuryAccountIdsCountedAsCash" type="checkbox" class="h-4 w-4 accent-primary" :value="account.id" />
+                  <span class="text-fg">{{ account.name }}</span>
+                  <span class="text-xs text-fg-muted">{{ account.workspace }}</span>
+                </span>
+                <span class="numeric text-fg-muted">{{ formatMoney(account.current_balance_dollars) }}</span>
+              </label>
+              <p class="text-xs text-fg-muted">Only the operating accounts. Leave the tax bucket and the HYSA out: deposits into them are money out.</p>
+            </fieldset>
           </div>
 
           <template #footer>

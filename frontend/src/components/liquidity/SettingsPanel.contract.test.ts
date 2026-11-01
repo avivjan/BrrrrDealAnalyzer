@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 
 import SettingsPanel from "./SettingsPanel.vue";
-import type { LiquiditySettings } from "../../types/liquidity";
+import type { LiquiditySettings, MercuryAccountSummary } from "../../types/liquidity";
 
 const SETTINGS: LiquiditySettings = {
   opening_balance_dollars: 49000,
@@ -122,5 +122,46 @@ describe("SettingsPanel", () => {
 
     expect(wrapper.emitted("close")).toHaveLength(2);
     expect(wrapper.emitted("save")).toBeUndefined();
+  });
+});
+
+describe("SettingsPanel — the Mercury accounts counted as cash", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  const account = (id: string, name: string, status = "active"): MercuryAccountSummary => ({
+    id, name, type: "checking", status, current_balance_dollars: 1000, available_balance_dollars: 1000, workspace: "AJYK",
+    is_counted_as_cash: true,
+  });
+  const ACCOUNTS = [account("operating", "Operating"), account("tax", "Tax bucket"), account("old", "Old", "archived")];
+
+  async function openWithAccounts(settings: LiquiditySettings = SETTINGS) {
+    const wrapper = mount(SettingsPanel, { props: { open: false, settings, mercuryAccounts: ACCOUNTS } });
+    await wrapper.setProps({ open: true });
+    return wrapper;
+  }
+
+  it("lists the active accounts, all ticked while nothing is chosen, and saves the ticked ones", async () => {
+    const wrapper = await openWithAccounts();
+    expect(document.querySelector('[data-testid="settings.mercury-account.old"]')).toBeNull();
+    const taxBox = at("settings.mercury-account.tax").find("input");
+    expect((taxBox.element as HTMLInputElement).checked).toBe(true);
+    await taxBox.setValue(false);
+    await at("settings.save").trigger("click");
+    expect(lastSave(wrapper)).toMatchObject({ mercury_account_ids_counted_as_cash: ["operating"] });
+  });
+
+  it("seeds the ticks from the stored choice", async () => {
+    await openWithAccounts({ ...SETTINGS, mercury_account_ids_counted_as_cash: ["tax"] });
+    expect((at("settings.mercury-account.operating").find("input").element as HTMLInputElement).checked).toBe(false);
+    expect((at("settings.mercury-account.tax").find("input").element as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("without Mercury accounts shows no list and keeps the stored choice", async () => {
+    const wrapper = await openPanel();
+    expect(document.querySelector('[data-testid="settings.mercury-accounts"]')).toBeNull();
+    await at("settings.save").trigger("click");
+    expect(lastSave(wrapper)).not.toHaveProperty("mercury_account_ids_counted_as_cash");
   });
 });
