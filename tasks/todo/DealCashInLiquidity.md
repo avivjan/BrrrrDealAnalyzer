@@ -158,7 +158,7 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
   - the Mercury account ids are stored, never the tokens;
   - migration SQL is static;
   - run bandit and `npm audit`.
-- [ ] T12 (1 h) Playwright flows + re-record; final gates; push; PR.
+- [x] T12 (1 h) Playwright flows + re-record; final gates; push; PR.
 
 ### Security pass (T11)
 - **Auth:** the new router is behind the app-key and session gates (it is not in `PUBLIC_ROUTERS`).
