@@ -28,6 +28,16 @@ export interface LiquidityTransaction {
    * is counted on today and carries its original date here.
    */
   overdue_since_date?: string
+  /** Set on a row imported from a BRRRR deal's Cash Needed schedule; null = a manual transaction. */
+  source_deal_board?: LiquidityDealBoard | null
+  source_deal_id?: string | null
+  source_item_key?: string | null
+  source_occurrence_number?: number | null
+  sequence_within_day?: number | null
+  /** A month of carrying costs added while the deal's refi was late. */
+  created_because_refi_is_late?: boolean
+  /** The deal no longer has this row; it stayed because its date or amount was changed by hand. */
+  no_longer_in_the_deal?: boolean
 }
 
 /** The one-off transactions as the timeline counts them today (see `projectTransactionsOntoToday`). */
@@ -116,6 +126,8 @@ export interface LiquiditySettings {
   reserve_dollars: number
   /** The Mercury accounts whose balance is cash on hand; null = every active account. */
   mercury_account_ids_counted_as_cash?: string[] | null
+  /** The owner's IANA time zone: "today" when no date is sent (an MCP call). */
+  timezone_name?: string
   updated_at?: string
 }
 
@@ -186,4 +198,91 @@ export interface MercuryBalanceResponse {
   /** The balance the timeline anchors on: only the accounts counted as cash. */
   counted_as_cash_balance_dollars: number
   mercury_account_ids_counted_as_cash: string[] | null
+}
+
+// --- A BRRRR deal's Cash Needed rows in the timeline (BackEnd/ReqRes/common/liquidity_deal_schemas.py) ---
+
+export type LiquidityDealBoard = 'my_deals' | 'bought'
+export type DealMilestone = 'contract_signed' | 'purchase_closed' | 'rehab_completed' | 'tenant_moved_in' | 'refi_closed'
+export type DealCashRowChangeKind = 'added' | 'updated' | 'removed' | 'unchanged' | 'kept_done' | 'kept_no_longer_in_the_deal'
+
+/** Take the deal's value for one field of one row although it was changed by hand. */
+export interface UseDealValueForField {
+  transaction_id: string
+  field: 'date' | 'amount'
+}
+
+export interface DealCashRowChange {
+  change_kind: DealCashRowChangeKind
+  item_key: string
+  occurrence_number: number
+  description: string
+  transaction_id: string | null
+  date_before: string | null
+  date_after: string | null
+  amount_dollars_before: number | null
+  amount_dollars_after: number | null
+  deal_date_not_applied_because_you_changed_it: string | null
+  deal_amount_dollars_not_applied_because_you_changed_it: number | null
+  created_because_refi_is_late: boolean
+}
+
+export interface DealCashRowChangeCounts {
+  added: number
+  updated: number
+  removed: number
+  unchanged: number
+  kept_done: number
+  kept_no_longer_in_the_deal: number
+  conflicts_with_your_changes: number
+}
+
+export interface DealMilestoneDateChange {
+  milestone: DealMilestone
+  date_before: string
+  date_after: string
+}
+
+/** The before -> after list of an import, a re-sync or a milestone change. */
+export interface DealCashRowChanges {
+  deal_board: LiquidityDealBoard
+  deal_id: string
+  deal_address: string
+  changes: DealCashRowChange[]
+  change_counts: DealCashRowChangeCounts
+  milestone_date_changes: DealMilestoneDateChange[]
+}
+
+export interface DealMilestoneState {
+  milestone: DealMilestone
+  planned_date: string
+  approved_at: string | null
+  is_overdue: boolean
+}
+
+export interface ImportedLiquidityDeal {
+  deal_board: LiquidityDealBoard
+  deal_id: string
+  deal_address: string
+  my_deals_deal_id_it_was_moved_from: string | null
+  liquidity_rows_out_of_date: boolean
+  open_row_count: number
+  done_row_count: number
+  overdue_open_row_count: number
+  late_refi_row_count: number
+  refi_is_late: boolean
+  milestones: DealMilestoneState[]
+}
+
+export interface DealMilestoneChangeReq {
+  milestone: DealMilestone
+  new_date: string
+  approve: boolean
+  use_deal_value_for?: UseDealValueForField[]
+  today?: string
+}
+
+export interface RemoveOpenDealRowsRes {
+  removed_row_count: number
+  earnest_money_refund_transaction_id: string | null
 }

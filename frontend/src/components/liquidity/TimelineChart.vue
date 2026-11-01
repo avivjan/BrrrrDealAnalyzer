@@ -68,6 +68,11 @@ const props = defineProps<{
   firstNegativeDate: string | null
   /** Reserve floor in dollars; undefined = not drawn. */
   reserveDollars?: number
+  /**
+   * A second balance per day, aligned with `days` (the import preview's "with this deal"), drawn as a
+   * dashed line; undefined = not drawn.
+   */
+  balancesWithTheDeal?: number[]
 }>()
 
 const emit = defineEmits<{
@@ -131,7 +136,7 @@ const C = computed(() => {
 })
 
 const count = computed(() => props.days.length)
-const range = computed(() => balanceRange(props.days.map((d) => d.balance_dollars)))
+const range = computed(() => balanceRange([...props.days.map((d) => d.balance_dollars), ...(props.balancesWithTheDeal ?? [])]))
 const plotBottom = computed(() => height.value - PAD_BOTTOM)
 const y = (balance: number) => yForBalance(balance, height.value, range.value)
 const x = (i: number) => xForIndex(i, scrollX.value)
@@ -227,6 +232,15 @@ const linePoints = computed<LinePoint[]>(() => {
 })
 
 const balancePath = computed(() => linePath(linePoints.value))
+
+/** The "with this deal" balance through the same visible days. */
+const balanceWithTheDealPath = computed(() => {
+  const balancesWithTheDeal = props.balancesWithTheDeal
+  if (!balancesWithTheDeal) return null
+  return linePath(linePoints.value
+    .filter((point) => balancesWithTheDeal[point.i] !== undefined)
+    .map((point) => ({ ...point, y: y(balancesWithTheDeal[point.i]!), value: balancesWithTheDeal[point.i]! })))
+})
 
 /** Gradient ids, unique per chart instance. */
 const gid = useId()
@@ -550,6 +564,7 @@ defineExpose({ centerOnToday })
 
         <!-- Running balance line -->
         <path v-draw-on data-part="balance-line" :d="balancePath" fill="none" :stroke="C.balanceDot" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        <path v-if="balanceWithTheDealPath" data-part="balance-with-the-deal-line" :d="balanceWithTheDealPath" fill="none" :stroke="C.reserveLine" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round" />
 
         <!-- Flow markers: one per day with transactions, sized by |net| -->
         <g data-part="flow-markers">

@@ -10,6 +10,12 @@ import type {
   LiquiditySettings,
   LiquiditySettingsUpdate,
   MercuryBalanceResponse,
+  DealCashRowChanges,
+  DealMilestoneChangeReq,
+  ImportedLiquidityDeal,
+  LiquidityDealBoard,
+  RemoveOpenDealRowsRes,
+  UseDealValueForField,
 } from '../types/liquidity'
 
 export const liquidityApi = {
@@ -83,6 +89,49 @@ export const liquidityApi = {
 
   async getMercuryBalance(): Promise<MercuryBalanceResponse> {
     const res = await apiClient.get<MercuryBalanceResponse>('/liquidity/mercury-balance')
+    return res.data
+  },
+
+  // --- A BRRRR deal's Cash Needed rows in the timeline ---
+
+  async getImportedDeals(today: string): Promise<ImportedLiquidityDeal[]> {
+    const res = await apiClient.get<ImportedLiquidityDeal[]>('/liquidity/deals', { params: { today } })
+    return res.data
+  },
+
+  async refreshLateRefis(today: string): Promise<{ added_row_count: number }> {
+    const res = await apiClient.post<{ added_row_count: number }>('/liquidity/deals/refresh-late-refis', { today })
+    return res.data
+  },
+
+  async previewDealImport(dealBoard: LiquidityDealBoard, dealId: string, today: string,
+    useDealValueFor: UseDealValueForField[] = []): Promise<DealCashRowChanges> {
+    const res = await apiClient.post<DealCashRowChanges>(`/liquidity/deals/${dealBoard}/${dealId}/import-preview`,
+      { today, use_deal_value_for: useDealValueFor })
+    return res.data
+  },
+
+  async importDeal(dealBoard: LiquidityDealBoard, dealId: string, today: string,
+    useDealValueFor: UseDealValueForField[] = []): Promise<DealCashRowChanges> {
+    const res = await apiClient.post<DealCashRowChanges>(`/liquidity/deals/${dealBoard}/${dealId}/import`,
+      { today, use_deal_value_for: useDealValueFor })
+    return res.data
+  },
+
+  async previewMilestoneChange(dealBoard: LiquidityDealBoard, dealId: string, data: DealMilestoneChangeReq): Promise<DealCashRowChanges> {
+    const res = await apiClient.post<DealCashRowChanges>(`/liquidity/deals/${dealBoard}/${dealId}/milestones/preview`, data)
+    return res.data
+  },
+
+  async applyMilestoneChange(dealBoard: LiquidityDealBoard, dealId: string, data: DealMilestoneChangeReq): Promise<DealCashRowChanges> {
+    const res = await apiClient.post<DealCashRowChanges>(`/liquidity/deals/${dealBoard}/${dealId}/milestones/apply`, data)
+    return res.data
+  },
+
+  async removeOpenDealRows(dealBoard: LiquidityDealBoard, dealId: string,
+    earnestMoneyRefundDate: string | null): Promise<RemoveOpenDealRowsRes> {
+    const res = await apiClient.post<RemoveOpenDealRowsRes>(`/liquidity/deals/${dealBoard}/${dealId}/remove-open-rows`,
+      { earnest_money_refund_date: earnestMoneyRefundDate })
     return res.data
   },
 }

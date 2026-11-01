@@ -178,4 +178,34 @@ describe("TimelineChart contract", () => {
       Reflect.deleteProperty(proto, "clientHeight");
     }
   });
+
+  it("draws the import preview's 'with this deal' balance as a dashed line only when given", async () => {
+    const proto = HTMLElement.prototype;
+    const size = (name: "clientWidth" | "clientHeight", value: number) =>
+      Object.defineProperty(proto, name, { configurable: true, get: () => value });
+    size("clientWidth", 800);
+    size("clientHeight", 400);
+    try {
+      const without = mountChart();
+      await without.vm.$nextTick();
+      expect(without.find('[data-part="balance-with-the-deal-line"]').exists()).toBe(false);
+      without.unmount();
+
+      const withTheDeal = mount(TimelineChart, {
+        props: {
+          days: DAYS, globalMin: -3, globalMinDates: ["2026-09-05"], firstNegativeDate: "2026-09-05",
+          balancesWithTheDeal: DAYS.map((d) => d.balance_dollars - 50),
+        },
+        attachTo: document.body,
+      });
+      await withTheDeal.vm.$nextTick();
+      const dashedLine = withTheDeal.get('[data-part="balance-with-the-deal-line"]');
+      expect(dashedLine.attributes("stroke-dasharray")).toBe("5 4");
+      expect(dashedLine.attributes("d")).toMatch(/^M/);
+      withTheDeal.unmount();
+    } finally {
+      Reflect.deleteProperty(proto, "clientWidth");
+      Reflect.deleteProperty(proto, "clientHeight");
+    }
+  });
 });

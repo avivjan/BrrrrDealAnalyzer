@@ -7,8 +7,11 @@ import type {
   LiquidityRecurringFrequency,
   LiquiditySettingsUpdate,
   SimulationResult,
+  DealCashRowChanges,
+  DealMilestone,
+  ImportedLiquidityDeal,
 } from '../types/liquidity'
-import { requiresSimulation, todayISO } from '../utils/liquidityEngine'
+import { addDays, requiresSimulation, todayISO } from '../utils/liquidityEngine'
 import { formatMoney } from '../utils/money'
 import TimelineChart from '../components/liquidity/TimelineChart.vue'
 import LiquiditySidebar from '../components/liquidity/LiquiditySidebar.vue'
@@ -17,6 +20,10 @@ import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
 import OverdueTransactionsStrip from '../components/liquidity/OverdueTransactionsStrip.vue'
+import LiquidityDealsPanel from '../components/liquidity/LiquidityDealsPanel.vue'
+import DealMilestoneChangeModal from '../components/liquidity/DealMilestoneChangeModal.vue'
+import DealImportPreviewModal from '../components/liquidity/DealImportPreviewModal.vue'
+
 
 const store = useLiquidityStore()
 
@@ -455,6 +462,30 @@ async function onUndo() {
   if (undo) await runQuickAction(undo, 'Undone.', null)
 }
 
+// --- Imported deals: milestones, re-sync after a deal edit, a dead deal ---
+const milestoneChange = ref<{ deal: ImportedLiquidityDeal; milestone: DealMilestone; approve: boolean } | null>(null)
+const dealToResync = ref<ImportedLiquidityDeal | null>(null)
+
+function onChangeMilestone(deal: ImportedLiquidityDeal, milestone: DealMilestone, approve: boolean) {
+  milestoneChange.value = { deal, milestone, approve }
+}
+
+function describeRowChanges(result: DealCashRowChanges): string {
+  const counts = result.change_counts
+  return `${counts.updated} changed, ${counts.added} added, ${counts.removed} removed.`
+}
+
+async function onRemoveOpenDealRows(deal: ImportedLiquidityDeal) {
+  if (!window.confirm(`Remove the ${deal.open_row_count} open liquidity rows of ${deal.deal_address}? Done rows stay.`)) return
+  const refundEarnestMoney = window.confirm('Add the earnest money deposit back as money in, a week from today?')
+  try {
+    const result = await store.removeOpenDealRows(deal.deal_board, deal.deal_id, refundEarnestMoney ? addDays(todayISO(), 7) : null)
+    showToast(`Removed ${result.removed_row_count} rows${result.earnest_money_refund_transaction_id ? ', earnest money refund added' : ''}.`)
+  } catch (e: any) {
+    showToast(e?.response?.data?.detail || e?.message || 'Could not remove the rows')
+  }
+}
+
 function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
   toastMessage.value = msg
   toastUndo.value = undo
@@ -651,6 +682,13 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
             @bulk-mark-done="onBulkMarkDone"
             @bulk-move-to-date="onBulkMoveToDate"
           />
+          <LiquidityDealsPanel
+            :imported-deals="store.importedDeals"
+            :transactions="store.transactions"
+            @change-milestone="onChangeMilestone"
+            @review-changes="(deal) => (dealToResync = deal)"
+            @remove-open-rows="onRemoveOpenDealRows"
+          />
           <UiSurface :level="1" padding="none" class="overflow-hidden">
             <div class="grid h-[340px] min-h-[320px] sm:h-[380px]">
               <TimelineChart
@@ -659,7 +697,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
                 :global-min="store.series.globalMin"
                 :global-min-dates="store.series.globalMinDates"
                 :first-negative-date="store.series.firstNegativeDate"
-                :reserve-k="store.settings.reserve_dollars"
+                :reserve-dollars="store.settings.reserve_dollars"
                 @select-day="onSelectDay"
               />
             </div>
@@ -738,6 +776,24 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
       :mercury-accounts="store.mercuryBalance?.accounts ?? []"
       @close="settingsOpen = false"
       @save="onSettingsSave"
+    />
+
+    <DealMilestoneChangeModal
+      v-if="milestoneChange"
+      :deal="milestoneChange.deal"
+      :milestone="milestoneChange.milestone"
+      :approve="milestoneChange.approve"
+      @close="milestoneChange = null"
+      @applied="(result) => showToast(`Milestone saved: ${describeRowChanges(result)}`)"
+    />
+
+    <DealImportPreviewModal
+      v-if="dealToResync"
+      :deal-board="dealToResync.deal_board"
+      :deal-id="dealToResync.deal_id"
+      :deal-address="dealToResync.deal_address"
+      @close="dealToResync = null"
+      @imported="(result) => showToast(`Re-synced: ${describeRowChanges(result)}`)"
     />
 
     <!-- Toast -->

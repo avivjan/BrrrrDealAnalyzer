@@ -14,6 +14,13 @@ import type {
   LiquiditySeries,
   MercuryBalanceResponse,
   TransactionsAsOfToday,
+  DealCashRowChange,
+  DealCashRowChanges,
+  DealMilestoneChangeReq,
+  ImportedLiquidityDeal,
+  LiquidityDealBoard,
+  RemoveOpenDealRowsRes,
+  UseDealValueForField,
 } from '../types/liquidity'
 import {
   buildDailyLiquiditySeries,
@@ -25,6 +32,7 @@ import {
   todayISO,
 } from '../utils/liquidityEngine'
 import type { SimulationResult } from '../types/liquidity'
+import { transactionsAfterDealChanges } from '../utils/dealCashRowsPreview'
 
 export const useLiquidityStore = defineStore('liquidity', () => {
   const transactions = ref<LiquidityTransaction[]>([])
@@ -37,6 +45,9 @@ export const useLiquidityStore = defineStore('liquidity', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const _version = ref(0)
+
+  /** The BRRRR deals imported into the timeline (the Deals panel), with their milestones. */
+  const importedDeals = ref<ImportedLiquidityDeal[]>([])
 
   const mercuryBalance = ref<MercuryBalanceResponse | null>(null)
   const mercurySyncing = ref(false)
@@ -90,14 +101,18 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     loading.value = true
     error.value = null
     try {
-      const [txns, recurring, s] = await Promise.all([
+      // A late refi's carrying-cost months become real rows first, on the browser's local date.
+      await liquidityApi.refreshLateRefis(todayISO()).catch(() => undefined)
+      const [txns, recurring, s, deals] = await Promise.all([
         liquidityApi.getTransactions(),
         liquidityApi.getRecurring(),
         liquidityApi.getSettings(),
+        liquidityApi.getImportedDeals(todayISO()).catch(() => [] as ImportedLiquidityDeal[]),
       ])
       transactions.value = txns
       recurringRules.value = recurring
       settings.value = s
+      importedDeals.value = deals
     } catch (e: any) {
       error.value = e?.response?.data?.detail || e.message || 'Failed to load liquidity data'
     } finally {
@@ -210,6 +225,68 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     _version.value++
   }
 
+  async function reloadTransactionsAndImportedDeals(): Promise<void> {
+    const [txns, deals] = await Promise.all([liquidityApi.getTransactions(), liquidityApi.getImportedDeals(todayISO())])
+    transactions.value = txns
+    importedDeals.value = deals
+    _version.value++
+  }
+
+  async function fetchImportedDeals(): Promise<void> {
+    importedDeals.value = await liquidityApi.getImportedDeals(todayISO())
+  }
+
+  /**
+   * The balance today vs "with these changes" of a deal's rows, over one shared range (the chart's dashed line
+   * and the preview's insights).
+   */
+  function seriesWithAndWithoutDealChanges(changes: DealCashRowChange[]): { seriesWithoutTheDeal: LiquiditySeries; seriesWithTheDeal: LiquiditySeries } {
+    const today = todayISO()
+    const oneOffTransactionsAfter = transactionsAfterDealChanges(transactions.value, changes)
+    const { rangeStart, rangeEnd } = computeDefaultRange(
+      [...transactions.value, ...oneOffTransactionsAfter],
+      settings.value.opening_balance_date,
+    )
+    const recurringOccurrences = expandAllRecurringRules(recurringRules.value, rangeStart, rangeEnd)
+    const seriesOf = (oneOffTransactions: LiquidityTransaction[]) => buildDailyLiquiditySeries(
+      projectTransactionsOntoToday([...oneOffTransactions, ...recurringOccurrences], today).countedTransactions,
+      settings.value.opening_balance_dollars,
+      settings.value.opening_balance_date,
+      rangeStart,
+      rangeEnd,
+    )
+    return { seriesWithoutTheDeal: seriesOf(transactions.value), seriesWithTheDeal: seriesOf(oneOffTransactionsAfter) }
+  }
+
+  function previewDealImport(dealBoard: LiquidityDealBoard, dealId: string, useDealValueFor: UseDealValueForField[] = []): Promise<DealCashRowChanges> {
+    return liquidityApi.previewDealImport(dealBoard, dealId, todayISO(), useDealValueFor)
+  }
+
+  /** Import the deal's rows, or re-sync them (the same call). */
+  async function importDeal(dealBoard: LiquidityDealBoard, dealId: string, useDealValueFor: UseDealValueForField[] = []): Promise<DealCashRowChanges> {
+    const result = await liquidityApi.importDeal(dealBoard, dealId, todayISO(), useDealValueFor)
+    await reloadTransactionsAndImportedDeals()
+    return result
+  }
+
+  function previewMilestoneChange(dealBoard: LiquidityDealBoard, dealId: string, change: DealMilestoneChangeReq): Promise<DealCashRowChanges> {
+    return liquidityApi.previewMilestoneChange(dealBoard, dealId, { ...change, today: todayISO() })
+  }
+
+  /** Approve or move a milestone: the deal's dates change and its rows re-sync, as the preview listed. */
+  async function applyMilestoneChange(dealBoard: LiquidityDealBoard, dealId: string, change: DealMilestoneChangeReq): Promise<DealCashRowChanges> {
+    const result = await liquidityApi.applyMilestoneChange(dealBoard, dealId, { ...change, today: todayISO() })
+    await reloadTransactionsAndImportedDeals()
+    return result
+  }
+
+  /** A dead deal: its open rows go, and the earnest money may come back as money in on `earnestMoneyRefundDate`. */
+  async function removeOpenDealRows(dealBoard: LiquidityDealBoard, dealId: string, earnestMoneyRefundDate: string | null): Promise<RemoveOpenDealRowsRes> {
+    const result = await liquidityApi.removeOpenDealRows(dealBoard, dealId, earnestMoneyRefundDate)
+    await reloadTransactionsAndImportedDeals()
+    return result
+  }
+
   async function deleteTransaction(id: string): Promise<void> {
     await liquidityApi.deleteTransaction(id)
     transactions.value = await liquidityApi.getTransactions()
@@ -304,6 +381,14 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     loading,
     error,
     series,
+    importedDeals,
+    fetchImportedDeals,
+    seriesWithAndWithoutDealChanges,
+    previewDealImport,
+    importDeal,
+    previewMilestoneChange,
+    applyMilestoneChange,
+    removeOpenDealRows,
     mercuryBalance,
     mercurySyncing,
     mercuryError,
