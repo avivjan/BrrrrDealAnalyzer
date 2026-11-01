@@ -28,6 +28,8 @@ def update_settings(db: Session, data: LiquiditySettingsUpdate):
     # Sent explicitly (a list, or null for "every active account"): stored as sent.
     if "mercury_account_ids_counted_as_cash" in data.model_fields_set:
         settings.mercury_account_ids_counted_as_cash = data.mercury_account_ids_counted_as_cash
+    if data.timezone_name is not None:
+        settings.timezone_name = data.timezone_name
     db.commit()
     db.refresh(settings)
     return settings_to_res(settings)

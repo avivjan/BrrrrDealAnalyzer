@@ -25,6 +25,17 @@ class LiquidityTransaction(Base):
     # The user changed the date / the amount by hand; a re-sync from a deal keeps that field.
     user_overrode_date = Column(Boolean, nullable=False, default=False, server_default="false")
     user_overrode_amount = Column(Boolean, nullable=False, default=False, server_default="false")
+    # A row imported from a deal's Cash Needed schedule: which deal (the board says which table), and its
+    # identity there (item_key + occurrence number, never the date). NULL on a manual transaction.
+    source_deal_board = Column(String(20), nullable=True)
+    source_deal_id = Column(Uuid(as_uuid=True), nullable=True, index=True)
+    source_item_key = Column(String(80), nullable=True)
+    source_occurrence_number = Column(Integer, nullable=True)
+    sequence_within_day = Column(Integer, nullable=True)
+    # Added while the deal's refi was late (planned date passed, not approved): a real month of carrying costs.
+    created_because_refi_is_late = Column(Boolean, nullable=False, default=False, server_default="false")
+    # The deal no longer has this row, but it carries an override, so it stayed.
+    no_longer_in_the_deal = Column(Boolean, nullable=False, default=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -77,4 +88,6 @@ class LiquiditySettings(Base):
     opening_balance_date = Column(Date, nullable=False)
     reserve_dollars = Column(Numeric(16, 2), nullable=False, default=5000)
     mercury_account_ids_counted_as_cash = Column(JSON, nullable=True)
+    # The owner's time zone: "today" for the backend (the late-refi rows on an MCP read). The browser sends its own date.
+    timezone_name = Column(String(64), nullable=False, default="America/New_York", server_default="America/New_York")
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

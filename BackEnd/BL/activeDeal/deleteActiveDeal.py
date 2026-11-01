@@ -1,4 +1,9 @@
+import uuid
+
 from sqlalchemy.orm import Session
+
+from BL.liquidity.dealCashRows.deal_cash_rows import DEAL_BOARD_MY_DEALS
+from BL.liquidity.dealCashRows.liquidity_deals import delete_open_rows_of_deal
 
 from DAL.crud.active_deal import delete_brrr_deal, delete_flip_deal
 
@@ -14,6 +19,8 @@ def delete_deal(db: Session, deal_id: str, deal_type: str) -> bool:
     """
     if deal_type == "BRRRR":
         if delete_brrr_deal(db, deal_id):
+            # Its open liquidity rows go with it; the done ones stay as history.
+            delete_open_rows_of_deal(db, DEAL_BOARD_MY_DEALS, uuid.UUID(str(deal_id)))
             db.commit()
             return True
     elif deal_type == "FLIP":

@@ -146,6 +146,19 @@ def _run_migrations_locked(engine):
 
     # The Mercury accounts counted as cash on hand (NULL = every active account).
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
+    add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "timezone_name",
+                          "VARCHAR(64) DEFAULT 'America/New_York' NOT NULL", None)
+    # The deal milestones approved in the liquidity timeline, and the "rows out of date" flag.
+    for brrr_table in ("active_deals", "bought_brrrr_deals"):
+        for column_name, column_ddl in (
+            ("contract_signed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("purchase_closed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("rehab_completed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("tenant_moved_in_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("refi_closed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("liquidity_rows_out_of_date", "BOOLEAN DEFAULT FALSE NOT NULL"),
+        ):
+            add_column_if_missing(engine, sa_inspect(engine), brrr_table, column_name, column_ddl, None)
 
     # Done / overdue on the one-off transactions. Every row already dated in the past was
     # treated as gone by the old timeline, so it starts done: the history never turns overdue.
@@ -154,6 +167,14 @@ def _run_migrations_locked(engine):
         ("originally_planned_date", "DATE", "effective_date"),
         ("user_overrode_date", "BOOLEAN DEFAULT FALSE NOT NULL", None),
         ("user_overrode_amount", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        # Rows imported from a deal's Cash Needed schedule (NULL on a manual transaction).
+        ("source_deal_board", "VARCHAR(20)", None),
+        ("source_deal_id", "UUID", None),
+        ("source_item_key", "VARCHAR(80)", None),
+        ("source_occurrence_number", "INTEGER", None),
+        ("sequence_within_day", "INTEGER", None),
+        ("created_because_refi_is_late", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        ("no_longer_in_the_deal", "BOOLEAN DEFAULT FALSE NOT NULL", None),
     ):
         add_column_if_missing(engine, sa_inspect(engine), "liquidity_transactions", column_name, column_ddl, backfill_value)
 

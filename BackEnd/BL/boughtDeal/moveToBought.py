@@ -6,6 +6,7 @@ from BL.boughtDeal.common.first_stage import first_stage_id
 from BL.common.deal_response import create_bought_deal_response
 from BL.inspection.common.inspection_deal_links import DEAL_BOARD_BOUGHT, DEAL_BOARD_MY_DEALS, deal_link_kind
 from DAL.crud.inspection import repoint_inspection_links
+from BL.liquidity.dealCashRows.liquidity_deals import repoint_deal_rows
 
 
 def move_to_bought(db: Session, source_deal, deal_type: str):
@@ -28,6 +29,9 @@ def move_to_bought(db: Session, source_deal, deal_type: str):
         deal_link_kind(DEAL_BOARD_BOUGHT, deal_type).link_column_name,
         new_deal.id,
     )
+    if deal_type == "BRRRR":
+        # Its liquidity rows follow it too, so the property is never counted twice (tasks/todo/DealCashInLiquidity.md).
+        repoint_deal_rows(db, DEAL_BOARD_MY_DEALS, source_deal.id, DEAL_BOARD_BOUGHT, new_deal.id)
     db.commit()
     db.refresh(new_deal)
     return create_bought_deal_response(new_deal)

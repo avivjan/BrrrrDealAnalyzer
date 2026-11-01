@@ -194,7 +194,9 @@ class TestEveryToolSchema:
         # 11 described inputs and 11 described outputs, inlined into every deal-body tool).
         # 440 kB with the Cash Needed schedule and the liquidity Done / overdue / bulk tools
         # (tasks/todo/CashNeededSchedule.md, tasks/todo/DealCashInLiquidity.md).
-        assert len(payload) < 440_000, f"tools/list is {len(payload)} bytes"
+        # 470 kB with the seven deal-import / milestone / late-refi tools and the deal source fields on every
+        # liquidity transaction (tasks/todo/DealCashInLiquidity.md).
+        assert len(payload) < 470_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

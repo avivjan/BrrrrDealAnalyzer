@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from ReqRes.common.bought_deal_schemas import BoughtBrrrDealCreate, BoughtFlipDealCreate
 from DAL.crud.bought_deal import update_bought_brrr_deal, update_bought_flip_deal
 from BL.common.deal_response import create_bought_deal_response
+from BL.liquidity.dealCashRows.deal_cash_rows import DEAL_BOARD_BOUGHT
+from BL.liquidity.dealCashRows.liquidity_deals import mark_liquidity_rows_out_of_date_if_the_save_changed_them
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal, validate_flip_inputs_for_saved_deal
 
 
@@ -15,6 +17,8 @@ def update_bought_deal(db: Session, deal_id: str, deal: Union[BoughtBrrrDealCrea
         if updated:
             db.commit()
             db.refresh(updated)
+            # An imported deal is never re-synced silently: the change waits for a confirm (tasks/todo/DealCashInLiquidity.md).
+            mark_liquidity_rows_out_of_date_if_the_save_changed_them(db, DEAL_BOARD_BOUGHT, updated)
             return create_bought_deal_response(updated)
     elif deal.deal_type == "FLIP":
         validate_flip_inputs_for_saved_deal(deal)

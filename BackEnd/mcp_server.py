@@ -104,6 +104,13 @@ INSTRUCTIONS = (
     "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
     "_in_thousands are thousands of dollars; every other money field is plain dollars (the liquidity "
     "timeline is in exact dollars: amount_dollars, opening_balance_dollars, reserve_dollars). "
+    "LIQUIDITY: a one-off row leaves the timeline only when marked done (never because its date passed); an open "
+    "money-out row dated before today counts on today (overdue), an open money-in row dated before today is not "
+    "counted until re-dated or done. A BRRRR deal's Cash Needed rows are imported with preview_liquidity_deal_import "
+    "then import_liquidity_deal (rows carry source_deal_board, source_deal_id, source_item_key); its milestones are "
+    "approved or moved with the milestone preview / apply tools, which write the dates back to the deal. Always show "
+    "the owner a preview before an import or a milestone change. Call refresh_liquidity_late_refis before reading "
+    "the timeline. 'Today' is the liquidity settings' timezone_name unless a today date is sent. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
     "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
@@ -254,7 +261,41 @@ DESCRIPTIONS: dict[str, str] = {
     "update_liquidity_recurring": "Change a recurring rule (partial update; re-projects all its events).",
     "delete_liquidity_recurring": "Remove a recurring rule.",
     "get_liquidity_settings": "Read the Liquidity settings: opening balance, its date and the reserve, in dollars.",
-    "update_liquidity_settings": "Change the opening balance, its date and/or the reserve.",
+    "update_liquidity_settings": (
+        "Change the opening balance, its date, the reserve, the Mercury accounts counted as cash and/or the time zone."),
+    "list_liquidity_deals": (
+        "The BRRRR deals imported into the Liquidity timeline: board (my_deals / bought), address, open / done / overdue "
+        "row counts, late-refi rows, liquidity_rows_out_of_date (a deal save changed its rows, not confirmed yet: "
+        "re-import to confirm) and the five milestones with planned_date, approved_at and is_overdue."
+    ),
+    "refresh_liquidity_late_refis": (
+        "Add the carrying-cost months of every imported deal whose refi is late (planned date passed, refi_closed not "
+        "approved): HML interest, HOA, insurance paid monthly and utilities on each 1st up to the first 1st after today, as "
+        "real rows flagged created_because_refi_is_late (no rent). Idempotent: call it before reading the timeline."
+    ),
+    "preview_liquidity_deal_import": (
+        "Preview importing (or re-syncing) a BRRRR deal's Cash Needed rows into the Liquidity timeline: each row's "
+        "change_kind, before -> after, and the deal's value kept out where the owner changed a date or amount by hand. "
+        "Writes nothing. 409 for a My Deals deal already in liquidity through its Bought copy."
+    ),
+    "import_liquidity_deal": (
+        "Import (or re-sync) a BRRRR deal's Cash Needed rows into the Liquidity timeline, as the preview listed them. "
+        "Safe to repeat: rows are matched by identity (item_key + occurrence number), a done row is never touched, a date "
+        "or amount the owner changed is kept unless use_deal_value_for names it. Show the owner the preview first."
+    ),
+    "preview_liquidity_deal_milestone_change": (
+        "Preview approving or moving one milestone of an imported deal (new_date, approve): the milestone dates that move "
+        "(moving purchase_closed moves the later ones) and every liquidity row affected, before -> after. Writes nothing; "
+        "a date out of order is a 400."
+    ),
+    "apply_liquidity_deal_milestone_change": (
+        "Approve or move one milestone of an imported deal: writes the date (and the approval) to the deal and re-syncs "
+        "its liquidity rows as the preview listed them. Show the owner the preview first."
+    ),
+    "remove_liquidity_deal_open_rows": (
+        "A dead deal: remove its open (not done) liquidity rows; with earnest_money_refund_date, the earnest money comes "
+        "back as money in on that date. Done rows stay as history."
+    ),
     "get_mercury_balance": (
         "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "
         "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
@@ -357,7 +398,8 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
-                     "apply_liquidity_transaction_bulk_action"}
+                     "apply_liquidity_transaction_bulk_action", "import_liquidity_deal", "apply_liquidity_deal_milestone_change",
+                     "remove_liquidity_deal_open_rows"}
 
 
 def tool_annotations(name: str, method: str) -> t.ToolAnnotations:
