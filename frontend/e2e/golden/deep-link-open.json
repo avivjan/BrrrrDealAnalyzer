@@ -1926,7 +1926,7 @@
             {
               "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,522.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,627.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 31 cash rows, net $78,627.06 out + Rehab cushion $5,000 held 2026-01-10 → 2026-02-24 = $83,627.06.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -2039,16 +2039,6 @@
         "cashReserve": "0.0000",
         "cash_flow": 97.03674361688704,
         "cash_needed_schedule_at_lowest_arv": {
-          "cash_that_must_stay_in_account": [
-            {
-              "amount_dollars": "5000.00",
-              "description": "Rehab cushion: kept on hand for first draws, permits and surprises, never spent",
-              "item_key": "rehab_cushion",
-              "reserve_ends_on_date": "2026-02-24",
-              "reserve_starts_on_date": "2026-01-10"
-            }
-          ],
-          "cash_that_must_stay_in_account_total_dollars": "5000.00",
           "dated_cash_rows": [
             {
               "date": "2026-01-03",
@@ -2063,6 +2053,13 @@
               "item_key": "cash_to_close_buy",
               "sequence_within_day": 0,
               "signed_amount_dollars": "-45439.01"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
+              "item_key": "rehab_cushion",
+              "sequence_within_day": 1,
+              "signed_amount_dollars": "-5000.00"
             },
             {
               "date": "2026-01-11",
@@ -2094,16 +2091,23 @@
             },
             {
               "date": "2026-02-24",
+              "description": "Appliances",
+              "item_key": "appliances",
+              "sequence_within_day": 0,
+              "signed_amount_dollars": "-630.00"
+            },
+            {
+              "date": "2026-02-24",
               "description": "Appraisal (paid outside the refi closing)",
               "item_key": "appraisal_fee",
-              "sequence_within_day": 0,
+              "sequence_within_day": 1,
               "signed_amount_dollars": "-700.00"
             },
             {
               "date": "2026-02-24",
               "description": "Survey (paid outside the refi closing)",
               "item_key": "survey_fee",
-              "sequence_within_day": 1,
+              "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
             },
             {
@@ -2126,13 +2130,6 @@
               "item_key": "maintenance_before_refi",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-100.00"
-            },
-            {
-              "date": "2026-03-10",
-              "description": "Appliances",
-              "item_key": "appliances",
-              "sequence_within_day": 0,
-              "signed_amount_dollars": "-630.00"
             },
             {
               "date": "2026-03-15",
@@ -2267,9 +2264,7 @@
               "sequence_within_day": 1,
               "signed_amount_dollars": "-11150.89"
             }
-          ],
-          "dated_cash_rows_net_outflow_dollars": "78627.06",
-          "total_cash_needed_dollars": "83627.06"
+          ]
         },
         "cash_on_cash": 2.1046625135062222,
         "cash_out": -55326.72891402273,

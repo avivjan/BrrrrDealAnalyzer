@@ -15030,70 +15030,19 @@
           "type": "object"
         },
         "CashNeededScheduleAtLowestArvRes": {
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario.\n\ndated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars = total_cash_needed_dollars\n(= total_cash_needed_for_deal), exactly. No running balance and no peak: cash troughs are managed globally\nin the liquidity timeline.",
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario. No running balance and\nno peak: cash troughs are managed globally in the liquidity timeline.",
           "properties": {
-            "cash_that_must_stay_in_account": {
-              "description": "Money held, not spent: the rehab cushion, from the purchase closing to the rehab completion.",
-              "items": {
-                "$ref": "#/$defs/CashThatMustStayInAccountRes"
-              },
-              "title": "Cash That Must Stay In Account",
-              "type": "array"
-            },
-            "cash_that_must_stay_in_account_total_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The sum of what must stay in the account, in dollars.",
-              "title": "Cash That Must Stay In Account Total Dollars"
-            },
             "dated_cash_rows": {
-              "description": "One row per individual cash item, in date order (then sequence_within_day). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
+              "description": "One row per individual cash item, in date order (then sequence_within_day), the rehab cushion included (a hold on the purchase closing date). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
               "items": {
                 "$ref": "#/$defs/CashNeededScheduleRowRes"
               },
               "title": "Dated Cash Rows",
               "type": "array"
-            },
-            "dated_cash_rows_net_outflow_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "Minus the sum of the signed dated rows, in dollars.",
-              "title": "Dated Cash Rows Net Outflow Dollars"
-            },
-            "total_cash_needed_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "dated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars: equals total_cash_needed_for_deal.",
-              "title": "Total Cash Needed Dollars"
             }
           },
           "required": [
-            "dated_cash_rows",
-            "cash_that_must_stay_in_account",
-            "dated_cash_rows_net_outflow_dollars",
-            "cash_that_must_stay_in_account_total_dollars",
-            "total_cash_needed_dollars"
+            "dated_cash_rows"
           ],
           "title": "CashNeededScheduleAtLowestArvRes",
           "type": "object"
@@ -15144,55 +15093,6 @@
             "item_key"
           ],
           "title": "CashNeededScheduleRowRes",
-          "type": "object"
-        },
-        "CashThatMustStayInAccountRes": {
-          "description": "Money that is not spent but must stay in the account for a window: a reserve, never a dated row.",
-          "properties": {
-            "amount_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The amount held, in exact dollars.",
-              "title": "Amount Dollars"
-            },
-            "description": {
-              "description": "What the money is held for.",
-              "title": "Description",
-              "type": "string"
-            },
-            "item_key": {
-              "description": "Stable machine key, e.g. 'rehab_cushion'.",
-              "title": "Item Key",
-              "type": "string"
-            },
-            "reserve_ends_on_date": {
-              "description": "...through this day, when it is released (ISO).",
-              "format": "date",
-              "title": "Reserve Ends On Date",
-              "type": "string"
-            },
-            "reserve_starts_on_date": {
-              "description": "The money must be in the account from this day (ISO)...",
-              "format": "date",
-              "title": "Reserve Starts On Date",
-              "type": "string"
-            }
-          },
-          "required": [
-            "item_key",
-            "description",
-            "amount_dollars",
-            "reserve_starts_on_date",
-            "reserve_ends_on_date"
-          ],
-          "title": "CashThatMustStayInAccountRes",
           "type": "object"
         },
         "RentComp": {
@@ -15558,7 +15458,7 @@
             }
           ],
           "default": null,
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
         },
         "cash_on_cash": {
           "anyOf": [
@@ -20177,70 +20077,19 @@
           "type": "object"
         },
         "CashNeededScheduleAtLowestArvRes": {
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario.\n\ndated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars = total_cash_needed_dollars\n(= total_cash_needed_for_deal), exactly. No running balance and no peak: cash troughs are managed globally\nin the liquidity timeline.",
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario. No running balance and\nno peak: cash troughs are managed globally in the liquidity timeline.",
           "properties": {
-            "cash_that_must_stay_in_account": {
-              "description": "Money held, not spent: the rehab cushion, from the purchase closing to the rehab completion.",
-              "items": {
-                "$ref": "#/$defs/CashThatMustStayInAccountRes"
-              },
-              "title": "Cash That Must Stay In Account",
-              "type": "array"
-            },
-            "cash_that_must_stay_in_account_total_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The sum of what must stay in the account, in dollars.",
-              "title": "Cash That Must Stay In Account Total Dollars"
-            },
             "dated_cash_rows": {
-              "description": "One row per individual cash item, in date order (then sequence_within_day). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
+              "description": "One row per individual cash item, in date order (then sequence_within_day), the rehab cushion included (a hold on the purchase closing date). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
               "items": {
                 "$ref": "#/$defs/CashNeededScheduleRowRes"
               },
               "title": "Dated Cash Rows",
               "type": "array"
-            },
-            "dated_cash_rows_net_outflow_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "Minus the sum of the signed dated rows, in dollars.",
-              "title": "Dated Cash Rows Net Outflow Dollars"
-            },
-            "total_cash_needed_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "dated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars: equals total_cash_needed_for_deal.",
-              "title": "Total Cash Needed Dollars"
             }
           },
           "required": [
-            "dated_cash_rows",
-            "cash_that_must_stay_in_account",
-            "dated_cash_rows_net_outflow_dollars",
-            "cash_that_must_stay_in_account_total_dollars",
-            "total_cash_needed_dollars"
+            "dated_cash_rows"
           ],
           "title": "CashNeededScheduleAtLowestArvRes",
           "type": "object"
@@ -20291,55 +20140,6 @@
             "item_key"
           ],
           "title": "CashNeededScheduleRowRes",
-          "type": "object"
-        },
-        "CashThatMustStayInAccountRes": {
-          "description": "Money that is not spent but must stay in the account for a window: a reserve, never a dated row.",
-          "properties": {
-            "amount_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The amount held, in exact dollars.",
-              "title": "Amount Dollars"
-            },
-            "description": {
-              "description": "What the money is held for.",
-              "title": "Description",
-              "type": "string"
-            },
-            "item_key": {
-              "description": "Stable machine key, e.g. 'rehab_cushion'.",
-              "title": "Item Key",
-              "type": "string"
-            },
-            "reserve_ends_on_date": {
-              "description": "...through this day, when it is released (ISO).",
-              "format": "date",
-              "title": "Reserve Ends On Date",
-              "type": "string"
-            },
-            "reserve_starts_on_date": {
-              "description": "The money must be in the account from this day (ISO)...",
-              "format": "date",
-              "title": "Reserve Starts On Date",
-              "type": "string"
-            }
-          },
-          "required": [
-            "item_key",
-            "description",
-            "amount_dollars",
-            "reserve_starts_on_date",
-            "reserve_ends_on_date"
-          ],
-          "title": "CashThatMustStayInAccountRes",
           "type": "object"
         },
         "RentComp": {
@@ -20692,7 +20492,7 @@
             }
           ],
           "default": null,
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
         },
         "cash_on_cash": {
           "anyOf": [
@@ -27519,70 +27319,19 @@
           "type": "object"
         },
         "CashNeededScheduleAtLowestArvRes": {
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario.\n\ndated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars = total_cash_needed_dollars\n(= total_cash_needed_for_deal), exactly. No running balance and no peak: cash troughs are managed globally\nin the liquidity timeline.",
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario. No running balance and\nno peak: cash troughs are managed globally in the liquidity timeline.",
           "properties": {
-            "cash_that_must_stay_in_account": {
-              "description": "Money held, not spent: the rehab cushion, from the purchase closing to the rehab completion.",
-              "items": {
-                "$ref": "#/$defs/CashThatMustStayInAccountRes"
-              },
-              "title": "Cash That Must Stay In Account",
-              "type": "array"
-            },
-            "cash_that_must_stay_in_account_total_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The sum of what must stay in the account, in dollars.",
-              "title": "Cash That Must Stay In Account Total Dollars"
-            },
             "dated_cash_rows": {
-              "description": "One row per individual cash item, in date order (then sequence_within_day). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
+              "description": "One row per individual cash item, in date order (then sequence_within_day), the rehab cushion included (a hold on the purchase closing date). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
               "items": {
                 "$ref": "#/$defs/CashNeededScheduleRowRes"
               },
               "title": "Dated Cash Rows",
               "type": "array"
-            },
-            "dated_cash_rows_net_outflow_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "Minus the sum of the signed dated rows, in dollars.",
-              "title": "Dated Cash Rows Net Outflow Dollars"
-            },
-            "total_cash_needed_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "dated_cash_rows_net_outflow_dollars + cash_that_must_stay_in_account_total_dollars: equals total_cash_needed_for_deal.",
-              "title": "Total Cash Needed Dollars"
             }
           },
           "required": [
-            "dated_cash_rows",
-            "cash_that_must_stay_in_account",
-            "dated_cash_rows_net_outflow_dollars",
-            "cash_that_must_stay_in_account_total_dollars",
-            "total_cash_needed_dollars"
+            "dated_cash_rows"
           ],
           "title": "CashNeededScheduleAtLowestArvRes",
           "type": "object"
@@ -27633,55 +27382,6 @@
             "item_key"
           ],
           "title": "CashNeededScheduleRowRes",
-          "type": "object"
-        },
-        "CashThatMustStayInAccountRes": {
-          "description": "Money that is not spent but must stay in the account for a window: a reserve, never a dated row.",
-          "properties": {
-            "amount_dollars": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                  "type": "string"
-                }
-              ],
-              "description": "The amount held, in exact dollars.",
-              "title": "Amount Dollars"
-            },
-            "description": {
-              "description": "What the money is held for.",
-              "title": "Description",
-              "type": "string"
-            },
-            "item_key": {
-              "description": "Stable machine key, e.g. 'rehab_cushion'.",
-              "title": "Item Key",
-              "type": "string"
-            },
-            "reserve_ends_on_date": {
-              "description": "...through this day, when it is released (ISO).",
-              "format": "date",
-              "title": "Reserve Ends On Date",
-              "type": "string"
-            },
-            "reserve_starts_on_date": {
-              "description": "The money must be in the account from this day (ISO)...",
-              "format": "date",
-              "title": "Reserve Starts On Date",
-              "type": "string"
-            }
-          },
-          "required": [
-            "item_key",
-            "description",
-            "amount_dollars",
-            "reserve_starts_on_date",
-            "reserve_ends_on_date"
-          ],
-          "title": "CashThatMustStayInAccountRes",
           "type": "object"
         }
       },
@@ -27734,7 +27434,7 @@
             }
           ],
           "default": null,
-          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), plus the rehab cushion that must stay in the account from the purchase closing to the rehab completion. The dated rows' net outflow + that cushion = total_cash_needed_for_deal."
+          "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
         },
         "cash_on_cash": {
           "anyOf": [
