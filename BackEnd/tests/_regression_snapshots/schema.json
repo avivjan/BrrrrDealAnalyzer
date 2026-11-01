@@ -4357,13 +4357,13 @@
         "default": null,
         "foreign_keys": [],
         "index": null,
-        "name": "amount_k",
+        "name": "amount_dollars",
         "nullable": false,
         "onupdate": null,
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(14, 4)",
+        "type": "NUMERIC(16, 2)",
         "unique": null
       },
       {
@@ -4509,13 +4509,13 @@
         "default": "0",
         "foreign_keys": [],
         "index": null,
-        "name": "opening_balance_k",
+        "name": "opening_balance_dollars",
         "nullable": false,
         "onupdate": null,
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(14, 4)",
+        "type": "NUMERIC(16, 2)",
         "unique": null
       },
       {
@@ -4534,16 +4534,16 @@
       },
       {
         "autoincrement": "auto",
-        "default": "5",
+        "default": "5000",
         "foreign_keys": [],
         "index": null,
-        "name": "reserve_k",
+        "name": "reserve_dollars",
         "nullable": false,
         "onupdate": null,
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(14, 4)",
+        "type": "NUMERIC(16, 2)",
         "unique": null
       },
       {
@@ -4618,13 +4618,13 @@
         "default": null,
         "foreign_keys": [],
         "index": null,
-        "name": "amount_k",
+        "name": "amount_dollars",
         "nullable": false,
         "onupdate": null,
         "primary_key": false,
         "python_type": "Decimal",
         "server_default": null,
-        "type": "NUMERIC(14, 4)",
+        "type": "NUMERIC(16, 2)",
         "unique": null
       },
       {

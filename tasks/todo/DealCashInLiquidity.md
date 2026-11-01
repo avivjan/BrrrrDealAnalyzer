@@ -142,7 +142,7 @@ This plan makes "paid" explicit (Done), keeps unpaid rows visible and counted, l
 ## Todo (≈ 16 h 30)
 - [x] T1 (5 min) Commit this plan as `tasks/todo/DealCashInLiquidity.md`.
 - [x] T2 (2 h) Phase 1, dollars: migration, models, schemas, CRUD, Mercury summary, engine, store, components, MCP text; tests.
-- [ ] T3 (15 min) `Golden update:` liquidity endpoints/OpenAPI/models + Playwright liquidity goldens for dollars.
+- [x] T3 (15 min) `Golden update:` liquidity endpoints/OpenAPI/models + Playwright liquidity goldens for dollars.
 - [ ] T4 (1 h) Phase 2, the Mercury accounts counted as cash (setting, panel, sync).
 - [ ] T5 (2 h 30) Phase 3, Done / overdue: columns + migration, endpoints, engine with today, UX (row actions, overdue strip, bulk, Undo).
 - [ ] T6 (1 h) Phase 4, the cushion row, appliances on the rehab completion, the reconciliation block removed; reports, popup, MCP glossary.

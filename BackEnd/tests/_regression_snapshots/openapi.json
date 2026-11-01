@@ -9799,7 +9799,7 @@
       "LiquidityRecurringTransactionCreate": {
         "description": "Definition of a repeating cash-flow rule.\n\nExactly one of `end_date` / `occurrences` may be set (both may be null\nfor an open-ended series; the frontend caps display at the visible\nhorizon).",
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -9809,8 +9809,8 @@
                 "type": "string"
               }
             ],
-            "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-            "title": "Amount K"
+            "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+            "title": "Amount Dollars"
           },
           "description": {
             "maxLength": 500,
@@ -9872,7 +9872,7 @@
         },
         "required": [
           "description",
-          "amount_k",
+          "amount_dollars",
           "start_date",
           "frequency"
         ],
@@ -9881,8 +9881,8 @@
       },
       "LiquidityRecurringTransactionRes": {
         "properties": {
-          "amount_k": {
-            "title": "Amount K",
+          "amount_dollars": {
+            "title": "Amount Dollars",
             "type": "number"
           },
           "created_at": {
@@ -9963,7 +9963,7 @@
         "required": [
           "id",
           "description",
-          "amount_k",
+          "amount_dollars",
           "start_date",
           "frequency",
           "interval"
@@ -9974,7 +9974,7 @@
       "LiquidityRecurringTransactionUpdate": {
         "description": "Partial update \u2014 only provided fields are written.",
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -9987,7 +9987,7 @@
                 "type": "null"
               }
             ],
-            "title": "Amount K"
+            "title": "Amount Dollars"
           },
           "description": {
             "anyOf": [
@@ -10082,12 +10082,12 @@
             "title": "Opening Balance Date",
             "type": "string"
           },
-          "opening_balance_k": {
-            "title": "Opening Balance K",
+          "opening_balance_dollars": {
+            "title": "Opening Balance Dollars",
             "type": "number"
           },
-          "reserve_k": {
-            "title": "Reserve K",
+          "reserve_dollars": {
+            "title": "Reserve Dollars",
             "type": "number"
           },
           "updated_at": {
@@ -10103,9 +10103,9 @@
           }
         },
         "required": [
-          "opening_balance_k",
+          "opening_balance_dollars",
           "opening_balance_date",
-          "reserve_k"
+          "reserve_dollars"
         ],
         "title": "LiquiditySettingsRes",
         "type": "object"
@@ -10124,7 +10124,7 @@
             ],
             "title": "Opening Balance Date"
           },
-          "opening_balance_k": {
+          "opening_balance_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10137,9 +10137,9 @@
                 "type": "null"
               }
             ],
-            "title": "Opening Balance K"
+            "title": "Opening Balance Dollars"
           },
-          "reserve_k": {
+          "reserve_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10152,7 +10152,7 @@
                 "type": "null"
               }
             ],
-            "title": "Reserve K"
+            "title": "Reserve Dollars"
           }
         },
         "title": "LiquiditySettingsUpdate",
@@ -10160,7 +10160,7 @@
       },
       "LiquidityTransactionCreate": {
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10170,8 +10170,8 @@
                 "type": "string"
               }
             ],
-            "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-            "title": "Amount K"
+            "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+            "title": "Amount Dollars"
           },
           "description": {
             "maxLength": 500,
@@ -10188,15 +10188,15 @@
         "required": [
           "effective_date",
           "description",
-          "amount_k"
+          "amount_dollars"
         ],
         "title": "LiquidityTransactionCreate",
         "type": "object"
       },
       "LiquidityTransactionRes": {
         "properties": {
-          "amount_k": {
-            "title": "Amount K",
+          "amount_dollars": {
+            "title": "Amount Dollars",
             "type": "number"
           },
           "created_at": {
@@ -10239,14 +10239,14 @@
           "id",
           "effective_date",
           "description",
-          "amount_k"
+          "amount_dollars"
         ],
         "title": "LiquidityTransactionRes",
         "type": "object"
       },
       "LiquidityTransactionUpdate": {
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10259,7 +10259,7 @@
                 "type": "null"
               }
             ],
-            "title": "Amount K"
+            "title": "Amount Dollars"
           },
           "description": {
             "anyOf": [
@@ -17307,7 +17307,7 @@
     },
     "/liquidity/mercury-balance": {
       "get": {
-        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
+        "description": "Fetch the live sum of all active Mercury account balances, in dollars.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
         "operationId": "get_mercury_balance_liquidity_mercury_balance_get",
         "responses": {
           "200": {

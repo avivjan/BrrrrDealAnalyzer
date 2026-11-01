@@ -33269,7 +33269,7 @@
   "liquidity/recurring_after_updates": {
     "body": [
       {
-        "amount_k": 2.6,
+        "amount_dollars": 2600.0,
         "created_at": "<created_at>",
         "description": "Rent (revised)",
         "end_date": "2025-03-05",
@@ -33286,7 +33286,7 @@
   },
   "liquidity/recurring_create": {
     "body": {
-      "amount_k": 2.6,
+      "amount_dollars": 2600.0,
       "created_at": "<created_at>",
       "description": "Rent",
       "end_date": "2025-03-05",
@@ -33327,7 +33327,7 @@
             "error": {}
           },
           "input": {
-            "amount_k": 1,
+            "amount_dollars": 1000,
             "description": "Bad",
             "end_date": "2020-01-01",
             "frequency": "monthly",
@@ -33354,9 +33354,9 @@
           "input": 0,
           "loc": [
             "body",
-            "amount_k"
+            "amount_dollars"
           ],
-          "msg": "Value error, amount_k must be non-zero.",
+          "msg": "Value error, amount_dollars must be non-zero.",
           "type": "value_error"
         }
       ]
@@ -33381,7 +33381,7 @@
   "liquidity/recurring_list": {
     "body": [
       {
-        "amount_k": 2.6,
+        "amount_dollars": 2600.0,
         "created_at": "<created_at>",
         "description": "Rent",
         "end_date": "2025-03-05",
@@ -33403,7 +33403,7 @@
   },
   "liquidity/recurring_update": {
     "body": {
-      "amount_k": 2.6,
+      "amount_dollars": 2600.0,
       "created_at": "<created_at>",
       "description": "Rent (revised)",
       "end_date": "2025-03-05",
@@ -33433,7 +33433,7 @@
   },
   "liquidity/recurring_update_zero_amount": {
     "body": {
-      "detail": "amount_k must be non-zero."
+      "detail": "amount_dollars must be non-zero."
     },
     "content_type": "application/json",
     "status": 400
@@ -33441,8 +33441,8 @@
   "liquidity/settings_after_update": {
     "body": {
       "opening_balance_date": "<opening_balance_date>",
-      "opening_balance_k": 123.4567,
-      "reserve_k": 7.5,
+      "opening_balance_dollars": 123456.7,
+      "reserve_dollars": 7500.0,
       "updated_at": "<updated_at>"
     },
     "content_type": "application/json",
@@ -33451,8 +33451,8 @@
   "liquidity/settings_autocreate": {
     "body": {
       "opening_balance_date": "<opening_balance_date>",
-      "opening_balance_k": 0.0,
-      "reserve_k": 5.0,
+      "opening_balance_dollars": 0.0,
+      "reserve_dollars": 5000.0,
       "updated_at": "<updated_at>"
     },
     "content_type": "application/json",
@@ -33461,8 +33461,8 @@
   "liquidity/settings_partial": {
     "body": {
       "opening_balance_date": "<opening_balance_date>",
-      "opening_balance_k": 123.4567,
-      "reserve_k": 9.0,
+      "opening_balance_dollars": 123456.7,
+      "reserve_dollars": 9000.0,
       "updated_at": "<updated_at>"
     },
     "content_type": "application/json",
@@ -33471,8 +33471,8 @@
   "liquidity/settings_update": {
     "body": {
       "opening_balance_date": "<opening_balance_date>",
-      "opening_balance_k": 123.4567,
-      "reserve_k": 7.5,
+      "opening_balance_dollars": 123456.7,
+      "reserve_dollars": 7500.0,
       "updated_at": "<updated_at>"
     },
     "content_type": "application/json",
@@ -33480,7 +33480,7 @@
   },
   "liquidity/txn_create": {
     "body": {
-      "amount_k": -12.5,
+      "amount_dollars": -12500.0,
       "created_at": "<created_at>",
       "description": "HM draw",
       "effective_date": "2024-03-05",
@@ -33526,7 +33526,7 @@
   "liquidity/txn_list": {
     "body": [
       {
-        "amount_k": -12.5,
+        "amount_dollars": -12500.0,
         "created_at": "<created_at>",
         "description": "HM draw",
         "effective_date": "2024-03-05",
@@ -33544,7 +33544,7 @@
   },
   "liquidity/txn_update": {
     "body": {
-      "amount_k": -13.25,
+      "amount_dollars": -13250.0,
       "created_at": "<created_at>",
       "description": "HM draw (revised)",
       "effective_date": "2024-03-05",
@@ -33556,7 +33556,7 @@
   },
   "liquidity/txn_update_empty": {
     "body": {
-      "amount_k": -13.25,
+      "amount_dollars": -13250.0,
       "created_at": "<created_at>",
       "description": "HM draw (revised)",
       "effective_date": "2024-03-05",

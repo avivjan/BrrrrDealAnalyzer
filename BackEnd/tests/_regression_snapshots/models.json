@@ -4742,7 +4742,7 @@
     "LiquidityRecurringTransactionCreate": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
@@ -4798,7 +4798,7 @@
     "LiquidityRecurringTransactionRes": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "<class 'float'>",
           "default": "PydanticUndefined",
@@ -4875,7 +4875,7 @@
     "LiquidityRecurringTransactionUpdate": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "Optional[Decimal]",
           "default": "None",
@@ -4938,14 +4938,14 @@
           "default_factory": null,
           "required": true
         },
-        "opening_balance_k": {
+        "opening_balance_dollars": {
           "alias": null,
           "annotation": "<class 'float'>",
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
         },
-        "reserve_k": {
+        "reserve_dollars": {
           "alias": null,
           "annotation": "<class 'float'>",
           "default": "PydanticUndefined",
@@ -4973,14 +4973,14 @@
           "default_factory": null,
           "required": false
         },
-        "opening_balance_k": {
+        "opening_balance_dollars": {
           "alias": null,
           "annotation": "Optional[Decimal]",
           "default": "None",
           "default_factory": null,
           "required": false
         },
-        "reserve_k": {
+        "reserve_dollars": {
           "alias": null,
           "annotation": "Optional[Decimal]",
           "default": "None",
@@ -4994,7 +4994,7 @@
     "LiquidityTransactionCreate": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "<class 'Decimal'>",
           "default": "PydanticUndefined",
@@ -5022,7 +5022,7 @@
     "LiquidityTransactionRes": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "<class 'float'>",
           "default": "PydanticUndefined",
@@ -5071,7 +5071,7 @@
     "LiquidityTransactionUpdate": {
       "extra": null,
       "fields": {
-        "amount_k": {
+        "amount_dollars": {
           "alias": null,
           "annotation": "Optional[Decimal]",
           "default": "None",
@@ -9998,7 +9998,7 @@
     },
     "LiquidityRecurringCreate": {
       "dump_by_alias": {
-        "amount_k": "2.6",
+        "amount_dollars": "2600",
         "description": "rent",
         "end_date": "2025-03-05",
         "frequency": "monthly",
@@ -10007,7 +10007,7 @@
         "start_date": "2024-03-05"
       },
       "dump_by_field": {
-        "amount_k": "2.6",
+        "amount_dollars": "2600",
         "description": "rent",
         "end_date": "2025-03-05",
         "frequency": "monthly",
@@ -10015,9 +10015,9 @@
         "occurrences": 12,
         "start_date": "2024-03-05"
       },
-      "dump_python_repr": "{'description': 'rent', 'amount_k': Decimal('2.6'), 'start_date': datetime.date(2024, 3, 5), 'end_date': datetime.date(2025, 3, 5), 'occurrences': 12, 'frequency': 'monthly', 'interval': 1}",
+      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('2600'), 'start_date': datetime.date(2024, 3, 5), 'end_date': datetime.date(2025, 3, 5), 'occurrences': 12, 'frequency': 'monthly', 'interval': 1}",
       "exclude_unset": {
-        "amount_k": "2.6",
+        "amount_dollars": "2600",
         "description": "rent",
         "end_date": "2025-03-05",
         "frequency": "monthly",
@@ -10042,7 +10042,7 @@
     },
     "LiquidityRecurringCreate/defaults": {
       "dump_by_alias": {
-        "amount_k": "1",
+        "amount_dollars": "1000",
         "description": "rent",
         "end_date": null,
         "frequency": "weekly",
@@ -10051,7 +10051,7 @@
         "start_date": "2024-03-05"
       },
       "dump_by_field": {
-        "amount_k": "1",
+        "amount_dollars": "1000",
         "description": "rent",
         "end_date": null,
         "frequency": "weekly",
@@ -10059,9 +10059,9 @@
         "occurrences": null,
         "start_date": "2024-03-05"
       },
-      "dump_python_repr": "{'description': 'rent', 'amount_k': Decimal('1'), 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'weekly', 'interval': 1}",
+      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('1000'), 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'weekly', 'interval': 1}",
       "exclude_unset": {
-        "amount_k": "1",
+        "amount_dollars": "1000",
         "description": "rent",
         "frequency": "weekly",
         "start_date": "2024-03-05"
@@ -10109,9 +10109,9 @@
       "error": [
         {
           "loc": [
-            "amount_k"
+            "amount_dollars"
           ],
-          "msg": "Value error, amount_k must be non-zero.",
+          "msg": "Value error, amount_dollars must be non-zero.",
           "type": "value_error"
         }
       ],
@@ -10120,7 +10120,7 @@
     },
     "LiquidityRecurringRes": {
       "dump_by_alias": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "created_at": null,
         "description": "d",
         "end_date": null,
@@ -10132,7 +10132,7 @@
         "updated_at": null
       },
       "dump_by_field": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "created_at": null,
         "description": "d",
         "end_date": null,
@@ -10143,9 +10143,9 @@
         "start_date": "2024-03-05",
         "updated_at": null
       },
-      "dump_python_repr": "{'id': 'abc', 'description': 'd', 'amount_k': 1.5, 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'monthly', 'interval': 2, 'created_at': None, 'updated_at': None}",
+      "dump_python_repr": "{'id': 'abc', 'description': 'd', 'amount_dollars': 1500.0, 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'monthly', 'interval': 2, 'created_at': None, 'updated_at': None}",
       "exclude_unset": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "description": "d",
         "frequency": "monthly",
         "id": "abc",
@@ -10156,7 +10156,7 @@
     },
     "LiquidityRecurringUpdate/empty": {
       "dump_by_alias": {
-        "amount_k": null,
+        "amount_dollars": null,
         "description": null,
         "end_date": null,
         "frequency": null,
@@ -10165,7 +10165,7 @@
         "start_date": null
       },
       "dump_by_field": {
-        "amount_k": null,
+        "amount_dollars": null,
         "description": null,
         "end_date": null,
         "frequency": null,
@@ -10173,79 +10173,79 @@
         "occurrences": null,
         "start_date": null
       },
-      "dump_python_repr": "{'description': None, 'amount_k': None, 'start_date': None, 'end_date': None, 'occurrences': None, 'frequency': None, 'interval': None}",
+      "dump_python_repr": "{'description': None, 'amount_dollars': None, 'start_date': None, 'end_date': None, 'occurrences': None, 'frequency': None, 'interval': None}",
       "exclude_unset": {},
       "ok": true
     },
     "LiquiditySettingsRes": {
       "dump_by_alias": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": 12.3456,
-        "reserve_k": 5.0,
+        "opening_balance_dollars": 12345.6,
+        "reserve_dollars": 5000.0,
         "updated_at": null
       },
       "dump_by_field": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": 12.3456,
-        "reserve_k": 5.0,
+        "opening_balance_dollars": 12345.6,
+        "reserve_dollars": 5000.0,
         "updated_at": null
       },
-      "dump_python_repr": "{'opening_balance_k': 12.3456, 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_k': 5.0, 'updated_at': None}",
+      "dump_python_repr": "{'opening_balance_dollars': 12345.6, 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': 5000.0, 'updated_at': None}",
       "exclude_unset": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": 12.3456,
-        "reserve_k": 5.0
+        "opening_balance_dollars": 12345.6,
+        "reserve_dollars": 5000.0
       },
       "ok": true
     },
     "LiquiditySettingsUpdate/empty": {
       "dump_by_alias": {
         "opening_balance_date": null,
-        "opening_balance_k": null,
-        "reserve_k": null
+        "opening_balance_dollars": null,
+        "reserve_dollars": null
       },
       "dump_by_field": {
         "opening_balance_date": null,
-        "opening_balance_k": null,
-        "reserve_k": null
+        "opening_balance_dollars": null,
+        "reserve_dollars": null
       },
-      "dump_python_repr": "{'opening_balance_k': None, 'opening_balance_date': None, 'reserve_k': None}",
+      "dump_python_repr": "{'opening_balance_dollars': None, 'opening_balance_date': None, 'reserve_dollars': None}",
       "exclude_unset": {},
       "ok": true
     },
     "LiquiditySettingsUpdate/full": {
       "dump_by_alias": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": "12.3456",
-        "reserve_k": "5"
+        "opening_balance_dollars": "12345.6",
+        "reserve_dollars": "5000"
       },
       "dump_by_field": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": "12.3456",
-        "reserve_k": "5"
+        "opening_balance_dollars": "12345.6",
+        "reserve_dollars": "5000"
       },
-      "dump_python_repr": "{'opening_balance_k': Decimal('12.3456'), 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_k': Decimal('5')}",
+      "dump_python_repr": "{'opening_balance_dollars': Decimal('12345.6'), 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': Decimal('5000')}",
       "exclude_unset": {
         "opening_balance_date": "2024-03-05",
-        "opening_balance_k": "12.3456",
-        "reserve_k": "5"
+        "opening_balance_dollars": "12345.6",
+        "reserve_dollars": "5000"
       },
       "ok": true
     },
     "LiquidityTransactionCreate": {
       "dump_by_alias": {
-        "amount_k": "-12.5",
+        "amount_dollars": "-12500",
         "description": "HM draw",
         "effective_date": "2024-03-05"
       },
       "dump_by_field": {
-        "amount_k": "-12.5",
+        "amount_dollars": "-12500",
         "description": "HM draw",
         "effective_date": "2024-03-05"
       },
-      "dump_python_repr": "{'effective_date': datetime.date(2024, 3, 5), 'description': 'HM draw', 'amount_k': Decimal('-12.5')}",
+      "dump_python_repr": "{'effective_date': datetime.date(2024, 3, 5), 'description': 'HM draw', 'amount_dollars': Decimal('-12500')}",
       "exclude_unset": {
-        "amount_k": "-12.5",
+        "amount_dollars": "-12500",
         "description": "HM draw",
         "effective_date": "2024-03-05"
       },
@@ -10279,7 +10279,7 @@
     },
     "LiquidityTransactionRes": {
       "dump_by_alias": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
         "description": "d",
         "effective_date": "2024-03-05",
@@ -10287,16 +10287,16 @@
         "updated_at": null
       },
       "dump_by_field": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
         "description": "d",
         "effective_date": "2024-03-05",
         "id": "abc",
         "updated_at": null
       },
-      "dump_python_repr": "{'id': 'abc', 'effective_date': datetime.date(2024, 3, 5), 'description': 'd', 'amount_k': 1.5, 'created_at': '2024-01-01T00:00:00', 'updated_at': None}",
+      "dump_python_repr": "{'id': 'abc', 'effective_date': datetime.date(2024, 3, 5), 'description': 'd', 'amount_dollars': 1500.0, 'created_at': '2024-01-01T00:00:00', 'updated_at': None}",
       "exclude_unset": {
-        "amount_k": 1.5,
+        "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
         "description": "d",
         "effective_date": "2024-03-05",
@@ -10307,16 +10307,16 @@
     },
     "LiquidityTransactionUpdate/empty": {
       "dump_by_alias": {
-        "amount_k": null,
+        "amount_dollars": null,
         "description": null,
         "effective_date": null
       },
       "dump_by_field": {
-        "amount_k": null,
+        "amount_dollars": null,
         "description": null,
         "effective_date": null
       },
-      "dump_python_repr": "{'effective_date': None, 'description': None, 'amount_k': None}",
+      "dump_python_repr": "{'effective_date': None, 'description': None, 'amount_dollars': None}",
       "exclude_unset": {},
       "ok": true
     },
@@ -23847,7 +23847,7 @@
     "LiquidityRecurringTransactionCreate": {
       "description": "Definition of a repeating cash-flow rule.\n\nExactly one of `end_date` / `occurrences` may be set (both may be null\nfor an open-ended series; the frontend caps display at the visible\nhorizon).",
       "properties": {
-        "amount_k": {
+        "amount_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -23857,8 +23857,8 @@
               "type": "string"
             }
           ],
-          "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-          "title": "Amount K"
+          "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+          "title": "Amount Dollars"
         },
         "description": {
           "maxLength": 500,
@@ -23922,7 +23922,7 @@
       },
       "required": [
         "description",
-        "amount_k",
+        "amount_dollars",
         "start_date",
         "frequency"
       ],
@@ -23931,8 +23931,8 @@
     },
     "LiquidityRecurringTransactionRes": {
       "properties": {
-        "amount_k": {
-          "title": "Amount K",
+        "amount_dollars": {
+          "title": "Amount Dollars",
           "type": "number"
         },
         "created_at": {
@@ -24017,7 +24017,7 @@
       "required": [
         "id",
         "description",
-        "amount_k",
+        "amount_dollars",
         "start_date",
         "frequency",
         "interval"
@@ -24028,7 +24028,7 @@
     "LiquidityRecurringTransactionUpdate": {
       "description": "Partial update \u2014 only provided fields are written.",
       "properties": {
-        "amount_k": {
+        "amount_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -24042,7 +24042,7 @@
             }
           ],
           "default": null,
-          "title": "Amount K"
+          "title": "Amount Dollars"
         },
         "description": {
           "anyOf": [
@@ -24143,12 +24143,12 @@
           "title": "Opening Balance Date",
           "type": "string"
         },
-        "opening_balance_k": {
-          "title": "Opening Balance K",
+        "opening_balance_dollars": {
+          "title": "Opening Balance Dollars",
           "type": "number"
         },
-        "reserve_k": {
-          "title": "Reserve K",
+        "reserve_dollars": {
+          "title": "Reserve Dollars",
           "type": "number"
         },
         "updated_at": {
@@ -24165,9 +24165,9 @@
         }
       },
       "required": [
-        "opening_balance_k",
+        "opening_balance_dollars",
         "opening_balance_date",
-        "reserve_k"
+        "reserve_dollars"
       ],
       "title": "LiquiditySettingsRes",
       "type": "object"
@@ -24187,7 +24187,7 @@
           "default": null,
           "title": "Opening Balance Date"
         },
-        "opening_balance_k": {
+        "opening_balance_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -24201,9 +24201,9 @@
             }
           ],
           "default": null,
-          "title": "Opening Balance K"
+          "title": "Opening Balance Dollars"
         },
-        "reserve_k": {
+        "reserve_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -24217,7 +24217,7 @@
             }
           ],
           "default": null,
-          "title": "Reserve K"
+          "title": "Reserve Dollars"
         }
       },
       "title": "LiquiditySettingsUpdate",
@@ -24225,7 +24225,7 @@
     },
     "LiquidityTransactionCreate": {
       "properties": {
-        "amount_k": {
+        "amount_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -24235,8 +24235,8 @@
               "type": "string"
             }
           ],
-          "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-          "title": "Amount K"
+          "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+          "title": "Amount Dollars"
         },
         "description": {
           "maxLength": 500,
@@ -24253,15 +24253,15 @@
       "required": [
         "effective_date",
         "description",
-        "amount_k"
+        "amount_dollars"
       ],
       "title": "LiquidityTransactionCreate",
       "type": "object"
     },
     "LiquidityTransactionRes": {
       "properties": {
-        "amount_k": {
-          "title": "Amount K",
+        "amount_dollars": {
+          "title": "Amount Dollars",
           "type": "number"
         },
         "created_at": {
@@ -24306,14 +24306,14 @@
         "id",
         "effective_date",
         "description",
-        "amount_k"
+        "amount_dollars"
       ],
       "title": "LiquidityTransactionRes",
       "type": "object"
     },
     "LiquidityTransactionUpdate": {
       "properties": {
-        "amount_k": {
+        "amount_dollars": {
           "anyOf": [
             {
               "type": "number"
@@ -24327,7 +24327,7 @@
             }
           ],
           "default": null,
-          "title": "Amount K"
+          "title": "Amount Dollars"
         },
         "description": {
           "anyOf": [
