@@ -4931,6 +4931,13 @@
     "LiquiditySettingsRes": {
       "extra": null,
       "fields": {
+        "mercury_account_ids_counted_as_cash": {
+          "alias": null,
+          "annotation": "Optional[list[str]]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "opening_balance_date": {
           "alias": null,
           "annotation": "<class 'date'>",
@@ -4966,6 +4973,13 @@
     "LiquiditySettingsUpdate": {
       "extra": null,
       "fields": {
+        "mercury_account_ids_counted_as_cash": {
+          "alias": null,
+          "annotation": "Optional[list[Annotated[str, FieldInfo(annotation=NoneType, required=True, metadata=[MinLen(min_length=1), MaxLen(max_length=100)])]]]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "opening_balance_date": {
           "alias": null,
           "annotation": "Optional[date]",
@@ -10179,18 +10193,20 @@
     },
     "LiquiditySettingsRes": {
       "dump_by_alias": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": 12345.6,
         "reserve_dollars": 5000.0,
         "updated_at": null
       },
       "dump_by_field": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": 12345.6,
         "reserve_dollars": 5000.0,
         "updated_at": null
       },
-      "dump_python_repr": "{'opening_balance_dollars': 12345.6, 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': 5000.0, 'updated_at': None}",
+      "dump_python_repr": "{'opening_balance_dollars': 12345.6, 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': 5000.0, 'mercury_account_ids_counted_as_cash': None, 'updated_at': None}",
       "exclude_unset": {
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": 12345.6,
@@ -10200,31 +10216,35 @@
     },
     "LiquiditySettingsUpdate/empty": {
       "dump_by_alias": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": null,
         "opening_balance_dollars": null,
         "reserve_dollars": null
       },
       "dump_by_field": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": null,
         "opening_balance_dollars": null,
         "reserve_dollars": null
       },
-      "dump_python_repr": "{'opening_balance_dollars': None, 'opening_balance_date': None, 'reserve_dollars': None}",
+      "dump_python_repr": "{'opening_balance_dollars': None, 'opening_balance_date': None, 'reserve_dollars': None, 'mercury_account_ids_counted_as_cash': None}",
       "exclude_unset": {},
       "ok": true
     },
     "LiquiditySettingsUpdate/full": {
       "dump_by_alias": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": "12345.6",
         "reserve_dollars": "5000"
       },
       "dump_by_field": {
+        "mercury_account_ids_counted_as_cash": null,
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": "12345.6",
         "reserve_dollars": "5000"
       },
-      "dump_python_repr": "{'opening_balance_dollars': Decimal('12345.6'), 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': Decimal('5000')}",
+      "dump_python_repr": "{'opening_balance_dollars': Decimal('12345.6'), 'opening_balance_date': datetime.date(2024, 3, 5), 'reserve_dollars': Decimal('5000'), 'mercury_account_ids_counted_as_cash': None}",
       "exclude_unset": {
         "opening_balance_date": "2024-03-05",
         "opening_balance_dollars": "12345.6",
@@ -24138,6 +24158,22 @@
     },
     "LiquiditySettingsRes": {
       "properties": {
+        "mercury_account_ids_counted_as_cash": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Mercury account ids whose balance counts as cash on hand (the operating accounts). Null = every active account. Leave the tax bucket and the HYSA out, so the deposits into them read as money out.",
+          "title": "Mercury Account Ids Counted As Cash"
+        },
         "opening_balance_date": {
           "format": "date",
           "title": "Opening Balance Date",
@@ -24173,7 +24209,27 @@
       "type": "object"
     },
     "LiquiditySettingsUpdate": {
+      "description": "Partial update: only the fields sent change. Sending mercury_account_ids_counted_as_cash as null\ncounts every active account again.",
       "properties": {
+        "mercury_account_ids_counted_as_cash": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 100,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Mercury account ids whose balance counts as cash on hand (the operating accounts). Null = every active account. Leave the tax bucket and the HYSA out, so the deposits into them read as money out.",
+          "title": "Mercury Account Ids Counted As Cash"
+        },
         "opening_balance_date": {
           "anyOf": [
             {

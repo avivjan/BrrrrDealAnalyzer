@@ -33440,6 +33440,7 @@
   },
   "liquidity/settings_after_update": {
     "body": {
+      "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,
       "reserve_dollars": 7500.0,
@@ -33450,6 +33451,7 @@
   },
   "liquidity/settings_autocreate": {
     "body": {
+      "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 0.0,
       "reserve_dollars": 5000.0,
@@ -33460,6 +33462,7 @@
   },
   "liquidity/settings_partial": {
     "body": {
+      "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,
       "reserve_dollars": 9000.0,
@@ -33470,6 +33473,7 @@
   },
   "liquidity/settings_update": {
     "body": {
+      "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,
       "reserve_dollars": 7500.0,
