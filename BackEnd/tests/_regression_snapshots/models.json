@@ -5057,6 +5057,13 @@
           "default_factory": null,
           "required": true
         },
+        "done_at": {
+          "alias": null,
+          "annotation": "Optional[str]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "effective_date": {
           "alias": null,
           "annotation": "<class 'date'>",
@@ -5071,10 +5078,31 @@
           "default_factory": null,
           "required": true
         },
+        "originally_planned_date": {
+          "alias": null,
+          "annotation": "Optional[date]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "updated_at": {
           "alias": null,
           "annotation": "Optional[str]",
           "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "user_overrode_amount": {
+          "alias": null,
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
+        },
+        "user_overrode_date": {
+          "alias": null,
+          "annotation": "<class 'bool'>",
+          "default": "False",
           "default_factory": null,
           "required": false
         }
@@ -10302,19 +10330,27 @@
         "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
         "description": "d",
+        "done_at": null,
         "effective_date": "2024-03-05",
         "id": "abc",
-        "updated_at": null
+        "originally_planned_date": null,
+        "updated_at": null,
+        "user_overrode_amount": false,
+        "user_overrode_date": false
       },
       "dump_by_field": {
         "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
         "description": "d",
+        "done_at": null,
         "effective_date": "2024-03-05",
         "id": "abc",
-        "updated_at": null
+        "originally_planned_date": null,
+        "updated_at": null,
+        "user_overrode_amount": false,
+        "user_overrode_date": false
       },
-      "dump_python_repr": "{'id': 'abc', 'effective_date': datetime.date(2024, 3, 5), 'description': 'd', 'amount_dollars': 1500.0, 'created_at': '2024-01-01T00:00:00', 'updated_at': None}",
+      "dump_python_repr": "{'id': 'abc', 'effective_date': datetime.date(2024, 3, 5), 'description': 'd', 'amount_dollars': 1500.0, 'done_at': None, 'originally_planned_date': None, 'user_overrode_date': False, 'user_overrode_amount': False, 'created_at': '2024-01-01T00:00:00', 'updated_at': None}",
       "exclude_unset": {
         "amount_dollars": 1500.0,
         "created_at": "2024-01-01T00:00:00",
@@ -24336,6 +24372,19 @@
           "title": "Description",
           "type": "string"
         },
+        "done_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the row was marked done (the money moved, or the hold was released); null = still open. An open row dated before today is overdue: money out counts on today, money in is not counted until it is re-dated or done.",
+          "title": "Done At"
+        },
         "effective_date": {
           "format": "date",
           "title": "Effective Date",
@@ -24344,6 +24393,20 @@
         "id": {
           "title": "Id",
           "type": "string"
+        },
+        "originally_planned_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The date the row was first created or imported with.",
+          "title": "Originally Planned Date"
         },
         "updated_at": {
           "anyOf": [
@@ -24356,6 +24419,18 @@
           ],
           "default": null,
           "title": "Updated At"
+        },
+        "user_overrode_amount": {
+          "default": false,
+          "description": "The amount was changed by hand; a re-sync from a deal keeps it.",
+          "title": "User Overrode Amount",
+          "type": "boolean"
+        },
+        "user_overrode_date": {
+          "default": false,
+          "description": "The date was changed by hand; a re-sync from a deal keeps it.",
+          "title": "User Overrode Date",
+          "type": "boolean"
         }
       },
       "required": [

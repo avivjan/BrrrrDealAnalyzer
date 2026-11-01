@@ -33487,9 +33487,13 @@
       "amount_dollars": -12500.0,
       "created_at": "<created_at>",
       "description": "HM draw",
+      "done_at": null,
       "effective_date": "2024-03-05",
       "id": "<id>",
-      "updated_at": "<updated_at>"
+      "originally_planned_date": "2024-03-05",
+      "updated_at": "<updated_at>",
+      "user_overrode_amount": false,
+      "user_overrode_date": false
     },
     "status": 201
   },
@@ -33533,9 +33537,13 @@
         "amount_dollars": -12500.0,
         "created_at": "<created_at>",
         "description": "HM draw",
+        "done_at": null,
         "effective_date": "2024-03-05",
         "id": "<id>",
-        "updated_at": "<updated_at>"
+        "originally_planned_date": "2024-03-05",
+        "updated_at": "<updated_at>",
+        "user_overrode_amount": false,
+        "user_overrode_date": false
       }
     ],
     "content_type": "application/json",
@@ -33551,9 +33559,13 @@
       "amount_dollars": -13250.0,
       "created_at": "<created_at>",
       "description": "HM draw (revised)",
+      "done_at": null,
       "effective_date": "2024-03-05",
       "id": "<id>",
-      "updated_at": "<updated_at>"
+      "originally_planned_date": "2024-03-05",
+      "updated_at": "<updated_at>",
+      "user_overrode_amount": true,
+      "user_overrode_date": false
     },
     "content_type": "application/json",
     "status": 200
@@ -33563,9 +33575,13 @@
       "amount_dollars": -13250.0,
       "created_at": "<created_at>",
       "description": "HM draw (revised)",
+      "done_at": null,
       "effective_date": "2024-03-05",
       "id": "<id>",
-      "updated_at": "<updated_at>"
+      "originally_planned_date": "2024-03-05",
+      "updated_at": "<updated_at>",
+      "user_overrode_amount": true,
+      "user_overrode_date": false
     },
     "content_type": "application/json",
     "status": 200

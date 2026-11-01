@@ -10192,6 +10192,63 @@
         "title": "LiquiditySettingsUpdate",
         "type": "object"
       },
+      "LiquidityTransactionBulkActionReq": {
+        "description": "One action on several one-off transactions at once (the timeline's bulk select).",
+        "properties": {
+          "action": {
+            "enum": [
+              "mark_done",
+              "mark_not_done",
+              "move_to_date",
+              "postpone_by_days"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "new_effective_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For move_to_date: the date every row moves to.",
+            "title": "New Effective Date"
+          },
+          "postpone_by_days": {
+            "anyOf": [
+              {
+                "maximum": 3660.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For postpone_by_days: how many days each row moves later.",
+            "title": "Postpone By Days"
+          },
+          "transaction_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Transaction Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "transaction_ids",
+          "action"
+        ],
+        "title": "LiquidityTransactionBulkActionReq",
+        "type": "object"
+      },
       "LiquidityTransactionCreate": {
         "properties": {
           "amount_dollars": {
@@ -10248,6 +10305,18 @@
             "title": "Description",
             "type": "string"
           },
+          "done_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the row was marked done (the money moved, or the hold was released); null = still open. An open row dated before today is overdue: money out counts on today, money in is not counted until it is re-dated or done.",
+            "title": "Done At"
+          },
           "effective_date": {
             "format": "date",
             "title": "Effective Date",
@@ -10256,6 +10325,19 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "originally_planned_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The date the row was first created or imported with.",
+            "title": "Originally Planned Date"
           },
           "updated_at": {
             "anyOf": [
@@ -10267,6 +10349,18 @@
               }
             ],
             "title": "Updated At"
+          },
+          "user_overrode_amount": {
+            "default": false,
+            "description": "The amount was changed by hand; a re-sync from a deal keeps it.",
+            "title": "User Overrode Amount",
+            "type": "boolean"
+          },
+          "user_overrode_date": {
+            "default": false,
+            "description": "The date was changed by hand; a re-sync from a deal keeps it.",
+            "title": "User Overrode Date",
+            "type": "boolean"
           }
         },
         "required": [
@@ -17610,6 +17704,48 @@
         "summary": "Create Liquidity Transaction"
       }
     },
+    "/liquidity/transactions/bulk": {
+      "post": {
+        "operationId": "apply_liquidity_transaction_bulk_action_liquidity_transactions_bulk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiquidityTransactionBulkActionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LiquidityTransactionRes"
+                  },
+                  "title": "Response Apply Liquidity Transaction Bulk Action Liquidity Transactions Bulk Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Liquidity Transaction Bulk Action"
+      }
+    },
     "/liquidity/transactions/{txn_id}": {
       "delete": {
         "operationId": "delete_liquidity_transaction_liquidity_transactions__txn_id__delete",
@@ -17692,6 +17828,84 @@
           }
         },
         "summary": "Update Liquidity Transaction"
+      }
+    },
+    "/liquidity/transactions/{txn_id}/done": {
+      "post": {
+        "operationId": "mark_liquidity_transaction_done_liquidity_transactions__txn_id__done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "title": "Txn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Transaction Done"
+      }
+    },
+    "/liquidity/transactions/{txn_id}/not-done": {
+      "post": {
+        "operationId": "mark_liquidity_transaction_not_done_liquidity_transactions__txn_id__not_done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "title": "Txn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Transaction Not Done"
       }
     },
     "/member-loan/access": {
