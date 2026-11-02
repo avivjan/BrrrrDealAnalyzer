@@ -28,7 +28,7 @@ google-cloud-storage==3.13.1
 mcp==1.30.0
 
 # Claude API (BL/arvEstimate): the "Estimate ARV with Claude" popup.
-anthropic==1.13.0
+anthropic==2.3.0
 
 # Test suite (BackEnd/tests). Kept in the main requirements file because the
 # Render build installs from it before running pytest in the pre-deploy step.
