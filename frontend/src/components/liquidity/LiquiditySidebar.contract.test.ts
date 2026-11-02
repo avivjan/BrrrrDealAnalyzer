@@ -21,16 +21,16 @@ const MONTHS = [
 ];
 
 const SETTINGS: LiquiditySettings = {
-  opening_balance_k: 49,
+  opening_balance_dollars: 49000,
   opening_balance_date: TODAY,
-  reserve_k: 5,
+  reserve_dollars: 5000,
 };
 
 function series(over: Partial<LiquiditySeries> = {}): LiquiditySeries {
   return {
     days: [
-      { date: TODAY, transactions: [], net_k: 0, balance_k: 42.5 },
-      { date: addDays(TODAY, 10), transactions: [], net_k: 0, balance_k: 8.25 },
+      { date: TODAY, transactions: [], net_dollars: 0, balance_dollars: 42500 },
+      { date: addDays(TODAY, 10), transactions: [], net_dollars: 0, balance_dollars: 8250 },
     ],
     globalMin: 8.25,
     globalMinDates: [addDays(TODAY, 10)],
@@ -44,7 +44,7 @@ const rule = (
 ): LiquidityRecurringTransaction => ({
   id: "rule-1",
   description: "HM interest",
-  amount_k: -2.4,
+  amount_dollars: -2400,
   start_date: TODAY,
   end_date: null,
   occurrences: null,
@@ -67,15 +67,15 @@ function mountSidebar(props: Record<string, unknown> = {}) {
 const mercury = (
   over: Partial<MercuryBalanceResponse> = {},
 ): MercuryBalanceResponse => ({
-  total_balance_k: 42.5,
-  total_available_k: 42.5,
+  total_balance_dollars: 42500,
+  total_available_dollars: 42500,
   account_count: 2,
   workspace_count: 1,
   workspaces: [
     {
       workspace: "brrrr",
-      total_balance_k: 42.5,
-      total_available_k: 42.5,
+      total_balance_dollars: 42500,
+      total_available_dollars: 42500,
       account_count: 2,
       accounts: [
         {
@@ -83,15 +83,18 @@ const mercury = (
           name: "Operating",
           type: "checking",
           status: "active",
-          current_balance_k: 30,
-          available_balance_k: 30,
+          current_balance_dollars: 30000,
+          available_balance_dollars: 30000,
           workspace: "brrrr",
+          is_counted_as_cash: true,
         },
       ],
     },
   ],
   workspace_errors: [],
   accounts: [],
+  counted_as_cash_balance_dollars: 42500,
+  mercury_account_ids_counted_as_cash: null,
   ...over,
 });
 
@@ -103,14 +106,14 @@ describe("LiquiditySidebar", () => {
       expect(text).not.toContain("Window Min");
     });
 
-    it("shows the 90-day low, rounded to one decimal, and its date", () => {
+    it("shows the 90-day low in dollars, and its date", () => {
       const minDate = addDays(TODAY, 10);
       const [, month, day] = minDate.split("-") as [string, string, string];
       const label = MONTHS[Number(month) - 1] + " " + Number(day);
 
       const text = mountSidebar().text();
       expect(text).toContain("Low (next 90d)");
-      expect(text).toContain("8.3k"); // 8.25 -> toFixed(1)
+      expect(text).toContain("$8,250");
       expect(text).toContain(label);
     });
 
@@ -123,7 +126,7 @@ describe("LiquiditySidebar", () => {
 
     it("shows the reserve threshold", () => {
       expect(mountSidebar().text()).toContain("Reserve Threshold");
-      expect(mountSidebar().text()).toContain("5.0k");
+      expect(mountSidebar().text()).toContain("$5,000");
     });
 
     it("picks the soonest future outflow and inflow", () => {
@@ -133,19 +136,19 @@ describe("LiquiditySidebar", () => {
             id: "a",
             effective_date: addDays(TODAY, 20),
             description: "Later draw",
-            amount_k: -5,
+            amount_dollars: -5000,
           },
           {
             id: "b",
             effective_date: addDays(TODAY, 3),
             description: "Sooner draw",
-            amount_k: -9,
+            amount_dollars: -9000,
           },
           {
             id: "c",
             effective_date: addDays(TODAY, 5),
             description: "Rent",
-            amount_k: 2,
+            amount_dollars: 2000,
           },
         ] as LiquidityTransaction[],
       });
@@ -162,7 +165,7 @@ describe("LiquiditySidebar", () => {
             id: "past",
             effective_date: addDays(TODAY, -5),
             description: "Old draw",
-            amount_k: -5,
+            amount_dollars: -5000,
           },
         ] as LiquidityTransaction[],
       });
@@ -190,8 +193,8 @@ describe("LiquiditySidebar", () => {
     it("sorts outflows above inflows", () => {
       const wrapper = mountSidebar({
         recurringRules: [
-          rule({ id: "in", description: "Rent in", amount_k: 3 }),
-          rule({ id: "out", description: "HM interest", amount_k: -2.4 }),
+          rule({ id: "in", description: "Rent in", amount_dollars: 3000 }),
+          rule({ id: "out", description: "HM interest", amount_dollars: -2400 }),
         ],
       });
 

@@ -5,15 +5,15 @@
       "path": "/liquidity/settings",
       "body": {
         "opening_balance_date": "<redacted>",
-        "opening_balance_k": 50,
-        "reserve_k": 5
+        "opening_balance_dollars": 50000,
+        "reserve_dollars": 5000
       }
     },
     {
       "method": "POST",
       "path": "/liquidity/transactions",
       "body": {
-        "amount_k": 12.5,
+        "amount_dollars": 12500,
         "description": "Refi proceeds",
         "effective_date": "2026-09-10"
       }
@@ -26,7 +26,7 @@
       "method": "POST",
       "path": "/liquidity/recurring",
       "body": {
-        "amount_k": 2.6,
+        "amount_dollars": 2600,
         "description": "Unit A rent",
         "end_date": null,
         "frequency": "monthly",

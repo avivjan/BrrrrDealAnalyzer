@@ -37,9 +37,12 @@ REFI_UNDERWRITING_FEE_PRESETS = {
 
 class BrrrLifecycleInputs(BaseModel):
     # -- Buy -------------------------------------------------------------------
-    buy_closing_date: Annotated[Optional[date], Field(alias="buyClosingDate", description=(
-        "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / "
-        "tenant dates. None = unknown: the date-driven figures are left out."))] = None
+    contract_date: Annotated[date, Field(alias="contractDate", description=(
+        "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or "
+        "before buyClosingDate."))]
+    buy_closing_date: Annotated[date, Field(alias="buyClosingDate", description=(
+        "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / "
+        "tenant / rehab-completed dates and every date of the Cash Needed schedule."))]
     earnest_money_deposit: Annotated[Decimal, Field(alias="earnestMoneyDeposit", description=(
         "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy)."))] = Decimal("5000")
     loan_charges_buy: Annotated[Decimal, Field(alias="loanChargesBuy", description=(

@@ -52,7 +52,9 @@ class TestTheFieldMapIsTheForms:
         frontend_keys_by_tab = _frontend_field_keys_by_tab()
         for section in sections:
             numeric_keys = [f.payload_key for g in section.groups for f in g.fields if f.display_kind not in NON_NUMERIC_KINDS]
-            assert sorted(numeric_keys) == sorted(frontend_keys_by_tab[section.tab_key]), section.tab_key
+            # The two mandatory BRRRR dates are listed on the frontend's Buy tab for its validation messages; here they are date rows.
+            frontend_numeric_keys = [key for key in frontend_keys_by_tab[section.tab_key] if key not in ("contractDate", "buyClosingDate")]
+            assert sorted(numeric_keys) == sorted(frontend_numeric_keys), section.tab_key
 
     def test_no_deprecated_or_hidden_brrrr_key_is_listed(self):
         listed = {f.payload_key for s in BRRRR_DEAL_INPUT_SECTIONS for g in s.groups for f in g.fields}
@@ -109,13 +111,11 @@ class TestResolvingTheUsersValues:
         rows = _resolved_rows("BRRRR", {"lowestArv": 250}, {"lowest_arv_effective": 250000})
         assert rows[("Refinance", "Lowest ARV Possible (stress test)")] == ("$250,000", (), None)
 
-    def test_seller_paid_taxes_is_auto_from_the_closing_month_and_hidden_without_a_date(self):
+    def test_seller_paid_taxes_is_auto_from_the_closing_month(self):
         december = _resolved_rows("BRRRR", {"buyClosingDate": "2026-12-15", "sellerPaidCurrentYearTaxes": None}, {})
         assert december[("Buy", "Seller already paid this year's taxes")][:2] == ("Yes", ("auto", "yes"))
         typed = _resolved_rows("BRRRR", {"buyClosingDate": "2026-03-01", "sellerPaidCurrentYearTaxes": True}, {})
         assert typed[("Buy", "Seller already paid this year's taxes")][:2] == ("Yes", ("yes",))
-        undated = _resolved_rows("BRRRR", {"buyClosingDate": None}, {})
-        assert ("Buy", "Seller already paid this year's taxes") not in undated
 
     def test_the_form_hides_a_notary_fee_with_the_notary_off_and_an_empty_note(self):
         rows = _resolved_rows("BRRRR", {"onlineNotaryBuy": False, "onlineNotaryRefi": True, "otherClosingCostsBuyNote": "",

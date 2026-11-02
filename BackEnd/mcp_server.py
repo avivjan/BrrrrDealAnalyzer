@@ -45,13 +45,13 @@ INSTRUCTIONS = (
     "niche, contact); then get_deal for one deal's full inputs, metrics and calculation "
     "breakdown. get_active_deals and get_bought_deals return every deal with its full "
     "breakdown and are very large; use them only when you truly need everything. "
-    "Conventions: every field whose name ends in _in_thousands or _k, or whose alias is "
+    "Conventions: every field whose name ends in _in_thousands, or whose alias is "
     "purchasePrice, rehabCost, constructionLoanBudget, lowestArv, closingCostsBuy, closingCostsRefi, "
     "cashReserve, salePrice, sellingClosingCosts or arv_in_thousands, is in THOUSANDS of dollars "
     "(250 = $250k); rent, taxes, insurance, HOA, utilities and every BRRRR settlement line, holding "
     "item and reserve (earnestMoneyDeposit, loanChargesBuy, appraisalFee, maintenanceReserve...) are "
     "plain dollars; rates and fees are percentages (75 = 75%). Deal bodies use the camelCase aliases "
-    "shown in each schema. A BRRRR field described as 'None = formula' takes its formula default "
+    "shown in each schema. A BRRRR deal requires two ISO dates, contractDate and buyClosingDate (a missing one is a 422); they must hold contract <= buy closing <= rehab completed (buyClosingDate + daysUntilRehabCompleted) <= refi closing (buyClosingDate + daysUntilRefi), and rehab completed <= tenant occupied (buyClosingDate + daysUntilRented). A BRRRR field described as 'None = formula' takes its formula default "
     "when null (the result reports the value used as *_effective). For BRRRR deals closingCostsBuy, "
     "closingCostsRefi, cashReserve and use_HM_for_rehab are deprecated and ignored: use the granular "
     "closing-cost fields, the four reserves and constructionLoanBudget. "
@@ -85,11 +85,16 @@ INSTRUCTIONS = (
     "statement's 'Due to Borrower'), before the reserves and what was invested; cash_out_routi_conservative / cash_wire_at_refi_conservative "
     "= the same wire at the lowest ARV (stress test), cash_to_refi_table_conservative = the cash to bring "
     "if it is negative. cash_to_close_buy = the wire to the title company on purchase day. "
-    "total_cash_needed_for_deal (Cash Needed) = the larger of total_cash_invested + rehab cushion + "
-    "cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the single out-of-pocket "
-    "figure through the refi, planned on the lowest-ARV stress test; there is no baseline or buffered variant) and "
-    "the day-one floor: EMD + cash_to_close_buy + an insurance bill paid outside it + rehab cushion + one month of "
-    "utilities, hard-money interest, HOA, insurance paid monthly and one tax-bucket deposit. "
+    "total_cash_needed_for_deal (Cash Needed) = total_cash_invested + rehab cushion + "
+    "cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv, to the cent (the single out-of-pocket "
+    "figure through the refi, planned on the lowest-ARV stress test; there is no baseline or buffered variant, no floor "
+    "and no clamping, so it may be negative). HOA, insurance paid monthly, utilities, pre-refi rent and hard-money "
+    "interest are whole monthly amounts paid on real 1sts, never prorated by days / 30. "
+    "cash_needed_schedule_at_lowest_arv = when every dollar of Cash Needed moves, in the Lowest-ARV scenario: "
+    "dated_cash_rows (one row per individual cash item: date, sequence_within_day, description, "
+    "signed_amount_dollars as an exact decimal string in whole dollars and cents, positive = money in, item_key); "
+    "the rehab cushion is one of them (a hold on the purchase closing date, postponed until it is marked done), "
+    "and the refi wire and the full reserves transfer are never rows. "
     "stolen_money = construction loan budget minus actual rehab (positive = pulled out through draws). "
     "total_hard_money_cost = points + interest + loan charges. seller_tax_credit positive = the seller "
     "credits the buyer; a positive credit is set aside in the property's tax bucket the day after closing, so it "
@@ -97,7 +102,15 @@ INSTRUCTIONS = (
     "plus cash out. cash_flow = monthly, in a regular year after the refinance. cash_on_cash = yearly cash flow / cash left "
     "in the deal and roi = (yearly cash flow + net_profit) / cash left in the deal, both in percent; "
     "-1 means infinite (no cash left in the deal), -2 means not applicable. Fields ending in "
-    "_in_thousands or _k are thousands of dollars; every other money field is plain dollars. "
+    "_in_thousands are thousands of dollars; every other money field is plain dollars (the liquidity "
+    "timeline is in exact dollars: amount_dollars, opening_balance_dollars, reserve_dollars). "
+    "LIQUIDITY: a one-off row leaves the timeline only when marked done (never because its date passed); an open "
+    "money-out row dated before today counts on today (overdue), an open money-in row dated before today is not "
+    "counted until re-dated or done. A BRRRR deal's Cash Needed rows are imported with preview_liquidity_deal_import "
+    "then import_liquidity_deal (rows carry source_deal_board, source_deal_id, source_item_key); its milestones are "
+    "approved or moved with the milestone preview / apply tools, which write the dates back to the deal. Always show "
+    "the owner a preview before an import or a milestone change. Call refresh_liquidity_late_refis before reading "
+    "the timeline. 'Today' is the liquidity settings' timezone_name unless a today date is sent. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
     "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
@@ -224,23 +237,67 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     # --- Liquidity timeline ---
     "list_liquidity_transactions": (
-        "List one-off cash events on the Liquidity timeline (amount_k in thousands, positive "
+        "List one-off cash events on the Liquidity timeline (amount_dollars in exact dollars, positive "
         "= inflow, negative = outflow)."
     ),
     "create_liquidity_transaction": "Add a one-off cash event to the Liquidity timeline.",
     "update_liquidity_transaction": "Change a one-off cash event (partial update).",
     "delete_liquidity_transaction": "Remove a one-off cash event.",
+    "mark_liquidity_transaction_done": (
+        "Mark a one-off cash event done: the money moved (or the hold was released), so it leaves the timeline. "
+        "A row never leaves because its date passed: an open money-out row dated before today counts on today (overdue), "
+        "an open money-in row dated before today is not counted until it is re-dated or marked done."
+    ),
+    "mark_liquidity_transaction_not_done": "Undo 'done' on a one-off cash event: it is open again.",
+    "apply_liquidity_transaction_bulk_action": (
+        "One action on several one-off cash events: mark_done, mark_not_done, move_to_date (new_effective_date) or "
+        "postpone_by_days. All or nothing: an unknown id is a 404 and nothing changes."
+    ),
     "list_liquidity_recurring": (
         "List recurring cash-flow rules (frequency daily/weekly/biweekly/monthly/quarterly/"
         "yearly, interval, and either end_date or occurrences)."
     ),
-    "create_liquidity_recurring": "Add a recurring cash-flow rule (amount_k must not be 0).",
+    "create_liquidity_recurring": "Add a recurring cash-flow rule (amount_dollars must not be 0).",
     "update_liquidity_recurring": "Change a recurring rule (partial update; re-projects all its events).",
     "delete_liquidity_recurring": "Remove a recurring rule.",
-    "get_liquidity_settings": "Read the Liquidity settings: opening balance (k), its date and the reserve (k).",
-    "update_liquidity_settings": "Change the opening balance, its date and/or the reserve.",
+    "get_liquidity_settings": "Read the Liquidity settings: opening balance, its date and the reserve, in dollars.",
+    "update_liquidity_settings": (
+        "Change the opening balance, its date, the reserve, the Mercury accounts counted as cash and/or the time zone."),
+    "list_liquidity_deals": (
+        "The BRRRR deals imported into the Liquidity timeline: board (my_deals / bought), address, open / done / overdue "
+        "row counts, late-refi rows, liquidity_rows_out_of_date (a deal save changed its rows, not confirmed yet: "
+        "re-import to confirm) and the five milestones with planned_date, approved_at and is_overdue."
+    ),
+    "refresh_liquidity_late_refis": (
+        "Add the carrying-cost months of every imported deal whose refi is late (planned date passed, refi_closed not "
+        "approved): HML interest, HOA, insurance paid monthly and utilities on each 1st up to the first 1st after today, as "
+        "real rows flagged created_because_refi_is_late (no rent). Idempotent: call it before reading the timeline."
+    ),
+    "preview_liquidity_deal_import": (
+        "Preview importing (or re-syncing) a BRRRR deal's Cash Needed rows into the Liquidity timeline: each row's "
+        "change_kind, before -> after, and the deal's value kept out where the owner changed a date or amount by hand. "
+        "Writes nothing. 409 for a My Deals deal already in liquidity through its Bought copy."
+    ),
+    "import_liquidity_deal": (
+        "Import (or re-sync) a BRRRR deal's Cash Needed rows into the Liquidity timeline, as the preview listed them. "
+        "Safe to repeat: rows are matched by identity (item_key + occurrence number), a done row is never touched, a date "
+        "or amount the owner changed is kept unless use_deal_value_for names it. Show the owner the preview first."
+    ),
+    "preview_liquidity_deal_milestone_change": (
+        "Preview approving or moving one milestone of an imported deal (new_date, approve): the milestone dates that move "
+        "(moving purchase_closed moves the later ones) and every liquidity row affected, before -> after. Writes nothing; "
+        "a date out of order is a 400."
+    ),
+    "apply_liquidity_deal_milestone_change": (
+        "Approve or move one milestone of an imported deal: writes the date (and the approval) to the deal and re-syncs "
+        "its liquidity rows as the preview listed them. Show the owner the preview first."
+    ),
+    "remove_liquidity_deal_open_rows": (
+        "A dead deal: remove its open (not done) liquidity rows; with earnest_money_refund_date, the earnest money comes "
+        "back as money in on that date. Done rows stay as history."
+    ),
     "get_mercury_balance": (
-        "Live bank balance: the total cash across the Mercury bank accounts in $k, used to "
+        "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "
         "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
         "on the server)."
     ),
@@ -340,7 +397,9 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 # site's own data; GET tools are read-only.
 OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
-DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal"}
+DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
+                     "apply_liquidity_transaction_bulk_action", "import_liquidity_deal", "apply_liquidity_deal_milestone_change",
+                     "remove_liquidity_deal_open_rows"}
 
 
 def tool_annotations(name: str, method: str) -> t.ToolAnnotations:

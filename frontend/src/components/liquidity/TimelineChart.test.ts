@@ -19,11 +19,11 @@ import { mount } from "@vue/test-utils";
 import TimelineChart from "./TimelineChart.vue";
 import type { DayBucket } from "../../types/liquidity";
 
-const day = (date: string, balance_k: number, net_k = 0): DayBucket => ({
+const day = (date: string, balance_dollars: number, net_dollars = 0): DayBucket => ({
   date,
   transactions: [],
-  net_k,
-  balance_k,
+  net_dollars,
+  balance_dollars,
 });
 
 const DAYS: DayBucket[] = [
@@ -146,7 +146,7 @@ describe("TimelineChart contract", () => {
     wrapper.unmount();
   });
 
-  it("draws the reserve floor only when reserveK is given (UI v3)", async () => {
+  it("draws the reserve floor only when reserveDollars is given (UI v3)", async () => {
     // jsdom lays nothing out: give the container a size so the plot renders.
     const proto = HTMLElement.prototype;
     const size = (name: "clientWidth" | "clientHeight", value: number) =>
@@ -162,17 +162,47 @@ describe("TimelineChart contract", () => {
       without.unmount();
 
       const withReserve = mount(TimelineChart, {
-        props: { days: DAYS, globalMin: -3, globalMinDates: ["2026-09-05"], firstNegativeDate: "2026-09-05", reserveK: 10 },
+        props: { days: DAYS, globalMin: -3, globalMinDates: ["2026-09-05"], firstNegativeDate: "2026-09-05", reserveDollars: 10 },
         attachTo: document.body,
       });
       await withReserve.vm.$nextTick();
       expect(withReserve.find('[data-part="reserve-line"]').exists()).toBe(true);
       expect(withReserve.findAll('[data-part="balance-area"]').length).toBeGreaterThan(0);
       // Four days carry a net flow: four markers, none for the flat days.
-      const flowDays = DAYS.map((d) => ({ ...d, transactions: d.net_k !== 0 ? [{ id: d.date } as never] : [] }));
+      const flowDays = DAYS.map((d) => ({ ...d, transactions: d.net_dollars !== 0 ? [{ id: d.date } as never] : [] }));
       await withReserve.setProps({ days: flowDays });
       expect(withReserve.findAll('[data-part="flow-marker"]')).toHaveLength(4);
       withReserve.unmount();
+    } finally {
+      Reflect.deleteProperty(proto, "clientWidth");
+      Reflect.deleteProperty(proto, "clientHeight");
+    }
+  });
+
+  it("draws the import preview's 'with this deal' balance as a dashed line only when given", async () => {
+    const proto = HTMLElement.prototype;
+    const size = (name: "clientWidth" | "clientHeight", value: number) =>
+      Object.defineProperty(proto, name, { configurable: true, get: () => value });
+    size("clientWidth", 800);
+    size("clientHeight", 400);
+    try {
+      const without = mountChart();
+      await without.vm.$nextTick();
+      expect(without.find('[data-part="balance-with-the-deal-line"]').exists()).toBe(false);
+      without.unmount();
+
+      const withTheDeal = mount(TimelineChart, {
+        props: {
+          days: DAYS, globalMin: -3, globalMinDates: ["2026-09-05"], firstNegativeDate: "2026-09-05",
+          balancesWithTheDeal: DAYS.map((d) => d.balance_dollars - 50),
+        },
+        attachTo: document.body,
+      });
+      await withTheDeal.vm.$nextTick();
+      const dashedLine = withTheDeal.get('[data-part="balance-with-the-deal-line"]');
+      expect(dashedLine.attributes("stroke-dasharray")).toBe("5 4");
+      expect(dashedLine.attributes("d")).toMatch(/^M/);
+      withTheDeal.unmount();
     } finally {
       Reflect.deleteProperty(proto, "clientWidth");
       Reflect.deleteProperty(proto, "clientHeight");

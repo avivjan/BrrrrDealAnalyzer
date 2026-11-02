@@ -8,14 +8,15 @@ One declaration so a column can never exist on one table and silently drop on `m
 `nullable=True` with `default=None` means "use the formula" -- see the ReqRes module.
 """
 
-from sqlalchemy import Column, Boolean, Date, Integer, Numeric, String
+from sqlalchemy import Column, Boolean, Date, DateTime, Integer, Numeric, String
 from sqlalchemy.orm import declarative_mixin
 
 
 @declarative_mixin
 class BrrrLifecycleColumns:
     # Buy
-    buy_closing_date = Column(Date, nullable=True)
+    contract_date = Column(Date, nullable=False)
+    buy_closing_date = Column(Date, nullable=False)
     earnest_money_deposit = Column(Numeric(12, 2), nullable=False, server_default='5000', default=5000)
     loan_charges_buy = Column(Numeric(12, 2), nullable=False, server_default='900', default=900)
     recording_transfer_buy = Column(Numeric(12, 2), nullable=True)
@@ -64,3 +65,13 @@ class BrrrLifecycleColumns:
     capex_reserve = Column(Numeric(12, 2), nullable=False, server_default='2500', default=2500)
     hysa_deposit_at_refi = Column(Numeric(12, 2), nullable=True)
     lowest_arv_in_thousands = Column(Numeric(14, 4), nullable=True)
+
+    # The five milestones as approved in the liquidity timeline (NULL = still planned). Not part of the
+    # deal form, so an autosave never touches them; `move_to_bought` copies them with every column.
+    contract_signed_approved_at = Column(DateTime(timezone=True), nullable=True)
+    purchase_closed_approved_at = Column(DateTime(timezone=True), nullable=True)
+    rehab_completed_approved_at = Column(DateTime(timezone=True), nullable=True)
+    tenant_moved_in_approved_at = Column(DateTime(timezone=True), nullable=True)
+    refi_closed_approved_at = Column(DateTime(timezone=True), nullable=True)
+    # A save changed the deal's imported liquidity rows and the change was not confirmed yet.
+    liquidity_rows_out_of_date = Column(Boolean, nullable=False, server_default='false', default=False)

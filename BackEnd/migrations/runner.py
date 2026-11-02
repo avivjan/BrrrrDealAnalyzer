@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from sqlalchemy import text, inspect as sa_inspect
 
 from DAL.data_models import (
+    LiquidityTransaction,
     DEFAULT_BRRRR_STAGE_SLUGS_BY_LEGACY_INT,
     DEFAULT_FLIP_STAGE_SLUGS_BY_LEGACY_INT,
 )
@@ -23,6 +24,8 @@ from migrations.steps.months_to_days import migrate_months_until_refi_to_days
 from migrations.steps.widen_money_columns import widen_money_columns
 from migrations.steps.widen_rate_columns import widen_rate_columns
 from migrations.steps.brrr_lifecycle_columns import add_brrr_lifecycle_columns
+from migrations.steps.liquidity_amounts_in_dollars import convert_liquidity_amounts_to_dollars
+from migrations.steps.brrr_contract_date_and_required_buy_closing_date import require_brrr_contract_date_and_buy_closing_date
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
 
@@ -108,8 +111,9 @@ def _run_migrations_locked(engine):
                     ))
                 columns = [c for c in columns if c != old_name]
 
-        # Drop any leftover columns not in the current model
-        expected = {"id", "effective_date", "description", "amount_k", "created_at", "updated_at"}
+        # Drop any leftover columns not in the current model. Read from the model, so a column
+        # added to it is never dropped here; `amount_k` is kept for the dollars step below.
+        expected = {column.name for column in LiquidityTransaction.__table__.columns} | {"amount_k"}
         for col in columns:
             if col not in expected:
                 with engine.begin() as conn:
@@ -129,16 +133,54 @@ def _run_migrations_locked(engine):
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_date DATE DEFAULT CURRENT_DATE NOT NULL"
                 ))
-        if "reserve_k" not in columns:
+        if "reserve_k" not in columns and "reserve_dollars" not in columns:
             with engine.begin() as conn:
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN reserve_k NUMERIC(14,4) DEFAULT 5 NOT NULL"
                 ))
-        if "opening_balance_k" not in columns:
+        if "opening_balance_k" not in columns and "opening_balance_dollars" not in columns:
             with engine.begin() as conn:
                 conn.execute(text(
                     "ALTER TABLE liquidity_settings ADD COLUMN opening_balance_k NUMERIC(14,4) DEFAULT 0 NOT NULL"
                 ))
+
+    # The Mercury accounts counted as cash on hand (NULL = every active account).
+    add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
+    add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "timezone_name",
+                          "VARCHAR(64) DEFAULT 'America/New_York' NOT NULL", None)
+    # The deal milestones approved in the liquidity timeline, and the "rows out of date" flag.
+    for brrr_table in ("active_deals", "bought_brrrr_deals"):
+        for column_name, column_ddl in (
+            ("contract_signed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("purchase_closed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("rehab_completed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("tenant_moved_in_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("refi_closed_approved_at", "TIMESTAMP WITH TIME ZONE"),
+            ("liquidity_rows_out_of_date", "BOOLEAN DEFAULT FALSE NOT NULL"),
+        ):
+            add_column_if_missing(engine, sa_inspect(engine), brrr_table, column_name, column_ddl, None)
+
+    # Done / overdue on the one-off transactions. Every row already dated in the past was
+    # treated as gone by the old timeline, so it starts done: the history never turns overdue.
+    for column_name, column_ddl, backfill_value in (
+        ("done_at", "TIMESTAMP WITH TIME ZONE", "CASE WHEN effective_date < CURRENT_DATE THEN now() ELSE NULL END"),
+        ("originally_planned_date", "DATE", "effective_date"),
+        ("user_overrode_date", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        ("user_overrode_amount", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        # Rows imported from a deal's Cash Needed schedule (NULL on a manual transaction).
+        ("source_deal_board", "VARCHAR(20)", None),
+        ("source_deal_id", "UUID", None),
+        ("source_item_key", "VARCHAR(80)", None),
+        ("source_occurrence_number", "INTEGER", None),
+        ("sequence_within_day", "INTEGER", None),
+        ("created_because_refi_is_late", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+        ("no_longer_in_the_deal", "BOOLEAN DEFAULT FALSE NOT NULL", None),
+    ):
+        add_column_if_missing(engine, sa_inspect(engine), "liquidity_transactions", column_name, column_ddl, backfill_value)
+
+    # The liquidity amounts move from thousands to exact dollars. Reflects fresh: the
+    # block above may have added a `_k` column. Idempotent.
+    convert_liquidity_amounts_to_dollars(engine, sa_inspect(engine))
 
     # Migrate `bought_stage` from INTEGER -> TEXT, mapping legacy numeric IDs
     # to the stable slug IDs used by the default pipeline template. Idempotent.
@@ -153,6 +195,8 @@ def _run_migrations_locked(engine):
     # budget, holding items, reserves, lowest ARV). Reflects fresh: the steps
     # above may have altered these tables. Idempotent.
     add_brrr_lifecycle_columns(engine, sa_inspect(engine))
+    # Both BRRRR dates are mandatory: contract_date is added and every missing date filled. Idempotent.
+    require_brrr_contract_date_and_buy_closing_date(engine, sa_inspect(engine))
 
     # Widen the money columns so a thousands value can hold an exact dollar.
     widen_money_columns(engine)

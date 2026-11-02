@@ -84,3 +84,28 @@ describe("BuySection — the seller tax credit pencil", () => {
     expect(sellerTaxCreditFigure(januaryFirst).find('[data-part="hint"]').text()).toContain("nothing to prorate");
   });
 });
+
+describe("BuySection — the two mandatory dates", () => {
+  const mountWithErrors = (deal: DealInputModel, fieldErrorMessages: Record<string, string>) =>
+    mount(BuySection, { props: { deal, surface: "card", fieldErrorMessages }, global: { stubs } });
+
+  it("writes the typed contract date to the deal", async () => {
+    const deal = reactive({ ...createEmptyDealForm("BRRRR"), contractDate: "2026-01-03", buyClosingDate: "2026-01-10" });
+    const wrapper = mountBuy(deal);
+    const contractDateInput = wrapper.find('[data-testid="form.field.contractDate"] input');
+    expect((contractDateInput.element as HTMLInputElement).value).toBe("2026-01-03");
+    await contractDateInput.setValue("2026-01-05");
+    await contractDateInput.trigger("change");
+    expect(deal.contractDate).toBe("2026-01-05");
+  });
+
+  it("turns a wrong date red with its message", () => {
+    const deal = reactive({ ...createEmptyDealForm("BRRRR"), contractDate: "2026-01-11", buyClosingDate: "2026-01-10" });
+    const wrapper = mountWithErrors(deal, { contractDate: "Contract date must be on or before the buy closing date." });
+    const contractDateField = wrapper.find('[data-testid="form.field.contractDate"]');
+    expect(contractDateField.find("input").classes()).toContain("ui-input-invalid");
+    expect(contractDateField.find("input").attributes("aria-invalid")).toBe("true");
+    expect(contractDateField.find('[data-part="error-message"]').text()).toBe("Contract date must be on or before the buy closing date.");
+    expect(wrapper.find('[data-testid="form.field.buyClosingDate"] [data-part="error-message"]').exists()).toBe(false);
+  });
+});

@@ -15,6 +15,8 @@ import { hasInvalidDealInput, validateDealInputFields } from "../utils/dealInput
 import DealReportPreviewModal from "../components/deal/DealReportPreviewModal.vue";
 import GenerateReportResultPickerPopup from "../components/deal/GenerateReportResultPickerPopup.vue";
 import { useDealReport } from "../composables/useDealReport";
+import { useDealLiquidityRows } from "../composables/useDealLiquidityRows";
+import ImportDealToLiquidityButton from "../components/liquidity/ImportDealToLiquidityButton.vue";
 import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
@@ -29,6 +31,7 @@ import {
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
+const { offerEarnestMoneyRefundBeforeDeletingDeal } = useDealLiquidityRows();
 const pipelineStore = usePipelineTemplateStore();
 
 const activeTab = ref<"FLIP" | "BRRRR">("BRRRR");
@@ -239,6 +242,7 @@ const onAdd = async (event: any, targetStageId: string) => {
 const confirmDelete = async (deal: BoughtDealRes) => {
   if (confirm(`Are you sure you want to delete ${deal.address}?`)) {
     try {
+      if (deal.deal_type !== "FLIP") await offerEarnestMoneyRefundBeforeDeletingDeal("bought", deal.id);
       await store.deleteBoughtDeal(deal.id, deal.deal_type || "BRRRR");
       refreshColumns();
     } catch {
@@ -398,6 +402,16 @@ watch(
   { deep: true }
 );
 
+/** For the "Import to liquidity" button: save pending edits first; invalid inputs cannot be imported. */
+const savePendingChangesBeforeLiquidityImport = async (): Promise<boolean> => {
+  if (hasInvalidDealInputs.value) {
+    alert("Fix the highlighted inputs before importing this deal to liquidity.");
+    return false;
+  }
+  if (isDirty) await performSave();
+  return true;
+};
+
 const deleteEditingDeal = async () => {
   if (editingDeal.value) {
     if (
@@ -406,6 +420,7 @@ const deleteEditingDeal = async () => {
       )
     ) {
       try {
+        if (editingDeal.value.deal_type !== "FLIP") await offerEarnestMoneyRefundBeforeDeletingDeal("bought", editingDeal.value.id);
         await store.deleteBoughtDeal(
           editingDeal.value.id,
           editingDeal.value.deal_type || "BRRRR"
@@ -1472,6 +1487,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     <span>Save failed</span>
                   </template>
                 </UiSaveStatus>
+                <ImportDealToLiquidityButton
+                  v-if="editingDeal.deal_type !== 'FLIP'"
+                  deal-board="bought"
+                  :deal-id="editingDeal.id"
+                  :deal-address="editingDeal.address"
+                  :save-pending-changes="savePendingChangesBeforeLiquidityImport"
+                />
                 <UiButton
                   data-testid="boughtdeals.modal.delete"
                   @click="deleteEditingDeal"
@@ -1530,6 +1552,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
       :metric-label="pressedResultTileForCalculationBreakdown?.metricLabel ?? ''"
       :breakdowns="currentAnalysis?.breakdowns"
       :metric-value="pressedResultTileValue"
+      :cash-needed-schedule="currentAnalysis && 'cash_needed_schedule_at_lowest_arv' in currentAnalysis ? currentAnalysis.cash_needed_schedule_at_lowest_arv : null"
       @close="pressedResultTileForCalculationBreakdown = null"
     />
   </div>

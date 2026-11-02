@@ -1,6 +1,6 @@
 /**
  * Pure computation functions for the liquidity timeline.
- * All amounts are in $k (thousands of dollars).
+ * All amounts are in exact dollars.
  * Dates are ISO strings (YYYY-MM-DD) for portability; we parse internally.
  */
 
@@ -10,6 +10,7 @@ import type {
   DayBucket,
   LiquiditySeries,
   SimulationResult,
+  TransactionsAsOfToday,
 } from '../types/liquidity'
 
 // ---------------------------------------------------------------------------
@@ -51,21 +52,66 @@ function daysBetween(from: string, to: string): number {
 }
 
 // ---------------------------------------------------------------------------
+// Done and overdue: a row leaves the timeline only when it is marked done
+// ---------------------------------------------------------------------------
+
+/**
+ * The transactions as the timeline counts them on `todayIsoDate` (the browser's local date).
+ *
+ * A passed date never removes a row: only `done_at` does.
+ * - a done row is left out (the money moved, or the hold was released);
+ * - an open money-out row dated before today is counted on today, the safe side: today's projected
+ *   balance is the bank balance minus what is still owed;
+ * - an open money-in row dated before today is shown but not counted, until it is re-dated or marked done;
+ * - recurring occurrences (`recurring_rule_id`) keep their old behaviour: they cannot be marked done.
+ */
+export function projectTransactionsOntoToday(
+  transactions: LiquidityTransaction[],
+  todayIsoDate: string,
+): TransactionsAsOfToday {
+  const countedTransactions: LiquidityTransaction[] = []
+  const overdueMoneyOut: LiquidityTransaction[] = []
+  const expectedMoneyInNotCounted: LiquidityTransaction[] = []
+  for (const txn of transactions) {
+    if (txn.recurring_rule_id) {
+      countedTransactions.push(txn)
+      continue
+    }
+    if (txn.done_at) continue
+    if (txn.effective_date >= todayIsoDate) {
+      countedTransactions.push(txn)
+    } else if (txn.amount_dollars < 0) {
+      overdueMoneyOut.push(txn)
+      countedTransactions.push({ ...txn, effective_date: todayIsoDate, overdue_since_date: txn.effective_date })
+    } else {
+      expectedMoneyInNotCounted.push(txn)
+    }
+  }
+  return { countedTransactions, overdueMoneyOut, expectedMoneyInNotCounted }
+}
+
+/** The first 1st strictly after `isoDate` (the "next 1st" postpone chip). */
+export function firstOfNextMonth(isoDate: string): string {
+  const [year, month] = isoDate.split('-').map(Number) as [number, number]
+  return month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`
+}
+
+// ---------------------------------------------------------------------------
 // Net-by-day aggregation
 // ---------------------------------------------------------------------------
 
 export function aggregateNetByDay(
   transactions: LiquidityTransaction[],
-): Map<string, { net_k: number; txns: LiquidityTransaction[] }> {
-  const map = new Map<string, { net_k: number; txns: LiquidityTransaction[] }>()
+): Map<string, { net_dollars: number; txns: LiquidityTransaction[] }> {
+  const map = new Map<string, { net_dollars: number; txns: LiquidityTransaction[] }>()
   for (const txn of transactions) {
     const d = txn.effective_date
     const entry = map.get(d)
     if (entry) {
-      entry.net_k += txn.amount_k
+      entry.net_dollars += txn.amount_dollars
       entry.txns.push(txn)
     } else {
-      map.set(d, { net_k: txn.amount_k, txns: [txn] })
+      map.set(d, { net_dollars: txn.amount_dollars, txns: [txn] })
     }
   }
   return map
@@ -87,12 +133,12 @@ export interface BuildSeriesOptions {
  * The series covers every calendar day from `rangeStart` to `rangeEnd`
  * (inclusive), carrying the balance forward on days with zero flow.
  *
- * openingBalanceK is the balance at **start** of openingBalanceDate (before
- * that day's flows). Days before the anchor are flat at openingBalanceK.
+ * openingBalanceDollars is the balance at **start** of openingBalanceDate (before
+ * that day's flows). Days before the anchor are flat at openingBalanceDollars.
  */
 export function buildDailyLiquiditySeries(
   transactions: LiquidityTransaction[],
-  openingBalanceK: number,
+  openingBalanceDollars: number,
   openingBalanceDate: string,
   rangeStart: string,
   rangeEnd: string,
@@ -101,7 +147,7 @@ export function buildDailyLiquiditySeries(
 
   const totalDays = daysBetween(rangeStart, rangeEnd)
   if (totalDays < 0) {
-    return { days: [], globalMin: openingBalanceK, globalMinDates: [openingBalanceDate], firstNegativeDate: null }
+    return { days: [], globalMin: openingBalanceDollars, globalMinDates: [openingBalanceDate], firstNegativeDate: null }
   }
 
   // Build bucket structure
@@ -112,19 +158,19 @@ export function buildDailyLiquiditySeries(
     days.push({
       date,
       transactions: entry ? entry.txns : [],
-      net_k: entry ? entry.net_k : 0,
-      balance_k: 0,
+      net_dollars: entry ? entry.net_dollars : 0,
+      balance_dollars: 0,
     })
   }
 
   // Fast-forward balance to rangeStart if it's after openingBalanceDate
-  let balance = openingBalanceK
+  let balance = openingBalanceDollars
   if (rangeStart > openingBalanceDate) {
     const preFlowDates = [...netMap.keys()]
       .filter(d => d > openingBalanceDate && d < rangeStart)
       .sort()
     for (const d of preFlowDates) {
-      balance += netMap.get(d)!.net_k
+      balance += netMap.get(d)!.net_dollars
     }
   }
 
@@ -135,16 +181,16 @@ export function buildDailyLiquiditySeries(
 
   for (const bucket of days) {
     if (bucket.date < openingBalanceDate) {
-      bucket.balance_k = openingBalanceK
+      bucket.balance_dollars = openingBalanceDollars
     } else if (bucket.date === openingBalanceDate) {
-      balance = openingBalanceK + bucket.net_k
-      bucket.balance_k = balance
+      balance = openingBalanceDollars + bucket.net_dollars
+      bucket.balance_dollars = balance
     } else {
-      balance += bucket.net_k
-      bucket.balance_k = balance
+      balance += bucket.net_dollars
+      bucket.balance_dollars = balance
     }
 
-    const b = bucket.balance_k
+    const b = bucket.balance_dollars
     if (b < globalMin) {
       globalMin = b
       globalMinDates = [bucket.date]
@@ -158,7 +204,7 @@ export function buildDailyLiquiditySeries(
   }
 
   if (globalMin === Infinity) {
-    globalMin = openingBalanceK
+    globalMin = openingBalanceDollars
     globalMinDates = [openingBalanceDate]
   }
 
@@ -208,15 +254,15 @@ export function computeDefaultRange(
  */
 export function simulateImpact(
   candidateTransactions: LiquidityTransaction[],
-  openingBalanceK: number,
+  openingBalanceDollars: number,
   openingBalanceDate: string,
   rangeStart: string,
   rangeEnd: string,
-  reserveK: number,
+  reserveDollars: number,
 ): SimulationResult {
   const series = buildDailyLiquiditySeries(
     candidateTransactions,
-    openingBalanceK,
+    openingBalanceDollars,
     openingBalanceDate,
     rangeStart,
     rangeEnd,
@@ -226,10 +272,10 @@ export function simulateImpact(
   const reserveBreachDates: string[] = []
 
   for (const bucket of series.days) {
-    if (bucket.balance_k < 0) {
+    if (bucket.balance_dollars < 0) {
       negativeDates.push(bucket.date)
     }
-    if (bucket.balance_k < reserveK && bucket.balance_k >= 0) {
+    if (bucket.balance_dollars < reserveDollars && bucket.balance_dollars >= 0) {
       reserveBreachDates.push(bucket.date)
     }
   }
@@ -251,15 +297,15 @@ export function simulateImpact(
  */
 export function requiresSimulation(
   oldTxn: LiquidityTransaction | null,
-  newAmount_k: number,
+  newAmountDollars: number,
   newDate: string,
 ): boolean {
   if (!oldTxn) {
     // New transaction: only outflows need simulation
-    return newAmount_k < 0
+    return newAmountDollars < 0
   }
   // Edit: simulate if the change could worsen any future balance
-  const amountDelta = newAmount_k - oldTxn.amount_k
+  const amountDelta = newAmountDollars - oldTxn.amount_dollars
   if (amountDelta < 0) return true // net decrease
   if (newDate !== oldTxn.effective_date) return true // date moved — could shift balances
   return false
@@ -349,7 +395,7 @@ export function expandRecurringRule(
       id: `recurring:${rule.id}:${i}`,
       effective_date: date,
       description: rule.description,
-      amount_k: rule.amount_k,
+      amount_dollars: rule.amount_dollars,
       recurring_rule_id: rule.id,
       recurring_index: i,
     })

@@ -28,6 +28,12 @@ export type StringKey = {
   [K in keyof DealInputModel]-?: string extends NonNullable<DealInputModel[K]> ? K : never;
 }[keyof DealInputModel];
 
+/** The two mandatory BRRRR dates (ISO strings): validated and shown with an error like the number fields. */
+export type DealDateKey = "contractDate" | "buyClosingDate";
+
+/** Any deal input the validation layer can point at: a number field or one of the two dates. */
+export type DealInputFieldKey = NumericKey | DealDateKey;
+
 export function useDealField(deal: DealInputModel) {
   const dealRecord = deal as Record<string, unknown>;
 

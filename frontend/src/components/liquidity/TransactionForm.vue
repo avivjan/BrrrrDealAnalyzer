@@ -11,6 +11,7 @@ import {
   expandRecurringRule,
   todayISO,
 } from '../../utils/liquidityEngine'
+import { formatSignedMoney } from '../../utils/money'
 
 /**
  * Unified add/edit modal for both one-off and recurring cash flows.
@@ -34,14 +35,14 @@ type SaveOneOff = {
   id?: string
   effective_date: string
   description: string
-  amount_k: number
+  amount_dollars: number
 }
 
 type SaveRecurring = {
   kind: 'recurring'
   id?: string
   description: string
-  amount_k: number
+  amount_dollars: number
   start_date: string
   end_date: string | null
   occurrences: number | null
@@ -100,8 +101,8 @@ watch(() => props.open, (open) => {
   if (props.editRecurring) {
     const r = props.editRecurring
     isRecurring.value = true
-    isOutflow.value = r.amount_k < 0
-    amount.value = Math.abs(r.amount_k).toString()
+    isOutflow.value = r.amount_dollars < 0
+    amount.value = Math.abs(r.amount_dollars).toString()
     description.value = r.description
     startDate.value = r.start_date
     frequency.value = r.frequency
@@ -117,8 +118,8 @@ watch(() => props.open, (open) => {
     }
   } else if (props.editTxn) {
     isRecurring.value = false
-    isOutflow.value = props.editTxn.amount_k < 0
-    amount.value = Math.abs(props.editTxn.amount_k).toString()
+    isOutflow.value = props.editTxn.amount_dollars < 0
+    amount.value = Math.abs(props.editTxn.amount_dollars).toString()
     description.value = props.editTxn.description
     effectiveDate.value = props.editTxn.effective_date
   } else {
@@ -168,7 +169,7 @@ const recurrencePreview = computed(() => {
   const virtualRule: LiquidityRecurringTransaction = {
     id: '__preview__',
     description: description.value.trim() || 'Preview',
-    amount_k: signedAmount,
+    amount_dollars: signedAmount,
     start_date: startDate.value,
     end_date: endMode.value === 'on' ? endDate.value : null,
     occurrences: endMode.value === 'after' ? occurrencesNum.value : null,
@@ -196,7 +197,7 @@ function onSave() {
       kind: 'recurring',
       id: props.editRecurring?.id,
       description: description.value.trim(),
-      amount_k: signedAmount,
+      amount_dollars: signedAmount,
       start_date: startDate.value,
       end_date: endMode.value === 'on' ? endDate.value : null,
       occurrences: endMode.value === 'after' ? occurrencesNum.value : null,
@@ -211,7 +212,7 @@ function onSave() {
     id: props.editTxn?.id,
     effective_date: effectiveDate.value,
     description: description.value.trim(),
-    amount_k: signedAmount,
+    amount_dollars: signedAmount,
   })
 }
 
@@ -306,7 +307,7 @@ function formatPreviewDate(iso: string): string {
           <!-- Amount -->
           <UiField class="mb-4">
             <template #label>
-              {{ isRecurring ? 'Amount per occurrence ($k)' : 'Amount ($k)' }}
+              {{ isRecurring ? 'Amount per occurrence ($)' : 'Amount ($)' }}
             </template>
             <template #default="{ id, describedBy }">
               <div class="relative">
@@ -318,13 +319,13 @@ function formatPreviewDate(iso: string): string {
                   type="number"
                   step="0.01"
                   min="0"
-                  placeholder="49.2"
-                  class="ui-input numeric pr-10"
+                  placeholder="49200"
+                  class="ui-input numeric pl-7"
                 />
-                <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-fg-muted">k</span>
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted">$</span>
               </div>
             </template>
-            <template #helper>All amounts in $k. e.g. 49.2 = $49,200</template>
+            <template #helper>Exact dollars, e.g. 49200 or 1970.83</template>
           </UiField>
 
           <!-- One-off date -->
@@ -485,8 +486,8 @@ function formatPreviewDate(iso: string): string {
                 class="flex items-baseline justify-between text-[11px] numeric"
               >
                 <span class="text-fg-muted">{{ formatPreviewDate(p.effective_date) }}</span>
-                <span :class="p.amount_k > 0 ? 'text-positive' : 'text-negative'">
-                  {{ p.amount_k > 0 ? '+' : '' }}{{ p.amount_k.toFixed(2) }}k
+                <span :class="p.amount_dollars > 0 ? 'text-positive' : 'text-negative'">
+                  {{ formatSignedMoney(p.amount_dollars) }}
                 </span>
               </div>
               <div

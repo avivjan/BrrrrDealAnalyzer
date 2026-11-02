@@ -76,7 +76,9 @@ export interface BrrrAnalyzeReq {
   // the formula"; the backend reports the value it used as `*_effective`.
 
   // Buy
-  /** ISO date of the purchase closing; null = unknown (date-driven figures left out). */
+  /** ISO date of the purchase contract (the earnest money is paid on it); required for BRRRR, on or before the buy closing. */
+  contractDate?: string | null;
+  /** ISO date of the purchase closing; required for BRRRR (every date of the deal derives from it). */
   buyClosingDate?: string | null;
   earnestMoneyDeposit?: number;
   loanChargesBuy?: number;
@@ -179,6 +181,24 @@ export interface CalcStep {
  */
 export type CalcBreakdowns = Record<string, CalcStep[]>;
 
+/**
+ * One individual cash item of Cash Needed on the day it moves (`BackEnd/ReqRes/common/cash_needed_schedule.py`).
+ * Maps 1:1 to a future liquidity transaction (`types/liquidity.ts`). Amounts are exact dollars in whole cents,
+ * sent as a decimal string ("-5000.00"); positive = money in, negative = money out.
+ */
+export interface CashNeededScheduleRow {
+  date: string;
+  sequence_within_day: number;
+  description: string;
+  signed_amount_dollars: string;
+  item_key: string;
+}
+
+/** When every dollar of Cash Needed moves, at the lowest ARV: one row per cash item, the rehab cushion among them (a hold). */
+export interface CashNeededScheduleAtLowestArv {
+  dated_cash_rows: CashNeededScheduleRow[];
+}
+
 export interface BrrrAnalyzeRes {
   cash_flow: number;
   dscr?: number;
@@ -188,8 +208,10 @@ export interface BrrrAnalyzeRes {
   roi?: number;
   equity?: number;
   net_profit?: number;
-  /** Cash Needed: max(total_cash_invested + rehab cushion + refi shortfall + reserves the lowest-ARV wire cannot fund, the day-one floor of EMD + cash to close + an insurance bill paid outside it + cushion + one month of utilities, HML interest, HOA, insurance and one tax deposit). */
+  /** Cash Needed, to the cent: total_cash_invested + rehab cushion + refi shortfall + reserves the lowest-ARV wire cannot fund. No floor, no clamp. */
   total_cash_needed_for_deal?: number;
+  /** The dated Lowest-ARV schedule behind Cash Needed. */
+  cash_needed_schedule_at_lowest_arv?: CashNeededScheduleAtLowestArv | null;
   total_cash_invested?: number;
   cash_to_close_buy?: number;
   purchase_loan_amount?: number;

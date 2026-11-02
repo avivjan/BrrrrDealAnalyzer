@@ -2,7 +2,7 @@
 seller tax credit, cash to close."""
 
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from BL.analyze.common.deal_math import (
     effective, recording_transfer_buy_default, deed_transfer_tax_buy_default, title_escrow_buy_default,
@@ -16,8 +16,8 @@ class BuySettlement(NamedTuple):
     title_escrow_buy: Decimal         # effective
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
-    seller_paid_current_year_taxes: Optional[bool]   # effective; None without a closing date
-    seller_tax_credit_formula: Decimal   # the proration by the closing date; 0 without a date
+    seller_paid_current_year_taxes: bool   # effective
+    seller_tax_credit_formula: Decimal   # the proration by the closing date
     seller_tax_credit: Decimal        # effective: input or the formula; positive = credit to the buyer
     seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): put in the property's tax bucket the day after closing
     cash_to_close_buy: Decimal        # the wire to the title company
@@ -33,11 +33,8 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
                                + insurance.insurance_bill_at_purchase_inside_closing)
 
     buy_closing_date = timeline.buy_closing_date
-    if buy_closing_date is None:
-        seller_paid_current_year_taxes, seller_tax_credit_formula = None, Decimal("0")
-    else:
-        seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, seller_paid_current_year_taxes_by_default(buy_closing_date))
-        seller_tax_credit_formula = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
+    seller_paid_current_year_taxes = effective(payload.seller_paid_current_year_taxes, seller_paid_current_year_taxes_by_default(buy_closing_date))
+    seller_tax_credit_formula = calc_seller_tax_credit(payload.annual_property_taxes, buy_closing_date, seller_paid_current_year_taxes)
     # The figure on the settlement statement, when typed, wins over the proration.
     seller_tax_credit = effective(payload.seller_tax_credit_at_purchase_closing, seller_tax_credit_formula)
     # A positive credit is the seller's share of this year's bill, which the buyer pays in November: it

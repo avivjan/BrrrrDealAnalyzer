@@ -18,13 +18,13 @@
  * the same order, for the Analyze page's rail.
  */
 import type { DealInputModel } from "../types";
-import type { NumericKey } from "../composables/useDealField";
+import type { DealInputFieldKey, NumericKey } from "../composables/useDealField";
 import { phaseTabForDealInputField } from "../config/dealInputPhaseTabs";
 
 export type DealInputFieldErrorKind = "missing" | "invalid";
 
 export interface DealInputFieldError {
-  fieldKey: NumericKey;
+  fieldKey: DealInputFieldKey;
   message: string;
   kind: DealInputFieldErrorKind;
   /** The form tab that holds the field, so a message can say where to look. */
@@ -76,7 +76,7 @@ export function validateDealInputFields(deal: DealInputModel, dealType: "BRRRR" 
   const errors: DealInputFieldError[] = [];
   const dealRecord = deal as Record<string, unknown>;
   const numberOf = (fieldKey: NumericKey) => numberOrZero(dealRecord[fieldKey]);
-  const report = (fieldKey: NumericKey, kind: DealInputFieldErrorKind, message: string) => {
+  const report = (fieldKey: DealInputFieldKey, kind: DealInputFieldErrorKind, message: string) => {
     errors.push({ fieldKey, kind, message, phaseTabLabel: phaseTabForDealInputField(fieldKey, dealType)?.label ?? "" });
   };
   const reportMissingUnlessPositive = (fieldKey: NumericKey, message: string) => {
@@ -116,11 +116,25 @@ export function validateDealInputFields(deal: DealInputModel, dealType: "BRRRR" 
     }
     reportIfNegative("constructionLoanBudget", "Construction loan budget cannot be negative.");
     reportIfNegative("daysUntilRented", "Days until rented cannot be negative.");
-    // The rehab ends between the purchase closing and the tenant moving in; the backend refuses the row otherwise.
+    // Both dates are mandatory (the backend answers a missing one with a 422), and
+    // contract <= buy closing <= rehab completed <= refi closing; rehab completed <= tenant occupied.
+    const contractDate = typeof dealRecord.contractDate === "string" ? dealRecord.contractDate : "";
+    const buyClosingDate = typeof dealRecord.buyClosingDate === "string" ? dealRecord.buyClosingDate : "";
+    if (!contractDate) report("contractDate", "invalid", "Contract date is required.");
+    if (!buyClosingDate) report("buyClosingDate", "invalid", "Buy closing date is required.");
+    if (contractDate && buyClosingDate && contractDate > buyClosingDate) {
+      report("contractDate", "invalid", "Contract date must be on or before the buy closing date.");
+    }
+    // The rehab ends between the purchase closing and both the tenant moving in and the refi; the backend refuses the row otherwise.
     if (dealRecord.daysUntilRehabCompleted != null && dealRecord.daysUntilRehabCompleted !== "") {
       if (numberOf("daysUntilRehabCompleted") < 0) report("daysUntilRehabCompleted", "invalid", "Days until rehab completed cannot be negative.");
-      else if (dealRecord.daysUntilRented != null && dealRecord.daysUntilRented !== "" && numberOf("daysUntilRehabCompleted") > numberOf("daysUntilRented")) {
-        report("daysUntilRehabCompleted", "invalid", "Rehab completion must be on or before the tenant-occupied date.");
+      else {
+        if (dealRecord.daysUntilRented != null && dealRecord.daysUntilRented !== "" && numberOf("daysUntilRehabCompleted") > numberOf("daysUntilRented")) {
+          report("daysUntilRehabCompleted", "invalid", "Rehab completion must be on or before the tenant-occupied date.");
+        }
+        if (numberOf("daysUntilRehabCompleted") > numberOf("daysUntilRefi")) {
+          report("daysUntilRehabCompleted", "invalid", "Rehab completion must be on or before the refi closing date.");
+        }
       }
     }
     if (dealRecord.lowestArv != null) {
@@ -154,8 +168,8 @@ export function validateDealInputFields(deal: DealInputModel, dealType: "BRRRR" 
 }
 
 /** The `invalid` messages keyed by field, for the form to hand each input its own line. */
-export function dealInputErrorMessageByFieldKey(deal: DealInputModel, dealType: "BRRRR" | "FLIP"): Partial<Record<NumericKey, string>> {
-  const messageByFieldKey: Partial<Record<NumericKey, string>> = {};
+export function dealInputErrorMessageByFieldKey(deal: DealInputModel, dealType: "BRRRR" | "FLIP"): Partial<Record<DealInputFieldKey, string>> {
+  const messageByFieldKey: Partial<Record<DealInputFieldKey, string>> = {};
   for (const error of validateDealInputFields(deal, dealType)) {
     if (error.kind === "invalid" && messageByFieldKey[error.fieldKey] == null) messageByFieldKey[error.fieldKey] = error.message;
   }

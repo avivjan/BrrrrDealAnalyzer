@@ -52,7 +52,7 @@ def test_tokens_are_secrets_and_only_accounts_is_called(monkeypatch):
     assert [c[0] for c in calls] == [mc.ACCOUNTS_URL]
     assert calls[0][1]["Authorization"] == "Bearer sekrit-token-ajyk-0001"
     assert calls[0][2] == mc.MERCURY_TIMEOUT_SECONDS
-    assert summary["total_balance_k"] == 12.0 and summary["workspace_count"] == 1
+    assert summary["total_balance_dollars"] == 12000.0 and summary["workspace_count"] == 1
     assert "sekrit" not in repr(summary)
 
 
@@ -100,3 +100,41 @@ def test_errors_are_never_cached(monkeypatch):
     with pytest.raises(mc.MercuryApiError):
         mc.summarize_balance()
     assert mc.summarize_balance()["workspace_count"] == 1
+
+
+def _two_account_summary():
+    accounts = [
+        {"id": "operating", "name": "Ops", "type": "checking", "status": "active", "current_balance_dollars": 40000.5,
+         "available_balance_dollars": 40000.5, "workspace": "AJYK"},
+        {"id": "tax-bucket", "name": "Tax bucket", "type": "checking", "status": "active", "current_balance_dollars": 2000.25,
+         "available_balance_dollars": 2000.25, "workspace": "AJYK"},
+        {"id": "closed", "name": "Old", "type": "checking", "status": "archived", "current_balance_dollars": 999,
+         "available_balance_dollars": 999, "workspace": "AJYK"},
+    ]
+    return {"total_balance_dollars": 42000.75, "total_available_dollars": 42000.75, "account_count": 2, "workspace_count": 1,
+            "workspaces": [{"workspace": "AJYK", "total_balance_dollars": 42000.75, "total_available_dollars": 42000.75,
+                            "account_count": 2, "accounts": accounts}],
+            "workspace_errors": [], "accounts": accounts}
+
+
+class TestTheAccountsCountedAsCash:
+    """Only the accounts chosen in the liquidity settings anchor the timeline; null = every active account."""
+
+    def test_every_active_account_counts_until_some_are_chosen(self, client, monkeypatch):
+        monkeypatch.setattr("BL.liquidity.mercuryBalance.summarize_balance", _two_account_summary)
+        body = client.get("/liquidity/mercury-balance").json()
+        assert body["counted_as_cash_balance_dollars"] == 42000.75
+        assert [a["is_counted_as_cash"] for a in body["accounts"]] == [True, True, False]
+
+    def test_only_the_chosen_accounts_count_and_null_resets(self, client, monkeypatch):
+        monkeypatch.setattr("BL.liquidity.mercuryBalance.summarize_balance", _two_account_summary)
+        saved = client.put("/liquidity/settings", json={"mercury_account_ids_counted_as_cash": ["operating"]}).json()
+        assert saved["mercury_account_ids_counted_as_cash"] == ["operating"]
+        body = client.get("/liquidity/mercury-balance").json()
+        assert body["counted_as_cash_balance_dollars"] == 40000.5
+        assert body["workspaces"][0]["accounts"][1]["is_counted_as_cash"] is False
+        assert _two_account_summary()["accounts"][0].get("is_counted_as_cash") is None   # the cached summary is never marked
+        client.put("/liquidity/settings", json={"reserve_dollars": 6000})   # a partial update keeps the choice
+        assert client.get("/liquidity/settings").json()["mercury_account_ids_counted_as_cash"] == ["operating"]
+        client.put("/liquidity/settings", json={"mercury_account_ids_counted_as_cash": None})
+        assert client.get("/liquidity/mercury-balance").json()["counted_as_cash_balance_dollars"] == 42000.75

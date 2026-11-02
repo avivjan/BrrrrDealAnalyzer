@@ -818,17 +818,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -949,6 +942,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "crime_rate": {
             "anyOf": [
@@ -1878,6 +1877,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -2046,17 +2047,10 @@
             "type": "string"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -2095,6 +2089,17 @@
             "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
+          },
+          "cash_needed_schedule_at_lowest_arv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CashNeededScheduleAtLowestArvRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
           },
           "cash_on_cash": {
             "anyOf": [
@@ -2252,6 +2257,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "created_at": {
             "format": "date-time",
@@ -3031,17 +3042,10 @@
             "type": "string"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehabContingency": {
             "anyOf": [
@@ -3079,17 +3083,10 @@
             "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "rent": {
             "anyOf": [
@@ -3288,17 +3285,10 @@
             "title": "Task"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "titleEscrowBuy": {
             "anyOf": [
@@ -3381,7 +3371,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars, rounded to the cent: total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it.",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -3467,6 +3457,11 @@
         },
         "required": [
           "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date",
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -4752,17 +4747,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -4868,6 +4856,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "crime_rate": {
             "anyOf": [
@@ -5785,6 +5779,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -5940,17 +5936,10 @@
             "type": "string"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -5989,6 +5978,17 @@
             "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
+          },
+          "cash_needed_schedule_at_lowest_arv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CashNeededScheduleAtLowestArvRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
           },
           "cash_on_cash": {
             "anyOf": [
@@ -6131,6 +6131,12 @@
               }
             ],
             "title": "Contact"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "created_at": {
             "format": "date-time",
@@ -6910,17 +6916,10 @@
             "type": "string"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehabContingency": {
             "anyOf": [
@@ -6958,17 +6957,10 @@
             "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "rent": {
             "anyOf": [
@@ -7155,17 +7147,10 @@
             "title": "Task"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "titleEscrowBuy": {
             "anyOf": [
@@ -7248,7 +7233,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars, rounded to the cent: total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it.",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -7334,6 +7319,11 @@
         },
         "required": [
           "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date",
+          "contractDate",
+          "buyClosingDate",
           "section",
           "stage",
           "address",
@@ -7453,6 +7443,65 @@
         "title": "CalcTerm",
         "type": "object"
       },
+      "CashNeededScheduleAtLowestArvRes": {
+        "description": "When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario. No running balance and\nno peak: cash troughs are managed globally in the liquidity timeline.",
+        "properties": {
+          "dated_cash_rows": {
+            "description": "One row per individual cash item, in date order (then sequence_within_day), the rehab cushion included (a hold on the purchase closing date). Money in as late as reasonable, money out as early as reasonable; no money-out row falls after the refi closing.",
+            "items": {
+              "$ref": "#/components/schemas/CashNeededScheduleRowRes"
+            },
+            "title": "Dated Cash Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dated_cash_rows"
+        ],
+        "title": "CashNeededScheduleAtLowestArvRes",
+        "type": "object"
+      },
+      "CashNeededScheduleRowRes": {
+        "description": "One individual cash item of Cash Needed, on the day it moves. Rows are never grouped by date.",
+        "properties": {
+          "date": {
+            "description": "The day the money moves (ISO).",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the cash item is, e.g. 'HML interest for May 2026'.",
+            "title": "Description",
+            "type": "string"
+          },
+          "item_key": {
+            "description": "Stable machine key of the item type, e.g. 'hml_interest_paid_monthly' or 'utilities' (shared by the rows of a monthly item); (item_key, date) is unique.",
+            "title": "Item Key",
+            "type": "string"
+          },
+          "sequence_within_day": {
+            "description": "The order of the rows that share this date: 0, 1, 2, ... Money out comes before money in on the same day.",
+            "title": "Sequence Within Day",
+            "type": "integer"
+          },
+          "signed_amount_dollars": {
+            "description": "Exact dollars in whole cents (not thousands). Positive = money comes in, negative = money goes out.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Signed Amount Dollars",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "sequence_within_day",
+          "description",
+          "signed_amount_dollars",
+          "item_key"
+        ],
+        "title": "CashNeededScheduleRowRes",
+        "type": "object"
+      },
       "CeremonyOptionsRes": {
         "properties": {
           "challenge_id": {
@@ -7536,6 +7585,252 @@
         "title": "CredentialRes",
         "type": "object"
       },
+      "DealCashRowChangeCountsRes": {
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "conflicts_with_your_changes": {
+            "description": "Rows where a value you set by hand was kept over the deal's.",
+            "title": "Conflicts With Your Changes",
+            "type": "integer"
+          },
+          "kept_done": {
+            "title": "Kept Done",
+            "type": "integer"
+          },
+          "kept_no_longer_in_the_deal": {
+            "title": "Kept No Longer In The Deal",
+            "type": "integer"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "added",
+          "updated",
+          "removed",
+          "unchanged",
+          "kept_done",
+          "kept_no_longer_in_the_deal",
+          "conflicts_with_your_changes"
+        ],
+        "title": "DealCashRowChangeCountsRes",
+        "type": "object"
+      },
+      "DealCashRowChangeRes": {
+        "properties": {
+          "amount_dollars_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Dollars After"
+          },
+          "amount_dollars_before": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Dollars Before"
+          },
+          "change_kind": {
+            "description": "added / updated (date, amount or text) / removed / unchanged / kept_done (a done row is never touched) / kept_no_longer_in_the_deal (the deal dropped it, you had changed it, so it stays).",
+            "enum": [
+              "added",
+              "updated",
+              "removed",
+              "unchanged",
+              "kept_done",
+              "kept_no_longer_in_the_deal"
+            ],
+            "title": "Change Kind",
+            "type": "string"
+          },
+          "created_because_refi_is_late": {
+            "default": false,
+            "title": "Created Because Refi Is Late",
+            "type": "boolean"
+          },
+          "date_after": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date After"
+          },
+          "date_before": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Before"
+          },
+          "deal_amount_dollars_not_applied_because_you_changed_it": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's new amount for a row whose amount you set by hand: kept out ('Use $<amount>' takes it).",
+            "title": "Deal Amount Dollars Not Applied Because You Changed It"
+          },
+          "deal_date_not_applied_because_you_changed_it": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's new date for a row whose date you set by hand: kept out ('Use <date>' takes it).",
+            "title": "Deal Date Not Applied Because You Changed It"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "item_key": {
+            "title": "Item Key",
+            "type": "string"
+          },
+          "occurrence_number": {
+            "title": "Occurrence Number",
+            "type": "integer"
+          },
+          "transaction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for a row still to be added.",
+            "title": "Transaction Id"
+          }
+        },
+        "required": [
+          "change_kind",
+          "item_key",
+          "occurrence_number",
+          "description"
+        ],
+        "title": "DealCashRowChangeRes",
+        "type": "object"
+      },
+      "DealCashRowChangesRes": {
+        "description": "The before -> after list of an import, a re-sync or a milestone change. A preview changes nothing.",
+        "properties": {
+          "change_counts": {
+            "$ref": "#/components/schemas/DealCashRowChangeCountsRes"
+          },
+          "changes": {
+            "description": "Every row of the deal, in date order (after the change).",
+            "items": {
+              "$ref": "#/components/schemas/DealCashRowChangeRes"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "deal_address": {
+            "title": "Deal Address",
+            "type": "string"
+          },
+          "deal_board": {
+            "enum": [
+              "my_deals",
+              "bought"
+            ],
+            "title": "Deal Board",
+            "type": "string"
+          },
+          "deal_id": {
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "milestone_date_changes": {
+            "description": "A milestone change only: every milestone whose date moves (moving the purchase closing moves the later ones).",
+            "items": {
+              "$ref": "#/components/schemas/DealMilestoneDateChangeRes"
+            },
+            "title": "Milestone Date Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "deal_board",
+          "deal_id",
+          "deal_address",
+          "changes",
+          "change_counts"
+        ],
+        "title": "DealCashRowChangesRes",
+        "type": "object"
+      },
+      "DealCashRowsImportReq": {
+        "properties": {
+          "today": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your local date (ISO). Omitted = today in the time zone of the liquidity settings.",
+            "title": "Today"
+          },
+          "use_deal_value_for": {
+            "description": "The (row, field) pairs where the deal's value replaces the one you set by hand (the 'Use $2,100' taps).",
+            "items": {
+              "$ref": "#/components/schemas/UseDealValueForField"
+            },
+            "maxItems": 2000,
+            "title": "Use Deal Value For",
+            "type": "array"
+          }
+        },
+        "title": "DealCashRowsImportReq",
+        "type": "object"
+      },
       "DealDetail": {
         "description": "One deal in full (inputs, metrics, breakdowns, comps), whichever board it is on.",
         "properties": {
@@ -7572,6 +7867,137 @@
           "deal"
         ],
         "title": "DealDetail",
+        "type": "object"
+      },
+      "DealMilestoneChangeReq": {
+        "properties": {
+          "approve": {
+            "default": true,
+            "description": "True = it happened on new_date (approved). False = still planned, on new_date.",
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "milestone": {
+            "enum": [
+              "contract_signed",
+              "purchase_closed",
+              "rehab_completed",
+              "tenant_moved_in",
+              "refi_closed"
+            ],
+            "title": "Milestone",
+            "type": "string"
+          },
+          "new_date": {
+            "description": "The milestone's date: the real one when approving, or a new planned one.",
+            "format": "date",
+            "title": "New Date",
+            "type": "string"
+          },
+          "today": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your local date (ISO). Omitted = today in the time zone of the liquidity settings.",
+            "title": "Today"
+          },
+          "use_deal_value_for": {
+            "items": {
+              "$ref": "#/components/schemas/UseDealValueForField"
+            },
+            "maxItems": 2000,
+            "title": "Use Deal Value For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "milestone",
+          "new_date"
+        ],
+        "title": "DealMilestoneChangeReq",
+        "type": "object"
+      },
+      "DealMilestoneDateChangeRes": {
+        "properties": {
+          "date_after": {
+            "format": "date",
+            "title": "Date After",
+            "type": "string"
+          },
+          "date_before": {
+            "format": "date",
+            "title": "Date Before",
+            "type": "string"
+          },
+          "milestone": {
+            "enum": [
+              "contract_signed",
+              "purchase_closed",
+              "rehab_completed",
+              "tenant_moved_in",
+              "refi_closed"
+            ],
+            "title": "Milestone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "milestone",
+          "date_before",
+          "date_after"
+        ],
+        "title": "DealMilestoneDateChangeRes",
+        "type": "object"
+      },
+      "DealMilestoneRes": {
+        "properties": {
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When it was approved; null = still planned.",
+            "title": "Approved At"
+          },
+          "is_overdue": {
+            "description": "The planned date passed and it is not approved.",
+            "title": "Is Overdue",
+            "type": "boolean"
+          },
+          "milestone": {
+            "enum": [
+              "contract_signed",
+              "purchase_closed",
+              "rehab_completed",
+              "tenant_moved_in",
+              "refi_closed"
+            ],
+            "title": "Milestone",
+            "type": "string"
+          },
+          "planned_date": {
+            "format": "date",
+            "title": "Planned Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "milestone",
+          "planned_date",
+          "is_overdue"
+        ],
+        "title": "DealMilestoneRes",
         "type": "object"
       },
       "DealSummary": {
@@ -9089,6 +9515,84 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportedLiquidityDealRes": {
+        "properties": {
+          "deal_address": {
+            "title": "Deal Address",
+            "type": "string"
+          },
+          "deal_board": {
+            "enum": [
+              "my_deals",
+              "bought"
+            ],
+            "title": "Deal Board",
+            "type": "string"
+          },
+          "deal_id": {
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "done_row_count": {
+            "title": "Done Row Count",
+            "type": "integer"
+          },
+          "late_refi_row_count": {
+            "title": "Late Refi Row Count",
+            "type": "integer"
+          },
+          "liquidity_rows_out_of_date": {
+            "description": "A deal save changed its rows and that change is not confirmed.",
+            "title": "Liquidity Rows Out Of Date",
+            "type": "boolean"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/DealMilestoneRes"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "my_deals_deal_id_it_was_moved_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A Bought deal moved from My Deals: the My Deals copy's id (that copy is in liquidity through this one).",
+            "title": "My Deals Deal Id It Was Moved From"
+          },
+          "open_row_count": {
+            "title": "Open Row Count",
+            "type": "integer"
+          },
+          "overdue_open_row_count": {
+            "title": "Overdue Open Row Count",
+            "type": "integer"
+          },
+          "refi_is_late": {
+            "title": "Refi Is Late",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deal_board",
+          "deal_id",
+          "deal_address",
+          "liquidity_rows_out_of_date",
+          "open_row_count",
+          "done_row_count",
+          "overdue_open_row_count",
+          "late_refi_row_count",
+          "refi_is_late",
+          "milestones"
+        ],
+        "title": "ImportedLiquidityDealRes",
+        "type": "object"
+      },
       "InspectionCompleteReq": {
         "additionalProperties": false,
         "properties": {
@@ -9632,6 +10136,78 @@
         "title": "InspectionSummaryRes",
         "type": "object"
       },
+      "LateRefiRefreshDealRes": {
+        "properties": {
+          "added_row_count": {
+            "title": "Added Row Count",
+            "type": "integer"
+          },
+          "deal_address": {
+            "title": "Deal Address",
+            "type": "string"
+          },
+          "deal_board": {
+            "enum": [
+              "my_deals",
+              "bought"
+            ],
+            "title": "Deal Board",
+            "type": "string"
+          },
+          "deal_id": {
+            "title": "Deal Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deal_board",
+          "deal_id",
+          "deal_address",
+          "added_row_count"
+        ],
+        "title": "LateRefiRefreshDealRes",
+        "type": "object"
+      },
+      "LateRefiRefreshReq": {
+        "properties": {
+          "today": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your local date (ISO). Omitted = today in the time zone of the liquidity settings.",
+            "title": "Today"
+          }
+        },
+        "title": "LateRefiRefreshReq",
+        "type": "object"
+      },
+      "LateRefiRefreshRes": {
+        "properties": {
+          "added_row_count": {
+            "title": "Added Row Count",
+            "type": "integer"
+          },
+          "deals_with_added_rows": {
+            "items": {
+              "$ref": "#/components/schemas/LateRefiRefreshDealRes"
+            },
+            "title": "Deals With Added Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "added_row_count",
+          "deals_with_added_rows"
+        ],
+        "title": "LateRefiRefreshRes",
+        "type": "object"
+      },
       "LinkedDealRes": {
         "properties": {
           "deal_board": {
@@ -9678,7 +10254,7 @@
       "LiquidityRecurringTransactionCreate": {
         "description": "Definition of a repeating cash-flow rule.\n\nExactly one of `end_date` / `occurrences` may be set (both may be null\nfor an open-ended series; the frontend caps display at the visible\nhorizon).",
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -9688,8 +10264,8 @@
                 "type": "string"
               }
             ],
-            "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-            "title": "Amount K"
+            "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+            "title": "Amount Dollars"
           },
           "description": {
             "maxLength": 500,
@@ -9751,7 +10327,7 @@
         },
         "required": [
           "description",
-          "amount_k",
+          "amount_dollars",
           "start_date",
           "frequency"
         ],
@@ -9760,8 +10336,8 @@
       },
       "LiquidityRecurringTransactionRes": {
         "properties": {
-          "amount_k": {
-            "title": "Amount K",
+          "amount_dollars": {
+            "title": "Amount Dollars",
             "type": "number"
           },
           "created_at": {
@@ -9842,7 +10418,7 @@
         "required": [
           "id",
           "description",
-          "amount_k",
+          "amount_dollars",
           "start_date",
           "frequency",
           "interval"
@@ -9853,7 +10429,7 @@
       "LiquidityRecurringTransactionUpdate": {
         "description": "Partial update \u2014 only provided fields are written.",
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -9866,7 +10442,7 @@
                 "type": "null"
               }
             ],
-            "title": "Amount K"
+            "title": "Amount Dollars"
           },
           "description": {
             "anyOf": [
@@ -9956,18 +10532,39 @@
       },
       "LiquiditySettingsRes": {
         "properties": {
+          "mercury_account_ids_counted_as_cash": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Mercury account ids whose balance counts as cash on hand (the operating accounts). Null = every active account. Leave the tax bucket and the HYSA out, so the deposits into them read as money out.",
+            "title": "Mercury Account Ids Counted As Cash"
+          },
           "opening_balance_date": {
             "format": "date",
             "title": "Opening Balance Date",
             "type": "string"
           },
-          "opening_balance_k": {
-            "title": "Opening Balance K",
+          "opening_balance_dollars": {
+            "title": "Opening Balance Dollars",
             "type": "number"
           },
-          "reserve_k": {
-            "title": "Reserve K",
+          "reserve_dollars": {
+            "title": "Reserve Dollars",
             "type": "number"
+          },
+          "timezone_name": {
+            "default": "America/New_York",
+            "description": "The owner's IANA time zone (e.g. America/New_York): what 'today' is when no date is sent, as on an MCP call (overdue rows, late refis). The website sends the browser's own date.",
+            "title": "Timezone Name",
+            "type": "string"
           },
           "updated_at": {
             "anyOf": [
@@ -9982,15 +10579,34 @@
           }
         },
         "required": [
-          "opening_balance_k",
+          "opening_balance_dollars",
           "opening_balance_date",
-          "reserve_k"
+          "reserve_dollars"
         ],
         "title": "LiquiditySettingsRes",
         "type": "object"
       },
       "LiquiditySettingsUpdate": {
+        "description": "Partial update: only the fields sent change. Sending mercury_account_ids_counted_as_cash as null\ncounts every active account again.",
         "properties": {
+          "mercury_account_ids_counted_as_cash": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Mercury account ids whose balance counts as cash on hand (the operating accounts). Null = every active account. Leave the tax bucket and the HYSA out, so the deposits into them read as money out.",
+            "title": "Mercury Account Ids Counted As Cash"
+          },
           "opening_balance_date": {
             "anyOf": [
               {
@@ -10003,7 +10619,7 @@
             ],
             "title": "Opening Balance Date"
           },
-          "opening_balance_k": {
+          "opening_balance_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10016,9 +10632,9 @@
                 "type": "null"
               }
             ],
-            "title": "Opening Balance K"
+            "title": "Opening Balance Dollars"
           },
-          "reserve_k": {
+          "reserve_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10031,15 +10647,85 @@
                 "type": "null"
               }
             ],
-            "title": "Reserve K"
+            "title": "Reserve Dollars"
+          },
+          "timezone_name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The owner's IANA time zone (e.g. America/New_York): what 'today' is when no date is sent, as on an MCP call (overdue rows, late refis). The website sends the browser's own date.",
+            "title": "Timezone Name"
           }
         },
         "title": "LiquiditySettingsUpdate",
         "type": "object"
       },
+      "LiquidityTransactionBulkActionReq": {
+        "description": "One action on several one-off transactions at once (the timeline's bulk select).",
+        "properties": {
+          "action": {
+            "enum": [
+              "mark_done",
+              "mark_not_done",
+              "move_to_date",
+              "postpone_by_days"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "new_effective_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For move_to_date: the date every row moves to.",
+            "title": "New Effective Date"
+          },
+          "postpone_by_days": {
+            "anyOf": [
+              {
+                "maximum": 3660.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For postpone_by_days: how many days each row moves later.",
+            "title": "Postpone By Days"
+          },
+          "transaction_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Transaction Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "transaction_ids",
+          "action"
+        ],
+        "title": "LiquidityTransactionBulkActionReq",
+        "type": "object"
+      },
       "LiquidityTransactionCreate": {
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10049,8 +10735,8 @@
                 "type": "string"
               }
             ],
-            "description": "Signed amount in $k (positive=inflow, negative=outflow)",
-            "title": "Amount K"
+            "description": "Signed amount in exact dollars, to the cent (positive=inflow, negative=outflow)",
+            "title": "Amount Dollars"
           },
           "description": {
             "maxLength": 500,
@@ -10067,15 +10753,15 @@
         "required": [
           "effective_date",
           "description",
-          "amount_k"
+          "amount_dollars"
         ],
         "title": "LiquidityTransactionCreate",
         "type": "object"
       },
       "LiquidityTransactionRes": {
         "properties": {
-          "amount_k": {
-            "title": "Amount K",
+          "amount_dollars": {
+            "title": "Amount Dollars",
             "type": "number"
           },
           "created_at": {
@@ -10089,9 +10775,27 @@
             ],
             "title": "Created At"
           },
+          "created_because_refi_is_late": {
+            "default": false,
+            "description": "A month of carrying costs added while the deal's refi was late (its planned date passed, not approved).",
+            "title": "Created Because Refi Is Late",
+            "type": "boolean"
+          },
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "done_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the row was marked done (the money moved, or the hold was released); null = still open. An open row dated before today is overdue: money out counts on today, money in is not counted until it is re-dated or done.",
+            "title": "Done At"
           },
           "effective_date": {
             "format": "date",
@@ -10101,6 +10805,89 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "no_longer_in_the_deal": {
+            "default": false,
+            "description": "The deal no longer has this row; it stayed because you changed its date or amount.",
+            "title": "No Longer In The Deal",
+            "type": "boolean"
+          },
+          "originally_planned_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The date the row was first created or imported with.",
+            "title": "Originally Planned Date"
+          },
+          "sequence_within_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The order among the deal's rows on the same date.",
+            "title": "Sequence Within Day"
+          },
+          "source_deal_board": {
+            "anyOf": [
+              {
+                "enum": [
+                  "my_deals",
+                  "bought"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set on a row imported from a BRRRR deal's Cash Needed schedule: the board of that deal. Null = a manual transaction.",
+            "title": "Source Deal Board"
+          },
+          "source_deal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The id of the deal the row was imported from.",
+            "title": "Source Deal Id"
+          },
+          "source_item_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The schedule item the row is, e.g. 'hml_interest_paid_monthly'.",
+            "title": "Source Item Key"
+          },
+          "source_occurrence_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The n-th row of that item in the deal (1-based). With the board, the deal and the item it is the row's identity.",
+            "title": "Source Occurrence Number"
           },
           "updated_at": {
             "anyOf": [
@@ -10112,20 +10899,32 @@
               }
             ],
             "title": "Updated At"
+          },
+          "user_overrode_amount": {
+            "default": false,
+            "description": "The amount was changed by hand; a re-sync from a deal keeps it.",
+            "title": "User Overrode Amount",
+            "type": "boolean"
+          },
+          "user_overrode_date": {
+            "default": false,
+            "description": "The date was changed by hand; a re-sync from a deal keeps it.",
+            "title": "User Overrode Date",
+            "type": "boolean"
           }
         },
         "required": [
           "id",
           "effective_date",
           "description",
-          "amount_k"
+          "amount_dollars"
         ],
         "title": "LiquidityTransactionRes",
         "type": "object"
       },
       "LiquidityTransactionUpdate": {
         "properties": {
-          "amount_k": {
+          "amount_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -10138,7 +10937,7 @@
                 "type": "null"
               }
             ],
-            "title": "Amount K"
+            "title": "Amount Dollars"
           },
           "description": {
             "anyOf": [
@@ -12194,6 +12993,49 @@
         "title": "RegisterVerifyReq",
         "type": "object"
       },
+      "RemoveOpenDealRowsReq": {
+        "properties": {
+          "earnest_money_refund_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When set, the deal's earnest money deposit comes back as money in on this date (a dead deal's refund).",
+            "title": "Earnest Money Refund Date"
+          }
+        },
+        "title": "RemoveOpenDealRowsReq",
+        "type": "object"
+      },
+      "RemoveOpenDealRowsRes": {
+        "properties": {
+          "earnest_money_refund_transaction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earnest Money Refund Transaction Id"
+          },
+          "removed_row_count": {
+            "title": "Removed Row Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "removed_row_count"
+        ],
+        "title": "RemoveOpenDealRowsRes",
+        "type": "object"
+      },
       "RentComp-Input": {
         "properties": {
           "rent": {
@@ -13377,6 +14219,31 @@
         "title": "TopDeal",
         "type": "object"
       },
+      "UseDealValueForField": {
+        "description": "Take the deal's value for one field of one row although you changed that field by hand.",
+        "properties": {
+          "field": {
+            "enum": [
+              "date",
+              "amount"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "transaction_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transaction_id",
+          "field"
+        ],
+        "title": "UseDealValueForField",
+        "type": "object"
+      },
       "UserRes": {
         "properties": {
           "display_name": {
@@ -13557,17 +14424,10 @@
             "title": "Brokerprocessingfeerefi"
           },
           "buyClosingDate": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Purchase closing date (ISO). Anchors prepaid interest, the seller tax credit and the refi / tenant dates. None = unknown: the date-driven figures are left out.",
-            "title": "Buyclosingdate"
+            "description": "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / tenant / rehab-completed dates and every date of the Cash Needed schedule.",
+            "format": "date",
+            "title": "Buyclosingdate",
+            "type": "string"
           },
           "capexPercent": {
             "anyOf": [
@@ -13652,6 +14512,12 @@
             "default": "0",
             "description": "Rehab budget financed by the hard-money lender, in thousands (35 = $35,000). 0 = rehab paid in cash. Budget minus actual rehab is the 'stolen money' draw spread.",
             "title": "Constructionloanbudget"
+          },
+          "contractDate": {
+            "description": "Purchase contract date (ISO), required. The earnest money deposit is paid on it. Must be on or before buyClosingDate.",
+            "format": "date",
+            "title": "Contractdate",
+            "type": "string"
           },
           "daysUntilRefi": {
             "default": 180,
@@ -14343,6 +15209,8 @@
           }
         },
         "required": [
+          "contractDate",
+          "buyClosingDate",
           "arv_in_thousands",
           "purchasePrice",
           "down_payment",
@@ -14391,6 +15259,17 @@
             "description": "Monthly cash flow in a regular year after the refinance, in dollars: rent minus vacancy, maintenance, capex, property management, taxes (this year's bill x 0.96 / 12), insurance (the regular-year monthly figure), HOA and the new mortgage payment. Never includes a closing lump. Negative = the property costs money every month.",
             "title": "Cash Flow",
             "type": "number"
+          },
+          "cash_needed_schedule_at_lowest_arv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CashNeededScheduleAtLowestArvRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When every dollar of Cash Needed moves, in the Lowest-ARV scenario: one dated row per individual cash item (signed exact dollars, positive = money in), the rehab cushion included as a hold on the purchase closing date."
           },
           "cash_on_cash": {
             "anyOf": [
@@ -14756,30 +15635,16 @@
             "title": "Recording Transfer Refi Effective"
           },
           "refi_closing_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until refi (ISO). Absent when no buy closing date is set.",
-            "title": "Refi Closing Date"
+            "description": "Buy closing date + days until refi (ISO).",
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
           },
           "rehab_completed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rehab completed (ISO). Absent when no buy closing date is set.",
-            "title": "Rehab Completed Date"
+            "description": "Buy closing date + days until rehab completed (ISO).",
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
           },
           "reserves_funded_from_own_pocket_at_lowest_arv": {
             "anyOf": [
@@ -14842,17 +15707,10 @@
             "title": "Stolen Money"
           },
           "tenant_occupied_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Buy closing date + days until rented (ISO). Absent when no buy closing date is set.",
-            "title": "Tenant Occupied Date"
+            "description": "Buy closing date + days until rented (ISO).",
+            "format": "date",
+            "title": "Tenant Occupied Date",
+            "type": "string"
           },
           "title_escrow_buy_effective": {
             "anyOf": [
@@ -14899,7 +15757,7 @@
                 "type": "null"
               }
             ],
-            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars: the larger of total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline) and the day-one floor: EMD + cash_to_close_buy + the insurance bill when paid outside the purchase closing + rehab cushion + one month of utilities, of HOA (30 days), of insurance paid monthly and one tax-bucket deposit + the rest of the first month's hard-money interest (30 days less the days already prepaid inside cash_to_close_buy).",
+            "description": "Cash Needed: the single definitive out-of-pocket capital through the refinance, in dollars, rounded to the cent: total_cash_invested + rehab cushion + cash_to_refi_table_conservative + reserves_funded_from_own_pocket_at_lowest_arv (the cash brought to the refi table, and the reserves the wire cannot fund, if the appraisal comes in at the lowest ARV; planned on the stress test, not the baseline). No floor and no clamping: negative means the deal gives back more than it takes. cash_needed_schedule_at_lowest_arv dates every dollar of it.",
             "title": "Total Cash Needed For Deal"
           },
           "total_hard_money_cost": {
@@ -14928,7 +15786,10 @@
           }
         },
         "required": [
-          "cash_flow"
+          "cash_flow",
+          "refi_closing_date",
+          "tenant_occupied_date",
+          "rehab_completed_date"
         ],
         "title": "analyzeBRRRRes",
         "type": "object"
@@ -17190,9 +18051,408 @@
         "summary": "Link Inspection To Deal"
       }
     },
+    "/liquidity/deals": {
+      "get": {
+        "operationId": "list_liquidity_deals_liquidity_deals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportedLiquidityDealRes"
+                  },
+                  "title": "Response List Liquidity Deals Liquidity Deals Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Liquidity Deals"
+      }
+    },
+    "/liquidity/deals/refresh-late-refis": {
+      "post": {
+        "operationId": "refresh_liquidity_late_refis_liquidity_deals_refresh_late_refis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LateRefiRefreshReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LateRefiRefreshRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Liquidity Late Refis"
+      }
+    },
+    "/liquidity/deals/{deal_board}/{deal_id}/import": {
+      "post": {
+        "operationId": "import_liquidity_deal_liquidity_deals__deal_board___deal_id__import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_board",
+            "required": true,
+            "schema": {
+              "enum": [
+                "my_deals",
+                "bought"
+              ],
+              "title": "Deal Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DealCashRowsImportReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealCashRowChangesRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Liquidity Deal"
+      }
+    },
+    "/liquidity/deals/{deal_board}/{deal_id}/import-preview": {
+      "post": {
+        "operationId": "preview_liquidity_deal_import_liquidity_deals__deal_board___deal_id__import_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_board",
+            "required": true,
+            "schema": {
+              "enum": [
+                "my_deals",
+                "bought"
+              ],
+              "title": "Deal Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DealCashRowsImportReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealCashRowChangesRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Liquidity Deal Import"
+      }
+    },
+    "/liquidity/deals/{deal_board}/{deal_id}/milestones/apply": {
+      "post": {
+        "operationId": "apply_liquidity_deal_milestone_change_liquidity_deals__deal_board___deal_id__milestones_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_board",
+            "required": true,
+            "schema": {
+              "enum": [
+                "my_deals",
+                "bought"
+              ],
+              "title": "Deal Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DealMilestoneChangeReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealCashRowChangesRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Liquidity Deal Milestone Change"
+      }
+    },
+    "/liquidity/deals/{deal_board}/{deal_id}/milestones/preview": {
+      "post": {
+        "operationId": "preview_liquidity_deal_milestone_change_liquidity_deals__deal_board___deal_id__milestones_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_board",
+            "required": true,
+            "schema": {
+              "enum": [
+                "my_deals",
+                "bought"
+              ],
+              "title": "Deal Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DealMilestoneChangeReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealCashRowChangesRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Liquidity Deal Milestone Change"
+      }
+    },
+    "/liquidity/deals/{deal_board}/{deal_id}/remove-open-rows": {
+      "post": {
+        "operationId": "remove_liquidity_deal_open_rows_liquidity_deals__deal_board___deal_id__remove_open_rows_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_board",
+            "required": true,
+            "schema": {
+              "enum": [
+                "my_deals",
+                "bought"
+              ],
+              "title": "Deal Board",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveOpenDealRowsReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveOpenDealRowsRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Liquidity Deal Open Rows"
+      }
+    },
     "/liquidity/mercury-balance": {
       "get": {
-        "description": "Fetch the live sum of all active Mercury account balances, in $k.\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
+        "description": "Fetch the live Mercury account balances, in dollars, and the cash on hand among them\n(`counted_as_cash_balance_dollars`: the accounts chosen in the liquidity settings).\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
         "operationId": "get_mercury_balance_liquidity_mercury_balance_get",
         "responses": {
           "200": {
@@ -17461,6 +18721,48 @@
         "summary": "Create Liquidity Transaction"
       }
     },
+    "/liquidity/transactions/bulk": {
+      "post": {
+        "operationId": "apply_liquidity_transaction_bulk_action_liquidity_transactions_bulk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiquidityTransactionBulkActionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LiquidityTransactionRes"
+                  },
+                  "title": "Response Apply Liquidity Transaction Bulk Action Liquidity Transactions Bulk Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Liquidity Transaction Bulk Action"
+      }
+    },
     "/liquidity/transactions/{txn_id}": {
       "delete": {
         "operationId": "delete_liquidity_transaction_liquidity_transactions__txn_id__delete",
@@ -17543,6 +18845,84 @@
           }
         },
         "summary": "Update Liquidity Transaction"
+      }
+    },
+    "/liquidity/transactions/{txn_id}/done": {
+      "post": {
+        "operationId": "mark_liquidity_transaction_done_liquidity_transactions__txn_id__done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "title": "Txn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Transaction Done"
+      }
+    },
+    "/liquidity/transactions/{txn_id}/not-done": {
+      "post": {
+        "operationId": "mark_liquidity_transaction_not_done_liquidity_transactions__txn_id__not_done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "title": "Txn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Transaction Not Done"
       }
     },
     "/member-loan/access": {

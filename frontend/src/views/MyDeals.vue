@@ -22,12 +22,32 @@ import type { ActiveDealRes, AnalyzeDealReq } from "../types";
 import { useDealReport } from "../composables/useDealReport";
 import DealReportPreviewModal from "../components/deal/DealReportPreviewModal.vue";
 import GenerateReportResultPickerPopup from "../components/deal/GenerateReportResultPickerPopup.vue";
+import ImportDealToLiquidityButton from "../components/liquidity/ImportDealToLiquidityButton.vue";
+import { DEAD_DEAL_STAGE, useDealLiquidityRows } from "../composables/useDealLiquidityRows";
 
 console.group("View: MyDeals");
 console.log("Component setup started");
 
 const boughtStore = useBoughtDealStore();
 const store = useDealStore();
+const { offerToRemoveOpenRowsOfDeadDeal, offerEarnestMoneyRefundBeforeDeletingDeal } = useDealLiquidityRows();
+
+/** A BRRRR deal just marked Dead: offer to take its open rows out of the liquidity timeline. */
+const offerLiquidityCleanupWhenDealDies = (deal: { id: string; address: string; deal_type?: string }, newStage: number, oldStage: number) => {
+  if (deal.deal_type === "FLIP" || newStage !== DEAD_DEAL_STAGE || oldStage === DEAD_DEAL_STAGE) return;
+  void offerToRemoveOpenRowsOfDeadDeal("my_deals", deal.id, deal.address).catch((e) =>
+    console.error("View: MyDeals - Failed to remove the dead deal's liquidity rows", e));
+};
+
+/** For the "Import to liquidity" button: save pending edits first; invalid inputs cannot be imported. */
+const savePendingChangesBeforeLiquidityImport = async (): Promise<boolean> => {
+  if (hasInvalidDealInputs.value) {
+    alert("Fix the highlighted inputs before importing this deal to liquidity.");
+    return false;
+  }
+  if (isDirty) await performSave();
+  return true;
+};
 const route = useRoute();
 const router = useRouter();
 
@@ -169,6 +189,7 @@ const onDrop = async (event: any, stageId: number) => {
       try {
         await store.updateDealStage(deal.id, stageId);
         console.log("View: MyDeals - Deal stage update sent to store");
+        offerLiquidityCleanupWhenDealDies(deal, stageId, Number(oldStage));
       } catch (e) {
         deal.stage = oldStage; // Revert
         console.error(
@@ -200,6 +221,7 @@ const onAdd = async (event: any, stageId: number) => {
       deal.stage = stageId;
       try {
         await store.updateDealStage(deal.id, stageId);
+        offerLiquidityCleanupWhenDealDies(deal, stageId, Number(oldStage));
       } catch (e) {
         deal.stage = oldStage;
         console.error(
@@ -215,6 +237,7 @@ const confirmDelete = async (deal: ActiveDealRes) => {
   console.log("View: MyDeals - confirmDelete requested for deal:", deal.id);
   if (confirm(`Are you sure you want to delete ${deal.address}?`)) {
     try {
+      if (deal.deal_type !== 'FLIP') await offerEarnestMoneyRefundBeforeDeletingDeal('my_deals', deal.id);
       await store.deleteDeal(deal.id, deal.deal_type || 'BRRRR');
       refreshColumns(); // Refresh local columns after store update
       console.log("View: MyDeals - Deal deleted successfully");
@@ -293,6 +316,7 @@ const deleteEditingDeal = async () => {
   if (editingDeal.value) {
     if (confirm(`Are you sure you want to delete ${editingDeal.value.address}?`)) {
       try {
+        if (editingDeal.value.deal_type !== 'FLIP') await offerEarnestMoneyRefundBeforeDeletingDeal('my_deals', editingDeal.value.id);
         await store.deleteDeal(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
         showDetailModal.value = false;
         refreshColumns();
@@ -372,10 +396,12 @@ const performSave = async () => {
   isDirty = false;
   saveStatus.value = 'saving';
   try {
+    const stageBeforeThisSave = Number(lastSavedDealSnapshot?.stage);
     const updatedDeal = await store.updateDeal(editingDeal.value);
     if (updatedDeal) {
       currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
     }
+    offerLiquidityCleanupWhenDealDies(editingDeal.value, Number(editingDeal.value.stage), stageBeforeThisSave);
     lastSavedDealSnapshot = JSON.parse(JSON.stringify(editingDeal.value));
     if (isDirty) {
       debouncedAutoSave();
@@ -1424,6 +1450,13 @@ console.groupEnd();
               >
                 <i class="pi pi-arrow-right" aria-hidden="true"></i> Move to Bought
               </UiButton>
+              <ImportDealToLiquidityButton
+                v-if="editingDeal.deal_type !== 'FLIP'"
+                deal-board="my_deals"
+                :deal-id="editingDeal.id"
+                :deal-address="editingDeal.address"
+                :save-pending-changes="savePendingChangesBeforeLiquidityImport"
+              />
               <UiButton
                 data-testid="mydeals.modal.delete"
                 @click="deleteEditingDeal"
@@ -1483,6 +1516,7 @@ console.groupEnd();
       :metric-label="pressedResultTileForCalculationBreakdown?.metricLabel ?? ''"
       :breakdowns="currentAnalysis?.breakdowns"
       :metric-value="pressedResultTileValue"
+      :cash-needed-schedule="currentAnalysis && 'cash_needed_schedule_at_lowest_arv' in currentAnalysis ? currentAnalysis.cash_needed_schedule_at_lowest_arv : null"
       @close="pressedResultTileForCalculationBreakdown = null"
     />
   </div>

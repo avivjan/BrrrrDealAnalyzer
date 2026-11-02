@@ -46,8 +46,7 @@ class TestInsuranceAcrossTheDeal:
         _assert_equal_to_the_cent(inside.cash_to_close_buy, outside.cash_to_close_buy + Decimal("1454.46"))
         _assert_equal_to_the_cent(inside.total_cash_invested, outside.total_cash_invested)
         _assert_equal_to_the_cent(inside.cash_out, outside.cash_out)
-        # The floor carries it either way: inside the purchase wire, or as its own term.
-        _assert_equal_to_the_cent(inside.cash_needed_floor, outside.cash_needed_floor)
+        assert inside.total_cash_needed == outside.total_cash_needed
 
     def test_the_bill_at_refi_comes_off_both_wires_or_goes_into_cash_invested_and_cash_out_is_the_same(self, brrrr_payload):
         inside = _compute(brrrr_payload, insuranceBillAtRefiClosing=2410.01)
@@ -81,9 +80,9 @@ class TestInsuranceAcrossTheDeal:
         assert (low.cash_out, low.total_cash_needed, low.cash_out_routi) == (high.cash_out, high.total_cash_needed, high.cash_out_routi)
         _assert_equal_to_the_cent(low.cash_flow, high.cash_flow + 150)
 
-    def test_the_monthly_until_refi_is_paid_every_30_days_until_the_refi(self, brrrr_payload):
-        results = _compute(brrrr_payload, monthlyInsuranceUntilRefi=120, daysUntilRefi=182)
-        assert results.insurance_paid_monthly_until_refi == Decimal(120) * 182 / 30
+    def test_the_monthly_until_refi_is_paid_on_every_1st_through_the_refi(self, brrrr_payload):
+        results = _compute(brrrr_payload, monthlyInsuranceUntilRefi=120, daysUntilRefi=182)   # 2026-01-10 -> 2026-07-11: Feb 1 .. Jul 1
+        assert results.insurance_paid_monthly_until_refi == Decimal(120) * 6
 
 
 class TestPropertyTaxBucket:
@@ -166,12 +165,6 @@ class TestPropertyTaxBucket:
         assert results.property_tax_bucket_deposit == results.property_tax_bill_paid_on_november_30 - results.seller_tax_credit_set_aside_in_tax_bucket
         assert results.property_tax_bucket_first_bill_deposit_count_until_refi == 1
 
-    def test_without_a_closing_date_the_deposit_is_a_twelfth_every_30_days(self, brrrr_payload):
-        results = _compute(brrrr_payload, buyClosingDate=None, daysUntilRefi=180)
-        assert results.first_property_tax_payment_date is None and results.property_tax_bucket_deposit_count_until_first_payment == 0
-        assert results.property_tax_bucket_deposit == results.monthly_taxes
-        assert results.property_tax_paid_into_bucket_until_refi == results.monthly_taxes * 6
-
     def test_the_regular_year_tax_is_the_bill_with_the_november_discount_over_12(self, brrrr_payload):
         results = _compute(brrrr_payload, annual_property_taxes=3087.96)
         assert results.monthly_taxes == Decimal("3087.96") * Decimal("0.96") / 12
@@ -235,15 +228,14 @@ class TestReservesSetAsideByTheOwner:
         short = _compute(brrrr_payload, arv_in_thousands=250, maintenanceReserve=30_000)
         assert short.reserves_funded_from_own_pocket_at_lowest_arv == max(Decimal(0), short.reserves_total - max(Decimal(0), short.cash_out_routi_conservative))
         assert short.reserves_funded_from_own_pocket_at_lowest_arv > 0
-        _assert_equal_to_the_cent(short.cash_needed_through_refi, short.total_cash_invested + Decimal(brrrr_payload["rehabCushion"])
-                                  + short.cash_to_refi_table_conservative + short.reserves_funded_from_own_pocket_at_lowest_arv)
+        assert short.total_cash_needed == deal_math.round_to_cents(short.total_cash_invested + Decimal(brrrr_payload["rehabCushion"])
+                                                                   + short.cash_to_refi_table_conservative + short.reserves_funded_from_own_pocket_at_lowest_arv)
 
 
 class TestRehabCompletionDate:
     def test_it_is_the_purchase_closing_plus_the_days(self, brrrr_payload):
         assert _compute(brrrr_payload).rehab_completed_date == date(2026, 2, 24)   # 2026-01-10 + 45
         assert _compute(brrrr_payload, daysUntilRehabCompleted=60).rehab_completed_date == date(2026, 3, 11)
-        assert _compute(brrrr_payload, buyClosingDate=None).rehab_completed_date is None
 
     def test_it_moves_no_money_yet(self, brrrr_payload):
         early, late = _compute(brrrr_payload, daysUntilRehabCompleted=10), _compute(brrrr_payload, daysUntilRehabCompleted=90)
@@ -301,7 +293,7 @@ class TestDscrPerDiemIsOnA360DayYear:
     {"buyClosingDate": "2026-08-20", "daysUntilRefi": 200, "propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi",
      "monthlyPropertyTaxBucketDeposit": 100},
     {"buyClosingDate": "2026-11-20", "daysUntilRefi": 120, "daysUntilRented": 60, "sellerTaxCreditAtPurchaseClosing": -40},
-    {"buyClosingDate": None, "propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi", "hysaDepositAtRefi": 0},
+    {"propertyTaxCollectionAtRefi": "full_tax_bill_collected_at_refi", "hysaDepositAtRefi": 0},
 ])
 def test_the_explanation_holds_on_the_new_inputs(brrrr_payload, overrides):
     # every `check` and `add_sum` guard in explain/brrr.py runs here

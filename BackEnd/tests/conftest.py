@@ -218,6 +218,7 @@ def brrrr_payload() -> dict:
         "maintenancePercent": 5,
         "capexPercent": 5,
         # BRRRR lifecycle inputs, as the form emits them (None = "use the formula default").
+        "contractDate": "2026-01-03",
         "buyClosingDate": "2026-01-10",
         "earnestMoneyDeposit": 5000,
         "loanChargesBuy": 900,
@@ -265,33 +266,6 @@ def brrrr_payload() -> dict:
         "section": 2,
         "stage": 2,
     }
-
-
-# The lifecycle inputs neutralised so the engine reduces to the pre-lifecycle one: no
-# dates, the legacy lumps as the only settlement lines, no holding items, no rent offset,
-# no cushion, no reserves, the budget = the hard-money-funded rehab (50k x 1.10), and the
-# lowest ARV = the ARV (the old engine had no stress test, so Cash Needed is planned on
-# the baseline wire). The old engine accrued $1,200/yr of insurance and $3,600/yr of taxes
-# per diem and charged them / 12 after the refi: that is insurance paid $100 a month with no
-# bill at either closing, and a $3,750 bill (x 0.96 = $3,600) deposited at $300 a month.
-LEGACY_EQUIVALENT_OVERRIDES = {
-    "lowestArv": 320,
-    "buyClosingDate": None, "earnestMoneyDeposit": 0, "loanChargesBuy": 0, "recordingTransferBuy": 0,
-    "titleEscrowBuy": 0, "onlineNotaryBuy": False, "otherClosingCostsBuy": 5000, "rehabCushion": 0,
-    "daysUntilRented": 180, "monthlyUtilitiesUntilRented": 0, "maintenanceBeforeRefi": 0, "appliances": 0,
-    "loanChargesRefi": 0, "recordingTransferRefi": 0, "titleEscrowRefi": 0, "onlineNotaryRefi": False,
-    "appraisalFee": 0, "surveyFee": 0, "refiUnderwritingFee": 0, "brokerProcessingFeeRefi": 0,
-    "otherClosingCostsRefi": 6000, "maintenanceReserve": 0, "vacancyReserve": 0, "capexReserve": 0,
-    "constructionLoanBudget": 55,
-    "annual_insurance": 0, "monthlyInsuranceUntilRefi": 100, "insuranceBillAtRefiClosing": 0, "monthlyInsuranceAfterRefi": 100,
-    "annual_property_taxes": 3750, "monthlyPropertyTaxBucketDeposit": 300, "hysaDepositAtRefi": 0,
-}
-
-
-@pytest.fixture
-def legacy_brrrr_payload(brrrr_payload: dict) -> dict:
-    """`brrrr_payload` with the lifecycle inputs neutralised; reproduces the pre-lifecycle figures."""
-    return {**brrrr_payload, **LEGACY_EQUIVALENT_OVERRIDES}
 
 
 @pytest.fixture

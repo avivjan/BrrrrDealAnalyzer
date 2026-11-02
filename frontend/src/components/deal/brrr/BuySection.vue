@@ -1,8 +1,8 @@
 <script setup lang="ts">
-/** BRRRR › Buy: the closing date, the hard-money stack and the purchase settlement. */
+/** BRRRR › Buy: the contract and closing dates, the hard-money stack and the purchase settlement. */
 import { computed, useId } from "vue";
 import type { DealInputModel, TitleModeBuy } from "../../../types";
-import { useDealField, type NumericKey } from "../../../composables/useDealField";
+import { useDealField, type DealInputFieldKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
@@ -18,7 +18,7 @@ const props = defineProps<{
   deal: DealInputModel;
   surface: "card" | "panel";
   /** Why a field's value is wrong, by field key (`utils/dealInputValidation`); a field with no entry is fine. */
-  fieldErrorMessages?: Partial<Record<NumericKey, string>>;
+  fieldErrorMessages?: Partial<Record<DealInputFieldKey, string>>;
 }>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
@@ -28,13 +28,20 @@ const LOAN_CHARGE_PRESETS = [
   { label: "212", value: 1900 },
 ];
 
+const contractDateId = useId();
+const contractDateErrorId = useId();
 const closingDateId = useId();
+const closingDateErrorId = useId();
 const titleModeId = useId();
 const notaryId = useId();
 const otherClosingCostsNoteId = useId();
 const NOTARY_FEE_DEFAULT = 250;
 const sellerPaidId = useId();
 
+const onContractDate = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value;
+  field.setStr("contractDate", value || null);
+};
 const onClosingDate = (event: Event) => {
   const value = (event.target as HTMLInputElement).value;
   field.setStr("buyClosingDate", value || null);
@@ -79,13 +86,48 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
 <template>
   <LifecycleSection title="Buy" icon="pi-home" :surface="surface">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <!-- Closing date + the two figures it unlocks -->
-      <div class="flex flex-col gap-1.5" data-testid="form.field.buyClosingDate">
-        <div data-part="label-row" class="flex h-5 items-center gap-1">
-          <label :for="closingDateId" data-part="label" class="text-sm font-medium leading-5 text-fg">Closing Date (Buy)</label>
-          <InputInfo :content="impactText('buyClosingDate')" field-label="Closing Date (Buy)" />
+      <!-- The two mandatory dates; the closing date unlocks the two figures beside them -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-1.5" data-testid="form.field.contractDate">
+          <div data-part="label-row" class="flex h-5 items-center gap-1">
+            <label :for="contractDateId" data-part="label" class="text-sm font-medium leading-5 text-fg">Contract Date</label>
+            <InputInfo :content="impactText('contractDate')" field-label="Contract Date" />
+          </div>
+          <input
+            :id="contractDateId"
+            v-shake="fieldErrorMessages?.contractDate"
+            data-part="input"
+            type="date"
+            required
+            class="ui-input"
+            :class="fieldErrorMessages?.contractDate ? 'ui-input-invalid' : ''"
+            :aria-invalid="fieldErrorMessages?.contractDate ? 'true' : undefined"
+            :aria-describedby="fieldErrorMessages?.contractDate ? contractDateErrorId : undefined"
+            :value="field.getStr('contractDate') ?? ''"
+            @change="onContractDate"
+          />
+          <p v-if="fieldErrorMessages?.contractDate" :id="contractDateErrorId" role="alert" data-part="error-message" class="text-xs text-negative">{{ fieldErrorMessages.contractDate }}</p>
         </div>
-        <input :id="closingDateId" data-part="input" type="date" class="ui-input" :value="field.getStr('buyClosingDate') ?? ''" @change="onClosingDate" />
+        <div class="flex flex-col gap-1.5" data-testid="form.field.buyClosingDate">
+          <div data-part="label-row" class="flex h-5 items-center gap-1">
+            <label :for="closingDateId" data-part="label" class="text-sm font-medium leading-5 text-fg">Closing Date (Buy)</label>
+            <InputInfo :content="impactText('buyClosingDate')" field-label="Closing Date (Buy)" />
+          </div>
+          <input
+            :id="closingDateId"
+            v-shake="fieldErrorMessages?.buyClosingDate"
+            data-part="input"
+            type="date"
+            required
+            class="ui-input"
+            :class="fieldErrorMessages?.buyClosingDate ? 'ui-input-invalid' : ''"
+            :aria-invalid="fieldErrorMessages?.buyClosingDate ? 'true' : undefined"
+            :aria-describedby="fieldErrorMessages?.buyClosingDate ? closingDateErrorId : undefined"
+            :value="field.getStr('buyClosingDate') ?? ''"
+            @change="onClosingDate"
+          />
+          <p v-if="fieldErrorMessages?.buyClosingDate" :id="closingDateErrorId" role="alert" data-part="error-message" class="text-xs text-negative">{{ fieldErrorMessages.buyClosingDate }}</p>
+        </div>
       </div>
       <div class="flex flex-col gap-2">
         <AutoFigure data-testid="form.auto.prepaidInterestBuy" label="Prepaid Interest (Buy)" :value="autoCalc.prepaidInterestBuy" :hint="prepaidInterestHint" />

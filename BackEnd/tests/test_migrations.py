@@ -8,6 +8,7 @@ must be a no-op, and the migrated rows must still serve through the API.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -25,7 +26,7 @@ ALL_DEAL_TABLES = ("active_deals", "flip_deals", "bought_brrrr_deals", "bought_f
 def _drop_lifecycle_columns() -> None:
     with app_db.engine.begin() as conn:
         for table in BRRR_TABLES:
-            for column in NEW_COLUMNS:
+            for column in [*NEW_COLUMNS, "contract_date"]:
                 conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS {column}"))
 
 
@@ -103,10 +104,10 @@ class TestBrrrLifecycleMigration:
             assert migrated_row["insurance_refi_bill_payment_timing"] == "inside_refi_closing"
             assert migrated_row["property_tax_collection_at_refi"] == "no_tax_collected_at_refi"
 
-    def test_formula_defaults_stay_null_and_the_date_stays_unknown(self, legacy_rows):
+    def test_formula_defaults_stay_null(self, legacy_rows):
         run_migrations(app_db.engine)
         migrated_row = _row_by_address("active_deals", "HM Rehab")
-        for column in ("buy_closing_date", "recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
+        for column in ("recording_transfer_buy", "title_escrow_buy", "seller_paid_current_year_taxes",
                        "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands",
                        "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note",
                        "seller_tax_credit_at_purchase_closing", "monthly_property_tax_bucket_deposit", "insurance_bill_at_refi_closing",
@@ -128,11 +129,47 @@ class TestBrrrLifecycleMigration:
         hard_money_rehab_deal = by_address["HM Rehab"]
         assert float(hard_money_rehab_deal["constructionLoanBudget"]) == pytest.approx(55.0)
         assert float(hard_money_rehab_deal["earnestMoneyDeposit"]) == pytest.approx(5000.0)
-        assert hard_money_rehab_deal["buyClosingDate"] is None and hard_money_rehab_deal["prepaid_interest_buy"] == 0
+        assert hard_money_rehab_deal["buyClosingDate"] is not None and hard_money_rehab_deal["contractDate"] is not None
         assert hard_money_rehab_deal["total_cash_needed_for_deal"] is not None
         bought = client.get("/bought-deals")
         assert bought.status_code == 200, bought.text
         assert any(d["address"] == "HM Rehab" for d in bought.json())
+
+
+class TestContractDateAndRequiredBuyClosingDateMigration:
+    """Existing BRRRR rows get both mandatory dates: a missing closing becomes the creation day + 7, and the
+    contract date is the creation day, or the closing date when the deal was entered after it closed."""
+
+    def test_a_missing_closing_date_becomes_creation_plus_seven_and_the_contract_the_creation_day(self, legacy_rows):
+        run_migrations(app_db.engine)
+        for table in BRRR_TABLES:
+            migrated_row = _row_by_address(table, "HM Rehab")
+            creation_day = migrated_row["created_at"].date()
+            assert migrated_row["buy_closing_date"] == creation_day + timedelta(days=7)
+            assert migrated_row["contract_date"] == creation_day
+
+    def test_a_closing_date_before_the_creation_day_becomes_the_contract_date(self, client, brrrr_payload):
+        """A deal entered after it closed: contract = created_at would break contract <= buy closing."""
+        client.post("/active-deals", json={**brrrr_payload, "address": "Entered After Closing", "buyClosingDate": "2020-03-05",
+                                            "contractDate": "2020-02-20"})
+        with app_db.engine.begin() as conn:
+            for table in BRRR_TABLES:
+                conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS contract_date"))
+        run_migrations(app_db.engine)
+        migrated_row = _row_by_address("active_deals", "Entered After Closing")
+        assert migrated_row["buy_closing_date"] == date(2020, 3, 5)
+        assert migrated_row["contract_date"] == date(2020, 3, 5)
+
+    def test_both_dates_are_not_null_and_the_migration_is_idempotent(self, legacy_rows):
+        run_migrations(app_db.engine)
+        run_migrations(app_db.engine)
+        with app_db.engine.connect() as conn:
+            for table in BRRR_TABLES:
+                nullability = dict(conn.execute(text(
+                    "SELECT column_name, is_nullable FROM information_schema.columns "
+                    "WHERE table_name = :t AND column_name IN ('contract_date', 'buy_closing_date')"
+                ), {"t": table}).all())
+                assert nullability == {"contract_date": "NO", "buy_closing_date": "NO"}, table
 
 
 class TestBrokerProcessingFeeDefault:
@@ -210,3 +247,48 @@ class TestWidenRateColumns:
         assert saved["cash_flow"] == pytest.approx(analyzed["cash_flow"])
         assert saved["cash_out_routi"] == pytest.approx(analyzed["cash_out_routi"])
         assert saved["total_cash_needed_for_deal"] == pytest.approx(analyzed["total_cash_needed_for_deal"])
+
+
+class TestLiquidityAmountsMoveToDollars:
+    """A database still in thousands ($k) gets every liquidity amount in exact dollars, once.
+    ($k was stored with 4 decimals, i.e. to the dime, so the amounts here are whole dimes.)"""
+
+    @staticmethod
+    def _back_to_thousands() -> None:
+        with app_db.engine.begin() as conn:
+            for table, column_in_thousands, column_in_dollars in (
+                ("liquidity_transactions", "amount_k", "amount_dollars"),
+                ("liquidity_recurring_transactions", "amount_k", "amount_dollars"),
+                ("liquidity_settings", "opening_balance_k", "opening_balance_dollars"),
+                ("liquidity_settings", "reserve_k", "reserve_dollars"),
+            ):
+                conn.execute(text(f"ALTER TABLE {table} RENAME COLUMN {column_in_dollars} TO {column_in_thousands}"))
+                conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {column_in_thousands} TYPE NUMERIC(14,4) "
+                                  f"USING {column_in_thousands} / 1000"))
+
+    def test_every_amount_is_multiplied_by_1000_and_the_migration_is_idempotent(self, client):
+        client.post("/liquidity/transactions", json={"effective_date": "2026-11-01", "description": "HML", "amount_dollars": -1970.8})
+        client.post("/liquidity/recurring", json={"description": "Rent", "amount_dollars": 2600, "start_date": "2026-11-01",
+                                                   "frequency": "monthly", "interval": 1})
+        client.put("/liquidity/settings", json={"opening_balance_dollars": 84022.1, "opening_balance_date": "2026-11-01",
+                                                 "reserve_dollars": 7500})
+        self._back_to_thousands()
+        assert "amount_k" in _column_names_of("liquidity_transactions")
+
+        run_migrations(app_db.engine)
+        run_migrations(app_db.engine)
+
+        assert "amount_k" not in _column_names_of("liquidity_transactions")
+        assert client.get("/liquidity/transactions").json()[0]["amount_dollars"] == -1970.8
+        assert client.get("/liquidity/recurring").json()[0]["amount_dollars"] == 2600
+        settings = client.get("/liquidity/settings").json()
+        assert (settings["opening_balance_dollars"], settings["reserve_dollars"]) == (84022.1, 7500)
+        assert "5000" in (_column_default_of("liquidity_settings", "reserve_dollars") or "")
+
+    def test_a_fresh_database_keeps_its_dollar_columns(self, client):
+        run_migrations(app_db.engine)
+        columns = _column_names_of("liquidity_transactions")
+        assert "amount_dollars" in columns and "amount_k" not in columns
+        settings_columns = _column_names_of("liquidity_settings")
+        assert {"opening_balance_dollars", "reserve_dollars"} <= settings_columns
+        assert not {"opening_balance_k", "reserve_k"} & settings_columns

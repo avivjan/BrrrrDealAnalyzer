@@ -286,6 +286,7 @@ BRRRR_PAYLOAD: dict[str, Any] = {
     "maintenancePercent": 5,
     "capexPercent": 5,
     # BRRRR lifecycle inputs (dates, settlement lines, construction budget, holding items, reserves)
+    "contractDate": "2026-01-03",
     "buyClosingDate": "2026-01-10",
     "earnestMoneyDeposit": 5000,
     "loanChargesBuy": 900,
@@ -354,7 +355,7 @@ BRRRR_CASES: list[tuple[str, dict[str, Any]]] = [
     ("contingency_100", _brrr(rehabContingency=100)),
     ("ltv_100", _brrr(ltv_as_precent=100)),
     ("ltv_1", _brrr(ltv_as_precent=1)),
-    ("one_day_refi", _brrr(daysUntilRefi=1)),
+    ("one_day_refi", _brrr(daysUntilRefi=1, daysUntilRehabCompleted=1)),
     ("year_refi", _brrr(daysUntilRefi=365)),
     ("ten_year_refi", _brrr(daysUntilRefi=3650)),
     ("cash_out_positive_sentinel", _brrr(arv_in_thousands=900, ltv_as_precent=90)),
@@ -363,7 +364,7 @@ BRRRR_CASES: list[tuple[str, dict[str, Any]]] = [
     ("all_cash", _brrr(down_payment=100, use_HM_for_rehab=False)),
     ("big_reserve", _brrr(maintenanceReserve=45000)),
     ("dated_december_we_pay_all", _brrr(buyClosingDate="2026-12-15", titleModeBuy="we_pay_all", lowestArv=280)),
-    ("no_date_cash_rehab", _brrr(buyClosingDate=None, constructionLoanBudget=0)),
+    ("cash_rehab_dated", _brrr(buyClosingDate="2026-04-15", contractDate="2026-04-01", constructionLoanBudget=0)),
     ("stolen_money", _brrr(constructionLoanBudget=70, rehabContingency=0)),
     ("notary_amounts_and_notes", _brrr(onlineNotaryFeeBuy=175, onlineNotaryRefi=False, otherClosingCostsBuy=320, otherClosingCostsBuyNote="HOA transfer + home warranty")),
     ("high_expenses", _brrr(vacancyPercent=25, maintenancePercent=25, capexPercent=25,
@@ -653,6 +654,10 @@ def _model_case(model: Any, payload: Any) -> dict[str, Any]:
     }
 
 
+# The three dates every BRRRR result carries (the buy closing date is mandatory).
+_BRRRR_RESULT_DATES = {"refi_closing_date": "2026-07-09", "tenant_occupied_date": "2026-04-10", "rehab_completed_date": "2026-02-24"}
+
+
 def capture_models() -> dict[str, Any]:
     today = "2024-03-05"
     cases: list[tuple[str, Any, Any]] = [
@@ -661,6 +666,7 @@ def capture_models() -> dict[str, Any]:
         ("analyzeBRRRReq/minimal", analyzeBRRRReq, {
             "arv_in_thousands": 320, "purchasePrice": 200, "down_payment": 20,
             "HMLInterestRate": 11, "ltv_as_precent": 75, "interestRate": 6.5, "rent": 2600,
+            "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10",
         }),
         ("analyzeBRRRReq/legacy_months_camel", analyzeBRRRReq, {
             k: v for k, v in _brrr().items() if k != "daysUntilRefi"
@@ -690,8 +696,9 @@ def capture_models() -> dict[str, Any]:
             "cash_to_close_buy": 40000.0, "stolen_money": 0.0,
             "messages": ["a note"],
             "breakdowns": {"cash_flow": [{"label": "x", "value": 1.5, "formula": "1 + 0.5"}]},
+            **_BRRRR_RESULT_DATES,
         }),
-        ("analyzeBRRRRes/minimal", analyzeBRRRRes, {"cash_flow": 0.0}),
+        ("analyzeBRRRRes/minimal", analyzeBRRRRes, {"cash_flow": 0.0, **_BRRRR_RESULT_DATES}),
         ("analyzeFlipRes/full", analyzeFlipRes, {
             "net_profit": 12620.0, "roi": 20.0, "annualized_roi": 40.0,
             "total_cash_needed": 63525.0, "total_cash_needed_with_buffer": 75000.0,
@@ -714,10 +721,11 @@ def capture_models() -> dict[str, Any]:
             "HML_points": 2, "HML_interest_rate": 11,
             "ltv_as_precent": 75, "days_until_refi": 180, "refi_points": 2,
             "cash_reserve_in_thousands": 0, "loan_term_years": 30,
+            "contract_date": "2026-01-03", "buy_closing_date": "2026-01-10",
         }),
         ("BrrrActiveDealCreate/defaults_only", BrrrActiveDealCreate, {
             "address": "1 Default St", "section": None, "stage": None,
-            "ltv_as_precent": None,
+            "ltv_as_precent": None, "contractDate": "2026-01-03", "buyClosingDate": "2026-01-10",
         }),
         ("BrrrActiveDealCreate/legacy_months", BrrrActiveDealCreate,
          {k: v for k, v in _brrr().items() if k != "daysUntilRefi"} | {"monthsUntilRefi": 6}),
@@ -733,7 +741,7 @@ def capture_models() -> dict[str, Any]:
             id="11111111-1111-1111-1111-111111111111",
             created_at="2024-01-02T03:04:05+00:00",
             updated_at="2024-01-02T03:04:06+00:00",
-            cash_flow=85.03674361688704,
+            cash_flow=85.03674361688704, **_BRRRR_RESULT_DATES,
         )),
         ("FlipActiveDealRes", FlipActiveDealRes, _flip(
             id="22222222-2222-2222-2222-222222222222",
@@ -753,7 +761,7 @@ def capture_models() -> dict[str, Any]:
             id="44444444-4444-4444-4444-444444444444",
             created_at="2024-01-02T03:04:05+00:00",
             updated_at="2024-01-02T03:04:06+00:00",
-            cash_flow=1.0, boughtStage="purchase",
+            cash_flow=1.0, boughtStage="purchase", **_BRRRR_RESULT_DATES,
         )),
         ("BoughtFlipDealRes", BoughtFlipDealRes, _flip(
             id="55555555-5555-5555-5555-555555555555",
@@ -765,61 +773,61 @@ def capture_models() -> dict[str, Any]:
         )),
         # -- liquidity
         ("LiquidityTransactionCreate", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "HM draw", "amount_k": "-12.5",
+            "effective_date": today, "description": "HM draw", "amount_dollars": "-12500",
         }),
         ("LiquidityTransactionCreate/blank_description", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "", "amount_k": 1,
+            "effective_date": today, "description": "", "amount_dollars": 1000,
         }),
         ("LiquidityTransactionCreate/long_description", LiquidityTransactionCreate, {
-            "effective_date": today, "description": "x" * 501, "amount_k": 1,
+            "effective_date": today, "description": "x" * 501, "amount_dollars": 1000,
         }),
         ("LiquidityTransactionUpdate/empty", LiquidityTransactionUpdate, {}),
         ("LiquidityTransactionRes", LiquidityTransactionRes, {
-            "id": "abc", "effective_date": today, "description": "d", "amount_k": 1.5,
+            "id": "abc", "effective_date": today, "description": "d", "amount_dollars": 1500,
             "created_at": "2024-01-01T00:00:00", "updated_at": None,
         }),
         ("LiquidityRecurringCreate", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": "2.6", "start_date": today,
+            "description": "rent", "amount_dollars": "2600", "start_date": today,
             "end_date": "2025-03-05", "occurrences": 12, "frequency": "monthly",
             "interval": 1,
         }),
         ("LiquidityRecurringCreate/defaults", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/zero_amount", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 0, "start_date": today,
+            "description": "rent", "amount_dollars": 0, "start_date": today,
             "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/end_before_start", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "end_date": "2020-01-01", "frequency": "weekly",
         }),
         ("LiquidityRecurringCreate/bad_frequency", LiquidityRecurringTransactionCreate, {
-            "description": "rent", "amount_k": 1, "start_date": today,
+            "description": "rent", "amount_dollars": 1000, "start_date": today,
             "frequency": "fortnightly",
         }),
         ("LiquidityRecurringCreate/interval_out_of_range",
          LiquidityRecurringTransactionCreate, {
-             "description": "rent", "amount_k": 1, "start_date": today,
+             "description": "rent", "amount_dollars": 1000, "start_date": today,
              "frequency": "weekly", "interval": 366,
          }),
         ("LiquidityRecurringCreate/occurrences_out_of_range",
          LiquidityRecurringTransactionCreate, {
-             "description": "rent", "amount_k": 1, "start_date": today,
+             "description": "rent", "amount_dollars": 1000, "start_date": today,
              "frequency": "weekly", "occurrences": 2001,
          }),
         ("LiquidityRecurringUpdate/empty", LiquidityRecurringTransactionUpdate, {}),
         ("LiquidityRecurringRes", LiquidityRecurringTransactionRes, {
-            "id": "abc", "description": "d", "amount_k": 1.5, "start_date": today,
+            "id": "abc", "description": "d", "amount_dollars": 1500, "start_date": today,
             "frequency": "monthly", "interval": 2,
         }),
         ("LiquiditySettingsUpdate/empty", LiquiditySettingsUpdate, {}),
         ("LiquiditySettingsUpdate/full", LiquiditySettingsUpdate, {
-            "opening_balance_k": "12.3456", "opening_balance_date": today, "reserve_k": "5",
+            "opening_balance_dollars": "12345.6", "opening_balance_date": today, "reserve_dollars": "5000",
         }),
         ("LiquiditySettingsRes", LiquiditySettingsRes, {
-            "opening_balance_k": 12.3456, "opening_balance_date": today, "reserve_k": 5.0,
+            "opening_balance_dollars": 12345.6, "opening_balance_date": today, "reserve_dollars": 5000,
         }),
         # -- pipeline templates
         ("PipelineSubStage", PipelineSubStage, {"id": "  a  ", "label": "  Label  "}),
@@ -1318,15 +1326,15 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity transactions ------------------------------------------------
     r.get("liquidity/txn_list_empty", "/liquidity/transactions")
     txn = client.post("/liquidity/transactions", json={
-        "effective_date": "2024-03-05", "description": "HM draw", "amount_k": -12.5,
+        "effective_date": "2024-03-05", "description": "HM draw", "amount_dollars": -12500,
     }).json()
     r.results["liquidity/txn_create"] = {"status": 201, "body": _redact(txn)}
     r.post("liquidity/txn_create_blank_description", "/liquidity/transactions", json={
-        "effective_date": "2024-03-05", "description": "", "amount_k": 1,
+        "effective_date": "2024-03-05", "description": "", "amount_dollars": 1000,
     })
     r.get("liquidity/txn_list", "/liquidity/transactions")
     r.put("liquidity/txn_update", f"/liquidity/transactions/{txn['id']}",
-          json={"description": "HM draw (revised)", "amount_k": -13.25})
+          json={"description": "HM draw (revised)", "amount_dollars": -13250})
     r.put("liquidity/txn_update_empty", f"/liquidity/transactions/{txn['id']}", json={})
     r.put("liquidity/txn_update_missing", f"/liquidity/transactions/{MISSING_ID}",
           json={"description": "x"})
@@ -1336,20 +1344,20 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity recurring ------------------------------------------------
     r.get("liquidity/recurring_list_empty", "/liquidity/recurring")
     rule = client.post("/liquidity/recurring", json={
-        "description": "Rent", "amount_k": 2.6, "start_date": "2024-03-05",
+        "description": "Rent", "amount_dollars": 2600, "start_date": "2024-03-05",
         "end_date": "2025-03-05", "occurrences": 12, "frequency": "monthly", "interval": 1,
     }).json()
     r.results["liquidity/recurring_create"] = {"status": 201, "body": _redact(rule)}
     r.post("liquidity/recurring_create_zero_amount", "/liquidity/recurring", json={
-        "description": "Zero", "amount_k": 0, "start_date": "2024-03-05",
+        "description": "Zero", "amount_dollars": 0, "start_date": "2024-03-05",
         "frequency": "monthly",
     })
     r.post("liquidity/recurring_create_bad_window", "/liquidity/recurring", json={
-        "description": "Bad", "amount_k": 1, "start_date": "2024-03-05",
+        "description": "Bad", "amount_dollars": 1000, "start_date": "2024-03-05",
         "end_date": "2020-01-01", "frequency": "monthly",
     })
     r.post("liquidity/recurring_create_bad_frequency", "/liquidity/recurring", json={
-        "description": "Bad", "amount_k": 1, "start_date": "2024-03-05",
+        "description": "Bad", "amount_dollars": 1000, "start_date": "2024-03-05",
         "frequency": "fortnightly",
     })
     r.get("liquidity/recurring_list", "/liquidity/recurring")
@@ -1358,7 +1366,7 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     r.put("liquidity/recurring_update_bad_window", f"/liquidity/recurring/{rule['id']}",
           json={"end_date": "2020-01-01"})
     r.put("liquidity/recurring_update_zero_amount", f"/liquidity/recurring/{rule['id']}",
-          json={"amount_k": 0})
+          json={"amount_dollars": 0})
     r.put("liquidity/recurring_update_missing", f"/liquidity/recurring/{MISSING_ID}",
           json={"description": "x"})
     r.get("liquidity/recurring_after_updates", "/liquidity/recurring")
@@ -1368,10 +1376,10 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
     # -- liquidity settings + mercury --------------------------------------
     r.get("liquidity/settings_autocreate", "/liquidity/settings")
     r.put("liquidity/settings_update", "/liquidity/settings",
-          json={"opening_balance_k": 123.4567, "opening_balance_date": "2024-03-05",
-                "reserve_k": 7.5})
+          json={"opening_balance_dollars": 123456.7, "opening_balance_date": "2024-03-05",
+                "reserve_dollars": 7500})
     r.get("liquidity/settings_after_update", "/liquidity/settings")
-    r.put("liquidity/settings_partial", "/liquidity/settings", json={"reserve_k": 9})
+    r.put("liquidity/settings_partial", "/liquidity/settings", json={"reserve_dollars": 9000})
     r.get("liquidity/mercury_balance_unconfigured", "/liquidity/mercury-balance")
 
     # -- email ------------------------------------------------------------

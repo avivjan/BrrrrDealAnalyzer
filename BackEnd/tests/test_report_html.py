@@ -226,7 +226,7 @@ class TestEveryCardIsThePopup:
         for label in ("HML Interest paid monthly", "Deed Transfer Tax (Buy)", "Title & Escrow (Buy)"):
             assert steps_by_label[label]["formula"] in texts, label
             assert steps_by_label[label]["note"] in texts, label
-        assert "Monthly HML interest: per diem" in hml_monthly["formula"]
+        assert "paid on the 1st after it" in hml_monthly["formula"]
 
 
 # -- self-contained and locked down ---------------------------------------------------------------
@@ -296,3 +296,26 @@ class TestHtmlReportEndpoints:
         assert blocks[1].resource.mimeType == "text/html"
         headings = [h.text() for h in parse_html(blocks[1].resource.text).find_all(lambda e: e.tag == "h2")]
         assert headings == ["How DSCR is calculated"]
+
+
+class TestTheCashNeededCardCarriesItsSchedule:
+    """The Cash Needed card shows the dated schedule (Lowest ARV), one row per cash item, the rehab cushion among them."""
+
+    def test_the_schedule_rows_with_the_cushion(self, client, brrrr_payload):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        html = client.post("/reports/brrr-html", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]}).text
+        schedule = body["cash_needed_schedule_at_lowest_arv"]
+        assert "Cash schedule (Lowest ARV)" in html and "Must stay in the account" not in html
+        assert html.count('<tr class="out">') + html.count('<tr class="in">') == len(schedule["dated_cash_rows"])
+        assert "Jan 3, 2026" in html and "Earnest money deposit" in html and "-$5,000" in html
+        assert "Rehab cushion (a hold: mark it done when you no longer need it)" in html
+
+    def test_only_the_cash_needed_card_has_it(self, client, brrrr_payload):
+        html = client.post("/reports/brrr-html", json=brrrr_payload, params={"selected_result_keys": ["cash_flow"]}).text
+        assert "Cash schedule (Lowest ARV)" not in html
+
+    def test_its_text_is_escaped(self, brrrr_payload, client):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        body["cash_needed_schedule_at_lowest_arv"]["dated_cash_rows"][0]["description"] = "<script>alert(1)</script>"
+        html = build_deal_html_report("x", "BRRRR", body, ["total_cash_needed_for_deal"])
+        assert "<script>alert(1)</script>" not in html and "&lt;script&gt;alert(1)&lt;/script&gt;" in html

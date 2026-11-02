@@ -95,12 +95,20 @@ export const DEFAULT_LONG_TERM_INTEREST_RATE = 7;
  */
 export const DEFAULT_DAYS_UNTIL_REFI = 180;
 
-/** Today as an ISO calendar date (local), the default Buy closing date of a new deal. */
+/** Days from the contract to the purchase closing on a brand-new deal. */
+export const DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING = 7;
+
+/** Today as an ISO calendar date (local), the default contract date of a new deal. */
 export function todayIsoDate(now: Date = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+/** Today + 7 days as an ISO calendar date (local), the default buy closing date of a new deal. */
+export function defaultBuyClosingIsoDate(now: Date = new Date()): string {
+  return todayIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING));
 }
 
 /** Defaults of the BRRRR lifecycle inputs (mirror the backend's `BrrrLifecycleInputs`). */
@@ -188,7 +196,8 @@ export function createEmptyDealForm(
     closingCostsRefi: 10,
     refiPoints: DEFAULT_REFI_POINTS,
     cashReserve: DEFAULT_CASH_RESERVE,
-    buyClosingDate: todayIsoDate(),
+    contractDate: todayIsoDate(),
+    buyClosingDate: defaultBuyClosingIsoDate(),
     ...BRRR_LIFECYCLE_DEFAULTS,
     loanTermYears: 30,
     ltv_as_precent: DEFAULT_LTV_PERCENT,
@@ -265,6 +274,7 @@ export const formatDealForClipboard = (deal: ActiveDealRes): string => {
       financials = `
 Financials (BRRRR)
 ------------------
+Contract Date: ${brrr.contractDate || "-"}
 Buy Closing Date: ${brrr.buyClosingDate || "-"}
 Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : undefined)}
 Earnest Money Deposit: ${formatMoney(brrr.earnestMoneyDeposit)}

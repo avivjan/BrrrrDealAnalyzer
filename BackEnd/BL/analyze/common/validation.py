@@ -84,8 +84,13 @@ def _brrr_range_and_sign_errors(payload) -> list[str]:
         validation_errors.append("Days until rented cannot be negative.")
     if _is_negative(payload.days_until_rehab_completed):
         validation_errors.append("Days until rehab completed cannot be negative.")
-    elif _rehab_completes_after_the_tenant_moves_in(payload):
-        validation_errors.append("Rehab completion must be on or before the tenant-occupied date.")
+    else:
+        if _rehab_completes_after_the_tenant_moves_in(payload):
+            validation_errors.append("Rehab completion must be on or before the tenant-occupied date.")
+        if _rehab_completes_after_the_refi_closes(payload):
+            validation_errors.append("Rehab completion must be on or before the refi closing date.")
+    if _contract_date_is_after_the_buy_closing_date(payload):
+        validation_errors.append("Contract date must be on or before the buy closing date.")
     if payload.lowest_arv_in_thousands is not None and payload.lowest_arv_in_thousands <= 0:
         validation_errors.append("Lowest ARV must be greater than 0.")
     if _is_negative(payload.annual_property_taxes):
@@ -132,6 +137,18 @@ def _rehab_completes_after_the_tenant_moves_in(payload) -> bool:
     """The rehab ends between the purchase closing and the tenant-occupied day; checked only once both counts are set."""
     return (payload.days_until_rehab_completed is not None and payload.days_until_rented is not None
             and payload.days_until_rehab_completed > payload.days_until_rented)
+
+
+def _rehab_completes_after_the_refi_closes(payload) -> bool:
+    """The rehab ends on or before the refi closing day; checked only once both counts are set."""
+    return (payload.days_until_rehab_completed is not None and payload.days_until_refi is not None
+            and payload.days_until_rehab_completed > payload.days_until_refi)
+
+
+def _contract_date_is_after_the_buy_closing_date(payload) -> bool:
+    """The contract is signed on or before the purchase closes: contract <= buy closing <= rehab completed <= refi."""
+    return (payload.contract_date is not None and payload.buy_closing_date is not None
+            and payload.contract_date > payload.buy_closing_date)
 
 
 def _lowest_arv_exceeds_arv(payload) -> bool:

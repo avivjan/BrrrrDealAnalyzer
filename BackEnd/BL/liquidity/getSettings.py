@@ -4,16 +4,16 @@ from sqlalchemy.orm import Session
 from ReqRes.common.liquidity_schemas import LiquiditySettingsUpdate
 from DAL.crud.liquidity import get_settings as _get_settings
 from BL.liquidity.common.mappers import settings_to_res
-from BL.liquidity.updateSettings import update_settings
+from BL.liquidity.updateSettings import update_settings, DEFAULT_RESERVE_DOLLARS
 
 
 def get_settings(db: Session):
     settings = _get_settings(db)
     if not settings:
         default_data = LiquiditySettingsUpdate(
-            opening_balance_k=0,
+            opening_balance_dollars=0,
             opening_balance_date=date_type.today(),
-            reserve_k=5,
+            reserve_dollars=DEFAULT_RESERVE_DOLLARS,
         )
         # `update_settings` already returns the built Res; the initial-create
         # path below matches the original inline `upsert_settings` + response

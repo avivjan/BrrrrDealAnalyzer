@@ -111,9 +111,11 @@ export function niceGridSteps(min: number, max: number, target: number): number[
   return steps;
 }
 
-export function formatK(value: number): string {
-  if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}M`;
-  return `${value.toFixed(1)}k`;
+/** A dollar amount in the chart's compact form: `12500` -> `"12.5k"`, `1500000` -> `"1.5M"`, `850` -> `"850"`. */
+export function formatDollarsCompact(dollars: number): string {
+  if (Math.abs(dollars) >= 1_000_000) return `${(dollars / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(dollars) >= 1000) return `${(dollars / 1000).toFixed(1)}k`;
+  return `${Math.round(dollars)}`;
 }
 
 export const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

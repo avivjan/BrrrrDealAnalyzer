@@ -9,6 +9,13 @@
       "path": "/active-deals"
     },
     {
+      "method": "POST",
+      "path": "/liquidity/deals/refresh-late-refis",
+      "body": {
+        "today": "2026-09-04"
+      }
+    },
+    {
       "method": "GET",
       "path": "/liquidity/transactions"
     },
@@ -19,6 +26,13 @@
     {
       "method": "GET",
       "path": "/liquidity/settings"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/deals",
+      "query": {
+        "today": "2026-09-04"
+      }
     },
     {
       "method": "GET",

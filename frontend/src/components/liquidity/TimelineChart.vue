@@ -20,7 +20,7 @@
  *
  * UI v3: the balance is drawn once — a line with a gradient area under it to
  * the zero line (positive and negative runs split at each crossing), the
- * reserve floor from settings as a dashed line + wash (`reserveK`, optional),
+ * reserve floor from settings as a dashed line + wash (`reserveDollars`, optional),
  * and each day's flows as one marker on the line sized by |net|. No bars.
  *
  * Geometry is pure (`./chart/geometry.ts`). No size, padding or transform
@@ -33,6 +33,7 @@ import { chartToken } from '../../design/chartTokens'
 import { themeEpoch } from '../../design/theme'
 import type { DayBucket } from '../../types/liquidity'
 import { todayISO } from '../../utils/liquidityEngine'
+import { formatSignedMoney } from '../../utils/money'
 import {
   DAY_WIDTH,
   MONTH_NAMES,
@@ -44,7 +45,7 @@ import {
   balanceRange,
   clampScroll,
   formatDateLong,
-  formatK,
+  formatDollarsCompact,
   indexForOffsetX,
   linePath,
   nextIndex,
@@ -65,8 +66,13 @@ const props = defineProps<{
   globalMin: number
   globalMinDates: string[]
   firstNegativeDate: string | null
-  /** Reserve floor in k; undefined = not drawn. */
-  reserveK?: number
+  /** Reserve floor in dollars; undefined = not drawn. */
+  reserveDollars?: number
+  /**
+   * A second balance per day, aligned with `days` (the import preview's "with this deal"), drawn as a
+   * dashed line; undefined = not drawn.
+   */
+  balancesWithTheDeal?: number[]
 }>()
 
 const emit = defineEmits<{
@@ -130,7 +136,7 @@ const C = computed(() => {
 })
 
 const count = computed(() => props.days.length)
-const range = computed(() => balanceRange(props.days.map((d) => d.balance_k)))
+const range = computed(() => balanceRange([...props.days.map((d) => d.balance_dollars), ...(props.balancesWithTheDeal ?? [])]))
 const plotBottom = computed(() => height.value - PAD_BOTTOM)
 const y = (balance: number) => yForBalance(balance, height.value, range.value)
 const x = (i: number) => xForIndex(i, scrollX.value)
@@ -174,7 +180,7 @@ interface DayShape {
 }
 
 /** The largest |net| in the series, the scale for the flow markers. */
-const maxAbsNet = computed(() => props.days.reduce((m, d) => Math.max(m, Math.abs(d.net_k)), 0))
+const maxAbsNet = computed(() => props.days.reduce((m, d) => Math.max(m, Math.abs(d.net_dollars)), 0))
 
 /** Everything the template needs per visible day, computed once per render. */
 const shapes = computed<DayShape[]>(() => {
@@ -186,7 +192,7 @@ const shapes = computed<DayShape[]>(() => {
     const [yr, mo, dy] = parseDateParts(day.date)
     const monthKey = `${yr}-${mo}`
     const wd = weekday(day.date)
-    const scale = maxAbsNet.value > 0 ? Math.abs(day.net_k) / maxAbsNet.value : 0
+    const scale = maxAbsNet.value > 0 ? Math.abs(day.net_dollars) / maxAbsNet.value : 0
     out.push({
       i,
       x: x(i),
@@ -197,10 +203,10 @@ const shapes = computed<DayShape[]>(() => {
       monthLabel: monthKey !== prevMonth ? `${MONTH_NAMES[parseInt(mo, 10) - 1] ?? ''} '${yr.slice(2)}` : null,
       dayNumber: parseInt(dy, 10),
       weekdayName: WEEKDAY_NAMES[wd] ?? '',
-      hasTxns: day.net_k !== 0,
+      hasTxns: day.net_dollars !== 0,
       hovered: i === activeIndex.value,
-      y: y(day.balance_k),
-      marker: day.transactions.length > 0 ? { r: 3 + 4 * scale, positive: day.net_k >= 0 } : null,
+      y: y(day.balance_dollars),
+      marker: day.transactions.length > 0 ? { r: 3 + 4 * scale, positive: day.net_dollars >= 0 } : null,
     })
     prevMonth = monthKey
   }
@@ -219,13 +225,22 @@ const linePoints = computed<LinePoint[]>(() => {
   const to = Math.min(count.value - 1, last + 1)
   const out: LinePoint[] = []
   for (let i = from; i <= to; i += 1) {
-    const value = props.days[i]!.balance_k
+    const value = props.days[i]!.balance_dollars
     out.push({ i, x: x(i), y: y(value), value })
   }
   return out
 })
 
 const balancePath = computed(() => linePath(linePoints.value))
+
+/** The "with this deal" balance through the same visible days. */
+const balanceWithTheDealPath = computed(() => {
+  const balancesWithTheDeal = props.balancesWithTheDeal
+  if (!balancesWithTheDeal) return null
+  return linePath(linePoints.value
+    .filter((point) => balancesWithTheDeal[point.i] !== undefined)
+    .map((point) => ({ ...point, y: y(balancesWithTheDeal[point.i]!), value: balancesWithTheDeal[point.i]! })))
+})
 
 /** Gradient ids, unique per chart instance. */
 const gid = useId()
@@ -245,9 +260,9 @@ const areaRuns = computed(() => {
   })
 })
 
-/** The reserve floor: a dashed line at `reserveK` and a wash between it and the zero line (both clipped to the plot). */
+/** The reserve floor: a dashed line at `reserveDollars` and a wash between it and the zero line (both clipped to the plot). */
 const reserve = computed(() => {
-  const k = props.reserveK
+  const k = props.reserveDollars
   if (k === undefined || !Number.isFinite(k)) return null
   const lineY = y(k)
   const clamped = Math.min(Math.max(lineY, PAD_TOP), plotBottom.value)
@@ -264,7 +279,7 @@ const minMarkers = computed(() => {
   return props.globalMinDates
     .map((date) => props.days.findIndex((d) => d.date === date))
     .filter((idx) => idx >= first && idx <= last)
-    .map((idx) => ({ idx, x: x(idx), y: y(props.days[idx]!.balance_k), negative: props.days[idx]!.balance_k < 0 }))
+    .map((idx) => ({ idx, x: x(idx), y: y(props.days[idx]!.balance_dollars), negative: props.days[idx]!.balance_dollars < 0 }))
 })
 
 const crosshair = computed(() => {
@@ -272,7 +287,7 @@ const crosshair = computed(() => {
   const [first, last] = window_.value
   if (idx === null || idx < first || idx > last) return null
   const day = props.days[idx]!
-  return { y: y(day.balance_k), x: x(idx), label: formatK(day.balance_k), negative: day.balance_k < 0 }
+  return { y: y(day.balance_dollars), x: x(idx), label: formatDollarsCompact(day.balance_dollars), negative: day.balance_dollars < 0 }
 })
 
 // ---------------------------------------------------------------------------
@@ -486,14 +501,14 @@ defineExpose({ centerOnToday })
           <template v-for="step in gridSteps" :key="step.value">
             <line :x1="PAD_LEFT" :x2="width" :y1="step.y" :y2="step.y" :stroke="C.grid" stroke-width="1" />
             <text :x="PAD_LEFT - 8" :y="step.y" text-anchor="end" dominant-baseline="middle" font-size="11" :fill="C.axisText">
-              {{ formatK(step.value) }}
+              {{ formatDollarsCompact(step.value) }}
             </text>
           </template>
         </g>
 
         <!-- Days: bands, rules, labels -->
         <g data-part="days">
-          <g v-for="s in shapes" :key="s.day.date" :data-date="s.day.date" :aria-label="`${s.day.date} balance ${formatK(s.day.balance_k)}`">
+          <g v-for="s in shapes" :key="s.day.date" :data-date="s.day.date" :aria-label="`${s.day.date} balance ${formatDollarsCompact(s.day.balance_dollars)}`">
             <rect v-if="s.weekend" :x="s.x - DAY_WIDTH / 2" :y="PAD_TOP" :width="DAY_WIDTH" :height="plotBottom - PAD_TOP" :fill="C.weekendBand" />
             <rect v-if="s.hovered" :x="s.x - DAY_WIDTH / 2" :y="PAD_TOP" :width="DAY_WIDTH" :height="plotBottom - PAD_TOP" :fill="C.todayBand" />
             <line
@@ -549,6 +564,7 @@ defineExpose({ centerOnToday })
 
         <!-- Running balance line -->
         <path v-draw-on data-part="balance-line" :d="balancePath" fill="none" :stroke="C.balanceDot" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        <path v-if="balanceWithTheDealPath" data-part="balance-with-the-deal-line" :d="balanceWithTheDealPath" fill="none" :stroke="C.reserveLine" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round" />
 
         <!-- Flow markers: one per day with transactions, sized by |net| -->
         <g data-part="flow-markers">
@@ -596,14 +612,14 @@ defineExpose({ centerOnToday })
         class="pointer-events-none absolute right-2 top-2 z-10 min-w-[200px] max-w-[280px] rounded-card border-ui border-line bg-surface/95 px-4 py-3 shadow-2"
       >
         <div class="mb-1.5 text-xs tracking-wide text-fg-muted">{{ formatDateLong(activeDay.date) }}</div>
-        <div class="mb-1 font-display text-xl font-bold tracking-display numeric" :class="activeDay.balance_k < 0 ? 'text-negative' : 'text-primary'">
-          {{ formatK(activeDay.balance_k) }}
+        <div class="mb-1 font-display text-xl font-bold tracking-display numeric" :class="activeDay.balance_dollars < 0 ? 'text-negative' : 'text-primary'">
+          {{ formatDollarsCompact(activeDay.balance_dollars) }}
           <span class="ml-1 font-sans text-[10px] font-normal tracking-normal text-fg-muted">EOD balance</span>
         </div>
-        <div v-if="activeDay.net_k !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
+        <div v-if="activeDay.net_dollars !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
           <span class="text-fg-muted">Day net:</span>
-          <span class="numeric font-bold" :class="activeDay.net_k > 0 ? 'text-positive' : 'text-negative'">
-            {{ activeDay.net_k > 0 ? '+' : '' }}{{ activeDay.net_k.toFixed(2) }}k
+          <span class="numeric font-bold" :class="activeDay.net_dollars > 0 ? 'text-positive' : 'text-negative'">
+            {{ formatSignedMoney(activeDay.net_dollars) }}
           </span>
         </div>
         <div v-if="activeDay.transactions.length" class="mt-1 border-t border-line pt-2">
@@ -619,8 +635,8 @@ defineExpose({ centerOnToday })
                 <i v-if="txn.recurring_rule_id" class="pi pi-refresh shrink-0 text-[8px] text-primary" title="From a recurring rule"></i>
                 <span class="truncate">{{ txn.description }}</span>
               </span>
-              <span class="numeric shrink-0 text-[11px] font-bold" :class="txn.amount_k > 0 ? 'text-positive' : 'text-negative'">
-                {{ txn.amount_k > 0 ? '+' : '' }}{{ txn.amount_k.toFixed(1) }}k
+              <span class="numeric shrink-0 text-[11px] font-bold" :class="txn.amount_dollars > 0 ? 'text-positive' : 'text-negative'">
+                {{ formatSignedMoney(txn.amount_dollars) }}
               </span>
             </div>
           </div>

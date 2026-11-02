@@ -9,7 +9,7 @@ const txn = (over: Partial<LiquidityTransaction> = {}): LiquidityTransaction => 
   id: "t1",
   effective_date: "2026-04-20",
   description: "Rehab draw #2",
-  amount_k: -12.5,
+  amount_dollars: -12500,
   ...over,
 });
 
@@ -17,8 +17,8 @@ function bucket(over: Partial<DayBucket> = {}): DayBucket {
   return {
     date: "2026-04-20",
     transactions: [txn()],
-    net_k: -12.5,
-    balance_k: 36.5,
+    net_dollars: -12500,
+    balance_dollars: 36500,
     ...over,
   };
 }
@@ -38,33 +38,33 @@ describe("DayDetail", () => {
   });
 
   it("says so when the day has no transactions", () => {
-    const wrapper = mountDetail(bucket({ transactions: [], net_k: 0 }));
+    const wrapper = mountDetail(bucket({ transactions: [], net_dollars: 0 }));
     expect(wrapper.find('[data-testid="daydetail.empty"]').text()).toBe(
       "No transactions on this date.",
     );
   });
 
   it("shows the day's net and end-of-day balance", () => {
-    const text = mountDetail(bucket({ net_k: 4.25, balance_k: -3.5 })).text();
-    expect(text).toContain("+4.25k");
-    expect(text).toContain("-3.50k");
+    const text = mountDetail(bucket({ net_dollars: 4250, balance_dollars: -3500 })).text();
+    expect(text).toContain("+$4,250");
+    expect(text).toContain("-$3,500");
   });
 
   it("signs each row's amount", () => {
     const wrapper = mountDetail(
       bucket({
         transactions: [
-          txn({ id: "out", amount_k: -12.5 }),
-          txn({ id: "in", amount_k: 8, description: "Rent" }),
+          txn({ id: "out", amount_dollars: -12500 }),
+          txn({ id: "in", amount_dollars: 8000, description: "Rent" }),
         ],
       }),
     );
 
     expect(wrapper.find('[data-testid="daydetail.txn.out"]').text()).toContain(
-      "-12.50k",
+      "-$12,500",
     );
     expect(wrapper.find('[data-testid="daydetail.txn.in"]').text()).toContain(
-      "+8.00k",
+      "+$8,000",
     );
   });
 
@@ -125,5 +125,21 @@ describe("DayDetail", () => {
         .trigger("click");
       expect(wrapper.emitted("editTxn")).toEqual([["rule-1__2"]]);
     });
+  });
+});
+
+describe("DayDetail — the quick row actions", () => {
+  it("tags an overdue row and forwards Done, a move and an amount change", async () => {
+    const overdue = txn({ effective_date: "2026-04-20", overdue_since_date: "2026-04-01" });
+    const wrapper = mountDetail(bucket({ transactions: [overdue] }));
+    expect(wrapper.find('[data-testid="daydetail.txn.t1.overdue"]').text()).toBe("overdue since Apr 1, 2026");
+    await wrapper.find('[data-testid="rowactions.t1.done"]').trigger("click");
+    await wrapper.find('[data-testid="rowactions.t1.date"]').setValue("2026-05-01");
+    await wrapper.find('[data-testid="amount.t1"]').trigger("click");
+    await wrapper.find('[data-testid="amount.t1.input"]').setValue("10000");
+    await wrapper.find('[data-testid="amount.t1.input"]').trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("markDone")).toEqual([["t1"]]);
+    expect(wrapper.emitted("moveToDate")).toEqual([["t1", "2026-05-01"]]);
+    expect(wrapper.emitted("changeAmount")).toEqual([["t1", -10000]]);
   });
 });

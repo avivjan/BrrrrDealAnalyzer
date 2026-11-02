@@ -80,6 +80,25 @@ export function daysThroughMonthEnd(day: Date): number {
   return daysInMonth(day) - day.getUTCDate() + 1;
 }
 
+/** Every 1st of a month strictly after `afterDay` and on or before `throughDay`: the window (after, through]. */
+export function firstOfMonthDates(afterDay: Date, throughDay: Date): Date[] {
+  const windowDates: Date[] = [];
+  let year = afterDay.getUTCFullYear();
+  let month = afterDay.getUTCMonth();
+  for (;;) {
+    const windowDate = new Date(Date.UTC(year, month, 1));
+    if (windowDate.getTime() > throughDay.getTime()) return windowDates;
+    if (windowDate.getTime() > afterDay.getTime()) windowDates.push(windowDate);
+    month += 1;
+    if (month === 12) { month = 0; year += 1; }
+  }
+}
+
+/** The first 1st strictly after `day`. */
+export function firstOfNextMonth(day: Date): Date {
+  return new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + 1, 1));
+}
+
 /** Every 15th of a month strictly after `afterDay` and on or before `throughDay`. */
 export function propertyTaxBucketDepositDates(afterDay: Date, throughDay: Date): Date[] {
   const depositDates: Date[] = [];
@@ -225,16 +244,17 @@ export interface BrrrAutoCalc {
   /** The bill × 0.96 paid on Nov 30. */
   propertyTaxBillPaidOnNovember30: number | null;
   firstPropertyTaxPaymentDate: string | null;
-  /** The 15ths after closing through the first Nov 30 (1 when none is left); null without a closing date. */
+  /** The 15ths after closing through the first Nov 30 (1 when none is left); null until the closing date is typed. */
   propertyTaxBucketDepositCountUntilFirstPayment: number | null;
   propertyTaxBucketDepositDefault: number | null;
   propertyTaxBucketDepositEffective: number | null;
-  /** Deposits of the first bill made on or before the refi (days ÷ 30 without a closing date). */
+  /** Deposits of the first bill made on or before the refi; null until the closing date is typed. */
   propertyTaxBucketFirstBillDepositCountUntilRefi: number | null;
   /** The regular-year tax after the refi: bill × 0.96 ÷ 12. */
   monthlyPropertyTaxAfterRefi: number | null;
   insurancePaidMonthlyUntilRefi: number | null;
-  daysRentedBeforeRefi: number | null;
+  /** The 1sts in (tenant occupied, refi] on which rent is collected before the refi. */
+  rentCollectionCountBeforeRefi: number | null;
   preRefiRentalIncome: number | null;
   utilitiesUntilRented: number | null;
   // Refinance
@@ -305,8 +325,16 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const prepaidDaysBuy = buyClosingDay && daysUntilRefi != null ? Math.min(daysThroughMonthEnd(buyClosingDay), daysUntilRefi) : null;
   const refiClosingDay = refiClosingDate ? parseIsoDate(refiClosingDate) : null;
   const prepaidDaysRefi = refiClosingDay ? daysThroughMonthEnd(refiClosingDay) : null;
-  const refiClosesInPurchaseMonth = !!buyClosingDay && !!refiClosingDay && buyClosingDay.getUTCFullYear() === refiClosingDay.getUTCFullYear() && buyClosingDay.getUTCMonth() === refiClosingDay.getUTCMonth();
-  const hmlInterestDaysAccruedIntoRefiPayoff = refiClosingDay ? (refiClosesInPurchaseMonth ? 0 : refiClosingDay.getUTCDate() - 1) : 0;
+  // The monthly items are paid on real 1sts (mirror of the backend's `timeline.py`): HOA and insurance on
+  // the 1sts in (closing, refi]. Each 1st pays the month before it in HML interest, except the first (the
+  // purchase month is prepaid) and any on or after the refi (that month is inside the payoff).
+  const firstOfMonthDatesAfterClosingThroughRefi = buyClosingDay && refiClosingDay ? firstOfMonthDates(buyClosingDay, refiClosingDay) : null;
+  const hmlInterestMonthlyPaymentDates = firstOfMonthDatesAfterClosingThroughRefi && refiClosingDay
+    ? firstOfMonthDatesAfterClosingThroughRefi.slice(1).filter((paymentDate) => paymentDate.getTime() < refiClosingDay.getTime())
+    : [];
+  const hmlInterestDaysPaidMonthly = hmlInterestMonthlyPaymentDates.reduce(
+    (days, paymentDate) => days + daysInMonth(new Date(paymentDate.getTime() - MS_PER_DAY)), 0);
+  const hmlInterestDaysAccruedIntoRefiPayoff = prepaidDaysBuy != null && daysUntilRefi != null ? daysUntilRefi - prepaidDaysBuy - hmlInterestDaysPaidMonthly : 0;
 
   const prepaidInterestBuy = hmlPerDiem != null && prepaidDaysBuy != null ? hmlPerDiem * prepaidDaysBuy : null;
   const accruedInterestAtPayoff = hmlPerDiem != null ? hmlPerDiem * hmlInterestDaysAccruedIntoRefiPayoff : 0;
@@ -356,21 +384,29 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     ? (propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay).length ? propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay) : [firstPaymentDay])
     : null;
   const propertyTaxBucketDepositCountUntilFirstPayment = firstBillDepositDates ? firstBillDepositDates.length : null;
-  const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 == null ? null
-    : propertyTaxBucketDepositCountUntilFirstPayment != null
-      ? Math.max(0, (propertyTaxBillPaidOnNovember30 - sellerTaxCreditSetAsideInTaxBucket) / propertyTaxBucketDepositCountUntilFirstPayment)
-      : monthlyPropertyTaxAfterRefi;
+  const propertyTaxBucketDepositDefault = propertyTaxBillPaidOnNovember30 != null && propertyTaxBucketDepositCountUntilFirstPayment != null
+    ? Math.max(0, (propertyTaxBillPaidOnNovember30 - sellerTaxCreditSetAsideInTaxBucket) / propertyTaxBucketDepositCountUntilFirstPayment)
+    : null;
   const propertyTaxBucketDepositEffective = deal.monthlyPropertyTaxBucketDeposit != null ? numberOrZero(deal.monthlyPropertyTaxBucketDeposit) : propertyTaxBucketDepositDefault;
   const refiClosingDayForTaxes = refiClosingDate ? parseIsoDate(refiClosingDate) : null;
-  const propertyTaxBucketFirstBillDepositCountUntilRefi = firstBillDepositDates
-    ? (refiClosingDayForTaxes ? firstBillDepositDates.filter((depositDate) => depositDate.getTime() <= refiClosingDayForTaxes.getTime()).length : null)
-    : daysUntilRefi != null ? daysUntilRefi / DAYS_PER_MONTH : null;
-  const insurancePaidMonthlyUntilRefi = daysUntilRefi != null ? (numberOrZero(deal.monthlyInsuranceUntilRefi) * daysUntilRefi) / DAYS_PER_MONTH : null;
+  const propertyTaxBucketFirstBillDepositCountUntilRefi = firstBillDepositDates && refiClosingDayForTaxes
+    ? firstBillDepositDates.filter((depositDate) => depositDate.getTime() <= refiClosingDayForTaxes.getTime()).length
+    : null;
+  const insurancePaidMonthlyUntilRefi = firstOfMonthDatesAfterClosingThroughRefi
+    ? numberOrZero(deal.monthlyInsuranceUntilRefi) * firstOfMonthDatesAfterClosingThroughRefi.length
+    : null;
 
   // -- Rent & holding -----------------------------------------------------------
-  const daysRentedBeforeRefi = daysUntilRefi != null && daysUntilRented != null ? Math.max(0, daysUntilRefi - daysUntilRented) : null;
-  const preRefiRentalIncome = isPositive(monthlyRent) && daysRentedBeforeRefi != null ? (monthlyRent * daysRentedBeforeRefi) / DAYS_PER_MONTH : null;
-  const utilitiesUntilRented = daysUntilRented != null ? (numberOrZero(deal.monthlyUtilitiesUntilRented) * daysUntilRented) / DAYS_PER_MONTH : null;
+  // Rent on the 1sts in (tenant occupied, refi]; utilities on the 1sts in (closing, min(tenant, refi)]
+  // plus one more 1st in arrears when it is on or before the refi.
+  const tenantOccupiedDay = tenantOccupiedDate ? parseIsoDate(tenantOccupiedDate) : null;
+  const rentCollectionCountBeforeRefi = tenantOccupiedDay && refiClosingDay ? firstOfMonthDates(tenantOccupiedDay, refiClosingDay).length : null;
+  const preRefiRentalIncome = isPositive(monthlyRent) && rentCollectionCountBeforeRefi != null ? monthlyRent * rentCollectionCountBeforeRefi : null;
+  const utilitiesStopOn = tenantOccupiedDay && refiClosingDay ? (tenantOccupiedDay.getTime() < refiClosingDay.getTime() ? tenantOccupiedDay : refiClosingDay) : null;
+  const utilityBillCountUntilRefi = buyClosingDay && refiClosingDay && utilitiesStopOn
+    ? firstOfMonthDates(buyClosingDay, utilitiesStopOn).length + (firstOfNextMonth(utilitiesStopOn).getTime() <= refiClosingDay.getTime() ? 1 : 0)
+    : null;
+  const utilitiesUntilRented = utilityBillCountUntilRefi != null ? numberOrZero(deal.monthlyUtilitiesUntilRented) * utilityBillCountUntilRefi : null;
 
   // -- Refinance -----------------------------------------------------------------
   const refiLoanAmount = arvDollars != null && ltvPercent != null ? arvDollars * (ltvPercent / 100) : null;
@@ -435,7 +471,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     recordingTransferBuyEffective: recordingTransferBuyEffectiveAmount, titleEscrowBuyEffective: titleEscrowBuyEffectiveAmount,
     notaryBuy, closingCostsBuyTotal, cashToCloseBuy, totalHardMoneyCost,
     rehabCostWithContingency, constructionBudget, stolenMoney, rehabCompletedDate,
-    tenantOccupiedDate, daysRentedBeforeRefi, preRefiRentalIncome, utilitiesUntilRented,
+    tenantOccupiedDate, rentCollectionCountBeforeRefi, preRefiRentalIncome, utilitiesUntilRented,
     propertyTaxBillPaidOnNovember30, firstPropertyTaxPaymentDate: firstPaymentDay ? toIsoDate(firstPaymentDay) : null,
     propertyTaxBucketDepositCountUntilFirstPayment, propertyTaxBucketDepositDefault, propertyTaxBucketDepositEffective,
     propertyTaxBucketFirstBillDepositCountUntilRefi, monthlyPropertyTaxAfterRefi, insurancePaidMonthlyUntilRefi,

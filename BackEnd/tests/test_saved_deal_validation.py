@@ -26,11 +26,30 @@ REJECTED_SAVED_INPUTS = [
     ("daysUntilRehabCompleted", 91, "Rehab completion must be on or before the tenant-occupied date"),
     ("daysUntilRehabCompleted", -1, "Days until rehab completed cannot be negative"),
     ("hysaDepositAtRefi", -1, "HYSA deposit at refi cannot be negative"),
+    ("contractDate", "2026-01-11", "Contract date must be on or before the buy closing date"),
+    ("daysUntilRefi", 44, "Rehab completion must be on or before the refi closing date"),
 ]
 
 
 def _post_active(client, payload):
     return client.post("/active-deals", json=payload)
+
+
+class TestMandatoryDates:
+    """`contractDate` and `buyClosingDate` are required on a saved BRRRR deal and on the calculator: a missing one is a 422."""
+
+    @pytest.mark.parametrize("date_alias", ["contractDate", "buyClosingDate"])
+    @pytest.mark.parametrize("route", ["/active-deals", "/bought-deals", "/analyze/brrr"])
+    def test_a_missing_date_is_a_422(self, client, brrrr_payload, date_alias, route):
+        payload_without_the_date = {key: value for key, value in brrrr_payload.items() if key != date_alias}
+        assert client.post(route, json=payload_without_the_date).status_code == 422
+        assert client.post(route, json={**brrrr_payload, date_alias: None}).status_code == 422
+
+    def test_an_old_deal_that_breaks_the_order_fails_on_its_next_save(self, client, brrrr_payload):
+        deal = _post_active(client, brrrr_payload).json()
+        response = client.put(f"/active-deals/{deal['id']}", json={**brrrr_payload, "contractDate": "2026-02-01"})
+        assert response.status_code == 400
+        assert "Contract date must be on or before the buy closing date" in response.json()["detail"]
 
 
 class TestActiveDealSaveValidation:

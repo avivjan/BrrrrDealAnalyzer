@@ -35,9 +35,9 @@ export interface SeededBoughtDeal extends SeededDeal {
 
 /** The liquidity settings row is a singleton — snapshot it, don't delete it. */
 interface LiquiditySettings {
-  opening_balance_k: number;
+  opening_balance_dollars: number;
   opening_balance_date: string;
-  reserve_k: number;
+  reserve_dollars: number;
 }
 
 interface PipelineTemplate {
@@ -172,9 +172,9 @@ export class Seeder {
       });
       const current = await this.json<LiquiditySettings>(response, 'GET /liquidity/settings');
       const drifted =
-        current.opening_balance_k !== this.baseline.opening_balance_k ||
+        current.opening_balance_dollars !== this.baseline.opening_balance_dollars ||
         current.opening_balance_date !== this.baseline.opening_balance_date ||
-        current.reserve_k !== this.baseline.reserve_k;
+        current.reserve_dollars !== this.baseline.reserve_dollars;
       if (drifted) {
         await this.request.put(this.url('/liquidity/settings'), {
           headers: SEED_HEADERS,

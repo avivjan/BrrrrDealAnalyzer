@@ -42,6 +42,8 @@ const moveToBought = vi.mocked(api.moveToBought);
 
 const DEAL: ActiveDealRes = {
   deal_type: "BRRRR",
+  contractDate: "2026-01-03",
+  buyClosingDate: "2026-01-10",
   id: "deal-1",
   created_at: "2026-01-01T00:00:00.000Z",
   updated_at: "2026-01-01T00:00:00.000Z",
