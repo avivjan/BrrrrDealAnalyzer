@@ -1951,7 +1951,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,522.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,552.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -2288,6 +2288,33 @@
               "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "deal_milestones": [
+            {
+              "date": "2026-01-03",
+              "description": "Contract signed",
+              "milestone_key": "contract_signed"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Purchase closing",
+              "milestone_key": "purchase_closed"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Rehab completed",
+              "milestone_key": "rehab_completed"
+            },
+            {
+              "date": "2026-04-10",
+              "description": "Tenant moves in",
+              "milestone_key": "tenant_moved_in"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Refi closing",
+              "milestone_key": "refi_closed"
             }
           ]
         },
@@ -4374,7 +4401,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,522.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,552.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -4711,6 +4738,33 @@
               "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "deal_milestones": [
+            {
+              "date": "2026-01-03",
+              "description": "Contract signed",
+              "milestone_key": "contract_signed"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Purchase closing",
+              "milestone_key": "purchase_closed"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Rehab completed",
+              "milestone_key": "rehab_completed"
+            },
+            {
+              "date": "2026-04-10",
+              "description": "Tenant moves in",
+              "milestone_key": "tenant_moved_in"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Refi closing",
+              "milestone_key": "refi_closed"
             }
           ]
         },

@@ -2065,7 +2065,7 @@
             {
               "formula": "Total Cash Invested ($56,574.24) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,629.33) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,354.46",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 6 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -2402,6 +2402,38 @@
               "item_key": "reserves_funded_from_own_pocket_at_lowest_arv",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-11150.89"
+            }
+          ],
+          "deal_milestones": [
+            {
+              "date": "2026-09-04",
+              "description": "Contract signed",
+              "milestone_key": "contract_signed"
+            },
+            {
+              "date": "2026-09-14",
+              "description": "Purchase closing",
+              "milestone_key": "purchase_closed"
+            },
+            {
+              "date": "2026-10-29",
+              "description": "Rehab completed",
+              "milestone_key": "rehab_completed"
+            },
+            {
+              "date": "2026-11-30",
+              "description": "Property tax bill paid from the tax bucket (Nov 30)",
+              "milestone_key": "property_tax_bill_paid_on_november_30"
+            },
+            {
+              "date": "2026-12-13",
+              "description": "Tenant moves in",
+              "milestone_key": "tenant_moved_in"
+            },
+            {
+              "date": "2027-03-13",
+              "description": "Refi closing",
+              "milestone_key": "refi_closed"
             }
           ]
         },
