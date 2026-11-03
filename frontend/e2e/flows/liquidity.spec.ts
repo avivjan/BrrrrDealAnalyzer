@@ -81,6 +81,16 @@ async function clickTheaterAction(page: Page, action: 'settings' | 'mercury-sync
   await page.getByTestId(`theater.more.${action}`).click();
 }
 
+/**
+ * The theater shows from the first render, before the data arrives: wait for the load and the (refused) Mercury
+ * sync to finish, so a recorder reset after this sees only the requests the test makes.
+ */
+async function waitForTheFirstLoad(page: Page): Promise<void> {
+  await expect(page.getByTestId('theater.root')).toBeVisible();
+  await expect(page.getByTestId('liquidity.loading')).toHaveCount(0);
+  await expect(page.getByTestId('liquidity.toast')).toHaveText(`Mercury sync failed: ${MERCURY_OFFLINE_DETAIL}`);
+}
+
 async function openSettingsAndSave(page: Page, settle: Settle): Promise<void> {
   await clickTheaterAction(page, 'settings');
   await expect(page.getByTestId('settings.root')).toBeVisible();
@@ -123,7 +133,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
   settle,
 }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('theater.root')).toBeVisible();
+  await waitForTheFirstLoad(page);
 
   api.reset();
 
@@ -170,7 +180,7 @@ test('deleting a recurring series names it in the confirm', async ({
   settle,
 }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('theater.root')).toBeVisible();
+  await waitForTheFirstLoad(page);
   await openSettingsAndSave(page, settle);
   await expect(page.getByTestId('chart.container')).toBeVisible();
 
@@ -212,7 +222,7 @@ test('deleting a recurring series names it in the confirm', async ({
 
 test('the chart walks days with the arrow keys, and Enter opens the day', async ({ page, settle }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('theater.root')).toBeVisible();
+  await waitForTheFirstLoad(page);
   await openSettingsAndSave(page, settle);
 
   const chart = page.getByTestId('chart.container');

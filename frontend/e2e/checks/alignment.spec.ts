@@ -302,7 +302,12 @@ test.describe('alignment', () => {
     await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
     // Settings: a single column today; measured so a future row is covered.
-    await page.getByTestId('theater.settings').click();
+    // On a phone, Settings sits behind the theater's ⋯ menu.
+    if (await page.getByTestId('theater.settings').isVisible()) await page.getByTestId('theater.settings').click();
+    else {
+      await page.getByTestId('theater.more').click();
+      await page.getByTestId('theater.more.settings').click();
+    }
     await expectAligned(page, 'settings.root', { expectRows: false });
   });
 });

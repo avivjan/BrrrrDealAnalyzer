@@ -53,19 +53,19 @@ Pure helper `groupOpenRowsOfDealByMonth(transactions, dealKey)` in the new `comp
 `hooks-inventory.test.ts` fails on a lost `data-testid`, so the specs are rewritten to the theater hooks (Tests) rather than keeping dead hooks.
 
 ## Todo (estimates)
-- [ ] Commit this plan as `tasks/todo/LiquidityTheaterOnly.md` (5 min)
-- [ ] 1: the view renders only the theater; leave = back / Dashboard; drop `T` and the query handling; loading spinner and error toast in the theater; delete `LiquiditySidebar` and `LiquidityDealsPanel` and their tests (60 min)
-- [ ] 2: "Done on another date…" in the sheet and the day modal (20 min)
-- [ ] 3: open rows by month in the legend drawer + `legendRows.ts` (60 min)
-- [ ] 4: last sync time, late-refi count, the collapsed "review changes" button (20 min)
-- [ ] MCP support: no new endpoint or tool. Check that no MCP text mentions the removed page layout, and leave it unchanged otherwise (5 min)
-- [ ] Tests (below) (120 min)
-- [ ] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (20 min):
+- [x] Commit this plan as `tasks/todo/LiquidityTheaterOnly.md` (5 min)
+- [x] 1: the view renders only the theater; leave = back / Dashboard; drop `T` and the query handling; loading spinner and error toast in the theater; delete `LiquiditySidebar` and `LiquidityDealsPanel` and their tests (60 min)
+- [x] 2: "Done on another date…" in the sheet and the day modal (20 min)
+- [x] 3: open rows by month in the legend drawer + `legendRows.ts` (60 min)
+- [x] 4: last sync time, late-refi count, the collapsed "review changes" button (20 min)
+- [x] MCP support: no new endpoint or tool. Check that no MCP text mentions the removed page layout, and leave it unchanged otherwise (5 min)
+- [x] Tests (below) (120 min)
+- [x] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (20 min):
   - leaving the page only goes back or to `/`, with no URL taken from input;
   - no `v-html`; month labels and descriptions are text only;
   - no new storage;
   - then `/security-review` on the diff.
-- [ ] `npm run build`, `npm test`, pytest; Playwright on Chromium and Mobile Chrome; push; update the PR description (20 min)
+- [x] `npm run build`, `npm test`, pytest; Playwright on Chromium and Mobile Chrome; push; update the PR description (20 min)
 
 ## Tests
 **Unit (vitest)**
