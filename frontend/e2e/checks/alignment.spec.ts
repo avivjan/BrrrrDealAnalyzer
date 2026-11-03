@@ -283,11 +283,11 @@ test.describe('alignment', () => {
 
   test('the liquidity transaction form and settings panel', async ({ page, settle }) => {
     await page.goto('/liquidity');
-    await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+    await expect(page.getByTestId('theater.add-flow')).toBeVisible();
 
     // One-time: the fields stack, so this measures nothing unless a grid
     // sneaks in — still worth running so the day it does, it is straight.
-    await page.getByTestId('liquidity.add-flow').click();
+    await page.getByTestId('theater.add-flow').click();
     await expectAligned(page, 'txnform.root', { expectRows: false });
 
     // Recurring: the frequency/interval row is a 3-column grid at every width.
@@ -302,7 +302,7 @@ test.describe('alignment', () => {
     await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
     // Settings: a single column today; measured so a future row is covered.
-    await page.getByTestId('liquidity.settings-open').click();
+    await page.getByTestId('theater.settings').click();
     await expectAligned(page, 'settings.root', { expectRows: false });
   });
 });

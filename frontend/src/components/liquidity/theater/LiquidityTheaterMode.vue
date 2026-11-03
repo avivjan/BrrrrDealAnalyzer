@@ -379,6 +379,7 @@ const SHORTCUTS = [
             </UiIconButton>
             <UiButton
               data-testid="theater.legend-toggle"
+              aria-label="Legend (L)"
               :variant="legendOpen ? 'secondary' : 'ghost'"
               size="sm"
               class="gap-1.5 rounded-full"
@@ -387,7 +388,7 @@ const SHORTCUTS = [
             >
               <i class="pi pi-list text-[10px]" aria-hidden="true"></i><span class="hidden sm:inline">Legend</span>
             </UiButton>
-            <UiButton data-testid="theater.add-flow" variant="primary" size="sm" class="gap-1.5 rounded-full shadow-glow-primary" @click="emit('addFlow')">
+            <UiButton data-testid="theater.add-flow" aria-label="Add flow" variant="primary" size="sm" class="gap-1.5 rounded-full shadow-glow-primary" @click="emit('addFlow')">
               <i class="pi pi-plus text-[10px]" aria-hidden="true"></i><span class="hidden sm:inline">Add Flow</span>
             </UiButton>
             <UiIconButton data-testid="theater.close" label="Leave the liquidity timeline (Esc)" size="md" @click="emit('leave')">

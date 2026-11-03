@@ -30,7 +30,7 @@ const ROUTES: [path: string, ready: string][] = [
   ['/analyze', 'form.root'],
   ['/my-deals', 'mydeals.add-deal'],
   ['/bought-deals', 'boughtdeals.edit-pipeline'],
-  ['/liquidity', 'liquidity.add-flow'],
+  ['/liquidity', 'theater.add-flow'],
   ['/reps', 'reps.manual-entry'],
 ];
 

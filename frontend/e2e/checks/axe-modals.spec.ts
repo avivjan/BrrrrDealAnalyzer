@@ -68,14 +68,14 @@ test.describe('overlays and seeded boards (desktop)', () => {
 
   test('the liquidity transaction form', async ({ page }) => {
     await page.goto('/liquidity');
-    await page.getByTestId('liquidity.add-flow').click();
+    await page.getByTestId('theater.add-flow').click();
     await expect(page.getByTestId('txnform.root')).toBeVisible();
     await checkA11y(page, 'liquidity@txnform');
   });
 
   test('the liquidity settings panel', async ({ page }) => {
     await page.goto('/liquidity');
-    await page.getByTestId('liquidity.settings-open').click();
+    await page.getByTestId('theater.settings').click();
     await expect(page.getByTestId('settings.root')).toBeVisible();
     await checkA11y(page, 'liquidity@settings');
   });
@@ -87,7 +87,7 @@ const ROUTES: [name: string, path: string, ready: string][] = [
   ['analyze', '/analyze', 'form.root'],
   ['my-deals', '/my-deals', 'mydeals.add-deal'],
   ['bought-deals', '/bought-deals', 'boughtdeals.edit-pipeline'],
-  ['liquidity', '/liquidity', 'liquidity.add-flow'],
+  ['liquidity', '/liquidity', 'theater.add-flow'],
   ['reps', '/reps', 'reps.manual-entry'],
 ];
 

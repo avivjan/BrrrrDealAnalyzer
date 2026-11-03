@@ -14,7 +14,7 @@ const ROUTES: [name: string, ready: string][] = [
   ['analyze', 'form.root'],
   ['my-deals', 'mydeals.add-deal'],
   ['bought-deals', 'boughtdeals.edit-pipeline'],
-  ['liquidity', 'liquidity.add-flow'],
+  ['liquidity', 'theater.add-flow'],
   ['reps', 'reps.manual-entry'],
   ['home', 'landing.offer'],
 ];
@@ -32,6 +32,11 @@ test.describe('desktop', () => {
       await page.getByTestId(`shell.nav.${name}`).first().click();
       await expect(page.getByTestId(ready)).toBeVisible();
       await expect(page.getByTestId(`shell.nav.${name}`).first()).toHaveAttribute('aria-current', 'page');
+      // The liquidity page covers the shell; Esc leaves it, back to the previous route.
+      if (name === 'liquidity') {
+        await page.keyboard.press('Escape');
+        await expect(page.getByTestId('theater.root')).toHaveCount(0);
+      }
     }
     // One <main>, one <h1> (the topbar title), on every route.
     await expect(page.locator('main')).toHaveCount(1);
@@ -77,11 +82,13 @@ test.describe('phone', () => {
     await expect(page.getByTestId('shell.mobile-nav')).toBeVisible();
     await expect(page.getByTestId('shell.sidebar')).toBeHidden();
     await page.getByTestId('shell.mobile-nav').getByTestId('shell.nav.liquidity').click();
-    await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+    await expect(page.getByTestId('theater.add-flow')).toBeVisible();
     // The bar never covers the page's last line: main pads for it.
     const padding = await page.locator('main').evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom));
     expect(padding).toBeGreaterThanOrEqual(60);
-    // Settings from the topbar gear on a phone too.
+    // Settings from the topbar gear on a phone too, once Esc has left the liquidity page (it covers the shell).
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('theater.root')).toHaveCount(0);
     await page.getByTestId('shell.settings-open').click();
     await expect(page.getByTestId('shell.settings')).toBeVisible();
   });
