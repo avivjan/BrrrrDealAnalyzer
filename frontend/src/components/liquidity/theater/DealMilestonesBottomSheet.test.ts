@@ -49,6 +49,14 @@ describe("DealMilestonesBottomSheet", () => {
     expect(wrapper.emitted("moveMilestone")?.[0]).toEqual([DEAL, "rehab_completed"]);
   });
 
+  it("offers Done on another date on an open milestone only", async () => {
+    const wrapper = mountSheet();
+    const milestones = wrapper.findAll('[data-testid="theater.sheet.milestone"]');
+    expect(milestones[0]!.find('[data-testid="theater.sheet.milestone.done-on-date"]').exists()).toBe(false);
+    await milestones[2]!.get('[data-testid="theater.sheet.milestone.done-on-date"]').trigger("click");
+    expect(wrapper.emitted("approveMilestoneOnAnotherDate")?.[0]).toEqual([DEAL, "rehab_completed"]);
+  });
+
   it("is a collapsed bar that toggles the sheet, counting the overdue milestones", async () => {
     const wrapper = mountSheet(false);
     expect(wrapper.get('[data-testid="theater.sheet"]').attributes("aria-hidden")).toBe("true");

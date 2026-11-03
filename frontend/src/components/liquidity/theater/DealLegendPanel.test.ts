@@ -69,6 +69,57 @@ describe("DealLegendPanel", () => {
     expect(wrapper.emitted("highlightDeal")).toEqual([["my_deals:d1"], [null]]);
   });
 
+  it("lists a deal's open rows by month, collapsed until asked, and a row opens its day", async () => {
+    const wrapper = mountLegend();
+    await wrapper.findAll('[data-testid="theater.legend.deal.toggle"]')[0]!.trigger("click");
+    const section = wrapper.get('[data-testid="theater.legend.deal.open-rows-section"]');
+    expect(section.text()).toContain("Open rows (2)");
+    expect(wrapper.find('[data-testid="theater.legend.deal.open-rows"]').exists()).toBe(false);
+    await section.trigger("click");
+    const months = wrapper.findAll('[data-testid="theater.legend.open-rows-month"]');
+    expect(months.map((month) => month.attributes("data-month"))).toEqual(["2026-09"]);
+    expect(months[0]!.text()).toContain("Sep 2026");
+    expect(months[0]!.text()).toContain("2 rows");
+    await wrapper.get('[data-testid="theater.legend.open-row.a"]').trigger("click");
+    expect(wrapper.emitted("openDay")).toEqual([["2026-09-01"]]);
+  });
+
+  it("collapses a month and the overdue section on a click", async () => {
+    const wrapper = mountLegend();
+    await wrapper.findAll('[data-testid="theater.legend.deal.toggle"]')[0]!.trigger("click");
+    await wrapper.get('[data-testid="theater.legend.deal.overdue-section"]').trigger("click");
+    expect(wrapper.find('[data-testid="theater.legend.overdue-row.a"]').exists()).toBe(false);
+    await wrapper.get('[data-testid="theater.legend.deal.open-rows-section"]').trigger("click");
+    await wrapper.get('[data-testid="theater.legend.open-rows-month.toggle"]').trigger("click");
+    expect(wrapper.find('[data-testid="theater.legend.open-row.a"]').exists()).toBe(false);
+  });
+
+  it("says how many rows a late refi added", async () => {
+    const wrapper = mount(DealLegendPanel, {
+      props: {
+        importedDeals: [deal("d1", "1 Main St", { refi_is_late: true, late_refi_row_count: 3 })],
+        overdueMoneyOut: [], expectedMoneyInNotCounted: [], transactions: [], recurringRules: [],
+      },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await wrapper.get('[data-testid="theater.legend.deal.toggle"]').trigger("click");
+    expect(wrapper.get('[data-testid="theater.legend.deal.refi-late"]').text()).toBe("Refi late · 3 added rows");
+  });
+
+  it("flags an out-of-date deal on its collapsed row, and opens its review from there", async () => {
+    const wrapper = mount(DealLegendPanel, {
+      props: {
+        importedDeals: [deal("d1", "1 Main St", { liquidity_rows_out_of_date: true }), deal("d2", "2 Main St")],
+        overdueMoneyOut: [], expectedMoneyInNotCounted: [], transactions: [], recurringRules: [],
+      },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    const buttons = wrapper.findAll('[data-testid="theater.legend.deal.review-changes-collapsed"]');
+    expect(buttons).toHaveLength(1);
+    await buttons[0]!.trigger("click");
+    expect(wrapper.emitted("reviewChanges")?.[0]?.[0]).toMatchObject({ deal_id: "d1" });
+  });
+
   it("counts the open manual rows as Other flows and lists the recurring series", () => {
     const wrapper = mountLegend();
     expect(wrapper.get('[data-testid="theater.legend.other-flows"]').text()).toContain("2 open");

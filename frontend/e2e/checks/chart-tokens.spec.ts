@@ -87,7 +87,7 @@ test.beforeEach(({}, testInfo) => {
 
 test('every --chart-* token resolves to a colour on /liquidity', async ({ page }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+  await expect(page.getByTestId('theater.add-flow')).toBeVisible();
 
   const { resolved, look, dark } = await page.evaluate((names) => {
     const html = document.documentElement;

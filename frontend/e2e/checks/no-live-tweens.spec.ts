@@ -225,26 +225,22 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await expect(page.getByTestId('boughtdeals.modal')).toBeHidden();
 
   // --- /liquidity -----------------------------------------------------------
-  // `liquidity.add-flow` lives in the header, which renders while the store is
-  // still loading, so it is not enough to wait on here: `LiquiditySidebar`
-  // mounts in the `v-else` branch and its `v-reveal.stagger` starts only once
-  // the store resolves. Waiting on the spinner to go instead means the stagger
-  // is already on the timeline before the clock moves, rather than starting
-  // during the settle's trailing real wait and being read as a straggler.
+  // The page is the theater: `theater.add-flow` renders while the store is
+  // still loading, so it is not enough to wait on here. Waiting on the first-load
+  // spinner to go as well means anything that animates in once the store
+  // resolves is already on the timeline before the clock moves.
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+  await expect(page.getByTestId('theater.add-flow')).toBeVisible();
   await expect(page.getByTestId('liquidity.loading')).toBeHidden();
-  // One simulated second clears that stagger with room to spare: the longest
-  // one it can produce is `DUR.slow + 0.06 × (n − 1)` — 0.76 s for the sidebar's
-  // seven `data-reveal` cards. Grow the sidebar past elevenish cards and this
-  // step, not the app, is what breaks first.
+  // One simulated second clears the theater's fade-in and the legend's slide
+  // with room to spare.
   await quietAfter('/liquidity (route)');
 
   // Add Flow. `TransactionForm` is a Vue `<Transition>` today and, like the
   // settings modal below, needs the clock to leave: `quietAfter` grants it.
   // `toHaveCount(0)` rather than `toBeHidden` because the form is `v-if`'d
   // out of the tree, which is how `flows/liquidity.spec.ts` asserts it too.
-  await page.getByTestId('liquidity.add-flow').click();
+  await page.getByTestId('theater.add-flow').click();
   await expect(page.getByTestId('txnform.root')).toBeVisible();
   await quietAfter('/liquidity add-flow open');
 
@@ -252,7 +248,7 @@ test('no GSAP tween outlives its interaction, on any route @motion', async ({
   await quietAfter('/liquidity add-flow cancelled');
   await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
-  await page.getByTestId('liquidity.settings-open').click();
+  await page.getByTestId('theater.settings').click();
   await expect(page.getByTestId('settings.root')).toBeVisible();
   await quietAfter('/liquidity settings modal open');
 

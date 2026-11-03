@@ -123,7 +123,7 @@ test('a second browser context starts from the defaults, whatever the first chos
 
 test('every --chart-* token resolves to a colour in all eight look × mode sets', async ({ page }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+  await expect(page.getByTestId('theater.add-flow')).toBeVisible();
   for (const look of LOOKS) {
     const bgByMode: string[] = [];
     for (const dark of [false, true]) {
@@ -135,7 +135,7 @@ test('every --chart-* token resolves to a colour in all eight look × mode sets'
         [look, dark] as const,
       );
       await page.reload();
-      await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+      await expect(page.getByTestId('theater.add-flow')).toBeVisible();
       const state = await rootState(page);
       expect(state.look).toBe(look);
       expect(state.dark).toBe(dark);
@@ -172,7 +172,7 @@ test.describe('axe in every look and mode', () => {
         expect((await rootState(page)).look).toBe(look);
         await checkA11y(page, `landing@${look}-${mode}`);
         await page.goto('/liquidity');
-        await expect(page.getByTestId('liquidity.add-flow')).toBeVisible();
+        await expect(page.getByTestId('theater.add-flow')).toBeVisible();
         await checkA11y(page, `liquidity@${look}-${mode}`);
       });
     }

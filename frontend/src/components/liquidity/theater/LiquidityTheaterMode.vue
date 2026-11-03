@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The liquidity timeline in theater mode (tasks/todo/LiquidityTheaterMode.md, section A): the chart takes the
- * whole viewport, over the app's sidebar and topbar, with everything the page shows moved into overlays:
+ * The liquidity page (tasks/todo/LiquidityTheaterMode.md, section A; tasks/todo/LiquidityTheaterOnly.md): the
+ * chart takes the whole viewport, over the app's sidebar and topbar, with everything else in overlays:
  *
  * - top bar: the headline figures as chips (Today's balance opens the Mercury breakdown, the overdue chip opens
  *   the overdue rows), and a floating action bar (Today, Mercury, Settings, + Add Flow, Legend, browser
@@ -9,10 +9,10 @@
  * - the legend (deals, their overdue rows, recurring series), the deals & milestones bottom sheet, and a full
  *   modal for a clicked day. Hovering a day shows a floating preview.
  *
- * Esc closes the topmost layer first (day modal, popovers, deals sheet, then the theater; the legend is a panel
- * that stays until toggled). Shortcuts: T
- * theater, F browser fullscreen, L legend, D deals, ? help; never while typing, and never while another dialog
- * (one of the view's modals, the command palette, Settings) is open.
+ * Esc closes the topmost layer first (day modal, popovers, deals sheet), then leaves the page (`leave`, the same as
+ * ×); the legend is a panel that stays until toggled. Shortcuts: F browser fullscreen, L legend, D deals, ? help;
+ * never while typing, and never while another dialog (one of the view's modals, the command palette, Settings) is
+ * open.
  *
  * Only `opacity` animates on this root and the chart's ancestors: the chart re-measures from a ResizeObserver.
  * The legend, the sheet and the popovers move with `transform` beside it.
@@ -46,7 +46,6 @@ export interface LiquidityHeadlineFigures {
 }
 
 const props = defineProps<{
-  open: boolean
   headlineFigures: LiquidityHeadlineFigures
   /** One of the view's own modals is open: it owns Esc and the keyboard. */
   isAnotherDialogOpen: boolean
@@ -54,8 +53,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'open'): void
-  (e: 'close'): void
+  /** Esc with nothing open, or ×: leave the liquidity page. */
+  (e: 'leave'): void
   (e: 'addFlow', date?: string): void
   (e: 'editTxn', id: string): void
   (e: 'deleteTxn', id: string): void
@@ -106,6 +105,16 @@ const moreActionsMenuOpen = ref(false)
 const shortcutsHelpOpen = ref(false)
 const highlightedDealKey = ref<string | null>(null)
 const dayModalDate = ref<string | null>(null)
+
+/** The first load: nothing to draw yet. */
+const isLoadingForTheFirstTime = computed(() => store.loading && store.transactions.length === 0 && store.importedDeals.length === 0)
+
+/** "HH:MM" of the last Mercury sync. */
+const mercurySyncedTime = computed(() => {
+  if (!store.mercuryLastSyncedAt) return null
+  const syncedAt = new Date(store.mercuryLastSyncedAt)
+  return `${String(syncedAt.getHours()).padStart(2, '0')}:${String(syncedAt.getMinutes()).padStart(2, '0')}`
+})
 
 function closePopovers() {
   overduePopoverOpen.value = false
@@ -190,32 +199,24 @@ function anotherDialogOwnsTheKeyboard(): boolean {
   return openDialogs.some(dialog => !rootRef.value?.contains(dialog))
 }
 
-/** Esc: the day modal, then a popover, then the deals sheet, then the theater. The legend is a panel, not a layer. */
+/** Esc: the day modal, then a popover, then the deals sheet, then leave the page. The legend is a panel, not a layer. */
 function closeTopmostLayer() {
   if (dayModalDate.value !== null) dayModalDate.value = null
   else if (overduePopoverOpen.value || balancePopoverOpen.value || moreActionsMenuOpen.value || shortcutsHelpOpen.value) closePopovers()
   else if (sheetOpen.value) sheetOpen.value = false
-  else emit('close')
+  else emit('leave')
 }
 
 function onKeyDown(event: KeyboardEvent) {
   if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
   if (anotherDialogOwnsTheKeyboard()) return
   if (event.key === 'Escape') {
-    if (!props.open) return
     event.preventDefault()
     closeTopmostLayer()
     return
   }
   if (isTypingInAField(event.target)) return
   const key = event.key.toLowerCase()
-  if (key === 't') {
-    event.preventDefault()
-    if (props.open) emit('close')
-    else emit('open')
-    return
-  }
-  if (!props.open) return
   if (key === 'f') {
     event.preventDefault()
     void toggleBrowserFullscreen()
@@ -231,9 +232,12 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', onKeyDown)
   document.addEventListener('fullscreenchange', onFullscreenChange)
+  // The arrow keys work at once: the focus starts on the chart.
+  await nextTick()
+  rootRef.value?.querySelector<HTMLElement>('[data-testid="chart.container"]')?.focus()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown)
@@ -241,38 +245,20 @@ onBeforeUnmount(() => {
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
 })
 
-// --- focus: into the chart on open, back where it was on close -----------------------------------------------
-let focusToRestoreOnClose: HTMLElement | null = null
-watch(() => props.open, async (isOpen) => {
-  if (isOpen) {
-    focusToRestoreOnClose = document.activeElement as HTMLElement | null
-    await nextTick()
-    rootRef.value?.querySelector<HTMLElement>('[data-testid="chart.container"]')?.focus()
-  } else {
-    dayModalDate.value = null
-    closePopovers()
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
-    focusToRestoreOnClose?.focus?.()
-    focusToRestoreOnClose = null
-  }
-}, { immediate: true })
-
 const SHORTCUTS = [
-  { key: 'T', action: 'Theater mode on / off' },
   { key: 'F', action: 'Browser fullscreen' },
   { key: 'L', action: 'Legend' },
   { key: 'D', action: 'Deals & milestones' },
   { key: '← →', action: 'Step through days' },
   { key: 'Enter', action: 'Open the selected day' },
-  { key: 'Esc', action: 'Close the top layer' },
+  { key: 'Esc', action: 'Close the top layer, then leave' },
 ]
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition name="theater-fade">
+    <Transition name="theater-fade" appear>
       <div
-        v-if="open"
         ref="rootRef"
         data-testid="theater.root"
         role="dialog"
@@ -281,7 +267,8 @@ const SHORTCUTS = [
         class="fixed inset-0 z-40 flex flex-col overflow-hidden bg-page text-fg"
       >
         <!-- Top bar: title, the figures as chips, the floating actions -->
-        <header class="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4 md:flex-nowrap">
+        <!-- A div, not a <header>: the app topbar underneath is the page banner. -->
+        <div data-testid="theater.top-bar" class="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4 md:flex-nowrap">
           <div class="flex shrink-0 items-center gap-2">
             <span class="flex h-8 w-8 items-center justify-center rounded-ctl bg-primary/10 text-primary" aria-hidden="true"><i class="pi pi-chart-line text-sm"></i></span>
             <h1 id="theater-heading" class="font-display text-lg font-semibold tracking-display text-fg md:sr-only xl:not-sr-only">Liquidity Timeline</h1>
@@ -392,6 +379,7 @@ const SHORTCUTS = [
             </UiIconButton>
             <UiButton
               data-testid="theater.legend-toggle"
+              aria-label="Legend (L)"
               :variant="legendOpen ? 'secondary' : 'ghost'"
               size="sm"
               class="gap-1.5 rounded-full"
@@ -400,10 +388,10 @@ const SHORTCUTS = [
             >
               <i class="pi pi-list text-[10px]" aria-hidden="true"></i><span class="hidden sm:inline">Legend</span>
             </UiButton>
-            <UiButton data-testid="theater.add-flow" variant="primary" size="sm" class="gap-1.5 rounded-full shadow-glow-primary" @click="emit('addFlow')">
+            <UiButton data-testid="theater.add-flow" aria-label="Add flow" variant="primary" size="sm" class="gap-1.5 rounded-full shadow-glow-primary" @click="emit('addFlow')">
               <i class="pi pi-plus text-[10px]" aria-hidden="true"></i><span class="hidden sm:inline">Add Flow</span>
             </UiButton>
-            <UiIconButton data-testid="theater.close" label="Exit full screen (Esc)" size="md" @click="emit('close')">
+            <UiIconButton data-testid="theater.close" label="Leave the liquidity timeline (Esc)" size="md" @click="emit('leave')">
               <i class="pi pi-times text-sm" aria-hidden="true"></i>
             </UiIconButton>
           </div>
@@ -419,16 +407,18 @@ const SHORTCUTS = [
                 <span class="font-semibold text-fg">Today's balance</span>
                 <span v-if="store.mercurySyncing" class="text-fg-muted">syncing…</span>
                 <span v-else-if="store.mercuryError" class="text-negative" :title="store.mercuryError">{{ store.mercuryBalance && store.mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}</span>
-                <span v-else-if="store.mercuryBalance" class="text-positive">mercury · {{ store.mercuryBalance.workspace_count }}</span>
+                <span v-else-if="store.mercuryBalance" data-testid="theater.balance-popover.sync" class="text-positive">
+                  mercury · {{ store.mercuryBalance.account_count }} account{{ store.mercuryBalance.account_count === 1 ? '' : 's' }} across {{ store.mercuryBalance.workspace_count }} workspace{{ store.mercuryBalance.workspace_count === 1 ? '' : 's' }}<template v-if="mercurySyncedTime"> · synced {{ mercurySyncedTime }}</template>
+                </span>
               </div>
               <p v-if="!store.mercuryBalance" class="text-xs text-fg-muted">No Mercury balance yet: the timeline starts from the opening balance in Settings.</p>
               <div v-else class="space-y-2">
-                <div v-for="workspace in store.mercuryBalance.workspaces" :key="workspace.workspace" class="space-y-0.5">
+                <div v-for="workspace in store.mercuryBalance.workspaces" :key="workspace.workspace" :data-testid="`theater.balance-popover.workspace.${workspace.workspace}`" class="space-y-0.5">
                   <div class="flex items-center justify-between gap-2 text-[11px]">
                     <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ workspace.workspace }}</span>
                     <span class="numeric whitespace-nowrap text-fg">{{ formatMoney(workspace.total_balance_dollars) }}</span>
                   </div>
-                  <div v-for="account in workspace.accounts" :key="account.id" class="flex items-center justify-between gap-2 pl-2 text-[11px] text-fg-muted">
+                  <div v-for="account in workspace.accounts" :key="account.id" :data-testid="`theater.balance-popover.account.${account.id}`" class="flex items-center justify-between gap-2 pl-2 text-[11px] text-fg-muted">
                     <span class="min-w-0 truncate">{{ account.name || account.type || 'Account' }}<template v-if="!account.is_counted_as_cash"> · not counted</template></span>
                     <span class="numeric whitespace-nowrap">{{ formatMoney(account.current_balance_dollars) }}</span>
                   </div>
@@ -464,10 +454,10 @@ const SHORTCUTS = [
           </Transition>
           <Transition name="theater-pop">
             <div v-if="moreActionsMenuOpen" data-testid="theater.more-menu" class="absolute top-full z-30 mt-2 rounded-card border-ui border-line bg-surface p-4 shadow-3 right-3 w-56 p-1">
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
-              <button v-if="openCommandPalette" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; openCommandPalette()"><i class="pi pi-search" aria-hidden="true"></i> Search</button>
+              <button data-testid="theater.more.today" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
+              <button data-testid="theater.more.mercury-sync" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
+              <button data-testid="theater.more.settings" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
+              <button data-testid="theater.more.search" v-if="openCommandPalette" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; openCommandPalette()"><i class="pi pi-search" aria-hidden="true"></i> Search</button>
               <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="toggleTheme()"><i :class="resolvedTheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true"></i> {{ resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode' }}</button>
               <button v-if="browserFullscreenIsSupported" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; toggleBrowserFullscreen()"><i class="pi pi-window-maximize" aria-hidden="true"></i> {{ isBrowserFullscreen ? 'Exit browser fullscreen' : 'Browser fullscreen' }}</button>
             </div>
@@ -483,7 +473,7 @@ const SHORTCUTS = [
               </dl>
             </div>
           </Transition>
-        </header>
+        </div>
 
         <!-- The stage: the chart edge to edge, the legend and the sheet over it -->
         <div class="relative min-h-0 flex-1" @pointerdown="closePopovers">
@@ -499,6 +489,15 @@ const SHORTCUTS = [
               :highlighted-deal-key="highlightedDealKey"
               @open-day="onOpenDay"
             />
+            <div
+              v-if="isLoadingForTheFirstTime"
+              data-testid="liquidity.loading"
+              class="absolute inset-0 z-10 flex items-center justify-center bg-page/60"
+            >
+              <span class="flex items-center gap-2 text-sm text-fg-muted">
+                <i class="pi pi-spin pi-spinner text-primary" aria-hidden="true"></i> Loading liquidity data…
+              </span>
+            </div>
           </div>
 
           <Transition name="theater-legend">
@@ -519,6 +518,7 @@ const SHORTCUTS = [
                 @remove-deal-from-timeline="(deal) => emit('removeDealFromTimeline', deal)"
                 @edit-recurring="(ruleId) => emit('editRecurring', ruleId)"
                 @delete-recurring="(ruleId) => emit('deleteRecurring', ruleId)"
+                @open-day="onOpenDay"
               />
             </div>
           </Transition>
@@ -531,6 +531,7 @@ const SHORTCUTS = [
             @toggle="sheetOpen = !sheetOpen"
             @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"
             @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"
+            @approve-milestone-on-another-date="(deal, milestone) => emit('changeMilestone', deal, milestone, true)"
             @move-milestone="(deal, milestone) => emit('changeMilestone', deal, milestone, false)"
           />
         </div>
@@ -545,6 +546,7 @@ const SHORTCUTS = [
           @close="dayModalDate = null"
           @step-day="stepDayModal"
           @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"
+          @approve-milestone-on-another-date="(deal, milestone) => emit('changeMilestone', deal, milestone, true)"
           @move-milestone="(deal, milestone) => emit('changeMilestone', deal, milestone, false)"
           @edit-txn="(id) => emit('editTxn', id)"
           @delete-txn="(id) => emit('deleteTxn', id)"
