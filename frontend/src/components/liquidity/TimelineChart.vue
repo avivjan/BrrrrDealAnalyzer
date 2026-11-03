@@ -23,15 +23,24 @@
  * reserve floor from settings as a dashed line + wash (`reserveDollars`, optional),
  * and each day's flows as one marker on the line sized by |net|. No bars.
  *
+ * LiquidityTheaterMode (tasks/todo/LiquidityTheaterMode.md, section E): today is emphasised (a glow behind its
+ * line, a "Today" pill above the plot, an edge chip that re-centres when today is scrolled away); a strip of
+ * dots above the axis shows which deals have rows each day, in their colors (from the injected deal lookup);
+ * `highlightedDealKey` dims every other deal; `tooltipFollowsPointer` floats the tooltip beside the crosshair
+ * (hover only, so a tap on a touch screen just selects the day). A touch pointer never sets the hover state.
+ *
  * Geometry is pure (`./chart/geometry.ts`). No size, padding or transform
  * transition may be applied to this element or any ancestor: the plot is
  * re-measured from a ResizeObserver.
  */
 import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 
+import { dealAccentStyleForTransaction, useInjectedDealAttributionLookup, type DealAttribution } from '../../composables/useLiquidityDealAttribution'
 import { chartToken } from '../../design/chartTokens'
 import { themeEpoch } from '../../design/theme'
 import type { DayBucket } from '../../types/liquidity'
+import DealAttributionTag from './DealAttributionTag.vue'
+import { dealKeyOfTransaction } from './dealColors'
 import { todayISO } from '../../utils/liquidityEngine'
 import { formatSignedMoney } from '../../utils/money'
 import {
@@ -73,10 +82,16 @@ const props = defineProps<{
    * dashed line; undefined = not drawn.
    */
   balancesWithTheDeal?: number[]
+  /** Float the tooltip beside the crosshair, for hover only (theater mode); off on a screen without hover. */
+  tooltipFollowsPointer?: boolean
+  /** A deal to bring forward: every other deal's dots are dimmed. */
+  highlightedDealKey?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'selectDay', date: string): void
+  /** A deliberate "show me this day": a click or tap, or Enter. The arrow keys only select. */
+  (e: 'openDay', date: string): void
 }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -86,11 +101,20 @@ const scrollX = ref(0)
 const hoveredIndex = ref<number | null>(null)
 const selectedIndex = ref<number | null>(null)
 const isDragging = ref(false)
+/** The selection came from the arrow keys: a floating tooltip follows it (there is no hover to follow). */
+const selectedByKeyboard = ref(false)
 let dragStartX = 0
 let dragStartScroll = 0
 let dragTravel = 0
 
 const today = todayISO()
+
+/** Each row's deal, when the view provides the lookup (the tooltip rows and the deal dots). */
+const dealAttributionLookup = useInjectedDealAttributionLookup()
+
+/** A screen without hover (a phone): the tooltip never follows a pointer there. */
+const screenHasHover = ref(true)
+const tooltipFloatsBesideCrosshair = computed(() => !!props.tooltipFollowsPointer && screenHasHover.value)
 
 /**
  * The 32 chart colours, read from the active look. Reading `themeEpoch`
@@ -149,6 +173,38 @@ const activeDay = computed<DayBucket | null>(() => {
   return props.days[idx] ?? null
 })
 
+/** The day the tooltip shows: a floating tooltip is a hover preview only (a click opens the day modal instead). */
+const tooltipDay = computed<DayBucket | null>(() => {
+  if (!tooltipFloatsBesideCrosshair.value) return activeDay.value
+  const idx = hoveredIndex.value ?? (selectedByKeyboard.value ? selectedIndex.value : null)
+  if (idx === null || idx < 0 || idx >= count.value) return null
+  return props.days[idx] ?? null
+})
+
+const FLOATING_TOOLTIP_WIDTH = 280
+const FLOATING_TOOLTIP_GAP = 18
+
+/** Where the floating tooltip sits: beside the crosshair, flipped to the left near the right edge. */
+const floatingTooltipStyle = computed<Record<string, string>>(() => {
+  if (!tooltipFloatsBesideCrosshair.value || !crosshair.value) return {} as Record<string, string>
+  const fitsOnTheRight = crosshair.value.x + FLOATING_TOOLTIP_GAP + FLOATING_TOOLTIP_WIDTH <= width.value - 8
+  const left = fitsOnTheRight
+    ? crosshair.value.x + FLOATING_TOOLTIP_GAP
+    : Math.max(8, crosshair.value.x - FLOATING_TOOLTIP_GAP - FLOATING_TOOLTIP_WIDTH)
+  const top = Math.min(Math.max(crosshair.value.y - 60, 8), Math.max(8, height.value - 220))
+  return { left: '0px', top: '0px', transform: `translate(${Math.round(left)}px, ${Math.round(top)}px)` }
+})
+
+/** Where today is against the visible window: on screen, or off to one side (the edge chip). */
+const todayIndex = computed(() => props.days.findIndex((d) => d.date === today))
+const todayOffScreenSide = computed<'left' | 'right' | null>(() => {
+  if (todayIndex.value < 0 || width.value === 0) return null
+  const todayX = x(todayIndex.value)
+  if (todayX < PAD_LEFT) return 'left'
+  if (todayX > width.value) return 'right'
+  return null
+})
+
 const zeroY = computed(() => y(0))
 const zeroVisible = computed(() => zeroY.value >= PAD_TOP && zeroY.value <= plotBottom.value)
 const baseY = computed(() => (zeroVisible.value ? zeroY.value : plotBottom.value))
@@ -177,6 +233,24 @@ interface DayShape {
   y: number
   /** One marker per day with transactions, 3–7 px by |net| against the series' max. */
   marker: { r: number; positive: boolean } | null
+  /** One dot per deal with rows on this day, in the deal's color. */
+  dealDots: { dealKey: string; x: number; colorHex: string }[]
+}
+
+const DEAL_DOT_SPACING = 7
+
+/** The distinct deals of a day's rows, in row order. */
+function dealsOfDay(day: DayBucket): DealAttribution[] {
+  const lookup = dealAttributionLookup?.value
+  if (!lookup) return []
+  const dealsSeen = new Map<string, DealAttribution>()
+  for (const transaction of day.transactions) {
+    const dealKey = dealKeyOfTransaction(transaction)
+    if (!dealKey || dealsSeen.has(dealKey)) continue
+    const dealAttribution = lookup.attributionForDealKey(dealKey)
+    if (dealAttribution) dealsSeen.set(dealKey, dealAttribution)
+  }
+  return [...dealsSeen.values()]
 }
 
 /** The largest |net| in the series, the scale for the flow markers. */
@@ -193,9 +267,12 @@ const shapes = computed<DayShape[]>(() => {
     const monthKey = `${yr}-${mo}`
     const wd = weekday(day.date)
     const scale = maxAbsNet.value > 0 ? Math.abs(day.net_dollars) / maxAbsNet.value : 0
+    const dayX = x(i)
+    const dealsOfThisDay = dealsOfDay(day)
+    const firstDealDotX = dayX - ((dealsOfThisDay.length - 1) * DEAL_DOT_SPACING) / 2
     out.push({
       i,
-      x: x(i),
+      x: dayX,
       day,
       weekend: wd === 0 || wd === 6,
       isToday: day.date === today,
@@ -207,6 +284,11 @@ const shapes = computed<DayShape[]>(() => {
       hovered: i === activeIndex.value,
       y: y(day.balance_dollars),
       marker: day.transactions.length > 0 ? { r: 3 + 4 * scale, positive: day.net_dollars >= 0 } : null,
+      dealDots: dealsOfThisDay.map((dealAttribution, dotIndex) => ({
+        dealKey: dealAttribution.dealKey,
+        x: firstDealDotX + dotIndex * DEAL_DOT_SPACING,
+        colorHex: dealAttribution.dealColorHex,
+      })),
     })
     prevMonth = monthKey
   }
@@ -316,7 +398,8 @@ function onPointerDown(e: PointerEvent) {
 }
 
 function onPointerMove(e: PointerEvent) {
-  const idx = indexAt(e.clientX)
+  // A finger has no hover: on a touch screen a tap selects and a drag pans, without a tooltip in the way.
+  const idx = e.pointerType === 'touch' ? null : indexAt(e.clientX)
   if (!isDragging.value) {
     hoveredIndex.value = idx
     return
@@ -353,7 +436,9 @@ function onPointerUp(e: PointerEvent) {
     const idx = indexAt(e.clientX)
     if (idx !== null) {
       selectedIndex.value = idx
+      selectedByKeyboard.value = false
       emit('selectDay', props.days[idx]!.date)
+      emit('openDay', props.days[idx]!.date)
     }
   }
 }
@@ -373,10 +458,12 @@ function onKeyDown(e: KeyboardEvent) {
     const next = nextIndex(current, e.key, count.value)
     if (next === null) return
     selectedIndex.value = next
+    selectedByKeyboard.value = true
     scrollX.value = scrollToReveal(next, scrollX.value, width.value, count.value)
     emit('selectDay', props.days[next]!.date)
   } else if (e.key === 'Enter' && current !== null && props.days[current]) {
     emit('selectDay', props.days[current]!.date)
+    emit('openDay', props.days[current]!.date)
   }
 }
 
@@ -395,6 +482,9 @@ function measure() {
 }
 
 onMounted(() => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    screenHasHover.value = !window.matchMedia('(hover: none)').matches
+  }
   measure()
   centerOnToday()
   if (typeof ResizeObserver !== 'undefined') {
@@ -535,16 +625,32 @@ defineExpose({ centerOnToday })
             <text :x="s.x" :y="plotBottom + 24" text-anchor="middle" font-size="8" :fill="s.isToday ? C.markerToday : C.markerIdle">
               {{ s.weekdayName }}
             </text>
-            <line
-              v-if="s.isToday"
-              :x1="s.x"
-              :x2="s.x"
-              :y1="PAD_TOP"
-              :y2="plotBottom"
-              :stroke="C.todayLine"
-              stroke-width="1.5"
-              stroke-dasharray="3 3"
-            />
+            <template v-if="s.isToday">
+              <rect
+                data-part="today-glow"
+                :x="s.x - DAY_WIDTH / 2"
+                :y="PAD_TOP"
+                :width="DAY_WIDTH"
+                :height="plotBottom - PAD_TOP"
+                :fill="C.todayLine"
+                fill-opacity="0.07"
+              />
+              <line data-part="today-glow-line" :x1="s.x" :x2="s.x" :y1="PAD_TOP" :y2="plotBottom" :stroke="C.todayLine" stroke-width="7" stroke-opacity="0.16" />
+              <line
+                :x1="s.x"
+                :x2="s.x"
+                :y1="PAD_TOP"
+                :y2="plotBottom"
+                :stroke="C.todayLine"
+                stroke-width="1.5"
+                stroke-dasharray="3 3"
+              />
+              <g data-part="today-pill">
+                <rect :x="s.x - 24" :y="PAD_TOP - 26" width="48" height="18" rx="9" :fill="C.todayLine" />
+                <text :x="s.x" :y="PAD_TOP - 17" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="700" letter-spacing="0.1em" :fill="C.balanceDotCore">TODAY</text>
+                <path :d="`M${s.x - 4},${PAD_TOP - 8} L${s.x + 4},${PAD_TOP - 8} L${s.x},${PAD_TOP - 3} Z`" :fill="C.todayLine" />
+              </g>
+            </template>
           </g>
         </g>
 
@@ -582,6 +688,26 @@ defineExpose({ centerOnToday })
           </template>
         </g>
 
+        <!-- Deal dots: one per deal with rows that day, just above the axis, in the deal's color -->
+        <g data-part="deal-dots">
+          <template v-for="s in shapes" :key="s.day.date">
+            <circle
+              v-for="dot in s.dealDots"
+              :key="dot.dealKey"
+              data-part="deal-dot"
+              :data-deal-key="dot.dealKey"
+              :cx="dot.x"
+              :cy="plotBottom - 7"
+              r="3"
+              :fill="dot.colorHex"
+              :stroke="C.balanceDotCore"
+              stroke-width="1"
+              :opacity="highlightedDealKey && highlightedDealKey !== dot.dealKey ? 0.2 : 1"
+              class="transition-opacity duration-fast ease-standard"
+            />
+          </template>
+        </g>
+
         <!-- Crosshair + y badge for the active day -->
         <g v-if="crosshair" data-part="crosshair">
           <line :x1="PAD_LEFT" :x2="width" :y1="crosshair.y" :y2="crosshair.y" :stroke="C.baseline" stroke-width="1" stroke-dasharray="2 2" />
@@ -605,42 +731,67 @@ defineExpose({ centerOnToday })
     </svg>
 
     <!-- Hover tooltip: day, balance, transactions -->
+    <!-- Today scrolled out of view: a chip at that edge brings it back. -->
+    <Transition name="fade">
+      <button
+        v-if="todayOffScreenSide"
+        type="button"
+        data-testid="chart.today-edge-chip"
+        :data-side="todayOffScreenSide"
+        class="absolute bottom-16 z-10 flex items-center gap-1 rounded-full border-ui border-line bg-surface/95 px-2.5 py-1 text-[11px] font-semibold text-primary shadow-2 hover:bg-surface-2"
+        :class="todayOffScreenSide === 'left' ? 'left-20' : 'right-3'"
+        @click="centerOnToday"
+      >
+        <i v-if="todayOffScreenSide === 'left'" class="pi pi-arrow-left text-[9px]" aria-hidden="true"></i>
+        Today
+        <i v-if="todayOffScreenSide === 'right'" class="pi pi-arrow-right text-[9px]" aria-hidden="true"></i>
+      </button>
+    </Transition>
+
     <Transition name="fade">
       <div
-        v-if="activeDay"
+        v-if="tooltipDay"
         data-testid="chart.tooltip"
-        class="pointer-events-none absolute right-2 top-2 z-10 min-w-[200px] max-w-[280px] rounded-card border-ui border-line bg-surface/95 px-4 py-3 shadow-2"
+        :data-floating="tooltipFloatsBesideCrosshair || undefined"
+        class="pointer-events-none absolute z-10 min-w-[200px] max-w-[280px] rounded-card border-ui border-line bg-surface/95 px-4 py-3 shadow-2 backdrop-blur-sm"
+        :class="tooltipFloatsBesideCrosshair ? 'floating-tooltip w-[280px]' : 'right-2 top-2'"
+        :style="floatingTooltipStyle"
       >
-        <div class="mb-1.5 text-xs tracking-wide text-fg-muted">{{ formatDateLong(activeDay.date) }}</div>
-        <div class="mb-1 font-display text-xl font-bold tracking-display numeric" :class="activeDay.balance_dollars < 0 ? 'text-negative' : 'text-primary'">
-          {{ formatDollarsCompact(activeDay.balance_dollars) }}
+        <div class="mb-1.5 text-xs tracking-wide text-fg-muted">{{ formatDateLong(tooltipDay.date) }}</div>
+        <div class="mb-1 font-display text-xl font-bold tracking-display numeric" :class="tooltipDay.balance_dollars < 0 ? 'text-negative' : 'text-primary'">
+          {{ formatDollarsCompact(tooltipDay.balance_dollars) }}
           <span class="ml-1 font-sans text-[10px] font-normal tracking-normal text-fg-muted">EOD balance</span>
         </div>
-        <div v-if="activeDay.net_dollars !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
+        <div v-if="tooltipDay.net_dollars !== 0" class="mb-2 flex items-center gap-1.5 text-xs">
           <span class="text-fg-muted">Day net:</span>
-          <span class="numeric font-bold" :class="activeDay.net_dollars > 0 ? 'text-positive' : 'text-negative'">
-            {{ formatSignedMoney(activeDay.net_dollars) }}
+          <span class="numeric font-bold" :class="tooltipDay.net_dollars > 0 ? 'text-positive' : 'text-negative'">
+            {{ formatSignedMoney(tooltipDay.net_dollars) }}
           </span>
         </div>
-        <div v-if="activeDay.transactions.length" class="mt-1 border-t border-line pt-2">
-          <div class="mb-1.5 text-[10px] uppercase tracking-wider text-fg-muted">Transactions ({{ activeDay.transactions.length }})</div>
+        <div v-if="tooltipDay.transactions.length" class="mt-1 border-t border-line pt-2">
+          <div class="mb-1.5 text-[10px] uppercase tracking-wider text-fg-muted">Transactions ({{ tooltipDay.transactions.length }})</div>
           <div class="space-y-1">
             <div
-              v-for="txn in activeDay.transactions.slice(0, 6)"
+              v-for="txn in tooltipDay.transactions.slice(0, 6)"
               :key="txn.id"
               :data-testid="`chart.txn.${txn.id}`"
-              class="flex items-baseline justify-between gap-3"
+              class="flex items-baseline justify-between gap-3 rounded-sm"
+              :style="dealAccentStyleForTransaction(dealAttributionLookup, txn)"
+              :class="dealKeyOfTransaction(txn) ? 'pl-2' : ''"
             >
-              <span class="flex min-w-0 items-center gap-1 text-[11px] text-fg">
-                <i v-if="txn.recurring_rule_id" class="pi pi-refresh shrink-0 text-[8px] text-primary" title="From a recurring rule"></i>
-                <span class="truncate">{{ txn.description }}</span>
+              <span class="flex min-w-0 flex-col text-[11px] text-fg">
+                <span class="flex min-w-0 items-center gap-1">
+                  <i v-if="txn.recurring_rule_id" class="pi pi-refresh shrink-0 text-[8px] text-primary" title="From a recurring rule"></i>
+                  <span class="truncate">{{ txn.description }}</span>
+                </span>
+                <DealAttributionTag :txn="txn" class="mt-0.5 self-start border-0 bg-transparent px-0" />
               </span>
               <span class="numeric shrink-0 text-[11px] font-bold" :class="txn.amount_dollars > 0 ? 'text-positive' : 'text-negative'">
                 {{ formatSignedMoney(txn.amount_dollars) }}
               </span>
             </div>
           </div>
-          <div v-if="activeDay.transactions.length > 6" class="mt-1 text-[10px] text-fg-muted">+{{ activeDay.transactions.length - 6 }} more</div>
+          <div v-if="tooltipDay.transactions.length > 6" class="mt-1 text-[10px] text-fg-muted">+{{ tooltipDay.transactions.length - 6 }} more</div>
         </div>
         <div v-else class="mt-1 text-[10px] italic text-fg-muted">No transactions</div>
       </div>
@@ -652,6 +803,17 @@ defineExpose({ centerOnToday })
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity var(--dur-fast) var(--ease-standard);
+}
+/* The floating tooltip glides between days; under reduced motion it jumps. */
+.floating-tooltip {
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform 90ms var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-tooltip {
+    transition: none;
+  }
 }
 .fade-enter-from,
 .fade-leave-to {

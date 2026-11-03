@@ -6,10 +6,12 @@
  */
 import { computed, ref } from 'vue'
 
+import { useInjectedDealAttributionLookup } from '../../composables/useLiquidityDealAttribution'
 import type { DealMilestone, ImportedLiquidityDeal, LiquidityTransaction } from '../../types/liquidity'
 import { formatSignedMoney } from '../../utils/money'
 import UiBadge from '../ui/UiBadge.vue'
 import UiButton from '../ui/UiButton.vue'
+import { dealKeyOf } from './dealColors'
 import { DEAL_MILESTONE_LABELS } from './dealMilestoneLabels'
 
 const props = defineProps<{
@@ -22,6 +24,14 @@ const emit = defineEmits<{
   (e: 'reviewChanges', deal: ImportedLiquidityDeal): void
   (e: 'removeOpenRows', deal: ImportedLiquidityDeal): void
 }>()
+
+/** A deal whose open rows were all removed or done is out of the timeline: only its done rows stay, as history. */
+const dealsStillInTheTimeline = computed(() => props.importedDeals.filter(deal => deal.open_row_count > 0))
+
+const dealAttributionLookup = useInjectedDealAttributionLookup()
+function dealColorHex(deal: ImportedLiquidityDeal): string | null {
+  return dealAttributionLookup?.value.attributionForDealKey(dealKeyOf(deal.deal_board, deal.deal_id))?.dealColorHex ?? null
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function shortDate(isoDate: string): string {
@@ -45,16 +55,17 @@ function boardLink(deal: ImportedLiquidityDeal): string {
 </script>
 
 <template>
-  <section v-if="importedDeals.length" data-testid="liquidity-deals" aria-label="Imported deals" class="flex flex-col gap-3">
+  <section v-if="dealsStillInTheTimeline.length" data-testid="liquidity-deals" aria-label="Imported deals" class="flex flex-col gap-3">
     <h2 class="text-sm font-semibold text-fg">Deals in the timeline</h2>
     <article
-      v-for="deal in importedDeals"
+      v-for="deal in dealsStillInTheTimeline"
       :key="`${deal.deal_board}-${deal.deal_id}`"
       data-testid="liquidity-deal"
       :data-deal-id="deal.deal_id"
       class="rounded-card border-ui border-line bg-surface p-3 text-sm"
     >
       <header class="flex flex-wrap items-center gap-2">
+        <span v-if="dealColorHex(deal)" data-testid="liquidity-deal.color" class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: dealColorHex(deal)! }" aria-hidden="true"></span>
         <RouterLink :to="boardLink(deal)" class="font-semibold text-fg hover:text-primary">{{ deal.deal_address }}</RouterLink>
         <UiBadge tone="neutral">{{ deal.deal_board === 'bought' ? 'Bought' : 'My Deals' }}</UiBadge>
         <UiBadge v-if="deal.overdue_open_row_count" tone="negative">{{ deal.overdue_open_row_count }} overdue</UiBadge>

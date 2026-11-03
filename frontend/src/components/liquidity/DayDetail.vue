@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { DayBucket } from '../../types/liquidity'
 import { formatMoney, formatSignedMoney } from '../../utils/money'
+import { dealAccentStyleForTransaction, useInjectedDealAttributionLookup } from '../../composables/useLiquidityDealAttribution'
+import DealAttributionTag from './DealAttributionTag.vue'
 import InlineAmountEditor from './InlineAmountEditor.vue'
 import TransactionRowActions from './TransactionRowActions.vue'
 
@@ -16,6 +18,9 @@ const emit = defineEmits<{
   (e: 'moveToDate', id: string, newEffectiveDate: string): void
   (e: 'changeAmount', id: string, newAmountDollars: number): void
 }>()
+
+/** Each row's deal (a tag and a left accent in its color), when the view provides the lookup. */
+const dealAttributionLookup = useInjectedDealAttributionLookup()
 
 function formatDate(iso: string): string {
   const parts = iso.split('-')
@@ -66,6 +71,7 @@ function formatDate(iso: string): string {
         :data-testid="`daydetail.txn.${txn.id}`"
         class="group rounded-ctl bg-surface-2 px-3 py-2"
         :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
+        :style="dealAccentStyleForTransaction(dealAttributionLookup, txn)"
       >
         <div class="flex items-center gap-2">
         <div class="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -74,6 +80,7 @@ function formatDate(iso: string): string {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
             <div class="min-w-0 break-words text-xs text-fg line-clamp-2">{{ txn.description }}</div>
+            <DealAttributionTag :txn="txn" class="shrink-0" />
             <UiBadge
               v-if="txn.recurring_rule_id"
               tone="primary"
