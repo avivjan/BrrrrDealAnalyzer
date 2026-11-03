@@ -72,18 +72,18 @@ No change to any amount, to Cash Needed, to the liquidity import or its timeline
     - styled as `schedule-milestone` with no amount cell;
     - cash rows unchanged;
     - no `deal_milestones` (older result) renders only cash rows.
-- [ ] M6 (35 min) **E2E**: a new `flows/cash-needed-schedule-milestones.spec.ts`.
+- [x] M6 (35 min) **E2E**: a new `flows/cash-needed-schedule-milestones.spec.ts`.
   - Open the Cash Needed popup on a seeded bought deal.
   - Expect the six milestone rows (Nov 30 included for a Sep-dated deal) in date order, with "Purchase closing" right above "Cash to close".
   - Expect them to look different from transactions (computed font-size, uppercase).
   - Then `npm run e2e:record` (goldens gain `deal_milestones` only), `a11y.spec.ts`, `npm run e2e`.
   - Visual check in light and dark at desktop and phone width.
-- [ ] M7 (10 min) **MCP**: no new tool. `deal_milestones` reaches `analyze_brrr` / `get_deal` through the response schema. Its descriptions stay short to keep `tools/list` under budget, and `tests/test_mcp.py` stays green.
+- [x] M7 (10 min) **MCP**: no new tool. `deal_milestones` reaches `analyze_brrr` / `get_deal` through the response schema. Its descriptions stay short to keep `tools/list` under budget, and `tests/test_mcp.py` stays green.
 - [x] M8 (15 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
   - Re-read every touched file.
   - The milestone text comes from fixed engine strings and dates. HTML goes through `_text()`, the PDF through `escape()`, the Vue code through interpolation; there is no `v-html` or new sink.
   - Run bandit, pip-audit and `npm audit --omit=dev`.
-- [ ] M9 (15 min) Final: `pytest`, `verify_regression.py verify`, `npm test`, `vue-tsc`, `npm run e2e` (chromium). Tick the boxes, push, and update the PR #122 description with this section.
+- [x] M9 (15 min) Final: `pytest`, `verify_regression.py verify`, `npm test`, `vue-tsc`, `npm run e2e` (chromium). Tick the boxes, push, and update the PR #122 description with this section.
 
 ## Verification
 - Backend: `pytest` (local Postgres 16), `verify_regression.py verify`.
@@ -92,3 +92,12 @@ No change to any amount, to Cash Needed, to the liquidity import or its timeline
   - In a bought deal → Cash Needed → "Cash schedule (Lowest ARV)", the six key dates are tinted uppercase rows with a flag and no amount, each above that day's transactions.
   - The same lines appear in the HTML report and the PDF.
   - The liquidity import of the same deal shows exactly the transactions it showed before.
+
+## Review
+The schedule now carries `deal_milestones` (contract signed, purchase closing, rehab completed, tenant moves in, the Nov 30
+tax bill inside the hold, refi closing) beside `dated_cash_rows`. The rows, Cash Needed and the liquidity import are untouched
+(pinned by `test_liquidity_deal_import` and a parametrized check over every reconciliation scenario). The popup, the HTML report
+and the PDF interleave them by date, first on their day, as tinted uppercase markers with a flag and no amount; an older result
+without them shows the plain rows. Goldens gained only the new list and the Cash Needed note. pytest + `verify_regression`
+green; vitest 1,799; Playwright chromium + Mobile Chrome 210 passed (the passkeys check fails only when another project enrolled
+devices first in the same database, and passes alone, as before); bandit, pip-audit, npm audit clean.
