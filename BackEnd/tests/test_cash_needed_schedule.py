@@ -222,11 +222,51 @@ class TestEachItemOnItsDate:
         assert all(abs(-row.signed_amount_dollars - results.property_tax_bucket_deposit) <= ONE_CENT for row in deposits)
 
 
+class TestTheDealsKeyDatesAmongTheRows:
+    """The deal's milestones are listed with the schedule so it reads as a timeline: markers, never cash."""
+
+    def _milestones_of(self, results):
+        return [(milestone.date, milestone.milestone_key, milestone.description)
+                for milestone in results.cash_needed_schedule_at_lowest_arv.deal_milestones]
+
+    def test_deal_milestones_are_the_contract_closing_rehab_tenant_and_refi_dates_in_order(self, brrrr_payload):
+        assert self._milestones_of(_compute(brrrr_payload, {})) == [
+            (date(2026, 1, 3), "contract_signed", "Contract signed"),
+            (date(2026, 1, 10), "purchase_closed", "Purchase closing"),
+            (date(2026, 2, 24), "rehab_completed", "Rehab completed"),    # + 45 days
+            (date(2026, 4, 10), "tenant_moved_in", "Tenant moves in"),     # + 90 days
+            (date(2026, 7, 9), "refi_closed", "Refi closing"),             # + 180 days
+        ]
+
+    def test_the_november_30_tax_bill_is_a_milestone_only_inside_the_hold(self, brrrr_payload):
+        january_closing = _compute(brrrr_payload, {})
+        assert "property_tax_bill_paid_on_november_30" not in [key for _, key, _ in self._milestones_of(january_closing)]
+        august_closing = _compute(brrrr_payload, RECONCILIATION_SCENARIOS["november_30_inside_the_hold_with_a_shortfall"])
+        milestones = self._milestones_of(august_closing)
+        assert (date(2026, 11, 30), "property_tax_bill_paid_on_november_30", "Property tax bill paid from the tax bucket (Nov 30)") in milestones
+        assert [milestone_date for milestone_date, _, _ in milestones] == sorted(milestone_date for milestone_date, _, _ in milestones)
+        assert milestones[-1][1] == "refi_closed"
+
+    def test_milestones_sharing_a_day_keep_the_lifecycle_order(self, brrrr_payload):
+        same_day = _compute(brrrr_payload, {"daysUntilRehabCompleted": 0, "daysUntilRented": 0})
+        assert [key for _, key, _ in self._milestones_of(same_day)][:4] == ["contract_signed", "purchase_closed", "rehab_completed", "tenant_moved_in"]
+
+    @pytest.mark.parametrize("scenario", list(RECONCILIATION_SCENARIOS))
+    def test_milestones_are_not_cash_rows_and_cash_needed_is_unchanged(self, brrrr_payload, scenario):
+        results = _compute(brrrr_payload, RECONCILIATION_SCENARIOS[scenario])
+        schedule = results.cash_needed_schedule_at_lowest_arv
+        milestone_descriptions = {milestone.description for milestone in schedule.deal_milestones}
+        assert not milestone_descriptions & {row.description for row in schedule.dated_cash_rows}
+        assert {row.item_key for row in schedule.dated_cash_rows} <= set(CASH_NEEDED_SCHEDULE_ITEM_KEYS)
+        assert -sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")) == results.total_cash_needed
+
+
 class TestTheScheduleOnTheApi:
     def test_analyze_returns_the_schedule_and_it_adds_up(self, client, brrrr_payload):
         body = client.post("/analyze/brrr", json=brrrr_payload).json()
         schedule = body["cash_needed_schedule_at_lowest_arv"]
-        assert set(schedule) == {"dated_cash_rows"}
+        assert set(schedule) == {"dated_cash_rows", "deal_milestones"}
+        assert set(schedule["deal_milestones"][0]) == {"date", "milestone_key", "description"}
         rows = schedule["dated_cash_rows"]
         assert set(rows[0]) == {"date", "sequence_within_day", "description", "signed_amount_dollars", "item_key"}
         assert float(-sum(Decimal(row["signed_amount_dollars"]) for row in rows)) == body["total_cash_needed_for_deal"]

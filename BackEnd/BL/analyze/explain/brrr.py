@@ -26,16 +26,14 @@ from BL.analyze.common.deal_math import (
     recording_transfer_default,
     recording_transfer_buy_default,
     deed_transfer_tax_buy_default,
-    title_escrow_buy_default,
+    title_escrow_buy_itemized_default,
     title_escrow_refi_default,
     lowest_arv_default,
     days_in_month,
     last_day_of_previous_month,
     HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST,
     PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR,
-    TITLE_ESCROW_BUY_STANDARD,
-    TITLE_ESCROW_BUY_WE_PAY_ALL,
-    TITLE_ESCROW_BUY_WE_PAY_ALL_TOP,
+    FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND,
 )
 
 # The headline metrics, in reading order: (result field, label, unit).
@@ -72,27 +70,54 @@ def _monthly_payment_dates_text(payment_dates: tuple[date, ...]) -> str:
     return f"{len(payment_dates)} payments on the 1sts from {payment_dates[0].isoformat()} to {payment_dates[-1].isoformat()}"
 
 
-def _title_escrow_buy_formula(title_mode: str, purchase_price: Decimal, title_escrow_buy: Decimal) -> str:
-    """How the title/escrow default was picked: the flat standard fee, or the we-pay-all price tier."""
+TITLE_OFFICE_AND_SEARCH_FEES_EXPLANATION = (
+    "Fixed office and third-party fees: $350 settlement / closing fee + $150 title search + $100 municipal lien search.")
+OWNERS_TITLE_POLICY_EXPLANATION = (
+    "The owner's title policy is strictly the Florida statutory promulgated rate (F.A.C. 69O-186.003): "
+    "$5.75 per $1,000 of the purchase price up to $100,000, then $5.00 per $1,000 above it.")
+LENDERS_TITLE_POLICY_EXPLANATION = (
+    "The lender's title policy: $250 covers the Florida ALTA 8.1 and Form 9 endorsements and the simultaneous-issue rate; "
+    "on a rehab / hard-money loan larger than the price, the statutory $5.00 per $1,000 is added on the loan balance above the price.")
+
+
+def _owners_title_policy_formula(title_mode: str, purchase_price: Decimal, owners_title_policy_premium: Decimal) -> str:
+    """The owner's policy line: the promulgated-rate arithmetic, or $0 when the seller pays it."""
     if title_mode != "we_pay_all":
-        return (f"Standard deal → flat {fmt_money(TITLE_ESCROW_BUY_STANDARD)}: we pay only the lender's title policy, its endorsements "
-                f"and the settlement/search fees; the seller pays the owner's policy")
-    (lowest_tier_upper_bound, lowest_tier_fee), (middle_tier_upper_bound, middle_tier_fee) = TITLE_ESCROW_BUY_WE_PAY_ALL
-    tier_table = (f"under {fmt_money(lowest_tier_upper_bound)} → {fmt_money(lowest_tier_fee)} · "
-                  f"{fmt_money(lowest_tier_upper_bound)} to {fmt_money(middle_tier_upper_bound)} → {fmt_money(middle_tier_fee)} · "
-                  f"above {fmt_money(middle_tier_upper_bound)} → {fmt_money(TITLE_ESCROW_BUY_WE_PAY_ALL_TOP)}")
-    if purchase_price < lowest_tier_upper_bound:
-        chosen_bracket = f"under {fmt_money(lowest_tier_upper_bound)}"
-    elif purchase_price <= middle_tier_upper_bound:
-        chosen_bracket = f"between {fmt_money(lowest_tier_upper_bound)} and {fmt_money(middle_tier_upper_bound)}"
-    else:
-        chosen_bracket = f"above {fmt_money(middle_tier_upper_bound)}"
-    return (f"We pay all closing costs → we pay every title charge, and the fee is set by the purchase price tier ({tier_table}). "
-            f"Purchase {fmt_money(purchase_price)} is {chosen_bracket} → {fmt_money(title_escrow_buy)}")
+        return "Standard deal → the seller pays the owner's title policy, so it costs us $0"
+    first_tier_upper_bound = FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND
+    if purchase_price <= first_tier_upper_bound:
+        return (f"We pay all closing costs → Purchase ({fmt_money(purchase_price)}) ÷ $1,000 × $5.75 "
+                f"= {fmt_money(owners_title_policy_premium)}")
+    return (f"We pay all closing costs → $575.00 on the first {fmt_money(first_tier_upper_bound)} + "
+            f"(Purchase {fmt_money(purchase_price)} − {fmt_money(first_tier_upper_bound)}) ÷ $1,000 × $5.00 "
+            f"= {fmt_money(owners_title_policy_premium)}")
+
+
+def _lenders_title_policy_formula(hml_amount: Decimal, purchase_price: Decimal, lenders_title_policy: Decimal) -> str:
+    """The lender's policy line: the $250 base, plus the surcharge when the loan exceeds the price."""
+    if hml_amount <= purchase_price:
+        return (f"Hard Money Loan ({fmt_money(hml_amount)}) does not exceed Purchase ({fmt_money(purchase_price)}) "
+                f"→ $250.00 flat (endorsements + simultaneous issue) = {fmt_money(lenders_title_policy)}")
+    return (f"$250.00 (endorsements + simultaneous issue) + (Hard Money Loan {fmt_money(hml_amount)} − Purchase "
+            f"{fmt_money(purchase_price)}) ÷ $1,000 × $5.00 = {fmt_money(lenders_title_policy)}")
 
 
 def _default_note(user_value, what_it_is: str) -> str:
     return f"Formula default for {what_it_is}; type a value to override." if user_value is None else f"{what_it_is} as entered."
+
+
+def _monthly_reserve_label(reserve_name: str, typed_monthly_dollars, percent_of_rent) -> str:
+    """An operating-expense term: the typed monthly dollars, or the percentage of the rent."""
+    if typed_monthly_dollars is not None:
+        return f"{reserve_name} {fmt_money(typed_monthly_dollars)}/month as entered"
+    return f"{reserve_name} {fmt_pct(percent_of_rent)} of rent"
+
+
+def _estimate_note(user_value, estimate: Decimal) -> str:
+    """Whether a closing-cost line is the estimate or a typed amount that overrides it."""
+    if user_value is None:
+        return "Estimated by formula; type the amount from the settlement statement to override."
+    return f"Typed from the settlement statement; it overrides the estimate ({fmt_money(estimate)})."
 
 
 def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, list[dict]]:
@@ -121,10 +146,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
                " the bill at the refi pays the first year, which this monthly figure still charges.",
     )
     breakdown.add_sum("cash_flow", "Monthly Operating Expenses", results.operating_expenses, [
-        (f"Vacancy {fmt_pct(payload.vacancy_percent)} of rent", results.vacancy),
-        (f"Management {fmt_pct(payload.property_managment_fee_precentages_from_rent)} of rent", results.management_fee),
-        (f"Maintenance {fmt_pct(payload.maintenance_percent)} of rent", results.maintenance),
-        (f"CapEx {fmt_pct(payload.capex_percent_of_rent)} of rent", results.capex),
+        (_monthly_reserve_label("Vacancy", payload.monthly_vacancy_reserve_dollars, payload.vacancy_percent), results.vacancy),
+        (_monthly_reserve_label("Management", payload.monthly_property_management_fee_dollars, payload.property_managment_fee_precentages_from_rent), results.management_fee),
+        (_monthly_reserve_label("Maintenance", payload.monthly_maintenance_reserve_dollars, payload.maintenance_percent), results.maintenance),
+        (_monthly_reserve_label("CapEx", payload.monthly_capex_reserve_dollars, payload.capex_percent_of_rent), results.capex),
         ("Property Tax per Month", results.monthly_taxes),
         ("Insurance per Month", results.monthly_insurance),
         ("HOA", payload.montly_hoa),
@@ -236,19 +261,49 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
                  f"Choosing 'we pay all closing costs' would add it to our costs: 0.70% × {fmt_money(results.purchase_price)} = {fmt_money(deed_transfer_tax_buy_default('we_pay_all', results.purchase_price))}.")),
     )
     check(results.recording_transfer_buy == (recording_transfer_buy_default(results.hml_amount, results.deed_transfer_tax_buy) if payload.recording_transfer_buy is None else payload.recording_transfer_buy), "recording (buy)")
+    recording_transfer_buy_estimate = recording_transfer_buy_default(results.hml_amount, results.deed_transfer_tax_buy)
     breakdown.add(
         CLOSE, "Recording & Transfer (Buy)", results.recording_transfer_buy,
         f"$250 + 0.55% × Hard Money Loan ({fmt_money(results.hml_amount)}) + Deed Transfer Tax ({fmt_money(results.deed_transfer_tax_buy)}) = {fmt_money(results.recording_transfer_buy)}"
         if payload.recording_transfer_buy is None else f"As entered: {fmt_money(results.recording_transfer_buy)}",
-        note=_default_note(payload.recording_transfer_buy, "government recording and transfer charges") + " The 0.55% (0.35% + 0.20%) is on the whole loan recorded, purchase loan plus construction budget.",
+        note=(_estimate_note(payload.recording_transfer_buy, recording_transfer_buy_estimate)
+              + " The estimate: $250 records the deed, the mortgage and the LLC affidavit; 0.55% (0.35% documentary stamps on the note "
+                "+ 0.20% intangible tax) is on the whole loan recorded, purchase loan plus construction budget; the 0.70% deed transfer "
+                "tax is added only when we pay all closing costs (otherwise it is the seller's)."),
     )
-    check(results.title_escrow_buy == (title_escrow_buy_default(payload.title_mode_buy, results.purchase_price) if payload.title_escrow_buy is None else payload.title_escrow_buy), "title (buy)")
+    title_escrow_buy_estimate = title_escrow_buy_itemized_default(payload.title_mode_buy, results.purchase_price, results.hml_amount)
+    check(results.title_office_and_search_fees_buy == title_escrow_buy_estimate.title_office_and_search_fees, "title office fees (buy)")
+    check(results.owners_title_policy_premium_buy == title_escrow_buy_estimate.owners_title_policy_premium, "owner's title policy (buy)")
+    check(results.lenders_title_policy_and_endorsements_buy == title_escrow_buy_estimate.lenders_title_policy_and_endorsements, "lender's title policy (buy)")
     breakdown.add(
-        CLOSE, "Title & Escrow (Buy)", results.title_escrow_buy,
-        (_title_escrow_buy_formula(payload.title_mode_buy, results.purchase_price, results.title_escrow_buy)
-         if payload.title_escrow_buy is None else f"As entered: {fmt_money(results.title_escrow_buy)}"),
-        note=_default_note(payload.title_escrow_buy, "title, escrow and settlement charges"),
+        CLOSE, "Title Office & Search Fees (Buy)", results.title_office_and_search_fees_buy,
+        f"$350.00 settlement / closing fee + $150.00 title search + $100.00 municipal lien search = {fmt_money(results.title_office_and_search_fees_buy)}",
+        note=TITLE_OFFICE_AND_SEARCH_FEES_EXPLANATION + " Flat fees, the same on every Florida purchase.",
     )
+    breakdown.add(
+        CLOSE, "Owner's Title Policy (Buy)", results.owners_title_policy_premium_buy,
+        _owners_title_policy_formula(payload.title_mode_buy, results.purchase_price, results.owners_title_policy_premium_buy),
+        note=OWNERS_TITLE_POLICY_EXPLANATION + (
+            " On a standard deal the seller buys it, so it is not one of our charges." if payload.title_mode_buy != "we_pay_all" else ""),
+    )
+    breakdown.add(
+        CLOSE, "Lender's Title Policy & Endorsements (Buy)", results.lenders_title_policy_and_endorsements_buy,
+        _lenders_title_policy_formula(results.hml_amount, results.purchase_price, results.lenders_title_policy_and_endorsements_buy),
+        note=LENDERS_TITLE_POLICY_EXPLANATION + " The loan is the whole hard-money loan: purchase loan plus construction budget.",
+    )
+    if payload.title_escrow_buy is None:
+        breakdown.add_sum(CLOSE, "Title & Escrow (Buy)", results.title_escrow_buy, [
+            ("Office & Search Fees", results.title_office_and_search_fees_buy),
+            ("Owner's Title Policy", results.owners_title_policy_premium_buy),
+            ("Lender's Title Policy & Endorsements", results.lenders_title_policy_and_endorsements_buy),
+        ], note=("Florida estimate for the title charges & escrow / settlement line; type a value to override. "
+                 + TITLE_OFFICE_AND_SEARCH_FEES_EXPLANATION + " " + OWNERS_TITLE_POLICY_EXPLANATION + " " + LENDERS_TITLE_POLICY_EXPLANATION))
+    else:
+        check(results.title_escrow_buy == payload.title_escrow_buy, "title (buy)")
+        breakdown.add(
+            CLOSE, "Title & Escrow (Buy)", results.title_escrow_buy, f"As entered: {fmt_money(results.title_escrow_buy)}",
+            note=_estimate_note(payload.title_escrow_buy, title_escrow_buy_estimate.total),
+        )
     check(results.notary_buy == ((Decimal("250") if payload.online_notary_fee_buy is None else payload.online_notary_fee_buy) if payload.online_notary_buy else Decimal("0")), "notary (buy)")
     breakdown.add(CLOSE, "Online Notary (Buy)", results.notary_buy,
                   f"Remote closing → {fmt_money(results.notary_buy)}" if payload.online_notary_buy else "Not a remote closing → $0",
@@ -432,11 +487,14 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         check(recording_transfer == (recording_transfer_default(refi_loan) if payload.recording_transfer_refi is None else payload.recording_transfer_refi), f"recording (refi){arv_label}")
         breakdown.add(section_key, f"Recording & Transfer (Refi){arv_label}", recording_transfer,
                f"0.55% × Refi Loan ({fmt_money(refi_loan)}) + $250 = {fmt_money(recording_transfer)}" if payload.recording_transfer_refi is None else f"As entered: {fmt_money(recording_transfer)}",
-               note=_default_note(payload.recording_transfer_refi, "government recording and transfer charges"))
+               note=(_estimate_note(payload.recording_transfer_refi, recording_transfer_default(refi_loan))
+                     + " The estimate: 0.55% (0.35% documentary stamps on the note + 0.20% intangible tax) of the refi loan recorded, "
+                       "+ $250 to record the mortgage."))
         check(title_escrow == (title_escrow_refi_default(refi_loan) if payload.title_escrow_refi is None else payload.title_escrow_refi), f"title (refi){arv_label}")
         breakdown.add(section_key, f"Title & Escrow (Refi){arv_label}", title_escrow,
                f"$800 + 0.45% × Refi Loan ({fmt_money(refi_loan)}) = {fmt_money(title_escrow)}" if payload.title_escrow_refi is None else f"As entered: {fmt_money(title_escrow)}",
-               note=_default_note(payload.title_escrow_refi, "title, escrow and settlement charges"))
+               note=(_estimate_note(payload.title_escrow_refi, title_escrow_refi_default(refi_loan))
+                     + " The estimate: a flat $800 + 0.45% of the refi loan, covering the settlement and search fees and the lender's title policy together."))
         breakdown.add_sum(section_key, f"Closing Costs (Refi){arv_label}", closing_costs_total, [
             ("Loan Charges", payload.loan_charges_refi),
             ("Recording & Transfer", recording_transfer),
@@ -574,7 +632,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
           "no money out after the refi")
     check(all(row.signed_amount_dollars == row.signed_amount_dollars.quantize(Decimal("0.01")) for row in schedule.dated_cash_rows),
           "schedule rows are whole cents")
-    schedule_note = f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, the rehab cushion one of them."
+    check(list(schedule.deal_milestones) == sorted(schedule.deal_milestones, key=lambda milestone: milestone.date),
+          "schedule milestones in date order")
+    schedule_note = (f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, the rehab cushion one of them, "
+                     f"with the deal's {len(schedule.deal_milestones)} key dates (closing, rehab completed, refi...) shown among them.")
     breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),

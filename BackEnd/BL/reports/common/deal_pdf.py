@@ -44,7 +44,7 @@ from reportlab.platypus import (
 )
 
 from BL.reports.common.cash_needed_schedule_report import (
-    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport,
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport, CashNeededScheduleReportMilestoneRow,
     resolve_cash_needed_schedule_report,
 )
 from BL.reports.common.breakdown_tree import (
@@ -184,6 +184,11 @@ def _styles() -> dict[str, ParagraphStyle]:
             "BWFormula", parent=base["Normal"],
             fontName="Courier", fontSize=8.5, leading=11.5,
             textColor=BRAND_INK,
+        ),
+        "schedule_milestone": ParagraphStyle(
+            "BWScheduleMilestone", parent=base["Normal"],
+            fontName="Helvetica-Bold", fontSize=8, leading=11,
+            textColor=BRAND_NAVY,
         ),
         "row_value": ParagraphStyle(
             "BWRowValue", parent=base["Normal"],
@@ -482,17 +487,33 @@ def _results_summary_table(sections: list[_ReportResultSection], result: dict, s
 
 
 def _cash_needed_schedule_flowables(schedule_report: CashNeededScheduleReport, styles) -> list[Any]:
-    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them."""
+    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them, and the
+    deal's key dates between them as tinted uppercase markers."""
     date_column_width, amount_column_width = 1.05 * inch, 1.35 * inch
     item_column_width = sum(_TREE_COLUMN_WIDTHS) - date_column_width - amount_column_width
     cells: list[list[Any]] = [[
         Paragraph("<b>Date</b>", styles["term"]), Paragraph("<b>Item</b>", styles["term"]), Paragraph("<b>Amount</b>", styles["row_value"]),
     ]]
-    for row in schedule_report.dated_rows:
+    milestone_row_styles: list[tuple] = []
+    for line in schedule_report.lines_in_date_order:
+        if isinstance(line, CashNeededScheduleReportMilestoneRow):
+            # A key date: a tinted uppercase marker over the item and amount columns, no amount.
+            row_index = len(cells)
+            cells.append([
+                Paragraph(escape(line.date_text), styles["schedule_milestone"]),
+                Paragraph(escape(line.description).upper(), styles["schedule_milestone"]),
+                "",
+            ])
+            milestone_row_styles += [
+                ("SPAN", (1, row_index), (2, row_index)),
+                ("BACKGROUND", (0, row_index), (-1, row_index), BRAND_PALE),
+                ("LINEBEFORE", (0, row_index), (0, row_index), 2, BRAND_NAVY),
+            ]
+            continue
         cells.append([
-            Paragraph(escape(row.date_text), styles["term"]),
-            Paragraph(escape(row.description), styles["term"]),
-            Paragraph(escape(row.signed_amount_text), styles["row_value"]),
+            Paragraph(escape(line.date_text), styles["term"]),
+            Paragraph(escape(line.description), styles["term"]),
+            Paragraph(escape(line.signed_amount_text), styles["row_value"]),
         ])
     table = Table(cells, colWidths=[date_column_width, item_column_width, amount_column_width], repeatRows=1)
     table.setStyle(TableStyle([
@@ -501,6 +522,7 @@ def _cash_needed_schedule_flowables(schedule_report: CashNeededScheduleReport, s
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 2),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        *milestone_row_styles,
     ]))
     return [Paragraph(escape(CASH_NEEDED_SCHEDULE_TITLE).upper(), styles["caption"]), table]
 

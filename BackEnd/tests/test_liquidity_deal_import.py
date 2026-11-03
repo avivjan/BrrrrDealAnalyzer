@@ -55,6 +55,10 @@ class TestImportPreviewAndImport:
         assert _import(client, deal["id"]).status_code == 200
         rows = _deal_rows(client, deal["id"])
         assert len(rows) == len(deal["cash_needed_schedule_at_lowest_arv"]["dated_cash_rows"])
+        # The schedule's key dates (contract, closing, rehab, tenant, refi) are markers: none becomes a transaction.
+        assert deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]
+        milestone_descriptions = {milestone["description"] for milestone in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]}
+        assert not milestone_descriptions & {row["description"] for row in rows}
         assert {row["source_deal_board"] for row in rows} == {"my_deals"}
         cushion = _row(rows, "rehab_cushion")
         assert (cushion["effective_date"], cushion["amount_dollars"]) == ("2026-01-10", -5000.0)

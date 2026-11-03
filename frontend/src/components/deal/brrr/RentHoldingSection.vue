@@ -3,19 +3,19 @@
  * BRRRR › Rent & Holding: the tenant, the pre-refi rent, and the carrying costs until the refi.
  *
  * Taxes and insurance are paid as the bills and deposits they really are: this year's tax bill
- * fills the property's tax bucket on each 15th, and the insurance bill at purchase is paid inside
- * or outside that closing. Their regular-year monthly figures (after the refi) are on Refinance.
+ * fills the property's tax bucket on each 15th (the insurance bill at purchase is on Buy, a line of
+ * that settlement). The monthly reserves (a % of the rent or dollars per month) and the
+ * regular-year insurance and tax after the refi close the section.
  */
-import { computed, useId } from "vue";
-import type { DealInputModel, InsurancePurchaseBillPaymentTiming } from "../../../types";
+import { computed } from "vue";
+import type { DealInputModel } from "../../../types";
 import { useDealField, type DealInputFieldKey } from "../../../composables/useDealField";
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
-import NumberInput from "../../ui/NumberInput.vue";
 import AutoDefaultMoneyInput from "../../ui/AutoDefaultMoneyInput.vue";
-import InputInfo from "../../ui/InputInfo.vue";
+import PercentOfRentOrMonthlyDollarsInput from "../../ui/PercentOfRentOrMonthlyDollarsInput.vue";
 import DaysOrDateField from "../../ui/DaysOrDateField.vue";
 import LifecycleSection from "../LifecycleSection.vue";
 import AutoFigure from "../AutoFigure.vue";
@@ -29,10 +29,7 @@ const props = defineProps<{
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
 
-const insurancePurchaseBillPaymentTimingId = useId();
-const onInsurancePurchaseBillPaymentTiming = (event: Event) => {
-  props.deal.insurancePurchaseBillPaymentTiming = (event.target as HTMLSelectElement).value as InsurancePurchaseBillPaymentTiming;
-};
+const monthlyRentDollars = computed(() => field.get("rent"));
 const taxBucketDepositHint = computed(() => {
   const depositsUntilRefi = autoCalc.value.propertyTaxBucketFirstBillDepositCountUntilRefi;
   const depositsUntilNovember30 = autoCalc.value.propertyTaxBucketDepositCountUntilFirstPayment;
@@ -124,26 +121,6 @@ const preRefiRentHint = computed(() =>
         <p v-if="taxBucketDepositHint" data-testid="form.auto.taxBucketDepositCount" class="numeric text-xs text-fg-muted">{{ taxBucketDepositHint }}</p>
       </div>
       <MoneyInput
-        data-testid="form.field.annual_insurance"
-        :error-message="fieldErrorMessages?.annual_insurance"
-        :model-value="field.get('annual_insurance')"
-        @update:model-value="(v: number | null) => field.set('annual_insurance', v)"
-        label="Insurance Bill at Purchase"
-        :needed-to-run-analysis="true"
-        :info="impactText('annual_insurance')"
-      />
-      <div class="flex flex-col gap-1.5" data-testid="form.field.insurancePurchaseBillPaymentTiming">
-        <div data-part="label-row" class="flex h-5 items-center gap-1">
-          <label :for="insurancePurchaseBillPaymentTimingId" data-part="label" class="text-sm font-medium leading-5 text-fg">Insurance Bill Paid</label>
-          <InputInfo :content="impactText('insurancePurchaseBillPaymentTiming')" field-label="Insurance Bill Paid" />
-        </div>
-        <select :id="insurancePurchaseBillPaymentTimingId" data-part="select" class="ui-select"
-                :value="deal.insurancePurchaseBillPaymentTiming ?? 'inside_purchase_closing'" @change="onInsurancePurchaseBillPaymentTiming">
-          <option value="inside_purchase_closing">Inside the purchase closing</option>
-          <option value="outside_purchase_closing">Outside the purchase closing</option>
-        </select>
-      </div>
-      <MoneyInput
         data-testid="form.field.monthlyInsuranceUntilRefi"
         :error-message="fieldErrorMessages?.monthlyInsuranceUntilRefi"
         :model-value="field.get('monthlyInsuranceUntilRefi')"
@@ -161,43 +138,76 @@ const preRefiRentHint = computed(() =>
         :info="impactText('montly_hoa')"
       />
 
-      <div class="md:col-span-2 mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <NumberInput
-          data-testid="form.field.vacancyPercent"
-          :error-message="fieldErrorMessages?.vacancyPercent"
-          :model-value="field.get('vacancyPercent')"
-          @update:model-value="(v: number | null) => field.set('vacancyPercent', v)"
-          label="Vacancy"
-          suffix="%"
-          :info="impactText('vacancyPercent')"
-        />
-        <NumberInput
-          data-testid="form.field.maintenancePercent"
-          :error-message="fieldErrorMessages?.maintenancePercent"
-          :model-value="field.get('maintenancePercent')"
-          @update:model-value="(v: number | null) => field.set('maintenancePercent', v)"
-          label="Maint."
-          suffix="%"
-          :info="impactText('maintenancePercent')"
-        />
-        <NumberInput
-          data-testid="form.field.capexPercent"
-          :error-message="fieldErrorMessages?.capexPercent"
-          :model-value="field.get('capexPercent')"
-          @update:model-value="(v: number | null) => field.set('capexPercent', v)"
-          label="CapEx"
-          suffix="%"
-          :info="impactText('capexPercent')"
-        />
-        <NumberInput
-          data-testid="form.field.property_managment_fee_precentages_from_rent"
-          :error-message="fieldErrorMessages?.property_managment_fee_precentages_from_rent"
-          :model-value="field.get('property_managment_fee_precentages_from_rent')"
-          @update:model-value="(v: number | null) => field.set('property_managment_fee_precentages_from_rent', v)"
-          label="Prop. Mgmt"
-          suffix="%"
-          :info="impactText('property_managment_fee_precentages_from_rent')"
-        />
+      <!-- Monthly reserves of a regular year: a % of the rent or dollars per month -->
+      <div class="my-2 border-t border-line pt-4 md:col-span-2">
+        <UiSectionHeader as="h4" class="mb-3">Monthly reserves</UiSectionHeader>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <PercentOfRentOrMonthlyDollarsInput
+            data-testid="form.field.vacancyPercent"
+            label="Vacancy"
+            :percent-of-rent="field.get('vacancyPercent')"
+            :monthly-dollars="field.getNullable('monthlyVacancyReserveDollars')"
+            :monthly-rent-dollars="monthlyRentDollars"
+            :info="impactText('vacancyPercent')"
+            :percent-error-message="fieldErrorMessages?.vacancyPercent"
+            :dollars-error-message="fieldErrorMessages?.monthlyVacancyReserveDollars"
+            @update:percent-of-rent="(v: number | null) => field.set('vacancyPercent', v)"
+            @update:monthly-dollars="(v: number | null) => field.setNullable('monthlyVacancyReserveDollars', v)"
+          />
+          <PercentOfRentOrMonthlyDollarsInput
+            data-testid="form.field.maintenancePercent"
+            label="Maintenance"
+            :percent-of-rent="field.get('maintenancePercent')"
+            :monthly-dollars="field.getNullable('monthlyMaintenanceReserveDollars')"
+            :monthly-rent-dollars="monthlyRentDollars"
+            :info="impactText('maintenancePercent')"
+            :percent-error-message="fieldErrorMessages?.maintenancePercent"
+            :dollars-error-message="fieldErrorMessages?.monthlyMaintenanceReserveDollars"
+            @update:percent-of-rent="(v: number | null) => field.set('maintenancePercent', v)"
+            @update:monthly-dollars="(v: number | null) => field.setNullable('monthlyMaintenanceReserveDollars', v)"
+          />
+          <PercentOfRentOrMonthlyDollarsInput
+            data-testid="form.field.capexPercent"
+            label="CapEx"
+            :percent-of-rent="field.get('capexPercent')"
+            :monthly-dollars="field.getNullable('monthlyCapexReserveDollars')"
+            :monthly-rent-dollars="monthlyRentDollars"
+            :info="impactText('capexPercent')"
+            :percent-error-message="fieldErrorMessages?.capexPercent"
+            :dollars-error-message="fieldErrorMessages?.monthlyCapexReserveDollars"
+            @update:percent-of-rent="(v: number | null) => field.set('capexPercent', v)"
+            @update:monthly-dollars="(v: number | null) => field.setNullable('monthlyCapexReserveDollars', v)"
+          />
+          <PercentOfRentOrMonthlyDollarsInput
+            data-testid="form.field.property_managment_fee_precentages_from_rent"
+            label="Prop. Management"
+            :percent-of-rent="field.get('property_managment_fee_precentages_from_rent')"
+            :monthly-dollars="field.getNullable('monthlyPropertyManagementFeeDollars')"
+            :monthly-rent-dollars="monthlyRentDollars"
+            :info="impactText('property_managment_fee_precentages_from_rent')"
+            :percent-error-message="fieldErrorMessages?.property_managment_fee_precentages_from_rent"
+            :dollars-error-message="fieldErrorMessages?.monthlyPropertyManagementFeeDollars"
+            @update:percent-of-rent="(v: number | null) => field.set('property_managment_fee_precentages_from_rent', v)"
+            @update:monthly-dollars="(v: number | null) => field.setNullable('monthlyPropertyManagementFeeDollars', v)"
+          />
+        </div>
+      </div>
+
+      <!-- A regular year after the refi -->
+      <div class="my-2 border-t border-line pt-4 md:col-span-2">
+        <UiSectionHeader as="h4" class="mb-3">Regular year after the refi</UiSectionHeader>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AutoDefaultMoneyInput
+            data-testid="form.field.monthlyInsuranceAfterRefi"
+            :error-message="fieldErrorMessages?.monthlyInsuranceAfterRefi"
+            :model-value="field.getNullable('monthlyInsuranceAfterRefi')"
+            :computed-default="autoCalc.monthlyInsuranceAfterRefiDefault"
+            @update:model-value="(v: number | null) => field.setNullable('monthlyInsuranceAfterRefi', v)"
+            label="Insurance per Month after Refi"
+            :info="impactText('monthlyInsuranceAfterRefi')"
+          />
+          <AutoFigure data-testid="form.auto.monthlyPropertyTaxAfterRefi" label="Property tax per month" :value="autoCalc.monthlyPropertyTaxAfterRefi" hint="this year's bill × 0.96 ÷ 12" />
+        </div>
       </div>
     </div>
     <template #footer>

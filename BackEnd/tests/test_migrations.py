@@ -111,7 +111,9 @@ class TestBrrrLifecycleMigration:
                        "recording_transfer_refi", "title_escrow_refi", "vacancy_reserve", "lowest_arv_in_thousands",
                        "online_notary_fee_buy", "online_notary_fee_refi", "other_closing_costs_buy_note", "other_closing_costs_refi_note",
                        "seller_tax_credit_at_purchase_closing", "monthly_property_tax_bucket_deposit", "insurance_bill_at_refi_closing",
-                       "monthly_insurance_after_refi", "property_tax_lump_sum_at_refi_closing", "hysa_deposit_at_refi"):
+                       "monthly_insurance_after_refi", "property_tax_lump_sum_at_refi_closing", "hysa_deposit_at_refi",
+                       "monthly_vacancy_reserve_dollars", "monthly_maintenance_reserve_dollars", "monthly_capex_reserve_dollars",
+                       "monthly_property_management_fee_dollars"):
             assert migrated_row[column] is None, column
 
     def test_construction_budget_mirrors_the_legacy_hard_money_flag(self, legacy_rows, brrrr_payload):

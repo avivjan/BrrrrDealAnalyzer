@@ -96,7 +96,7 @@ export const DEFAULT_LONG_TERM_INTEREST_RATE = 7;
 export const DEFAULT_DAYS_UNTIL_REFI = 180;
 
 /** Days from the contract to the purchase closing on a brand-new deal. */
-export const DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING = 7;
+export const DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING = 10;
 
 /** Today as an ISO calendar date (local), the default contract date of a new deal. */
 export function todayIsoDate(now: Date = new Date()): string {
@@ -106,7 +106,7 @@ export function todayIsoDate(now: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
-/** Today + 7 days as an ISO calendar date (local), the default buy closing date of a new deal. */
+/** Today + 10 days as an ISO calendar date (local), the default buy closing date of a new deal (the contract date + 10). */
 export function defaultBuyClosingIsoDate(now: Date = new Date()): string {
   return todayIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING));
 }
@@ -150,6 +150,10 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   monthlyInsuranceAfterRefi: null,
   propertyTaxCollectionAtRefi: "no_tax_collected_at_refi" as const,
   propertyTaxLumpSumAtRefiClosing: null,
+  monthlyVacancyReserveDollars: null,
+  monthlyMaintenanceReserveDollars: null,
+  monthlyCapexReserveDollars: null,
+  monthlyPropertyManagementFeeDollars: null,
   maintenanceReserve: 1500,
   vacancyReserve: null,
   capexReserve: 2500,
@@ -287,6 +291,7 @@ Days until Rented: ${brrr.daysUntilRented ?? "-"} (utilities ${formatMoney(brrr.
 Property Tax Bill (this year): ${formatMoney(brrr.annual_property_taxes)} (bucket deposit ${formatMoney(brrr.property_tax_bucket_deposit_effective)} each 15th, ${formatMoney(brrr.property_tax_paid_into_bucket_until_refi)} until refi; at refi: ${brrr.propertyTaxCollectionAtRefi === "full_tax_bill_collected_at_refi" ? `lender collects ${formatMoney(brrr.property_tax_lump_sum_at_refi_closing_effective)}, bucket returns ${formatMoney(brrr.property_tax_bucket_balance_released_at_refi)}` : "my bucket pays Nov 30"}; regular year ${formatMoney(brrr.monthly_property_tax_after_refi)}/mo)
 Insurance: bill at purchase ${formatMoney(brrr.annual_insurance)} (${brrr.insurancePurchaseBillPaymentTiming === "outside_purchase_closing" ? "outside" : "inside"} the closing), ${formatMoney(brrr.monthlyInsuranceUntilRefi)}/mo until refi, bill at refi ${formatMoney(brrr.insurance_bill_at_refi_effective)} (${brrr.insuranceRefiBillPaymentTiming === "outside_refi_closing" ? "outside" : "inside"} the closing), regular year ${formatMoney(brrr.monthly_insurance_after_refi_effective)}/mo
 Rent: ${formatMoney(brrr.rent)}
+Monthly reserves (regular year): vacancy ${brrr.monthlyVacancyReserveDollars != null ? `${formatMoney(toNumber(brrr.monthlyVacancyReserveDollars))}/mo` : `${toNumber(brrr.vacancyPercent) ?? 0}% of rent`}, maintenance ${brrr.monthlyMaintenanceReserveDollars != null ? `${formatMoney(toNumber(brrr.monthlyMaintenanceReserveDollars))}/mo` : `${toNumber(brrr.maintenancePercent) ?? 0}% of rent`}, capex ${brrr.monthlyCapexReserveDollars != null ? `${formatMoney(toNumber(brrr.monthlyCapexReserveDollars))}/mo` : `${toNumber(brrr.capexPercent) ?? 0}% of rent`}, management ${brrr.monthlyPropertyManagementFeeDollars != null ? `${formatMoney(toNumber(brrr.monthlyPropertyManagementFeeDollars))}/mo` : `${toNumber(brrr.property_managment_fee_precentages_from_rent) ?? 0}% of rent`}
 Days until Refi: ${brrr.daysUntilRefi ?? "-"} (refi ${brrr.refi_closing_date || "-"})
 ARV: ${formatMoney(brrr.arv_in_thousands ? brrr.arv_in_thousands * 1000 : undefined)} (lowest ${formatMoney(brrr.lowest_arv_effective)})
 Closing Costs (Refi): ${formatMoney(brrr.closing_costs_refi_total)} (broker points ${Number(brrr.refiPoints ?? BRRR_LEGACY_DEFAULTS.refiPoints)} pts, underwriting ${formatMoney(brrr.refiUnderwritingFee)}, processing ${formatMoney(brrr.brokerProcessingFeeRefi)})

@@ -72,6 +72,14 @@ def _is_on(payload_key: str) -> Callable[[DealInputs], bool]:
     return lambda inputs: bool(inputs.get(payload_key))
 
 
+def _is_blank(payload_key: str) -> Callable[[DealInputs], bool]:
+    return lambda inputs: inputs.get(payload_key) is None
+
+
+def _is_typed(payload_key: str) -> Callable[[DealInputs], bool]:
+    return lambda inputs: inputs.get(payload_key) is not None
+
+
 TITLE_MODE_BUY_LABELS = {"standard": "Standard (lender's policy)", "we_pay_all": "We pay all closing costs"}
 INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS = {"inside_purchase_closing": "Inside the purchase closing",
                                                  "outside_purchase_closing": "Outside the purchase closing"}
@@ -110,13 +118,17 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
             DealInputField("titleModeBuy", "Title Charges", "choice", choice_labels=TITLE_MODE_BUY_LABELS),
             DealInputField("titleEscrowBuy", "Title & Escrow / Settlement", "money",
                            effective_result_key="title_escrow_buy_effective",
-                           formula_hint="Formula: by the title charges and the purchase price tier"),
+                           formula_hint=("Florida estimate: $600 office fees + the owner's policy (we pay all only) "
+                                         "+ the lender's policy ($250 + $5/$1k of the loan above the price)")),
             DealInputField("onlineNotaryBuy", "Online notary", "yes_no"),
             DealInputField("onlineNotaryFeeBuy", "Notary fee", "money", constant_default_when_blank=250,
                            formula_hint="Default: $250", shown_when=_is_on("onlineNotaryBuy")),
             DealInputField("otherClosingCostsBuy", "Other Closing Costs", "money"),
             DealInputField("otherClosingCostsBuyNote", "What the other closing costs are for", "text",
                            shown_when=_has_text("otherClosingCostsBuyNote")),
+            DealInputField("annual_insurance", "Insurance Bill at Purchase", "money"),
+            DealInputField("insurancePurchaseBillPaymentTiming", "Insurance Bill Paid", "choice",
+                           choice_labels=INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS),
         )),
     )),
     DealInputSection("rehab", "Rehab", "wrench", (
@@ -143,17 +155,22 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
             DealInputField("monthlyPropertyTaxBucketDeposit", "Tax Bucket Deposit (each 15th)", "money", value_suffix="/mo",
                            effective_result_key="property_tax_bucket_deposit_effective",
                            formula_hint="Formula: (bill x 0.96 - the seller credit) / the 15ths left until Nov 30"),
-            DealInputField("annual_insurance", "Insurance Bill at Purchase", "money"),
-            DealInputField("insurancePurchaseBillPaymentTiming", "Insurance Bill Paid", "choice",
-                           choice_labels=INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS),
             DealInputField("monthlyInsuranceUntilRefi", "Insurance per Month until Refi", "money", value_suffix="/mo"),
             DealInputField("montly_hoa", "Monthly HOA", "money", value_suffix="/mo"),
         )),
-        DealInputGroup("Operating Expenses (% of rent)", (
-            DealInputField("vacancyPercent", "Vacancy", "percent"),
-            DealInputField("maintenancePercent", "Maint.", "percent"),
-            DealInputField("capexPercent", "CapEx", "percent"),
-            DealInputField("property_managment_fee_precentages_from_rent", "Prop. Mgmt", "percent"),
+        DealInputGroup("Operating Expenses (% of rent or $ per month)", (
+            DealInputField("vacancyPercent", "Vacancy", "percent", shown_when=_is_blank("monthlyVacancyReserveDollars")),
+            DealInputField("monthlyVacancyReserveDollars", "Vacancy", "money", value_suffix="/mo", shown_when=_is_typed("monthlyVacancyReserveDollars")),
+            DealInputField("maintenancePercent", "Maintenance", "percent", shown_when=_is_blank("monthlyMaintenanceReserveDollars")),
+            DealInputField("monthlyMaintenanceReserveDollars", "Maintenance", "money", value_suffix="/mo", shown_when=_is_typed("monthlyMaintenanceReserveDollars")),
+            DealInputField("capexPercent", "CapEx", "percent", shown_when=_is_blank("monthlyCapexReserveDollars")),
+            DealInputField("monthlyCapexReserveDollars", "CapEx", "money", value_suffix="/mo", shown_when=_is_typed("monthlyCapexReserveDollars")),
+            DealInputField("property_managment_fee_precentages_from_rent", "Prop. Management", "percent", shown_when=_is_blank("monthlyPropertyManagementFeeDollars")),
+            DealInputField("monthlyPropertyManagementFeeDollars", "Prop. Management", "money", value_suffix="/mo", shown_when=_is_typed("monthlyPropertyManagementFeeDollars")),
+        )),
+        DealInputGroup("Regular year after the refi", (
+            DealInputField("monthlyInsuranceAfterRefi", "Insurance per Month after Refi", "money", value_suffix="/mo",
+                           effective_result_key="monthly_insurance_after_refi_effective", formula_hint="Default: the insurance bill at refi / 12"),
         )),
     )),
     DealInputSection("refinance", "Refinance", "refresh", (
@@ -197,10 +214,6 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
         DealInputGroup("Paid outside closing (end of rehab)", (
             DealInputField("appraisalFee", "Appraisal", "money"),
             DealInputField("surveyFee", "Survey", "money"),
-        )),
-        DealInputGroup("Regular year after the refi", (
-            DealInputField("monthlyInsuranceAfterRefi", "Insurance per Month after Refi", "money", value_suffix="/mo",
-                           effective_result_key="monthly_insurance_after_refi_effective", formula_hint="Default: the insurance bill at refi / 12"),
         )),
         DealInputGroup("Reserves you set aside at refi", (
             DealInputField("maintenanceReserve", "Maintenance Reserve", "money"),

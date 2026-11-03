@@ -45,4 +45,31 @@ describe("AutoDefaultMoneyInput", () => {
     });
     expect(wrapper.findComponent({ name: "MoneyInput" }).props("errorMessage")).toBe("Lowest ARV cannot exceed ARV.");
   });
+
+  describe("the estimate explanation under the box", () => {
+    const explanationLines = ["$250 + 0.55% × $123,000 + $0 = $926.50", "No deed transfer tax: the seller pays it on a standard deal"];
+    const mountWithExplanation = (modelValue: number | null) =>
+      mount(AutoDefaultMoneyInput, {
+        props: { modelValue, computedDefault: 926.5, label: "Recording & Transfer", estimateExplanationLines: explanationLines },
+        global: { stubs },
+      });
+
+    it("shows every line while the field is on its formula default", () => {
+      const explanation = mountWithExplanation(null).find('[data-part="estimate-explanation"]');
+      expect(explanation.exists()).toBe(true);
+      expect(explanation.findAll("li").map((line) => line.text())).toEqual(explanationLines);
+    });
+
+    it("hides once a dollar amount is typed, and comes back on reset", async () => {
+      const wrapper = mountWithExplanation(null);
+      await wrapper.setProps({ modelValue: 1000 });
+      expect(wrapper.find('[data-part="estimate-explanation"]').exists()).toBe(false);
+      await wrapper.setProps({ modelValue: null });
+      expect(wrapper.find('[data-part="estimate-explanation"]').exists()).toBe(true);
+    });
+
+    it("renders nothing when no explanation is given", () => {
+      expect(mountField(null).find('[data-part="estimate-explanation"]').exists()).toBe(false);
+    });
+  });
 });

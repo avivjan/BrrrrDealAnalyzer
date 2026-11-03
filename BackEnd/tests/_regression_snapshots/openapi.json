@@ -1233,6 +1233,22 @@
             "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
           },
+          "monthlyCapexReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent.",
+            "title": "Monthlycapexreservedollars"
+          },
           "monthlyInsuranceAfterRefi": {
             "anyOf": [
               {
@@ -1263,6 +1279,38 @@
             "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
             "title": "Monthlyinsuranceuntilrefi"
           },
+          "monthlyMaintenanceReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent.",
+            "title": "Monthlymaintenancereservedollars"
+          },
+          "monthlyPropertyManagementFeeDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent.",
+            "title": "Monthlypropertymanagementfeedollars"
+          },
           "monthlyPropertyTaxBucketDeposit": {
             "anyOf": [
               {
@@ -1292,6 +1340,22 @@
             "default": "80",
             "description": "Electric, water and lawn per month while vacant, in dollars.",
             "title": "Monthlyutilitiesuntilrented"
+          },
+          "monthlyVacancyReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent.",
+            "title": "Monthlyvacancyreservedollars"
           },
           "montly_hoa": {
             "anyOf": [
@@ -1789,7 +1853,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees ($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; $5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the hard-money loan above the price).",
             "title": "Titleescrowbuy"
           },
           "titleEscrowRefi": {
@@ -1810,7 +1874,7 @@
           },
           "titleModeBuy": {
             "default": "standard",
-            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "description": "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay every title charge (the owner's policy too) and the 0.70% deed transfer tax.",
             "enum": [
               "standard",
               "we_pay_all"
@@ -2504,6 +2568,18 @@
             ],
             "title": "Interestrate"
           },
+          "lenders_title_policy_and_endorsements_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), lender's policy in dollars: $250 (ALTA 8.1, Florida Form 9, simultaneous issue) + $5.00 per $1,000 of the hard-money loan above the price. The three estimate lines sum to the title/escrow default; a typed titleEscrowBuy overrides the total.",
+            "title": "Lenders Title Policy And Endorsements Buy"
+          },
           "loanChargesBuy": {
             "default": "900",
             "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
@@ -2610,6 +2686,19 @@
             "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
             "title": "Messages"
           },
+          "monthlyCapexReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent.",
+            "title": "Monthlycapexreservedollars"
+          },
           "monthlyInsuranceAfterRefi": {
             "anyOf": [
               {
@@ -2630,6 +2719,32 @@
             "title": "Monthlyinsuranceuntilrefi",
             "type": "string"
           },
+          "monthlyMaintenanceReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent.",
+            "title": "Monthlymaintenancereservedollars"
+          },
+          "monthlyPropertyManagementFeeDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent.",
+            "title": "Monthlypropertymanagementfeedollars"
+          },
           "monthlyPropertyTaxBucketDeposit": {
             "anyOf": [
               {
@@ -2649,6 +2764,19 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monthlyutilitiesuntilrented",
             "type": "string"
+          },
+          "monthlyVacancyReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent.",
+            "title": "Monthlyvacancyreservedollars"
           },
           "monthly_insurance_after_refi_effective": {
             "anyOf": [
@@ -2813,6 +2941,18 @@
               }
             ],
             "title": "Overall Design"
+          },
+          "owners_title_policy_premium_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), owner's policy in dollars at the statutory promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of the price up to $100,000, $5.00 per $1,000 above. Only when we pay all closing costs; $0 on a standard deal (the seller pays it).",
+            "title": "Owners Title Policy Premium Buy"
           },
           "pics_link": {
             "anyOf": [
@@ -3300,7 +3440,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees ($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; $5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the hard-money loan above the price).",
             "title": "Titleescrowbuy"
           },
           "titleEscrowRefi": {
@@ -3318,7 +3458,7 @@
           },
           "titleModeBuy": {
             "default": "standard",
-            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "description": "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay every title charge (the owner's policy too) and the 0.70% deed transfer tax.",
             "enum": [
               "standard",
               "we_pay_all"
@@ -3335,7 +3475,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or the Florida estimate when null (office fees + owner's policy + lender's policy).",
             "title": "Title Escrow Buy Effective"
           },
           "title_escrow_refi_effective": {
@@ -3349,6 +3489,18 @@
             ],
             "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
             "title": "Title Escrow Refi Effective"
+          },
+          "title_office_and_search_fees_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), office fees in dollars: $350 settlement + $150 title search + $100 municipal lien search = $600.",
+            "title": "Title Office And Search Fees Buy"
           },
           "total_cash_invested": {
             "anyOf": [
@@ -5147,6 +5299,22 @@
             "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
           },
+          "monthlyCapexReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent.",
+            "title": "Monthlycapexreservedollars"
+          },
           "monthlyInsuranceAfterRefi": {
             "anyOf": [
               {
@@ -5177,6 +5345,38 @@
             "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
             "title": "Monthlyinsuranceuntilrefi"
           },
+          "monthlyMaintenanceReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent.",
+            "title": "Monthlymaintenancereservedollars"
+          },
+          "monthlyPropertyManagementFeeDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent.",
+            "title": "Monthlypropertymanagementfeedollars"
+          },
           "monthlyPropertyTaxBucketDeposit": {
             "anyOf": [
               {
@@ -5206,6 +5406,22 @@
             "default": "80",
             "description": "Electric, water and lawn per month while vacant, in dollars.",
             "title": "Monthlyutilitiesuntilrented"
+          },
+          "monthlyVacancyReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent.",
+            "title": "Monthlyvacancyreservedollars"
           },
           "montly_hoa": {
             "anyOf": [
@@ -5691,7 +5907,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees ($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; $5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the hard-money loan above the price).",
             "title": "Titleescrowbuy"
           },
           "titleEscrowRefi": {
@@ -5712,7 +5928,7 @@
           },
           "titleModeBuy": {
             "default": "standard",
-            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "description": "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay every title charge (the owner's policy too) and the 0.70% deed transfer tax.",
             "enum": [
               "standard",
               "we_pay_all"
@@ -6378,6 +6594,18 @@
             ],
             "title": "Interestrate"
           },
+          "lenders_title_policy_and_endorsements_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), lender's policy in dollars: $250 (ALTA 8.1, Florida Form 9, simultaneous issue) + $5.00 per $1,000 of the hard-money loan above the price. The three estimate lines sum to the title/escrow default; a typed titleEscrowBuy overrides the total.",
+            "title": "Lenders Title Policy And Endorsements Buy"
+          },
           "loanChargesBuy": {
             "default": "900",
             "description": "Hard-money lender charges at purchase, in dollars (presets: 3shacks $900, 212 $1,900).",
@@ -6484,6 +6712,19 @@
             "description": "Reserved for input-validation warnings; currently never populated (invalid input is rejected with HTTP 400 instead), so this is null or an empty list.",
             "title": "Messages"
           },
+          "monthlyCapexReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent.",
+            "title": "Monthlycapexreservedollars"
+          },
           "monthlyInsuranceAfterRefi": {
             "anyOf": [
               {
@@ -6504,6 +6745,32 @@
             "title": "Monthlyinsuranceuntilrefi",
             "type": "string"
           },
+          "monthlyMaintenanceReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent.",
+            "title": "Monthlymaintenancereservedollars"
+          },
+          "monthlyPropertyManagementFeeDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent.",
+            "title": "Monthlypropertymanagementfeedollars"
+          },
           "monthlyPropertyTaxBucketDeposit": {
             "anyOf": [
               {
@@ -6523,6 +6790,19 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monthlyutilitiesuntilrented",
             "type": "string"
+          },
+          "monthlyVacancyReserveDollars": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent.",
+            "title": "Monthlyvacancyreservedollars"
           },
           "monthly_insurance_after_refi_effective": {
             "anyOf": [
@@ -6687,6 +6967,18 @@
               }
             ],
             "title": "Overall Design"
+          },
+          "owners_title_policy_premium_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), owner's policy in dollars at the statutory promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of the price up to $100,000, $5.00 per $1,000 above. Only when we pay all closing costs; $0 on a standard deal (the seller pays it).",
+            "title": "Owners Title Policy Premium Buy"
           },
           "pics_link": {
             "anyOf": [
@@ -7162,7 +7454,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees ($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; $5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the hard-money loan above the price).",
             "title": "Titleescrowbuy"
           },
           "titleEscrowRefi": {
@@ -7180,7 +7472,7 @@
           },
           "titleModeBuy": {
             "default": "standard",
-            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "description": "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay every title charge (the owner's policy too) and the 0.70% deed transfer tax.",
             "enum": [
               "standard",
               "we_pay_all"
@@ -7197,7 +7489,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or the Florida estimate when null (office fees + owner's policy + lender's policy).",
             "title": "Title Escrow Buy Effective"
           },
           "title_escrow_refi_effective": {
@@ -7211,6 +7503,18 @@
             ],
             "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
             "title": "Title Escrow Refi Effective"
+          },
+          "title_office_and_search_fees_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), office fees in dollars: $350 settlement + $150 title search + $100 municipal lien search = $600.",
+            "title": "Title Office And Search Fees Buy"
           },
           "total_cash_invested": {
             "anyOf": [
@@ -7453,12 +7757,48 @@
             },
             "title": "Dated Cash Rows",
             "type": "array"
+          },
+          "deal_milestones": {
+            "description": "The deal's key dates in date order, shown among the cash rows (a milestone first on a shared day). Not cash: never part of Cash Needed or the liquidity import. The Nov 30 tax bill is one only inside the hold.",
+            "items": {
+              "$ref": "#/components/schemas/CashNeededScheduleMilestoneRes"
+            },
+            "title": "Deal Milestones",
+            "type": "array"
           }
         },
         "required": [
           "dated_cash_rows"
         ],
         "title": "CashNeededScheduleAtLowestArvRes",
+        "type": "object"
+      },
+      "CashNeededScheduleMilestoneRes": {
+        "description": "One key date of the deal, shown among the cash rows. A marker, not cash.",
+        "properties": {
+          "date": {
+            "description": "The day of the milestone (ISO).",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "description": "The milestone as shown, e.g. 'Purchase closing'.",
+            "title": "Description",
+            "type": "string"
+          },
+          "milestone_key": {
+            "description": "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed.",
+            "title": "Milestone Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "milestone_key",
+          "description"
+        ],
+        "title": "CashNeededScheduleMilestoneRes",
         "type": "object"
       },
       "CashNeededScheduleRowRes": {
@@ -14747,6 +15087,22 @@
             "description": "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not the wire) and counts as equity.",
             "title": "Maintenancereserve"
           },
+          "monthlyCapexReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent.",
+            "title": "Monthlycapexreservedollars"
+          },
           "monthlyInsuranceAfterRefi": {
             "anyOf": [
               {
@@ -14777,6 +15133,38 @@
             "description": "Insurance paid monthly between the purchase and the refi, in dollars per month (30-day months).",
             "title": "Monthlyinsuranceuntilrefi"
           },
+          "monthlyMaintenanceReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent.",
+            "title": "Monthlymaintenancereservedollars"
+          },
+          "monthlyPropertyManagementFeeDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent.",
+            "title": "Monthlypropertymanagementfeedollars"
+          },
           "monthlyPropertyTaxBucketDeposit": {
             "anyOf": [
               {
@@ -14806,6 +15194,22 @@
             "default": "80",
             "description": "Electric, water and lawn per month while vacant, in dollars.",
             "title": "Monthlyutilitiesuntilrented"
+          },
+          "monthlyVacancyReserveDollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent.",
+            "title": "Monthlyvacancyreservedollars"
           },
           "montly_hoa": {
             "anyOf": [
@@ -15142,7 +15546,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode.",
+            "description": "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees ($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; $5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the hard-money loan above the price).",
             "title": "Titleescrowbuy"
           },
           "titleEscrowRefi": {
@@ -15163,7 +15567,7 @@
           },
           "titleModeBuy": {
             "default": "standard",
-            "description": "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above).",
+            "description": "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay every title charge (the owner's policy too) and the 0.70% deed transfer tax.",
             "enum": [
               "standard",
               "we_pay_all"
@@ -15451,6 +15855,18 @@
             "description": "Insurance bill at the refi actually used, in dollars: the input, or the insurance bill at purchase when null.",
             "title": "Insurance Bill At Refi Effective"
           },
+          "lenders_title_policy_and_endorsements_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), lender's policy in dollars: $250 (ALTA 8.1, Florida Form 9, simultaneous issue) + $5.00 per $1,000 of the hard-money loan above the price. The three estimate lines sum to the title/escrow default; a typed titleEscrowBuy overrides the total.",
+            "title": "Lenders Title Policy And Endorsements Buy"
+          },
           "lowest_arv_effective": {
             "anyOf": [
               {
@@ -15513,6 +15929,18 @@
             ],
             "description": "Net profit created by the deal, in dollars: equity plus cash out (a negative cash out, money left in, reduces it).",
             "title": "Net Profit"
+          },
+          "owners_title_policy_premium_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), owner's policy in dollars at the statutory promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of the price up to $100,000, $5.00 per $1,000 above. Only when we pay all closing costs; $0 on a standard deal (the seller pays it).",
+            "title": "Owners Title Policy Premium Buy"
           },
           "pre_refi_rental_income": {
             "anyOf": [
@@ -15721,7 +16149,7 @@
                 "type": "null"
               }
             ],
-            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null.",
+            "description": "Title/escrow charges (buy) actually used, in dollars: the input, or the Florida estimate when null (office fees + owner's policy + lender's policy).",
             "title": "Title Escrow Buy Effective"
           },
           "title_escrow_refi_effective": {
@@ -15735,6 +16163,18 @@
             ],
             "description": "Title/escrow charges (refi) actually used, in dollars: the input, or its formula default when null.",
             "title": "Title Escrow Refi Effective"
+          },
+          "title_office_and_search_fees_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Florida title estimate (buy), office fees in dollars: $350 settlement + $150 title search + $100 municipal lien search = $600.",
+            "title": "Title Office And Search Fees Buy"
           },
           "total_cash_invested": {
             "anyOf": [

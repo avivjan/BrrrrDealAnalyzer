@@ -46,12 +46,18 @@ ONLINE_NOTARY_FEE = Decimal("250")
 RECORDING_TRANSFER_RATE = Decimal("0.0055")   # of the loan recorded (0.35% + 0.20%)
 RECORDING_TRANSFER_FLAT = Decimal("250")      # deed, mortgage and LLC affidavit recording
 DEED_TRANSFER_TAX_RATE_WE_PAY_ALL = Decimal("0.0070")   # of the purchase price, only when we pay all closing costs
-TITLE_ESCROW_BUY_STANDARD = Decimal("1000")   # lender's policy + endorsements + settlement/search
-TITLE_ESCROW_BUY_WE_PAY_ALL = (               # (upper price bound, flat fee) when the buyer pays all title charges
-    (Decimal("150000"), Decimal("2050")),
-    (Decimal("200000"), Decimal("2200")),
-)
-TITLE_ESCROW_BUY_WE_PAY_ALL_TOP = Decimal("2400")
+# Title & escrow at purchase, Florida. Office and third-party fees, always ours:
+TITLE_SETTLEMENT_CLOSING_FEE = Decimal("350")
+TITLE_SEARCH_FEE = Decimal("150")
+MUNICIPAL_LIEN_SEARCH_FEE = Decimal("100")
+# Owner's title policy at the Florida statutory promulgated rate (F.A.C. 69O-186.003), per $1,000 of the price:
+FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND = Decimal("100000")
+FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K = Decimal("5.75")
+FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_ABOVE_100K = Decimal("5.00")
+# Lender's title policy: Florida ALTA 8.1, Florida Form 9 and the simultaneous-issue rate, plus the
+# statutory rate on the part of the loan above the price (a rehab / hard-money loan can exceed it):
+LENDERS_POLICY_ENDORSEMENTS_AND_SIMULTANEOUS_ISSUE_FEE = Decimal("250")
+LENDERS_POLICY_EXCESS_LOAN_RATE_PER_THOUSAND = Decimal("5.00")
 TITLE_ESCROW_REFI_FLAT = Decimal("800")
 TITLE_ESCROW_REFI_RATE = Decimal("0.0045")
 LOWEST_ARV_FACTOR = Decimal("0.90")
@@ -251,17 +257,52 @@ def recording_transfer_buy_default(hml_amount, deed_transfer_tax):
     loan (purchase loan + construction budget, the mortgage recorded) + the deed transfer tax."""
     return RECORDING_TRANSFER_FLAT + RECORDING_TRANSFER_RATE * hml_amount + deed_transfer_tax
 
-def title_escrow_buy_default(title_mode: str, purchase_price):
-    """Title/escrow/settlement at purchase: $1,000 standard, or the we-pay-all tier by price
-    ($2,050 under $150k, $2,200 from $150k to $200k inclusive, $2,400 above)."""
-    if title_mode != "we_pay_all":
-        return TITLE_ESCROW_BUY_STANDARD
-    for price_upper_bound, title_fee in TITLE_ESCROW_BUY_WE_PAY_ALL:
-        if purchase_price < price_upper_bound:
-            return title_fee
-    if purchase_price == TITLE_ESCROW_BUY_WE_PAY_ALL[-1][0]:
-        return TITLE_ESCROW_BUY_WE_PAY_ALL[-1][1]
-    return TITLE_ESCROW_BUY_WE_PAY_ALL_TOP
+def florida_owners_title_policy_premium(purchase_price):
+    """Owner's title policy at the Florida promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of
+    the price up to $100,000, then $5.00 per $1,000 above it ($575 at $100,000)."""
+    if purchase_price <= FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND:
+        return purchase_price / Decimal("1000") * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K
+    first_tier_premium = FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND / Decimal("1000") * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K
+    return first_tier_premium + (purchase_price - FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND) / Decimal("1000") * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_ABOVE_100K
+
+def lenders_title_policy_and_endorsements(loan_amount, purchase_price):
+    """Lender's title policy: $250 (Florida ALTA 8.1, Form 9 and the simultaneous-issue rate) + $5.00
+    per $1,000 of the loan above the price; $250 flat when the loan does not exceed the price."""
+    loan_amount_above_purchase_price = max(Decimal("0"), loan_amount - purchase_price)
+    return (LENDERS_POLICY_ENDORSEMENTS_AND_SIMULTANEOUS_ISSUE_FEE
+            + loan_amount_above_purchase_price / Decimal("1000") * LENDERS_POLICY_EXCESS_LOAN_RATE_PER_THOUSAND)
+
+
+class TitleEscrowBuyItemizedDefault(NamedTuple):
+    settlement_closing_fee: Decimal
+    title_search_fee: Decimal
+    municipal_lien_search_fee: Decimal
+    title_office_and_search_fees: Decimal          # the three above
+    owners_title_policy_premium: Decimal           # $0 on a standard deal: the seller pays the owner's policy
+    lenders_title_policy_and_endorsements: Decimal
+    total: Decimal                                 # office fees + owner's policy + lender's policy
+
+
+def title_escrow_buy_itemized_default(title_mode: str, purchase_price, hml_amount) -> TitleEscrowBuyItemizedDefault:
+    """Title/escrow/settlement at purchase, Florida: $600 office fees ($350 settlement + $150 title
+    search + $100 municipal lien search) + the owner's policy (only when we pay all closing costs) +
+    the lender's policy on the whole hard-money loan (purchase loan + construction budget)."""
+    title_office_and_search_fees = TITLE_SETTLEMENT_CLOSING_FEE + TITLE_SEARCH_FEE + MUNICIPAL_LIEN_SEARCH_FEE
+    owners_title_policy_premium = florida_owners_title_policy_premium(purchase_price) if title_mode == "we_pay_all" else Decimal("0.00")
+    lenders_title_policy = lenders_title_policy_and_endorsements(hml_amount, purchase_price)
+    return TitleEscrowBuyItemizedDefault(
+        settlement_closing_fee=TITLE_SETTLEMENT_CLOSING_FEE,
+        title_search_fee=TITLE_SEARCH_FEE,
+        municipal_lien_search_fee=MUNICIPAL_LIEN_SEARCH_FEE,
+        title_office_and_search_fees=title_office_and_search_fees,
+        owners_title_policy_premium=owners_title_policy_premium,
+        lenders_title_policy_and_endorsements=lenders_title_policy,
+        total=title_office_and_search_fees + owners_title_policy_premium + lenders_title_policy,
+    )
+
+def title_escrow_buy_default(title_mode: str, purchase_price, hml_amount):
+    """The total of `title_escrow_buy_itemized_default`."""
+    return title_escrow_buy_itemized_default(title_mode, purchase_price, hml_amount).total
 
 def title_escrow_refi_default(loan_amount):
     """Title/escrow/settlement at refi: $800 + 0.45% of the refi loan."""

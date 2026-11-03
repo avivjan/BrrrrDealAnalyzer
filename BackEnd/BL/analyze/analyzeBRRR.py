@@ -69,6 +69,9 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
         seller_tax_credit=results.seller_tax_credit, closing_costs_buy_total=results.closing_costs_buy_total,
         deed_transfer_tax_buy=results.deed_transfer_tax_buy,
+        title_office_and_search_fees_buy=results.title_office_and_search_fees_buy,
+        owners_title_policy_premium_buy=results.owners_title_policy_premium_buy,
+        lenders_title_policy_and_endorsements_buy=results.lenders_title_policy_and_endorsements_buy,
         stolen_money=results.stolen_money, pre_refi_rental_income=results.pre_refi_rental_income,
         closing_costs_refi_total=results.closing_costs_refi_total, prepaid_interest_refi=results.prepaid_interest_refi,
         reserves_total=results.reserves_total,
@@ -95,6 +98,7 @@ def cash_needed_schedule_response(schedule) -> CashNeededScheduleAtLowestArvRes:
     """The engine's schedule (NamedTuples) as the response model."""
     return CashNeededScheduleAtLowestArvRes(
         dated_cash_rows=[row._asdict() for row in schedule.dated_cash_rows],
+        deal_milestones=[milestone._asdict() for milestone in schedule.deal_milestones],
     )
 
 
@@ -163,7 +167,11 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         property_tax_lump_sum_at_refi_closing=property_tax_bucket.property_tax_lump_sum_at_refi_closing,
         property_tax_bucket_balance_released_at_refi=property_tax_bucket.property_tax_bucket_balance_released_at_refi,
         deed_transfer_tax_buy=buy_settlement.deed_transfer_tax_buy,
-        recording_transfer_buy=buy_settlement.recording_transfer_buy, title_escrow_buy=buy_settlement.title_escrow_buy, notary_buy=buy_settlement.notary_buy,
+        recording_transfer_buy=buy_settlement.recording_transfer_buy,
+        title_office_and_search_fees_buy=buy_settlement.title_office_and_search_fees_buy,
+        owners_title_policy_premium_buy=buy_settlement.owners_title_policy_premium_buy,
+        lenders_title_policy_and_endorsements_buy=buy_settlement.lenders_title_policy_and_endorsements_buy,
+        title_escrow_buy=buy_settlement.title_escrow_buy, notary_buy=buy_settlement.notary_buy,
         closing_costs_buy_total=buy_settlement.closing_costs_buy_total, seller_paid_current_year_taxes=buy_settlement.seller_paid_current_year_taxes,
         seller_tax_credit_formula=buy_settlement.seller_tax_credit_formula, seller_tax_credit=buy_settlement.seller_tax_credit,
         seller_tax_credit_set_aside_in_tax_bucket=buy_settlement.seller_tax_credit_set_aside_in_tax_bucket,

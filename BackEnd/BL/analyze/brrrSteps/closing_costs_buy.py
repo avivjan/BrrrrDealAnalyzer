@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import NamedTuple
 
 from BL.analyze.common.deal_math import (
-    effective, recording_transfer_buy_default, deed_transfer_tax_buy_default, title_escrow_buy_default,
+    effective, recording_transfer_buy_default, deed_transfer_tax_buy_default, title_escrow_buy_itemized_default,
     calc_seller_tax_credit, seller_paid_current_year_taxes_by_default, ONLINE_NOTARY_FEE,
 )
 
@@ -13,7 +13,10 @@ from BL.analyze.common.deal_math import (
 class BuySettlement(NamedTuple):
     deed_transfer_tax_buy: Decimal    # $0 standard; 0.70% of the price when we pay all closing costs
     recording_transfer_buy: Decimal   # effective
-    title_escrow_buy: Decimal         # effective
+    title_office_and_search_fees_buy: Decimal            # the estimate's $350 settlement + $150 title search + $100 lien search
+    owners_title_policy_premium_buy: Decimal             # the estimate's owner's policy (FL promulgated rate); $0 on a standard deal
+    lenders_title_policy_and_endorsements_buy: Decimal   # the estimate's lender's policy: $250 + $5/$1k of the loan above the price
+    title_escrow_buy: Decimal         # effective: input or the Florida estimate (the three above)
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: bool   # effective
@@ -27,7 +30,8 @@ class BuySettlement(NamedTuple):
 def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline, insurance) -> BuySettlement:
     deed_transfer_tax_buy = deed_transfer_tax_buy_default(payload.title_mode_buy, purchase_price)
     recording_transfer_buy = effective(payload.recording_transfer_buy, recording_transfer_buy_default(hml_amount, deed_transfer_tax_buy))
-    title_escrow_buy = effective(payload.title_escrow_buy, title_escrow_buy_default(payload.title_mode_buy, purchase_price))
+    title_escrow_buy_estimate = title_escrow_buy_itemized_default(payload.title_mode_buy, purchase_price, hml_amount)
+    title_escrow_buy = effective(payload.title_escrow_buy, title_escrow_buy_estimate.total)
     notary_buy = effective(payload.online_notary_fee_buy, ONLINE_NOTARY_FEE) if payload.online_notary_buy else Decimal("0")
     closing_costs_buy_total = (payload.loan_charges_buy + recording_transfer_buy + title_escrow_buy + notary_buy + payload.other_closing_costs_buy
                                + insurance.insurance_bill_at_purchase_inside_closing)
@@ -48,6 +52,9 @@ def closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cas
     return BuySettlement(
         deed_transfer_tax_buy=deed_transfer_tax_buy,
         recording_transfer_buy=recording_transfer_buy,
+        title_office_and_search_fees_buy=title_escrow_buy_estimate.title_office_and_search_fees,
+        owners_title_policy_premium_buy=title_escrow_buy_estimate.owners_title_policy_premium,
+        lenders_title_policy_and_endorsements_buy=title_escrow_buy_estimate.lenders_title_policy_and_endorsements,
         title_escrow_buy=title_escrow_buy,
         notary_buy=notary_buy,
         closing_costs_buy_total=closing_costs_buy_total,

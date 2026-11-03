@@ -26,6 +26,15 @@ class CashNeededScheduleRowRes(BaseModel):
         "a monthly item); (item_key, date) is unique."))
 
 
+class CashNeededScheduleMilestoneRes(BaseModel):
+    """One key date of the deal, shown among the cash rows. A marker, not cash."""
+
+    date: calendar_date = Field(..., description="The day of the milestone (ISO).")
+    milestone_key: str = Field(..., description=(
+        "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed."))
+    description: str = Field(..., description="The milestone as shown, e.g. 'Purchase closing'.")
+
+
 class CashNeededScheduleAtLowestArvRes(BaseModel):
     """When every dollar of Cash Needed moves, in the Lowest-ARV (conservative) scenario. No running balance and
     no peak: cash troughs are managed globally in the liquidity timeline."""
@@ -34,3 +43,6 @@ class CashNeededScheduleAtLowestArvRes(BaseModel):
         "One row per individual cash item, in date order (then sequence_within_day), the rehab cushion included (a hold "
         "on the purchase closing date). Money in as late as reasonable, money out as early as reasonable; no money-out "
         "row falls after the refi closing."))
+    deal_milestones: list[CashNeededScheduleMilestoneRes] = Field(default_factory=list, description=(
+        "The deal's key dates in date order, shown among the cash rows (a milestone first on a shared day). Not cash: "
+        "never part of Cash Needed or the liquidity import. The Nov 30 tax bill is one only inside the hold."))

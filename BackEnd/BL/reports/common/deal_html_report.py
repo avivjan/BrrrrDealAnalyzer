@@ -39,7 +39,7 @@ from BL.reports.common.breakdown_tree import (
     top_level_rows_for_headline,
 )
 from BL.reports.common.cash_needed_schedule_report import (
-    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport,
+    CASH_NEEDED_RESULT_KEY, CASH_NEEDED_SCHEDULE_TITLE, CashNeededScheduleReport, CashNeededScheduleReportMilestoneRow,
     resolve_cash_needed_schedule_report,
 )
 from BL.reports.common.deal_input_sections import ResolvedDealInputSection, resolve_deal_input_sections
@@ -145,13 +145,18 @@ def _rows_markup(
     return "".join(parts)
 
 
+def _cash_needed_schedule_line_markup(line) -> str:
+    if isinstance(line, CashNeededScheduleReportMilestoneRow):
+        return (f'<tr class="milestone"><td class="date">{_text(line.date_text)}</td>'
+                f'<td colspan="2"><span class="milestone-label">◆ {_text(line.description)}</span></td></tr>')
+    return (f'<tr class="{"in" if line.is_money_in else "out"}"><td class="date">{_text(line.date_text)}</td>'
+            f'<td>{_text(line.description)}</td><td class="val">{_text(line.signed_amount_text)}</td></tr>')
+
+
 def _cash_needed_schedule_markup(schedule_report: CashNeededScheduleReport) -> str:
-    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them."""
-    dated_rows = "".join(
-        f'<tr class="{"in" if row.is_money_in else "out"}"><td class="date">{_text(row.date_text)}</td>'
-        f'<td>{_text(row.description)}</td><td class="val">{_text(row.signed_amount_text)}</td></tr>'
-        for row in schedule_report.dated_rows
-    )
+    """The popup's Cash Needed schedule: one dated row per cash item, the rehab cushion among them, and the
+    deal's key dates between them as tinted uppercase markers (no amount)."""
+    dated_rows = "".join(_cash_needed_schedule_line_markup(line) for line in schedule_report.lines_in_date_order)
     return (
         f'<section class="schedule" aria-label="{_text(CASH_NEEDED_SCHEDULE_TITLE)}">'
         f'<p class="caption">{_text(CASH_NEEDED_SCHEDULE_TITLE)}</p>'
@@ -463,6 +468,9 @@ details[open] > summary .chev::before { transform: rotate(45deg); left: 5px; top
 .schedule-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .schedule-table td.date { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .schedule-table tr.in .val { color: var(--cyan); }
+.schedule-table tr.milestone td { background: rgba(167,139,250,0.10); color: var(--violet); padding-top: 5px; padding-bottom: 5px; }
+.schedule-table tr.milestone td:first-child { box-shadow: inset 3px 0 0 var(--violet); color: var(--violet); }
+.schedule-table .milestone-label { font: 700 10.5px/1.4 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
 .all-steps { margin-top: 16px; }
 .all-steps > summary {
   cursor: pointer; font: 700 10.5px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);

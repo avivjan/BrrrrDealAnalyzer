@@ -161,7 +161,7 @@
               "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,953.62) = -$55,326.73",
+              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,878.62) = -$55,251.73",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -181,19 +181,19 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56953.61692265117
+                  "value": 56878.61692265117
                 }
               ],
               "unit": "money",
-              "value": -55326.72891402273
+              "value": -55251.72891402273
             },
             {
-              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($55,326.73) × 100 = 2.1%",
+              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($55,251.73) × 100 = 2.11%",
               "label": "Cash on Cash",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 2.1046625135062222
+              "value": 2.1075194320428094
             }
           ],
           "cash_out": [
@@ -435,7 +435,7 @@
               "value": 1085
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($45,439.01) + Seller Tax Credit set aside in the tax bucket ($88.77) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,836.67) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,953.62",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($45,364.01) + Seller Tax Credit set aside in the tax bucket ($88.77) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,836.67) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,878.62",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -449,7 +449,7 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 45439.01065449011
+                  "value": 45364.01065449011
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
@@ -543,7 +543,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56953.61692265117
+              "value": 56878.61692265117
             },
             {
               "formula": "Refi Loan ($240,000) − HML Payoff ($215,525.56) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($996.67) = $12,777.78",
@@ -579,7 +579,7 @@
               "value": 12777.777777777777
             },
             {
-              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,953.62) = -$55,326.73",
+              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,878.62) = -$55,251.73",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -599,11 +599,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56953.61692265117
+                  "value": 56878.61692265117
                 }
               ],
               "unit": "money",
-              "value": -55326.72891402273
+              "value": -55251.72891402273
             }
           ],
           "cash_out_routi": [
@@ -663,7 +663,7 @@
             {
               "formula": "0.55% × Refi Loan ($240,000) + $250 = $1,570",
               "label": "Recording & Transfer (Refi)",
-              "note": "Formula default for government recording and transfer charges; type a value to override.",
+              "note": "Estimated by formula; type the amount from the settlement statement to override. The estimate: 0.55% (0.35% documentary stamps on the note + 0.20% intangible tax) of the refi loan recorded, + $250 to record the mortgage.",
               "terms": null,
               "unit": "money",
               "value": 1570
@@ -671,7 +671,7 @@
             {
               "formula": "$800 + 0.45% × Refi Loan ($240,000) = $1,880",
               "label": "Title & Escrow (Refi)",
-              "note": "Formula default for title, escrow and settlement charges; type a value to override.",
+              "note": "Estimated by formula; type the amount from the settlement statement to override. The estimate: a flat $800 + 0.45% of the refi loan, covering the settlement and search fees and the lender's title policy together.",
               "terms": null,
               "unit": "money",
               "value": 1880
@@ -836,7 +836,7 @@
             {
               "formula": "0.55% × Refi Loan ($216,000) + $250 = $1,438",
               "label": "Recording & Transfer (Refi) (Lowest ARV)",
-              "note": "Formula default for government recording and transfer charges; type a value to override.",
+              "note": "Estimated by formula; type the amount from the settlement statement to override. The estimate: 0.55% (0.35% documentary stamps on the note + 0.20% intangible tax) of the refi loan recorded, + $250 to record the mortgage.",
               "terms": null,
               "unit": "money",
               "value": 1438
@@ -844,7 +844,7 @@
             {
               "formula": "$800 + 0.45% × Refi Loan ($216,000) = $1,772",
               "label": "Title & Escrow (Refi) (Lowest ARV)",
-              "note": "Formula default for title, escrow and settlement charges; type a value to override.",
+              "note": "Estimated by formula; type the amount from the settlement statement to override. The estimate: a flat $800 + 0.45% of the refi loan, covering the settlement and search fees and the lender's title policy together.",
               "terms": null,
               "unit": "money",
               "value": 1772
@@ -1057,18 +1057,61 @@
             {
               "formula": "$250 + 0.55% × Hard Money Loan ($215,000) + Deed Transfer Tax ($0) = $1,432.50",
               "label": "Recording & Transfer (Buy)",
-              "note": "Formula default for government recording and transfer charges; type a value to override. The 0.55% (0.35% + 0.20%) is on the whole loan recorded, purchase loan plus construction budget.",
+              "note": "Estimated by formula; type the amount from the settlement statement to override. The estimate: $250 records the deed, the mortgage and the LLC affidavit; 0.55% (0.35% documentary stamps on the note + 0.20% intangible tax) is on the whole loan recorded, purchase loan plus construction budget; the 0.70% deed transfer tax is added only when we pay all closing costs (otherwise it is the seller's).",
               "terms": null,
               "unit": "money",
               "value": 1432.5
             },
             {
-              "formula": "Standard deal → flat $1,000: we pay only the lender's title policy, its endorsements and the settlement/search fees; the seller pays the owner's policy",
-              "label": "Title & Escrow (Buy)",
-              "note": "Formula default for title, escrow and settlement charges; type a value to override.",
+              "formula": "$350.00 settlement / closing fee + $150.00 title search + $100.00 municipal lien search = $600",
+              "label": "Title Office & Search Fees (Buy)",
+              "note": "Fixed office and third-party fees: $350 settlement / closing fee + $150 title search + $100 municipal lien search. Flat fees, the same on every Florida purchase.",
               "terms": null,
               "unit": "money",
-              "value": 1000
+              "value": 600
+            },
+            {
+              "formula": "Standard deal → the seller pays the owner's title policy, so it costs us $0",
+              "label": "Owner's Title Policy (Buy)",
+              "note": "The owner's title policy is strictly the Florida statutory promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of the purchase price up to $100,000, then $5.00 per $1,000 above it. On a standard deal the seller buys it, so it is not one of our charges.",
+              "terms": null,
+              "unit": "money",
+              "value": 0
+            },
+            {
+              "formula": "$250.00 (endorsements + simultaneous issue) + (Hard Money Loan $215,000 − Purchase $200,000) ÷ $1,000 × $5.00 = $325",
+              "label": "Lender's Title Policy & Endorsements (Buy)",
+              "note": "The lender's title policy: $250 covers the Florida ALTA 8.1 and Form 9 endorsements and the simultaneous-issue rate; on a rehab / hard-money loan larger than the price, the statutory $5.00 per $1,000 is added on the loan balance above the price. The loan is the whole hard-money loan: purchase loan plus construction budget.",
+              "terms": null,
+              "unit": "money",
+              "value": 325
+            },
+            {
+              "formula": "Office & Search Fees ($600) + Owner's Title Policy ($0) + Lender's Title Policy & Endorsements ($325) = $925",
+              "label": "Title & Escrow (Buy)",
+              "note": "Florida estimate for the title charges & escrow / settlement line; type a value to override. Fixed office and third-party fees: $350 settlement / closing fee + $150 title search + $100 municipal lien search. The owner's title policy is strictly the Florida statutory promulgated rate (F.A.C. 69O-186.003): $5.75 per $1,000 of the purchase price up to $100,000, then $5.00 per $1,000 above it. The lender's title policy: $250 covers the Florida ALTA 8.1 and Form 9 endorsements and the simultaneous-issue rate; on a rehab / hard-money loan larger than the price, the statutory $5.00 per $1,000 is added on the loan balance above the price.",
+              "terms": [
+                {
+                  "label": "Office & Search Fees",
+                  "sign": "+",
+                  "step_label": "Title Office & Search Fees (Buy)",
+                  "value": 600
+                },
+                {
+                  "label": "Owner's Title Policy",
+                  "sign": "+",
+                  "step_label": "Owner's Title Policy (Buy)",
+                  "value": 0
+                },
+                {
+                  "label": "Lender's Title Policy & Endorsements",
+                  "sign": "+",
+                  "step_label": "Lender's Title Policy & Endorsements (Buy)",
+                  "value": 325
+                }
+              ],
+              "unit": "money",
+              "value": 925
             },
             {
               "formula": "Remote closing → $250",
@@ -1087,7 +1130,7 @@
               "value": 1200
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -1107,7 +1150,7 @@
                   "label": "Title & Escrow",
                   "sign": "+",
                   "step_label": "Title & Escrow (Buy)",
-                  "value": 1000
+                  "value": 925
                 },
                 {
                   "label": "Online Notary",
@@ -1129,7 +1172,7 @@
                 }
               ],
               "unit": "money",
-              "value": 4782.5
+              "value": 4707.5
             },
             {
               "formula": "Taxes ($3,600) × seller's days (Jan 1 to the day before 2026-01-10) ÷ days in the year = $88.77",
@@ -1140,7 +1183,7 @@
               "value": 88.76712328767124
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($1,445.28) − Seller Tax Credit ($88.77) − Earnest Money Deposit ($5,000) = $45,439.01",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,707.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($1,445.28) − Seller Tax Credit ($88.77) − Earnest Money Deposit ($5,000) = $45,364.01",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -1154,7 +1197,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 4782.5
+                  "value": 4707.5
                 },
                 {
                   "label": "HML Points",
@@ -1182,7 +1225,7 @@
                 }
               ],
               "unit": "money",
-              "value": 45439.01065449011
+              "value": 45364.01065449011
             }
           ],
           "dscr": [
@@ -1313,7 +1356,7 @@
           ],
           "net_profit": [
             {
-              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,953.62) = -$55,326.73",
+              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,878.62) = -$55,251.73",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -1333,11 +1376,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56953.61692265117
+                  "value": 56878.61692265117
                 }
               ],
               "unit": "money",
-              "value": -55326.72891402273
+              "value": -55251.72891402273
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
@@ -1348,7 +1391,7 @@
               "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($91,150.89) + Cash Out (-$55,326.73) = $35,824.16",
+              "formula": "Equity ($91,150.89) + Cash Out (-$55,251.73) = $35,899.16",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1362,11 +1405,11 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -55326.72891402273
+                  "value": -55251.72891402273
                 }
               ],
               "unit": "money",
-              "value": 35824.16085512661
+              "value": 35899.16085512661
             }
           ],
           "roi": [
@@ -1392,7 +1435,7 @@
               "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,953.62) = -$55,326.73",
+              "formula": "Cash-Out Wire ($12,777.78) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,878.62) = -$55,251.73",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -1412,11 +1455,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56953.61692265117
+                  "value": 56878.61692265117
                 }
               ],
               "unit": "money",
-              "value": -55326.72891402273
+              "value": -55251.72891402273
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
@@ -1427,7 +1470,7 @@
               "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($91,150.89) + Cash Out (-$55,326.73) = $35,824.16",
+              "formula": "Equity ($91,150.89) + Cash Out (-$55,251.73) = $35,899.16",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1441,19 +1484,19 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -55326.72891402273
+                  "value": -55251.72891402273
                 }
               ],
               "unit": "money",
-              "value": 35824.16085512661
+              "value": 35899.16085512661
             },
             {
-              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($35,824.16)) ÷ |Cash Out| ($55,326.73) × 100 = 66.85%",
+              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($35,899.16)) ÷ |Cash Out| ($55,251.73) × 100 = 67.08%",
               "label": "ROI",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 66.85485027681507
+              "value": 67.0813429860339
             }
           ],
           "stolen_money": [
@@ -1518,7 +1561,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($1,000) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,782.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -1538,7 +1581,7 @@
                   "label": "Title & Escrow",
                   "sign": "+",
                   "step_label": "Title & Escrow (Buy)",
-                  "value": 1000
+                  "value": 925
                 },
                 {
                   "label": "Online Notary",
@@ -1560,7 +1603,7 @@
                 }
               ],
               "unit": "money",
-              "value": 4782.5
+              "value": 4707.5
             },
             {
               "formula": "Credit received at closing ($88.77) → put in the property's tax bucket the day after",
@@ -1571,7 +1614,7 @@
               "value": 88.76712328767124
             },
             {
-              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,782.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($1,445.28) − Seller Tax Credit ($88.77) − Earnest Money Deposit ($5,000) = $45,439.01",
+              "formula": "Down Payment ($40,000) + Closing Costs (Buy) ($4,707.50) + HML Points ($4,300) + Prepaid Interest (Buy) ($1,445.28) − Seller Tax Credit ($88.77) − Earnest Money Deposit ($5,000) = $45,364.01",
               "label": "Cash to Close (Buy)",
               "note": "The wire to the title company on purchase day. Earnest money is already in escrow, so it is credited here.",
               "terms": [
@@ -1585,7 +1628,7 @@
                   "label": "Closing Costs (Buy)",
                   "sign": "+",
                   "step_label": "Closing Costs (Buy)",
-                  "value": 4782.5
+                  "value": 4707.5
                 },
                 {
                   "label": "HML Points",
@@ -1613,7 +1656,7 @@
                 }
               ],
               "unit": "money",
-              "value": 45439.01065449011
+              "value": 45364.01065449011
             },
             {
               "formula": "Actual Rehab ($55,000) − Construction Budget ($55,000) = $0",
@@ -1782,7 +1825,7 @@
               "value": 1085
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($45,439.01) + Seller Tax Credit set aside in the tax bucket ($88.77) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,836.67) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,953.62",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($45,364.01) + Seller Tax Credit set aside in the tax bucket ($88.77) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,836.67) + Tax Bucket Shortfall topped up on Nov 30 ($0) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,878.62",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -1796,7 +1839,7 @@
                   "label": "Cash to Close (Buy)",
                   "sign": "+",
                   "step_label": "Cash to Close (Buy)",
-                  "value": 45439.01065449011
+                  "value": 45364.01065449011
                 },
                 {
                   "label": "Seller Tax Credit set aside in the tax bucket",
@@ -1890,7 +1933,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56953.61692265117
+              "value": 56878.61692265117
             },
             {
               "formula": "Wire (-$10,522.56) is negative → $10,522.56 brought to the table",
@@ -1909,15 +1952,15 @@
               "value": 11150.889769149338
             },
             {
-              "formula": "Total Cash Invested ($56,953.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,522.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,627.06",
+              "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,522.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,552.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
                   "sign": "+",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56953.61692265117
+                  "value": 56878.61692265117
                 },
                 {
                   "label": "Rehab Cushion",
@@ -1939,7 +1982,7 @@
                 }
               ],
               "unit": "money",
-              "value": 83627.06
+              "value": 83552.06
             }
           ],
           "total_hard_money_cost": [
@@ -2037,7 +2080,7 @@
               "description": "Cash to close (the purchase wire)",
               "item_key": "cash_to_close_buy",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-45439.01"
+              "signed_amount_dollars": "-45364.01"
             },
             {
               "date": "2026-01-10",
@@ -2249,17 +2292,44 @@
               "sequence_within_day": 1,
               "signed_amount_dollars": "-11150.89"
             }
+          ],
+          "deal_milestones": [
+            {
+              "date": "2026-01-03",
+              "description": "Contract signed",
+              "milestone_key": "contract_signed"
+            },
+            {
+              "date": "2026-01-10",
+              "description": "Purchase closing",
+              "milestone_key": "purchase_closed"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Rehab completed",
+              "milestone_key": "rehab_completed"
+            },
+            {
+              "date": "2026-04-10",
+              "description": "Tenant moves in",
+              "milestone_key": "tenant_moved_in"
+            },
+            {
+              "date": "2026-07-09",
+              "description": "Refi closing",
+              "milestone_key": "refi_closed"
+            }
           ]
         },
-        "cash_on_cash": 2.1046625135062222,
-        "cash_out": -55326.72891402273,
+        "cash_on_cash": 2.1075194320428094,
+        "cash_out": -55251.72891402273,
         "cash_out_routi": 12777.777777777777,
         "cash_out_routi_conservative": -10522.555555555555,
-        "cash_to_close_buy": 45439.01065449011,
+        "cash_to_close_buy": 45364.01065449011,
         "cash_to_refi_table_conservative": 10522.555555555555,
         "closingCostsBuy": "5.0000",
         "closingCostsRefi": "6.0000",
-        "closing_costs_buy_total": 4782.5,
+        "closing_costs_buy_total": 4707.5,
         "closing_costs_refi_total": 10700,
         "constructionLoanBudget": "55.0000",
         "contact": null,
@@ -2287,6 +2357,7 @@
         "insuranceRefiBillPaymentTiming": "inside_refi_closing",
         "insurance_bill_at_refi_effective": 1200,
         "interestRate": "6.500",
+        "lenders_title_policy_and_endorsements_buy": 325,
         "loanChargesBuy": "900.00",
         "loanChargesRefi": "200.00",
         "loanTermYears": 30,
@@ -2297,14 +2368,18 @@
         "maintenancePercent": "5.00",
         "maintenanceReserve": "1500.00",
         "messages": null,
+        "monthlyCapexReserveDollars": null,
         "monthlyInsuranceAfterRefi": null,
         "monthlyInsuranceUntilRefi": "0.00",
+        "monthlyMaintenanceReserveDollars": null,
+        "monthlyPropertyManagementFeeDollars": null,
         "monthlyPropertyTaxBucketDeposit": null,
         "monthlyUtilitiesUntilRented": "80.00",
+        "monthlyVacancyReserveDollars": null,
         "monthly_insurance_after_refi_effective": 100,
         "monthly_property_tax_after_refi": 288,
         "montly_hoa": "0.00",
-        "net_profit": 35824.16085512661,
+        "net_profit": 35899.16085512661,
         "niche": null,
         "notes": null,
         "onlineNotaryBuy": true,
@@ -2316,6 +2391,7 @@
         "otherClosingCostsRefi": "0.00",
         "otherClosingCostsRefiNote": null,
         "overall_design": null,
+        "owners_title_policy_premium_buy": 0,
         "pics_link": null,
         "pre_refi_rental_income": 7800,
         "prepaid_interest_buy": 1445.2777777777778,
@@ -2344,7 +2420,7 @@
         "rent_comps": null,
         "reserves_funded_from_own_pocket_at_lowest_arv": 11150.889769149338,
         "reserves_total": 11150.889769149338,
-        "roi": 66.85485027681507,
+        "roi": 67.0813429860339,
         "section": 1,
         "sellerPaidCurrentYearTaxes": null,
         "sellerTaxCreditAtPurchaseClosing": null,
@@ -2359,10 +2435,11 @@
         "titleEscrowBuy": null,
         "titleEscrowRefi": null,
         "titleModeBuy": "standard",
-        "title_escrow_buy_effective": 1000,
+        "title_escrow_buy_effective": 925,
         "title_escrow_refi_effective": 1880,
-        "total_cash_invested": 56953.61692265117,
-        "total_cash_needed_for_deal": 83627.06,
+        "title_office_and_search_fees_buy": 600,
+        "total_cash_invested": 56878.61692265117,
+        "total_cash_needed_for_deal": 83552.06,
         "total_hard_money_cost": 17025,
         "updated_at": "<redacted>",
         "use_HM_for_rehab": true,

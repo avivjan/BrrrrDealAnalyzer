@@ -52,10 +52,13 @@ class BrrrLifecycleInputs(BaseModel):
         "whole hard-money loan (purchase loan + construction budget) + the deed transfer tax (0.70% of the "
         "purchase price when we pay all closing costs, else $0)."))] = None
     title_mode_buy: Annotated[TitleModeBuy, Field(alias="titleModeBuy", description=(
-        "'standard' = buyer pays the lender's policy only ($1,000 default); 'we_pay_all' = buyer pays all "
-        "title charges ($2,050 under $150k, $2,200 to $200k, $2,400 above)."))] = "standard"
+        "'standard' = the seller pays the owner's title policy and the deed transfer tax; 'we_pay_all' = we pay "
+        "every title charge (the owner's policy too) and the 0.70% deed transfer tax."))] = "standard"
     title_escrow_buy: Annotated[Optional[Decimal], Field(alias="titleEscrowBuy", description=(
-        "Title, escrow and settlement charges at purchase, in dollars. None = formula by title mode."))] = None
+        "Title, escrow and settlement charges at purchase, in dollars. None = Florida estimate: $600 office fees "
+        "($350 settlement + $150 title search + $100 municipal lien search) + the owner's policy (we_pay_all only; "
+        "$5.75/$1k of the price to $100k, $5.00/$1k above) + the lender's policy ($250 + $5.00/$1k of the "
+        "hard-money loan above the price)."))] = None
     online_notary_buy: Annotated[bool, Field(alias="onlineNotaryBuy", description=(
         "Remote online notary at purchase: adds the notary fee to the buy closing costs."))] = True
     online_notary_fee_buy: Annotated[Optional[Decimal], Field(alias="onlineNotaryFeeBuy", description=(
@@ -140,6 +143,14 @@ class BrrrLifecycleInputs(BaseModel):
     property_tax_lump_sum_at_refi_closing: Annotated[Optional[Decimal], Field(alias="propertyTaxLumpSumAtRefiClosing", description=(
         "The tax lump the refi settlement collects, in dollars; used only with 'full_tax_bill_collected_at_refi'. "
         "None = this year's bill (annual_property_taxes)."))] = None
+    monthly_vacancy_reserve_dollars: Annotated[Optional[Decimal], Field(alias="monthlyVacancyReserveDollars", description=(
+        "Monthly vacancy reserve in a regular year after the refi, in dollars. None = vacancyPercent x rent."))] = None
+    monthly_maintenance_reserve_dollars: Annotated[Optional[Decimal], Field(alias="monthlyMaintenanceReserveDollars", description=(
+        "Monthly maintenance reserve in a regular year after the refi, in dollars. None = maintenancePercent x rent."))] = None
+    monthly_capex_reserve_dollars: Annotated[Optional[Decimal], Field(alias="monthlyCapexReserveDollars", description=(
+        "Monthly CapEx reserve in a regular year after the refi, in dollars. None = capexPercent x rent."))] = None
+    monthly_property_management_fee_dollars: Annotated[Optional[Decimal], Field(alias="monthlyPropertyManagementFeeDollars", description=(
+        "Monthly property management fee in a regular year after the refi, in dollars. None = property_managment_fee_precentages_from_rent x rent."))] = None
     maintenance_reserve: Annotated[Decimal, Field(alias="maintenanceReserve", description=(
         "Maintenance reserve the owner sets aside at the refi, in dollars. Stays in the deal (lowers cash out, not "
         "the wire) and counts as equity."))] = Decimal("1500")
