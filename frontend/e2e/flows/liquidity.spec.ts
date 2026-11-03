@@ -1,14 +1,13 @@
 import { expect, test } from '../fixtures';
 
 /**
- * The liquidity timeline.
+ * The liquidity timeline, which is the theater page (tasks/todo/LiquidityTheaterOnly.md).
  *
  * Four requests on load, a Mercury sync that this environment always refuses,
- * an empty state that leads into settings, and then the two ways money enters
- * the timeline (a one-off and a recurring series). The chart is a `<canvas>`,
- * so its keyboard contract — arrow keys walk days and open the day panel — is
- * the only way a keyboard user reaches the data at all, and it is asserted
- * here rather than assumed.
+ * settings from the action bar, and then the two ways money enters the timeline
+ * (a one-off and a recurring series). The chart's keyboard contract — the arrow
+ * keys walk days, Enter opens the day — is the only way a keyboard user reaches
+ * the data at all, and it is asserted here rather than assumed.
  */
 
 const MERCURY_OFFLINE_DETAIL =
@@ -69,75 +68,21 @@ type Settle = (ms: number) => Promise<void>;
 const TRANSITION_MS = 400;
 
 /**
- * Below this the overview sidebar is not a right rail but an inline section
- * behind `liquidity.sidebar-toggle` (UI v2). At the v1 baseline it was hidden
- * outright below `lg`, which is why two tests here used to skip on phones.
+ * An action of the theater's action bar: on a phone the secondary ones
+ * (Today, Mercury, Settings) sit behind the ⋯ menu.
  */
-const SIDEBAR_BREAKPOINT = 1024;
-
-function isNarrow(page: Page): boolean {
-  return (page.viewportSize()?.width ?? 0) < SIDEBAR_BREAKPOINT;
-}
-
-/** On a phone, expand the overview so the sidebar's figures are on screen. */
-async function openOverview(page: Page): Promise<void> {
-  if (!isNarrow(page)) return;
-  const toggle = page.getByTestId('liquidity.sidebar-toggle');
-  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
-}
-
-/**
- * True when the browser had to shrink the page to fit the device.
- *
- * The liquidity header lays its four controls out in a row that needs about
- * 494 CSS px. On a Pixel 7 (412 px) the page therefore renders zoomed out, and
- * a synthetic tap no longer lands where the layout says the control is —
- * neither `click()` nor `tap()` can drive that header. An iPhone 14 (390 px)
- * wraps instead and stays drivable, so this is checked per device rather than
- * assumed per project. The underlying overflow is a Phase 0 baseline
- * observation; see `docs/ui-overhaul/device-checklist.md`.
- */
-async function pageIsZoomedOut(page: Page): Promise<boolean> {
-  const layoutWidth = await page.evaluate(() => window.innerWidth);
-  return layoutWidth > (page.viewportSize()?.width ?? layoutWidth);
-}
-
-/**
- * Record — as an annotation, not an assertion — how much width the header row
- * is actually asking for on this device.
- *
- * The liquidity header lays five controls out in one unwrapped row that needs
- * about 494 CSS px, so an iPhone lets it run off the right edge and a Pixel
- * zooms the whole page out to cope. That is a *visual* defect, and pinning it
- * with an assertion would make the suite fail the day someone fixes it, which
- * is backwards. It belongs in `docs/ui-overhaul/device-checklist.md`; this puts
- * the measured number in the run report so the checklist has something to cite.
- */
-async function annotateHeaderWidth(page: Page): Promise<void> {
-  const needed = await page.evaluate(() => {
-    const ids = [
-      'liquidity.today',
-      'liquidity.mercury-sync',
-      'liquidity.settings-open',
-      'liquidity.add-flow',
-    ];
-    return Math.max(
-      ...ids.map((id) => {
-        const element = document.querySelector(`[data-testid="${id}"]`);
-        return element ? element.getBoundingClientRect().right : 0;
-      }),
-    );
-  });
-  test.info().annotations.push({
-    type: 'baseline-defect',
-    description:
-      `liquidity header needs ${Math.ceil(needed)} CSS px on a ` +
-      `${page.viewportSize()!.width} px device`,
-  });
+async function clickTheaterAction(page: Page, action: 'settings' | 'mercury-sync' | 'today'): Promise<void> {
+  const button = page.getByTestId(`theater.${action}`);
+  if (await button.isVisible()) {
+    await button.click();
+    return;
+  }
+  await page.getByTestId('theater.more').click();
+  await page.getByTestId(`theater.more.${action}`).click();
 }
 
 async function openSettingsAndSave(page: Page, settle: Settle): Promise<void> {
-  await page.getByTestId('liquidity.empty.settings').click();
+  await clickTheaterAction(page, 'settings');
   await expect(page.getByTestId('settings.root')).toBeVisible();
   await page.getByTestId('settings.balance').fill('50000');
   await page.getByTestId('settings.date').fill('2026-09-04');
@@ -147,20 +92,29 @@ async function openSettingsAndSave(page: Page, settle: Settle): Promise<void> {
   await expect(page.getByTestId('settings.root')).toHaveCount(0);
 }
 
-test('the timeline loads, fails its Mercury sync, and offers the empty state', async ({
+async function openLegend(page: Page, settle: Settle) {
+  const legendToggle = page.getByTestId('theater.legend-toggle');
+  await expect(legendToggle).toBeVisible();
+  if ((await legendToggle.getAttribute('aria-expanded')) !== 'true') await legendToggle.click();
+  await settle(TRANSITION_MS);
+  const legend = page.getByTestId('theater.legend');
+  await expect(legend).toBeVisible();
+  return legend;
+}
+
+test('the timeline loads straight into the theater and fails its Mercury sync', async ({
   page,
   api,
 }) => {
   await page.goto('/liquidity');
 
-  await expect(page.getByTestId('liquidity.empty')).toBeVisible();
+  await expect(page.getByTestId('theater.root')).toBeVisible();
+  await expect(page.getByTestId('chart.container')).toBeVisible();
   await expect(page.getByTestId('liquidity.toast')).toHaveText(
     `Mercury sync failed: ${MERCURY_OFFLINE_DETAIL}`,
   );
 
   await api.expectContract('liquidity-load');
-
-  if (isNarrow(page)) await annotateHeaderWidth(page);
 });
 
 test('settings, a one-off flow and a recurring series all persist', async ({
@@ -169,11 +123,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
   settle,
 }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.empty')).toBeVisible();
-  test.skip(
-    await pageIsZoomedOut(page),
-    'the header overflows this device, so the page is zoomed out and its controls cannot be driven',
-  );
+  await expect(page.getByTestId('theater.root')).toBeVisible();
 
   api.reset();
 
@@ -183,7 +133,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
 
   // A one-off inflow. Inflows skip the simulation warning by design — only an
   // outflow can sink the timeline.
-  await page.getByTestId('liquidity.add-flow').click();
+  await page.getByTestId('theater.add-flow').click();
   await expect(page.getByTestId('txnform.root')).toBeVisible();
   await page.getByTestId('txnform.inflow').click();
   await page.getByTestId('txnform.amount').fill('12500');
@@ -195,7 +145,7 @@ test('settings, a one-off flow and a recurring series all persist', async ({
   await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
   // A recurring series.
-  await page.getByTestId('liquidity.add-flow').click();
+  await page.getByTestId('theater.add-flow').click();
   await expect(page.getByTestId('txnform.root')).toBeVisible();
   await page.getByTestId('txnform.mode-recurring').click();
   await page.getByTestId('txnform.inflow').click();
@@ -220,11 +170,11 @@ test('deleting a recurring series names it in the confirm', async ({
   settle,
 }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.empty')).toBeVisible();
+  await expect(page.getByTestId('theater.root')).toBeVisible();
   await openSettingsAndSave(page, settle);
   await expect(page.getByTestId('chart.container')).toBeVisible();
 
-  await page.getByTestId('liquidity.add-flow').click();
+  await page.getByTestId('theater.add-flow').click();
   await page.getByTestId('txnform.mode-recurring').click();
   await page.getByTestId('txnform.inflow').click();
   await page.getByTestId('txnform.amount').fill('2600');
@@ -237,15 +187,15 @@ test('deleting a recurring series names it in the confirm', async ({
   );
   await expect(page.getByTestId('txnform.root')).toHaveCount(0);
 
-  await openOverview(page);
-  const rule = page.locator('[data-testid^="sidebar.recurring."]').first();
+  const legend = await openLegend(page, settle);
+  const rule = legend.locator('[data-testid^="theater.legend.recurring."]').first();
   await expect(rule).toBeVisible();
 
   api.reset();
   dialogs.reset();
 
-  await page
-    .locator('[data-testid^="sidebar.recurring."][data-testid$=".delete"]')
+  await legend
+    .locator('[data-testid^="theater.legend.recurring."][data-testid$=".delete"]')
     .first()
     .click();
 
@@ -260,18 +210,23 @@ test('deleting a recurring series names it in the confirm', async ({
   await api.expectContract('liquidity-delete-recurring');
 });
 
-test('the chart walks days with the arrow keys', async ({ page, settle }) => {
+test('the chart walks days with the arrow keys, and Enter opens the day', async ({ page, settle }) => {
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity.empty')).toBeVisible();
+  await expect(page.getByTestId('theater.root')).toBeVisible();
   await openSettingsAndSave(page, settle);
 
   const chart = page.getByTestId('chart.container');
   await expect(chart).toBeVisible();
-  await expect(page.getByTestId('daydetail.root')).toHaveCount(0);
+  await expect(page.getByTestId('theater.day-modal')).toHaveCount(0);
 
   await chart.focus();
   await chart.press('ArrowRight');
+  // The arrow keys preview the day; they do not open it.
+  await expect(page.getByTestId('chart.tooltip')).toBeVisible();
+  await expect(page.getByTestId('theater.day-modal')).toHaveCount(0);
 
+  await chart.press('Enter');
+  await expect(page.getByTestId('theater.day-modal')).toBeVisible();
   await expect(page.getByTestId('daydetail.root')).toBeVisible();
 });
 
@@ -290,12 +245,10 @@ test('a successful Mercury sync renders the per-workspace breakdown', async ({
 
   await expect(page.getByTestId('chart.container')).toBeVisible();
 
-  await openOverview(page);
-  await expect(page.getByTestId('sidebar.workspace.BigWhales')).toBeVisible();
-  await expect(page.getByTestId('sidebar.account.acct-checking')).toContainText(
-    'Operating',
-  );
-  await expect(page.getByTestId('sidebar.account.acct-reserve')).toContainText(
-    '$12,300',
-  );
+  await page.getByTestId('theater.figure.balance').click();
+  const popover = page.getByTestId('theater.balance-popover');
+  await expect(popover.getByTestId('theater.balance-popover.workspace.BigWhales')).toBeVisible();
+  await expect(popover.getByTestId('theater.balance-popover.account.acct-checking')).toContainText('Operating');
+  await expect(popover.getByTestId('theater.balance-popover.account.acct-reserve')).toContainText('$12,300');
+  await expect(popover.getByTestId('theater.balance-popover.sync')).toContainText('2 accounts across 1 workspace');
 });

@@ -267,7 +267,8 @@ const SHORTCUTS = [
         class="fixed inset-0 z-40 flex flex-col overflow-hidden bg-page text-fg"
       >
         <!-- Top bar: title, the figures as chips, the floating actions -->
-        <header class="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4 md:flex-nowrap">
+        <!-- A div, not a <header>: the app topbar underneath is the page banner. -->
+        <div data-testid="theater.top-bar" class="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4 md:flex-nowrap">
           <div class="flex shrink-0 items-center gap-2">
             <span class="flex h-8 w-8 items-center justify-center rounded-ctl bg-primary/10 text-primary" aria-hidden="true"><i class="pi pi-chart-line text-sm"></i></span>
             <h1 id="theater-heading" class="font-display text-lg font-semibold tracking-display text-fg md:sr-only xl:not-sr-only">Liquidity Timeline</h1>
@@ -411,12 +412,12 @@ const SHORTCUTS = [
               </div>
               <p v-if="!store.mercuryBalance" class="text-xs text-fg-muted">No Mercury balance yet: the timeline starts from the opening balance in Settings.</p>
               <div v-else class="space-y-2">
-                <div v-for="workspace in store.mercuryBalance.workspaces" :key="workspace.workspace" class="space-y-0.5">
+                <div v-for="workspace in store.mercuryBalance.workspaces" :key="workspace.workspace" :data-testid="`theater.balance-popover.workspace.${workspace.workspace}`" class="space-y-0.5">
                   <div class="flex items-center justify-between gap-2 text-[11px]">
                     <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ workspace.workspace }}</span>
                     <span class="numeric whitespace-nowrap text-fg">{{ formatMoney(workspace.total_balance_dollars) }}</span>
                   </div>
-                  <div v-for="account in workspace.accounts" :key="account.id" class="flex items-center justify-between gap-2 pl-2 text-[11px] text-fg-muted">
+                  <div v-for="account in workspace.accounts" :key="account.id" :data-testid="`theater.balance-popover.account.${account.id}`" class="flex items-center justify-between gap-2 pl-2 text-[11px] text-fg-muted">
                     <span class="min-w-0 truncate">{{ account.name || account.type || 'Account' }}<template v-if="!account.is_counted_as_cash"> · not counted</template></span>
                     <span class="numeric whitespace-nowrap">{{ formatMoney(account.current_balance_dollars) }}</span>
                   </div>
@@ -452,10 +453,10 @@ const SHORTCUTS = [
           </Transition>
           <Transition name="theater-pop">
             <div v-if="moreActionsMenuOpen" data-testid="theater.more-menu" class="absolute top-full z-30 mt-2 rounded-card border-ui border-line bg-surface p-4 shadow-3 right-3 w-56 p-1">
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
-              <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
-              <button v-if="openCommandPalette" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; openCommandPalette()"><i class="pi pi-search" aria-hidden="true"></i> Search</button>
+              <button data-testid="theater.more.today" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
+              <button data-testid="theater.more.mercury-sync" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
+              <button data-testid="theater.more.settings" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
+              <button data-testid="theater.more.search" v-if="openCommandPalette" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; openCommandPalette()"><i class="pi pi-search" aria-hidden="true"></i> Search</button>
               <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="toggleTheme()"><i :class="resolvedTheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true"></i> {{ resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode' }}</button>
               <button v-if="browserFullscreenIsSupported" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; toggleBrowserFullscreen()"><i class="pi pi-window-maximize" aria-hidden="true"></i> {{ isBrowserFullscreen ? 'Exit browser fullscreen' : 'Browser fullscreen' }}</button>
             </div>
@@ -471,7 +472,7 @@ const SHORTCUTS = [
               </dl>
             </div>
           </Transition>
-        </header>
+        </div>
 
         <!-- The stage: the chart edge to edge, the legend and the sheet over it -->
         <div class="relative min-h-0 flex-1" @pointerdown="closePopovers">

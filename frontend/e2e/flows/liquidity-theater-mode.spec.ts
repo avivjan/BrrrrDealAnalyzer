@@ -4,10 +4,11 @@ import { expect, test } from '../fixtures';
 import { API_ORIGIN } from '../fixtures/env';
 
 /**
- * The liquidity timeline in theater mode (tasks/todo/LiquidityTheaterMode.md): the chart over the whole viewport,
- * Esc and × to leave, `?view=theater` to come back; the legend with a deal's overdue rows and "Remove from
- * timeline"; the deals sheet with a one-tap milestone Done; the hover preview and the day modal. The browser clock
- * is frozen on 2026-09-04 (fixtures/clock.ts).
+ * The liquidity page, which is the theater (tasks/todo/LiquidityTheaterMode.md, tasks/todo/LiquidityTheaterOnly.md):
+ * the chart over the whole viewport; Esc and × leave to the previous page, or the Dashboard for a direct link; the
+ * legend with a deal's overdue rows, its open rows by month and "Remove from timeline"; the deals sheet with a
+ * one-tap Done and "Done on another date"; the hover preview and the day modal. The browser clock is frozen on
+ * 2026-09-04 (fixtures/clock.ts).
  */
 
 const SEED_HEADERS = { 'x-e2e-seed': '1' };
@@ -55,15 +56,17 @@ async function openLegend(page: Page, settle: (ms: number) => Promise<void>) {
   return legend;
 }
 
-test('theater mode covers the viewport; Esc and × leave it, and ?view=theater brings it back', async ({ page, request, settle }) => {
+test('/liquidity is the theater over the whole viewport; Esc and × leave to the previous page or the Dashboard', async ({ page, request, settle }) => {
   await seedSettings(request);
   await seedTransaction(request, '2026-09-10', -1200, 'Plumber');
 
-  await page.goto('/liquidity');
-  await page.getByTestId('liquidity.theater-open').click();
+  // In-app navigation: Esc goes back to where you came from.
+  await page.goto('/my-deals');
+  await expect(page.getByTestId('mydeals.add-deal')).toBeVisible();
+  await page.locator('a[href="/liquidity"]:visible').first().click();
   const theater = page.getByTestId('theater.root');
   await expect(theater).toBeVisible();
-  await expect(page).toHaveURL(/[?&]view=theater/);
+  await expect(page).toHaveURL(/\/liquidity$/);
 
   // The chart spans the viewport's width: no app sidebar, no Upcoming rail beside it.
   const viewportWidth = page.viewportSize()!.width;
@@ -73,15 +76,16 @@ test('theater mode covers the viewport; Esc and × leave it, and ?view=theater b
 
   await page.keyboard.press('Escape');
   await settle(TRANSITION_MS);
+  await expect(page).toHaveURL(/\/my-deals$/);
   await expect(theater).toHaveCount(0);
-  await expect(page).not.toHaveURL(/view=theater/);
 
+  // A direct link (an old ?view=theater one still works) has no in-app page to go back to: × goes to the Dashboard.
   await page.goto('/liquidity?view=theater');
   await expect(theater).toBeVisible();
   await theater.getByTestId('theater.close').click();
   await settle(TRANSITION_MS);
+  await expect(page).toHaveURL(/\/$/);
   await expect(theater).toHaveCount(0);
-  await expect(page).toHaveURL(/\/liquidity$/);
 });
 
 test('the legend lists a deal with its overdue rows; Done clears one, and the deal can leave the timeline', async ({ page, seed, request, dialogs, settle }) => {
@@ -89,7 +93,7 @@ test('the legend lists a deal with its overdue rows; Done clears one, and the de
   const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
   await importDeal(request, deal.id);
 
-  await page.goto('/liquidity?view=theater');
+  await page.goto('/liquidity');
   const legend = await openLegend(page, settle);
   const dealEntry = legend.getByTestId('theater.legend.deal');
   await expect(dealEntry).toContainText('12 Theater Way');
@@ -119,7 +123,7 @@ test('the deals sheet approves a milestone in one tap when nothing else changes'
   const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
   await importDeal(request, deal.id);
 
-  await page.goto('/liquidity?view=theater');
+  await page.goto('/liquidity');
   await page.getByTestId('theater.sheet.toggle').click();
   const sheet = page.getByTestId('theater.sheet');
   await expect(sheet.getByTestId('theater.sheet.deal')).toContainText('12 Theater Way');
@@ -138,12 +142,52 @@ test('the deals sheet approves a milestone in one tap when nothing else changes'
   await expect(contractSigned.getByTestId('theater.sheet.milestone.done')).toHaveCount(0);
 });
 
+test('a milestone can be marked done on another date, from the deals sheet', async ({ page, seed, request, settle }) => {
+  await seedSettings(request);
+  const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
+  await importDeal(request, deal.id);
+
+  await page.goto('/liquidity');
+  await page.getByTestId('theater.sheet.toggle').click();
+  await settle(TRANSITION_MS);
+  const contractSigned = page.locator('[data-testid="theater.sheet.milestone"][data-milestone="contract_signed"]');
+  await contractSigned.getByTestId('theater.sheet.milestone.done-on-date').click();
+  const modal = page.getByTestId('deal-milestone-change');
+  await expect(modal).toContainText('Approve: Contract signed');
+  await modal.getByTestId('deal-milestone-change.date').fill('2026-08-21');
+  await expect(modal.getByTestId('deal-milestone-change.confirm')).toBeEnabled();
+  await modal.getByTestId('deal-milestone-change.confirm').click();
+  await settle(TRANSITION_MS);
+  await expect(modal).toHaveCount(0);
+  await expect(contractSigned).toHaveAttribute('data-done', 'true');
+  await expect(contractSigned).toContainText('Aug 21, 2026');
+});
+
+test("the legend lists a deal's open rows by month, and a row opens its day", async ({ page, seed, request, settle }) => {
+  await seedSettings(request);
+  const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
+  await importDeal(request, deal.id);
+
+  await page.goto('/liquidity');
+  const legend = await openLegend(page, settle);
+  await legend.getByTestId('theater.legend.deal.toggle').click();
+  await legend.getByTestId('theater.legend.deal.open-rows-section').click();
+  const firstMonth = legend.getByTestId('theater.legend.open-rows-month').first();
+  await expect(firstMonth).toHaveAttribute('data-month', '2026-08');
+  const firstRow = firstMonth.locator('[data-testid^="theater.legend.open-row."]').first();
+  await expect(firstRow).toContainText('Aug 20');
+  await firstRow.click();
+  const dayModal = page.getByTestId('theater.day-modal');
+  await expect(dayModal).toBeVisible();
+  await expect(dayModal).toContainText('August 20, 2026');
+});
+
 test('hovering a day previews it; a click opens the day in full, with every action', async ({ page, request, settle }, testInfo) => {
   test.skip(testInfo.project.name.startsWith('Mobile'), 'hover is a desktop pointer gesture');
   await seedSettings(request);
   const plumberId = await seedTransaction(request, TODAY, -1200, 'Plumber');
 
-  await page.goto('/liquidity?view=theater');
+  await page.goto('/liquidity');
   const theater = page.getByTestId('theater.root');
   const chart = theater.getByTestId('chart.container');
   await expect(chart).toBeVisible();
@@ -181,7 +225,7 @@ test('theater mode has no serious accessibility violations', async ({ page, seed
   const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
   await importDeal(request, deal.id);
 
-  await page.goto('/liquidity?view=theater');
+  await page.goto('/liquidity');
   await openLegend(page, settle);
   await page.getByTestId('theater.sheet.toggle').click();
   // axe schedules its work on timers: let the frozen clock run.

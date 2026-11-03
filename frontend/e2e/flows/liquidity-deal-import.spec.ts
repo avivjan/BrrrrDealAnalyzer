@@ -14,6 +14,13 @@ const TRANSITION_MS = 400;
 const DEAL_DATES_AFTER_TODAY = { contractDate: '2026-08-28', buyClosingDate: '2026-09-10', address: '7 Preview Lane', section: 1 };
 
 type Request = import('@playwright/test').APIRequestContext;
+type Page = import('@playwright/test').Page;
+
+/** The overdue rows live in the overdue chip's popover on the theater page. */
+async function openOverdueRows(page: Page): Promise<void> {
+  await page.getByTestId('theater.figure.overdue').click();
+  await expect(page.getByTestId('theater.overdue-popover')).toBeVisible();
+}
 
 async function seedSettings(request: Request): Promise<void> {
   const response = await request.put(`${API_ORIGIN}/liquidity/settings`, {
@@ -57,7 +64,11 @@ test('a deal is imported only after its preview, from the My Deals modal', async
   await api.expectContract('liquidity-deal-import');
 
   await page.goto('/liquidity');
-  await expect(page.getByTestId('liquidity-deal')).toContainText('7 Preview Lane');
+  const legendToggle = page.getByTestId('theater.legend-toggle');
+  await expect(legendToggle).toBeVisible();
+  if ((await legendToggle.getAttribute('aria-expanded')) !== 'true') await legendToggle.click();
+  await settle(TRANSITION_MS);
+  await expect(page.getByTestId('theater.legend.deal')).toContainText('7 Preview Lane');
 });
 
 test('an overdue payment counts on today until it is marked done, and Done can be undone', async ({ page, request }) => {
@@ -65,8 +76,9 @@ test('an overdue payment counts on today until it is marked done, and Done can b
   const overdueId = await seedTransaction(request, '2026-09-01', -1970.83, 'HML interest for August 2026');
 
   await page.goto('/liquidity');
+  await expect(page.getByTestId('theater.figure.overdue')).toContainText('1 overdue');
+  await openOverdueRows(page);
   await expect(page.getByTestId('overdue.count')).toContainText('1 overdue');
-  await page.getByTestId('overdue.toggle').click();
   await page.getByTestId(`rowactions.${overdueId}.done`).click();
   await expect(page.getByTestId('liquidity.toast')).toContainText('Marked done.');
   await expect(page.getByTestId('overdue.root')).toHaveCount(0);
@@ -81,7 +93,7 @@ test('a postpone chip, an amount edit and a new date for overdue money in', asyn
   const rentId = await seedTransaction(request, '2026-09-01', 2600, 'Rent collected');
 
   await page.goto('/liquidity');
-  await page.getByTestId('overdue.toggle').click();
+  await openOverdueRows(page);
   await expect(page.getByTestId(`overdue.row.${rentId}`)).toContainText('not counted until you give it a new date');
 
   await page.getByTestId(`amount.${paymentId}`).click();
@@ -101,8 +113,9 @@ test('a bulk postpone moves every selected overdue row', async ({ page, request 
   const secondId = await seedTransaction(request, '2026-09-01', -450, 'HOA dues');
 
   await page.goto('/liquidity');
+  await expect(page.getByTestId('theater.figure.overdue')).toContainText('2 overdue');
+  await openOverdueRows(page);
   await expect(page.getByTestId('overdue.count')).toContainText('2 overdue');
-  await page.getByTestId('overdue.toggle').click();
   await page.getByTestId(`overdue.row.${firstId}.select`).check();
   await page.getByTestId(`overdue.row.${secondId}.select`).check();
   await page.getByTestId('overdue.bulk.postpone.week').click();
@@ -119,11 +132,13 @@ test('moving the purchase closing lists the affected rows first, then writes the
   expect(imported.ok()).toBe(true);
 
   await page.goto('/liquidity');
-  const purchaseClosed = page.locator('[data-testid="liquidity-deal.milestone"][data-milestone="purchase_closed"]');
+  await page.getByTestId('theater.sheet.toggle').click();
+  await settle(TRANSITION_MS);
+  const purchaseClosed = page.locator('[data-testid="theater.sheet.milestone"][data-milestone="purchase_closed"]');
   await expect(purchaseClosed).toContainText('Sep 10, 2026');
 
   api.reset();
-  await purchaseClosed.getByTestId('liquidity-deal.milestone.move').click();
+  await purchaseClosed.getByTestId('theater.sheet.milestone.move').click();
   const modal = page.getByTestId('deal-milestone-change');
   await expect(modal).toBeVisible();
   await modal.getByTestId('deal-milestone-change.date').fill('2026-09-14');

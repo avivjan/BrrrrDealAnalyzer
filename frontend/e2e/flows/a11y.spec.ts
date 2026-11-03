@@ -15,7 +15,7 @@ const ROUTES: [name: string, path: string, ready: string][] = [
   ['analyze', '/analyze', 'form.root'],
   ['my-deals', '/my-deals', 'mydeals.add-deal'],
   ['bought-deals', '/bought-deals', 'boughtdeals.edit-pipeline'],
-  ['liquidity', '/liquidity', 'liquidity.add-flow'],
+  ['liquidity', '/liquidity', 'theater.add-flow'],
   ['reps', '/reps', 'reps.manual-entry'],
 ];
 
