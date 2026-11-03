@@ -5,13 +5,15 @@ never a closing lump: those belong to the purchase-to-refi outputs."""
 
 from decimal import Decimal
 
-from BL.analyze.common.deal_math import OperatingExpenses
+from BL.analyze.common.deal_math import OperatingExpenses, effective
 
 
 def operating_expenses_step(payload, monthly_property_tax_after_refi, monthly_insurance_after_refi) -> OperatingExpenses:
-    vacancy = payload.rent * (payload.vacancy_percent / Decimal("100.0"))
-    management = payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0"))
-    maintenance = payload.rent * (payload.maintenance_percent / Decimal("100.0"))
-    capex = payload.rent * (payload.capex_percent_of_rent / Decimal("100.0"))
+    # Each reserve is a percentage of the rent unless a monthly dollar amount is typed, which wins.
+    vacancy = effective(payload.monthly_vacancy_reserve_dollars, payload.rent * (payload.vacancy_percent / Decimal("100.0")))
+    management = effective(payload.monthly_property_management_fee_dollars,
+                           payload.rent * (payload.property_managment_fee_precentages_from_rent / Decimal("100.0")))
+    maintenance = effective(payload.monthly_maintenance_reserve_dollars, payload.rent * (payload.maintenance_percent / Decimal("100.0")))
+    capex = effective(payload.monthly_capex_reserve_dollars, payload.rent * (payload.capex_percent_of_rent / Decimal("100.0")))
     total = vacancy + management + maintenance + capex + monthly_property_tax_after_refi + monthly_insurance_after_refi + payload.montly_hoa
     return OperatingExpenses(total, vacancy, management, maintenance, capex, monthly_property_tax_after_refi, monthly_insurance_after_refi)

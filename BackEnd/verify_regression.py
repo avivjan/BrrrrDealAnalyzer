@@ -1060,10 +1060,11 @@ def capture_calculations(client: TestClient) -> dict[str, Any]:
     ]:
         rec("helpers", f"calc_seller_tax_credit({taxes},{closing.isoformat()},{paid})",
             lambda taxes=taxes, closing=closing, paid=paid: calc_seller_tax_credit(D(taxes), closing, paid))
-    for mode, price in [("standard", "140000"), ("we_pay_all", "149999"), ("we_pay_all", "150000"),
-                        ("we_pay_all", "200000"), ("we_pay_all", "200001")]:
-        rec("helpers", f"title_escrow_buy_default({mode},{price})",
-            lambda mode=mode, price=price: title_escrow_buy_default(mode, D(price)))
+    for mode, price, hml_amount in [("standard", "100000", "123000"), ("we_pay_all", "100000", "123000"),
+                                    ("we_pay_all", "80000", "72000"), ("we_pay_all", "250000", "250000"),
+                                    ("standard", "140000", "126000")]:
+        rec("helpers", f"title_escrow_buy_default({mode},{price},{hml_amount})",
+            lambda mode=mode, price=price, hml_amount=hml_amount: title_escrow_buy_default(mode, D(price), D(hml_amount)))
     for loan in ["126000", "150000", "0"]:
         rec("helpers", f"recording_transfer_default({loan})", lambda loan=loan: recording_transfer_default(D(loan)))
         rec("helpers", f"title_escrow_refi_default({loan})", lambda loan=loan: title_escrow_refi_default(D(loan)))

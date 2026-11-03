@@ -109,6 +109,17 @@ class analyzeBRRRRes(BaseModel):
     deed_transfer_tax_buy: Optional[float] = Field(None, description=(
         "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the "
         "seller's debit), 0.70% of the purchase price when we pay all closing costs."))
+    title_office_and_search_fees_buy: Optional[float] = Field(None, description=(
+        "Florida title estimate (buy), office fees in dollars: $350 settlement + $150 title search + $100 "
+        "municipal lien search = $600."))
+    owners_title_policy_premium_buy: Optional[float] = Field(None, description=(
+        "Florida title estimate (buy), owner's policy in dollars at the statutory promulgated rate (F.A.C. "
+        "69O-186.003): $5.75 per $1,000 of the price up to $100,000, $5.00 per $1,000 above. Only when we pay all "
+        "closing costs; $0 on a standard deal (the seller pays it)."))
+    lenders_title_policy_and_endorsements_buy: Optional[float] = Field(None, description=(
+        "Florida title estimate (buy), lender's policy in dollars: $250 (ALTA 8.1, Florida Form 9, simultaneous "
+        "issue) + $5.00 per $1,000 of the hard-money loan above the price. The three estimate lines sum to the "
+        "title/escrow default; a typed titleEscrowBuy overrides the total."))
     stolen_money: Optional[float] = Field(None, description=(
         "Lender draw spread, in dollars: construction loan budget minus actual rehab (with contingency). "
         "Positive = capital pulled out through draws before the refi; negative = extra out-of-pocket rehab."))
@@ -159,7 +170,8 @@ class analyzeBRRRRes(BaseModel):
     recording_transfer_buy_effective: Optional[float] = Field(None, description=(
         "Recording/transfer charges (buy) actually used, in dollars: the input, or its formula default when null."))
     title_escrow_buy_effective: Optional[float] = Field(None, description=(
-        "Title/escrow charges (buy) actually used, in dollars: the input, or its formula default when null."))
+        "Title/escrow charges (buy) actually used, in dollars: the input, or the Florida estimate when null "
+        "(office fees + owner's policy + lender's policy)."))
     recording_transfer_refi_effective: Optional[float] = Field(None, description=(
         "Recording/transfer charges (refi) actually used, in dollars: the input, or its formula default when null."))
     title_escrow_refi_effective: Optional[float] = Field(None, description=(

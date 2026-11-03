@@ -86,9 +86,9 @@ Every BRRRR deal on the title default: Standard $1,000 → $850 + excess-loan su
 
 ## Todo (≈ 8 h 25)
 - [ ] T1 (10 min) Copy the plan to `tasks/todo/SettlementStatementFloridaTitle.md`; commit.
-- [ ] T2 (60 min) Backend title: constants, functions and itemized NamedTuple; step, record, response and descriptions; explain child steps, `add_sum` and notes.
-- [ ] T3 (45 min) Backend $ reserves (all four): inputs, DAL columns, migration rows, `operating_expenses_step`, explain labels, validation, report input section.
-- [ ] T4 (50 min) Backend tests.
+- [x] T2 (60 min) Backend title: constants, functions and itemized NamedTuple; step, record, response and descriptions; explain child steps, `add_sum` and notes.
+- [x] T3 (45 min) Backend $ reserves (all four): inputs, DAL columns, migration rows, `operating_expenses_step`, explain labels, validation, report input section.
+- [x] T4 (50 min) Backend tests.
   - **Unit** (`test_brrr_lifecycle.py`):
     - `test_florida_title_we_pay_all_100k_price_123k_loan_is_exactly_1540`
     - `test_florida_title_standard_100k_price_123k_loan_is_965_without_owners_policy`

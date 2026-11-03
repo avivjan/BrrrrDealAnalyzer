@@ -459,6 +459,10 @@ def _step_by_label(breakdowns: dict, section_key: str, step_label: str) -> dict:
     return next(step for step in breakdowns[section_key] if step["label"] == step_label)
 
 
+def _step_by_label_anywhere(breakdowns: dict, step_label: str) -> dict:
+    return next(step for steps in breakdowns.values() for step in steps if step["label"] == step_label)
+
+
 class TestHmlInterestPaidMonthlyIsExplained:
     """The Total Cash Invested operand opens onto its own step: the per diem × the real days of each month paid on a 1st."""
 
@@ -491,8 +495,9 @@ class TestDeedTransferAndTitleExplainWhoPaysAndHow:
         deed = _step_by_label(breakdowns, "cash_to_close_buy", "Deed Transfer Tax (Buy)")
         assert "the seller pays the deed transfer tax" in deed["formula"] and deed["value"] == 0
         assert "0.70% × $200,000 = $1,400" in deed["note"]
-        title = _step_by_label(breakdowns, "cash_to_close_buy", "Title & Escrow (Buy)")
-        assert title["formula"].startswith("Standard deal → flat $1,000")
+        owners_title_policy = _step_by_label(breakdowns, "cash_to_close_buy", "Owner's Title Policy (Buy)")
+        assert owners_title_policy["formula"] == "Standard deal → the seller pays the owner's title policy, so it costs us $0"
+        assert owners_title_policy["value"] == 0
 
     def test_we_pay_all_takes_over_the_sellers_tax(self, brrrr_payload):
         req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all"})
@@ -500,15 +505,65 @@ class TestDeedTransferAndTitleExplainWhoPaysAndHow:
         assert deed["formula"] == "We pay all closing costs → we also pay the seller's deed transfer tax: 0.70% × Purchase ($200,000) = $1,400"
         assert "added into Recording & Transfer (Buy)" in deed["note"]
 
-    @pytest.mark.parametrize("purchase_price_in_thousands, bracket_text, title_fee_text", [
-        (140, "Purchase $140,000 is under $150,000 → $2,050", "$2,050"),
-        (150, "Purchase $150,000 is between $150,000 and $200,000 → $2,200", "$2,200"),
-        (200, "Purchase $200,000 is between $150,000 and $200,000 → $2,200", "$2,200"),
-        (210, "Purchase $210,000 is above $200,000 → $2,400", "$2,400"),
-    ])
-    def test_we_pay_all_title_shows_the_tier_table_and_the_bracket(self, brrrr_payload, purchase_price_in_thousands, bracket_text, title_fee_text):
-        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all", "purchasePrice": purchase_price_in_thousands})
+    def test_florida_title_estimate_is_itemized_and_explained(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all", "purchasePrice": 100,
+                                                             "down_payment": 0, "constructionLoanBudget": 23})
+        breakdowns = explain_brrr(req, results_w_intermediates)
+        office_fees = _step_by_label(breakdowns, "cash_to_close_buy", "Title Office & Search Fees (Buy)")
+        assert office_fees["formula"] == "$350.00 settlement / closing fee + $150.00 title search + $100.00 municipal lien search = $600"
+        owners_title_policy = _step_by_label(breakdowns, "cash_to_close_buy", "Owner's Title Policy (Buy)")
+        assert owners_title_policy["formula"] == "We pay all closing costs → Purchase ($100,000) ÷ $1,000 × $5.75 = $575"
+        assert "F.A.C. 69O-186.003" in owners_title_policy["note"] and "$5.75 per $1,000" in owners_title_policy["note"]
+        lenders_title_policy = _step_by_label(breakdowns, "cash_to_close_buy", "Lender's Title Policy & Endorsements (Buy)")
+        assert lenders_title_policy["formula"] == ("$250.00 (endorsements + simultaneous issue) + (Hard Money Loan $123,000 − Purchase "
+                                                   "$100,000) ÷ $1,000 × $5.00 = $365")
+        assert "ALTA 8.1" in lenders_title_policy["note"]
+        title = _step_by_label(breakdowns, "cash_to_close_buy", "Title & Escrow (Buy)")
+        assert title["formula"] == ("Office & Search Fees ($600) + Owner's Title Policy ($575) + "
+                                    "Lender's Title Policy & Endorsements ($365) = $1,540")
+        assert [term["step_label"] for term in title["terms"]] == [
+            "Title Office & Search Fees (Buy)", "Owner's Title Policy (Buy)", "Lender's Title Policy & Endorsements (Buy)"]
+        assert "$350 settlement" in title["note"] and "promulgated rate" in title["note"]
+
+    def test_owners_policy_above_100k_shows_both_tiers(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleModeBuy": "we_pay_all", "purchasePrice": 250})
+        owners_title_policy = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_to_close_buy", "Owner's Title Policy (Buy)")
+        assert owners_title_policy["formula"] == ("We pay all closing costs → $575.00 on the first $100,000 + "
+                                                  "(Purchase $250,000 − $100,000) ÷ $1,000 × $5.00 = $1,325")
+
+    def test_typed_title_says_it_overrides_the_estimate(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"titleEscrowBuy": 999})
         title = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_to_close_buy", "Title & Escrow (Buy)")
-        assert "under $150,000 → $2,050 · $150,000 to $200,000 → $2,200 · above $200,000 → $2,400" in title["formula"]
-        assert title["formula"].endswith(bracket_text)
-        assert float(results_w_intermediates.title_escrow_buy) == float(title_fee_text.strip("$").replace(",", ""))
+        assert title["formula"] == "As entered: $999"
+        assert "overrides the estimate" in title["note"]
+
+
+class TestClosingCostEstimatesAreExplained:
+    @pytest.mark.parametrize("label, note_fragment", [
+        ("Recording & Transfer (Buy)", "0.35% documentary stamps on the note + 0.20% intangible tax"),
+        ("Recording & Transfer (Refi)", "0.35% documentary stamps on the note + 0.20% intangible tax"),
+        ("Title & Escrow (Refi)", "a flat $800 + 0.45% of the refi loan"),
+        ("Recording & Transfer (Refi) (Lowest ARV)", "+ $250 to record the mortgage"),
+        ("Title & Escrow (Refi) (Lowest ARV)", "a flat $800 + 0.45% of the refi loan"),
+    ])
+    def test_each_estimate_note_names_its_formula_parts(self, brrrr_payload, label, note_fragment):
+        req, results_w_intermediates = _brrr(brrrr_payload, {})
+        step = _step_by_label_anywhere(explain_brrr(req, results_w_intermediates), label)
+        assert note_fragment in step["note"] and "Estimated by formula" in step["note"]
+
+    def test_a_typed_amount_says_it_overrides_the_estimate(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"recordingTransferBuy": 1234, "titleEscrowRefi": 777})
+        breakdowns = explain_brrr(req, results_w_intermediates)
+        recording = _step_by_label_anywhere(breakdowns, "Recording & Transfer (Buy)")
+        assert recording["formula"] == "As entered: $1,234" and "overrides the estimate" in recording["note"]
+        refi_title = _step_by_label_anywhere(breakdowns, "Title & Escrow (Refi)")
+        assert refi_title["formula"] == "As entered: $777" and "overrides the estimate" in refi_title["note"]
+
+
+class TestMonthlyReservesExplainTheirUnit:
+    def test_typed_dollars_and_percent_of_rent_read_differently(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"monthlyVacancyReserveDollars": 75, "maintenancePercent": 5})
+        operating_expenses = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_flow", "Monthly Operating Expenses")
+        term_labels = [term["label"] for term in operating_expenses["terms"]]
+        assert "Vacancy $75/month as entered" in term_labels
+        assert "Maintenance 5% of rent" in term_labels

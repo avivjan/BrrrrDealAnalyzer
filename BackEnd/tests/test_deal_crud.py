@@ -174,6 +174,14 @@ class TestLifecycleFieldsRoundTrip:
         untouched = _create(client, brrrr_payload)
         assert untouched["onlineNotaryFeeBuy"] is None and untouched["otherClosingCostsBuyNote"] is None
 
+    def test_monthly_reserve_dollars_round_trip_and_default_to_null(self, client, brrrr_payload):
+        reserve_dollar_aliases = ("monthlyVacancyReserveDollars", "monthlyMaintenanceReserveDollars",
+                                  "monthlyCapexReserveDollars", "monthlyPropertyManagementFeeDollars")
+        deal = _create(client, {**brrrr_payload, **{alias: 75 + index for index, alias in enumerate(reserve_dollar_aliases)}})
+        assert [float(deal[alias]) for alias in reserve_dollar_aliases] == [75, 76, 77, 78]
+        untouched = _create(client, brrrr_payload)
+        assert all(untouched[alias] is None for alias in reserve_dollar_aliases)
+
     def test_a_stale_client_sending_the_hm_flag_gets_a_construction_budget(self, client, brrrr_payload):
         """A stale client speaks the pre-lifecycle model: no lifecycle field but the two mandatory dates, just the boolean."""
         lifecycle_aliases = {field.alias or name for name, field in BrrrLifecycleInputs.model_fields.items()} - {"contractDate", "buyClosingDate"}

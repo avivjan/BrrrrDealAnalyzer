@@ -135,12 +135,47 @@ class TestInterestTimeline:
 
 
 class TestBuySettlementLines:
-    @pytest.mark.parametrize("price, fee", [(149_999, 2050), (150_000, 2200), (200_000, 2200), (200_001, 2400)])
-    def test_we_pay_all_title_tiers(self, price, fee):
-        assert deal_math.title_escrow_buy_default("we_pay_all", Decimal(price)) == fee
+    def test_florida_title_we_pay_all_100k_price_123k_loan_is_exactly_1540(self):
+        itemized_title_estimate = deal_math.title_escrow_buy_itemized_default("we_pay_all", Decimal(100_000), Decimal(123_000))
+        assert itemized_title_estimate.title_office_and_search_fees == Decimal("600.00")
+        assert itemized_title_estimate.owners_title_policy_premium == Decimal("575.00")
+        assert itemized_title_estimate.lenders_title_policy_and_endorsements == Decimal("365.00")  # $250 + $23k ÷ 1,000 × $5
+        assert itemized_title_estimate.total == Decimal("1540.00")
 
-    def test_standard_title_is_flat(self):
-        assert deal_math.title_escrow_buy_default("standard", Decimal(500_000)) == 1000
+    def test_florida_title_standard_100k_price_123k_loan_is_965_without_owners_policy(self):
+        itemized_title_estimate = deal_math.title_escrow_buy_itemized_default("standard", Decimal(100_000), Decimal(123_000))
+        assert itemized_title_estimate.owners_title_policy_premium == 0  # the seller pays the owner's policy
+        assert itemized_title_estimate.total == Decimal("965.00")
+
+    @pytest.mark.parametrize("purchase_price, expected_owners_title_policy_premium", [
+        (80_000, Decimal("460.00")),      # $80k ÷ 1,000 × $5.75
+        (100_000, Decimal("575.00")),     # the first tier's top
+        (250_000, Decimal("1325.00")),    # $575 + $150k ÷ 1,000 × $5.00
+    ])
+    def test_owners_policy_premium_follows_the_florida_promulgated_rate(self, purchase_price, expected_owners_title_policy_premium):
+        assert deal_math.florida_owners_title_policy_premium(Decimal(purchase_price)) == expected_owners_title_policy_premium
+
+    @pytest.mark.parametrize("loan_amount", [72_000, 100_000])
+    def test_lenders_policy_is_250_flat_when_loan_does_not_exceed_price(self, loan_amount):
+        assert deal_math.lenders_title_policy_and_endorsements(Decimal(loan_amount), Decimal(100_000)) == 250
+
+    def test_the_deal_100k_price_123k_hard_money_loan_yields_1540_title_when_we_pay_all(self, brrrr_payload):
+        results = _compute(brrrr_payload, purchasePrice=100, down_payment=0, constructionLoanBudget=23, titleModeBuy="we_pay_all")
+        assert results.hml_amount == 123_000
+        assert results.title_escrow_buy == Decimal("1540.00")
+        assert (results.title_office_and_search_fees_buy, results.owners_title_policy_premium_buy,
+                results.lenders_title_policy_and_endorsements_buy) == (600, 575, 365)
+
+    def test_title_itemized_fields_sum_to_title_escrow_buy(self, brrrr_payload):
+        for title_mode in ("standard", "we_pay_all"):
+            results = _compute(brrrr_payload, titleModeBuy=title_mode)
+            assert results.title_escrow_buy == (results.title_office_and_search_fees_buy + results.owners_title_policy_premium_buy
+                                                + results.lenders_title_policy_and_endorsements_buy)
+
+    def test_typed_title_escrow_overrides_the_florida_estimate_but_keeps_the_itemization(self, brrrr_payload):
+        results = _compute(brrrr_payload, titleEscrowBuy=999)
+        assert results.title_escrow_buy == 999
+        assert results.title_office_and_search_fees_buy == 600  # the estimate is still reported, line by line
 
     def test_recording_default_is_on_the_whole_hard_money_loan_plus_the_deed_tax(self, brrrr_payload):
         results = _compute(brrrr_payload)
@@ -154,7 +189,8 @@ class TestBuySettlementLines:
         results = _compute(brrrr_payload, titleModeBuy="we_pay_all")
         assert results.deed_transfer_tax_buy == Decimal("0.0070") * results.purchase_price
         assert results.recording_transfer_buy == 250 + Decimal("0.0055") * results.hml_amount + results.deed_transfer_tax_buy
-        assert results.title_escrow_buy == 2200  # the $200k price sits in the middle tier
+        # $600 office fees + the owner's policy on $200k ($575 + $500) + the lender's policy on $215k ($250 + $75)
+        assert results.title_escrow_buy == Decimal("2000.00")
 
     def test_notary_fee_defaults_to_250_and_can_be_typed_or_switched_off(self, brrrr_payload):
         assert _compute(brrrr_payload).notary_buy == 250
@@ -310,6 +346,24 @@ class TestRefinanceSettlement:
         assert with_capex_reserve.net_profit == without_capex_reserve.net_profit
 
 
+class TestMonthlyReservesInDollarsOrPercentOfRent:
+    def test_monthly_vacancy_maintenance_capex_and_management_dollars_override_the_percent(self, brrrr_payload):
+        results = _compute(brrrr_payload, monthlyVacancyReserveDollars=75, monthlyMaintenanceReserveDollars=120,
+                           monthlyCapexReserveDollars=90, monthlyPropertyManagementFeeDollars=150)
+        assert (results.vacancy, results.maintenance, results.capex, results.management_fee) == (75, 120, 90, 150)
+        assert results.operating_expenses == (Decimal(75) + 150 + 120 + 90 + results.monthly_taxes + results.monthly_insurance
+                                              + Decimal(brrrr_payload["montly_hoa"]))
+
+    def test_null_reserve_dollars_keep_the_percent_of_rent(self, brrrr_payload):
+        results = _compute(brrrr_payload, monthlyVacancyReserveDollars=None, vacancyPercent=5)
+        assert results.vacancy == Decimal(brrrr_payload["rent"]) * Decimal("0.05")
+
+    def test_typed_reserve_dollars_move_the_cash_flow_by_the_difference(self, brrrr_payload):
+        by_percent = _compute(brrrr_payload, vacancyPercent=5)
+        by_dollars = _compute(brrrr_payload, vacancyPercent=5, monthlyVacancyReserveDollars=75)
+        assert by_dollars.cash_flow == by_percent.cash_flow + by_percent.vacancy - 75
+
+
 class TestLowestArvStressTest:
     def test_defaults_to_90_percent_of_arv(self, brrrr_payload):
         results = _compute(brrrr_payload)
@@ -413,7 +467,8 @@ class TestApiShapeAndValidation:
                     "pre_refi_rental_income", "cash_out_routi_conservative", "cash_to_refi_table_conservative",
                     "total_cash_invested", "refi_closing_date", "tenant_occupied_date",
                     "deed_transfer_tax_buy", "recording_transfer_buy_effective", "title_escrow_buy_effective", "recording_transfer_refi_effective",
-                    "title_escrow_refi_effective", "vacancy_reserve_effective", "lowest_arv_effective"):
+                    "title_escrow_refi_effective", "vacancy_reserve_effective", "lowest_arv_effective",
+                    "title_office_and_search_fees_buy", "owners_title_policy_premium_buy", "lenders_title_policy_and_endorsements_buy"):
             assert key in body, key
         assert "total_cash_needed_for_deal_with_buffer" not in body
         assert body["refi_closing_date"] == "2026-07-09"  # 2026-01-10 + 180
@@ -434,6 +489,10 @@ class TestApiShapeAndValidation:
         ("otherClosingCostsBuy", -1, "Other closing costs (buy) cannot be negative"),
         ("onlineNotaryFeeBuy", -1, "Online notary fee (buy) cannot be negative"),
         ("onlineNotaryFeeRefi", -1, "Online notary fee (refi) cannot be negative"),
+        ("monthlyVacancyReserveDollars", -1, "Monthly vacancy reserve cannot be negative"),
+        ("monthlyMaintenanceReserveDollars", -1, "Monthly maintenance reserve cannot be negative"),
+        ("monthlyCapexReserveDollars", -1, "Monthly CapEx reserve cannot be negative"),
+        ("monthlyPropertyManagementFeeDollars", -1, "Monthly property management fee cannot be negative"),
         ("constructionLoanBudget", -1, "Construction loan budget cannot be negative"),
         ("rehabCushion", -1, "Rehab cushion cannot be negative"),
         ("daysUntilRented", -1, "Days until rented cannot be negative"),

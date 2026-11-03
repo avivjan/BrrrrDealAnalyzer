@@ -86,7 +86,10 @@ class BrrrResultsWithIntermediates:
     # -- the purchase settlement -------------------------------------------------
     deed_transfer_tax_buy: Decimal  # $0 standard; 0.70% of the price when we pay all closing costs
     recording_transfer_buy: Decimal # effective
-    title_escrow_buy: Decimal       # effective
+    title_office_and_search_fees_buy: Decimal            # Florida estimate: $350 settlement + $150 title search + $100 lien search
+    owners_title_policy_premium_buy: Decimal             # Florida estimate: owner's policy at the promulgated rate; $0 on a standard deal
+    lenders_title_policy_and_endorsements_buy: Decimal   # Florida estimate: $250 + $5/$1k of the hard-money loan above the price
+    title_escrow_buy: Decimal       # effective: input or the Florida estimate
     notary_buy: Decimal
     closing_costs_buy_total: Decimal
     seller_paid_current_year_taxes: bool   # effective

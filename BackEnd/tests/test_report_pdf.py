@@ -500,7 +500,7 @@ def _step_by_label(breakdowns: dict, label: str) -> dict:
 
 class TestBreakdownExplanationsFromPr83ReachThePdf:
     """HML Interest paid monthly (a new step, now drillable from Total Cash Invested), the deed transfer
-    tax's who-pays explanation and the title & escrow price tier: each in the PDF, word for word as the
+    tax's who-pays explanation and the Florida title & escrow estimate: each in the PDF, word for word as the
     popup shows it, for a standard deal, and a we-pay-all deal."""
 
     @pytest.mark.parametrize("scenario", list(BRRRR_BREAKDOWN_SCENARIOS))
@@ -533,18 +533,20 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
         analysis, text, _ = _analysis_and_report_text(client, payload, ["cash_to_close_buy"])
         deed_step = _step_by_label(analysis["breakdowns"], "Deed Transfer Tax (Buy)")
         title_step = _step_by_label(analysis["breakdowns"], "Title & Escrow (Buy)")
+        owners_title_policy_step = _step_by_label(analysis["breakdowns"], "Owner's Title Policy (Buy)")
         for step in (deed_step, title_step):
             assert _normalize_like_pdf_text(step["formula"]) in text, step["label"]
             assert _normalize_like_pdf_text(step["note"]) in text, step["label"]
         if scenario == "we_pay_all_closing_costs":
             assert "we also pay the seller's deed transfer tax" in deed_step["formula"]
             assert "added into Recording & Transfer (Buy)" in deed_step["note"]
-            assert "fee is set by the purchase price tier" in title_step["formula"]
-            assert "Purchase $200,000 is between $150,000 and $200,000 → $2,200" in text
+            assert title_step["formula"].startswith("Office & Search Fees ($600) + Owner's Title Policy ($1,075)")
+            assert "F.A.C. 69O-186.003" in text
         else:
             assert "the seller pays the deed transfer tax" in deed_step["formula"]
             assert "Choosing 'we pay all closing costs' would add it" in deed_step["note"]
-            assert title_step["formula"].startswith("Standard deal → flat $1,000")
+            assert owners_title_policy_step["formula"] == "Standard deal → the seller pays the owner's title policy, so it costs us $0"
+            assert title_step["formula"].startswith("Office & Search Fees ($600) + Owner's Title Policy ($0)")
         # Title & Escrow is an operand of Closing Costs (Buy), itself opened under Cash to Close: a link to its block.
         title_value_text = format_value_like_calculation_popup("money", title_step["value"])
         assert f"+ Title & Escrow › {title_value_text}" in text
