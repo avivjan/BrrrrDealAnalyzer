@@ -118,6 +118,13 @@ const currentYearPropertyTaxBillHint = computed(() => {
     : "the seller's credit goes into the tax bucket, which pays the bill on Nov 30 (−4%)";
 });
 
+/** The lender finances price + fee; the deed tax and the owner's title policy stay on the contract price. */
+const assignmentFeeNote = computed(() =>
+  autoCalc.value.purchasePriceWithAssignmentFee != null && numberOrZeroForNote(props.deal.assignmentFee) > 0
+    ? `financed: ${formatMoney(autoCalc.value.purchasePriceWithAssignmentFee)} total`
+    : undefined,
+);
+const numberOrZeroForNote = (value: unknown) => Number(value) || 0;
 const moneyNote = (amount: number | null) => (amount == null ? undefined : `= ${formatMoney(amount)}`);
 const perDiemNote = computed(() => (autoCalc.value.hmlPerDiem == null ? undefined : `${formatMoney(autoCalc.value.hmlPerDiem)}/day`));
 const prepaidInterestHint = computed(() =>
@@ -253,6 +260,15 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
         :required="true"
         :needed-to-run-analysis="true"
         :info="impactText('purchasePrice')"
+      />
+      <MoneyInput
+        data-testid="form.field.assignmentFee"
+        :error-message="fieldErrorMessages?.assignmentFee"
+        :model-value="field.get('assignmentFee')"
+        @update:model-value="(v: number | null) => field.set('assignmentFee', v)"
+        label="Assignment Fee"
+        :note="assignmentFeeNote"
+        :info="impactText('assignmentFee')"
       />
       <MoneyInput
         data-testid="form.field.earnestMoneyDeposit"

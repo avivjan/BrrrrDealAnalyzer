@@ -61,6 +61,7 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   buyClosingDate: ["prepaid_interest_buy", "seller_tax_credit", "cash_to_close_buy", "hml_payoff", "prepaid_interest_refi", "cash_out_routi", ...CASH_METRICS],
   purchasePrice: ["purchase_loan_amount", "hml_amount", "deed_transfer_tax_buy", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   down_payment: ["purchase_loan_amount", "hml_amount", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
+  assignmentFee: ["purchase_loan_amount", "hml_amount", "total_hard_money_cost", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   earnestMoneyDeposit: ["cash_to_close_buy"],
   hmlPoints: ["total_hard_money_cost", "cash_to_close_buy", ...CASH_METRICS],
   HMLInterestRate: ["total_hard_money_cost", "prepaid_interest_buy", "cash_to_close_buy", "hml_payoff", "cash_out_routi", ...CASH_METRICS],

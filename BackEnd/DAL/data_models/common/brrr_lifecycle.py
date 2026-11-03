@@ -17,6 +17,7 @@ class BrrrLifecycleColumns:
     # Buy
     contract_date = Column(Date, nullable=False)
     buy_closing_date = Column(Date, nullable=False)
+    assignment_fee = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
     earnest_money_deposit = Column(Numeric(12, 2), nullable=False, server_default='5000', default=5000)
     loan_charges_buy = Column(Numeric(12, 2), nullable=False, server_default='900', default=900)
     recording_transfer_buy = Column(Numeric(12, 2), nullable=True)

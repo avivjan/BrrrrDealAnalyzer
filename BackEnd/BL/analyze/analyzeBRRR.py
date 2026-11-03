@@ -65,7 +65,8 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         total_cash_needed_for_deal=results.total_cash_needed,
         cash_needed_schedule_at_lowest_arv=cash_needed_schedule_response(results.cash_needed_schedule_at_lowest_arv),
         total_cash_invested=results.total_cash_invested, cash_to_close_buy=results.cash_to_close_buy,
-        purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
+        purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount,
+        purchase_price_with_assignment_fee=results.purchase_price_with_assignment_fee, hml_payoff=results.hml_payoff,
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
         seller_tax_credit=results.seller_tax_credit, closing_costs_buy_total=results.closing_costs_buy_total,
         deed_transfer_tax_buy=results.deed_transfer_tax_buy,
@@ -106,8 +107,9 @@ def cash_needed_schedule_response(schedule) -> CashNeededScheduleAtLowestArvRes:
 def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     """Run every BRRRR step in lifecycle order. Reading top to bottom is reading the calculation."""
     # Buy
-    arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget, lowest_arv = dollar_basis_step(payload)
-    purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price, construction_budget)
+    (arv, purchase_price, purchase_price_with_assignment_fee, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget,
+     lowest_arv) = dollar_basis_step(payload)
+    purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price_with_assignment_fee, construction_budget)
     timeline = timeline_step(payload)
     hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
     insurance = insurance_step(payload, timeline)
@@ -133,7 +135,8 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
                                                                    property_tax_bucket, stolen_money, cash_out_figures, total_cash_needed)
 
     return BrrrResultsWithIntermediates(
-        arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
+        arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, purchase_price_with_assignment_fee=purchase_price_with_assignment_fee,
+        rehab_cost_base=rehab_cost_base,
         rehab_contingency=rehab_contingency, rehab_cost=rehab_cost, construction_budget=construction_budget,
         purchase_loan_amount=purchase_loan_amount, down_payment_cash=down_payment_cash, hml_amount=hml_amount,
         buy_closing_date=timeline.buy_closing_date, refi_closing_date=timeline.refi_closing_date,

@@ -24,7 +24,8 @@ class BrrrResultsWithIntermediates:
     # -- dollar basis ---------------------------------------------------------
     arv: Decimal
     lowest_arv: Decimal             # effective: input or 90% of ARV
-    purchase_price: Decimal
+    purchase_price: Decimal         # the contract price (deed transfer tax and the owner's title policy are on it)
+    purchase_price_with_assignment_fee: Decimal   # + the assignment fee: what the down payment and the purchase loan are on
     rehab_cost_base: Decimal        # rehab before contingency
     rehab_contingency: Decimal      # rehab_cost_base x contingency %
     rehab_cost: Decimal             # rehab_cost_base + rehab_contingency

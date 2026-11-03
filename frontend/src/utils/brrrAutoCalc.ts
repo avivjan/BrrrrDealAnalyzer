@@ -272,6 +272,8 @@ export function annualPropertyTaxesFromSellerTaxCredit(sellerTaxCreditDollars: n
 
 export interface BrrrAutoCalc {
   // Buy
+  /** Purchase price + assignment fee: what the down payment and the purchase loan are on. */
+  purchasePriceWithAssignmentFee: number | null;
   purchaseLoanAmount: number | null;
   downPaymentCash: number | null;
   hmlAmount: number | null;
@@ -378,8 +380,10 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const buyClosingDay = parseIsoDate(deal.buyClosingDate ?? null);
 
   // -- Buy: the hard-money stack --------------------------------------------
-  const purchaseLoanAmount = purchasePriceDollars != null && downPaymentPercent != null ? purchasePriceDollars * (1 - downPaymentPercent / 100) : null;
-  const downPaymentCash = purchasePriceDollars != null && downPaymentPercent != null ? (downPaymentPercent / 100) * purchasePriceDollars : null;
+  // The lender treats price + assignment fee as the total cost: the down payment and the loan are on it.
+  const purchasePriceWithAssignmentFee = purchasePriceDollars != null ? purchasePriceDollars + numberOrZero(deal.assignmentFee) : null;
+  const purchaseLoanAmount = purchasePriceWithAssignmentFee != null && downPaymentPercent != null ? purchasePriceWithAssignmentFee * (1 - downPaymentPercent / 100) : null;
+  const downPaymentCash = purchasePriceWithAssignmentFee != null && downPaymentPercent != null ? (downPaymentPercent / 100) * purchasePriceWithAssignmentFee : null;
   const rehabCostWithContingency = deal.rehabCost != null ? numberOrZero(deal.rehabCost) * 1000 * (1 + numberOrZero(deal.rehabContingency) / 100) : null;
   const constructionBudget = deal.constructionLoanBudget != null ? numberOrZero(deal.constructionLoanBudget) * 1000 : null;
   const hmlAmount = purchaseLoanAmount != null ? purchaseLoanAmount + (constructionBudget ?? 0) : null;
@@ -539,7 +543,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
       : null;
 
   return {
-    purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
+    purchasePriceWithAssignmentFee, purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
     prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective,
     sellerTaxCreditFormula: sellerTaxCreditFormulaAmount, sellerTaxCredit: sellerTaxCreditAmount, insuranceBillAtPurchaseInsideClosing, propertyTaxBillPaidAtPurchaseClosing,
     sellerTaxCreditProratedDays: sellerTaxCreditProratedDaysCount,

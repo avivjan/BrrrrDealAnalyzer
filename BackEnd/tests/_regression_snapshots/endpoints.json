@@ -9,6 +9,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "breakdowns": {
@@ -1042,7 +1043,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -2420,6 +2421,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -3127,6 +3129,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "breakdowns": {
@@ -4160,7 +4163,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -5538,6 +5541,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -5601,6 +5605,7 @@
         "appraisalFee": "700.00",
         "appraisal_and_survey_paid_outside_closing": 1085.0,
         "arv_in_thousands": "320.0000",
+        "assignmentFee": "0.00",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": {
@@ -6634,7 +6639,7 @@
             {
               "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0.0
@@ -8012,6 +8017,7 @@
         "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000.0,
+        "purchase_price_with_assignment_fee": 200000.0,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
@@ -8695,6 +8701,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "breakdowns": {
@@ -9728,7 +9735,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $210,000 = $1,470.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $210,000 = $1,470.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -11106,6 +11113,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "210.0000",
       "purchase_loan_amount": 168000.0,
+      "purchase_price_with_assignment_fee": 210000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1476.5,
@@ -11162,6 +11170,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "breakdowns": {
@@ -12195,7 +12204,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -13573,6 +13582,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -14261,6 +14271,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "boughtStage": "purchase",
@@ -15295,7 +15306,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -16674,6 +16685,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -16759,6 +16771,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "boughtStage": "purchase",
@@ -17793,7 +17806,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -19172,6 +19185,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -19870,6 +19884,7 @@
         "appraisalFee": "700.00",
         "appraisal_and_survey_paid_outside_closing": 1085.0,
         "arv_in_thousands": "320.0000",
+        "assignmentFee": "0.00",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "purchase",
@@ -20904,7 +20919,7 @@
             {
               "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0.0
@@ -22283,6 +22298,7 @@
         "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000.0,
+        "purchase_price_with_assignment_fee": 200000.0,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
@@ -22970,6 +22986,7 @@
       "appraisalFee": "700.00",
       "appraisal_and_survey_paid_outside_closing": 1085.0,
       "arv_in_thousands": "320.0000",
+      "assignmentFee": "0.00",
       "bathrooms": null,
       "bedrooms": null,
       "boughtStage": "rehab",
@@ -24004,7 +24021,7 @@
           {
             "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
             "label": "Deed Transfer Tax (Buy)",
-            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+            "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
             "terms": null,
             "unit": "money",
             "value": 0.0
@@ -25392,6 +25409,7 @@
       "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
       "purchasePrice": "200.0000",
       "purchase_loan_amount": 160000.0,
+      "purchase_price_with_assignment_fee": 200000.0,
       "recordingTransferBuy": null,
       "recordingTransferRefi": null,
       "recording_transfer_buy_effective": 1432.5,
@@ -26354,6 +26372,7 @@
         "appraisalFee": "700.00",
         "appraisal_and_survey_paid_outside_closing": 1085.0,
         "arv_in_thousands": "320.0000",
+        "assignmentFee": "0.00",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": {
@@ -27387,7 +27406,7 @@
             {
               "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0.0
@@ -28765,6 +28784,7 @@
         "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000.0,
+        "purchase_price_with_assignment_fee": 200000.0,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
@@ -29444,6 +29464,7 @@
         "appraisalFee": "700.00",
         "appraisal_and_survey_paid_outside_closing": 1085.0,
         "arv_in_thousands": "320.0000",
+        "assignmentFee": "0.00",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "rehab",
@@ -30478,7 +30499,7 @@
             {
               "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0.0
@@ -31866,6 +31887,7 @@
         "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000.0,
+        "purchase_price_with_assignment_fee": 200000.0,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,
@@ -31919,6 +31941,7 @@
         "appraisalFee": "700.00",
         "appraisal_and_survey_paid_outside_closing": 1085.0,
         "arv_in_thousands": "320.0000",
+        "assignmentFee": "0.00",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "purchase",
@@ -32953,7 +32976,7 @@
             {
               "formula": "Standard deal \u2192 the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0",
               "label": "Deed Transfer Tax (Buy)",
-              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
+              "note": "The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. Choosing 'we pay all closing costs' would add it to our costs: 0.70% \u00d7 $200,000 = $1,400.",
               "terms": null,
               "unit": "money",
               "value": 0.0
@@ -34332,6 +34355,7 @@
         "property_tax_paid_into_bucket_until_refi": 1836.6724782067247,
         "purchasePrice": "200.0000",
         "purchase_loan_amount": 160000.0,
+        "purchase_price_with_assignment_fee": 200000.0,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": 1432.5,

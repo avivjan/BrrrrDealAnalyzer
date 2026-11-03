@@ -35,7 +35,7 @@ export const FLIP_PHASE_TABS: readonly PhaseTab[] = [
 
 export const DEAL_INPUT_FIELD_KEYS_BY_PHASE_TAB: Record<PhaseTabKey, readonly DealInputFieldKey[]> = {
   buy: [
-    "contractDate", "buyClosingDate", "sellerTaxCreditAtPurchaseClosing", "purchasePrice", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
+    "contractDate", "buyClosingDate", "sellerTaxCreditAtPurchaseClosing", "purchasePrice", "assignmentFee", "earnestMoneyDeposit", "down_payment", "hmlPoints", "HMLInterestRate",
     "loanChargesBuy", "recordingTransferBuy", "titleEscrowBuy", "onlineNotaryFeeBuy", "otherClosingCostsBuy", "annual_insurance",
   ],
   rehab: ["rehabCost", "constructionLoanBudget", "rehabContingency", "rehabCushion", "daysUntilRehabCompleted"],

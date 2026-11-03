@@ -174,6 +174,10 @@ class TestLifecycleFieldsRoundTrip:
         untouched = _create(client, brrrr_payload)
         assert untouched["onlineNotaryFeeBuy"] is None and untouched["otherClosingCostsBuyNote"] is None
 
+    def test_the_assignment_fee_round_trips_and_defaults_to_zero(self, client, brrrr_payload):
+        assert float(_create(client, {**brrrr_payload, "assignmentFee": 15000})["assignmentFee"]) == 15000
+        assert float(_create(client, brrrr_payload)["assignmentFee"]) == 0
+
     def test_monthly_reserve_dollars_round_trip_and_default_to_null(self, client, brrrr_payload):
         reserve_dollar_aliases = ("monthlyVacancyReserveDollars", "monthlyMaintenanceReserveDollars",
                                   "monthlyCapexReserveDollars", "monthlyPropertyManagementFeeDollars")

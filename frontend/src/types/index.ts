@@ -80,6 +80,8 @@ export interface BrrrAnalyzeReq {
   contractDate?: string | null;
   /** ISO date of the purchase closing; required for BRRRR (every date of the deal derives from it). */
   buyClosingDate?: string | null;
+  /** The wholesaler's assignment fee, in dollars: financed with the price; no deed tax or title policy on it. */
+  assignmentFee?: number;
   earnestMoneyDeposit?: number;
   loanChargesBuy?: number;
   /** null → 0.55% × purchase loan + $250 */

@@ -204,3 +204,15 @@ describe("BuySection — who pays this year's tax bill", () => {
     expect([deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing, deal.sellerPaidCurrentYearTaxes]).toEqual([false, null]);
   });
 });
+
+describe("BuySection — the assignment fee", () => {
+  it("sits under the purchase price and shows the total the lender finances", async () => {
+    const deal = reactive({ ...createEmptyDealForm("BRRRR"), purchasePrice: 200 });
+    const wrapper = mountBuy(deal);
+    const moneyLabels = wrapper.findAllComponents({ name: "MoneyInput" }).map((input) => input.props("label"));
+    expect(moneyLabels.indexOf("Assignment Fee")).toBe(moneyLabels.indexOf("Purchase Price") + 1);
+    const assignmentFee = wrapper.findAllComponents({ name: "MoneyInput" }).find((input) => input.props("label") === "Assignment Fee")!;
+    await assignmentFee.vm.$emit("update:modelValue", 15000);
+    expect(deal.assignmentFee).toBe(15000);
+  });
+});

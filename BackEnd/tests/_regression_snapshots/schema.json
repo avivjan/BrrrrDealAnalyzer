@@ -647,6 +647,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "assignment_fee",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(12, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": "5000",
         "foreign_keys": [],
         "index": null,
@@ -2344,6 +2358,20 @@
         "python_type": "date",
         "server_default": null,
         "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "assignment_fee",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(12, 2)",
         "unique": null
       },
       {

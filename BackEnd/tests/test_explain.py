@@ -45,6 +45,7 @@ BRRRR_SCENARIOS = {
     "pitia_zero": {"arv_in_thousands": 0, "annual_property_taxes": 0, "annual_insurance": 0, "montly_hoa": 0},
     # lifecycle branches
     "december_paid_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
+    "assignment_fee": {"assignmentFee": 15000, "titleModeBuy": "we_pay_all"},
     "we_pay_the_tax_bill_at_a_november_closing": {"contractDate": "2026-11-10", "buyClosingDate": "2026-11-20",
                                                   "buyerPaysCurrentYearTaxBillAtPurchaseClosing": True},
     "same_month_refi": {"buyClosingDate": "2026-03-20", "contractDate": "2026-03-01", "daysUntilRefi": 5, "daysUntilRented": 0, "daysUntilRehabCompleted": 0},
@@ -569,3 +570,15 @@ class TestMonthlyReservesExplainTheirUnit:
         term_labels = [term["label"] for term in operating_expenses["terms"]]
         assert "Vacancy $75/month as entered" in term_labels
         assert "Maintenance 5% of rent" in term_labels
+
+
+class TestTheAssignmentFeeIsExplained:
+    def test_the_loan_and_the_down_payment_name_the_fee_and_the_deed_tax_does_not(self, brrrr_payload):
+        req, results_w_intermediates = _brrr(brrrr_payload, {"assignmentFee": 15000, "titleModeBuy": "we_pay_all"})
+        breakdowns = explain_brrr(req, results_w_intermediates)
+        loan = _step_by_label_anywhere(breakdowns, "Purchase Loan (hard money)")
+        assert loan["formula"].startswith("Purchase + Assignment Fee ($200,000 + $15,000 = $215,000) × (1 − Down Payment 20%)")
+        down_payment = _step_by_label_anywhere(breakdowns, "Down Payment (cash)")
+        assert down_payment["formula"] == "20% × Purchase + Assignment Fee ($200,000 + $15,000 = $215,000) = $43,000"
+        deed = _step_by_label_anywhere(breakdowns, "Deed Transfer Tax (Buy)")
+        assert "0.70% × Purchase ($200,000) = $1,400" in deed["formula"] and "never the assignment fee" in deed["note"]

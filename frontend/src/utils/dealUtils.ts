@@ -113,6 +113,7 @@ export function defaultBuyClosingIsoDate(now: Date = new Date()): string {
 
 /** Defaults of the BRRRR lifecycle inputs (mirror the backend's `BrrrLifecycleInputs`). */
 export const BRRR_LIFECYCLE_DEFAULTS = {
+  assignmentFee: 0,
   earnestMoneyDeposit: 5000,
   loanChargesBuy: 900,
   recordingTransferBuy: null,
@@ -282,6 +283,7 @@ Financials (BRRRR)
 Contract Date: ${brrr.contractDate || "-"}
 Buy Closing Date: ${brrr.buyClosingDate || "-"}
 Purchase Price: ${formatMoney(brrr.purchasePrice ? brrr.purchasePrice * 1000 : undefined)}
+Assignment Fee: ${formatMoney(toNumber(brrr.assignmentFee) ?? 0)} (financed with the price; no deed tax or title policy on it)
 Earnest Money Deposit: ${formatMoney(brrr.earnestMoneyDeposit)}
 Closing Costs (Buy): ${formatMoney(brrr.closing_costs_buy_total)} (loan charges ${formatMoney(brrr.loanChargesBuy)}, recording ${formatMoney(brrr.recording_transfer_buy_effective)}, title/escrow ${formatMoney(brrr.title_escrow_buy_effective)}, notary ${brrr.onlineNotaryBuy === false ? "no" : formatMoney(toNumber(brrr.onlineNotaryFeeBuy) ?? 250)}, other ${formatMoney(brrr.otherClosingCostsBuy)}${brrr.otherClosingCostsBuyNote ? ` — ${brrr.otherClosingCostsBuyNote}` : ""})
 Actual Rehab Cost: ${formatMoney(brrr.rehabCost ? brrr.rehabCost * 1000 : undefined)}

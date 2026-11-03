@@ -318,3 +318,15 @@ describe("this year's tax bill paid by us at the purchase closing (mirror of the
     expect(brrrAutoCalc({ ...FIXTURE, ...novemberClosing }).propertyTaxBillPaidAtPurchaseClosing).toBe(0);
   });
 });
+
+describe("the assignment fee (mirror of the backend)", () => {
+  it("is financed with the price; the deed transfer tax and the owner's title policy stay on the contract price", () => {
+    const withFee = brrrAutoCalc({ ...FIXTURE, assignmentFee: 15000, titleModeBuy: "we_pay_all" });
+    const withoutFee = brrrAutoCalc({ ...FIXTURE, titleModeBuy: "we_pay_all" });
+    expect(withFee.purchasePriceWithAssignmentFee).toBe(215_000);
+    expectCloseToTheCent(withFee.downPaymentCash, 0.2 * 215_000);
+    expectCloseToTheCent(withFee.purchaseLoanAmount, 0.8 * 215_000);
+    expectCloseToTheCent(withFee.deedTransferTaxBuy, 0.007 * 200_000);
+    expectCloseToTheCent(withFee.titleEscrowBuyItemizedDefault!.ownersTitlePolicyPremium, withoutFee.titleEscrowBuyItemizedDefault!.ownersTitlePolicyPremium);
+  });
+});

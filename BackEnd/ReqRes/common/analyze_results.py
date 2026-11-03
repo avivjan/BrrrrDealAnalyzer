@@ -86,7 +86,7 @@ class analyzeBRRRRes(BaseModel):
         "insurance bill when paid inside the closing) + hard-money points + prepaid interest (buy) - seller tax credit - "
         "earnest money deposit."))
     purchase_loan_amount: Optional[float] = Field(None, description=(
-        "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %)."))
+        "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %)."))
     hml_amount: Optional[float] = Field(None, description=(
         "Total hard-money principal, in dollars: purchase loan + construction loan budget."))
     hml_payoff: Optional[float] = Field(None, description=(
@@ -109,6 +109,8 @@ class analyzeBRRRRes(BaseModel):
     deed_transfer_tax_buy: Optional[float] = Field(None, description=(
         "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the "
         "seller's debit), 0.70% of the purchase price when we pay all closing costs."))
+    purchase_price_with_assignment_fee: Optional[float] = Field(None, description=(
+        "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on."))
     property_tax_bill_paid_at_purchase_closing: Optional[float] = Field(None, description=(
         "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line "
         "(x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise."))

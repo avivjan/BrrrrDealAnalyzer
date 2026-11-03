@@ -762,6 +762,20 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -2053,6 +2067,13 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Assignmentfee",
+            "type": "string"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -3132,8 +3153,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recordingTransferBuy": {
             "anyOf": [
@@ -4880,6 +4913,20 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -6131,6 +6178,13 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Assignmentfee",
+            "type": "string"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -7182,8 +7236,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recordingTransferBuy": {
             "anyOf": [
@@ -14797,6 +14863,20 @@
             "description": "After repair value (ARV) of the property in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "brokerProcessingFeeRefi": {
             "anyOf": [
               {
@@ -16101,8 +16181,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recording_transfer_buy_effective": {
             "anyOf": [

@@ -43,6 +43,8 @@ class BrrrLifecycleInputs(BaseModel):
     buy_closing_date: Annotated[date, Field(alias="buyClosingDate", description=(
         "Purchase closing date (ISO), required. Anchors prepaid interest, the seller tax credit, the refi / "
         "tenant / rehab-completed dates and every date of the Cash Needed schedule."))]
+    assignment_fee: Annotated[Decimal, Field(alias="assignmentFee", description=(
+        "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it."))] = Decimal("0")
     earnest_money_deposit: Annotated[Decimal, Field(alias="earnestMoneyDeposit", description=(
         "Earnest money already paid to escrow, in dollars; credited against Cash to Close (Buy)."))] = Decimal("5000")
     loan_charges_buy: Annotated[Decimal, Field(alias="loanChargesBuy", description=(

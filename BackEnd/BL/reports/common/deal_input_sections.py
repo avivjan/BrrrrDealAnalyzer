@@ -108,6 +108,7 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
                            effective_result_key="seller_tax_credit",
                            formula_hint="Formula: this year's tax bill prorated by the closing date"),
             DealInputField("purchasePrice", "Purchase Price", "money_in_thousands"),
+            DealInputField("assignmentFee", "Assignment Fee", "money"),
             DealInputField("earnestMoneyDeposit", "Earnest Money Deposit", "money"),
         )),
         DealInputGroup("Hard Money", (

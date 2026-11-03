@@ -23,6 +23,30 @@ def _compute(payload: dict, **overrides):
     return compute_brrr_with_intermediates(analyzeBRRRReq.model_validate({**payload, **overrides}))
 
 
+class TestAssignmentFee:
+    """The lender finances price + assignment fee; the deed transfer tax and the owner's title policy stay on the price."""
+
+    def test_the_down_payment_and_the_loan_are_on_the_price_plus_the_fee(self, brrrr_payload):
+        with_fee = _compute(brrrr_payload, assignmentFee=15000, down_payment=20)   # $200k price
+        assert with_fee.purchase_price == 200_000 and with_fee.purchase_price_with_assignment_fee == 215_000
+        assert with_fee.down_payment_cash == Decimal("43000")                    # 20% × 215,000
+        assert with_fee.purchase_loan_amount == Decimal("172000")                # 80% × 215,000
+        assert with_fee.hml_amount == with_fee.purchase_loan_amount + with_fee.construction_budget
+
+    def test_the_deed_transfer_tax_and_the_owners_policy_ignore_the_fee(self, brrrr_payload):
+        without_fee = _compute(brrrr_payload, titleModeBuy="we_pay_all")
+        with_fee = _compute(brrrr_payload, titleModeBuy="we_pay_all", assignmentFee=15000)
+        assert with_fee.deed_transfer_tax_buy == without_fee.deed_transfer_tax_buy == Decimal("0.0070") * 200_000
+        assert with_fee.owners_title_policy_premium_buy == without_fee.owners_title_policy_premium_buy
+
+    def test_the_fee_reaches_cash_to_close_through_the_down_payment(self, brrrr_payload):
+        without_fee, with_fee = _compute(brrrr_payload), _compute(brrrr_payload, assignmentFee=15000)
+        assert with_fee.down_payment_cash - without_fee.down_payment_cash == Decimal(brrrr_payload["down_payment"]) / 100 * 15000
+
+    def test_no_fee_changes_nothing(self, brrrr_payload):
+        assert _compute(brrrr_payload, assignmentFee=0).cash_to_close_buy == _compute(brrrr_payload).cash_to_close_buy
+
+
 class TestWePayThisYearsTaxBillAtPurchaseClosing:
     """The third tax choice: we pay this year's whole bill at the purchase closing; the seller still credits their days."""
 
@@ -435,6 +459,7 @@ class TestLowestArvStressTest:
 SCENARIOS = {
     "dated": {"buyClosingDate": "2026-01-10", "daysUntilRefi": 181},
     "december_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
+    "assignment_fee": {"assignmentFee": 15000, "titleModeBuy": "we_pay_all"},
     "we_pay_the_tax_bill_at_closing": {"buyClosingDate": "2026-11-20", "contractDate": "2026-11-10",
                                        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": True},
     "cash_rehab": {"constructionLoanBudget": 0},
@@ -466,7 +491,8 @@ class TestReconcileIdentities:
     def test_buy_settlement_sources_equal_uses(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, **SCENARIOS[scenario])
         sources = Decimal(brrrr_payload["earnestMoneyDeposit"]) + results.cash_to_close_buy + results.purchase_loan_amount + results.seller_tax_credit
-        uses = results.purchase_price + results.closing_costs_buy_total + results.hml_points + results.prepaid_interest_buy
+        # The settlement pays the seller the price and the wholesaler the assignment fee.
+        uses = results.purchase_price_with_assignment_fee + results.closing_costs_buy_total + results.hml_points + results.prepaid_interest_buy
         _assert_equal_to_the_cent(sources, uses)
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
@@ -525,6 +551,7 @@ class TestApiShapeAndValidation:
 
     @pytest.mark.parametrize("field, value, message", [
         ("earnestMoneyDeposit", -1, "Earnest money deposit cannot be negative"),
+        ("assignmentFee", -1, "Assignment fee cannot be negative"),
         ("loanChargesBuy", -1, "Loan charges (buy) cannot be negative"),
         ("recordingTransferBuy", -1, "Recording and transfer charges (buy) cannot be negative"),
         ("titleEscrowBuy", -1, "Title and escrow charges (buy) cannot be negative"),

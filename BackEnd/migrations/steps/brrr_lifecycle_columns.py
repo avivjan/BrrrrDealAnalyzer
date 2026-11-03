@@ -30,6 +30,7 @@ BRRR_TABLES = ("active_deals", "bought_brrrr_deals")
 BRRR_LIFECYCLE_COLUMNS = (
     # Buy
     ("buy_closing_date", "DATE", None),
+    ("assignment_fee", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("earnest_money_deposit", "NUMERIC(12,2) DEFAULT 5000", "5000"),
     ("loan_charges_buy", "NUMERIC(12,2) DEFAULT 900", "900"),
     ("recording_transfer_buy", "NUMERIC(12,2)", None),

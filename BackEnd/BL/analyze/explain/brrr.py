@@ -191,15 +191,24 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     )
 
     # -- BUY: the hard-money stack ---------------------------------------------
-    check(results.purchase_loan_amount == results.purchase_price * (1 - payload.down_payment / Decimal("100.0")), "purchase loan")
+    check(results.purchase_price_with_assignment_fee == results.purchase_price + payload.assignment_fee, "price with assignment fee")
+    has_assignment_fee = payload.assignment_fee != 0
+    financed_price_text = (f"Purchase + Assignment Fee ({fmt_money(results.purchase_price)} + {fmt_money(payload.assignment_fee)} = "
+                           f"{fmt_money(results.purchase_price_with_assignment_fee)})" if has_assignment_fee
+                           else f"Purchase ({fmt_money(results.purchase_price)})")
+    financed_price_note = ("The lender treats price + assignment fee as the total cost; the deed transfer tax and the owner's title policy "
+                           "stay on the contract price." if has_assignment_fee else None)
+    check(results.purchase_loan_amount == results.purchase_price_with_assignment_fee * (1 - payload.down_payment / Decimal("100.0")), "purchase loan")
     breakdown.add(
         [CLOSE, HM_COST], "Purchase Loan (hard money)", results.purchase_loan_amount,
-        f"Purchase ({fmt_money(results.purchase_price)}) × (1 − Down Payment {fmt_pct(payload.down_payment)}) = {fmt_money(results.purchase_loan_amount)}",
+        f"{financed_price_text} × (1 − Down Payment {fmt_pct(payload.down_payment)}) = {fmt_money(results.purchase_loan_amount)}",
+        note=financed_price_note,
     )
-    check(results.down_payment_cash == (payload.down_payment / Decimal("100")) * results.purchase_price, "down payment")
+    check(results.down_payment_cash == (payload.down_payment / Decimal("100")) * results.purchase_price_with_assignment_fee, "down payment")
     breakdown.add(
         [CLOSE, CASH_NEEDED], "Down Payment (cash)", results.down_payment_cash,
-        f"{fmt_pct(payload.down_payment)} × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.down_payment_cash)}",
+        f"{fmt_pct(payload.down_payment)} × {financed_price_text} = {fmt_money(results.down_payment_cash)}",
+        note=financed_price_note,
     )
     check(results.construction_budget == payload.construction_loan_budget_in_thousands * Decimal("1000.0"), "construction budget")
     breakdown.add_sum([HM_COST, WIRE, "cash_out"], "Hard Money Loan (total principal)", results.hml_amount, [
@@ -256,7 +265,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         (f"We pay all closing costs → we also pay the seller's deed transfer tax: 0.70% × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.deed_transfer_tax_buy)}"
          if payload.title_mode_buy == "we_pay_all" else
          "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0"),
-        note=("The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. "
+        note=("The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. "
               + ("Because we pay all closing costs we take it over; it is added into Recording & Transfer (Buy)."
                  if payload.title_mode_buy == "we_pay_all" else
                  f"Choosing 'we pay all closing costs' would add it to our costs: 0.70% × {fmt_money(results.purchase_price)} = {fmt_money(deed_transfer_tax_buy_default('we_pay_all', results.purchase_price))}.")),
