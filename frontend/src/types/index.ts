@@ -199,9 +199,18 @@ export interface CashNeededScheduleRow {
   item_key: string;
 }
 
+/** One key date of the deal (contract, closing, rehab completed, tenant, Nov 30 tax bill, refi): a marker, not cash. */
+export interface CashNeededScheduleMilestone {
+  date: string;
+  milestone_key: string;
+  description: string;
+}
+
 /** When every dollar of Cash Needed moves, at the lowest ARV: one row per cash item, the rehab cushion among them (a hold). */
 export interface CashNeededScheduleAtLowestArv {
   dated_cash_rows: CashNeededScheduleRow[];
+  /** The deal's key dates in date order; absent on a result saved before they existed. */
+  deal_milestones?: CashNeededScheduleMilestone[];
 }
 
 export interface BrrrAnalyzeRes {

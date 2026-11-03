@@ -66,7 +66,7 @@ No change to any amount, to Cash Needed, to the liquidity import or its timeline
     - `test_report_html.py` / `test_report_pdf.py`: the schedule shows "Purchase closing" before "Cash to close (the purchase wire)", with `class="milestone"` in the HTML;
     - `verify_regression.py snapshot`, review (only the added `deal_milestones`), `verify`.
 - [x] M4 (30 min) Reports: `cash_needed_schedule_report.py` merge, HTML markup + CSS, PDF row style.
-- [ ] M5 (40 min) Frontend types + `CashNeededScheduleTable.vue`.
+- [x] M5 (40 min) Frontend types + `CashNeededScheduleTable.vue`.
   - **Unit** (`CashNeededScheduleTable.test.ts`):
     - milestones interleaved by date and first on a shared day;
     - styled as `schedule-milestone` with no amount cell;
@@ -79,7 +79,7 @@ No change to any amount, to Cash Needed, to the liquidity import or its timeline
   - Then `npm run e2e:record` (goldens gain `deal_milestones` only), `a11y.spec.ts`, `npm run e2e`.
   - Visual check in light and dark at desktop and phone width.
 - [ ] M7 (10 min) **MCP**: no new tool. `deal_milestones` reaches `analyze_brrr` / `get_deal` through the response schema. Its descriptions stay short to keep `tools/list` under budget, and `tests/test_mcp.py` stays green.
-- [ ] M8 (15 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
+- [x] M8 (15 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
   - Re-read every touched file.
   - The milestone text comes from fixed engine strings and dates. HTML goes through `_text()`, the PDF through `escape()`, the Vue code through interpolation; there is no `v-html` or new sink.
   - Run bandit, pip-audit and `npm audit --omit=dev`.
