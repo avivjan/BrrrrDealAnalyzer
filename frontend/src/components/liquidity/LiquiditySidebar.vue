@@ -9,6 +9,7 @@ import type {
 } from '../../types/liquidity'
 import { todayISO, addDays, describeRecurrence } from '../../utils/liquidityEngine'
 import { formatMoney, formatSignedMoney } from '../../utils/money'
+import DealAttributionTag from './DealAttributionTag.vue'
 
 const props = defineProps<{
   series: LiquiditySeries
@@ -105,6 +106,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
       <UiSectionHeader as="h4" class="mb-1">Next Outflow</UiSectionHeader>
       <div class="font-bold numeric text-negative">{{ formatMoney(nextOutflow.amount_dollars) }}</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextOutflow.description }}</div>
+      <DealAttributionTag :txn="nextOutflow" class="mt-1" />
       <div class="text-fg-muted">{{ formatDate(nextOutflow.effective_date) }}</div>
     </UiCard>
 
@@ -113,6 +115,7 @@ function endLabel(rule: LiquidityRecurringTransaction): string {
       <UiSectionHeader as="h4" class="mb-1">Next Inflow</UiSectionHeader>
       <div class="font-bold numeric text-positive">{{ formatSignedMoney(nextInflow.amount_dollars) }}</div>
       <div class="mt-0.5 break-words text-fg-muted line-clamp-2">{{ nextInflow.description }}</div>
+      <DealAttributionTag :txn="nextInflow" class="mt-1" />
       <div class="text-fg-muted">{{ formatDate(nextInflow.effective_date) }}</div>
     </UiCard>
 

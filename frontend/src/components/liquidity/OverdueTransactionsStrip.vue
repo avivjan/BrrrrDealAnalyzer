@@ -10,12 +10,16 @@ import { computed, ref, watch } from 'vue'
 import type { LiquidityTransaction } from '../../types/liquidity'
 import { addDays, firstOfNextMonth, todayISO } from '../../utils/liquidityEngine'
 import { formatMoney } from '../../utils/money'
+import { dealAccentStyleForTransaction, useInjectedDealAttributionLookup } from '../../composables/useLiquidityDealAttribution'
+import DealAttributionTag from './DealAttributionTag.vue'
 import InlineAmountEditor from './InlineAmountEditor.vue'
 import TransactionRowActions from './TransactionRowActions.vue'
 
 const props = defineProps<{
   overdueMoneyOut: LiquidityTransaction[]
   expectedMoneyInNotCounted: LiquidityTransaction[]
+  /** Start with the rows shown (the theater's overdue popover, opened on purpose). */
+  initiallyOpen?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -25,6 +29,9 @@ const emit = defineEmits<{
   (e: 'bulkMarkDone', ids: string[]): void
   (e: 'bulkMoveToDate', ids: string[], newEffectiveDate: string): void
 }>()
+
+/** Each row's deal (a tag and a left accent in its color), when the view provides the lookup. */
+const dealAttributionLookup = useInjectedDealAttributionLookup()
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function shortDate(iso: string): string {
@@ -37,7 +44,7 @@ const rows = computed(() => [
   ...props.expectedMoneyInNotCounted.map((txn) => ({ txn, isCounted: false })),
 ])
 const overdueMoneyOutTotalDollars = computed(() => props.overdueMoneyOut.reduce((total, txn) => total + txn.amount_dollars, 0))
-const isOpen = ref(false)
+const isOpen = ref(!!props.initiallyOpen)
 
 const selectedIds = ref<string[]>([])
 // A row that left the strip (done, or moved to a date ahead) is no longer selectable.
@@ -109,6 +116,7 @@ function bulkMarkDone() {
         :data-testid="`overdue.row.${row.txn.id}`"
         class="rounded-ctl bg-surface px-3 py-2"
         :class="row.isCounted ? '' : 'opacity-70'"
+        :style="dealAccentStyleForTransaction(dealAttributionLookup, row.txn)"
       >
         <div class="flex items-center gap-2">
           <input
@@ -120,7 +128,10 @@ function bulkMarkDone() {
             :value="row.txn.id"
           />
           <div class="min-w-0 flex-1">
-            <div class="truncate text-sm text-fg">{{ row.txn.description }}</div>
+            <div class="flex min-w-0 items-center gap-2">
+              <span class="truncate text-sm text-fg">{{ row.txn.description }}</span>
+              <DealAttributionTag :txn="row.txn" class="shrink-0" />
+            </div>
             <div class="text-xs" :class="row.isCounted ? 'text-warning' : 'text-fg-muted'">
               <template v-if="row.isCounted">overdue since {{ shortDate(row.txn.effective_date) }} · counted on today</template>
               <template v-else>expected {{ shortDate(row.txn.effective_date) }} · not counted until you give it a new date</template>

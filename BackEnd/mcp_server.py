@@ -269,12 +269,14 @@ DESCRIPTIONS: dict[str, str] = {
     "list_liquidity_deals": (
         "The BRRRR deals imported into the Liquidity timeline: board (my_deals / bought), address, open / done / overdue "
         "row counts, late-refi rows, liquidity_rows_out_of_date (a deal save changed its rows, not confirmed yet: "
-        "re-import to confirm) and the five milestones with planned_date, approved_at and is_overdue."
+        "re-import to confirm) and the five milestones with planned_date, approved_at and is_overdue. open_row_count 0 = "
+        "out of the timeline."
     ),
     "refresh_liquidity_late_refis": (
         "Add the carrying-cost months of every imported deal whose refi is late (planned date passed, refi_closed not "
         "approved): HML interest, HOA, insurance paid monthly and utilities on each 1st up to the first 1st after today, as "
-        "real rows flagged created_because_refi_is_late (no rent). Idempotent: call it before reading the timeline."
+        "real rows flagged created_because_refi_is_late (no rent); skips a deal with no open row. Idempotent: call it "
+        "before reading the timeline."
     ),
     "preview_liquidity_deal_import": (
         "Preview importing (or re-syncing) a BRRRR deal's Cash Needed rows into the Liquidity timeline: each row's "
@@ -296,8 +298,10 @@ DESCRIPTIONS: dict[str, str] = {
         "its liquidity rows as the preview listed them. Show the owner the preview first."
     ),
     "remove_liquidity_deal_open_rows": (
-        "A dead deal: remove its open (not done) liquidity rows; with earnest_money_refund_date, the earnest money comes "
-        "back as money in on that date. Done rows stay as history."
+        "Take a deal out of the Liquidity timeline (a dead deal, or the owner's 'Remove from timeline'): remove its open "
+        "(not done) liquidity rows, so it gets no late-refi months either; with earnest_money_refund_date, the earnest "
+        "money comes back as money in on that date. Done rows stay as history; a re-import brings the open rows back. "
+        "The deal itself stays on its board. Confirm with the owner first."
     ),
     "get_mercury_balance": (
         "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "

@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, toRef } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
+import { provideLiquidityDealAttribution } from '../composables/useLiquidityDealAttribution'
+import { useOneTapMilestoneApproval } from '../composables/useOneTapMilestoneApproval'
 import type {
   LiquidityTransaction,
   LiquidityRecurringTransaction,
@@ -23,9 +26,25 @@ import OverdueTransactionsStrip from '../components/liquidity/OverdueTransaction
 import LiquidityDealsPanel from '../components/liquidity/LiquidityDealsPanel.vue'
 import DealMilestoneChangeModal from '../components/liquidity/DealMilestoneChangeModal.vue'
 import DealImportPreviewModal from '../components/liquidity/DealImportPreviewModal.vue'
+import LiquidityTheaterMode from '../components/liquidity/theater/LiquidityTheaterMode.vue'
 
 
 const store = useLiquidityStore()
+
+/** Every row below can show the deal it came from, in that deal's color (done rows of a finished deal too). */
+provideLiquidityDealAttribution(toRef(store, 'importedDeals'))
+
+// --- Theater mode: `?view=theater`, entered and left with `replace` so it adds no history entries ---
+const route = useRoute()
+const router = useRouter()
+const THEATER_VIEW_QUERY_VALUE = 'theater'
+const theaterModeIsOpen = computed(() => route.query.view === THEATER_VIEW_QUERY_VALUE)
+function openTheaterMode() {
+  if (!theaterModeIsOpen.value) void router.replace({ query: { ...route.query, view: THEATER_VIEW_QUERY_VALUE } })
+}
+function closeTheaterMode() {
+  if (theaterModeIsOpen.value) void router.replace({ query: { ...route.query, view: undefined } })
+}
 
 // Save payloads emitted by TransactionForm. Mirrors the discriminated
 // union over there; duplicated locally so we can name it in template refs
@@ -475,6 +494,18 @@ function describeRowChanges(result: DealCashRowChanges): string {
   return `${counts.updated} changed, ${counts.added} added, ${counts.removed} removed.`
 }
 
+/** Done on a milestone: approved in one tap when nothing else changes, otherwise its before -> after list opens. */
+const { milestoneKeyBeingApproved, approveMilestoneOnItsPlannedDate } = useOneTapMilestoneApproval({
+  previewMilestoneChange: (dealBoard, dealId, change) => store.previewMilestoneChange(dealBoard, dealId, change),
+  applyMilestoneChange: (dealBoard, dealId, change) => store.applyMilestoneChange(dealBoard, dealId, change),
+  openMilestoneApprovalReview: (deal, milestone) => onChangeMilestone(deal, milestone, true),
+  showToast: (message) => showToast(message),
+})
+
+/** One of this view's own dialogs is open: theater mode leaves Esc and its shortcuts to it. */
+const anotherLiquidityDialogIsOpen = computed(() =>
+  formOpen.value || settingsOpen.value || warningOpen.value || !!milestoneChange.value || !!dealToResync.value)
+
 async function onRemoveOpenDealRows(deal: ImportedLiquidityDeal) {
   if (!window.confirm(`Remove the ${deal.open_row_count} open liquidity rows of ${deal.deal_address}? Done rows stay.`)) return
   const refundEarnestMoney = window.confirm('Add the earnest money deposit back as money in, a week from today?')
@@ -527,6 +558,16 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
         <div data-hero="item" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">
             <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
+          </UiButton>
+          <UiButton
+            data-testid="liquidity.theater-open"
+            variant="secondary"
+            size="sm"
+            class="min-h-9 touch:min-h-11 gap-1.5"
+            title="Full screen timeline (T)"
+            @click="openTheaterMode"
+          >
+            <i class="pi pi-window-maximize text-[10px]" aria-hidden="true"></i> Full screen
           </UiButton>
           <UiButton
             data-testid="liquidity.mercury-sync"
@@ -689,7 +730,16 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
             @review-changes="(deal) => (dealToResync = deal)"
             @remove-open-rows="onRemoveOpenDealRows"
           />
-          <UiSurface :level="1" padding="none" class="overflow-hidden">
+          <UiSurface :level="1" padding="none" class="relative overflow-hidden">
+            <UiIconButton
+              data-testid="liquidity.theater-open.chart"
+              label="Open the timeline full screen (T)"
+              title="Full screen (T)"
+              class="absolute bottom-[3.75rem] right-2 z-10 bg-surface/90 shadow-1"
+              @click="openTheaterMode"
+            >
+              <i class="pi pi-expand text-xs" aria-hidden="true"></i>
+            </UiIconButton>
             <div class="grid h-[340px] min-h-[320px] sm:h-[380px]">
               <TimelineChart
                 ref="chartRef"
@@ -751,6 +801,33 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
         </aside>
       </div>
     </template>
+
+    <!-- Theater mode: the chart over the whole viewport, everything else in overlays -->
+    <LiquidityTheaterMode
+      v-if="hasData"
+      :open="theaterModeIsOpen"
+      :headline-figures="kpis"
+      :is-another-dialog-open="anotherLiquidityDialogIsOpen"
+      :milestone-key-being-approved="milestoneKeyBeingApproved"
+      @open="openTheaterMode"
+      @close="closeTheaterMode"
+      @add-flow="(date) => openAddForm(date)"
+      @edit-txn="openEditForm"
+      @delete-txn="onDeleteTxn"
+      @open-settings="settingsOpen = true"
+      @sync-mercury="refreshFromMercury"
+      @edit-recurring="openEditRecurring"
+      @delete-recurring="onDeleteRecurringRule"
+      @mark-done="onMarkTransactionDone"
+      @move-to-date="onMoveTransactionToDate"
+      @change-amount="onChangeTransactionAmount"
+      @bulk-mark-done="onBulkMarkDone"
+      @bulk-move-to-date="onBulkMoveToDate"
+      @approve-milestone="approveMilestoneOnItsPlannedDate"
+      @change-milestone="onChangeMilestone"
+      @review-changes="(deal) => (dealToResync = deal)"
+      @remove-deal-from-timeline="onRemoveOpenDealRows"
+    />
 
     <!-- Modals -->
     <TransactionForm
