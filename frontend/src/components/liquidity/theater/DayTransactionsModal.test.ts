@@ -60,6 +60,16 @@ describe("DayTransactionsModal", () => {
     wrapper.unmount();
   });
 
+  it("offers Done on another date for a milestone that is not done yet", async () => {
+    const wrapper = mountModal();
+    await wrapper.get('[data-testid="theater.day-modal.milestone.done-on-date"]').trigger("click");
+    expect(wrapper.emitted("approveMilestoneOnAnotherDate")?.[0]).toEqual([DEAL, "rehab_completed"]);
+    wrapper.unmount();
+    const approved = mountModal({ milestonesOnThisDay: [{ deal: DEAL, state: { ...DEAL.milestones[0]!, approved_at: "2026-11-20T12:00:00Z" } }] });
+    expect(approved.find('[data-testid="theater.day-modal.milestone.done-on-date"]').exists()).toBe(false);
+    approved.unmount();
+  });
+
   it("carries every row's actions through to the view", async () => {
     const wrapper = mountModal();
     await wrapper.get('[data-testid="rowactions.survey.done"]').trigger("click");

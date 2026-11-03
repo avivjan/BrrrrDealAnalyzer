@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * A day of the full-screen timeline, in full (tasks/todo/LiquidityTheaterMode.md, section E): the opening and
- * end-of-day balance, money in and out, the imported deals' milestones planned that day (Approve, Move), and
+ * end-of-day balance, money in and out, the imported deals' milestones planned that day (Approve, Done on another
+ * date, Move), and
  * every row with its deal tag and all its actions (Done, Postpone, Move, amount, edit, delete) through the
  * existing DayDetail. ‹ › and the arrow keys step to the previous / next day.
  *
@@ -29,6 +30,7 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'stepDay', direction: -1 | 1): void
   (e: 'approveMilestone', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
+  (e: 'approveMilestoneOnAnotherDate', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
   (e: 'moveMilestone', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
   (e: 'editTxn', id: string): void
   (e: 'deleteTxn', id: string): void
@@ -150,6 +152,16 @@ onMounted(() => nextTick(() => panelRef.value?.focus()))
                 class="min-h-8 touch:min-h-11 gap-1 text-positive"
                 @click="emit('approveMilestone', entry.deal, entry.state.milestone)"
               ><i class="pi pi-check text-[10px]" aria-hidden="true"></i> Approve</UiButton>
+              <UiIconButton
+                v-if="!entry.state.approved_at"
+                data-testid="theater.day-modal.milestone.done-on-date"
+                :label="`Done on another date: ${DEAL_MILESTONE_LABELS[entry.state.milestone]}`"
+                title="Done on another date…"
+                class="text-positive"
+                @click="emit('approveMilestoneOnAnotherDate', entry.deal, entry.state.milestone)"
+              >
+                <i class="pi pi-calendar-plus text-xs" aria-hidden="true"></i>
+              </UiIconButton>
               <UiButton
                 data-testid="theater.day-modal.milestone.move"
                 size="sm"

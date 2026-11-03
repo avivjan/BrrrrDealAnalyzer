@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The liquidity timeline in theater mode (tasks/todo/LiquidityTheaterMode.md, section A): the chart takes the
- * whole viewport, over the app's sidebar and topbar, with everything the page shows moved into overlays:
+ * The liquidity page (tasks/todo/LiquidityTheaterMode.md, section A; tasks/todo/LiquidityTheaterOnly.md): the
+ * chart takes the whole viewport, over the app's sidebar and topbar, with everything else in overlays:
  *
  * - top bar: the headline figures as chips (Today's balance opens the Mercury breakdown, the overdue chip opens
  *   the overdue rows), and a floating action bar (Today, Mercury, Settings, + Add Flow, Legend, browser
@@ -9,10 +9,10 @@
  * - the legend (deals, their overdue rows, recurring series), the deals & milestones bottom sheet, and a full
  *   modal for a clicked day. Hovering a day shows a floating preview.
  *
- * Esc closes the topmost layer first (day modal, popovers, deals sheet, then the theater; the legend is a panel
- * that stays until toggled). Shortcuts: T
- * theater, F browser fullscreen, L legend, D deals, ? help; never while typing, and never while another dialog
- * (one of the view's modals, the command palette, Settings) is open.
+ * Esc closes the topmost layer first (day modal, popovers, deals sheet), then leaves the page (`leave`, the same as
+ * ×); the legend is a panel that stays until toggled. Shortcuts: F browser fullscreen, L legend, D deals, ? help;
+ * never while typing, and never while another dialog (one of the view's modals, the command palette, Settings) is
+ * open.
  *
  * Only `opacity` animates on this root and the chart's ancestors: the chart re-measures from a ResizeObserver.
  * The legend, the sheet and the popovers move with `transform` beside it.
@@ -46,7 +46,6 @@ export interface LiquidityHeadlineFigures {
 }
 
 const props = defineProps<{
-  open: boolean
   headlineFigures: LiquidityHeadlineFigures
   /** One of the view's own modals is open: it owns Esc and the keyboard. */
   isAnotherDialogOpen: boolean
@@ -54,8 +53,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'open'): void
-  (e: 'close'): void
+  /** Esc with nothing open, or ×: leave the liquidity page. */
+  (e: 'leave'): void
   (e: 'addFlow', date?: string): void
   (e: 'editTxn', id: string): void
   (e: 'deleteTxn', id: string): void
@@ -106,6 +105,16 @@ const moreActionsMenuOpen = ref(false)
 const shortcutsHelpOpen = ref(false)
 const highlightedDealKey = ref<string | null>(null)
 const dayModalDate = ref<string | null>(null)
+
+/** The first load: nothing to draw yet. */
+const isLoadingForTheFirstTime = computed(() => store.loading && store.transactions.length === 0 && store.importedDeals.length === 0)
+
+/** "HH:MM" of the last Mercury sync. */
+const mercurySyncedTime = computed(() => {
+  if (!store.mercuryLastSyncedAt) return null
+  const syncedAt = new Date(store.mercuryLastSyncedAt)
+  return `${String(syncedAt.getHours()).padStart(2, '0')}:${String(syncedAt.getMinutes()).padStart(2, '0')}`
+})
 
 function closePopovers() {
   overduePopoverOpen.value = false
@@ -190,32 +199,24 @@ function anotherDialogOwnsTheKeyboard(): boolean {
   return openDialogs.some(dialog => !rootRef.value?.contains(dialog))
 }
 
-/** Esc: the day modal, then a popover, then the deals sheet, then the theater. The legend is a panel, not a layer. */
+/** Esc: the day modal, then a popover, then the deals sheet, then leave the page. The legend is a panel, not a layer. */
 function closeTopmostLayer() {
   if (dayModalDate.value !== null) dayModalDate.value = null
   else if (overduePopoverOpen.value || balancePopoverOpen.value || moreActionsMenuOpen.value || shortcutsHelpOpen.value) closePopovers()
   else if (sheetOpen.value) sheetOpen.value = false
-  else emit('close')
+  else emit('leave')
 }
 
 function onKeyDown(event: KeyboardEvent) {
   if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
   if (anotherDialogOwnsTheKeyboard()) return
   if (event.key === 'Escape') {
-    if (!props.open) return
     event.preventDefault()
     closeTopmostLayer()
     return
   }
   if (isTypingInAField(event.target)) return
   const key = event.key.toLowerCase()
-  if (key === 't') {
-    event.preventDefault()
-    if (props.open) emit('close')
-    else emit('open')
-    return
-  }
-  if (!props.open) return
   if (key === 'f') {
     event.preventDefault()
     void toggleBrowserFullscreen()
@@ -231,9 +232,12 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', onKeyDown)
   document.addEventListener('fullscreenchange', onFullscreenChange)
+  // The arrow keys work at once: the focus starts on the chart.
+  await nextTick()
+  rootRef.value?.querySelector<HTMLElement>('[data-testid="chart.container"]')?.focus()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown)
@@ -241,38 +245,20 @@ onBeforeUnmount(() => {
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
 })
 
-// --- focus: into the chart on open, back where it was on close -----------------------------------------------
-let focusToRestoreOnClose: HTMLElement | null = null
-watch(() => props.open, async (isOpen) => {
-  if (isOpen) {
-    focusToRestoreOnClose = document.activeElement as HTMLElement | null
-    await nextTick()
-    rootRef.value?.querySelector<HTMLElement>('[data-testid="chart.container"]')?.focus()
-  } else {
-    dayModalDate.value = null
-    closePopovers()
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
-    focusToRestoreOnClose?.focus?.()
-    focusToRestoreOnClose = null
-  }
-}, { immediate: true })
-
 const SHORTCUTS = [
-  { key: 'T', action: 'Theater mode on / off' },
   { key: 'F', action: 'Browser fullscreen' },
   { key: 'L', action: 'Legend' },
   { key: 'D', action: 'Deals & milestones' },
   { key: '← →', action: 'Step through days' },
   { key: 'Enter', action: 'Open the selected day' },
-  { key: 'Esc', action: 'Close the top layer' },
+  { key: 'Esc', action: 'Close the top layer, then leave' },
 ]
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition name="theater-fade">
+    <Transition name="theater-fade" appear>
       <div
-        v-if="open"
         ref="rootRef"
         data-testid="theater.root"
         role="dialog"
@@ -403,7 +389,7 @@ const SHORTCUTS = [
             <UiButton data-testid="theater.add-flow" variant="primary" size="sm" class="gap-1.5 rounded-full shadow-glow-primary" @click="emit('addFlow')">
               <i class="pi pi-plus text-[10px]" aria-hidden="true"></i><span class="hidden sm:inline">Add Flow</span>
             </UiButton>
-            <UiIconButton data-testid="theater.close" label="Exit full screen (Esc)" size="md" @click="emit('close')">
+            <UiIconButton data-testid="theater.close" label="Leave the liquidity timeline (Esc)" size="md" @click="emit('leave')">
               <i class="pi pi-times text-sm" aria-hidden="true"></i>
             </UiIconButton>
           </div>
@@ -419,7 +405,9 @@ const SHORTCUTS = [
                 <span class="font-semibold text-fg">Today's balance</span>
                 <span v-if="store.mercurySyncing" class="text-fg-muted">syncing…</span>
                 <span v-else-if="store.mercuryError" class="text-negative" :title="store.mercuryError">{{ store.mercuryBalance && store.mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}</span>
-                <span v-else-if="store.mercuryBalance" class="text-positive">mercury · {{ store.mercuryBalance.workspace_count }}</span>
+                <span v-else-if="store.mercuryBalance" data-testid="theater.balance-popover.sync" class="text-positive">
+                  mercury · {{ store.mercuryBalance.account_count }} account{{ store.mercuryBalance.account_count === 1 ? '' : 's' }} across {{ store.mercuryBalance.workspace_count }} workspace{{ store.mercuryBalance.workspace_count === 1 ? '' : 's' }}<template v-if="mercurySyncedTime"> · synced {{ mercurySyncedTime }}</template>
+                </span>
               </div>
               <p v-if="!store.mercuryBalance" class="text-xs text-fg-muted">No Mercury balance yet: the timeline starts from the opening balance in Settings.</p>
               <div v-else class="space-y-2">
@@ -499,6 +487,15 @@ const SHORTCUTS = [
               :highlighted-deal-key="highlightedDealKey"
               @open-day="onOpenDay"
             />
+            <div
+              v-if="isLoadingForTheFirstTime"
+              data-testid="liquidity.loading"
+              class="absolute inset-0 z-10 flex items-center justify-center bg-page/60"
+            >
+              <span class="flex items-center gap-2 text-sm text-fg-muted">
+                <i class="pi pi-spin pi-spinner text-primary" aria-hidden="true"></i> Loading liquidity data…
+              </span>
+            </div>
           </div>
 
           <Transition name="theater-legend">
@@ -519,6 +516,7 @@ const SHORTCUTS = [
                 @remove-deal-from-timeline="(deal) => emit('removeDealFromTimeline', deal)"
                 @edit-recurring="(ruleId) => emit('editRecurring', ruleId)"
                 @delete-recurring="(ruleId) => emit('deleteRecurring', ruleId)"
+                @open-day="onOpenDay"
               />
             </div>
           </Transition>
@@ -531,6 +529,7 @@ const SHORTCUTS = [
             @toggle="sheetOpen = !sheetOpen"
             @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"
             @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"
+            @approve-milestone-on-another-date="(deal, milestone) => emit('changeMilestone', deal, milestone, true)"
             @move-milestone="(deal, milestone) => emit('changeMilestone', deal, milestone, false)"
           />
         </div>
@@ -545,6 +544,7 @@ const SHORTCUTS = [
           @close="dayModalDate = null"
           @step-day="stepDayModal"
           @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"
+          @approve-milestone-on-another-date="(deal, milestone) => emit('changeMilestone', deal, milestone, true)"
           @move-milestone="(deal, milestone) => emit('changeMilestone', deal, milestone, false)"
           @edit-txn="(id) => emit('editTxn', id)"
           @delete-txn="(id) => emit('deleteTxn', id)"

@@ -2,7 +2,8 @@
 /**
  * The legend of the full-screen timeline (tasks/todo/LiquidityTheaterMode.md, section C): every deal still in
  * the timeline with its color, a red "N overdue" pill, and, on a click, its overdue rows with their one-tap
- * actions. Hovering a deal highlights its dots on the chart. A deal can be taken out of the timeline from here
+ * actions and all its open rows by month (collapsed; a row opens its day, tasks/todo/LiquidityTheaterOnly.md,
+ * section 3). Hovering a deal highlights its dots on the chart. A deal can be taken out of the timeline from here
  * (the view confirms first). Manual rows are "Other flows"; the recurring series are listed below.
  *
  * Non-modal on purpose: the chart beside it stays interactive.
@@ -16,6 +17,7 @@ import { formatSignedMoney } from '../../../utils/money'
 import { dealKeyOf, NEUTRAL_DEAL_COLOR_HEX, shortDealAddress } from '../dealColors'
 import InlineAmountEditor from '../InlineAmountEditor.vue'
 import TransactionRowActions from '../TransactionRowActions.vue'
+import { groupOpenRowsOfDealByMonth } from './legendRows'
 
 const props = defineProps<{
   importedDeals: ImportedLiquidityDeal[]
@@ -37,6 +39,8 @@ const emit = defineEmits<{
   (e: 'removeDealFromTimeline', deal: ImportedLiquidityDeal): void
   (e: 'editRecurring', ruleId: string): void
   (e: 'deleteRecurring', ruleId: string): void
+  /** Open a day in the day modal (a click on one of a deal's open rows). */
+  (e: 'openDay', date: string): void
 }>()
 
 const dealAttributionLookup = useInjectedDealAttributionLookup()
@@ -71,8 +75,32 @@ const overdueRowCountByDealKey = computed(() => {
 })
 
 const expandedDealKey = ref<string | null>(null)
+const overdueSectionOpen = ref(true)
+const openRowsSectionOpen = ref(false)
+const expandedMonthKeys = ref<string[]>([])
 function toggleDeal(dealKey: string) {
   expandedDealKey.value = expandedDealKey.value === dealKey ? null : dealKey
+  overdueSectionOpen.value = true
+  openRowsSectionOpen.value = false
+  expandedMonthKeys.value = []
+}
+
+/** Every open row of the expanded deal, month by month. */
+const openRowsOfTheExpandedDealByMonth = computed(() =>
+  expandedDealKey.value ? groupOpenRowsOfDealByMonth(props.transactions, expandedDealKey.value) : [])
+const openRowCountOfTheExpandedDeal = computed(() =>
+  openRowsOfTheExpandedDealByMonth.value.reduce((total, month) => total + month.rows.length, 0))
+
+/** Opening the section shows its first month at once. */
+function toggleOpenRowsSection() {
+  openRowsSectionOpen.value = !openRowsSectionOpen.value
+  const firstMonth = openRowsOfTheExpandedDealByMonth.value[0]
+  if (openRowsSectionOpen.value && firstMonth && !expandedMonthKeys.value.length) expandedMonthKeys.value = [firstMonth.monthKey]
+}
+function toggleMonth(monthKey: string) {
+  expandedMonthKeys.value = expandedMonthKeys.value.includes(monthKey)
+    ? expandedMonthKeys.value.filter(expandedMonthKey => expandedMonthKey !== monthKey)
+    : [...expandedMonthKeys.value, monthKey]
 }
 const overdueRowsOfTheExpandedDeal = computed(() => overdueRowsOfEveryDeal.value.filter(({ txn }) =>
   !!txn.source_deal_board && !!txn.source_deal_id && dealKeyOf(txn.source_deal_board, txn.source_deal_id) === expandedDealKey.value))
@@ -138,6 +166,17 @@ function shortDate(isoDate: string): string {
                 >{{ overdueRowCountByDealKey.get(entry.dealKey) }} overdue</span>
                 <i class="pi shrink-0 text-[9px] text-fg-muted" :class="expandedDealKey === entry.dealKey ? 'pi-chevron-up' : 'pi-chevron-down'" aria-hidden="true"></i>
               </button>
+              <UiIconButton
+                v-if="entry.deal.liquidity_rows_out_of_date"
+                data-testid="theater.legend.deal.review-changes-collapsed"
+                size="sm"
+                class="text-warning"
+                :label="`The deal changed: review ${entry.deal.deal_address}'s liquidity rows`"
+                title="The deal changed: review its rows"
+                @click="emit('reviewChanges', entry.deal)"
+              >
+                <i class="pi pi-exclamation-triangle text-[10px]" aria-hidden="true"></i>
+              </UiIconButton>
               <RouterLink
                 :to="boardLink(entry.deal)"
                 class="flex h-7 w-7 shrink-0 items-center justify-center rounded-ctl text-fg-muted hover:bg-surface hover:text-primary"
@@ -163,7 +202,9 @@ function shortDate(isoDate: string): string {
               <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-fg-muted">
                 <UiBadge tone="neutral" class="px-1.5 py-0 text-[10px]">{{ entry.deal.deal_board === 'bought' ? 'Bought' : 'My Deals' }}</UiBadge>
                 <span>{{ entry.deal.open_row_count }} open · {{ entry.deal.done_row_count }} done</span>
-                <UiBadge v-if="entry.deal.refi_is_late" tone="warning" class="px-1.5 py-0 text-[10px]">Refi late</UiBadge>
+                <UiBadge v-if="entry.deal.refi_is_late" data-testid="theater.legend.deal.refi-late" tone="warning" class="px-1.5 py-0 text-[10px]">
+                  Refi late · {{ entry.deal.late_refi_row_count }} added row{{ entry.deal.late_refi_row_count === 1 ? '' : 's' }}
+                </UiBadge>
                 <button
                   v-if="entry.deal.liquidity_rows_out_of_date"
                   type="button"
@@ -172,9 +213,19 @@ function shortDate(isoDate: string): string {
                   @click="emit('reviewChanges', entry.deal)"
                 >Out of date · Review changes</button>
               </div>
-              <p v-if="!overdueRowsOfTheExpandedDeal.length" class="text-xs text-fg-muted">Nothing overdue on this deal.</p>
+              <button
+                type="button"
+                data-testid="theater.legend.deal.overdue-section"
+                class="flex w-full items-center justify-between gap-2 rounded-ctl px-1 py-0.5 text-left text-[10px] font-semibold uppercase tracking-wider text-fg-muted hover:text-fg"
+                :aria-expanded="overdueSectionOpen"
+                @click="overdueSectionOpen = !overdueSectionOpen"
+              >
+                <span>Overdue ({{ overdueRowsOfTheExpandedDeal.length }})</span>
+                <i class="pi text-[9px]" :class="overdueSectionOpen ? 'pi-chevron-up' : 'pi-chevron-down'" aria-hidden="true"></i>
+              </button>
+              <p v-if="overdueSectionOpen && !overdueRowsOfTheExpandedDeal.length" class="px-1 text-xs text-fg-muted">Nothing overdue on this deal.</p>
               <div
-                v-for="row in overdueRowsOfTheExpandedDeal"
+                v-for="row in overdueSectionOpen ? overdueRowsOfTheExpandedDeal : []"
                 :key="row.txn.id"
                 :data-testid="`theater.legend.overdue-row.${row.txn.id}`"
                 class="rounded-ctl bg-surface px-3 py-2"
@@ -199,6 +250,50 @@ function shortDate(isoDate: string): string {
                   @move-to-date="(id, date) => emit('moveToDate', id, date)"
                 />
               </div>
+
+              <!-- Every open row of the deal, month by month: one compact line each, a click opens its day. -->
+              <button
+                type="button"
+                data-testid="theater.legend.deal.open-rows-section"
+                class="flex w-full items-center justify-between gap-2 rounded-ctl px-1 py-0.5 text-left text-[10px] font-semibold uppercase tracking-wider text-fg-muted hover:text-fg"
+                :aria-expanded="openRowsSectionOpen"
+                @click="toggleOpenRowsSection"
+              >
+                <span>Open rows ({{ openRowCountOfTheExpandedDeal }})</span>
+                <i class="pi text-[9px]" :class="openRowsSectionOpen ? 'pi-chevron-up' : 'pi-chevron-down'" aria-hidden="true"></i>
+              </button>
+              <ul v-if="openRowsSectionOpen" data-testid="theater.legend.deal.open-rows" class="space-y-1">
+                <li v-for="month in openRowsOfTheExpandedDealByMonth" :key="month.monthKey" data-testid="theater.legend.open-rows-month" :data-month="month.monthKey">
+                  <button
+                    type="button"
+                    data-testid="theater.legend.open-rows-month.toggle"
+                    class="flex w-full items-center gap-2 rounded-ctl bg-surface px-2 py-1 text-left text-[11px] hover:bg-surface-3"
+                    :aria-expanded="expandedMonthKeys.includes(month.monthKey)"
+                    @click="toggleMonth(month.monthKey)"
+                  >
+                    <i class="pi text-[8px] text-fg-muted" :class="expandedMonthKeys.includes(month.monthKey) ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
+                    <span class="font-semibold text-fg">{{ month.monthLabel }}</span>
+                    <span class="flex-1 text-fg-muted">· {{ month.rows.length }} row{{ month.rows.length === 1 ? '' : 's' }}</span>
+                    <span class="numeric font-semibold" :class="month.netDollars < 0 ? 'text-negative' : 'text-positive'">{{ formatSignedMoney(month.netDollars) }}</span>
+                  </button>
+                  <ul v-if="expandedMonthKeys.includes(month.monthKey)" class="mt-0.5 space-y-px pl-3">
+                    <li v-for="transaction in month.rows" :key="transaction.id">
+                      <button
+                        type="button"
+                        :data-testid="`theater.legend.open-row.${transaction.id}`"
+                        class="flex w-full items-center gap-2 rounded-ctl px-2 py-0.5 text-left text-[11px] hover:bg-surface"
+                        :title="`Open ${shortDate(transaction.effective_date)}`"
+                        @click="emit('openDay', transaction.effective_date)"
+                      >
+                        <span class="w-11 shrink-0 tabular-nums text-fg-muted">{{ shortDate(transaction.effective_date) }}</span>
+                        <i v-if="transaction.created_because_refi_is_late" class="pi pi-clock shrink-0 text-[9px] text-warning" title="Added while the refi is late" aria-hidden="true"></i>
+                        <span class="min-w-0 flex-1 truncate text-fg">{{ transaction.description }}</span>
+                        <span class="numeric shrink-0" :class="transaction.amount_dollars < 0 ? 'text-negative' : 'text-positive'">{{ formatSignedMoney(transaction.amount_dollars) }}</span>
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
             </div>
           </li>
           <li v-if="openManualRowCount" data-testid="theater.legend.other-flows" class="flex items-center gap-2 px-2 py-1.5">

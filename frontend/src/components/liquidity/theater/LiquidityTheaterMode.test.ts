@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mount, RouterLinkStub } from "@vue/test-utils";
+import { enableAutoUnmount, mount, RouterLinkStub } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 
 import LiquidityTheaterMode from "./LiquidityTheaterMode.vue";
@@ -11,9 +11,9 @@ const HEADLINE_FIGURES = {
   daysToNegative: "None", daysTone: "positive", reserve: "$5,000",
 };
 
-function mountTheater(props: Partial<{ open: boolean; isAnotherDialogOpen: boolean }> = {}) {
+function mountTheater(props: Partial<{ isAnotherDialogOpen: boolean }> = {}) {
   return mount(LiquidityTheaterMode, {
-    props: { open: true, headlineFigures: HEADLINE_FIGURES, isAnotherDialogOpen: false, ...props },
+    props: { headlineFigures: HEADLINE_FIGURES, isAnotherDialogOpen: false, ...props },
     global: { stubs: { teleport: true, RouterLink: RouterLinkStub } },
     attachTo: document.body,
   });
@@ -25,6 +25,11 @@ function pressKey(key: string, target: EventTarget = window) {
   return event;
 }
 
+const sheetToggle = (wrapper: ReturnType<typeof mountTheater>) => wrapper.get('[data-testid="theater.sheet.toggle"]');
+
+// A test that fails must not leave its window key listener behind for the next one.
+enableAutoUnmount(afterEach);
+
 describe("LiquidityTheaterMode", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -34,55 +39,54 @@ describe("LiquidityTheaterMode", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("renders nothing while closed, and the full-screen frame while open", () => {
-    const closed = mountTheater({ open: false });
-    expect(closed.find('[data-testid="theater.root"]').exists()).toBe(false);
-    closed.unmount();
-    const open = mountTheater();
-    expect(open.get('[data-testid="theater.root"]').attributes("aria-modal")).toBe("true");
-    expect(open.get('[data-testid="theater.figure.balance"]').text()).toContain("$42,106");
-    open.unmount();
+  it("is the full-screen frame from the first render", () => {
+    const wrapper = mountTheater();
+    expect(wrapper.get('[data-testid="theater.root"]').attributes("aria-modal")).toBe("true");
+    expect(wrapper.get('[data-testid="theater.figure.balance"]').text()).toContain("$42,106");
   });
 
-  it("leaves on × and on Esc", async () => {
+  it("leaves the page on × and on Esc", async () => {
     const wrapper = mountTheater();
     await wrapper.get('[data-testid="theater.close"]').trigger("click");
     pressKey("Escape");
-    expect(wrapper.emitted("close")).toHaveLength(2);
-    wrapper.unmount();
+    expect(wrapper.emitted("leave")).toHaveLength(2);
   });
 
   it("closes the deals sheet with Esc before leaving", async () => {
     const wrapper = mountTheater();
-    await wrapper.get('[data-testid="theater.sheet.toggle"]').trigger("click");
-    expect(wrapper.get('[data-testid="theater.sheet.toggle"]').attributes("aria-expanded")).toBe("true");
+    await sheetToggle(wrapper).trigger("click");
+    expect(sheetToggle(wrapper).attributes("aria-expanded")).toBe("true");
     pressKey("Escape");
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('[data-testid="theater.sheet.toggle"]').attributes("aria-expanded")).toBe("false");
-    expect(wrapper.emitted("close")).toBeUndefined();
+    expect(sheetToggle(wrapper).attributes("aria-expanded")).toBe("false");
+    expect(wrapper.emitted("leave")).toBeUndefined();
     pressKey("Escape");
-    expect(wrapper.emitted("close")).toHaveLength(1);
-    wrapper.unmount();
+    expect(wrapper.emitted("leave")).toHaveLength(1);
   });
 
-  it("leaves Esc and the shortcuts to another open dialog", () => {
+  it("leaves Esc and the shortcuts to another open dialog", async () => {
     const wrapper = mountTheater({ isAnotherDialogOpen: true });
     pressKey("Escape");
-    pressKey("t");
-    expect(wrapper.emitted("close")).toBeUndefined();
-    wrapper.unmount();
+    pressKey("d");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("leave")).toBeUndefined();
+    expect(sheetToggle(wrapper).attributes("aria-expanded")).toBe("false");
   });
 
-  it("opens on T from the page, and ignores T typed into a field", () => {
-    const wrapper = mountTheater({ open: false });
+  it("ignores a shortcut typed into a field", async () => {
+    const wrapper = mountTheater();
     const input = document.createElement("input");
     document.body.appendChild(input);
-    pressKey("t", input);
-    expect(wrapper.emitted("open")).toBeUndefined();
-    pressKey("t");
-    expect(wrapper.emitted("open")).toHaveLength(1);
+    pressKey("d", input);
+    await wrapper.vm.$nextTick();
+    expect(sheetToggle(wrapper).attributes("aria-expanded")).toBe("false");
     input.remove();
-    wrapper.unmount();
+  });
+
+  it("has no T shortcut: the theater is the page", () => {
+    const wrapper = mountTheater();
+    pressKey("t");
+    expect(wrapper.emitted("leave")).toBeUndefined();
   });
 
   it("toggles the legend on L and the deals sheet on D", async () => {
@@ -93,8 +97,29 @@ describe("LiquidityTheaterMode", () => {
     expect(wrapper.find('[data-testid="theater.legend"]').exists()).toBe(!legendOpenAtFirst);
     pressKey("d");
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('[data-testid="theater.sheet.toggle"]').attributes("aria-expanded")).toBe("true");
-    wrapper.unmount();
+    expect(sheetToggle(wrapper).attributes("aria-expanded")).toBe("true");
+  });
+
+  it("shows a spinner during the first load only", async () => {
+    const store = useLiquidityStore();
+    store.loading = true;
+    const wrapper = mountTheater();
+    expect(wrapper.find('[data-testid="liquidity.loading"]').exists()).toBe(true);
+    store.transactions = [{ id: "u", effective_date: "2026-11-10", description: "Plumber", amount_dollars: -80 }];
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-testid="liquidity.loading"]').exists()).toBe(false);
+  });
+
+  it("shows when Mercury last synced in the balance popover", async () => {
+    const store = useLiquidityStore();
+    store.mercuryBalance = {
+      total_balance_dollars: 42106, total_available_dollars: 42106, account_count: 3, workspace_count: 1,
+      workspaces: [], workspace_errors: [], accounts: [], counted_as_cash_balance_dollars: 42106, mercury_account_ids_counted_as_cash: null,
+    };
+    store.mercuryLastSyncedAt = new Date(2026, 10, 3, 9, 5).toISOString();
+    const wrapper = mountTheater();
+    await wrapper.get('[data-testid="theater.figure.balance"]').trigger("click");
+    expect(wrapper.get('[data-testid="theater.balance-popover.sync"]').text()).toBe("mercury · 3 accounts across 1 workspace · synced 09:05");
   });
 
   it("shows the overdue chip and its popover from the store's overdue rows", async () => {
@@ -106,6 +131,5 @@ describe("LiquidityTheaterMode", () => {
     expect(chip.text()).toContain("1 overdue");
     await chip.trigger("click");
     expect(wrapper.get('[data-testid="theater.overdue-popover"]').text()).toContain("Utilities");
-    wrapper.unmount();
   });
 });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, toRef } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import { provideLiquidityDealAttribution } from '../composables/useLiquidityDealAttribution'
 import { useOneTapMilestoneApproval } from '../composables/useOneTapMilestoneApproval'
@@ -16,14 +16,9 @@ import type {
 } from '../types/liquidity'
 import { addDays, requiresSimulation, todayISO } from '../utils/liquidityEngine'
 import { formatMoney } from '../utils/money'
-import TimelineChart from '../components/liquidity/TimelineChart.vue'
-import LiquiditySidebar from '../components/liquidity/LiquiditySidebar.vue'
-import DayDetail from '../components/liquidity/DayDetail.vue'
 import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
-import OverdueTransactionsStrip from '../components/liquidity/OverdueTransactionsStrip.vue'
-import LiquidityDealsPanel from '../components/liquidity/LiquidityDealsPanel.vue'
 import DealMilestoneChangeModal from '../components/liquidity/DealMilestoneChangeModal.vue'
 import DealImportPreviewModal from '../components/liquidity/DealImportPreviewModal.vue'
 import LiquidityTheaterMode from '../components/liquidity/theater/LiquidityTheaterMode.vue'
@@ -34,16 +29,12 @@ const store = useLiquidityStore()
 /** Every row below can show the deal it came from, in that deal's color (done rows of a finished deal too). */
 provideLiquidityDealAttribution(toRef(store, 'importedDeals'))
 
-// --- Theater mode: `?view=theater`, entered and left with `replace` so it adds no history entries ---
-const route = useRoute()
+// --- The page is the theater (tasks/todo/LiquidityTheaterOnly.md): leaving it goes back, or to the Dashboard ---
 const router = useRouter()
-const THEATER_VIEW_QUERY_VALUE = 'theater'
-const theaterModeIsOpen = computed(() => route.query.view === THEATER_VIEW_QUERY_VALUE)
-function openTheaterMode() {
-  if (!theaterModeIsOpen.value) void router.replace({ query: { ...route.query, view: THEATER_VIEW_QUERY_VALUE } })
-}
-function closeTheaterMode() {
-  if (theaterModeIsOpen.value) void router.replace({ query: { ...route.query, view: undefined } })
+function leaveLiquidityPage() {
+  // vue-router records the previous in-app page in history.state.back; a direct link has none.
+  if (window.history.state?.back) router.back()
+  else void router.push('/')
 }
 
 // Save payloads emitted by TransactionForm. Mirrors the discriminated
@@ -71,8 +62,6 @@ type RecurringSavePayload = {
 
 type SavePayload = OneOffSavePayload | RecurringSavePayload
 
-const chartRef = ref<InstanceType<typeof TimelineChart> | null>(null)
-const selectedDate = ref<string | null>(null)
 const formOpen = ref(false)
 const editingTxn = ref<LiquidityTransaction | null>(null)
 const editingRecurring = ref<LiquidityRecurringTransaction | null>(null)
@@ -84,8 +73,6 @@ const warningSeverity = ref<'hard' | 'soft' | 'none'>('none')
 const warningResult = ref<SimulationResult | null>(null)
 const pendingSave = ref<SavePayload | null>(null)
 
-/** Narrow screens: the sidebar is an inline collapsible section instead of a right rail. */
-const sidebarOpen = ref(false)
 
 /** Header KPIs, from the series App already computed — no fetch. */
 const todayIso = todayISO()
@@ -109,35 +96,23 @@ const kpis = computed(() => {
   } as const
 })
 
-/** "HH:MM" of the last Mercury sync, for the balance KPI's status title. */
-const mercurySyncedTime = computed(() => {
-  if (!store.mercuryLastSyncedAt) return null
-  const d = new Date(store.mercuryLastSyncedAt)
-  const h = String(d.getHours()).padStart(2, '0')
-  const m = String(d.getMinutes()).padStart(2, '0')
-  return `${h}:${m}`
-})
 
 const toastMessage = ref('')
 const toastVisible = ref(false)
-/** The toast's "Undo" for a quick row action (Done, a move, an amount); null = no Undo button. */
+/** The toast's action ("Undo" after a quick row action, "Retry" after a failed load); null = no button. */
 const toastUndo = ref<(() => Promise<void>) | null>(null)
+const toastActionLabel = ref('Undo')
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
-const selectedBucket = computed(() => {
-  if (!selectedDate.value) return null
-  return store.series.days.find(d => d.date === selectedDate.value) ?? null
-})
 
-const hasData = computed(() =>
-  store.transactions.length > 0 ||
-  store.recurringRules.length > 0 ||
-  store.settings.opening_balance_dollars !== 0 ||
-  !!store.mercuryBalance
-)
+
+async function loadLiquidityData() {
+  await store.fetchAll()
+  if (store.error) showToast('Failed to load: ' + store.error, loadLiquidityData, 'Retry')
+}
 
 onMounted(async () => {
-  await store.fetchAll()
+  await loadLiquidityData()
   await store.syncFromMercury()
   if (store.mercuryError) {
     showToast('Mercury sync failed: ' + store.mercuryError)
@@ -155,14 +130,10 @@ async function refreshFromMercury() {
   }
 }
 
-function onSelectDay(date: string) {
-  selectedDate.value = date
-}
-
 function openAddForm(date?: string) {
   editingTxn.value = null
   editingRecurring.value = null
-  prefillDate.value = date ?? selectedDate.value
+  prefillDate.value = date ?? null
   formOpen.value = true
 }
 
@@ -478,7 +449,8 @@ async function onUndo() {
   const undo = toastUndo.value
   toastUndo.value = null
   toastVisible.value = false
-  if (undo) await runQuickAction(undo, 'Undone.', null)
+  if (undo && toastActionLabel.value !== 'Undo') await undo()
+  else if (undo) await runQuickAction(undo, 'Undone.', null)
 }
 
 // --- Imported deals: milestones, re-sync after a deal edit, a dead deal ---
@@ -517,9 +489,10 @@ async function onRemoveOpenDealRows(deal: ImportedLiquidityDeal) {
   }
 }
 
-function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
+function showToast(msg: string, undo: (() => Promise<void>) | null = null, actionLabel = 'Undo') {
   toastMessage.value = msg
   toastUndo.value = undo
+  toastActionLabel.value = actionLabel
   toastVisible.value = true
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toastVisible.value = false }, 4000)
@@ -528,289 +501,16 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
 
 <template>
   <!--
-    UI v3: a grid dashboard inside the shell (which owns the viewport, the
-    sticky header and the h1). Hero header → four KPIs (Today's balance
-    carries the Mercury status) → the chart → day detail + the Upcoming
-    sidebar. Below `lg` the sidebar is an inline collapsible section rather
-    than a hidden rail, so every figure is reachable on a phone. Every hook,
-    handler, store call, modal and the 4 s toast are the v1 ones.
-
-    No size, padding or transform transition on the chart panel or any of its
-    ancestors: the chart re-measures itself from a ResizeObserver.
+    The liquidity page is the theater (tasks/todo/LiquidityTheaterOnly.md): the chart over the whole viewport,
+    everything else in its overlays. This view keeps the handlers, the modals and the toast; Esc with nothing
+    open, or ×, leaves the page.
   -->
-  <div class="mx-auto flex w-full max-w-[96rem] flex-col gap-4 px-3 py-4 text-fg sm:px-5 lg:px-6 lg:py-6">
-    <!-- Header: the hero pattern every page shares (eyebrow, title, controls). -->
-    <UiTransition preset="hero" appear>
-      <header class="flex flex-wrap items-end gap-3">
-        <div class="min-w-0 flex-1">
-          <p data-hero="eyebrow" class="numeric text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-            Cash
-          </p>
-          <UiSectionHeader
-            as="h2"
-            data-hero="title"
-            class="[&_[data-part=title]]:font-display [&_[data-part=title]]:text-2xl [&_[data-part=title]]:tracking-display"
-          >
-            Liquidity Timeline
-          </UiSectionHeader>
-        </div>
-
-        <div data-hero="item" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <UiButton data-testid="liquidity.today" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="chartRef?.centerOnToday()">
-            <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
-          </UiButton>
-          <UiButton
-            data-testid="liquidity.theater-open"
-            variant="secondary"
-            size="sm"
-            class="min-h-9 touch:min-h-11 gap-1.5"
-            title="Full screen timeline (T)"
-            @click="openTheaterMode"
-          >
-            <i class="pi pi-window-maximize text-[10px]" aria-hidden="true"></i> Full screen
-          </UiButton>
-          <UiButton
-            data-testid="liquidity.mercury-sync"
-            variant="secondary"
-            size="sm"
-            class="min-h-9 touch:min-h-11 gap-1.5"
-            :disabled="store.mercurySyncing"
-            :title="store.mercuryError ? 'Mercury error: ' + store.mercuryError : 'Re-sync opening balance from Mercury'"
-            @click="refreshFromMercury"
-          >
-            <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-[10px]" aria-hidden="true"></i>
-            {{ store.mercurySyncing ? 'Syncing…' : 'Mercury' }}
-          </UiButton>
-          <UiButton data-testid="liquidity.settings-open" variant="secondary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5" @click="settingsOpen = true">
-            <i class="pi pi-cog text-[10px]" aria-hidden="true"></i> Settings
-          </UiButton>
-          <UiButton data-testid="liquidity.add-flow" variant="primary" size="sm" class="min-h-9 touch:min-h-11 gap-1.5 shadow-glow-primary" @click="openAddForm()">
-            <i class="pi pi-plus text-[10px]" aria-hidden="true"></i> Add Flow
-          </UiButton>
-        </div>
-      </header>
-    </UiTransition>
-
-    <!-- Loading -->
-    <div v-if="store.loading" data-testid="liquidity.loading" class="flex min-h-[40vh] items-center justify-center p-6">
-      <div class="text-center">
-        <i class="pi pi-spin pi-spinner mb-3 text-2xl text-primary" aria-hidden="true"></i>
-        <p class="text-sm text-fg-muted">Loading liquidity data...</p>
-      </div>
-    </div>
-
-    <!-- Error -->
-    <div v-else-if="store.error" data-testid="liquidity.error" class="flex min-h-[40vh] items-center justify-center p-6">
-      <UiSurface :level="1" padding="lg" class="max-w-sm text-center">
-        <i class="pi pi-exclamation-circle mb-3 text-3xl text-negative" aria-hidden="true"></i>
-        <p class="mb-2 text-sm font-semibold text-negative">Failed to load</p>
-        <p class="mb-4 break-words text-xs text-fg-muted">{{ store.error }}</p>
-        <UiButton data-testid="liquidity.retry" variant="secondary" size="sm" class="min-h-9 touch:min-h-11" @click="store.fetchAll()">
-          Retry
-        </UiButton>
-      </UiSurface>
-    </div>
-
-    <!-- Empty state -->
-    <div v-else-if="!hasData && !store.loading" data-testid="liquidity.empty" class="flex min-h-[40vh] items-center justify-center p-6">
-      <UiEmptyState icon="pi pi-chart-line" class="max-w-md">
-        No liquidity data yet
-        <template #description>
-          Set your opening balance and add your first cash flow to get started.
-        </template>
-        <template #actions>
-          <div class="flex flex-wrap justify-center gap-3">
-            <UiButton data-testid="liquidity.empty.settings" variant="secondary" @click="settingsOpen = true">
-              Set Opening Balance
-            </UiButton>
-            <UiButton data-testid="liquidity.empty.add" variant="primary" @click="openAddForm()">
-              Add First Flow
-            </UiButton>
-          </div>
-        </template>
-      </UiEmptyState>
-    </div>
-
-    <!-- Dashboard -->
-    <template v-else>
-      <div v-reveal.stagger class="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <!--
-          Today's balance carries the Mercury status in its footer: the sync
-          line and the per-workspace breakdown that used to be a sidebar card.
-          The `sidebar.*` hooks on them are the e2e's and stay as they were.
-        -->
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.balance" label="Today's balance" :tone="kpis.balanceTone" icon="pi pi-wallet">
-          <template #value><span v-count-up>{{ kpis.balance }}</span></template>
-          <template #footer>
-            <div v-if="store.mercurySyncing" class="flex items-center gap-1 text-[10px] text-fg-muted">
-              <i class="pi pi-spin pi-spinner text-[9px]" aria-hidden="true"></i> syncing
-            </div>
-            <div
-              v-else-if="store.mercuryError"
-              class="flex items-center gap-1 text-[10px] text-negative"
-              :title="store.mercuryError"
-            >
-              <i class="pi pi-exclamation-triangle text-[9px]" aria-hidden="true"></i>
-              {{ store.mercuryBalance && store.mercuryBalance.workspaces.length > 0 ? 'partial sync' : 'mercury offline' }}
-            </div>
-            <div
-              v-else-if="store.mercuryBalance"
-              class="flex items-center gap-1 text-[10px] text-positive"
-              :title="`Synced ${store.mercuryBalance.account_count} account(s) across ${store.mercuryBalance.workspace_count} workspace(s)` + (mercurySyncedTime ? ' at ' + mercurySyncedTime : '')"
-            >
-              <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
-              mercury · {{ store.mercuryBalance.workspace_count }}
-            </div>
-
-            <!-- Per-workspace breakdown -->
-            <div
-              v-if="store.mercuryBalance && store.mercuryBalance.workspaces.length > 0"
-              class="mt-2 space-y-2 border-t border-line pt-2"
-            >
-              <div v-for="ws in store.mercuryBalance.workspaces" :key="ws.workspace" :data-testid="`sidebar.workspace.${ws.workspace}`" class="space-y-0.5">
-                <div class="flex items-center justify-between gap-2 text-[10px]">
-                  <span class="min-w-0 truncate font-semibold uppercase tracking-wide text-fg">{{ ws.workspace }}</span>
-                  <span class="whitespace-nowrap numeric text-fg">{{ formatMoney(ws.total_balance_dollars) }}</span>
-                </div>
-                <div
-                  v-for="a in ws.accounts"
-                  :key="a.id"
-                  :data-testid="`sidebar.account.${a.id}`"
-                  class="flex items-center justify-between gap-2 pl-2 text-[10px] text-fg-muted"
-                >
-                  <span class="min-w-0 truncate pr-1">{{ a.name || a.type || 'Account' }}</span>
-                  <span class="whitespace-nowrap numeric text-fg-muted">{{ formatMoney(a.current_balance_dollars) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Per-workspace errors -->
-            <div
-              v-if="store.mercuryBalance && store.mercuryBalance.workspace_errors.length > 0"
-              class="mt-2 space-y-0.5 border-t border-line pt-2"
-            >
-              <div
-                v-for="err in store.mercuryBalance.workspace_errors"
-                :key="err.workspace"
-                :data-testid="`sidebar.workspace-error.${err.workspace}`"
-                class="flex items-center justify-between gap-2 text-[10px] text-negative"
-                :title="err.error"
-              >
-                <span class="font-semibold uppercase tracking-wide">{{ err.workspace }}</span>
-                <span class="min-w-0 truncate pl-2">{{ err.error }}</span>
-              </div>
-            </div>
-          </template>
-        </UiKpiCard>
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.min" label="Window minimum" :tone="kpis.minTone" icon="pi pi-arrow-down" :delta="kpis.minDate ? `on ${kpis.minDate}` : undefined">
-          <template #value><span v-count-up>{{ kpis.min }}</span></template>
-        </UiKpiCard>
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.negative" label="Days to negative" :value="kpis.daysToNegative" :tone="kpis.daysTone" icon="pi pi-exclamation-triangle" />
-        <UiKpiCard data-reveal data-testid="liquidity.kpi.reserve" label="Reserve floor" icon="pi pi-shield">
-          <template #value><span v-count-up>{{ kpis.reserve }}</span></template>
-        </UiKpiCard>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <!-- Overdue strip + chart + day detail -->
-        <div class="flex min-w-0 flex-col gap-4">
-          <OverdueTransactionsStrip
-            :overdue-money-out="store.overdueMoneyOut"
-            :expected-money-in-not-counted="store.expectedMoneyInNotCounted"
-            @mark-done="onMarkTransactionDone"
-            @move-to-date="onMoveTransactionToDate"
-            @change-amount="onChangeTransactionAmount"
-            @bulk-mark-done="onBulkMarkDone"
-            @bulk-move-to-date="onBulkMoveToDate"
-          />
-          <LiquidityDealsPanel
-            :imported-deals="store.importedDeals"
-            :transactions="store.transactions"
-            @change-milestone="onChangeMilestone"
-            @review-changes="(deal) => (dealToResync = deal)"
-            @remove-open-rows="onRemoveOpenDealRows"
-          />
-          <UiSurface :level="1" padding="none" class="relative overflow-hidden">
-            <UiIconButton
-              data-testid="liquidity.theater-open.chart"
-              label="Open the timeline full screen (T)"
-              title="Full screen (T)"
-              class="absolute bottom-[3.75rem] right-2 z-10 bg-surface/90 shadow-1"
-              @click="openTheaterMode"
-            >
-              <i class="pi pi-expand text-xs" aria-hidden="true"></i>
-            </UiIconButton>
-            <div class="grid h-[340px] min-h-[320px] sm:h-[380px]">
-              <TimelineChart
-                ref="chartRef"
-                :days="store.series.days"
-                :global-min="store.series.globalMin"
-                :global-min-dates="store.series.globalMinDates"
-                :first-negative-date="store.series.firstNegativeDate"
-                :reserve-dollars="store.settings.reserve_dollars"
-                @select-day="onSelectDay"
-              />
-            </div>
-          </UiSurface>
-
-          <div class="max-h-[320px] overflow-y-auto overscroll-contain">
-            <DayDetail
-              v-if="selectedBucket"
-              :bucket="selectedBucket"
-              @edit-txn="openEditForm"
-              @delete-txn="onDeleteTxn"
-              @add-on-date="openAddForm"
-              @mark-done="onMarkTransactionDone"
-              @move-to-date="onMoveTransactionToDate"
-              @change-amount="onChangeTransactionAmount"
-            />
-            <UiSurface v-else :level="2" padding="md" class="text-center text-xs text-fg-muted">
-              Click or arrow-key to a day to see details
-            </UiSurface>
-          </div>
-        </div>
-
-        <!-- Sidebar (Upcoming): right rail on lg+, inline collapsible below -->
-        <aside aria-label="Upcoming" class="min-w-0">
-          <UiButton
-            data-testid="liquidity.sidebar-toggle"
-            variant="secondary"
-            block
-            class="lg:hidden"
-            :aria-expanded="sidebarOpen"
-            aria-controls="liquidity-sidebar"
-            @click="sidebarOpen = !sidebarOpen"
-          >
-            <i :class="sidebarOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs" aria-hidden="true"></i>
-            {{ sidebarOpen ? 'Hide overview' : 'Show overview' }}
-          </UiButton>
-          <div id="liquidity-sidebar" :class="sidebarOpen ? 'mt-3 block' : 'hidden lg:block'">
-            <LiquiditySidebar
-              :series="store.series"
-              :settings="store.settings"
-              :transactions="store.transactions"
-              :recurring-rules="store.recurringRules"
-              :mercury-balance="store.mercuryBalance"
-              :mercury-syncing="store.mercurySyncing"
-              :mercury-error="store.mercuryError"
-              :mercury-last-synced-at="store.mercuryLastSyncedAt"
-              @edit-recurring="openEditRecurring"
-              @delete-recurring="onDeleteRecurringRule"
-            />
-          </div>
-        </aside>
-      </div>
-    </template>
-
-    <!-- Theater mode: the chart over the whole viewport, everything else in overlays -->
+  <div class="text-fg">
     <LiquidityTheaterMode
-      v-if="hasData"
-      :open="theaterModeIsOpen"
       :headline-figures="kpis"
       :is-another-dialog-open="anotherLiquidityDialogIsOpen"
       :milestone-key-being-approved="milestoneKeyBeingApproved"
-      @open="openTheaterMode"
-      @close="closeTheaterMode"
+      @leave="leaveLiquidityPage"
       @add-flow="(date) => openAddForm(date)"
       @edit-txn="openEditForm"
       @delete-txn="onDeleteTxn"
@@ -878,7 +578,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
       <div
         v-if="toastVisible"
         data-testid="liquidity.toast"
-        class="fixed inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-50 mx-auto w-fit max-w-[min(28rem,calc(100%-2rem))] rounded-card border-ui border-line bg-surface px-4 py-2.5 text-xs text-fg shadow-3"
+        class="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 mx-auto w-fit max-w-[min(28rem,calc(100%-2rem))] rounded-card border-ui border-line bg-surface px-4 py-2.5 text-xs text-fg shadow-3"
       >
         <span>{{ toastMessage }}</span>
         <button
@@ -887,7 +587,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
           data-testid="liquidity.toast.undo"
           class="ml-3 font-semibold text-primary hover:text-primary-hover"
           @click="onUndo"
-        >Undo</button>
+        >{{ toastActionLabel }}</button>
       </div>
     </Transition>
   </div>

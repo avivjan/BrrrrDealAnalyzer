@@ -3,7 +3,8 @@
  * The bottom of the full-screen timeline (tasks/todo/LiquidityTheaterMode.md, section D): a collapsed bar that
  * slides a sheet up with one card per deal in the timeline, side by side. Each card lists the deal's five
  * milestones in date order with a Done button (approve it on its planned date; the view decides whether the
- * before -> after list needs a look first) and Move. A done milestone is muted.
+ * before -> after list needs a look first), "Done on another date…" (the date picker, then the list) and Move.
+ * A done milestone is muted.
  *
  * The sheet moves with `transform` only and sits over the chart, so the chart never resizes.
  */
@@ -25,6 +26,7 @@ const emit = defineEmits<{
   (e: 'toggle'): void
   (e: 'highlightDeal', dealKey: string | null): void
   (e: 'approveMilestone', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
+  (e: 'approveMilestoneOnAnotherDate', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
   (e: 'moveMilestone', deal: ImportedLiquidityDeal, milestone: DealMilestone): void
 }>()
 
@@ -95,7 +97,7 @@ function scrollCarousel(direction: -1 | 1) {
           :key="card.dealKey"
           data-testid="theater.sheet.deal"
           :data-deal-key="card.dealKey"
-          class="w-[19rem] shrink-0 snap-start rounded-card border-ui border-line bg-surface p-3 shadow-1"
+          class="w-[20.5rem] shrink-0 snap-start rounded-card border-ui border-line bg-surface p-3 shadow-1"
           :style="{ boxShadow: `inset 0 3px 0 ${card.dealColorHex}` }"
           @mouseenter="emit('highlightDeal', card.dealKey)"
           @mouseleave="emit('highlightDeal', null)"
@@ -139,6 +141,16 @@ function scrollCarousel(direction: -1 | 1) {
                 <i :class="milestoneKeyBeingApproved === milestoneKey(card.dealKey, state) ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-[9px]" aria-hidden="true"></i>
                 Done
               </UiButton>
+              <UiIconButton
+                v-if="!state.approved_at"
+                data-testid="theater.sheet.milestone.done-on-date"
+                :label="`Done on another date: ${DEAL_MILESTONE_LABELS[state.milestone]} of ${card.deal.deal_address}`"
+                title="Done on another date…"
+                class="text-positive"
+                @click="emit('approveMilestoneOnAnotherDate', card.deal, state.milestone)"
+              >
+                <i class="pi pi-calendar-plus text-[10px]" aria-hidden="true"></i>
+              </UiIconButton>
               <UiButton
                 data-testid="theater.sheet.milestone.move"
                 size="sm"
