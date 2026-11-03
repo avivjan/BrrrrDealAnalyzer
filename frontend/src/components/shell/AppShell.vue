@@ -14,7 +14,7 @@
  * collapsed: an animated width would make the liquidity chart's
  * ResizeObserver repaint through the whole transition.
  */
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { cn } from "../../design/cn";
@@ -23,6 +23,7 @@ import AppSettings from "./AppSettings.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppTopbar from "./AppTopbar.vue";
 import CommandPalette from "./CommandPalette.vue";
+import { OPEN_COMMAND_PALETTE_INJECTION_KEY } from "./commandPaletteInjection";
 import { navItemForPath } from "./nav";
 
 const SIDEBAR_STORAGE_KEY = "bw.sidebar";
@@ -38,6 +39,11 @@ function readCollapsed(): boolean {
 const collapsed = ref(readCollapsed());
 const paletteOpen = ref(false);
 const settingsOpen = ref(false);
+
+// A full-screen view that covers the topbar still offers search through this.
+provide(OPEN_COMMAND_PALETTE_INJECTION_KEY, () => {
+  paletteOpen.value = true;
+});
 
 function setCollapsed(value: boolean) {
   collapsed.value = value;
