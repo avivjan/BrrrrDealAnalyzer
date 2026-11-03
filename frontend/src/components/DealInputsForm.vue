@@ -187,9 +187,9 @@ const isPhaseTabActive = (key: PhaseTabKey) => activePhaseTabKey.value === key;
  * its fields is still empty or 0.
  */
 const NEEDED_FIELDS_BY_PHASE_TAB: Record<PhaseTabKey, readonly NumericKey[]> = {
-  buy: ["purchasePrice"],
+  buy: ["purchasePrice", "annual_insurance"],
   rehab: ["rehabCost"],
-  rentHolding: ["rent", "annual_property_taxes", "annual_insurance"],
+  rentHolding: ["rent", "annual_property_taxes"],
   refinance: ["arv_in_thousands"],
   buyRehab: ["purchasePrice", "rehabCost"],
   flipStrategy: ["salePrice"],

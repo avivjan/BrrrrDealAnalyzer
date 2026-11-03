@@ -11,6 +11,10 @@ import {
   sellerTaxCredit,
   sellerTaxCreditProratedDays,
   titleEscrowBuyDefault,
+  titleEscrowBuyItemizedDefault,
+  floridaOwnersTitlePolicyPremium,
+  lendersTitlePolicyAndEndorsements,
+  wePayAllExtraClosingCost,
 } from "./brrrAutoCalc";
 import type { DealInputModel } from "../types";
 
@@ -63,10 +67,10 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
     expect(autoCalc.sellerPaidCurrentYearTaxesEffective).toBe(false);
     expectCloseToTheCent(autoCalc.deedTransferTaxBuy, 0);
     expectCloseToTheCent(autoCalc.recordingTransferBuyEffective, 250 + 0.0055 * 215_000); // the WHOLE hard-money loan
-    expectCloseToTheCent(autoCalc.titleEscrowBuyEffective, 1000);
+    expectCloseToTheCent(autoCalc.titleEscrowBuyEffective, 925); // $600 office fees + $250 + $15k above the price × $5/$1k
     expectCloseToTheCent(autoCalc.insuranceBillAtPurchaseInsideClosing, 1200);
-    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 4782.5); // includes the $1,200 insurance bill paid inside the closing
-    expectCloseToTheCent(autoCalc.cashToCloseBuy, 45439.01);
+    expectCloseToTheCent(autoCalc.closingCostsBuyTotal, 4707.5); // includes the $1,200 insurance bill paid inside the closing
+    expectCloseToTheCent(autoCalc.cashToCloseBuy, 45364.01);
   });
 
   it("the tax bucket and the regular-year tax", () => {
@@ -102,7 +106,7 @@ describe("brrrAutoCalc — parity with the backend engine", () => {
 
   it("the insurance and tax pickers move the bills between the settlements and the pocket", () => {
     const outside = brrrAutoCalc({ ...FIXTURE, insurancePurchaseBillPaymentTiming: "outside_purchase_closing", insuranceRefiBillPaymentTiming: "outside_refi_closing" });
-    expectCloseToTheCent(outside.closingCostsBuyTotal, 3582.5);
+    expectCloseToTheCent(outside.closingCostsBuyTotal, 3507.5);
     expectCloseToTheCent(outside.cashOutWire, 12360.42 + 1200);
     const lenderCollectsTheTax = brrrAutoCalc({ ...FIXTURE, propertyTaxCollectionAtRefi: "full_tax_bill_collected_at_refi" });
     expectCloseToTheCent(lenderCollectsTheTax.propertyTaxLumpSumAtRefiClosingEffective, 3600);
@@ -160,10 +164,10 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     const wePayAll = brrrAutoCalc({ ...FIXTURE, titleModeBuy: "we_pay_all" });
     expectCloseToTheCent(wePayAll.deedTransferTaxBuy, 0.007 * 200_000);
     expectCloseToTheCent(wePayAll.recordingTransferBuyEffective, 250 + 0.0055 * 215_000 + 1400);
-    expectCloseToTheCent(wePayAll.titleEscrowBuyEffective, 2200);
-    // the premium is the same whichever mode is selected: (2200 - 1000) + 1400
-    expectCloseToTheCent(wePayAll.wePayAllExtraClosingCost, 2600);
-    expectCloseToTheCent(brrrAutoCalc(FIXTURE).wePayAllExtraClosingCost, 2600);
+    expectCloseToTheCent(wePayAll.titleEscrowBuyEffective, 2000); // 925 + the owner's policy on $200k ($575 + $500)
+    // the premium is the same whichever mode is selected: the owner's policy 1075 + the deed tax 1400
+    expectCloseToTheCent(wePayAll.wePayAllExtraClosingCost, 2475);
+    expectCloseToTheCent(brrrAutoCalc(FIXTURE).wePayAllExtraClosingCost, 2475);
   });
 
   it("the notary fee defaults to $250, can be typed, and is $0 when the checkbox is off", () => {
@@ -178,7 +182,7 @@ describe("brrrAutoCalc — figures appear only once their inputs exist", () => {
     expect(autoCalc.recordingTransferBuyEffective).toBe(1234);
     expect(autoCalc.lowestArvEffective).toBe(250_000);
     expect(autoCalc.vacancyReserveEffective).toBe(0);
-    expect(autoCalc.titleEscrowBuyEffective).toBe(2200);
+    expect(autoCalc.titleEscrowBuyEffective).toBeCloseTo(2000, 10); // untyped: the Florida estimate with the owner's policy
   });
 
   it("computes nothing from a lowest ARV that is above the ARV or not positive", () => {
@@ -267,7 +271,27 @@ describe("date helpers", () => {
     expect(sellerTaxCredit(3650, parseIsoDate("2026-12-15")!, true)).toBeCloseTo((-3650 * 17) / 365, 6);
     expect(sellerTaxCredit(3650, parseIsoDate("2024-02-29")!, false)).toBeCloseTo((3650 * 59) / 366, 6);
   });
-  it.each([[149_999, 2050], [150_000, 2200], [200_000, 2200], [200_001, 2400]])("we-pay-all title tier at $%s is $%s", (price, fee) => {
-    expect(titleEscrowBuyDefault("we_pay_all", price)).toBe(fee);
+});
+
+describe("Florida title & escrow estimate (mirror of the backend's title_escrow_buy_itemized_default)", () => {
+  it("is exactly $1,540 on a $100k purchase with a $123k hard-money loan when we pay all closing costs", () => {
+    const itemized = titleEscrowBuyItemizedDefault("we_pay_all", 100_000, 123_000);
+    expect(itemized.titleOfficeAndSearchFees).toBe(600);
+    expect(itemized.ownersTitlePolicyPremium).toBeCloseTo(575, 10);
+    expect(itemized.lendersTitlePolicyAndEndorsements).toBeCloseTo(365, 10);
+    expect(itemized.total).toBeCloseTo(1540, 10);
+  });
+  it("leaves the owner's policy to the seller on a standard deal: $965", () => {
+    expect(titleEscrowBuyDefault("standard", 100_000, 123_000)).toBeCloseTo(965, 10);
+    expect(titleEscrowBuyItemizedDefault("standard", 100_000, 123_000).ownersTitlePolicyPremium).toBe(0);
+  });
+  it.each([[80_000, 460], [100_000, 575], [250_000, 1325]])("owner's policy on a $%s price is $%s", (price, premium) => {
+    expect(floridaOwnersTitlePolicyPremium(price)).toBeCloseTo(premium, 10);
+  });
+  it.each([72_000, 100_000])("the lender's policy is $250 flat when the $%s loan does not exceed the price", (loanAmount) => {
+    expect(lendersTitlePolicyAndEndorsements(loanAmount, 100_000)).toBe(250);
+  });
+  it("paying all closing costs adds the owner's policy and the deed transfer tax", () => {
+    expect(wePayAllExtraClosingCost(100_000)).toBeCloseTo(575 + 700, 10);
   });
 });

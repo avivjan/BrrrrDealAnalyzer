@@ -161,12 +161,12 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
         DealInputGroup("Operating Expenses (% of rent or $ per month)", (
             DealInputField("vacancyPercent", "Vacancy", "percent", shown_when=_is_blank("monthlyVacancyReserveDollars")),
             DealInputField("monthlyVacancyReserveDollars", "Vacancy", "money", value_suffix="/mo", shown_when=_is_typed("monthlyVacancyReserveDollars")),
-            DealInputField("maintenancePercent", "Maint.", "percent", shown_when=_is_blank("monthlyMaintenanceReserveDollars")),
-            DealInputField("monthlyMaintenanceReserveDollars", "Maint.", "money", value_suffix="/mo", shown_when=_is_typed("monthlyMaintenanceReserveDollars")),
+            DealInputField("maintenancePercent", "Maintenance", "percent", shown_when=_is_blank("monthlyMaintenanceReserveDollars")),
+            DealInputField("monthlyMaintenanceReserveDollars", "Maintenance", "money", value_suffix="/mo", shown_when=_is_typed("monthlyMaintenanceReserveDollars")),
             DealInputField("capexPercent", "CapEx", "percent", shown_when=_is_blank("monthlyCapexReserveDollars")),
             DealInputField("monthlyCapexReserveDollars", "CapEx", "money", value_suffix="/mo", shown_when=_is_typed("monthlyCapexReserveDollars")),
-            DealInputField("property_managment_fee_precentages_from_rent", "Prop. Mgmt", "percent", shown_when=_is_blank("monthlyPropertyManagementFeeDollars")),
-            DealInputField("monthlyPropertyManagementFeeDollars", "Prop. Mgmt", "money", value_suffix="/mo", shown_when=_is_typed("monthlyPropertyManagementFeeDollars")),
+            DealInputField("property_managment_fee_precentages_from_rent", "Prop. Management", "percent", shown_when=_is_blank("monthlyPropertyManagementFeeDollars")),
+            DealInputField("monthlyPropertyManagementFeeDollars", "Prop. Management", "money", value_suffix="/mo", shown_when=_is_typed("monthlyPropertyManagementFeeDollars")),
         )),
         DealInputGroup("Regular year after the refi", (
             DealInputField("monthlyInsuranceAfterRefi", "Insurance per Month after Refi", "money", value_suffix="/mo",

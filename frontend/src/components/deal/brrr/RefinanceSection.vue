@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * BRRRR › Refinance: the new loan, its settlement lines (the insurance bill and the tax lump when
- * the lender collects them), what is paid outside the closing, the regular-year insurance, the
- * reserves the owner sets aside, and the two wires. The wires are the settlement statement's
+ * the lender collects them), what is paid outside the closing, the reserves the owner sets aside,
+ * and the two wires (the regular-year insurance and tax are on Rent & Holding). The wires are the settlement statement's
  * "Due to Borrower": the reserves are the owner's own money and never come off them.
  */
 import { computed, useId } from "vue";
@@ -11,6 +11,7 @@ import { useDealField, type DealInputFieldKey } from "../../../composables/useDe
 import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
+import { recordingTransferRefiEstimateExplanationLines, titleEscrowRefiEstimateExplanationLines } from "../../../utils/closingCostEstimateExplanations";
 import MoneyInput from "../../ui/MoneyInput.vue";
 import NumberInput from "../../ui/NumberInput.vue";
 import SliderField from "../../ui/SliderField.vue";
@@ -29,6 +30,12 @@ const props = defineProps<{
 }>();
 const field = useDealField(props.deal);
 const autoCalc = computed(() => brrrAutoCalc(props.deal));
+const recordingTransferRefiExplanationLines = computed(() =>
+  recordingTransferRefiEstimateExplanationLines(autoCalc.value.refiLoanAmount, autoCalc.value.recordingTransferRefiDefault),
+);
+const titleEscrowRefiExplanationLines = computed(() =>
+  titleEscrowRefiEstimateExplanationLines(autoCalc.value.refiLoanAmount, autoCalc.value.titleEscrowRefiDefault),
+);
 
 const UNDERWRITING_PRESETS = [
   { label: "MyLoanPathway", value: 2240 },
@@ -156,6 +163,7 @@ const prepaidInterestHint = computed(() =>
             @update:model-value="(v: number | null) => field.setNullable('recordingTransferRefi', v)"
             label="Recording & Transfer (Refi)"
             :info="impactText('recordingTransferRefi')"
+            :estimate-explanation-lines="recordingTransferRefiExplanationLines"
           />
           <AutoDefaultMoneyInput
             data-testid="form.field.titleEscrowRefi"
@@ -165,6 +173,7 @@ const prepaidInterestHint = computed(() =>
             @update:model-value="(v: number | null) => field.setNullable('titleEscrowRefi', v)"
             label="Title & Escrow / Settlement (Refi)"
             :info="impactText('titleEscrowRefi')"
+            :estimate-explanation-lines="titleEscrowRefiExplanationLines"
           />
           <div class="flex flex-col gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryRefi">
             <div class="flex items-center gap-2">
@@ -304,23 +313,6 @@ const prepaidInterestHint = computed(() =>
             :info="impactText('surveyFee')"
             note="$385 · $450 · $485 seen"
           />
-        </div>
-      </div>
-
-      <!-- A regular year after the refi -->
-      <div class="my-2 border-t border-line pt-4 md:col-span-2">
-        <UiSectionHeader as="h4" class="mb-3">Regular year after the refi</UiSectionHeader>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AutoDefaultMoneyInput
-            data-testid="form.field.monthlyInsuranceAfterRefi"
-            :error-message="fieldErrorMessages?.monthlyInsuranceAfterRefi"
-            :model-value="field.getNullable('monthlyInsuranceAfterRefi')"
-            :computed-default="autoCalc.monthlyInsuranceAfterRefiDefault"
-            @update:model-value="(v: number | null) => field.setNullable('monthlyInsuranceAfterRefi', v)"
-            label="Insurance per Month after Refi"
-            :info="impactText('monthlyInsuranceAfterRefi')"
-          />
-          <AutoFigure data-testid="form.auto.monthlyPropertyTaxAfterRefi" label="Property tax per month" :value="autoCalc.monthlyPropertyTaxAfterRefi" hint="this year's bill × 0.96 ÷ 12" />
         </div>
       </div>
 

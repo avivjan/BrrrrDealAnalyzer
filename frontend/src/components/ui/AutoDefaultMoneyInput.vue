@@ -21,11 +21,17 @@ const props = defineProps<{
   info?: string;
   /** Why the override is wrong; handed to the money box underneath. */
   errorMessage?: string;
+  /**
+   * How the formula default is calculated, one line each, shown under the box only while the
+   * field is on that default: a typed amount hides it, "auto" brings it back.
+   */
+  estimateExplanationLines?: string[];
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
 const usesFormulaDefault = computed(() => props.modelValue == null);
+const shownEstimateExplanationLines = computed(() => (usesFormulaDefault.value ? props.estimateExplanationLines ?? [] : []));
 /** What the box displays: the override, or the formula's current value. */
 const displayedValue = computed(() => (usesFormulaDefault.value ? props.computedDefault : props.modelValue));
 
@@ -62,5 +68,12 @@ const onAmountUpdate = (value: number | null) => {
     >
       <i class="pi pi-refresh text-[11px]" aria-hidden="true"></i> auto
     </button>
+    <ul
+      v-if="shownEstimateExplanationLines.length"
+      data-part="estimate-explanation"
+      class="mt-1.5 flex flex-col gap-0.5 border-l-2 border-line pl-2 text-xs leading-4 text-fg-muted"
+    >
+      <li v-for="line in shownEstimateExplanationLines" :key="line" class="numeric">{{ line }}</li>
+    </ul>
   </div>
 </template>

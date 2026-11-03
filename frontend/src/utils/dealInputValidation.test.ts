@@ -85,7 +85,7 @@ describe("validateDealInputFields", () => {
     expect(errors.every((e) => e.kind === "invalid")).toBe(true);
     expect(errors.map((e) => `${e.fieldKey}@${e.phaseTabLabel}`)).toEqual([
       "rehabCost@Rehab", "rehabContingency@Rehab", "down_payment@Buy", "hmlPoints@Buy", "HMLInterestRate@Buy",
-      "annual_property_taxes@Rent & Holding", "annual_insurance@Rent & Holding", "montly_hoa@Rent & Holding",
+      "annual_property_taxes@Rent & Holding", "annual_insurance@Buy", "montly_hoa@Rent & Holding",
       "ltv_as_precent@Refinance", "refiPoints@Refinance", "appraisalFee@Refinance", "constructionLoanBudget@Rehab",
       // A tenant before the purchase also puts the 45-day rehab completion after the tenant.
       // ...and a refi on day 0 puts it after the refi too.

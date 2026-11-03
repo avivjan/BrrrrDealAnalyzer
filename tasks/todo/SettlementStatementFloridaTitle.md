@@ -104,14 +104,14 @@ Every BRRRR deal on the title default: Standard $1,000 → $850 + excess-loan su
     - `test_migrations.py`: the new columns exist and are NULL.
     - `test_saved_deal_validation.py`: negative reserve dollars are rejected.
     - Then `verify_regression.py snapshot`, review the diff, and `verify`.
-- [ ] T5 (40 min) Frontend calc and the title explanation: `brrrAutoCalc.ts` mirror, BuySection explanation line and we-pay-all hint. **Unit** (`brrrAutoCalc.test.ts`): 1540 / 965 / 460 / 1325 / lender 250 parity with the backend numbers. `BuySection.test.ts`: the explanation shows on the default and hides once a value is typed. Update the breakdown parity fixture if it moves.
-- [ ] T5b (45 min) Closing-cost estimate explanations (§8): the `estimateExplanation` prop on `AutoDefaultMoneyInput`, `closingCostEstimateExplanations.ts`, wiring on the four inputs, fuller explain notes in `explain/brrr.py`.
+- [x] T5 (40 min) Frontend calc and the title explanation: `brrrAutoCalc.ts` mirror, BuySection explanation line and we-pay-all hint. **Unit** (`brrrAutoCalc.test.ts`): 1540 / 965 / 460 / 1325 / lender 250 parity with the backend numbers. `BuySection.test.ts`: the explanation shows on the default and hides once a value is typed. Update the breakdown parity fixture if it moves.
+- [x] T5b (45 min) Closing-cost estimate explanations (§8): the `estimateExplanation` prop on `AutoDefaultMoneyInput`, `closingCostEstimateExplanations.ts`, wiring on the four inputs, fuller explain notes in `explain/brrr.py`.
   - **Unit:**
     - `AutoDefaultMoneyInput.test.ts`: the explanation shows on the default, hides once a value is typed, and comes back on reset.
     - `closingCostEstimateExplanations.test.ts`: the exact strings for the fixture deal, e.g. buy recording on a $123k loan reads "$250 + 0.55% × $123,000 + $0 = $926.50".
     - `BuySection.test.ts` / new `RefinanceSection.test.ts`: each of the four inputs shows its line on the default and none when overridden.
   - **Integration:** `test_explain.py`: the four closing-cost steps carry a non-empty note naming their formula parts on the default, and "As entered" with the override note when typed.
-- [ ] T6 (30 min) Dates + tax back-solve: `dealUtils.ts` +10; `onContractDate` follow-until-edited; `onSellerTaxCreditEdited` back-solve. **Unit:**
+- [x] T6 (30 min) Dates + tax back-solve: `dealUtils.ts` +10; `onContractDate` follow-until-edited; `onSellerTaxCreditEdited` back-solve. **Unit:**
   - `DealInputsForm.test.ts` "+10 default", with `defaultBuyClosingIsoDate(new Date(2026, 11, 28)) === "2027-01-07"`.
   - `BuySection.test.ts`:
     - the contract date moves a default closing;
@@ -120,7 +120,7 @@ Every BRRRR deal on the title default: Standard $1,000 → $850 + excess-loan su
     - December paid: −167.67 gives 3600;
     - Jan 1: no pencil.
 - [ ] T7 (60 min) $ reserves UI: `PercentOfRentOrMonthlyDollarsInput.vue` + test (radiogroup toggle, seeding both ways, back to % clears the dollars, the "≈" note in each mode, $0 rent keeps the % unchanged), wiring of all four in RentHolding, types, defaults, impact map, phase-tab keys, copy-for-AI. Check visually in light and dark at phone and desktop widths (Playwright screenshot).
-- [ ] T8 (30 min) Tab moves: the insurance pair to Buy, the regular-year block to Rent & Holding, the needed-fields map and phase-tab keys. **Unit:** `DealInputsForm.test.ts` label lists per tab, the DOM-ordered needed list (`:254-263`) and tab dots updated; the Buy tab dot lights when `annual_insurance` is empty.
+- [x] T8 (30 min) Tab moves: the insurance pair to Buy, the regular-year block to Rent & Holding, the needed-fields map and phase-tab keys. **Unit:** `DealInputsForm.test.ts` label lists per tab, the DOM-ordered needed list (`:254-263`) and tab dots updated; the Buy tab dot lights when `annual_insurance` is empty.
 - [ ] T9 (60 min) **E2E** (Playwright):
   - update `seller-tax-credit-edit` (today + 10; typing the credit updates both tax-bill boxes);
   - new `flows/florida-title-estimate.spec.ts` (price 100k, rehab 23k at 0% down, we-pay-all → the title input default reads $1,540 and the explanation lists $600 / $575 / $365; opening the breakdown popup shows the three steps; typing a dollar amount in Recording & Transfer (Buy) hides its explanation, and the Refinance tab shows the refi title and recording explanations);

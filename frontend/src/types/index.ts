@@ -135,6 +135,11 @@ export interface BrrrAnalyzeReq {
   propertyTaxCollectionAtRefi?: PropertyTaxCollectionAtRefi;
   /** Used only when the refi lender collects the whole bill; null → this year's bill */
   propertyTaxLumpSumAtRefiClosing?: number | null;
+  /** Monthly reserves of a regular year after the refi in dollars; null → their percentage of the rent */
+  monthlyVacancyReserveDollars?: number | null;
+  monthlyMaintenanceReserveDollars?: number | null;
+  monthlyCapexReserveDollars?: number | null;
+  monthlyPropertyManagementFeeDollars?: number | null;
   maintenanceReserve?: number;
   /** null → one month of rent */
   vacancyReserve?: number | null;

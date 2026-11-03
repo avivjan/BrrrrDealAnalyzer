@@ -1,9 +1,14 @@
 <script setup lang="ts">
-/** BRRRR › Buy: the contract and closing dates, the hard-money stack and the purchase settlement. */
+/**
+ * BRRRR › Buy: the contract and closing dates, the hard-money stack and the purchase settlement,
+ * with the insurance bill at purchase (a line of that settlement when paid inside it).
+ */
 import { computed, useId } from "vue";
-import type { DealInputModel, TitleModeBuy } from "../../../types";
+import type { DealInputModel, InsurancePurchaseBillPaymentTiming, TitleModeBuy } from "../../../types";
 import { useDealField, type DealInputFieldKey } from "../../../composables/useDealField";
-import { brrrAutoCalc } from "../../../utils/brrrAutoCalc";
+import { addDays, annualPropertyTaxesFromSellerTaxCredit, brrrAutoCalc, parseIsoDate } from "../../../utils/brrrAutoCalc";
+import { DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING } from "../../../utils/dealUtils";
+import { recordingTransferBuyEstimateExplanationLines, titleEscrowBuyEstimateExplanationLines } from "../../../utils/closingCostEstimateExplanations";
 import { impactText } from "../../../config/brrrInputImpacts";
 import { formatMoney } from "../../../utils/money";
 import MoneyInput from "../../ui/MoneyInput.vue";
@@ -37,10 +42,24 @@ const notaryId = useId();
 const otherClosingCostsNoteId = useId();
 const NOTARY_FEE_DEFAULT = 250;
 const sellerPaidId = useId();
+const insurancePurchaseBillPaymentTimingId = useId();
 
+/**
+ * The closing date follows the contract date (contract + 10 days) while it is still that default
+ * or empty; once a closing date is typed by hand it stays where it was put.
+ */
+const closingDateIsStillTheDefaultForContractDate = (previousContractDate: string | null): boolean => {
+  const currentClosingDate = field.getStr("buyClosingDate");
+  if (!currentClosingDate) return true;
+  return previousContractDate != null && currentClosingDate === addDays(previousContractDate, DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING);
+};
 const onContractDate = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value;
-  field.setStr("contractDate", value || null);
+  const newContractDate = (event.target as HTMLInputElement).value || null;
+  const closingDateFollowsTheContractDate = closingDateIsStillTheDefaultForContractDate(field.getStr("contractDate"));
+  field.setStr("contractDate", newContractDate);
+  if (newContractDate && closingDateFollowsTheContractDate) {
+    field.setStr("buyClosingDate", addDays(newContractDate, DEFAULT_DAYS_FROM_CONTRACT_TO_BUY_CLOSING));
+  }
 };
 const onClosingDate = (event: Event) => {
   const value = (event.target as HTMLInputElement).value;
@@ -49,6 +68,13 @@ const onClosingDate = (event: Event) => {
 const onTitleMode = (event: Event) => {
   props.deal.titleModeBuy = (event.target as HTMLSelectElement).value as TitleModeBuy;
 };
+const onInsurancePurchaseBillPaymentTiming = (event: Event) => {
+  props.deal.insurancePurchaseBillPaymentTiming = (event.target as HTMLSelectElement).value as InsurancePurchaseBillPaymentTiming;
+};
+const titleEscrowBuyExplanationLines = computed(() => titleEscrowBuyEstimateExplanationLines(autoCalc.value.titleEscrowBuyItemizedDefault));
+const recordingTransferBuyExplanationLines = computed(() =>
+  recordingTransferBuyEstimateExplanationLines(autoCalc.value.hmlAmount, autoCalc.value.deedTransferTaxBuy, autoCalc.value.recordingTransferBuyDefault),
+);
 
 const sellerPaidExplicit = computed(() => typeof props.deal.sellerPaidCurrentYearTaxes === "boolean");
 const sellerPaidChecked = computed(() => autoCalc.value.sellerPaidCurrentYearTaxesEffective ?? false);
@@ -72,14 +98,19 @@ const sellerTaxCreditIsEditable = computed(() => (autoCalc.value.sellerTaxCredit
 const sellerTaxCreditIsTyped = computed(() => props.deal.sellerTaxCreditAtPurchaseClosing != null);
 /**
  * The credit typed over the figure is the one on the settlement statement (the county-tax and
- * assessment lines together). It overrides the proration and leaves this year's tax bill as
- * typed: the bill paid on Nov 30 is its own figure. The direction comes from "seller already
- * paid", so a December reimbursement reads negative whatever sign it is typed with.
+ * assessment lines together). It overrides the proration, and this year's tax bill follows it:
+ * the bill becomes the one whose proration gives that credit (both Property Tax Bill boxes
+ * update). The direction comes from "seller already paid", so a December reimbursement reads
+ * negative whatever sign it is typed with.
  */
 const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
   const sellerAlreadyPaid = autoCalc.value.sellerPaidCurrentYearTaxesEffective;
   const typedAmount = Math.abs(sellerTaxCreditDollars);
   field.setNullable("sellerTaxCreditAtPurchaseClosing", sellerAlreadyPaid ? -typedAmount : typedAmount);
+  const buyClosingDay = parseIsoDate(field.getStr("buyClosingDate"));
+  if (buyClosingDay == null || sellerAlreadyPaid == null) return;
+  const propertyTaxBillGivingThatCredit = annualPropertyTaxesFromSellerTaxCredit(typedAmount, buyClosingDay, sellerAlreadyPaid);
+  if (propertyTaxBillGivingThatCredit != null) field.set("annual_property_taxes", propertyTaxBillGivingThatCredit);
 };
 </script>
 
@@ -248,6 +279,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
             @update:model-value="(v: number | null) => field.setNullable('recordingTransferBuy', v)"
             label="Recording & Transfer"
             :info="impactText('recordingTransferBuy')"
+            :estimate-explanation-lines="recordingTransferBuyExplanationLines"
           />
           <div class="flex flex-col gap-1.5" data-testid="form.field.titleModeBuy">
             <div data-part="label-row" class="flex h-5 items-center gap-1">
@@ -260,7 +292,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
             </select>
             <p v-if="autoCalc.wePayAllExtraClosingCost != null" data-testid="form.auto.wePayAllExtraClosingCost" class="numeric text-xs text-fg-muted">
               Paying all closing costs adds <span class="font-semibold text-fg">{{ formatMoney(autoCalc.wePayAllExtraClosingCost) }}</span> over standard
-              <span class="text-fg-muted">(title tier + 0.70% deed transfer tax)</span>
+              <span class="text-fg-muted">(owner's title policy + 0.70% deed transfer tax)</span>
             </p>
           </div>
           <AutoDefaultMoneyInput
@@ -271,6 +303,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
             @update:model-value="(v: number | null) => field.setNullable('titleEscrowBuy', v)"
             label="Title & Escrow / Settlement"
             :info="impactText('titleEscrowBuy')"
+            :estimate-explanation-lines="titleEscrowBuyExplanationLines"
           />
           <div class="flex flex-col gap-2 rounded-ctl border-ui border-line p-3 group-data-[surface=card]:bg-surface-2 group-data-[surface=panel]:bg-surface" data-testid="form.field.onlineNotaryBuy">
             <div class="flex items-center gap-2">
@@ -310,6 +343,26 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
               :value="field.getStr('otherClosingCostsBuyNote') ?? ''"
               @change="field.setStr('otherClosingCostsBuyNote', ($event.target as HTMLInputElement).value || null)"
             />
+          </div>
+          <MoneyInput
+            data-testid="form.field.annual_insurance"
+            :error-message="fieldErrorMessages?.annual_insurance"
+            :model-value="field.get('annual_insurance')"
+            @update:model-value="(v: number | null) => field.set('annual_insurance', v)"
+            label="Insurance Bill at Purchase"
+            :needed-to-run-analysis="true"
+            :info="impactText('annual_insurance')"
+          />
+          <div class="flex flex-col gap-1.5" data-testid="form.field.insurancePurchaseBillPaymentTiming">
+            <div data-part="label-row" class="flex h-5 items-center gap-1">
+              <label :for="insurancePurchaseBillPaymentTimingId" data-part="label" class="text-sm font-medium leading-5 text-fg">Insurance Bill Paid</label>
+              <InputInfo :content="impactText('insurancePurchaseBillPaymentTiming')" field-label="Insurance Bill Paid" />
+            </div>
+            <select :id="insurancePurchaseBillPaymentTimingId" data-part="select" class="ui-select"
+                    :value="deal.insurancePurchaseBillPaymentTiming ?? 'inside_purchase_closing'" @change="onInsurancePurchaseBillPaymentTiming">
+              <option value="inside_purchase_closing">Inside the purchase closing</option>
+              <option value="outside_purchase_closing">Outside the purchase closing</option>
+            </select>
           </div>
         </div>
         <div class="mt-3">

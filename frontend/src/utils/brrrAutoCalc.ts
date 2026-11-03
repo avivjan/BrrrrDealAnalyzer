@@ -18,7 +18,17 @@ import { toNumber } from "./dealUtils";
 export const NOTARY_FEE = 250;
 export const RECORDING_RATE = 0.0055;
 export const RECORDING_FLAT = 250;
-export const TITLE_BUY_STANDARD = 1000;
+/** Florida title & escrow at purchase: the office and third-party fees, always ours. */
+export const TITLE_SETTLEMENT_CLOSING_FEE = 350;
+export const TITLE_SEARCH_FEE = 150;
+export const MUNICIPAL_LIEN_SEARCH_FEE = 100;
+/** Owner's policy, Florida statutory promulgated rate (F.A.C. 69O-186.003), per $1,000 of the price. */
+export const FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND = 100_000;
+export const FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K = 5.75;
+export const FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_ABOVE_100K = 5.0;
+/** Lender's policy: ALTA 8.1, Florida Form 9 and the simultaneous-issue rate, plus $5/$1k of the loan above the price. */
+export const LENDERS_POLICY_ENDORSEMENTS_AND_SIMULTANEOUS_ISSUE_FEE = 250;
+export const LENDERS_POLICY_EXCESS_LOAN_RATE_PER_THOUSAND = 5.0;
 export const TITLE_REFI_FLAT = 800;
 export const TITLE_REFI_RATE = 0.0045;
 export const DEED_TRANSFER_TAX_RATE_WE_PAY_ALL = 0.007;
@@ -158,16 +168,63 @@ export function recordingTransferBuyDefault(hmlAmount: number, deedTransferTax: 
   return RECORDING_FLAT + RECORDING_RATE * hmlAmount + deedTransferTax;
 }
 
-/** What paying all closing costs adds over a standard deal: the title tier step-up plus the deed transfer tax. */
-export function wePayAllExtraClosingCost(purchasePriceDollars: number): number {
-  return titleEscrowBuyDefault("we_pay_all", purchasePriceDollars) - TITLE_BUY_STANDARD + deedTransferTaxBuyDefault("we_pay_all", purchasePriceDollars);
+/** Owner's title policy at the Florida promulgated rate: $5.75 per $1,000 to $100,000, then $5.00 per $1,000. */
+export function floridaOwnersTitlePolicyPremium(purchasePriceDollars: number): number {
+  if (purchasePriceDollars <= FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND) {
+    return (purchasePriceDollars / 1000) * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K;
+  }
+  const firstTierPremium = (FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND / 1000) * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_UP_TO_100K;
+  return firstTierPremium + ((purchasePriceDollars - FLORIDA_OWNERS_POLICY_FIRST_TIER_UPPER_BOUND) / 1000) * FLORIDA_OWNERS_POLICY_RATE_PER_THOUSAND_ABOVE_100K;
 }
 
-export function titleEscrowBuyDefault(titleMode: string | undefined, purchasePriceDollars: number): number {
-  if (titleMode !== "we_pay_all") return TITLE_BUY_STANDARD;
-  if (purchasePriceDollars < 150_000) return 2050;
-  if (purchasePriceDollars <= 200_000) return 2200;
-  return 2400;
+/** Lender's title policy: $250, plus $5.00 per $1,000 of the loan above the price ($250 flat otherwise). */
+export function lendersTitlePolicyAndEndorsements(loanAmountDollars: number, purchasePriceDollars: number): number {
+  const loanAmountAbovePurchasePrice = Math.max(0, loanAmountDollars - purchasePriceDollars);
+  return LENDERS_POLICY_ENDORSEMENTS_AND_SIMULTANEOUS_ISSUE_FEE + (loanAmountAbovePurchasePrice / 1000) * LENDERS_POLICY_EXCESS_LOAN_RATE_PER_THOUSAND;
+}
+
+export interface TitleEscrowBuyItemizedDefault {
+  settlementClosingFee: number;
+  titleSearchFee: number;
+  municipalLienSearchFee: number;
+  titleOfficeAndSearchFees: number;
+  /** $0 on a standard deal: the seller pays the owner's policy. */
+  ownersTitlePolicyPremium: number;
+  lendersTitlePolicyAndEndorsements: number;
+  /** The loan the lender's policy insures: the whole hard-money loan. */
+  loanAmountInsured: number;
+  purchasePrice: number;
+  ownersTitlePolicyIsOurs: boolean;
+  total: number;
+}
+
+/** Title & escrow at purchase, Florida (mirror of `title_escrow_buy_itemized_default`). */
+export function titleEscrowBuyItemizedDefault(titleMode: string | undefined, purchasePriceDollars: number, hmlAmountDollars: number): TitleEscrowBuyItemizedDefault {
+  const titleOfficeAndSearchFees = TITLE_SETTLEMENT_CLOSING_FEE + TITLE_SEARCH_FEE + MUNICIPAL_LIEN_SEARCH_FEE;
+  const ownersTitlePolicyIsOurs = titleMode === "we_pay_all";
+  const ownersTitlePolicyPremium = ownersTitlePolicyIsOurs ? floridaOwnersTitlePolicyPremium(purchasePriceDollars) : 0;
+  const lendersTitlePolicy = lendersTitlePolicyAndEndorsements(hmlAmountDollars, purchasePriceDollars);
+  return {
+    settlementClosingFee: TITLE_SETTLEMENT_CLOSING_FEE,
+    titleSearchFee: TITLE_SEARCH_FEE,
+    municipalLienSearchFee: MUNICIPAL_LIEN_SEARCH_FEE,
+    titleOfficeAndSearchFees,
+    ownersTitlePolicyPremium,
+    lendersTitlePolicyAndEndorsements: lendersTitlePolicy,
+    loanAmountInsured: hmlAmountDollars,
+    purchasePrice: purchasePriceDollars,
+    ownersTitlePolicyIsOurs,
+    total: titleOfficeAndSearchFees + ownersTitlePolicyPremium + lendersTitlePolicy,
+  };
+}
+
+export function titleEscrowBuyDefault(titleMode: string | undefined, purchasePriceDollars: number, hmlAmountDollars: number): number {
+  return titleEscrowBuyItemizedDefault(titleMode, purchasePriceDollars, hmlAmountDollars).total;
+}
+
+/** What paying all closing costs adds over a standard deal: the owner's title policy plus the deed transfer tax. */
+export function wePayAllExtraClosingCost(purchasePriceDollars: number): number {
+  return floridaOwnersTitlePolicyPremium(purchasePriceDollars) + deedTransferTaxBuyDefault("we_pay_all", purchasePriceDollars);
 }
 
 export function titleEscrowRefiDefault(loanAmount: number): number {
@@ -227,6 +284,8 @@ export interface BrrrAutoCalc {
   deedTransferTaxBuy: number | null;
   recordingTransferBuyDefault: number | null;
   titleEscrowBuyDefault: number | null;
+  /** The Florida estimate line by line (null until the price and the loan are known). */
+  titleEscrowBuyItemizedDefault: TitleEscrowBuyItemizedDefault | null;
   wePayAllExtraClosingCost: number | null;
   recordingTransferBuyEffective: number | null;
   titleEscrowBuyEffective: number | null;
@@ -351,7 +410,9 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const deedTransferTaxBuy = purchasePriceDollars != null ? deedTransferTaxBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
   const recordingTransferBuyDefaultAmount = hmlAmount != null && deedTransferTaxBuy != null ? recordingTransferBuyDefault(hmlAmount, deedTransferTaxBuy) : null;
   const wePayAllExtra = purchasePriceDollars != null ? wePayAllExtraClosingCost(purchasePriceDollars) : null;
-  const titleEscrowBuyDefaultAmount = purchasePriceDollars != null ? titleEscrowBuyDefault(deal.titleModeBuy, purchasePriceDollars) : null;
+  const titleEscrowBuyItemizedDefaultAmounts = purchasePriceDollars != null && hmlAmount != null
+    ? titleEscrowBuyItemizedDefault(deal.titleModeBuy, purchasePriceDollars, hmlAmount) : null;
+  const titleEscrowBuyDefaultAmount = titleEscrowBuyItemizedDefaultAmounts?.total ?? null;
   const recordingTransferBuyEffectiveAmount = deal.recordingTransferBuy != null ? numberOrZero(deal.recordingTransferBuy) : recordingTransferBuyDefaultAmount;
   const titleEscrowBuyEffectiveAmount = deal.titleEscrowBuy != null ? numberOrZero(deal.titleEscrowBuy) : titleEscrowBuyDefaultAmount;
   const notaryBuy = deal.onlineNotaryBuy === false ? 0 : (deal.onlineNotaryFeeBuy != null ? numberOrZero(deal.onlineNotaryFeeBuy) : NOTARY_FEE);
@@ -467,6 +528,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
     sellerTaxCreditFormula: sellerTaxCreditFormulaAmount, sellerTaxCredit: sellerTaxCreditAmount, insuranceBillAtPurchaseInsideClosing,
     sellerTaxCreditProratedDays: sellerTaxCreditProratedDaysCount,
     deedTransferTaxBuy, recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
+    titleEscrowBuyItemizedDefault: titleEscrowBuyItemizedDefaultAmounts,
     wePayAllExtraClosingCost: wePayAllExtra,
     recordingTransferBuyEffective: recordingTransferBuyEffectiveAmount, titleEscrowBuyEffective: titleEscrowBuyEffectiveAmount,
     notaryBuy, closingCostsBuyTotal, cashToCloseBuy, totalHardMoneyCost,

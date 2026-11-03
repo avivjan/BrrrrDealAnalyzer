@@ -96,6 +96,10 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   maintenancePercent: ["cash_flow", "dscr", "cash_on_cash", "roi"],
   capexPercent: ["cash_flow", "dscr", "cash_on_cash", "roi"],
   property_managment_fee_precentages_from_rent: ["cash_flow", "dscr", "cash_on_cash", "roi"],
+  monthlyVacancyReserveDollars: ["cash_flow", "dscr", "cash_on_cash", "roi"],
+  monthlyMaintenanceReserveDollars: ["cash_flow", "dscr", "cash_on_cash", "roi"],
+  monthlyCapexReserveDollars: ["cash_flow", "dscr", "cash_on_cash", "roi"],
+  monthlyPropertyManagementFeeDollars: ["cash_flow", "dscr", "cash_on_cash", "roi"],
   // Refinance
   daysUntilRefi: ["total_hard_money_cost", "pre_refi_rental_income", "prepaid_interest_refi", "hml_payoff", "cash_out_routi", ...CASH_METRICS],
   arv_in_thousands: ["cash_out_routi", "cash_out_routi_conservative", "equity", "cash_flow", "dscr", ...CASH_METRICS],
