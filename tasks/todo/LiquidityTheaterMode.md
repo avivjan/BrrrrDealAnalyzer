@@ -113,17 +113,17 @@ Nothing on the page is lost: every control and figure from the sidebars gets a p
 - **Focus:** it moves into the theater on open and back to the toggle on close; the modal has `aria-modal` and its own heading.
 
 ## Todo (estimates)
-- [ ] Commit this plan as `tasks/todo/LiquidityTheaterMode.md` (5 min)
-- [ ] B: `dealColors.ts`, attribution composable, `DealAttributionTag`, wired into DayDetail, overdue strip, sidebar, deals panel (60 min)
-- [ ] E: TimelineChart today emphasis, follow-pointer tooltip, deal-colored tooltip rows, deal dots, highlight (75 min)
-- [ ] A: `LiquidityTheaterMode` shell, URL state, Esc stack, shortcuts, browser fullscreen, action bar, KPI chips + Mercury popover, overdue chip popover; AppShell `openCommandPalette` provide (120 min)
-- [ ] C: `DealLegendPanel` with overdue pills, inline overdue drawer, Remove from timeline, recurring section (75 min)
-- [ ] D: `DealMilestonesBottomSheet` + `useOneTapMilestoneApproval` (75 min)
-- [ ] E: `DayTransactionsModal` with milestones-on-this-day and day stepping (60 min)
-- [ ] F: backend `refresh_late_refis` skips deals with no open rows; frontend hides those deals in the legend, the sheet and the Deals panel (20 min)
-- [ ] MCP support: update the `remove_liquidity_deal_open_rows` description and `INSTRUCTIONS` in `BackEnd/mcp_server.py` (removing a deal's open rows takes it out of the timeline and stops its late-refi months), and their MCP tests if any pin the text. No new endpoint, so no new tool (15 min)
-- [ ] Tests (below) (120 min)
-- [ ] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (30 min):
+- [x] Commit this plan as `tasks/todo/LiquidityTheaterMode.md` (5 min)
+- [x] B: `dealColors.ts`, attribution composable, `DealAttributionTag`, wired into DayDetail, overdue strip, sidebar, deals panel (60 min)
+- [x] E: TimelineChart today emphasis, follow-pointer tooltip, deal-colored tooltip rows, deal dots, highlight (75 min)
+- [x] A: `LiquidityTheaterMode` shell, URL state, Esc stack, shortcuts, browser fullscreen, action bar, KPI chips + Mercury popover, overdue chip popover; AppShell `openCommandPalette` provide (120 min)
+- [x] C: `DealLegendPanel` with overdue pills, inline overdue drawer, Remove from timeline, recurring section (75 min)
+- [x] D: `DealMilestonesBottomSheet` + `useOneTapMilestoneApproval` (75 min)
+- [x] E: `DayTransactionsModal` with milestones-on-this-day and day stepping (60 min)
+- [x] F: backend `refresh_late_refis` skips deals with no open rows; frontend hides those deals in the legend, the sheet and the Deals panel (20 min)
+- [x] MCP support: update the `remove_liquidity_deal_open_rows` description and `INSTRUCTIONS` in `BackEnd/mcp_server.py` (removing a deal's open rows takes it out of the timeline and stops its late-refi months), and their MCP tests if any pin the text. No new endpoint, so no new tool (15 min)
+- [x] Tests (below) (120 min)
+- [x] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (30 min):
   - no `v-html`;
   - deal addresses and descriptions rendered as text only;
   - `localStorage` holds only UI flags;
@@ -132,7 +132,7 @@ Nothing on the page is lost: every control and figure from the sidebars gets a p
   - no new secrets or env in the frontend;
   - the backend filter adds no new input;
   - then `/security-review` on the diff.
-- [ ] `npm run build`, `npm test`, `npm run audit`, the contrast audit, pytest; push; open the PR (20 min)
+- [x] `npm run build`, `npm test`, `npm run audit`, the contrast audit, pytest; push; open the PR (20 min)
 
 ## Tests
 **Unit (vitest)**
