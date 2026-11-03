@@ -54,9 +54,9 @@ The table appears in three places from one backend result: the website's breakdo
 No change to any amount, to Cash Needed, to the liquidity import or its timeline, or to the FLIP results.
 
 ## Todo (≈ 3 h 30)
-- [ ] M1 (10 min) Copy the plan to `tasks/todo/CashNeededScheduleMilestones.md`; commit.
-- [ ] M2 (35 min) Backend engine + response + explain check (above).
-- [ ] M3 (30 min) Backend tests.
+- [x] M1 (10 min) Copy the plan to `tasks/todo/CashNeededScheduleMilestones.md`; commit.
+- [x] M2 (35 min) Backend engine + response + explain check (above).
+- [x] M3 (30 min) Backend tests.
   - **Unit** (`tests/test_cash_needed_schedule.py`):
     - `test_deal_milestones_are_the_contract_closing_rehab_tenant_and_refi_dates_in_order` (fixture: 2026-01-03, 2026-01-10, +45, tenant, +180);
     - `test_the_november_30_tax_bill_is_a_milestone_only_inside_the_hold` (a Jan closing with a 180-day refi: absent; a Sep closing: present on 2026-11-30);
@@ -65,7 +65,7 @@ No change to any amount, to Cash Needed, to the liquidity import or its timeline
     - `test_liquidity_deal_import.py`: the imported rows are unchanged (no milestone becomes a transaction);
     - `test_report_html.py` / `test_report_pdf.py`: the schedule shows "Purchase closing" before "Cash to close (the purchase wire)", with `class="milestone"` in the HTML;
     - `verify_regression.py snapshot`, review (only the added `deal_milestones`), `verify`.
-- [ ] M4 (30 min) Reports: `cash_needed_schedule_report.py` merge, HTML markup + CSS, PDF row style.
+- [x] M4 (30 min) Reports: `cash_needed_schedule_report.py` merge, HTML markup + CSS, PDF row style.
 - [ ] M5 (40 min) Frontend types + `CashNeededScheduleTable.vue`.
   - **Unit** (`CashNeededScheduleTable.test.ts`):
     - milestones interleaved by date and first on a shared day;

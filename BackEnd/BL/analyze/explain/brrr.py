@@ -632,7 +632,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
           "no money out after the refi")
     check(all(row.signed_amount_dollars == row.signed_amount_dollars.quantize(Decimal("0.01")) for row in schedule.dated_cash_rows),
           "schedule rows are whole cents")
-    schedule_note = f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, the rehab cushion one of them."
+    check(list(schedule.deal_milestones) == sorted(schedule.deal_milestones, key=lambda milestone: milestone.date),
+          "schedule milestones in date order")
+    schedule_note = (f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, the rehab cushion one of them, "
+                     f"with the deal's {len(schedule.deal_milestones)} key dates (closing, rehab completed, refi...) shown among them.")
     breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
         ("Total Cash Invested", results.total_cash_invested),
         ("Rehab Cushion", payload.rehab_cushion),

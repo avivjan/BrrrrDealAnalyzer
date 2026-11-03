@@ -7757,12 +7757,48 @@
             },
             "title": "Dated Cash Rows",
             "type": "array"
+          },
+          "deal_milestones": {
+            "description": "The deal's key dates in date order, shown among the cash rows (a milestone first on a shared day). Not cash: never part of Cash Needed or the liquidity import. The Nov 30 tax bill is one only inside the hold.",
+            "items": {
+              "$ref": "#/components/schemas/CashNeededScheduleMilestoneRes"
+            },
+            "title": "Deal Milestones",
+            "type": "array"
           }
         },
         "required": [
           "dated_cash_rows"
         ],
         "title": "CashNeededScheduleAtLowestArvRes",
+        "type": "object"
+      },
+      "CashNeededScheduleMilestoneRes": {
+        "description": "One key date of the deal, shown among the cash rows. A marker, not cash.",
+        "properties": {
+          "date": {
+            "description": "The day of the milestone (ISO).",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "description": "The milestone as shown, e.g. 'Purchase closing'.",
+            "title": "Description",
+            "type": "string"
+          },
+          "milestone_key": {
+            "description": "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed.",
+            "title": "Milestone Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "milestone_key",
+          "description"
+        ],
+        "title": "CashNeededScheduleMilestoneRes",
         "type": "object"
       },
       "CashNeededScheduleRowRes": {

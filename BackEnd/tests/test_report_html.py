@@ -310,6 +310,22 @@ class TestTheCashNeededCardCarriesItsSchedule:
         assert "Jan 3, 2026" in html and "Earnest money deposit" in html and "-$5,000" in html
         assert "Rehab cushion (a hold: mark it done when you no longer need it)" in html
 
+    def test_the_deals_key_dates_sit_among_the_rows_as_markers(self, client, brrrr_payload):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        html = client.post("/reports/brrr-html", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]}).text
+        assert html.count('<tr class="milestone">') == len(body["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]) == 5
+        purchase_closing_marker = '<tr class="milestone"><td class="date">Jan 10, 2026</td><td colspan="2"><span class="milestone-label">◆ Purchase closing</span></td></tr>'
+        assert purchase_closing_marker in html
+        assert html.index(purchase_closing_marker) < html.index("Cash to close (the purchase wire)")
+        assert html.index("◆ Contract signed") < html.index("Earnest money deposit") < html.index(purchase_closing_marker)
+        assert ".schedule-table tr.milestone td" in html and "text-transform: uppercase" in html
+
+    def test_an_older_result_without_key_dates_shows_only_the_rows(self, client, brrrr_payload):
+        body = client.post("/analyze/brrr", json=brrrr_payload).json()
+        del body["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]
+        html = build_deal_html_report("x", "BRRRR", body, ["total_cash_needed_for_deal"])
+        assert '<tr class="milestone">' not in html and "Cash to close (the purchase wire)" in html
+
     def test_only_the_cash_needed_card_has_it(self, client, brrrr_payload):
         html = client.post("/reports/brrr-html", json=brrrr_payload, params={"selected_result_keys": ["cash_flow"]}).text
         assert "Cash schedule (Lowest ARV)" not in html
@@ -319,3 +335,6 @@ class TestTheCashNeededCardCarriesItsSchedule:
         body["cash_needed_schedule_at_lowest_arv"]["dated_cash_rows"][0]["description"] = "<script>alert(1)</script>"
         html = build_deal_html_report("x", "BRRRR", body, ["total_cash_needed_for_deal"])
         assert "<script>alert(1)</script>" not in html and "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+        body["cash_needed_schedule_at_lowest_arv"]["deal_milestones"][0]["description"] = "<img src=x onerror=alert(1)>"
+        html = build_deal_html_report("x", "BRRRR", body, ["total_cash_needed_for_deal"])
+        assert "<img src=x" not in html and "&lt;img src=x onerror=alert(1)&gt;" in html

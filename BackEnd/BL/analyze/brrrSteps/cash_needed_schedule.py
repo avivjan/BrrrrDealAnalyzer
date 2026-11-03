@@ -58,6 +58,20 @@ CASH_NEEDED_SCHEDULE_ITEM_KEYS = (
     "property_tax_bucket_balance_released_at_refi",
 )
 _CATALOGUE_POSITION_BY_ITEM_KEY = {item_key: position for position, item_key in enumerate(CASH_NEEDED_SCHEDULE_ITEM_KEYS)}
+
+# The deal's key dates, shown among the cash rows so the schedule reads as a timeline. Markers, not cash:
+# never a row of `dated_cash_rows`, never imported into the liquidity timeline. The first five are the
+# liquidity timeline's own milestones (`BL/liquidity/dealCashRows/deal_milestones.py`); on a date they share,
+# they are listed in this order.
+CASH_NEEDED_SCHEDULE_MILESTONE_KEYS = (
+    "contract_signed",
+    "purchase_closed",
+    "rehab_completed",
+    "tenant_moved_in",
+    "property_tax_bill_paid_on_november_30",
+    "refi_closed",
+)
+_CATALOGUE_POSITION_BY_MILESTONE_KEY = {milestone_key: position for position, milestone_key in enumerate(CASH_NEEDED_SCHEDULE_MILESTONE_KEYS)}
 _AT_THE_LOWEST_ARV_REFI = " (Lowest-ARV refi)"
 
 
@@ -69,8 +83,31 @@ class CashNeededScheduleRow(NamedTuple):
     item_key: str                     # one of CASH_NEEDED_SCHEDULE_ITEM_KEYS; (item_key, date) is unique
 
 
+class CashNeededScheduleMilestone(NamedTuple):
+    date: date
+    milestone_key: str                # one of CASH_NEEDED_SCHEDULE_MILESTONE_KEYS
+    description: str
+
+
 class CashNeededScheduleAtLowestArv(NamedTuple):
     dated_cash_rows: tuple[CashNeededScheduleRow, ...]
+    deal_milestones: tuple[CashNeededScheduleMilestone, ...]   # the key dates, in date order; not cash
+
+
+def deal_milestones_of_the_schedule(timeline, first_property_tax_payment_date: date) -> tuple[CashNeededScheduleMilestone, ...]:
+    """The deal's key dates in date order. The Nov 30 tax bill is one only while it falls inside the hold
+    (after the purchase closing, on or before the refi): the bucket pays it, so it explains the deposits around it."""
+    milestones = [
+        CashNeededScheduleMilestone(timeline.contract_date, "contract_signed", "Contract signed"),
+        CashNeededScheduleMilestone(timeline.buy_closing_date, "purchase_closed", "Purchase closing"),
+        CashNeededScheduleMilestone(timeline.rehab_completed_date, "rehab_completed", "Rehab completed"),
+        CashNeededScheduleMilestone(timeline.tenant_occupied_date, "tenant_moved_in", "Tenant moves in"),
+        CashNeededScheduleMilestone(timeline.refi_closing_date, "refi_closed", "Refi closing"),
+    ]
+    if timeline.buy_closing_date < first_property_tax_payment_date <= timeline.refi_closing_date:
+        milestones.append(CashNeededScheduleMilestone(first_property_tax_payment_date, "property_tax_bill_paid_on_november_30",
+                                                      "Property tax bill paid from the tax bucket (Nov 30)"))
+    return tuple(sorted(milestones, key=lambda milestone: (milestone.date, _CATALOGUE_POSITION_BY_MILESTONE_KEY[milestone.milestone_key])))
 
 
 def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, buy_settlement, insurance, property_tax_bucket,
@@ -163,7 +200,10 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
         sequence_within_day = dated_cash_rows[-1].sequence_within_day + 1 if dated_cash_rows and dated_cash_rows[-1].date == row_date else 0
         dated_cash_rows.append(CashNeededScheduleRow(row_date, sequence_within_day, description, rounded_amount_by_exact_row[id(row)], item_key))
 
-    return CashNeededScheduleAtLowestArv(dated_cash_rows=tuple(dated_cash_rows))
+    return CashNeededScheduleAtLowestArv(
+        dated_cash_rows=tuple(dated_cash_rows),
+        deal_milestones=deal_milestones_of_the_schedule(timeline, property_tax_bucket.first_property_tax_payment_date),
+    )
 
 
 def _rounded_on_the_running_total(exact_rows: list[tuple[date, str, str, Decimal]], target_signed_total: Decimal) -> dict[int, Decimal]:

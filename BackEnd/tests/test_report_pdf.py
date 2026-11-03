@@ -561,6 +561,11 @@ class TestTheCashNeededSectionCarriesItsSchedule:
         assert "Jan 3, 2026 Earnest money deposit -$5,000" in text
         assert "Rehab cushion (a hold: mark it done when you no longer need it) -$5,000" in text
         assert "Must stay in the account" not in text
+        # The deal's key dates are uppercase markers among the rows, each first on its day.
+        assert "Jan 10, 2026 PURCHASE CLOSING" in text
+        assert text.index("Jan 10, 2026 PURCHASE CLOSING") < text.index("Cash to close (the purchase wire)")
+        for marker in ("CONTRACT SIGNED", "REHAB COMPLETED", "TENANT MOVES IN", "REFI CLOSING"):
+            assert marker in text, marker
 
     def test_only_the_cash_needed_section_has_it(self, client, brrrr_payload):
         response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["cash_flow"]})
