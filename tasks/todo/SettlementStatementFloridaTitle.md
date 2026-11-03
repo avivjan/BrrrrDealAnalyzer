@@ -119,21 +119,21 @@ Every BRRRR deal on the title default: Standard $1,000 → $850 + excess-loan su
     - typing credit 177.53 on 2026-01-10 sets the tax bill to 7199.83 and keeps the override;
     - December paid: −167.67 gives 3600;
     - Jan 1: no pencil.
-- [ ] T7 (60 min) $ reserves UI: `PercentOfRentOrMonthlyDollarsInput.vue` + test (radiogroup toggle, seeding both ways, back to % clears the dollars, the "≈" note in each mode, $0 rent keeps the % unchanged), wiring of all four in RentHolding, types, defaults, impact map, phase-tab keys, copy-for-AI. Check visually in light and dark at phone and desktop widths (Playwright screenshot).
+- [x] T7 (60 min) $ reserves UI: `PercentOfRentOrMonthlyDollarsInput.vue` + test (radiogroup toggle, seeding both ways, back to % clears the dollars, the "≈" note in each mode, $0 rent keeps the % unchanged), wiring of all four in RentHolding, types, defaults, impact map, phase-tab keys, copy-for-AI. Check visually in light and dark at phone and desktop widths (Playwright screenshot).
 - [x] T8 (30 min) Tab moves: the insurance pair to Buy, the regular-year block to Rent & Holding, the needed-fields map and phase-tab keys. **Unit:** `DealInputsForm.test.ts` label lists per tab, the DOM-ordered needed list (`:254-263`) and tab dots updated; the Buy tab dot lights when `annual_insurance` is empty.
-- [ ] T9 (60 min) **E2E** (Playwright):
+- [x] T9 (60 min) **E2E** (Playwright):
   - update `seller-tax-credit-edit` (today + 10; typing the credit updates both tax-bill boxes);
   - new `flows/florida-title-estimate.spec.ts` (price 100k, rehab 23k at 0% down, we-pay-all → the title input default reads $1,540 and the explanation lists $600 / $575 / $365; opening the breakdown popup shows the three steps; typing a dollar amount in Recording & Transfer (Buy) hides its explanation, and the Refinance tab shows the refi title and recording explanations);
   - new `flows/monthly-reserve-dollars.spec.ts` (toggle Vacancy to $, type 75, analyze, the cash-flow breakdown shows "Vacancy $75.00/month as entered");
   - an insurance-on-the-Buy-tab assertion;
   - then `npm run e2e:record`, review the golden diffs, `a11y.spec.ts`, `npm run e2e`.
-- [ ] T10 (15 min) **MCP**: no new tool or endpoint. The new inputs and result fields reach `analyze_brrr` / `get_deal` through the Pydantic schemas, the descriptions and a glossary sentence. `tests/test_mcp.py` (descriptions ≤ limits, `tools/list` budget, OpenAPI golden) stays green. Manual `analyze_brrr` with `titleModeBuy: we_pay_all`, price 100k, 23k rehab at 0% down → `title_escrow_buy == 1540` and itemized 600 / 575 / 365; `monthlyVacancyReserveDollars: 75` → `vacancy == 75`.
-- [ ] T11 (20 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
+- [x] T10 (15 min) **MCP**: no new tool or endpoint. The new inputs and result fields reach `analyze_brrr` / `get_deal` through the Pydantic schemas, the descriptions and a glossary sentence. `tests/test_mcp.py` (descriptions ≤ limits, `tools/list` budget, OpenAPI golden) stays green. Manual `analyze_brrr` with `titleModeBuy: we_pay_all`, price 100k, 23k rehab at 0% down → `title_escrow_buy == 1540` and itemized 600 / 575 / 365; `monthlyVacancyReserveDollars: 75` → `vacancy == 75`.
+- [x] T11 (20 min) **Security** (`.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo"):
   - Re-read every touched file.
   - The new inputs are bounded Decimals validated ≥ 0 on both sides; the migration is a static column list, with no string-built SQL from input.
   - No `v-html`, inline handlers or secrets in the frontend; the explanation text is rendered with interpolation only.
   - Run `bandit -q -r . -x ./tests,./verify_regression.py -ll -ii`, `pip-audit` and `npm audit`.
-- [ ] T12 (20 min) Final: `cd BackEnd && pytest && python3 verify_regression.py verify`; `cd frontend && npm test && npm run build && npm run e2e`; tick the boxes; push `-u origin claude/settlement-statement-florida-title-5k3j75`; open the PR. It lists the ⚠ decisions and states that title defaults move every BRRRR result.
+- [x] T12 (20 min) Final: `cd BackEnd && pytest && python3 verify_regression.py verify`; `cd frontend && npm test && npm run build && npm run e2e`; tick the boxes; push `-u origin claude/settlement-statement-florida-title-5k3j75`; open the PR. It lists the ⚠ decisions and states that title defaults move every BRRRR result.
 
 ## Verification
 - Backend: `pytest` (local Postgres 16, as in `tasks/todo/DealFormTabsAndDefaults.md`); `verify_regression.py verify` after the re-record.
@@ -144,3 +144,31 @@ Every BRRRR deal on the title default: Standard $1,000 → $850 + excess-loan su
   - The Buy tab holds the insurance bill and its timing; Rent & Holding holds "Regular year after the refi".
   - Vacancy toggled to $ 75 gives cash flow lower by $75 − 5% × rent.
   - Price 100k, rehab 23k, 0% down, we-pay-all → Title & Escrow default $1,540 with the three-line explanation under it. "How is this calculated" shows Office fees $600, Owner's policy $575 and Lender's policy $365 with the statutory notes.
+
+## Review
+
+**Florida title (backend + mirror).** `deal_math.title_escrow_buy_itemized_default(title_mode, price, hml_amount)` replaces the
+$1,000 flat / we-pay-all tiers: $600 office fees + the owner's policy at the FL promulgated rate (we pay all only) + the lender's
+policy ($250 + $5/$1k of the hard-money loan above the price). $100k / $123k → $1,540 (we pay all), $965 (standard). The three
+lines are on the record and the response (`title_office_and_search_fees_buy`, `owners_title_policy_premium_buy`,
+`lenders_title_policy_and_endorsements_buy`); the breakdown files each as a step with its statutory note and Title & Escrow (Buy)
+is their sum. `brrrAutoCalc.titleEscrowBuyItemizedDefault` mirrors it; the we-pay-all premium is now owner's policy + deed tax.
+
+**Estimate explanations.** `AutoDefaultMoneyInput` gained `estimateExplanationLines`, shown only while the field is on its
+formula default; `utils/closingCostEstimateExplanations.ts` builds the lines for title + recording (buy) and title + recording
+(refi). The popup notes for the same four steps name their formula parts, or say a typed amount overrides the estimate.
+
+**$ reserves.** Four nullable lifecycle columns (`monthly_vacancy_reserve_dollars`, `monthly_maintenance_reserve_dollars`,
+`monthly_capex_reserve_dollars`, `monthly_property_management_fee_dollars`) override the % of rent when set; validated ≥ 0 on both
+sides. `PercentOfRentOrMonthlyDollarsInput` is a % | $ pill (radiogroup) with the other unit read back underneath.
+
+**Dates, tax bill, layout.** New deals close at contract + 10; a contract-date change moves a closing still on that default.
+Typing the seller tax credit also back-solves the tax bill (`annualPropertyTaxesFromSellerTaxCredit`). Insurance Bill at Purchase
+and its timing are on Buy (the tab dot follows); "Regular year after the refi" is on Rent & Holding. The report input sections follow.
+
+**Numbers that move.** Every BRRRR deal on the title default (e.g. the pytest fixture $1,000 → $925); cash flow and DSCR do not.
+Backend goldens, the breakdown parity fixture and eleven Playwright network goldens re-recorded, diffs reviewed.
+
+**Verification.** pytest green, `verify_regression.py verify` identical; vitest 1,795 + 20 new green; `vue-tsc` clean; Playwright
+chromium / Mobile Chrome / chromium-motion 214 passed (the one passkeys failure was a reused backend's leftover devices and passes on
+a fresh one); bandit, pip-audit, npm audit clean.
