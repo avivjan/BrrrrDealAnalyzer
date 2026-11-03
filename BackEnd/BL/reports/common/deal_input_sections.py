@@ -80,6 +80,11 @@ def _is_typed(payload_key: str) -> Callable[[DealInputs], bool]:
     return lambda inputs: inputs.get(payload_key) is not None
 
 
+CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICE_LABELS = {
+    "seller_paid_or_pays_at_closing": "Seller already paid / pays it at closing (we reimburse our days)",
+    "we_pay_at_purchase_closing": "We pay it at closing (seller credits their days)",
+    "we_pay_in_november_outside_closing": "We pay it in November, outside closing (POC)",
+}
 TITLE_MODE_BUY_LABELS = {"standard": "Standard (lender's policy)", "we_pay_all": "We pay all closing costs"}
 INSURANCE_PURCHASE_BILL_PAYMENT_TIMING_LABELS = {"inside_purchase_closing": "Inside the purchase closing",
                                                  "outside_purchase_closing": "Outside the purchase closing"}
@@ -97,12 +102,13 @@ BRRRR_DEAL_INPUT_SECTIONS: tuple[DealInputSection, ...] = (
         DealInputGroup(None, (
             DealInputField("contractDate", "Contract Date", "date"),
             DealInputField("buyClosingDate", "Closing Date (Buy)", "date"),
-            DealInputField("sellerPaidCurrentYearTaxes", "Seller already paid this year's taxes", "yes_no",
-                           formula_hint="Auto: yes for an October to December closing"),
+            DealInputField("sellerPaidCurrentYearTaxes", "This year's property tax bill", "choice",
+                           formula_hint="Auto: the seller pays it for an October to December closing, else we pay it in November"),
             DealInputField("sellerTaxCreditAtPurchaseClosing", "Seller Tax Credit", "money",
                            effective_result_key="seller_tax_credit",
                            formula_hint="Formula: this year's tax bill prorated by the closing date"),
             DealInputField("purchasePrice", "Purchase Price", "money_in_thousands"),
+            DealInputField("assignmentFee", "Assignment Fee", "money"),
             DealInputField("earnestMoneyDeposit", "Earnest Money Deposit", "money"),
         )),
         DealInputGroup("Hard Money", (
@@ -376,12 +382,20 @@ def _resolve_row(input_field: DealInputField, inputs: DealInputs, result: Calcul
         value_text = format_deal_input_value(input_field.display_kind, input_field.constant_default_when_blank, input_field.value_suffix)
         chips.append("auto")
         hint = input_field.formula_hint
-    elif input_field.payload_key == "sellerPaidCurrentYearTaxes" and raw_value is None:
-        closing_date = _as_date(inputs.get("buyClosingDate"))
-        automatic_value = bool(closing_date and seller_paid_current_year_taxes_by_default(closing_date))
-        value_text = format_deal_input_value("yes_no", automatic_value)
-        chips.extend(["auto", "yes" if automatic_value else "no"])
-        hint = input_field.formula_hint
+    elif input_field.payload_key == "sellerPaidCurrentYearTaxes":
+        # One row for the three-way choice the form shows (two stored fields).
+        if inputs.get("buyerPaysCurrentYearTaxBillAtPurchaseClosing"):
+            value_text = CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICE_LABELS["we_pay_at_purchase_closing"]
+        elif raw_value is None:
+            closing_date = _as_date(inputs.get("buyClosingDate"))
+            seller_pays_by_default = bool(closing_date and seller_paid_current_year_taxes_by_default(closing_date))
+            value_text = CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICE_LABELS[
+                "seller_paid_or_pays_at_closing" if seller_pays_by_default else "we_pay_in_november_outside_closing"]
+            chips.append("auto")
+            hint = input_field.formula_hint
+        else:
+            value_text = CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICE_LABELS[
+                "seller_paid_or_pays_at_closing" if raw_value else "we_pay_in_november_outside_closing"]
     else:
         value_text = format_deal_input_value(input_field.display_kind, raw_value, input_field.value_suffix, input_field.choice_labels)
         if input_field.display_kind == "yes_no":

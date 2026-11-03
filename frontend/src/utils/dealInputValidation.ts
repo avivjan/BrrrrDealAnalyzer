@@ -33,6 +33,7 @@ export interface DealInputFieldError {
 
 /** (field, label) of every dollar line item of the BRRRR lifecycle; `null` = formula default, so skipped. */
 const BRRR_NON_NEGATIVE_DOLLAR_FIELDS: ReadonlyArray<[NumericKey, string]> = [
+  ["assignmentFee", "Assignment fee"],
   ["earnestMoneyDeposit", "Earnest money deposit"],
   ["loanChargesBuy", "Loan charges (buy)"],
   ["recordingTransferBuy", "Recording and transfer charges (buy)"],

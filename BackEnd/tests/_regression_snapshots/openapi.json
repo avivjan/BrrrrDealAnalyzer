@@ -762,6 +762,20 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -822,6 +836,12 @@
             "format": "date",
             "title": "Buyclosingdate",
             "type": "string"
+          },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
           },
           "capexPercent": {
             "anyOf": [
@@ -2047,6 +2067,13 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Assignmentfee",
+            "type": "string"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -2115,6 +2142,12 @@
             "format": "date",
             "title": "Buyclosingdate",
             "type": "string"
+          },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
           },
           "capexPercent": {
             "anyOf": [
@@ -3038,6 +3071,18 @@
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
           },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
+          },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [
               {
@@ -3108,8 +3153,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recordingTransferBuy": {
             "anyOf": [
@@ -4856,6 +4913,20 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -4903,6 +4974,12 @@
             "format": "date",
             "title": "Buyclosingdate",
             "type": "string"
+          },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
           },
           "capexPercent": {
             "anyOf": [
@@ -6101,6 +6178,13 @@
             "description": "ARV in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Assignmentfee",
+            "type": "string"
+          },
           "bathrooms": {
             "anyOf": [
               {
@@ -6156,6 +6240,12 @@
             "format": "date",
             "title": "Buyclosingdate",
             "type": "string"
+          },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
           },
           "capexPercent": {
             "anyOf": [
@@ -7064,6 +7154,18 @@
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
           },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
+          },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [
               {
@@ -7134,8 +7236,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recordingTransferBuy": {
             "anyOf": [
@@ -14749,6 +14863,20 @@
             "description": "After repair value (ARV) of the property in thousands",
             "title": "Arv In Thousands"
           },
+          "assignmentFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+            "title": "Assignmentfee"
+          },
           "brokerProcessingFeeRefi": {
             "anyOf": [
               {
@@ -14768,6 +14896,12 @@
             "format": "date",
             "title": "Buyclosingdate",
             "type": "string"
+          },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
           },
           "capexPercent": {
             "anyOf": [
@@ -15978,6 +16112,18 @@
             "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
             "title": "Prepaid Interest Refi"
           },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
+          },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [
               {
@@ -16035,8 +16181,20 @@
                 "type": "null"
               }
             ],
-            "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+            "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
             "title": "Purchase Loan Amount"
+          },
+          "purchase_price_with_assignment_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+            "title": "Purchase Price With Assignment Fee"
           },
           "recording_transfer_buy_effective": {
             "anyOf": [

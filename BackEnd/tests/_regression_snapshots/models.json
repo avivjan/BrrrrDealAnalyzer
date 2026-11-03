@@ -262,6 +262,13 @@
           "default_factory": null,
           "required": false
         },
+        "assignment_fee": {
+          "alias": "assignmentFee",
+          "annotation": "<class 'Decimal'>",
+          "default": "Decimal('0')",
+          "default_factory": null,
+          "required": false
+        },
         "bathrooms": {
           "alias": null,
           "annotation": "Optional[Decimal]",
@@ -296,6 +303,13 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
+        },
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": {
+          "alias": "buyerPaysCurrentYearTaxBillAtPurchaseClosing",
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
@@ -927,6 +941,13 @@
           "default_factory": null,
           "required": false
         },
+        "assignment_fee": {
+          "alias": "assignmentFee",
+          "annotation": "<class 'Decimal'>",
+          "default": "Decimal('0')",
+          "default_factory": null,
+          "required": false
+        },
         "bathrooms": {
           "alias": null,
           "annotation": "Optional[Decimal]",
@@ -968,6 +989,13 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
+        },
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": {
+          "alias": "buyerPaysCurrentYearTaxBillAtPurchaseClosing",
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
@@ -1536,6 +1564,13 @@
           "default_factory": null,
           "required": false
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "alias": null,
+          "annotation": "Optional[float]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "alias": null,
           "annotation": "Optional[float]",
@@ -1588,6 +1623,13 @@
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
           "annotation": "Optional[Decimal]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "purchase_price_with_assignment_fee": {
+          "alias": null,
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -2614,6 +2656,13 @@
           "default_factory": null,
           "required": false
         },
+        "assignment_fee": {
+          "alias": "assignmentFee",
+          "annotation": "<class 'Decimal'>",
+          "default": "Decimal('0')",
+          "default_factory": null,
+          "required": false
+        },
         "bathrooms": {
           "alias": null,
           "annotation": "Optional[Decimal]",
@@ -2641,6 +2690,13 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
+        },
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": {
+          "alias": "buyerPaysCurrentYearTaxBillAtPurchaseClosing",
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
@@ -3258,6 +3314,13 @@
           "default_factory": null,
           "required": false
         },
+        "assignment_fee": {
+          "alias": "assignmentFee",
+          "annotation": "<class 'Decimal'>",
+          "default": "Decimal('0')",
+          "default_factory": null,
+          "required": false
+        },
         "bathrooms": {
           "alias": null,
           "annotation": "Optional[Decimal]",
@@ -3292,6 +3355,13 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
+        },
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": {
+          "alias": "buyerPaysCurrentYearTaxBillAtPurchaseClosing",
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
@@ -3853,6 +3923,13 @@
           "default_factory": null,
           "required": false
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "alias": null,
+          "annotation": "Optional[float]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "alias": null,
           "annotation": "Optional[float]",
@@ -3905,6 +3982,13 @@
         "purchase_price_in_thousands": {
           "alias": "purchasePrice",
           "annotation": "Optional[Decimal]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "purchase_price_with_assignment_fee": {
+          "alias": null,
+          "annotation": "Optional[float]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -6450,6 +6534,13 @@
           "default_factory": null,
           "required": true
         },
+        "assignment_fee": {
+          "alias": "assignmentFee",
+          "annotation": "<class 'Decimal'>",
+          "default": "Decimal('0')",
+          "default_factory": null,
+          "required": false
+        },
         "broker_processing_fee_refi": {
           "alias": "brokerProcessingFeeRefi",
           "annotation": "<class 'Decimal'>",
@@ -6463,6 +6554,13 @@
           "default": "PydanticUndefined",
           "default_factory": null,
           "required": true
+        },
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": {
+          "alias": "buyerPaysCurrentYearTaxBillAtPurchaseClosing",
+          "annotation": "<class 'bool'>",
+          "default": "False",
+          "default_factory": null,
+          "required": false
         },
         "capex_percent_of_rent": {
           "alias": "capexPercent",
@@ -7115,6 +7213,13 @@
           "default_factory": null,
           "required": false
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "alias": null,
+          "annotation": "Optional[float]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "alias": null,
           "annotation": "Optional[float]",
@@ -7144,6 +7249,13 @@
           "required": false
         },
         "purchase_loan_amount": {
+          "alias": null,
+          "annotation": "Optional[float]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "purchase_price_with_assignment_fee": {
           "alias": null,
           "annotation": "Optional[float]",
           "default": "None",
@@ -7487,11 +7599,13 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "rehab",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -7586,11 +7700,13 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "bought_stage": "rehab",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -7675,7 +7791,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'rehab', 'completedSubstages': {'a': True, 'b': False}, 'sourceDealId': UUID('33333333-3333-3333-3333-333333333333')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'rehab', 'completedSubstages': {'a': True, 'b': False}, 'sourceDealId': UUID('33333333-3333-3333-3333-333333333333')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -7756,11 +7872,13 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "purchase",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -7852,11 +7970,13 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "bought_stage": "purchase",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -7938,7 +8058,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -8014,12 +8134,14 @@
         "appraisalFee": "700",
         "appraisal_and_survey_paid_outside_closing": null,
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "boughtStage": "purchase",
         "breakdowns": null,
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -8104,12 +8226,14 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8",
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchasePrice": "200",
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": null,
@@ -8164,12 +8288,14 @@
         "appraisal_and_survey_paid_outside_closing": null,
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "bought_stage": "purchase",
         "breakdowns": null,
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_flow": 1.0,
@@ -8251,6 +8377,7 @@
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
         "property_managment_fee_precentages_from_rent": "8",
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_collection_at_refi": "no_tax_collected_at_refi",
@@ -8259,6 +8386,7 @@
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
         "purchase_price_in_thousands": "200",
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi": null,
@@ -8303,7 +8431,7 @@
         "vacancy_reserve_effective": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'cash_flow': 1.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None, 'id': UUID('44444444-4444-4444-4444-444444444444'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
+      "dump_python_repr": "{'cash_flow': 1.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'purchase_price_with_assignment_fee': None, 'property_tax_bill_paid_at_purchase_closing': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'boughtStage': 'purchase', 'completedSubstages': {}, 'sourceDealId': None, 'id': UUID('44444444-4444-4444-4444-444444444444'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -8644,10 +8772,12 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -8737,10 +8867,12 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -8820,7 +8952,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -8895,10 +9027,12 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "0",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "brokerProcessingFeeRefi": "0",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "0.0",
         "capexReserve": "2500",
         "cashReserve": "0.0",
@@ -8988,10 +9122,12 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "0",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "broker_processing_fee_refi": "0",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "0.0",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0.0",
@@ -9071,7 +9207,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': None, 'rehabCost': Decimal('0.0'), 'rehabContingency': Decimal('0.0'), 'down_payment': None, 'closingCostsBuy': Decimal('0.0'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('0.0'), 'HMLInterestRate': None, 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0'), 'section': None, 'stage': None, 'address': '1 Default St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('0'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0.0'), 'loanTermYears': 30, 'ltv_as_precent': None, 'interestRate': None, 'rent': None, 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': None, 'rehabCost': Decimal('0.0'), 'rehabContingency': Decimal('0.0'), 'down_payment': None, 'closingCostsBuy': Decimal('0.0'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('0.0'), 'HMLInterestRate': None, 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0'), 'section': None, 'stage': None, 'address': '1 Default St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('0'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0.0'), 'loanTermYears': 30, 'ltv_as_precent': None, 'interestRate': None, 'rent': None, 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0')}",
       "exclude_unset": {
         "address": "1 Default St",
         "buyClosingDate": "2026-01-10",
@@ -9091,10 +9227,12 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "0",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "brokerProcessingFeeRefi": "0",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "0.0",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -9184,10 +9322,12 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "0",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "broker_processing_fee_refi": "0",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "0.0",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -9267,7 +9407,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('0.0'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0'), 'section': 1, 'stage': 1, 'address': '1 Field St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('0'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': None, 'rent': None, 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('0.0'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0'), 'section': 1, 'stage': 1, 'address': '1 Field St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('0'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': None, 'rent': None, 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Field St",
@@ -9298,10 +9438,12 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -9391,10 +9533,12 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -9474,7 +9618,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -9549,10 +9693,12 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -9654,10 +9800,12 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -9749,7 +9897,7 @@
         "vacancy_reserve": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': [{'url': 'http://s', 'arv': Decimal('310'), 'how_long_ago': '2mo'}], 'rent_comps': [{'url': 'http://r', 'rent': Decimal('2500'), 'time_on_market': '5d'}], 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': [{'url': 'http://s', 'arv': Decimal('310'), 'how_long_ago': '2mo'}], 'rent_comps': [{'url': 'http://r', 'rent': Decimal('2500'), 'time_on_market': '5d'}], 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -9839,11 +9987,13 @@
         "appraisalFee": "700",
         "appraisal_and_survey_paid_outside_closing": null,
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": null,
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -9927,12 +10077,14 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8",
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchasePrice": "200",
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recordingTransferBuy": null,
         "recordingTransferRefi": null,
         "recording_transfer_buy_effective": null,
@@ -9986,11 +10138,13 @@
         "appraisal_and_survey_paid_outside_closing": null,
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "bathrooms": null,
         "bedrooms": null,
         "breakdowns": null,
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_flow": 85.03674361688704,
@@ -10071,6 +10225,7 @@
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
         "property_managment_fee_precentages_from_rent": "8",
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_collection_at_refi": "no_tax_collected_at_refi",
@@ -10079,6 +10234,7 @@
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
         "purchase_price_in_thousands": "200",
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi": null,
@@ -10122,7 +10278,7 @@
         "vacancy_reserve_effective": null,
         "zillow_link": null
       },
-      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'id': UUID('11111111-1111-1111-1111-111111111111'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
+      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'purchase_price_with_assignment_fee': None, 'property_tax_bill_paid_at_purchase_closing': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None, 'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'HMLInterestRate': Decimal('11'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0'), 'section': 2, 'stage': 2, 'address': '1 Shared Form St', 'sqft': None, 'bedrooms': None, 'bathrooms': None, 'zillow_link': None, 'overall_design': None, 'crime_rate': None, 'pics_link': None, 'google_drive_link': None, 'contact': None, 'task': None, 'niche': None, 'sold_comps': None, 'rent_comps': None, 'notes': None, 'deal_type': 'BRRRR', 'arv_in_thousands': Decimal('320'), 'daysUntilRefi': 180, 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'id': UUID('11111111-1111-1111-1111-111111111111'), 'created_at': datetime.datetime(2024, 1, 2, 3, 4, 5, tzinfo=TzInfo(0)), 'updated_at': datetime.datetime(2024, 1, 2, 3, 4, 6, tzinfo=TzInfo(0))}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "address": "1 Shared Form St",
@@ -11587,8 +11743,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -11662,8 +11820,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -11728,7 +11888,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 195, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 195, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -11798,8 +11958,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -11873,8 +12035,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -11939,7 +12103,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -12009,8 +12173,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -12084,8 +12250,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -12150,7 +12318,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -12220,8 +12388,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -12295,8 +12465,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -12361,7 +12533,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -12431,8 +12603,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -12506,8 +12680,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -12572,7 +12748,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -12642,8 +12818,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "0",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "0.0",
         "capexReserve": "2500",
         "cashReserve": "0.0",
@@ -12717,8 +12895,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "0",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "0.0",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0.0",
@@ -12783,7 +12963,7 @@
         "vacancy_percent": "0.0",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('0.0'), 'rehabContingency': Decimal('0.0'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('0.0'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('0.0'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0.0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0'), 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('0'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('0'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('0.0'), 'rehabContingency': Decimal('0.0'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('0.0'), 'use_HM_for_rehab': False, 'hmlPoints': Decimal('0.0'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('0.0'), 'refiPoints': Decimal('2'), 'cashReserve': Decimal('0.0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('0.0'), 'property_managment_fee_precentages_from_rent': Decimal('0.0'), 'maintenancePercent': Decimal('0.0'), 'capexPercent': Decimal('0.0'), 'annual_property_taxes': Decimal('0.0'), 'annual_insurance': Decimal('0.0'), 'montly_hoa': Decimal('0.0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "arv_in_thousands": "320",
@@ -12805,8 +12985,10 @@
         "appliances": "630",
         "appraisalFee": "700",
         "arv_in_thousands": "320",
+        "assignmentFee": "0",
         "brokerProcessingFeeRefi": "395",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5",
         "capexReserve": "2500",
         "cashReserve": "0",
@@ -12880,8 +13062,10 @@
         "appliances": "630",
         "appraisal_fee": "700",
         "arv_in_thousands": "320",
+        "assignment_fee": "0",
         "broker_processing_fee_refi": "395",
         "buy_closing_date": "2026-01-10",
+        "buyer_pays_current_year_tax_bill_at_purchase_closing": false,
         "capex_percent_of_rent": "5",
         "capex_reserve": "2500",
         "cash_reserve_in_thousands": "0",
@@ -12946,7 +13130,7 @@
         "vacancy_percent": "5",
         "vacancy_reserve": null
       },
-      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
+      "dump_python_repr": "{'contractDate': datetime.date(2026, 1, 3), 'buyClosingDate': datetime.date(2026, 1, 10), 'assignmentFee': Decimal('0'), 'earnestMoneyDeposit': Decimal('5000'), 'loanChargesBuy': Decimal('900'), 'recordingTransferBuy': None, 'titleModeBuy': 'standard', 'titleEscrowBuy': None, 'onlineNotaryBuy': True, 'onlineNotaryFeeBuy': None, 'otherClosingCostsBuy': Decimal('0'), 'otherClosingCostsBuyNote': None, 'sellerPaidCurrentYearTaxes': None, 'buyerPaysCurrentYearTaxBillAtPurchaseClosing': False, 'sellerTaxCreditAtPurchaseClosing': None, 'insurancePurchaseBillPaymentTiming': 'inside_purchase_closing', 'constructionLoanBudget': Decimal('55'), 'rehabCushion': Decimal('5000'), 'daysUntilRehabCompleted': 45, 'daysUntilRented': 90, 'monthlyUtilitiesUntilRented': Decimal('80'), 'maintenanceBeforeRefi': Decimal('500'), 'appliances': Decimal('630'), 'monthlyInsuranceUntilRefi': Decimal('0'), 'monthlyPropertyTaxBucketDeposit': None, 'loanChargesRefi': Decimal('200'), 'recordingTransferRefi': None, 'titleEscrowRefi': None, 'onlineNotaryRefi': True, 'onlineNotaryFeeRefi': None, 'appraisalFee': Decimal('700'), 'surveyFee': Decimal('385'), 'refiUnderwritingFee': Decimal('2000'), 'brokerProcessingFeeRefi': Decimal('395'), 'otherClosingCostsRefi': Decimal('0'), 'otherClosingCostsRefiNote': None, 'insuranceBillAtRefiClosing': None, 'insuranceRefiBillPaymentTiming': 'inside_refi_closing', 'monthlyInsuranceAfterRefi': None, 'propertyTaxCollectionAtRefi': 'no_tax_collected_at_refi', 'propertyTaxLumpSumAtRefiClosing': None, 'monthlyVacancyReserveDollars': None, 'monthlyMaintenanceReserveDollars': None, 'monthlyCapexReserveDollars': None, 'monthlyPropertyManagementFeeDollars': None, 'maintenanceReserve': Decimal('1500'), 'vacancyReserve': None, 'capexReserve': Decimal('2500'), 'hysaDepositAtRefi': None, 'lowestArv': None, 'arv_in_thousands': Decimal('320'), 'purchasePrice': Decimal('200'), 'rehabCost': Decimal('50'), 'rehabContingency': Decimal('10'), 'down_payment': Decimal('20'), 'closingCostsBuy': Decimal('5'), 'use_HM_for_rehab': True, 'hmlPoints': Decimal('2'), 'daysUntilRefi': 180, 'HMLInterestRate': Decimal('11'), 'closingCostsRefi': Decimal('6'), 'refiPoints': Decimal('1.5'), 'cashReserve': Decimal('0'), 'loanTermYears': 30, 'ltv_as_precent': Decimal('75'), 'interestRate': Decimal('6.5'), 'rent': Decimal('2600'), 'vacancyPercent': Decimal('5'), 'property_managment_fee_precentages_from_rent': Decimal('8'), 'maintenancePercent': Decimal('5'), 'capexPercent': Decimal('5'), 'annual_property_taxes': Decimal('3600'), 'annual_insurance': Decimal('1200'), 'montly_hoa': Decimal('0')}",
       "exclude_unset": {
         "HMLInterestRate": "11",
         "annual_insurance": "1200",
@@ -13052,11 +13236,13 @@
         "pre_refi_rental_income": null,
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi_effective": null,
         "refi_closing_date": "2026-07-09",
@@ -13118,11 +13304,13 @@
         "pre_refi_rental_income": null,
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi_effective": null,
         "refi_closing_date": "2026-07-09",
@@ -13141,7 +13329,7 @@
         "total_hard_money_cost": null,
         "vacancy_reserve_effective": null
       },
-      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': 1.2, 'cash_out': -1000.5, 'cash_out_routi': 250.25, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': 12.5, 'roi': 30.0, 'equity': 80000.0, 'net_profit': 79000.0, 'total_cash_needed_for_deal': 63525.0, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': 40000.0, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': 0.0, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': ['a note'], 'breakdowns': {'cash_flow': [{'label': 'x', 'value': 1.5, 'unit': 'money', 'formula': '1 + 0.5', 'terms': None, 'note': None}]}}",
+      "dump_python_repr": "{'cash_flow': 85.03674361688704, 'dscr': 1.2, 'cash_out': -1000.5, 'cash_out_routi': 250.25, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': 12.5, 'roi': 30.0, 'equity': 80000.0, 'net_profit': 79000.0, 'total_cash_needed_for_deal': 63525.0, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': 40000.0, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'purchase_price_with_assignment_fee': None, 'property_tax_bill_paid_at_purchase_closing': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': 0.0, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': ['a note'], 'breakdowns': {'cash_flow': [{'label': 'x', 'value': 1.5, 'unit': 'money', 'formula': '1 + 0.5', 'terms': None, 'note': None}]}}",
       "exclude_unset": {
         "breakdowns": {
           "cash_flow": [
@@ -13203,11 +13391,13 @@
         "pre_refi_rental_income": null,
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi_effective": null,
         "refi_closing_date": "2026-07-09",
@@ -13256,11 +13446,13 @@
         "pre_refi_rental_income": null,
         "prepaid_interest_buy": null,
         "prepaid_interest_refi": null,
+        "property_tax_bill_paid_at_purchase_closing": null,
         "property_tax_bucket_balance_released_at_refi": null,
         "property_tax_bucket_deposit_effective": null,
         "property_tax_lump_sum_at_refi_closing_effective": null,
         "property_tax_paid_into_bucket_until_refi": null,
         "purchase_loan_amount": null,
+        "purchase_price_with_assignment_fee": null,
         "recording_transfer_buy_effective": null,
         "recording_transfer_refi_effective": null,
         "refi_closing_date": "2026-07-09",
@@ -13279,7 +13471,7 @@
         "total_hard_money_cost": null,
         "vacancy_reserve_effective": null
       },
-      "dump_python_repr": "{'cash_flow': 0.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None}",
+      "dump_python_repr": "{'cash_flow': 0.0, 'dscr': None, 'cash_out': None, 'cash_out_routi': None, 'cash_out_routi_conservative': None, 'cash_to_refi_table_conservative': None, 'cash_on_cash': None, 'roi': None, 'equity': None, 'net_profit': None, 'total_cash_needed_for_deal': None, 'cash_needed_schedule_at_lowest_arv': None, 'total_cash_invested': None, 'cash_to_close_buy': None, 'purchase_loan_amount': None, 'hml_amount': None, 'hml_payoff': None, 'total_hard_money_cost': None, 'prepaid_interest_buy': None, 'seller_tax_credit': None, 'closing_costs_buy_total': None, 'deed_transfer_tax_buy': None, 'purchase_price_with_assignment_fee': None, 'property_tax_bill_paid_at_purchase_closing': None, 'title_office_and_search_fees_buy': None, 'owners_title_policy_premium_buy': None, 'lenders_title_policy_and_endorsements_buy': None, 'stolen_money': None, 'pre_refi_rental_income': None, 'closing_costs_refi_total': None, 'prepaid_interest_refi': None, 'reserves_total': None, 'refi_closing_date': datetime.date(2026, 7, 9), 'tenant_occupied_date': datetime.date(2026, 4, 10), 'rehab_completed_date': datetime.date(2026, 2, 24), 'appraisal_and_survey_paid_outside_closing': None, 'insurance_bill_at_refi_effective': None, 'monthly_insurance_after_refi_effective': None, 'property_tax_bucket_deposit_effective': None, 'property_tax_paid_into_bucket_until_refi': None, 'property_tax_lump_sum_at_refi_closing_effective': None, 'property_tax_bucket_balance_released_at_refi': None, 'monthly_property_tax_after_refi': None, 'hysa_deposit_at_refi_effective': None, 'reserves_funded_from_own_pocket_at_lowest_arv': None, 'recording_transfer_buy_effective': None, 'title_escrow_buy_effective': None, 'recording_transfer_refi_effective': None, 'title_escrow_refi_effective': None, 'vacancy_reserve_effective': None, 'lowest_arv_effective': None, 'messages': None, 'breakdowns': None}",
       "exclude_unset": {
         "cash_flow": 0.0,
         "refi_closing_date": "2026-07-09",
@@ -14193,6 +14385,20 @@
           "description": "ARV in thousands",
           "title": "Arv In Thousands"
         },
+        "assignmentFee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+          "title": "Assignmentfee"
+        },
         "bathrooms": {
           "anyOf": [
             {
@@ -14255,6 +14461,12 @@
           "format": "date",
           "title": "Buyclosingdate",
           "type": "string"
+        },
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+          "default": false,
+          "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+          "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+          "type": "boolean"
         },
         "capexPercent": {
           "anyOf": [
@@ -15857,6 +16069,20 @@
           "description": "ARV in thousands",
           "title": "Arv In Thousands"
         },
+        "assignmentFee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+          "title": "Assignmentfee"
+        },
         "bathrooms": {
           "anyOf": [
             {
@@ -15938,6 +16164,12 @@
           "format": "date",
           "title": "Buyclosingdate",
           "type": "string"
+        },
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+          "default": false,
+          "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+          "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+          "type": "boolean"
         },
         "capexPercent": {
           "anyOf": [
@@ -17056,6 +17288,19 @@
           "default": "0.0",
           "title": "Property Managment Fee Precentages From Rent"
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+          "title": "Property Tax Bill Paid At Purchase Closing"
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "anyOf": [
             {
@@ -17135,8 +17380,21 @@
             }
           ],
           "default": null,
-          "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+          "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
           "title": "Purchase Loan Amount"
+        },
+        "purchase_price_with_assignment_fee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+          "title": "Purchase Price With Assignment Fee"
         },
         "recordingTransferBuy": {
           "anyOf": [
@@ -19492,6 +19750,20 @@
           "description": "ARV in thousands",
           "title": "Arv In Thousands"
         },
+        "assignmentFee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+          "title": "Assignmentfee"
+        },
         "bathrooms": {
           "anyOf": [
             {
@@ -19541,6 +19813,12 @@
           "format": "date",
           "title": "Buyclosingdate",
           "type": "string"
+        },
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+          "default": false,
+          "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+          "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+          "type": "boolean"
         },
         "capexPercent": {
           "anyOf": [
@@ -21115,6 +21393,20 @@
           "description": "ARV in thousands",
           "title": "Arv In Thousands"
         },
+        "assignmentFee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+          "title": "Assignmentfee"
+        },
         "bathrooms": {
           "anyOf": [
             {
@@ -21183,6 +21475,12 @@
           "format": "date",
           "title": "Buyclosingdate",
           "type": "string"
+        },
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+          "default": false,
+          "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+          "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+          "type": "boolean"
         },
         "capexPercent": {
           "anyOf": [
@@ -22286,6 +22584,19 @@
           "default": "0.0",
           "title": "Property Managment Fee Precentages From Rent"
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+          "title": "Property Tax Bill Paid At Purchase Closing"
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "anyOf": [
             {
@@ -22365,8 +22676,21 @@
             }
           ],
           "default": null,
-          "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+          "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
           "title": "Purchase Loan Amount"
+        },
+        "purchase_price_with_assignment_fee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+          "title": "Purchase Price With Assignment Fee"
         },
         "recordingTransferBuy": {
           "anyOf": [
@@ -27336,6 +27660,20 @@
           "description": "After repair value (ARV) of the property in thousands",
           "title": "Arv In Thousands"
         },
+        "assignmentFee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "Wholesaler's assignment fee, in dollars: financed with the price (down payment and loan on price + fee); no deed tax or title policy on it.",
+          "title": "Assignmentfee"
+        },
         "brokerProcessingFeeRefi": {
           "anyOf": [
             {
@@ -27355,6 +27693,12 @@
           "format": "date",
           "title": "Buyclosingdate",
           "type": "string"
+        },
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+          "default": false,
+          "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+          "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+          "type": "boolean"
         },
         "capexPercent": {
           "anyOf": [
@@ -28829,6 +29173,19 @@
           "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
           "title": "Prepaid Interest Refi"
         },
+        "property_tax_bill_paid_at_purchase_closing": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+          "title": "Property Tax Bill Paid At Purchase Closing"
+        },
         "property_tax_bucket_balance_released_at_refi": {
           "anyOf": [
             {
@@ -28891,8 +29248,21 @@
             }
           ],
           "default": null,
-          "description": "Hard-money loan on the purchase, in dollars: purchase price x (1 - down payment %).",
+          "description": "Hard-money loan on the purchase, in dollars: (purchase price + assignment fee) x (1 - down payment %).",
           "title": "Purchase Loan Amount"
+        },
+        "purchase_price_with_assignment_fee": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Purchase price + assignment fee, in dollars: the total cost the down payment and the purchase loan are on.",
+          "title": "Purchase Price With Assignment Fee"
         },
         "recording_transfer_buy_effective": {
           "anyOf": [

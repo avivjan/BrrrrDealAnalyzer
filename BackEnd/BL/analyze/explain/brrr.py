@@ -23,6 +23,7 @@ from BL.analyze.common.deal_math import (
     calc_roi,
     calc_seller_tax_credit,
     seller_paid_current_year_taxes_by_default,
+    current_year_property_tax_bill_paid_at_purchase_closing,
     recording_transfer_default,
     recording_transfer_buy_default,
     deed_transfer_tax_buy_default,
@@ -190,15 +191,24 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     )
 
     # -- BUY: the hard-money stack ---------------------------------------------
-    check(results.purchase_loan_amount == results.purchase_price * (1 - payload.down_payment / Decimal("100.0")), "purchase loan")
+    check(results.purchase_price_with_assignment_fee == results.purchase_price + payload.assignment_fee, "price with assignment fee")
+    has_assignment_fee = payload.assignment_fee != 0
+    financed_price_text = (f"Purchase + Assignment Fee ({fmt_money(results.purchase_price)} + {fmt_money(payload.assignment_fee)} = "
+                           f"{fmt_money(results.purchase_price_with_assignment_fee)})" if has_assignment_fee
+                           else f"Purchase ({fmt_money(results.purchase_price)})")
+    financed_price_note = ("The lender treats price + assignment fee as the total cost; the deed transfer tax and the owner's title policy "
+                           "stay on the contract price." if has_assignment_fee else None)
+    check(results.purchase_loan_amount == results.purchase_price_with_assignment_fee * (1 - payload.down_payment / Decimal("100.0")), "purchase loan")
     breakdown.add(
         [CLOSE, HM_COST], "Purchase Loan (hard money)", results.purchase_loan_amount,
-        f"Purchase ({fmt_money(results.purchase_price)}) × (1 − Down Payment {fmt_pct(payload.down_payment)}) = {fmt_money(results.purchase_loan_amount)}",
+        f"{financed_price_text} × (1 − Down Payment {fmt_pct(payload.down_payment)}) = {fmt_money(results.purchase_loan_amount)}",
+        note=financed_price_note,
     )
-    check(results.down_payment_cash == (payload.down_payment / Decimal("100")) * results.purchase_price, "down payment")
+    check(results.down_payment_cash == (payload.down_payment / Decimal("100")) * results.purchase_price_with_assignment_fee, "down payment")
     breakdown.add(
         [CLOSE, CASH_NEEDED], "Down Payment (cash)", results.down_payment_cash,
-        f"{fmt_pct(payload.down_payment)} × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.down_payment_cash)}",
+        f"{fmt_pct(payload.down_payment)} × {financed_price_text} = {fmt_money(results.down_payment_cash)}",
+        note=financed_price_note,
     )
     check(results.construction_budget == payload.construction_loan_budget_in_thousands * Decimal("1000.0"), "construction budget")
     breakdown.add_sum([HM_COST, WIRE, "cash_out"], "Hard Money Loan (total principal)", results.hml_amount, [
@@ -255,7 +265,7 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         (f"We pay all closing costs → we also pay the seller's deed transfer tax: 0.70% × Purchase ({fmt_money(results.purchase_price)}) = {fmt_money(results.deed_transfer_tax_buy)}"
          if payload.title_mode_buy == "we_pay_all" else
          "Standard deal → the seller pays the deed transfer tax (a seller debit on the settlement statement), so it costs us $0"),
-        note=("The deed transfer tax (documentary stamps on the deed) is 0.70% of the price and is normally the seller's. "
+        note=("The deed transfer tax (documentary stamps on the deed) is 0.70% of the contract price (never the assignment fee) and is normally the seller's. "
               + ("Because we pay all closing costs we take it over; it is added into Recording & Transfer (Buy)."
                  if payload.title_mode_buy == "we_pay_all" else
                  f"Choosing 'we pay all closing costs' would add it to our costs: 0.70% × {fmt_money(results.purchase_price)} = {fmt_money(deed_transfer_tax_buy_default('we_pay_all', results.purchase_price))}.")),
@@ -316,6 +326,19 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         (f"Paid through the purchase settlement → {fmt_money(results.insurance_bill_at_purchase_inside_closing)}" if insurance_bill_at_purchase_is_inside_closing
          else "Paid outside the purchase closing → $0 here (in Total Cash Invested instead)"),
     )
+    we_pay_current_year_tax_bill_at_closing = payload.buyer_pays_current_year_tax_bill_at_purchase_closing
+    check(results.property_tax_bill_paid_at_purchase_closing == (current_year_property_tax_bill_paid_at_purchase_closing(payload.annual_property_taxes, results.buy_closing_date)
+                                                                 if we_pay_current_year_tax_bill_at_closing else 0), "tax bill paid at purchase closing")
+    if we_pay_current_year_tax_bill_at_closing:
+        closing_month_discount_text = {11: " × 0.96 (4% November discount)", 12: " × 0.97 (3% December discount)"}.get(results.buy_closing_date.month, " (the full bill: no discount before November)")
+        tax_bill_at_closing_formula = (f"We pay this year's bill at the purchase closing: Property Tax Bill ({fmt_money(payload.annual_property_taxes)})"
+                                       f"{closing_month_discount_text} = {fmt_money(results.property_tax_bill_paid_at_purchase_closing)}")
+    else:
+        tax_bill_at_closing_formula = ("Seller already paid / pays this year's bill → $0 here (you reimburse your days through the Seller Tax Credit)"
+                                       if results.seller_paid_current_year_taxes else
+                                       "We pay this year's bill ourselves in November (outside closing, from the tax bucket) → $0 here")
+    breakdown.add(CLOSE, "Property Tax Bill paid at Purchase Closing", results.property_tax_bill_paid_at_purchase_closing, tax_bill_at_closing_formula,
+                  note="Florida discounts an early payment: 4% in November and 3% in December of the bill's year.")
     breakdown.add_sum([CLOSE, CASH_NEEDED], "Closing Costs (Buy)", results.closing_costs_buy_total, [
         ("Loan Charges", payload.loan_charges_buy),
         ("Recording & Transfer", results.recording_transfer_buy),
@@ -323,8 +346,13 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         ("Online Notary", results.notary_buy),
         ("Other", payload.other_closing_costs_buy),
         ("Insurance Bill (inside closing)", results.insurance_bill_at_purchase_inside_closing),
+        ("Property Tax Bill (paid at closing)", results.property_tax_bill_paid_at_purchase_closing),
     ])
-    check(results.seller_paid_current_year_taxes == (payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None else seller_paid_current_year_taxes_by_default(results.buy_closing_date)), "seller paid taxes")
+    check(results.seller_paid_current_year_taxes == (False if we_pay_current_year_tax_bill_at_closing else
+                                                     payload.seller_paid_current_year_taxes if payload.seller_paid_current_year_taxes is not None
+                                                     else seller_paid_current_year_taxes_by_default(results.buy_closing_date)), "seller paid taxes")
+    check(results.current_year_property_tax_bill_settled_by_purchase_closing == (results.seller_paid_current_year_taxes or we_pay_current_year_tax_bill_at_closing),
+          "this year's tax bill settled by the purchase closing")
     check(results.seller_tax_credit_formula == calc_seller_tax_credit(payload.annual_property_taxes, results.buy_closing_date, results.seller_paid_current_year_taxes), "seller tax credit")
     tax_formula = (
         f"Seller already paid this year's taxes → buyer credits the seller for {results.buy_closing_date.isoformat()} through Dec 31: {fmt_money(results.seller_tax_credit_formula)}"
@@ -335,14 +363,18 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     if payload.seller_tax_credit_at_purchase_closing is not None:
         tax_formula = f"As entered from the settlement statement: {fmt_money(results.seller_tax_credit)} (the proration would give {fmt_money(results.seller_tax_credit_formula)})"
     breakdown.add(CLOSE, "Seller Tax Credit", results.seller_tax_credit, tax_formula,
-           note="Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement, "
-                "and that credit is set aside in the property's tax bucket the day after closing.")
-    check(results.seller_tax_credit_set_aside_in_tax_bucket == max(Decimal("0"), results.seller_tax_credit), "seller tax credit set aside")
+           note=("Taxes are billed in November for the calendar year; positive = the seller credits the buyer on the settlement statement"
+                 + (", against the whole bill we pay at this closing." if we_pay_current_year_tax_bill_at_closing else
+                    ", and that credit is set aside in the property's tax bucket the day after closing.")))
+    check(results.seller_tax_credit_set_aside_in_tax_bucket == (Decimal("0") if we_pay_current_year_tax_bill_at_closing else max(Decimal("0"), results.seller_tax_credit)),
+          "seller tax credit set aside")
     # Filed under the same sections as the Total Cash Invested sum: when the credit is positive
     # the record holds one Decimal object under both fields, and the breakdown only links such an
     # operand to a step inside the sum's own sections.
     breakdown.add([CASH_NEEDED, "cash_out"], "Seller Tax Credit set aside in the tax bucket", results.seller_tax_credit_set_aside_in_tax_bucket,
-           (f"Credit received at closing ({fmt_money(results.seller_tax_credit)}) → put in the property's tax bucket the day after"
+           ("$0: we pay this year's whole bill at the purchase closing, so the seller's credit only offsets that line"
+            if we_pay_current_year_tax_bill_at_closing else
+            f"Credit received at closing ({fmt_money(results.seller_tax_credit)}) → put in the property's tax bucket the day after"
             if results.seller_tax_credit > 0 else
             "$0: a negative credit is the buyer's reimbursement to the seller and stays in Cash to Close" if results.seller_tax_credit < 0 else
             "No credit at closing → nothing to set aside ($0)"),

@@ -222,6 +222,15 @@ def round_to_cents(value: Decimal) -> Decimal:
     """Half away from zero, to the cent: the rounding of Cash Needed and of every schedule row."""
     return value.quantize(ONE_CENT, rounding=ROUND_HALF_UP)
 
+# Florida's early-payment discount on a property tax bill (F.S. 197.162): 4% in November, 3% in
+# December of the bill's year (2% / 1% in January / February belong to the following calendar year).
+FLORIDA_PROPERTY_TAX_EARLY_PAYMENT_FACTOR_BY_MONTH_OF_THE_BILLS_YEAR = {11: Decimal("0.96"), 12: Decimal("0.97")}
+
+def current_year_property_tax_bill_paid_at_purchase_closing(annual_taxes, buy_closing_date: date):
+    """This year's bill when we pay it at the purchase closing: discounted in November (4%) and December
+    (3%), once the bill is out; before November it is the full bill (no discount yet)."""
+    return annual_taxes * FLORIDA_PROPERTY_TAX_EARLY_PAYMENT_FACTOR_BY_MONTH_OF_THE_BILLS_YEAR.get(buy_closing_date.month, Decimal("1"))
+
 def seller_paid_current_year_taxes_by_default(buy_closing_date: date) -> bool:
     """From October the title takes this year's bill at closing, so the seller has paid it."""
     return buy_closing_date.month >= SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH

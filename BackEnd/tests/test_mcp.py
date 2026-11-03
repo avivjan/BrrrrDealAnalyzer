@@ -196,7 +196,10 @@ class TestEveryToolSchema:
         # (tasks/todo/CashNeededSchedule.md, tasks/todo/DealCashInLiquidity.md).
         # 470 kB with the seven deal-import / milestone / late-refi tools and the deal source fields on every
         # liquidity transaction (tasks/todo/DealCashInLiquidity.md).
-        assert len(payload) < 470_000, f"tools/list is {len(payload)} bytes"
+        # 473 kB with the Florida title lines, the four monthly-reserve dollar inputs, the Cash Needed schedule's
+        # key dates and the "we pay this year's tax bill at closing" input (tasks/todo/SettlementStatementFloridaTitle.md,
+        # tasks/todo/CashNeededScheduleMilestones.md).
+        assert len(payload) < 480_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

@@ -30,6 +30,7 @@ BRRR_TABLES = ("active_deals", "bought_brrrr_deals")
 BRRR_LIFECYCLE_COLUMNS = (
     # Buy
     ("buy_closing_date", "DATE", None),
+    ("assignment_fee", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("earnest_money_deposit", "NUMERIC(12,2) DEFAULT 5000", "5000"),
     ("loan_charges_buy", "NUMERIC(12,2) DEFAULT 900", "900"),
     ("recording_transfer_buy", "NUMERIC(12,2)", None),
@@ -40,6 +41,7 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("other_closing_costs_buy", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_buy_note", "VARCHAR(500)", None),
     ("seller_paid_current_year_taxes", "BOOLEAN", None),
+    ("buyer_pays_current_year_tax_bill_at_purchase_closing", "BOOLEAN DEFAULT FALSE", "FALSE"),
     ("seller_tax_credit_at_purchase_closing", "NUMERIC(12,2)", None),
     ("insurance_purchase_bill_payment_timing", "VARCHAR(30) DEFAULT 'inside_purchase_closing'", "'inside_purchase_closing'"),
     # Rehab

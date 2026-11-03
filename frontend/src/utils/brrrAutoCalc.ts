@@ -39,6 +39,13 @@ export const DSCR_DAYS_PER_YEAR = 360;
 export const DAYS_PER_MONTH = 30;
 /** Property taxes are paid on Nov 30 with the 4% November discount. */
 export const PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR = 0.96;
+/** Florida's early-payment discount by the month of the bill's year (F.S. 197.162): 4% in November, 3% in December. */
+export const FLORIDA_PROPERTY_TAX_EARLY_PAYMENT_FACTOR_BY_MONTH: Readonly<Record<number, number>> = { 11: 0.96, 12: 0.97 };
+
+/** This year's bill when we pay it at the purchase closing: discounted in November / December, else the full bill. */
+export function currentYearPropertyTaxBillPaidAtPurchaseClosing(annualPropertyTaxes: number, closingDay: Date): number {
+  return annualPropertyTaxes * (FLORIDA_PROPERTY_TAX_EARLY_PAYMENT_FACTOR_BY_MONTH[closingDay.getUTCMonth() + 1] ?? 1);
+}
 export const PROPERTY_TAX_BUCKET_DEPOSIT_DAY_OF_MONTH = 15;
 export const HYSA_DEPOSIT_MONTHS_OF_PRINCIPAL_AND_INTEREST = 3;
 /** From this closing month (1-based) on, the title takes this year's bill at closing: the seller has paid it by default. */
@@ -265,6 +272,8 @@ export function annualPropertyTaxesFromSellerTaxCredit(sellerTaxCreditDollars: n
 
 export interface BrrrAutoCalc {
   // Buy
+  /** Purchase price + assignment fee: what the down payment and the purchase loan are on. */
+  purchasePriceWithAssignmentFee: number | null;
   purchaseLoanAmount: number | null;
   downPaymentCash: number | null;
   hmlAmount: number | null;
@@ -279,6 +288,8 @@ export interface BrrrAutoCalc {
   /** Effective: the typed settlement-statement credit, or the formula. */
   sellerTaxCredit: number | null;
   insuranceBillAtPurchaseInsideClosing: number;
+  /** This year's tax bill paid by us at the purchase closing (a closing-cost line); 0 otherwise. */
+  propertyTaxBillPaidAtPurchaseClosing: number;
   /** Days the proration covers; 0 on a Jan 1 closing with unpaid taxes (nothing to back-solve). */
   sellerTaxCreditProratedDays: number | null;
   deedTransferTaxBuy: number | null;
@@ -369,8 +380,10 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const buyClosingDay = parseIsoDate(deal.buyClosingDate ?? null);
 
   // -- Buy: the hard-money stack --------------------------------------------
-  const purchaseLoanAmount = purchasePriceDollars != null && downPaymentPercent != null ? purchasePriceDollars * (1 - downPaymentPercent / 100) : null;
-  const downPaymentCash = purchasePriceDollars != null && downPaymentPercent != null ? (downPaymentPercent / 100) * purchasePriceDollars : null;
+  // The lender treats price + assignment fee as the total cost: the down payment and the loan are on it.
+  const purchasePriceWithAssignmentFee = purchasePriceDollars != null ? purchasePriceDollars + numberOrZero(deal.assignmentFee) : null;
+  const purchaseLoanAmount = purchasePriceWithAssignmentFee != null && downPaymentPercent != null ? purchasePriceWithAssignmentFee * (1 - downPaymentPercent / 100) : null;
+  const downPaymentCash = purchasePriceWithAssignmentFee != null && downPaymentPercent != null ? (downPaymentPercent / 100) * purchasePriceWithAssignmentFee : null;
   const rehabCostWithContingency = deal.rehabCost != null ? numberOrZero(deal.rehabCost) * 1000 * (1 + numberOrZero(deal.rehabContingency) / 100) : null;
   const constructionBudget = deal.constructionLoanBudget != null ? numberOrZero(deal.constructionLoanBudget) * 1000 : null;
   const hmlAmount = purchaseLoanAmount != null ? purchaseLoanAmount + (constructionBudget ?? 0) : null;
@@ -400,7 +413,14 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
 
   // -- Buy: the settlement -----------------------------------------------------
   const annualPropertyTaxes = numberOrNull(deal.annual_property_taxes);
-  const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay ? (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() + 1 >= SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH) : null;
+  const wePayCurrentYearTaxBillAtClosing = deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing === true;
+  const sellerAlreadyPaidCurrentYearTaxesEffective = buyClosingDay
+    ? (wePayCurrentYearTaxBillAtClosing ? false : (deal.sellerPaidCurrentYearTaxes ?? buyClosingDay.getUTCMonth() + 1 >= SELLER_PAID_CURRENT_YEAR_TAXES_BY_DEFAULT_FROM_MONTH))
+    : null;
+  /** This year's bill is settled by the closing (the seller paid it, or we pay it there): the bucket saves for next year's. */
+  const currentYearTaxBillSettledByPurchaseClosing = sellerAlreadyPaidCurrentYearTaxesEffective === true || wePayCurrentYearTaxBillAtClosing;
+  const propertyTaxBillPaidAtPurchaseClosing = wePayCurrentYearTaxBillAtClosing && buyClosingDay
+    ? currentYearPropertyTaxBillPaidAtPurchaseClosing(numberOrZero(deal.annual_property_taxes), buyClosingDay) : 0;
   const sellerTaxCreditFormulaAmount = buyClosingDay && isPositive(annualPropertyTaxes) ? sellerTaxCredit(annualPropertyTaxes, buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective as boolean) : buyClosingDay ? 0 : null;
   // The figure typed from the settlement statement wins over the proration.
   const sellerTaxCreditAmount = deal.sellerTaxCreditAtPurchaseClosing != null ? numberOrZero(deal.sellerTaxCreditAtPurchaseClosing) : sellerTaxCreditFormulaAmount;
@@ -419,7 +439,7 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   const closingCostsBuyTotal =
     recordingTransferBuyEffectiveAmount != null && titleEscrowBuyEffectiveAmount != null
       ? numberOrZero(deal.loanChargesBuy) + recordingTransferBuyEffectiveAmount + titleEscrowBuyEffectiveAmount + notaryBuy + numberOrZero(deal.otherClosingCostsBuy)
-        + insuranceBillAtPurchaseInsideClosing
+        + insuranceBillAtPurchaseInsideClosing + propertyTaxBillPaidAtPurchaseClosing
       : null;
   const cashToCloseBuy =
     downPaymentCash != null && closingCostsBuyTotal != null
@@ -436,10 +456,10 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
   // -- The property's tax bucket until the refi ---------------------------------
   const propertyTaxBillPaidOnNovember30 = annualPropertyTaxes != null ? annualPropertyTaxes * PROPERTY_TAX_NOVEMBER_PAYMENT_FACTOR : null;
   const monthlyPropertyTaxAfterRefi = propertyTaxBillPaidOnNovember30 != null ? propertyTaxBillPaidOnNovember30 / 12 : null;
-  const sellerTaxCreditSetAsideInTaxBucket = Math.max(0, sellerTaxCreditAmount ?? 0);
-  const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective === true) : null;
+  const sellerTaxCreditSetAsideInTaxBucket = wePayCurrentYearTaxBillAtClosing ? 0 : Math.max(0, sellerTaxCreditAmount ?? 0);
+  const firstPaymentDay = buyClosingDay ? firstPropertyTaxPaymentDate(buyClosingDay, currentYearTaxBillSettledByPurchaseClosing) : null;
   const firstDepositAfter = buyClosingDay && firstPaymentDay
-    ? firstPropertyTaxBucketDepositAfter(buyClosingDay, sellerAlreadyPaidCurrentYearTaxesEffective === true, firstPaymentDay)
+    ? firstPropertyTaxBucketDepositAfter(buyClosingDay, currentYearTaxBillSettledByPurchaseClosing, firstPaymentDay)
     : null;
   const firstBillDepositDates = firstDepositAfter && firstPaymentDay
     ? (propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay).length ? propertyTaxBucketDepositDates(firstDepositAfter, firstPaymentDay) : [firstPaymentDay])
@@ -523,9 +543,9 @@ export function brrrAutoCalc(deal: DealInputModel): BrrrAutoCalc {
       : null;
 
   return {
-    purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
+    purchasePriceWithAssignmentFee, purchaseLoanAmount, downPaymentCash, hmlAmount, hmlPointsDollars, hmlPerDiem, hmlInterestTotal,
     prepaidDaysBuy, prepaidInterestBuy, sellerPaidCurrentYearTaxesEffective: sellerAlreadyPaidCurrentYearTaxesEffective,
-    sellerTaxCreditFormula: sellerTaxCreditFormulaAmount, sellerTaxCredit: sellerTaxCreditAmount, insuranceBillAtPurchaseInsideClosing,
+    sellerTaxCreditFormula: sellerTaxCreditFormulaAmount, sellerTaxCredit: sellerTaxCreditAmount, insuranceBillAtPurchaseInsideClosing, propertyTaxBillPaidAtPurchaseClosing,
     sellerTaxCreditProratedDays: sellerTaxCreditProratedDaysCount,
     deedTransferTaxBuy, recordingTransferBuyDefault: recordingTransferBuyDefaultAmount, titleEscrowBuyDefault: titleEscrowBuyDefaultAmount,
     titleEscrowBuyItemizedDefault: titleEscrowBuyItemizedDefaultAmounts,

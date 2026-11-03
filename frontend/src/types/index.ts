@@ -80,6 +80,8 @@ export interface BrrrAnalyzeReq {
   contractDate?: string | null;
   /** ISO date of the purchase closing; required for BRRRR (every date of the deal derives from it). */
   buyClosingDate?: string | null;
+  /** The wholesaler's assignment fee, in dollars: financed with the price; no deed tax or title policy on it. */
+  assignmentFee?: number;
   earnestMoneyDeposit?: number;
   loanChargesBuy?: number;
   /** null → 0.55% × purchase loan + $250 */
@@ -94,6 +96,8 @@ export interface BrrrAnalyzeReq {
   otherClosingCostsBuyNote?: string | null;
   /** null → auto: true for an October to December closing */
   sellerPaidCurrentYearTaxes?: boolean | null;
+  /** We pay this year's whole tax bill at the purchase closing (wins over sellerPaidCurrentYearTaxes). */
+  buyerPaysCurrentYearTaxBillAtPurchaseClosing?: boolean;
   /** The settlement statement's tax proration (may be negative). null → this year's bill prorated by the closing date */
   sellerTaxCreditAtPurchaseClosing?: number | null;
   /** Where the insurance bill at purchase (annual_insurance) is paid. */

@@ -18,6 +18,7 @@ from ReqRes.common.analyze_inputs import analyzeBRRRReq, analyzeFlipReq
 
 # (field, label) of every dollar line item of the BRRRR lifecycle; `None` = formula default, so skipped.
 _BRRR_NON_NEGATIVE_DOLLARS = [
+    ("assignment_fee", "Assignment fee"),
     ("earnest_money_deposit", "Earnest money deposit"),
     ("loan_charges_buy", "Loan charges (buy)"),
     ("recording_transfer_buy", "Recording and transfer charges (buy)"),

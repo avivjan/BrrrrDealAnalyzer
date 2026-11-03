@@ -1,4 +1,5 @@
-"""BRRRR step: thousands->dollars basis, rehab with rehab_contingency, construction budget, lowest ARV."""
+"""BRRRR step: thousands->dollars basis, the price with the assignment fee, rehab with rehab_contingency,
+construction budget, lowest ARV."""
 
 from decimal import Decimal
 
@@ -7,7 +8,9 @@ from BL.analyze.common.deal_math import thousands_to_dollars, effective, lowest_
 
 def dollar_basis_step(payload):
     arv = thousands_to_dollars(payload.arv_in_thousands)
-    purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)
+    purchase_price = thousands_to_dollars(payload.purchase_price_in_thousands)   # the contract price on the deed
+    # What the hard-money lender finances against: the price plus the wholesaler's assignment fee.
+    purchase_price_with_assignment_fee = purchase_price + payload.assignment_fee
     rehab_cost_base = thousands_to_dollars(payload.rehab_cost_in_thousands)
     rehab_contingency = rehab_cost_base * (payload.rehab_contingency_percent / Decimal("100.0"))
     rehab_cost = rehab_cost_base + rehab_contingency
@@ -16,4 +19,4 @@ def dollar_basis_step(payload):
         None if payload.lowest_arv_in_thousands is None else thousands_to_dollars(payload.lowest_arv_in_thousands),
         lowest_arv_default(arv),
     )
-    return arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget, lowest_arv
+    return arv, purchase_price, purchase_price_with_assignment_fee, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget, lowest_arv

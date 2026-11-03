@@ -44,6 +44,8 @@ RECONCILIATION_SCENARIOS = {
     "negative_cash_to_close": {"earnestMoneyDeposit": 60_000},
     "refi_shortfall_and_reserves_from_pocket": {"arv_in_thousands": 250, "maintenanceReserve": 30_000},
     "with_hoa": {"montly_hoa": 450},
+    "we_pay_the_tax_bill_at_a_november_closing": {"buyClosingDate": "2026-11-20", "contractDate": "2026-11-10",
+                                                  "buyerPaysCurrentYearTaxBillAtPurchaseClosing": True},
     "sub_cent_amounts": {"annual_property_taxes": 3087.97, "HMLInterestRate": 11.375, "maintenanceBeforeRefi": 500.01},
 }
 

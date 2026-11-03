@@ -65,10 +65,12 @@ def calculate_brrr_results(payload) -> analyzeBRRRRes:
         total_cash_needed_for_deal=results.total_cash_needed,
         cash_needed_schedule_at_lowest_arv=cash_needed_schedule_response(results.cash_needed_schedule_at_lowest_arv),
         total_cash_invested=results.total_cash_invested, cash_to_close_buy=results.cash_to_close_buy,
-        purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount, hml_payoff=results.hml_payoff,
+        purchase_loan_amount=results.purchase_loan_amount, hml_amount=results.hml_amount,
+        purchase_price_with_assignment_fee=results.purchase_price_with_assignment_fee, hml_payoff=results.hml_payoff,
         total_hard_money_cost=results.total_hard_money_cost, prepaid_interest_buy=results.prepaid_interest_buy,
         seller_tax_credit=results.seller_tax_credit, closing_costs_buy_total=results.closing_costs_buy_total,
         deed_transfer_tax_buy=results.deed_transfer_tax_buy,
+        property_tax_bill_paid_at_purchase_closing=results.property_tax_bill_paid_at_purchase_closing,
         title_office_and_search_fees_buy=results.title_office_and_search_fees_buy,
         owners_title_policy_premium_buy=results.owners_title_policy_premium_buy,
         lenders_title_policy_and_endorsements_buy=results.lenders_title_policy_and_endorsements_buy,
@@ -105,14 +107,15 @@ def cash_needed_schedule_response(schedule) -> CashNeededScheduleAtLowestArvRes:
 def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
     """Run every BRRRR step in lifecycle order. Reading top to bottom is reading the calculation."""
     # Buy
-    arv, purchase_price, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget, lowest_arv = dollar_basis_step(payload)
-    purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price, construction_budget)
+    (arv, purchase_price, purchase_price_with_assignment_fee, rehab_cost_base, rehab_contingency, rehab_cost, construction_budget,
+     lowest_arv) = dollar_basis_step(payload)
+    purchase_loan_amount, down_payment_cash, hml_amount = purchase_loan_step(payload, purchase_price_with_assignment_fee, construction_budget)
     timeline = timeline_step(payload)
     hml_and_holding = hml_and_holding_costs_step(payload, hml_amount, timeline)
     insurance = insurance_step(payload, timeline)
     buy_settlement = closing_costs_buy_step(payload, purchase_price, hml_amount, down_payment_cash, hml_and_holding, timeline, insurance)
     property_tax_bucket = property_tax_bucket_step(payload, timeline, buy_settlement.seller_tax_credit_set_aside_in_tax_bucket,
-                                                   buy_settlement.seller_paid_current_year_taxes)
+                                                   buy_settlement.current_year_property_tax_bill_settled_by_purchase_closing)
     # Rehab
     stolen_money, rehab_paid_cash_out_of_pocket = rehab_draw_step(rehab_cost, construction_budget)
     # Rent: a regular year after the refi
@@ -132,7 +135,8 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
                                                                    property_tax_bucket, stolen_money, cash_out_figures, total_cash_needed)
 
     return BrrrResultsWithIntermediates(
-        arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, rehab_cost_base=rehab_cost_base,
+        arv=arv, lowest_arv=lowest_arv, purchase_price=purchase_price, purchase_price_with_assignment_fee=purchase_price_with_assignment_fee,
+        rehab_cost_base=rehab_cost_base,
         rehab_contingency=rehab_contingency, rehab_cost=rehab_cost, construction_budget=construction_budget,
         purchase_loan_amount=purchase_loan_amount, down_payment_cash=down_payment_cash, hml_amount=hml_amount,
         buy_closing_date=timeline.buy_closing_date, refi_closing_date=timeline.refi_closing_date,
@@ -175,6 +179,8 @@ def compute_brrr_with_intermediates(payload) -> BrrrResultsWithIntermediates:
         closing_costs_buy_total=buy_settlement.closing_costs_buy_total, seller_paid_current_year_taxes=buy_settlement.seller_paid_current_year_taxes,
         seller_tax_credit_formula=buy_settlement.seller_tax_credit_formula, seller_tax_credit=buy_settlement.seller_tax_credit,
         seller_tax_credit_set_aside_in_tax_bucket=buy_settlement.seller_tax_credit_set_aside_in_tax_bucket,
+        current_year_property_tax_bill_settled_by_purchase_closing=buy_settlement.current_year_property_tax_bill_settled_by_purchase_closing,
+        property_tax_bill_paid_at_purchase_closing=buy_settlement.property_tax_bill_paid_at_purchase_closing,
         cash_to_close_buy=buy_settlement.cash_to_close_buy,
         total_hard_money_cost=buy_settlement.total_hard_money_cost,
         stolen_money=stolen_money, rehab_paid_cash_out_of_pocket=rehab_paid_cash_out_of_pocket,

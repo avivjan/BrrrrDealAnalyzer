@@ -174,3 +174,45 @@ describe("BuySection — the insurance bill at purchase and the closing-cost est
     expect(estimateExplanationLinesOf(mountBuy(deal), "Recording & Transfer")[0]).toBe("$250 + 0.55% × $123,000 + $0 = $926.50");
   });
 });
+
+describe("BuySection — who pays this year's tax bill", () => {
+  const taxBillSelect = (wrapper: ReturnType<typeof mountBuy>) => wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] select');
+
+  it("offers the three choices, on auto by the closing month", () => {
+    const wrapper = mountBuy(reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-07-01", annual_property_taxes: 3600 }));
+    expect(taxBillSelect(wrapper).findAll("option").map((option) => option.text())).toEqual([
+      "Seller already paid / pays it at closing (we reimburse our days)",
+      "We pay it at closing (seller credits their days)",
+      "We pay it in November, outside closing (POC)",
+    ]);
+    expect((taxBillSelect(wrapper).element as HTMLSelectElement).value).toBe("we_pay_in_november_outside_closing");
+    expect(wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] [data-part="auto"]').exists()).toBe(true);
+  });
+
+  it("writes both stored fields for each choice, and auto resets them", async () => {
+    const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-11-20", annual_property_taxes: 3600 });
+    const wrapper = mountBuy(deal);
+    await taxBillSelect(wrapper).setValue("we_pay_at_purchase_closing");
+    expect([deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing, deal.sellerPaidCurrentYearTaxes]).toEqual([true, null]);
+    expect(wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] [data-part="hint"]').text()).toContain("$3,456");
+    expect(sellerTaxCreditFigure(wrapper).find('[data-part="value"]').text()).toBe("$3,185.75");
+    await taxBillSelect(wrapper).setValue("seller_paid_or_pays_at_closing");
+    expect([deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing, deal.sellerPaidCurrentYearTaxes]).toEqual([false, true]);
+    await taxBillSelect(wrapper).setValue("we_pay_in_november_outside_closing");
+    expect([deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing, deal.sellerPaidCurrentYearTaxes]).toEqual([false, false]);
+    await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] [data-part="reset"]').trigger("click");
+    expect([deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing, deal.sellerPaidCurrentYearTaxes]).toEqual([false, null]);
+  });
+});
+
+describe("BuySection — the assignment fee", () => {
+  it("sits under the purchase price and shows the total the lender finances", async () => {
+    const deal = reactive({ ...createEmptyDealForm("BRRRR"), purchasePrice: 200 });
+    const wrapper = mountBuy(deal);
+    const moneyLabels = wrapper.findAllComponents({ name: "MoneyInput" }).map((input) => input.props("label"));
+    expect(moneyLabels.indexOf("Assignment Fee")).toBe(moneyLabels.indexOf("Purchase Price") + 1);
+    const assignmentFee = wrapper.findAllComponents({ name: "MoneyInput" }).find((input) => input.props("label") === "Assignment Fee")!;
+    await assignmentFee.vm.$emit("update:modelValue", 15000);
+    expect(deal.assignmentFee).toBe(15000);
+  });
+});

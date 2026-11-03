@@ -454,6 +454,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "2/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "2/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -1278,6 +1287,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "input/1/2/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "input/1/2/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -2082,6 +2100,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "input/1/2/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "input/1/2/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -2649,6 +2676,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "input/3/1/2/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "input/3/1/2/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -3205,6 +3241,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "1/2/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "1/2/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -3527,6 +3572,15 @@
      "formattedValue": "$1,200"
     },
     {
+     "path": "0/1/1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
+    },
+    {
      "path": "0/1/2",
      "sign": "+",
      "label": "HML Points",
@@ -3746,7 +3800,7 @@
    "derivedRows": []
   },
   "cash_to_close_buy": {
-   "headlineStepIndex": 14,
+   "headlineStepIndex": 15,
    "headlineStepLabel": "Cash to Close (Buy)",
    "rows": [
     {
@@ -3847,6 +3901,15 @@
      "unit": "money",
      "linkedStepLabel": "Insurance Bill at Purchase (inside closing)",
      "formattedValue": "$1,200"
+    },
+    {
+     "path": "1/6",
+     "sign": "+",
+     "label": "Property Tax Bill (paid at closing)",
+     "value": 0.0,
+     "unit": "money",
+     "linkedStepLabel": "Property Tax Bill paid at Purchase Closing",
+     "formattedValue": "$0"
     },
     {
      "path": "2",
