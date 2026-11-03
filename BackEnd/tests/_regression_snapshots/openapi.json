@@ -823,6 +823,12 @@
             "title": "Buyclosingdate",
             "type": "string"
           },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -2116,6 +2122,12 @@
             "title": "Buyclosingdate",
             "type": "string"
           },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -3037,6 +3049,18 @@
             ],
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
+          },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
           },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [
@@ -4904,6 +4928,12 @@
             "title": "Buyclosingdate",
             "type": "string"
           },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -6157,6 +6187,12 @@
             "title": "Buyclosingdate",
             "type": "string"
           },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -7063,6 +7099,18 @@
             ],
             "default": "0.0",
             "title": "Property Managment Fee Precentages From Rent"
+          },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
           },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [
@@ -14769,6 +14817,12 @@
             "title": "Buyclosingdate",
             "type": "string"
           },
+          "buyerPaysCurrentYearTaxBillAtPurchaseClosing": {
+            "default": false,
+            "description": "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes.",
+            "title": "Buyerpayscurrentyeartaxbillatpurchaseclosing",
+            "type": "boolean"
+          },
           "capexPercent": {
             "anyOf": [
               {
@@ -15977,6 +16031,18 @@
             ],
             "description": "DSCR-loan per-diem interest collected at the refi closing through the end of that month, in dollars (360-day year, as the refi settlement statements quote it). 0 when no buy closing date is set.",
             "title": "Prepaid Interest Refi"
+          },
+          "property_tax_bill_paid_at_purchase_closing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line (x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise.",
+            "title": "Property Tax Bill Paid At Purchase Closing"
           },
           "property_tax_bucket_balance_released_at_refi": {
             "anyOf": [

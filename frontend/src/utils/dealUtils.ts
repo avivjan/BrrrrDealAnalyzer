@@ -123,6 +123,7 @@ export const BRRR_LIFECYCLE_DEFAULTS = {
   otherClosingCostsBuy: 0,
   otherClosingCostsBuyNote: null,
   sellerPaidCurrentYearTaxes: null,
+  buyerPaysCurrentYearTaxBillAtPurchaseClosing: false,
   sellerTaxCreditAtPurchaseClosing: null,
   insurancePurchaseBillPaymentTiming: "inside_purchase_closing" as const,
   constructionLoanBudget: 0,

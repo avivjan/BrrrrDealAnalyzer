@@ -76,8 +76,47 @@ const recordingTransferBuyExplanationLines = computed(() =>
   recordingTransferBuyEstimateExplanationLines(autoCalc.value.hmlAmount, autoCalc.value.deedTransferTaxBuy, autoCalc.value.recordingTransferBuyDefault),
 );
 
-const sellerPaidExplicit = computed(() => typeof props.deal.sellerPaidCurrentYearTaxes === "boolean");
-const sellerPaidChecked = computed(() => autoCalc.value.sellerPaidCurrentYearTaxesEffective ?? false);
+/**
+ * Who pays this year's tax bill, one choice stored in two fields: `sellerPaidCurrentYearTaxes`
+ * (null = auto by the closing month) and `buyerPaysCurrentYearTaxBillAtPurchaseClosing`.
+ */
+type CurrentYearPropertyTaxBillChoice = "seller_paid_or_pays_at_closing" | "we_pay_at_purchase_closing" | "we_pay_in_november_outside_closing";
+const CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICES: { value: CurrentYearPropertyTaxBillChoice; label: string }[] = [
+  { value: "seller_paid_or_pays_at_closing", label: "Seller already paid / pays it at closing (we reimburse our days)" },
+  { value: "we_pay_at_purchase_closing", label: "We pay it at closing (seller credits their days)" },
+  { value: "we_pay_in_november_outside_closing", label: "We pay it in November, outside closing (POC)" },
+];
+const currentYearPropertyTaxBillChoiceIsAuto = computed(() =>
+  props.deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing !== true && typeof props.deal.sellerPaidCurrentYearTaxes !== "boolean");
+const currentYearPropertyTaxBillChoice = computed<CurrentYearPropertyTaxBillChoice>(() => {
+  if (props.deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing === true) return "we_pay_at_purchase_closing";
+  return autoCalc.value.sellerPaidCurrentYearTaxesEffective ? "seller_paid_or_pays_at_closing" : "we_pay_in_november_outside_closing";
+});
+const onCurrentYearPropertyTaxBillChoice = (event: Event) => {
+  const choice = (event.target as HTMLSelectElement).value as CurrentYearPropertyTaxBillChoice;
+  props.deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing = choice === "we_pay_at_purchase_closing";
+  field.setBool("sellerPaidCurrentYearTaxes", choice === "seller_paid_or_pays_at_closing" ? true : choice === "we_pay_in_november_outside_closing" ? false : null);
+};
+const closingCostsBuyTotalHint = computed(() => {
+  const includedBills = [
+    autoCalc.value.insuranceBillAtPurchaseInsideClosing ? `the insurance bill ${formatMoney(autoCalc.value.insuranceBillAtPurchaseInsideClosing)}` : null,
+    autoCalc.value.propertyTaxBillPaidAtPurchaseClosing ? `this year's tax bill ${formatMoney(autoCalc.value.propertyTaxBillPaidAtPurchaseClosing)}` : null,
+  ].filter(Boolean);
+  return includedBills.length ? `includes ${includedBills.join(" and ")}` : undefined;
+});
+const resetCurrentYearPropertyTaxBillChoiceToAuto = () => {
+  props.deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing = false;
+  field.setBool("sellerPaidCurrentYearTaxes", null);
+};
+const currentYearPropertyTaxBillHint = computed(() => {
+  if (currentYearPropertyTaxBillChoice.value === "we_pay_at_purchase_closing") {
+    const billAtClosing = autoCalc.value.propertyTaxBillPaidAtPurchaseClosing;
+    return `the whole bill is a closing line: ${formatMoney(billAtClosing)} (−4% in Nov, −3% in Dec, else full)`;
+  }
+  return currentYearPropertyTaxBillChoice.value === "seller_paid_or_pays_at_closing"
+    ? "the tax bucket starts saving for next year's bill"
+    : "the seller's credit goes into the tax bucket, which pays the bill on Nov 30 (−4%)";
+});
 
 const moneyNote = (amount: number | null) => (amount == null ? undefined : `= ${formatMoney(amount)}`);
 const perDiemNote = computed(() => (autoCalc.value.hmlPerDiem == null ? undefined : `${formatMoney(autoCalc.value.hmlPerDiem)}/day`));
@@ -89,8 +128,9 @@ const sellerTaxCreditHint = computed(() => {
   const proratedDays = autoCalc.value.sellerTaxCreditProratedDays;
   if (paid == null || proratedDays == null) return undefined;
   if (proratedDays === 0) return "no seller days before a Jan 1 closing, nothing to prorate";
-  return paid
-    ? `buyer credits the seller for ${proratedDays} days (taxes already paid) · a real cost`
+  if (paid) return `buyer credits the seller for ${proratedDays} days (taxes already paid) · a real cost`;
+  return props.deal.buyerPaysCurrentYearTaxBillAtPurchaseClosing === true
+    ? `seller credits the buyer for ${proratedDays} days owned · against the bill we pay at closing`
     : `seller credits the buyer for ${proratedDays} days owned · set aside for the tax bill after closing`;
 });
 /** The pencil only makes sense while the proration covers at least one day (a Jan 1 unpaid closing has no seller days). */
@@ -187,13 +227,19 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
           note="same field as Rent & Holding"
           :info="impactText('annual_property_taxes')"
         />
-        <div v-if="autoCalc.sellerPaidCurrentYearTaxesEffective != null" class="flex items-center gap-2 text-xs text-fg-muted" data-testid="form.field.sellerPaidCurrentYearTaxes">
-          <input :id="sellerPaidId" type="checkbox" class="h-4 w-4 accent-primary" :checked="sellerPaidChecked"
-                 @change="field.setBool('sellerPaidCurrentYearTaxes', ($event.target as HTMLInputElement).checked)" />
-          <label :for="sellerPaidId">Seller already paid this year's taxes</label>
-          <span v-if="!sellerPaidExplicit" data-part="auto" class="rounded-ctl bg-surface-3 px-1.5 text-[10px] uppercase tracking-wide">auto</span>
-          <button v-else type="button" data-part="reset" class="text-primary hover:text-primary-hover" @click="field.setBool('sellerPaidCurrentYearTaxes', null)">auto</button>
-          <InputInfo :content="impactText('sellerPaidCurrentYearTaxes')" field-label="Seller already paid this year's taxes" />
+        <div v-if="autoCalc.sellerPaidCurrentYearTaxesEffective != null" class="flex flex-col gap-1.5" data-testid="form.field.sellerPaidCurrentYearTaxes">
+          <div data-part="label-row" class="flex h-5 items-center justify-between gap-1">
+            <span class="inline-flex items-center gap-1">
+              <label :for="sellerPaidId" data-part="label" class="text-sm font-medium leading-5 text-fg">This year's tax bill</label>
+              <InputInfo :content="impactText('sellerPaidCurrentYearTaxes')" field-label="This year's tax bill" />
+            </span>
+            <span v-if="currentYearPropertyTaxBillChoiceIsAuto" data-part="auto" class="rounded-ctl bg-surface-3 px-1.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">auto</span>
+            <button v-else type="button" data-part="reset" class="text-xs font-medium text-primary hover:text-primary-hover" @click="resetCurrentYearPropertyTaxBillChoiceToAuto">auto</button>
+          </div>
+          <select :id="sellerPaidId" data-part="select" class="ui-select" :value="currentYearPropertyTaxBillChoice" @change="onCurrentYearPropertyTaxBillChoice">
+            <option v-for="choice in CURRENT_YEAR_PROPERTY_TAX_BILL_CHOICES" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+          </select>
+          <p data-part="hint" class="numeric text-xs text-fg-muted">{{ currentYearPropertyTaxBillHint }}</p>
         </div>
       </div>
 
@@ -367,7 +413,7 @@ const onSellerTaxCreditEdited = (sellerTaxCreditDollars: number) => {
         </div>
         <div class="mt-3">
           <AutoFigure data-testid="form.auto.closingCostsBuyTotal" label="Total closing costs (Buy)" :value="autoCalc.closingCostsBuyTotal"
-                      :hint="autoCalc.insuranceBillAtPurchaseInsideClosing ? `includes the insurance bill ${formatMoney(autoCalc.insuranceBillAtPurchaseInsideClosing)}` : undefined" />
+                      :hint="closingCostsBuyTotalHint" />
         </div>
       </div>
     </div>

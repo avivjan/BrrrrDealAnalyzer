@@ -95,7 +95,9 @@ class BrrrResultsWithIntermediates:
     seller_paid_current_year_taxes: bool   # effective
     seller_tax_credit_formula: Decimal   # the proration by the closing date
     seller_tax_credit: Decimal      # effective: input or the formula; positive = credit to the buyer
-    seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): in the tax bucket the day after closing
+    seller_tax_credit_set_aside_in_tax_bucket: Decimal   # max(0, credit): in the tax bucket the day after closing; 0 when we pay the bill at closing
+    current_year_property_tax_bill_settled_by_purchase_closing: bool   # seller paid it, or we pay it at the purchase closing
+    property_tax_bill_paid_at_purchase_closing: Decimal  # this year's bill paid by us at the purchase closing (a closing-cost line); 0 otherwise
     cash_to_close_buy: Decimal      # the wire on purchase day
     total_hard_money_cost: Decimal  # points + interest + loan charges (buy)
 

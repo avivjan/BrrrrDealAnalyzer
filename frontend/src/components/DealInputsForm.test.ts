@@ -665,7 +665,7 @@ describe("DealInputsForm", () => {
       const deal = reactive({ ...createEmptyDealForm("BRRRR"), buyClosingDate: "2026-09-20", annual_property_taxes: 3600 });
       const wrapper = mountForm(deal, "BRRRR");
 
-      await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] input').setValue(true);
+      await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] select').setValue("seller_paid_or_pays_at_closing");
       expect(deal.sellerPaidCurrentYearTaxes).toBe(true);
       await wrapper.find('[data-testid="form.field.sellerPaidCurrentYearTaxes"] [data-part="reset"]').trigger("click");
       expect(deal.sellerPaidCurrentYearTaxes).toBeNull();

@@ -1123,7 +1123,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -1162,6 +1170,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -1554,7 +1568,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -1593,6 +1607,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -2055,6 +2075,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -2392,6 +2413,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -4219,7 +4241,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -4258,6 +4288,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -4650,7 +4686,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -4689,6 +4725,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -5151,6 +5193,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -5488,6 +5531,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -6671,7 +6715,15 @@
               "value": 1200.0
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+              "label": "Property Tax Bill paid at Purchase Closing",
+              "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -6710,6 +6762,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -7102,7 +7160,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -7141,6 +7199,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -7603,6 +7667,7 @@
         },
         "brokerProcessingFeeRefi": "395.00",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
@@ -7940,6 +8005,7 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bill_paid_at_purchase_closing": 0.0,
         "property_tax_bucket_balance_released_at_refi": 0.0,
         "property_tax_bucket_deposit_effective": 306.1120797011208,
         "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -9743,7 +9809,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,476.50) + Title & Escrow ($915) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,741.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,476.50) + Title & Escrow ($915) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,741.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -9782,6 +9856,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -10174,7 +10254,7 @@
             "value": 10220.833333333334
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,476.50) + Title & Escrow ($915) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,741.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,476.50) + Title & Escrow ($915) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,741.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -10213,6 +10293,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -10675,6 +10761,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -11012,6 +11099,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -12188,7 +12276,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -12227,6 +12323,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -12619,7 +12721,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -12658,6 +12760,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -13120,6 +13228,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -13457,6 +13566,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -15266,7 +15376,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -15305,6 +15423,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -15697,7 +15821,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -15736,6 +15860,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -16198,6 +16328,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -16536,6 +16667,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -17742,7 +17874,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -17781,6 +17921,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -18173,7 +18319,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -18212,6 +18358,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -18674,6 +18826,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -19012,6 +19165,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -20831,7 +20985,15 @@
               "value": 1200.0
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+              "label": "Property Tax Bill paid at Purchase Closing",
+              "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -20870,6 +21032,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -21262,7 +21430,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -21301,6 +21469,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -21763,6 +21937,7 @@
         },
         "brokerProcessingFeeRefi": "395.00",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
@@ -22101,6 +22276,7 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bill_paid_at_purchase_closing": 0.0,
         "property_tax_bucket_balance_released_at_refi": 0.0,
         "property_tax_bucket_deposit_effective": 306.1120797011208,
         "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -23909,7 +24085,15 @@
             "value": 1200.0
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+            "label": "Property Tax Bill paid at Purchase Closing",
+            "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+            "terms": null,
+            "unit": "money",
+            "value": 0.0
+          },
+          {
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -23948,6 +24132,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -24340,7 +24530,7 @@
             "value": 9854.166666666666
           },
           {
-            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+            "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
             "label": "Closing Costs (Buy)",
             "note": null,
             "terms": [
@@ -24379,6 +24569,12 @@
                 "sign": "+",
                 "step_label": "Insurance Bill at Purchase (inside closing)",
                 "value": 1200.0
+              },
+              {
+                "label": "Property Tax Bill (paid at closing)",
+                "sign": "+",
+                "step_label": "Property Tax Bill paid at Purchase Closing",
+                "value": 0.0
               }
             ],
             "unit": "money",
@@ -24841,6 +25037,7 @@
       },
       "brokerProcessingFeeRefi": "395.00",
       "buyClosingDate": "2026-01-10",
+      "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
       "capexPercent": "5.00",
       "capexReserve": "2500.00",
       "cashReserve": "0.0000",
@@ -25188,6 +25385,7 @@
       "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
       "propertyTaxLumpSumAtRefiClosing": null,
       "property_managment_fee_precentages_from_rent": "8.00",
+      "property_tax_bill_paid_at_purchase_closing": 0.0,
       "property_tax_bucket_balance_released_at_refi": 0.0,
       "property_tax_bucket_deposit_effective": 306.1120797011208,
       "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -27270,7 +27468,15 @@
               "value": 1200.0
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+              "label": "Property Tax Bill paid at Purchase Closing",
+              "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -27309,6 +27515,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -27701,7 +27913,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -27740,6 +27952,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -28202,6 +28420,7 @@
         },
         "brokerProcessingFeeRefi": "395.00",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
@@ -28539,6 +28758,7 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bill_paid_at_purchase_closing": 0.0,
         "property_tax_bucket_balance_released_at_refi": 0.0,
         "property_tax_bucket_deposit_effective": 306.1120797011208,
         "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -30339,7 +30559,15 @@
               "value": 1200.0
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+              "label": "Property Tax Bill paid at Purchase Closing",
+              "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -30378,6 +30606,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -30770,7 +31004,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -30809,6 +31043,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -31271,6 +31511,7 @@
         },
         "brokerProcessingFeeRefi": "395.00",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
@@ -31618,6 +31859,7 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bill_paid_at_purchase_closing": 0.0,
         "property_tax_bucket_balance_released_at_refi": 0.0,
         "property_tax_bucket_deposit_effective": 306.1120797011208,
         "property_tax_lump_sum_at_refi_closing_effective": 0.0,
@@ -32792,7 +33034,15 @@
               "value": 1200.0
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "We pay this year's bill ourselves in November (outside closing, from the tax bucket) \u2192 $0 here",
+              "label": "Property Tax Bill paid at Purchase Closing",
+              "note": "Florida discounts an early payment: 4% in November and 3% in December of the bill's year.",
+              "terms": null,
+              "unit": "money",
+              "value": 0.0
+            },
+            {
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -32831,6 +33081,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -33223,7 +33479,7 @@
               "value": 9854.166666666666
             },
             {
-              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) = $4,707.50",
+              "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
               "label": "Closing Costs (Buy)",
               "note": null,
               "terms": [
@@ -33262,6 +33518,12 @@
                   "sign": "+",
                   "step_label": "Insurance Bill at Purchase (inside closing)",
                   "value": 1200.0
+                },
+                {
+                  "label": "Property Tax Bill (paid at closing)",
+                  "sign": "+",
+                  "step_label": "Property Tax Bill paid at Purchase Closing",
+                  "value": 0.0
                 }
               ],
               "unit": "money",
@@ -33724,6 +33986,7 @@
         },
         "brokerProcessingFeeRefi": "395.00",
         "buyClosingDate": "2026-01-10",
+        "buyerPaysCurrentYearTaxBillAtPurchaseClosing": false,
         "capexPercent": "5.00",
         "capexReserve": "2500.00",
         "cashReserve": "0.0000",
@@ -34062,6 +34325,7 @@
         "propertyTaxCollectionAtRefi": "no_tax_collected_at_refi",
         "propertyTaxLumpSumAtRefiClosing": null,
         "property_managment_fee_precentages_from_rent": "8.00",
+        "property_tax_bill_paid_at_purchase_closing": 0.0,
         "property_tax_bucket_balance_released_at_refi": 0.0,
         "property_tax_bucket_deposit_effective": 306.1120797011208,
         "property_tax_lump_sum_at_refi_closing_effective": 0.0,

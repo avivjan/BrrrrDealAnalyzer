@@ -23,6 +23,46 @@ def _compute(payload: dict, **overrides):
     return compute_brrr_with_intermediates(analyzeBRRRReq.model_validate({**payload, **overrides}))
 
 
+class TestWePayThisYearsTaxBillAtPurchaseClosing:
+    """The third tax choice: we pay this year's whole bill at the purchase closing; the seller still credits their days."""
+
+    def test_a_november_closing_pays_the_bill_with_the_4_percent_discount_as_a_closing_line(self, brrrr_payload):
+        paid_at_closing = _compute(brrrr_payload, contractDate="2026-11-10", buyClosingDate="2026-11-20", annual_property_taxes=3600,
+                                   buyerPaysCurrentYearTaxBillAtPurchaseClosing=True)
+        assert paid_at_closing.property_tax_bill_paid_at_purchase_closing == Decimal("3456.00")   # 3,600 × 0.96
+        assert paid_at_closing.seller_paid_current_year_taxes is False
+        assert paid_at_closing.seller_tax_credit == Decimal("3600") * 323 / 365                    # Jan 1 .. Nov 19: the seller's days
+        assert paid_at_closing.seller_tax_credit_set_aside_in_tax_bucket == 0                     # nothing left to save for this bill
+        # This year's bill is settled: the bucket saves for next year's from the first 15th after closing.
+        assert paid_at_closing.first_property_tax_payment_date == date(2027, 11, 30)
+        assert paid_at_closing.property_tax_bucket_first_bill_deposit_dates_until_refi[0] == date(2026, 12, 15)
+
+    def test_the_line_is_in_the_closing_costs_and_the_net_reaches_cash_needed(self, brrrr_payload):
+        dates = {"contractDate": "2026-11-10", "buyClosingDate": "2026-11-20", "annual_property_taxes": 3600}
+        paid_at_closing = _compute(brrrr_payload, **dates, buyerPaysCurrentYearTaxBillAtPurchaseClosing=True)
+        seller_paid = _compute(brrrr_payload, **dates, sellerPaidCurrentYearTaxes=True)
+        assert paid_at_closing.closing_costs_buy_total == seller_paid.closing_costs_buy_total + Decimal("3456.00")
+        # Same bucket timing as a seller-paid bill; at closing: the bill − the seller's credit vs. the reimbursement of our days.
+        assert paid_at_closing.property_tax_paid_into_bucket_until_refi == seller_paid.property_tax_paid_into_bucket_until_refi
+        cash_to_close_difference = paid_at_closing.cash_to_close_buy - seller_paid.cash_to_close_buy
+        assert abs(cash_to_close_difference - (Decimal("3456.00") - paid_at_closing.seller_tax_credit + seller_paid.seller_tax_credit)) < Decimal("1e-20")
+        # Paying the whole bill in November is cheaper than reimbursing our days by exactly the 4% discount.
+        assert cash_to_close_difference.quantize(Decimal("0.01")) == Decimal("-144.00")
+        assert (paid_at_closing.total_cash_invested - seller_paid.total_cash_invested
+                == paid_at_closing.cash_to_close_buy - seller_paid.cash_to_close_buy)
+
+    @pytest.mark.parametrize("closing_date, factor", [("2026-07-01", Decimal("1")), ("2026-12-10", Decimal("0.97"))])
+    def test_no_discount_before_november_and_3_percent_in_december(self, brrrr_payload, closing_date, factor):
+        results = _compute(brrrr_payload, contractDate="2026-06-20", buyClosingDate=closing_date, annual_property_taxes=3600,
+                           buyerPaysCurrentYearTaxBillAtPurchaseClosing=True)
+        assert results.property_tax_bill_paid_at_purchase_closing == Decimal("3600") * factor
+
+    def test_it_wins_over_seller_already_paid_and_is_zero_when_off(self, brrrr_payload):
+        both = _compute(brrrr_payload, buyerPaysCurrentYearTaxBillAtPurchaseClosing=True, sellerPaidCurrentYearTaxes=True)
+        assert both.seller_paid_current_year_taxes is False and both.seller_tax_credit > 0
+        assert _compute(brrrr_payload).property_tax_bill_paid_at_purchase_closing == 0
+
+
 class TestConstructionBudget:
     def test_zero_budget_is_the_cash_rehab_case(self, brrrr_payload):
         results = _compute(brrrr_payload, constructionLoanBudget=0)
@@ -395,6 +435,8 @@ class TestLowestArvStressTest:
 SCENARIOS = {
     "dated": {"buyClosingDate": "2026-01-10", "daysUntilRefi": 181},
     "december_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
+    "we_pay_the_tax_bill_at_closing": {"buyClosingDate": "2026-11-20", "contractDate": "2026-11-10",
+                                       "buyerPaysCurrentYearTaxBillAtPurchaseClosing": True},
     "cash_rehab": {"constructionLoanBudget": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
     "shortfall": {"arv_in_thousands": 250, "maintenanceReserve": 30_000},

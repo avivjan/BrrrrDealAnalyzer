@@ -787,6 +787,20 @@
       },
       {
         "autoincrement": "auto",
+        "default": "False",
+        "foreign_keys": [],
+        "index": null,
+        "name": "buyer_pays_current_year_tax_bill_at_purchase_closing",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bool",
+        "server_default": "false",
+        "type": "BOOLEAN",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
         "default": null,
         "foreign_keys": [],
         "index": null,
@@ -2469,6 +2483,20 @@
         "primary_key": false,
         "python_type": "bool",
         "server_default": null,
+        "type": "BOOLEAN",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "False",
+        "foreign_keys": [],
+        "index": null,
+        "name": "buyer_pays_current_year_tax_bill_at_purchase_closing",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bool",
+        "server_default": "false",
         "type": "BOOLEAN",
         "unique": null
       },

@@ -71,6 +71,8 @@ class BrrrLifecycleInputs(BaseModel):
         "Whether the seller already paid this year's property tax bill (billed in November). None = auto: "
         "true for an October to December closing (the title takes this year's bill at closing). Sets the direction of "
         "the seller tax credit; once paid, the tax bucket fills toward next year's bill from Dec 15."))] = None
+    buyer_pays_current_year_tax_bill_at_purchase_closing: Annotated[bool, Field(alias="buyerPaysCurrentYearTaxBillAtPurchaseClosing", description=(
+        "We pay this year's tax bill at the purchase closing (x0.96 Nov, x0.97 Dec); wins over sellerPaidCurrentYearTaxes."))] = False
     seller_tax_credit_at_purchase_closing: Annotated[Optional[Decimal], Field(alias="sellerTaxCreditAtPurchaseClosing", description=(
         "Property-tax proration on the purchase settlement statement, in dollars (the county-tax and assessment "
         "lines together). Positive = the seller credits the buyer; negative = the buyer reimburses the seller. "

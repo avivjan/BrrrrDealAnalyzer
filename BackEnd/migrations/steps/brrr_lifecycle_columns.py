@@ -40,6 +40,7 @@ BRRR_LIFECYCLE_COLUMNS = (
     ("other_closing_costs_buy", "NUMERIC(12,2) DEFAULT 0", "0"),
     ("other_closing_costs_buy_note", "VARCHAR(500)", None),
     ("seller_paid_current_year_taxes", "BOOLEAN", None),
+    ("buyer_pays_current_year_tax_bill_at_purchase_closing", "BOOLEAN DEFAULT FALSE", "FALSE"),
     ("seller_tax_credit_at_purchase_closing", "NUMERIC(12,2)", None),
     ("insurance_purchase_bill_payment_timing", "VARCHAR(30) DEFAULT 'inside_purchase_closing'", "'inside_purchase_closing'"),
     # Rehab

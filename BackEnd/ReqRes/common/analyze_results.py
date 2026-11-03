@@ -109,6 +109,9 @@ class analyzeBRRRRes(BaseModel):
     deed_transfer_tax_buy: Optional[float] = Field(None, description=(
         "Deed transfer tax inside the buy recording/transfer default, in dollars: $0 on a standard deal (the "
         "seller's debit), 0.70% of the purchase price when we pay all closing costs."))
+    property_tax_bill_paid_at_purchase_closing: Optional[float] = Field(None, description=(
+        "This year's property tax bill when we pay it at the purchase closing, in dollars: a buy closing-cost line "
+        "(x 0.96 in November, x 0.97 in December, else the full bill). 0 otherwise."))
     title_office_and_search_fees_buy: Optional[float] = Field(None, description=(
         "Florida title estimate (buy), office fees in dollars: $350 settlement + $150 title search + $100 "
         "municipal lien search = $600."))

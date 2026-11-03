@@ -15,6 +15,7 @@ import {
   floridaOwnersTitlePolicyPremium,
   lendersTitlePolicyAndEndorsements,
   wePayAllExtraClosingCost,
+  currentYearPropertyTaxBillPaidAtPurchaseClosing,
 } from "./brrrAutoCalc";
 import type { DealInputModel } from "../types";
 
@@ -293,5 +294,27 @@ describe("Florida title & escrow estimate (mirror of the backend's title_escrow_
   });
   it("paying all closing costs adds the owner's policy and the deed transfer tax", () => {
     expect(wePayAllExtraClosingCost(100_000)).toBeCloseTo(575 + 700, 10);
+  });
+});
+
+describe("this year's tax bill paid by us at the purchase closing (mirror of the backend)", () => {
+  const novemberClosing = { contractDate: "2026-11-10", buyClosingDate: "2026-11-20", annual_property_taxes: 3600 };
+
+  it("is a closing line with the 4% November discount; the seller still credits their days and nothing is set aside", () => {
+    const paidAtClosing = brrrAutoCalc({ ...FIXTURE, ...novemberClosing, buyerPaysCurrentYearTaxBillAtPurchaseClosing: true });
+    const sellerPaid = brrrAutoCalc({ ...FIXTURE, ...novemberClosing, sellerPaidCurrentYearTaxes: true });
+    expectCloseToTheCent(paidAtClosing.propertyTaxBillPaidAtPurchaseClosing, 3456);
+    expect(paidAtClosing.sellerPaidCurrentYearTaxesEffective).toBe(false);
+    expectCloseToTheCent(paidAtClosing.sellerTaxCredit, (3600 * 323) / 365);
+    expectCloseToTheCent(paidAtClosing.closingCostsBuyTotal, sellerPaid.closingCostsBuyTotal! + 3456);
+    // The bill is settled: same bucket timing as a seller-paid bill, and exactly the 4% discount cheaper at closing.
+    expect(paidAtClosing.propertyTaxBucketDepositCountUntilFirstPayment).toBe(sellerPaid.propertyTaxBucketDepositCountUntilFirstPayment);
+    expectCloseToTheCent(paidAtClosing.cashToCloseBuy! - sellerPaid.cashToCloseBuy!, -144);
+  });
+
+  it("takes the full bill before November and 3% off in December", () => {
+    expect(currentYearPropertyTaxBillPaidAtPurchaseClosing(3600, parseIsoDate("2026-07-01")!)).toBe(3600);
+    expectCloseToTheCent(currentYearPropertyTaxBillPaidAtPurchaseClosing(3600, parseIsoDate("2026-12-10")!), 3492);
+    expect(brrrAutoCalc({ ...FIXTURE, ...novemberClosing }).propertyTaxBillPaidAtPurchaseClosing).toBe(0);
   });
 });

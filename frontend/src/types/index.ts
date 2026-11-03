@@ -94,6 +94,8 @@ export interface BrrrAnalyzeReq {
   otherClosingCostsBuyNote?: string | null;
   /** null → auto: true for an October to December closing */
   sellerPaidCurrentYearTaxes?: boolean | null;
+  /** We pay this year's whole tax bill at the purchase closing (wins over sellerPaidCurrentYearTaxes). */
+  buyerPaysCurrentYearTaxBillAtPurchaseClosing?: boolean;
   /** The settlement statement's tax proration (may be negative). null → this year's bill prorated by the closing date */
   sellerTaxCreditAtPurchaseClosing?: number | null;
   /** Where the insurance bill at purchase (annual_insurance) is paid. */

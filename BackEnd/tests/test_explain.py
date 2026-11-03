@@ -45,6 +45,8 @@ BRRRR_SCENARIOS = {
     "pitia_zero": {"arv_in_thousands": 0, "annual_property_taxes": 0, "annual_insurance": 0, "montly_hoa": 0},
     # lifecycle branches
     "december_paid_we_pay_all": {"buyClosingDate": "2026-12-15", "titleModeBuy": "we_pay_all"},
+    "we_pay_the_tax_bill_at_a_november_closing": {"contractDate": "2026-11-10", "buyClosingDate": "2026-11-20",
+                                                  "buyerPaysCurrentYearTaxBillAtPurchaseClosing": True},
     "same_month_refi": {"buyClosingDate": "2026-03-20", "contractDate": "2026-03-01", "daysUntilRefi": 5, "daysUntilRented": 0, "daysUntilRehabCompleted": 0},
     "stolen_money": {"constructionLoanBudget": 70, "rehabContingency": 0},
     "tenant_after_refi": {"daysUntilRented": 400},

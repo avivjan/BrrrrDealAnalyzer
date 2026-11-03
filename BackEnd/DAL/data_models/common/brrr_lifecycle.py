@@ -27,6 +27,7 @@ class BrrrLifecycleColumns:
     other_closing_costs_buy = Column(Numeric(12, 2), nullable=False, server_default='0', default=0)
     other_closing_costs_buy_note = Column(String(500), nullable=True)
     seller_paid_current_year_taxes = Column(Boolean, nullable=True)
+    buyer_pays_current_year_tax_bill_at_purchase_closing = Column(Boolean, nullable=False, server_default='false', default=False)
     seller_tax_credit_at_purchase_closing = Column(Numeric(12, 2), nullable=True)
     insurance_purchase_bill_payment_timing = Column(String(30), nullable=False, server_default='inside_purchase_closing', default='inside_purchase_closing')
 

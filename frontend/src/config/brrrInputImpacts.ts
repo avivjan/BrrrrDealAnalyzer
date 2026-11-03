@@ -71,7 +71,8 @@ export const BRRR_INPUT_IMPACTS: Record<string, BrrrOutputKey[]> = {
   onlineNotaryBuy: BUY_CLOSING_LINE,
   onlineNotaryFeeBuy: BUY_CLOSING_LINE,
   otherClosingCostsBuy: BUY_CLOSING_LINE,
-  sellerPaidCurrentYearTaxes: ["seller_tax_credit", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
+  sellerPaidCurrentYearTaxes: ["seller_tax_credit", "closing_costs_buy_total", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
+  buyerPaysCurrentYearTaxBillAtPurchaseClosing: ["closing_costs_buy_total", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
   sellerTaxCreditAtPurchaseClosing: ["seller_tax_credit", "cash_to_close_buy", "property_tax_paid_into_bucket_until_refi", ...CASH_METRICS],
   insurancePurchaseBillPaymentTiming: ["closing_costs_buy_total", "cash_to_close_buy", "total_cash_invested", ...CASH_METRICS],
   // Rehab
