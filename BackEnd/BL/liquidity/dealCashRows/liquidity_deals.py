@@ -186,12 +186,19 @@ def _imported_deals(db: Session) -> list[tuple[DealBoard, object]]:
     return sorted(imported_deals, key=lambda board_and_deal: (board_and_deal[1].address or "", str(board_and_deal[1].id)))
 
 
+def _deal_has_open_rows(db: Session, deal_board: DealBoard, deal_id) -> bool:
+    return any(row.done_at is None for row in imported_rows_of_deal(db, deal_board, deal_id))
+
+
 def refresh_late_refis(db: Session, today: Optional[date]) -> LateRefiRefreshRes:
     """Add the carrying-cost months still missing for every imported deal whose refi is late. Idempotent by identity."""
     resolved_today = today_for_liquidity(db, today)
     deals_with_added_rows = []
     for deal_board, deal in _imported_deals(db):
         if not refi_is_late(deal, resolved_today):
+            continue
+        # A deal taken out of the timeline (its open rows removed, or all done) gets no new late-refi months.
+        if not _deal_has_open_rows(db, deal_board, deal.id):
             continue
         added_changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_cash_rows_including_late_refi_months(deal, resolved_today),
                                                     only_add_missing_late_refi_rows=True)

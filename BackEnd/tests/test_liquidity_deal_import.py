@@ -231,6 +231,48 @@ class TestLateRefi:
         assert not any(row["created_because_refi_is_late"] for row in rows if row["id"] != done_late_row["id"])
         assert self._refresh(client)["added_row_count"] == 0
 
+    def test_a_deal_taken_out_of_the_timeline_gets_no_late_months_back(self, client, brrrr_payload):
+        deal = _create_my_deals_deal(client, brrrr_payload)
+        _import(client, deal["id"])
+        emd = _row(_deal_rows(client, deal["id"]), "earnest_money_deposit")
+        client.post(f"/liquidity/transactions/{emd['id']}/done")
+        client.post(f"/liquidity/deals/my_deals/{deal['id']}/remove-open-rows", json={"earnest_money_refund_date": None})
+        assert self._refresh(client)["added_row_count"] == 0
+        assert [row["id"] for row in _deal_rows(client, deal["id"])] == [emd["id"]]
+
+
+class TestRemoveDealFromTimeline:
+    """The theater legend's "Remove from timeline" (tasks/todo/LiquidityTheaterMode.md, decision 1 and section F)."""
+
+    def _listed_deal(self, client, deal_id):
+        return next((listed for listed in client.get("/liquidity/deals", params={"today": BEFORE_THE_DEAL}).json()
+                     if listed["deal_id"] == deal_id), None)
+
+    def test_a_removed_deal_stays_listed_with_no_open_rows_so_its_done_rows_keep_their_address(self, client, brrrr_payload):
+        deal = _create_my_deals_deal(client, brrrr_payload)
+        _import(client, deal["id"])
+        emd = _row(_deal_rows(client, deal["id"]), "earnest_money_deposit")
+        client.post(f"/liquidity/transactions/{emd['id']}/done")
+        client.post(f"/liquidity/deals/my_deals/{deal['id']}/remove-open-rows", json={"earnest_money_refund_date": None})
+        listed = self._listed_deal(client, deal["id"])
+        assert (listed["open_row_count"], listed["done_row_count"], listed["deal_address"]) == (0, 1, "1 Shared Form St")
+
+    def test_re_importing_a_removed_deal_brings_its_open_rows_back_and_keeps_the_done_ones_done(self, client, brrrr_payload):
+        deal = _create_my_deals_deal(client, brrrr_payload)
+        _import(client, deal["id"])
+        row_count = len(_deal_rows(client, deal["id"]))
+        emd = _row(_deal_rows(client, deal["id"]), "earnest_money_deposit")
+        client.post(f"/liquidity/transactions/{emd['id']}/done")
+        client.post(f"/liquidity/deals/my_deals/{deal['id']}/remove-open-rows", json={"earnest_money_refund_date": None})
+
+        result = _import(client, deal["id"]).json()
+        assert result["change_counts"]["kept_done"] == 1
+        assert result["change_counts"]["added"] == row_count - 1
+        rows = _deal_rows(client, deal["id"])
+        assert len(rows) == row_count
+        assert next(row for row in rows if row["id"] == emd["id"])["done_at"] is not None
+        assert self._listed_deal(client, deal["id"])["open_row_count"] == row_count - 1
+
 
 class TestMoveToBoughtAndDelete:
     def test_moving_to_bought_repoints_the_rows_and_the_my_deals_copy_cannot_be_imported(self, client, brrrr_payload):
