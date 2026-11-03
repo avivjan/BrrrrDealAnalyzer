@@ -164,7 +164,8 @@ onMounted(() => nextTick(() => panelRef.value?.focus()))
         <!-- Every row of the day, with its deal and every action -->
         <DayDetail
           :bucket="bucket"
-          class="!border-0 !p-0 !shadow-none"
+          hide-day-heading
+          class="!border-0 !bg-transparent !p-0 !shadow-none"
           @edit-txn="(id) => emit('editTxn', id)"
           @delete-txn="(id) => emit('deleteTxn', id)"
           @add-on-date="(date) => emit('addOnDate', date)"

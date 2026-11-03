@@ -9,7 +9,8 @@
  * - the legend (deals, their overdue rows, recurring series), the deals & milestones bottom sheet, and a full
  *   modal for a clicked day. Hovering a day shows a floating preview.
  *
- * Esc closes the topmost layer first (day modal, popovers, legend, sheet, then the theater). Shortcuts: T
+ * Esc closes the topmost layer first (day modal, popovers, deals sheet, then the theater; the legend is a panel
+ * that stays until toggled). Shortcuts: T
  * theater, F browser fullscreen, L legend, D deals, ? help; never while typing, and never while another dialog
  * (one of the view's modals, the command palette, Settings) is open.
  *
@@ -189,10 +190,10 @@ function anotherDialogOwnsTheKeyboard(): boolean {
   return openDialogs.some(dialog => !rootRef.value?.contains(dialog))
 }
 
+/** Esc: the day modal, then a popover, then the deals sheet, then the theater. The legend is a panel, not a layer. */
 function closeTopmostLayer() {
   if (dayModalDate.value !== null) dayModalDate.value = null
   else if (overduePopoverOpen.value || balancePopoverOpen.value || moreActionsMenuOpen.value || shortcutsHelpOpen.value) closePopovers()
-  else if (legendOpen.value) legendOpen.value = false
   else if (sheetOpen.value) sheetOpen.value = false
   else emit('close')
 }
@@ -280,13 +281,13 @@ const SHORTCUTS = [
         class="fixed inset-0 z-40 flex flex-col overflow-hidden bg-page text-fg"
       >
         <!-- Top bar: title, the figures as chips, the floating actions -->
-        <header class="relative z-30 flex items-center gap-3 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4">
+        <header class="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md sm:px-4 md:flex-nowrap">
           <div class="flex shrink-0 items-center gap-2">
             <span class="flex h-8 w-8 items-center justify-center rounded-ctl bg-primary/10 text-primary" aria-hidden="true"><i class="pi pi-chart-line text-sm"></i></span>
-            <h1 id="theater-heading" class="hidden font-display text-lg font-semibold tracking-display text-fg md:block">Liquidity Timeline</h1>
+            <h1 id="theater-heading" class="font-display text-lg font-semibold tracking-display text-fg md:sr-only xl:not-sr-only">Liquidity Timeline</h1>
           </div>
 
-          <div data-testid="theater.figures" class="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
+          <div data-testid="theater.figures" class="no-scrollbar order-last flex w-full min-w-0 items-center gap-2 overflow-x-auto py-0.5 md:order-none md:w-auto md:flex-1">
             <button
               type="button"
               data-testid="theater.figure.balance"
@@ -346,7 +347,7 @@ const SHORTCUTS = [
           </div>
 
           <!-- Floating action bar -->
-          <div data-testid="theater.actions" class="flex shrink-0 items-center gap-1 rounded-full border-ui border-line bg-surface/90 p-1 shadow-2">
+          <div data-testid="theater.actions" class="ml-auto flex shrink-0 items-center gap-1 rounded-full border-ui border-line bg-surface/90 p-1 shadow-2">
             <div class="hidden items-center gap-1 md:flex">
               <UiButton data-testid="theater.today" variant="ghost" size="sm" class="gap-1.5 rounded-full" @click="chartRef?.centerOnToday()">
                 <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
@@ -501,14 +502,14 @@ const SHORTCUTS = [
           </div>
 
           <Transition name="theater-legend">
-            <div v-if="legendOpen" class="absolute inset-x-3 bottom-14 top-3 z-20 flex flex-col sm:inset-x-auto sm:left-3" @pointerdown.stop>
+            <div v-if="legendOpen" class="pointer-events-none absolute inset-x-3 bottom-14 top-3 z-20 flex flex-col sm:inset-x-auto sm:left-[5.25rem]" @pointerdown.stop>
               <DealLegendPanel
                 :imported-deals="store.importedDeals"
                 :overdue-money-out="store.overdueMoneyOut"
                 :expected-money-in-not-counted="store.expectedMoneyInNotCounted"
                 :transactions="store.transactions"
                 :recurring-rules="store.recurringRules"
-                class="max-h-full"
+                class="pointer-events-auto max-h-full"
                 @close="legendOpen = false"
                 @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"
                 @mark-done="(id) => emit('markDone', id)"

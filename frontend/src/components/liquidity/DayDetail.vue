@@ -8,6 +8,8 @@ import TransactionRowActions from './TransactionRowActions.vue'
 
 defineProps<{
   bucket: DayBucket | null
+  /** The caller already shows the date, the net and the end-of-day balance (the theater's day modal). */
+  hideDayHeading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -32,7 +34,8 @@ function formatDate(iso: string): string {
 <template>
   <div v-if="bucket" data-testid="daydetail.root" class="rounded-card border-ui border-line bg-surface p-4 shadow-1">
     <div class="mb-3 flex items-center justify-between gap-2">
-      <h3 class="min-w-0 truncate font-display text-base font-semibold tracking-display text-fg">{{ formatDate(bucket.date) }}</h3>
+      <h3 v-if="!hideDayHeading" class="min-w-0 truncate font-display text-base font-semibold tracking-display text-fg">{{ formatDate(bucket.date) }}</h3>
+      <h3 v-else class="text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Transactions ({{ bucket.transactions.length }})</h3>
       <UiButton
         data-testid="daydetail.add"
         variant="ghost"
@@ -44,7 +47,7 @@ function formatDate(iso: string): string {
       </UiButton>
     </div>
 
-    <div class="mb-3 flex gap-4 text-xs">
+    <div v-if="!hideDayHeading" class="mb-3 flex gap-4 text-xs">
       <div>
         <span class="text-fg-muted">Net: </span>
         <span class="numeric font-semibold" :class="bucket.net_dollars > 0 ? 'text-positive' : bucket.net_dollars < 0 ? 'text-negative' : 'text-fg-muted'">

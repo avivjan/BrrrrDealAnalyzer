@@ -804,7 +804,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null) {
 
     <!-- Theater mode: the chart over the whole viewport, everything else in overlays -->
     <LiquidityTheaterMode
-      v-if="!store.loading && !store.error && hasData"
+      v-if="hasData"
       :open="theaterModeIsOpen"
       :headline-figures="kpis"
       :is-another-dialog-open="anotherLiquidityDialogIsOpen"

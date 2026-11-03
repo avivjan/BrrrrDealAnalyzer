@@ -28,7 +28,7 @@ Nothing on the page is lost: every control and figure from the sidebars gets a p
 - **State in the URL:** `?view=theater`, so a refresh or a shared link reopens it.
   - Entering and exiting both use `router.replace({ query: { ...route.query, view: 'theater' | undefined } })`: no history entries, and other query keys are kept (refinement 3).
   - Any other `view` value is ignored.
-- **Exit:** the `×` button, or `Esc`. Esc closes the topmost layer first: day modal → legend → bottom sheet → theater. It is ignored while one of the view's own dialogs is open (an `isAnotherDialogOpen` prop computed in the view).
+- **Exit:** the `×` button, or `Esc`. Esc closes the topmost layer first: day modal → popovers → bottom sheet → theater. The legend is a persistent panel (opened by default on desktop), toggled with its button or `L`, not part of the Esc stack (changed while building: Esc closing the legend first made Esc feel broken). It is ignored while one of the view's own dialogs is open (an `isAnotherDialogOpen` prop computed in the view).
 - **Shortcuts** (ignored while typing in an input): `T` theater, `F` browser fullscreen (Fullscreen API on `documentElement`, so the modals stay visible), `L` legend, `D` deals sheet, `←`/`→` days (the chart already does this).
 - **Layout:** a column of:
   1. a top bar: title, KPI chips, floating actions;

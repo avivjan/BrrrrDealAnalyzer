@@ -59,6 +59,17 @@ const overdueRowsOfEveryDeal = computed(() => [
   ...props.expectedMoneyInNotCounted.map(txn => ({ txn, isCounted: false })),
 ])
 
+/** Each deal's overdue rows, live: a Done or a postpone updates the pill at once. */
+const overdueRowCountByDealKey = computed(() => {
+  const counts = new Map<string, number>()
+  for (const { txn } of overdueRowsOfEveryDeal.value) {
+    if (!txn.source_deal_board || !txn.source_deal_id) continue
+    const dealKey = dealKeyOf(txn.source_deal_board, txn.source_deal_id)
+    counts.set(dealKey, (counts.get(dealKey) ?? 0) + 1)
+  }
+  return counts
+})
+
 const expandedDealKey = ref<string | null>(null)
 function toggleDeal(dealKey: string) {
   expandedDealKey.value = expandedDealKey.value === dealKey ? null : dealKey
@@ -121,10 +132,10 @@ function shortDate(isoDate: string): string {
                 <span class="h-3 w-3 shrink-0 rounded-full ring-2 ring-surface" :style="{ backgroundColor: entry.dealColorHex }" aria-hidden="true"></span>
                 <span class="min-w-0 flex-1 truncate text-sm font-medium text-fg">{{ entry.shortDealAddress }}</span>
                 <span
-                  v-if="entry.deal.overdue_open_row_count"
+                  v-if="overdueRowCountByDealKey.get(entry.dealKey)"
                   data-testid="theater.legend.deal.overdue"
                   class="shrink-0 rounded-full border-ui border-negative/40 bg-negative/10 px-2 py-px text-[10px] font-bold text-negative"
-                >{{ entry.deal.overdue_open_row_count }} overdue</span>
+                >{{ overdueRowCountByDealKey.get(entry.dealKey) }} overdue</span>
                 <i class="pi shrink-0 text-[9px] text-fg-muted" :class="expandedDealKey === entry.dealKey ? 'pi-chevron-up' : 'pi-chevron-down'" aria-hidden="true"></i>
               </button>
               <RouterLink
