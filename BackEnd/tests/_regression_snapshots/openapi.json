@@ -8238,6 +8238,14 @@
             "title": "Deal Id",
             "type": "string"
           },
+          "key_dates": {
+            "description": "An import preview / import only: the deal's key dates as its Cash Needed table shows them, in date order.",
+            "items": {
+              "$ref": "#/components/schemas/DealKeyDateRes"
+            },
+            "title": "Key Dates",
+            "type": "array"
+          },
           "milestone_date_changes": {
             "description": "A milestone change only: every milestone whose date moves (moving the purchase closing moves the later ones).",
             "items": {
