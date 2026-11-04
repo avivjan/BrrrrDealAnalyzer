@@ -94,7 +94,8 @@ def _change_to_res(change: DealCashRowChange) -> DealCashRowChangeRes:
 
 
 def _changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange],
-                 milestone_date_changes: Optional[list[DealMilestoneDateChangeRes]] = None) -> DealCashRowChangesRes:
+                 milestone_date_changes: Optional[list[DealMilestoneDateChangeRes]] = None,
+                 key_dates: Optional[list[DealKeyDateRes]] = None) -> DealCashRowChangesRes:
     def count_of(change_kind: str) -> int:
         return sum(1 for change in changes if change.change_kind == change_kind)
     return DealCashRowChangesRes(
@@ -108,6 +109,7 @@ def _changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange],
                                             or change.deal_amount_not_applied_because_you_changed_it is not None),
         ),
         milestone_date_changes=milestone_date_changes or [],
+        key_dates=key_dates or [],
     )
 
 
@@ -119,7 +121,8 @@ def preview_deal_import(db: Session, deal_board: DealBoard, deal_id: str, use_de
     _refuse_a_my_deals_deal_imported_through_its_bought_copy(db, deal_board, deal)
     planned_rows = planned_cash_rows_including_late_refi_months(deal, today_for_liquidity(db, today))
     changes = diff_deal_cash_rows(planned_rows, imported_rows_of_deal(db, deal_board, deal.id), _use_deal_value_for_pairs(use_deal_value_for))
-    return _changes_res(deal_board, deal, changes)
+    # The key dates are the preview chart's flags (contract, closing, rehab, the Nov 30 bill, refi).
+    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
 
 
 def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value_for: list[UseDealValueForField],
@@ -131,7 +134,7 @@ def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value
     changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_rows, _use_deal_value_for_pairs(use_deal_value_for))
     deal.liquidity_rows_out_of_date = False
     db.commit()
-    return _changes_res(deal_board, deal, changes)
+    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
 
 
 # --- Milestones ---------------------------------------------------------------------------------------------------

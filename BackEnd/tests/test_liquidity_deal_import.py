@@ -339,3 +339,12 @@ class TestImportedDealKeyDates:
         assert [(key_date["key"], key_date["date"]) for key_date in listed["key_dates"]] == schedule_markers
         assert ("property_tax_bill_paid_on_november_30", "2026-11-30") in schedule_markers
         assert [key_date["date"] for key_date in listed["key_dates"]] == sorted(key_date["date"] for key_date in listed["key_dates"])
+
+
+def test_the_import_preview_carries_the_deals_key_dates(client, brrrr_payload):
+    deal = _create_my_deals_deal(client, {**brrrr_payload, "buyClosingDate": "2026-08-20", "contractDate": "2026-08-01",
+                                          "daysUntilRefi": 200})
+    preview = _preview(client, deal["id"], today="2026-07-01").json()
+    schedule_markers = [(marker["milestone_key"], marker["date"]) for marker in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]]
+    assert [(key_date["key"], key_date["date"]) for key_date in preview["key_dates"]] == schedule_markers
+    assert ("property_tax_bill_paid_on_november_30", "2026-11-30") in schedule_markers

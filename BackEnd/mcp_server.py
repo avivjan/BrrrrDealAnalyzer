@@ -281,7 +281,8 @@ DESCRIPTIONS: dict[str, str] = {
     "preview_liquidity_deal_import": (
         "Preview importing (or re-syncing) a BRRRR deal's Cash Needed rows into the Liquidity timeline: each row's "
         "change_kind, before -> after, and the deal's value kept out where the owner changed a date or amount by hand. "
-        "Writes nothing. 409 for a My Deals deal already in liquidity through its Bought copy."
+        "Writes nothing; key_dates gives the deal's Cash Needed markers. 409 for a My Deals deal already in liquidity "
+        "through its Bought copy."
     ),
     "import_liquidity_deal": (
         "Import (or re-sync) a BRRRR deal's Cash Needed rows into the Liquidity timeline, as the preview listed them. "
