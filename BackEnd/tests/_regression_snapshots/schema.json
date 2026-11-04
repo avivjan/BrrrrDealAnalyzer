@@ -4658,6 +4658,127 @@
       "id"
     ]
   },
+  "liquidity_recurring_occurrence_states": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [
+          "liquidity_recurring_transactions.id"
+        ],
+        "index": true,
+        "name": "recurring_rule_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "scheduled_date",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "done_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "moved_to_date",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "created_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "ForeignKeyConstraint:recurring_rule_id",
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:recurring_rule_id,scheduled_date"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "recurring_rule_id"
+        ],
+        "name": "ix_liquidity_recurring_occurrence_states_recurring_rule_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
   "liquidity_recurring_transactions": {
     "columns": [
       {
@@ -4770,6 +4891,20 @@
         "python_type": "int",
         "server_default": "1",
         "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "occurrences_can_be_overdue_from",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
         "unique": null
       },
       {

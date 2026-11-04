@@ -34428,7 +34428,9 @@
         "frequency": "monthly",
         "id": "<id>",
         "interval": 2,
+        "occurrence_states": [],
         "occurrences": 12,
+        "occurrences_can_be_overdue_from": "<occurrences_can_be_overdue_from>",
         "start_date": "2024-03-05",
         "updated_at": "<updated_at>"
       }
@@ -34445,7 +34447,9 @@
       "frequency": "monthly",
       "id": "<id>",
       "interval": 1,
+      "occurrence_states": [],
       "occurrences": 12,
+      "occurrences_can_be_overdue_from": "<occurrences_can_be_overdue_from>",
       "start_date": "2024-03-05",
       "updated_at": "<updated_at>"
     },
@@ -34540,7 +34544,9 @@
         "frequency": "monthly",
         "id": "<id>",
         "interval": 1,
+        "occurrence_states": [],
         "occurrences": 12,
+        "occurrences_can_be_overdue_from": "<occurrences_can_be_overdue_from>",
         "start_date": "2024-03-05",
         "updated_at": "<updated_at>"
       }
@@ -34562,7 +34568,9 @@
       "frequency": "monthly",
       "id": "<id>",
       "interval": 2,
+      "occurrence_states": [],
       "occurrences": 12,
+      "occurrences_can_be_overdue_from": "<occurrences_can_be_overdue_from>",
       "start_date": "2024-03-05",
       "updated_at": "<updated_at>"
     },

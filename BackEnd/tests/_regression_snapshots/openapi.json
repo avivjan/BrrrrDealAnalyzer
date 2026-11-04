@@ -10746,6 +10746,80 @@
         "title": "LinkedDealRes",
         "type": "object"
       },
+      "LiquidityRecurringOccurrenceMoveReq": {
+        "properties": {
+          "new_effective_date": {
+            "format": "date",
+            "title": "New Effective Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_effective_date"
+        ],
+        "title": "LiquidityRecurringOccurrenceMoveReq",
+        "type": "object"
+      },
+      "LiquidityRecurringOccurrenceRef": {
+        "properties": {
+          "recurring_rule_id": {
+            "maxLength": 64,
+            "title": "Recurring Rule Id",
+            "type": "string"
+          },
+          "scheduled_date": {
+            "format": "date",
+            "title": "Scheduled Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recurring_rule_id",
+          "scheduled_date"
+        ],
+        "title": "LiquidityRecurringOccurrenceRef",
+        "type": "object"
+      },
+      "LiquidityRecurringOccurrenceStateRes": {
+        "properties": {
+          "done_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When it was marked done; null = open.",
+            "title": "Done At"
+          },
+          "moved_to_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The date it was moved to; null = on its scheduled date.",
+            "title": "Moved To Date"
+          },
+          "scheduled_date": {
+            "description": "The date the rule gives this occurrence (its identity).",
+            "format": "date",
+            "title": "Scheduled Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduled_date"
+        ],
+        "title": "LiquidityRecurringOccurrenceStateRes",
+        "type": "object"
+      },
       "LiquidityRecurringTransactionCreate": {
         "description": "Definition of a repeating cash-flow rule.\n\nExactly one of `end_date` / `occurrences` may be set (both may be null\nfor an open-ended series; the frontend caps display at the visible\nhorizon).",
         "properties": {
@@ -10882,6 +10956,14 @@
             "title": "Interval",
             "type": "integer"
           },
+          "occurrence_states": {
+            "description": "The occurrences marked done or moved; every other occurrence is open on its scheduled date.",
+            "items": {
+              "$ref": "#/components/schemas/LiquidityRecurringOccurrenceStateRes"
+            },
+            "title": "Occurrence States",
+            "type": "array"
+          },
           "occurrences": {
             "anyOf": [
               {
@@ -10892,6 +10974,19 @@
               }
             ],
             "title": "Occurrences"
+          },
+          "occurrences_can_be_overdue_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An occurrence before this date is history, never overdue (the day the rule was added).",
+            "title": "Occurrences Can Be Overdue From"
           },
           "start_date": {
             "format": "date",
@@ -11201,18 +11296,25 @@
             "description": "For postpone_by_days: how many days each row moves later.",
             "title": "Postpone By Days"
           },
+          "recurring_occurrences": {
+            "description": "Occurrences of recurring rules the same action applies to (the bulk bar can mix them with one-off rows).",
+            "items": {
+              "$ref": "#/components/schemas/LiquidityRecurringOccurrenceRef"
+            },
+            "maxItems": 500,
+            "title": "Recurring Occurrences",
+            "type": "array"
+          },
           "transaction_ids": {
             "items": {
               "type": "string"
             },
             "maxItems": 500,
-            "minItems": 1,
             "title": "Transaction Ids",
             "type": "array"
           }
         },
         "required": [
-          "transaction_ids",
           "action"
         ],
         "title": "LiquidityTransactionBulkActionReq",
@@ -19246,6 +19348,163 @@
           }
         },
         "summary": "Update Liquidity Recurring"
+      }
+    },
+    "/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/done": {
+      "post": {
+        "operationId": "mark_liquidity_recurring_occurrence_done_liquidity_recurring__rule_id__occurrences__scheduled_date__done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scheduled_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Scheduled Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityRecurringTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Recurring Occurrence Done"
+      }
+    },
+    "/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/move": {
+      "post": {
+        "operationId": "move_liquidity_recurring_occurrence_liquidity_recurring__rule_id__occurrences__scheduled_date__move_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scheduled_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Scheduled Date",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiquidityRecurringOccurrenceMoveReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityRecurringTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Move Liquidity Recurring Occurrence"
+      }
+    },
+    "/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/not-done": {
+      "post": {
+        "operationId": "mark_liquidity_recurring_occurrence_not_done_liquidity_recurring__rule_id__occurrences__scheduled_date__not_done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scheduled_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Scheduled Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidityRecurringTransactionRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Recurring Occurrence Not Done"
       }
     },
     "/liquidity/settings": {

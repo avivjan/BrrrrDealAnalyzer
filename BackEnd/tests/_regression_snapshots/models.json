@@ -5085,9 +5085,23 @@
           "default_factory": null,
           "required": true
         },
+        "occurrence_states": {
+          "alias": null,
+          "annotation": "list[LiquidityRecurringOccurrenceStateRes]",
+          "default": "PydanticUndefined",
+          "default_factory": "list",
+          "required": false
+        },
         "occurrences": {
           "alias": null,
           "annotation": "Optional[int]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "occurrences_can_be_overdue_from": {
+          "alias": null,
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -10675,7 +10689,9 @@
         "frequency": "monthly",
         "id": "abc",
         "interval": 2,
+        "occurrence_states": [],
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05",
         "updated_at": null
       },
@@ -10687,11 +10703,13 @@
         "frequency": "monthly",
         "id": "abc",
         "interval": 2,
+        "occurrence_states": [],
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05",
         "updated_at": null
       },
-      "dump_python_repr": "{'id': 'abc', 'description': 'd', 'amount_dollars': 1500.0, 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'monthly', 'interval': 2, 'created_at': None, 'updated_at': None}",
+      "dump_python_repr": "{'id': 'abc', 'description': 'd', 'amount_dollars': 1500.0, 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'monthly', 'interval': 2, 'occurrences_can_be_overdue_from': None, 'occurrence_states': [], 'created_at': None, 'updated_at': None}",
       "exclude_unset": {
         "amount_dollars": 1500.0,
         "description": "d",
@@ -24970,6 +24988,50 @@
       "type": "object"
     },
     "LiquidityRecurringTransactionRes": {
+      "$defs": {
+        "LiquidityRecurringOccurrenceStateRes": {
+          "properties": {
+            "done_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "When it was marked done; null = open.",
+              "title": "Done At"
+            },
+            "moved_to_date": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The date it was moved to; null = on its scheduled date.",
+              "title": "Moved To Date"
+            },
+            "scheduled_date": {
+              "description": "The date the rule gives this occurrence (its identity).",
+              "format": "date",
+              "title": "Scheduled Date",
+              "type": "string"
+            }
+          },
+          "required": [
+            "scheduled_date"
+          ],
+          "title": "LiquidityRecurringOccurrenceStateRes",
+          "type": "object"
+        }
+      },
       "properties": {
         "amount_dollars": {
           "title": "Amount Dollars",
@@ -25024,6 +25086,14 @@
           "title": "Interval",
           "type": "integer"
         },
+        "occurrence_states": {
+          "description": "The occurrences marked done or moved; every other occurrence is open on its scheduled date.",
+          "items": {
+            "$ref": "#/$defs/LiquidityRecurringOccurrenceStateRes"
+          },
+          "title": "Occurrence States",
+          "type": "array"
+        },
         "occurrences": {
           "anyOf": [
             {
@@ -25035,6 +25105,20 @@
           ],
           "default": null,
           "title": "Occurrences"
+        },
+        "occurrences_can_be_overdue_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "An occurrence before this date is history, never overdue (the day the rule was added).",
+          "title": "Occurrences Can Be Overdue From"
         },
         "start_date": {
           "format": "date",
