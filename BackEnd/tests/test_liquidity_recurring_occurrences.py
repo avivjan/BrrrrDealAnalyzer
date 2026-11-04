@@ -35,6 +35,12 @@ class TestOccurrenceStates:
         assert rule["occurrences_can_be_overdue_from"] == today_in_the_settings_zone.isoformat()
         assert rule["occurrence_states"] == []
 
+    def test_the_overdue_from_date_can_be_given_on_create_and_changed(self, client):
+        rule = _create_rule(client, occurrences_can_be_overdue_from="2026-09-15")
+        assert rule["occurrences_can_be_overdue_from"] == "2026-09-15"
+        edited = client.put(f"/liquidity/recurring/{rule['id']}", json={"occurrences_can_be_overdue_from": "2026-10-15"}).json()
+        assert edited["occurrences_can_be_overdue_from"] == "2026-10-15"
+
     def test_done_then_undo_keeps_no_state_behind(self, client):
         rule = _create_rule(client)
         done = _occurrence(client, rule["id"], "2026-10-01", "done").json()

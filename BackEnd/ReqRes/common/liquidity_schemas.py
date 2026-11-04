@@ -99,6 +99,8 @@ class LiquidityRecurringTransactionCreate(BaseModel):
     interval: int = Field(
         1, ge=1, le=365, description="'Every N units' multiplier on top of frequency."
     )
+    occurrences_can_be_overdue_from: Optional[date] = Field(None, description=(
+        "Occurrences from this date on can be overdue (missed); earlier ones are history. Default: today."))
 
     @field_validator("amount_dollars")
     @classmethod
@@ -124,6 +126,8 @@ class LiquidityRecurringTransactionUpdate(BaseModel):
     occurrences: Optional[int] = Field(None, ge=1, le=2000)
     frequency: Optional[LiquidityFrequency] = None
     interval: Optional[int] = Field(None, ge=1, le=365)
+    occurrences_can_be_overdue_from: Optional[date] = Field(None, description=(
+        "Occurrences from this date on can be overdue (missed); earlier ones are history."))
 
     # The `end_date < start_date` invariant has to be checked at the CRUD
     # layer once we merge the patch into the existing row, since either

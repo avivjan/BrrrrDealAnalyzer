@@ -14,8 +14,9 @@ def create_recurring(db: Session, data: LiquidityRecurringTransactionCreate):
         # so a hand-rolled HTTP client can't poison the DB.
         raise ValueError(f"Unsupported frequency: {data.frequency!r}")
     rule = insert_recurring(db, data)
-    # Occurrences before today are history (already in the bank balance), never overdue.
-    rule.occurrences_can_be_overdue_from = today_for_liquidity(db, None)
+    # Occurrences before today are history (already in the bank balance), never overdue, unless the caller says
+    # from when a missed one counts (a series entered with a payment already missed).
+    rule.occurrences_can_be_overdue_from = data.occurrences_can_be_overdue_from or today_for_liquidity(db, None)
     db.commit()
     db.refresh(rule)
     return recurring_to_res(rule)
