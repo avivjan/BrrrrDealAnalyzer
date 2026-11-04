@@ -1,6 +1,7 @@
 """/liquidity/* -- transactions, recurring rules, settings, Mercury balance."""
 
-from typing import List
+from datetime import date
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from ReqRes.common.liquidity_schemas import (
     LiquidityRecurringTransactionRes,
     LiquiditySettingsUpdate, LiquiditySettingsRes,
     LiquidityTransactionBulkActionReq,
+    LiquidityRecurringOccurrenceMoveReq,
 )
 from BL.liquidity.markTransactionDone import mark_transaction_done as mark_transaction_done_bl
 from BL.liquidity.bulkTransactionAction import apply_bulk_transaction_action as apply_bulk_transaction_action_bl, UnknownLiquidityTransactionError
@@ -23,6 +25,9 @@ from BL.liquidity.listRecurring import list_recurring as list_recurring_bl
 from BL.liquidity.createRecurring import create_recurring as create_recurring_bl
 from BL.liquidity.updateRecurring import update_recurring as update_recurring_bl
 from BL.liquidity.deleteRecurring import delete_recurring as delete_recurring_bl
+from BL.liquidity.recurringOccurrences import (
+    NotAnOccurrenceOfTheRuleError, UnknownRecurringRuleError, change_occurrence as change_occurrence_bl,
+)
 from BL.liquidity.getSettings import get_settings as get_settings_bl
 from BL.liquidity.updateSettings import update_settings as update_settings_bl
 from BL.liquidity.mercuryBalance import get_mercury_balance as get_mercury_balance_bl
@@ -67,6 +72,8 @@ def apply_liquidity_transaction_bulk_action(data: LiquidityTransactionBulkAction
         return apply_bulk_transaction_action_bl(db, data)
     except UnknownLiquidityTransactionError:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    except NotAnOccurrenceOfTheRuleError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 @router.delete("/liquidity/transactions/{txn_id}")
 def delete_liquidity_transaction(txn_id: str, db: Session = Depends(get_db)):
@@ -113,6 +120,32 @@ def update_liquidity_recurring(
     if not result:
         raise HTTPException(status_code=404, detail="Recurring rule not found")
     return result
+
+
+def _change_recurring_occurrence(db: Session, rule_id: str, scheduled_date: date, action: str, new_effective_date: Optional[date] = None):
+    try:
+        return change_occurrence_bl(db, rule_id, scheduled_date, action, new_effective_date)
+    except UnknownRecurringRuleError:
+        raise HTTPException(status_code=404, detail="Recurring rule not found")
+    except NotAnOccurrenceOfTheRuleError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+# One occurrence of a rule: done (the money moved), open again (Undo), or moved to another date.
+@router.post("/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/done", response_model=LiquidityRecurringTransactionRes)
+def mark_liquidity_recurring_occurrence_done(rule_id: str, scheduled_date: date, db: Session = Depends(get_db)):
+    return _change_recurring_occurrence(db, rule_id, scheduled_date, "mark_done")
+
+
+@router.post("/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/not-done", response_model=LiquidityRecurringTransactionRes)
+def mark_liquidity_recurring_occurrence_not_done(rule_id: str, scheduled_date: date, db: Session = Depends(get_db)):
+    return _change_recurring_occurrence(db, rule_id, scheduled_date, "mark_not_done")
+
+
+@router.post("/liquidity/recurring/{rule_id}/occurrences/{scheduled_date}/move", response_model=LiquidityRecurringTransactionRes)
+def move_liquidity_recurring_occurrence(rule_id: str, scheduled_date: date, data: LiquidityRecurringOccurrenceMoveReq,
+                                        db: Session = Depends(get_db)):
+    return _change_recurring_occurrence(db, rule_id, scheduled_date, "move_to_date", data.new_effective_date)
 
 
 @router.delete("/liquidity/recurring/{rule_id}")

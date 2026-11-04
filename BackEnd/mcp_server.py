@@ -109,7 +109,8 @@ INSTRUCTIONS = (
     "timeline is in exact dollars: amount_dollars, opening_balance_dollars, reserve_dollars). "
     "LIQUIDITY: a one-off row leaves the timeline only when marked done (never because its date passed); an open "
     "money-out row dated before today counts on today (overdue), an open money-in row dated before today is not "
-    "counted until re-dated or done. A BRRRR deal's Cash Needed rows are imported with preview_liquidity_deal_import "
+    "counted until re-dated or done. A recurring rule's occurrences work the same way (done / moved per scheduled_date; "
+    "those before occurrences_can_be_overdue_from are history). A BRRRR deal's Cash Needed rows are imported with preview_liquidity_deal_import "
     "then import_liquidity_deal (rows carry source_deal_board, source_deal_id, source_item_key); its milestones are "
     "approved or moved with the milestone preview / apply tools, which write the dates back to the deal. Always show "
     "the owner a preview before an import or a milestone change. Call refresh_liquidity_late_refis before reading "
@@ -254,11 +255,22 @@ DESCRIPTIONS: dict[str, str] = {
     "mark_liquidity_transaction_not_done": "Undo 'done' on a one-off cash event: it is open again.",
     "apply_liquidity_transaction_bulk_action": (
         "One action on several one-off cash events: mark_done, mark_not_done, move_to_date (new_effective_date) or "
-        "postpone_by_days. All or nothing: an unknown id is a 404 and nothing changes."
+        "postpone_by_days; recurring_occurrences (rule id + scheduled_date) take the same action. All or nothing: an "
+        "unknown id is a 404 and nothing changes."
     ),
     "list_liquidity_recurring": (
-        "List recurring cash-flow rules (frequency daily/weekly/biweekly/monthly/quarterly/"
-        "yearly, interval, and either end_date or occurrences)."
+        "List recurring cash-flow rules (frequency daily/weekly/biweekly/monthly/quarterly/yearly, interval, and either "
+        "end_date or occurrences), each with occurrence_states (done / moved occurrences, by scheduled_date) and "
+        "occurrences_can_be_overdue_from."
+    ),
+    "mark_liquidity_recurring_occurrence_done": (
+        "Mark one occurrence of a recurring rule done (by its scheduled_date): the money moved, so it leaves the timeline. "
+        "An open occurrence dated before today is overdue like a one-off row. 422 if the rule has no occurrence that day."
+    ),
+    "mark_liquidity_recurring_occurrence_not_done": "Undo 'done' on one occurrence of a recurring rule: it is open again.",
+    "move_liquidity_recurring_occurrence": (
+        "Move one occurrence of a recurring rule (by its scheduled_date) to new_effective_date; the rest of the series "
+        "stays. Moving it back to its scheduled date clears the move."
     ),
     "create_liquidity_recurring": "Add a recurring cash-flow rule (amount_dollars must not be 0).",
     "update_liquidity_recurring": "Change a recurring rule (partial update; re-projects all its events).",

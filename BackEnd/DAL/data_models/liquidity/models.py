@@ -1,5 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, Date, func, Numeric, Uuid, JSON
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Date, func, Numeric, Uuid, JSON, UniqueConstraint
 import uuid
+
+from sqlalchemy.orm import relationship
 
 from db import Base
 
@@ -69,6 +71,29 @@ class LiquidityRecurringTransaction(Base):
     frequency = Column(String, nullable=False)  # one of LIQUIDITY_RECURRING_FREQUENCIES
     # "Every N units" multiplier on top of `frequency`. Defaults to 1.
     interval = Column(Integer, nullable=False, default=1, server_default="1")
+    # An occurrence before this date is history (already in the bank balance), never overdue: the day the rule was
+    # added (existing rules: the migration date). NULL reads as the rule's start date.
+    occurrences_can_be_overdue_from = Column(Date, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    occurrence_states = relationship("LiquidityRecurringOccurrenceState", cascade="all, delete-orphan", passive_deletes=True,
+                                     order_by="LiquidityRecurringOccurrenceState.scheduled_date")
+
+
+class LiquidityRecurringOccurrenceState(Base):
+    """One occurrence of a recurring rule, marked done and/or moved to another date (it is open on its own date
+    otherwise). Keyed by the date the rule gives the occurrence, so editing the rule's amount or description keeps
+    the state; a schedule change leaves states that no longer match an occurrence, and they are ignored."""
+
+    __tablename__ = "liquidity_recurring_occurrence_states"
+    __table_args__ = (UniqueConstraint("recurring_rule_id", "scheduled_date", name="uq_recurring_occurrence_state"),)
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    recurring_rule_id = Column(Uuid(as_uuid=True), ForeignKey("liquidity_recurring_transactions.id", ondelete="CASCADE"),
+                               nullable=False, index=True)
+    scheduled_date = Column(Date, nullable=False)
+    done_at = Column(DateTime(timezone=True), nullable=True)
+    moved_to_date = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

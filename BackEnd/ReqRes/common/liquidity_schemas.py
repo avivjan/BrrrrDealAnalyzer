@@ -57,13 +57,17 @@ LiquidityTransactionBulkAction = Literal["mark_done", "mark_not_done", "move_to_
 class LiquidityTransactionBulkActionReq(BaseModel):
     """One action on several one-off transactions at once (the timeline's bulk select)."""
 
-    transaction_ids: list[str] = Field(..., min_length=1, max_length=500)
+    transaction_ids: list[str] = Field(default_factory=list, max_length=500)
+    recurring_occurrences: list["LiquidityRecurringOccurrenceRef"] = Field(default_factory=list, max_length=500, description=(
+        "Occurrences of recurring rules the same action applies to (the bulk bar can mix them with one-off rows)."))
     action: LiquidityTransactionBulkAction
     new_effective_date: Optional[date] = Field(None, description="For move_to_date: the date every row moves to.")
     postpone_by_days: Optional[int] = Field(None, ge=1, le=3660, description="For postpone_by_days: how many days each row moves later.")
 
     @model_validator(mode="after")
     def _each_action_has_its_value(self) -> "LiquidityTransactionBulkActionReq":
+        if not self.transaction_ids and not self.recurring_occurrences:
+            raise ValueError("Name at least one transaction or recurring occurrence.")
         if self.action == "move_to_date" and self.new_effective_date is None:
             raise ValueError("move_to_date needs new_effective_date.")
         if self.action == "postpone_by_days" and self.postpone_by_days is None:
@@ -126,6 +130,21 @@ class LiquidityRecurringTransactionUpdate(BaseModel):
     # field may be missing from the patch payload.
 
 
+class LiquidityRecurringOccurrenceStateRes(BaseModel):
+    scheduled_date: date = Field(..., description="The date the rule gives this occurrence (its identity).")
+    done_at: Optional[str] = Field(None, description="When it was marked done; null = open.")
+    moved_to_date: Optional[date] = Field(None, description="The date it was moved to; null = on its scheduled date.")
+
+
+class LiquidityRecurringOccurrenceMoveReq(BaseModel):
+    new_effective_date: date
+
+
+class LiquidityRecurringOccurrenceRef(BaseModel):
+    recurring_rule_id: str = Field(..., max_length=64)
+    scheduled_date: date
+
+
 class LiquidityRecurringTransactionRes(BaseModel):
     id: str
     description: str
@@ -135,6 +154,10 @@ class LiquidityRecurringTransactionRes(BaseModel):
     occurrences: Optional[int] = None
     frequency: LiquidityFrequency
     interval: int
+    occurrences_can_be_overdue_from: Optional[date] = Field(None, description=(
+        "An occurrence before this date is history, never overdue (the day the rule was added)."))
+    occurrence_states: list[LiquidityRecurringOccurrenceStateRes] = Field(default_factory=list, description=(
+        "The occurrences marked done or moved; every other occurrence is open on its scheduled date."))
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -180,3 +203,6 @@ class LiquiditySettingsRes(BaseModel):
     updated_at: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+LiquidityTransactionBulkActionReq.model_rebuild()

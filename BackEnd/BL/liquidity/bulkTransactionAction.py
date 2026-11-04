@@ -1,4 +1,5 @@
-"""One action on several one-off transactions at once: mark done / open, move to a date, or postpone by days.
+"""One action on several one-off transactions (and recurring occurrences) at once: mark done / open, move to a
+date, or postpone by days.
 
 All or nothing: an unknown id fails the whole request before anything changes. Moving a row by hand
 marks its date as the user's (`user_overrode_date`, while it differs from the planned date), so a
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from DAL.crud.liquidity import get_transactions_by_ids
 from BL.liquidity.common.mappers import txn_to_res
+from BL.liquidity.recurringOccurrences import UnknownRecurringRuleError, change_occurrences_in_bulk
 from ReqRes.common.liquidity_schemas import LiquidityTransactionBulkActionReq
 
 
@@ -27,6 +29,12 @@ def apply_bulk_transaction_action(db: Session, data: LiquidityTransactionBulkAct
     txns = get_transactions_by_ids(db, txn_ids)
     if len(txns) != len(txn_ids):
         raise UnknownLiquidityTransactionError("Unknown transaction id.")
+    if data.recurring_occurrences:
+        try:
+            change_occurrences_in_bulk(db, data.recurring_occurrences, data.action, data.new_effective_date, data.postpone_by_days)
+        except UnknownRecurringRuleError as exc:
+            db.rollback()
+            raise UnknownLiquidityTransactionError("Unknown recurring rule id.") from exc
     now = datetime.now(timezone.utc)
     for txn in txns:
         if data.action == "mark_done":
