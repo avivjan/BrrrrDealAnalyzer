@@ -231,6 +231,89 @@ test('a row marked Done by mistake is struck through in the legend and in its da
   await expect(doneInDay).toHaveCount(0);
 });
 
+async function seedMonthlyRecurringRule(request: Request, start_date: string, amount_dollars: number, description: string): Promise<string> {
+  const response = await request.post(`${API_ORIGIN}/liquidity/recurring`, {
+    headers: SEED_HEADERS,
+    // The rule counts missed occurrences from Aug 1 (the server's own "today" would be its real date, not the frozen one).
+    data: { description, amount_dollars, start_date, frequency: 'monthly', interval: 1, occurrences_can_be_overdue_from: '2026-08-01' },
+  });
+  expect(response.ok()).toBe(true);
+  return ((await response.json()) as { id: string }).id;
+}
+
+test('a missed recurring occurrence is overdue; Done clears it, Undo from its day brings it back, and +1 week moves it alone', async ({ page, request, settle }) => {
+  await seedSettings(request);
+  const ruleId = await seedMonthlyRecurringRule(request, '2026-09-01', -1500, 'Lawn service');
+  const missedOccurrenceId = `recurring:${ruleId}:0`;   // Sep 1, before the frozen "today" (Sep 4)
+
+  await page.goto('/liquidity');
+  await expect(page.getByTestId('theater.figure.overdue')).toContainText('1 overdue');
+  const legend = await openLegend(page, settle);
+  const series = legend.getByTestId(`theater.legend.recurring.${ruleId}`);
+  await expect(series.getByTestId(`theater.legend.recurring.${ruleId}.overdue`)).toContainText('1 overdue');
+  await series.getByTestId(`theater.legend.recurring.${ruleId}.toggle`).click();
+  const missedOccurrence = series.getByTestId(`theater.legend.occurrence.${missedOccurrenceId}`);
+  await expect(missedOccurrence).toHaveAttribute('data-state', 'overdue');
+
+  await missedOccurrence.getByTestId(`theater.legend.occurrence.${missedOccurrenceId}.done`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Marked done.');
+  await settle(5000);
+  await expect(missedOccurrence).toHaveAttribute('data-state', 'done');
+  await expect(page.getByTestId('theater.figure.overdue')).toHaveCount(0);
+  await expect(series.getByTestId(`theater.legend.recurring.${ruleId}.overdue`)).toHaveCount(0);
+
+  // Its day (Sep 1) lists it struck through, with Undo.
+  await missedOccurrence.locator('button').first().click();
+  const dayModal = page.getByTestId('theater.day-modal');
+  await expect(dayModal).toContainText('September 1, 2026');
+  const doneInDay = dayModal.getByTestId(`theater.day-modal.done-row.${missedOccurrenceId}`);
+  await expect(doneInDay).toBeVisible();
+  await doneInDay.getByTestId(`theater.day-modal.done-row.${missedOccurrenceId}.undo`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Reopened.');
+  await expect(doneInDay).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await settle(TRANSITION_MS);
+  await expect(page.getByTestId('theater.figure.overdue')).toContainText('1 overdue');
+
+  // +1 week from the overdue list moves that occurrence to a week from today; October's stays on Oct 1.
+  await settle(5000);
+  await page.getByTestId('theater.figure.overdue').click();
+  const overduePopover = page.getByTestId('theater.overdue-popover');
+  await overduePopover.getByTestId(`rowactions.${missedOccurrenceId}.postpone.week`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Moved to 2026-09-11.');
+  await expect(page.getByTestId('theater.figure.overdue')).toHaveCount(0);
+  const rule = ((await (await request.get(`${API_ORIGIN}/liquidity/recurring`, { headers: SEED_HEADERS })).json()) as Array<{ id: string; occurrence_states: unknown[] }>)
+    .find((listed) => listed.id === ruleId)!;
+  expect(rule.occurrence_states).toEqual([{ scheduled_date: '2026-09-01', done_at: null, moved_to_date: '2026-09-11' }]);
+  await expect(series.getByTestId(`theater.legend.occurrence.recurring:${ruleId}:1`)).toContainText('Oct 1');
+});
+
+test('Lowest brings the lowest balance into view and shows its day', async ({ page, request, settle }) => {
+  await seedSettings(request);
+  await seedTransaction(request, '2026-12-10', -120000, 'Big renovation draw');
+  await seedTransaction(request, '2026-12-20', 90000, 'Refi proceeds');
+
+  await page.goto('/liquidity');
+  const theater = page.getByTestId('theater.root');
+  const chart = theater.getByTestId('chart.container');
+  await expect(chart).toBeVisible();
+  const lowestDayColumn = chart.locator('[data-date="2026-12-10"]');
+  const lowestButton = page.getByTestId('theater.lowest');
+  if (await lowestButton.isVisible()) {
+    await expect(lowestButton).toHaveAttribute('title', 'Lowest balance: $30,000 on Dec 10');
+    await lowestButton.click();
+  } else {
+    await page.getByTestId('theater.more').click();
+    await page.getByTestId('theater.more.lowest').click();
+  }
+  await settle(TRANSITION_MS * 2);
+  const chartBox = (await chart.boundingBox())!;
+  const columnBox = (await lowestDayColumn.boundingBox())!;
+  expect(columnBox.x).toBeGreaterThanOrEqual(chartBox.x);
+  expect(columnBox.x + columnBox.width).toBeLessThanOrEqual(chartBox.x + chartBox.width);
+  await expect(theater.getByTestId('chart.tooltip')).toContainText('Big renovation draw');
+});
+
 test('hovering a day previews it; a click opens the day in full, with every action', async ({ page, request, settle }, testInfo) => {
   test.skip(testInfo.project.name.startsWith('Mobile'), 'hover is a desktop pointer gesture');
   await seedSettings(request);

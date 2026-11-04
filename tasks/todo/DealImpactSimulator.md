@@ -134,21 +134,21 @@ A purpose-built SVG: fit to its width, no scrolling. `TimelineChart` stays as it
 - **Tests:** unit (`centerOnDate` centres and selects; the theater button calls it with the lowest date); e2e (Lowest brings the low day into view with its tooltip).
 
 ## Todo (estimates)
-- [ ] Commit this plan (5 min)
-- [ ] D: `key_dates` on the preview response + pytest; regenerate the OpenAPI snapshot in a `Golden update:` commit (25 min)
-- [ ] B: `buildDealImpactDecision` + unit tests (60 min)
-- [ ] A: `dealImpactGeometry.ts` + `DealImpactChart.vue` (lines, gap, zones, annotations, range chips, hover/tap/keys) + unit tests (150 min)
-- [ ] C: `DealImpactView.vue` (frame, top bar, verdict, rail cards, details, sticky phone action); `DealImportPreviewModal.vue` renders it (90 min)
-- [ ] MCP support: the import-preview description mentions `key_dates` (5 min)
-- [ ] F: the Lowest button (30 min)
-- [ ] E: recurring occurrence states (table, column, migration, endpoints, MCP tools), the engine, the row actions and the views (180 min)
-- [ ] Tests (below) (75 min)
-- [ ] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (15 min):
+- [x] Commit this plan (5 min)
+- [x] D: `key_dates` on the preview response + pytest; regenerate the OpenAPI snapshot in a `Golden update:` commit (25 min)
+- [x] B: `buildDealImpactDecision` + unit tests (60 min)
+- [x] A: `dealImpactGeometry.ts` + `DealImpactChart.vue` (lines, gap, zones, annotations, range chips, hover/tap/keys) + unit tests (150 min)
+- [x] C: `DealImpactView.vue` (frame, top bar, verdict, rail cards, details, sticky phone action); `DealImportPreviewModal.vue` renders it (90 min)
+- [x] MCP support: the import-preview description mentions `key_dates` (5 min)
+- [x] F: the Lowest button (30 min)
+- [x] E: recurring occurrence states (table, column, migration, endpoints, MCP tools), the engine, the row actions and the views (180 min)
+- [x] Tests (below) (75 min)
+- [x] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (15 min):
   - addresses, descriptions and labels are text only, no `v-html`;
   - inline colors only from the palette;
   - `key_dates` exposes nothing the deal endpoints don't already;
   - then `/security-review` on the diff.
-- [ ] Build, vitest, pytest; Playwright on Chromium and Mobile Chrome (re-record `liquidity-deal-import` in a `Golden update:` commit, since the preview response gains `key_dates`); screenshots; push; PR (30 min)
+- [x] Build, vitest, pytest; Playwright on Chromium and Mobile Chrome (re-record `liquidity-deal-import` in a `Golden update:` commit, since the preview response gains `key_dates`); screenshots; push; PR (30 min)
 
 ## Tests
 **Unit (vitest)**
