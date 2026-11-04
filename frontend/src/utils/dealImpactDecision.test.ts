@@ -88,6 +88,9 @@ describe("buildDealImpactDecision: an import", () => {
     expect(verdictText(decision)).toBe("You stay above your $5,000 reserve: lowest $30,000 on Nov 6, 2026.");
     expect(decision.verdictFollowUp).toBeNull();
     expect(decision.lowestChangeDollars).toBe(-20_000);
+    // Never under the reserve: there is nothing to come back above.
+    expect(decision.backAboveReserveAfterTheRefi).toBeNull();
+    expect(decision.shortOfTheReserveAtTheEnd).toBeNull();
   });
 
   it("does not blame the deal for a timeline already under the reserve", () => {

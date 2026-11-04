@@ -251,6 +251,8 @@ export interface DealCashRowChanges {
   changes: DealCashRowChange[]
   change_counts: DealCashRowChangeCounts
   milestone_date_changes: DealMilestoneDateChange[]
+  /** An import preview / import: the deal's key dates as its Cash Needed table shows them. */
+  key_dates?: DealKeyDate[]
 }
 
 export interface DealMilestoneState {

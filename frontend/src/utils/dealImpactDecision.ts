@@ -149,7 +149,10 @@ export function buildDealImpactDecision(input: {
       .filter(change => change.change_kind !== 'removed' && change.change_kind !== 'kept_done' && change.date_after === refiDate)
       .reduce((total, change) => total + (change.amount_dollars_after ?? 0), 0),
   } : null
-  const backDay = refiDate ? daysFromToday.find(day => day.date >= refiDate && day.balance_dollars >= reserveDollars) : undefined
+  // "Back above" only means something if the balance went under the reserve before (or on) the refi.
+  const wasUnderTheReserveUntilTheRefi = !!refiDate && daysFromToday.some(day => day.date <= refiDate && day.balance_dollars < reserveDollars)
+  const backDay = refiDate && wasUnderTheReserveUntilTheRefi
+    ? daysFromToday.find(day => day.date >= refiDate && day.balance_dollars >= reserveDollars) : undefined
   const backAboveReserveAfterTheRefi = backDay && refiDate ? { date: backDay.date, daysAfterTheRefi: daysBetween(refiDate, backDay.date) } : null
   const lastDay = seriesAfter.days[seriesAfter.days.length - 1]
   const shortOfTheReserveAtTheEnd = !backAboveReserveAfterTheRefi && lastDay && lastDay.balance_dollars < reserveDollars
