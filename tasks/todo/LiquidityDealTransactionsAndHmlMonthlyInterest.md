@@ -44,19 +44,19 @@ On branch `claude/zen-brown-nv5tlv` with the open PR avivjan/BrrrrDealAnalyzer#1
 - **A deal whose rows are all done** (`open_row_count` 0) is hidden from the legend today, which would make its done rows unreachable. It gets a collapsed "Finished deals (N)" group under Deals, with only its Transactions section.
 
 ## Todo (estimates)
-- [ ] Commit this plan (5 min)
-- [ ] A: `calc_hml_monthly_interest_payment`; the HML slices and total; the schedule rows; the explain check and text (40 min)
-- [ ] A: pytest for exactly 1% at 12% in 28-, 30- and 31-day months, the total = sum of slices, Σ rows == −Cash Needed. Update the regression snapshots (`tests/_regression_snapshots`) in a `Golden update:` commit (40 min)
-- [ ] B: `key_dates` on the imported deals + pytest (25 min)
-- [ ] B: `dealTransactionsTimelineByMonth`, the Transactions section, done rows struck through with Undo, Finished deals, `markNotDone` wiring (75 min)
-- [ ] MCP support: the `list_liquidity_deals` description mentions `key_dates`. Marking a row not done is already the tool `mark_liquidity_transaction_not_done` (10 min)
-- [ ] Tests (below) (60 min)
-- [ ] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (15 min):
+- [x] Commit this plan (5 min)
+- [x] A: `calc_hml_monthly_interest_payment`; the HML slices and total; the schedule rows; the explain check and text (40 min)
+- [x] A: pytest for exactly 1% at 12% in 28-, 30- and 31-day months, the total = sum of slices, Σ rows == −Cash Needed. Update the regression snapshots (`tests/_regression_snapshots`) in a `Golden update:` commit (40 min)
+- [x] B: `key_dates` on the imported deals + pytest (25 min)
+- [x] B: `dealTransactionsTimelineByMonth`, the Transactions section, done rows struck through with Undo, Finished deals, `markNotDone` wiring (75 min)
+- [x] MCP support: the `list_liquidity_deals` description mentions `key_dates`. Marking a row not done is already the tool `mark_liquidity_transaction_not_done` (10 min)
+- [x] Tests (below) (60 min)
+- [x] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (15 min):
   - descriptions and key dates are rendered as text only;
   - Undo only sends ids from the loaded list;
   - `key_dates` exposes nothing the deal endpoints don't already;
   - then `/security-review` on the diff.
-- [ ] Build, vitest, pytest; Playwright (liquidity specs, and the analyze / deal goldens, re-recorded in a `Golden update:` commit if the HML amounts change them); push; update PR #125 (30 min)
+- [x] Build, vitest, pytest; Playwright (liquidity specs, and the analyze / deal goldens, re-recorded in a `Golden update:` commit if the HML amounts change them); push; update PR #125 (30 min)
 
 ## Tests
 **Unit (vitest)**
