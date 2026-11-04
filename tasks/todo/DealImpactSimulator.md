@@ -127,6 +127,12 @@ A purpose-built SVG: fit to its width, no scrolling. `TimelineChart` stays as it
 - **Integration (pytest):** the endpoints (done / not-done / move, idempotent; 404 for an unknown rule; 422 for a date the rule never produces); the bulk endpoint with occurrences; cascade on rule delete; the migration sets the overdue-from date on existing rules.
 - **E2E:** a monthly series whose last 1st has passed shows as overdue. Done clears it; Undo from its day brings it back; +1 week moves only that occurrence.
 
+### F. A "Lowest" button next to Today (added in chat)
+- **Theater action bar:** a **Lowest** button beside **Today** (`theater.lowest`; also in the phone's ⋯ menu as `theater.more.lowest`) that scrolls the chart to the timeline's lowest balance (`store.series.globalMinDates[0]`) and selects that day, so its floating tooltip shows the balance.
+- **`TimelineChart`** exposes `centerOnDate(isoDate)` beside `centerOnToday`; it centres the day and selects it, as the arrow keys do, so the tooltip follows.
+- **Title:** "Lowest balance: −$31,744 on Mar 3" on the button.
+- **Tests:** unit (`centerOnDate` centres and selects; the theater button calls it with the lowest date); e2e (Lowest brings the low day into view with its tooltip).
+
 ## Todo (estimates)
 - [ ] Commit this plan (5 min)
 - [ ] D: `key_dates` on the preview response + pytest; regenerate the OpenAPI snapshot in a `Golden update:` commit (25 min)
@@ -134,6 +140,7 @@ A purpose-built SVG: fit to its width, no scrolling. `TimelineChart` stays as it
 - [ ] A: `dealImpactGeometry.ts` + `DealImpactChart.vue` (lines, gap, zones, annotations, range chips, hover/tap/keys) + unit tests (150 min)
 - [ ] C: `DealImpactView.vue` (frame, top bar, verdict, rail cards, details, sticky phone action); `DealImportPreviewModal.vue` renders it (90 min)
 - [ ] MCP support: the import-preview description mentions `key_dates` (5 min)
+- [ ] F: the Lowest button (30 min)
 - [ ] E: recurring occurrence states (table, column, migration, endpoints, MCP tools), the engine, the row actions and the views (180 min)
 - [ ] Tests (below) (75 min)
 - [ ] Security task, from `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely (15 min):
