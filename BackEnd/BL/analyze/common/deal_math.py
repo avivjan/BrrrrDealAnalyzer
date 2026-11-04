@@ -154,6 +154,11 @@ def calc_hml_interest(hml_amount, HML_interest_rate, days):
     """Hard-money interest over `days`: amount x annual rate / 360, per diem. Divide last (see above)."""
     return hml_amount * HML_interest_rate * Decimal(days) / DAYS_PER_YEAR / Decimal("100.0")
 
+def calc_hml_monthly_interest_payment(hml_amount, HML_interest_rate):
+    """One full month of hard-money interest: amount x annual rate / 12, whatever the month's length (1% at 12%).
+    Only the partial months (the purchase month, prepaid at closing, and the payoff month) are per diem."""
+    return hml_amount * HML_interest_rate / MONTHS_PER_YEAR / Decimal("100.0")
+
 def calc_prepaid_interest_refi(loan_amount, interest_rate, days):
     """DSCR-loan per-diem interest over `days` on a 360-day year. Divide last."""
     return loan_amount * interest_rate * Decimal(days) / DSCR_DAYS_PER_YEAR / Decimal("100.0")

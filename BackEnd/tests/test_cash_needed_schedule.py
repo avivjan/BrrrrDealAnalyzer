@@ -289,3 +289,34 @@ class TestTheScheduleOnTheApi:
         import mcp_server
         assert "contractDate and buyClosingDate" in mcp_server.INSTRUCTIONS and "a missing one is a 422" in mcp_server.INSTRUCTIONS
         assert "cash_needed_schedule_at_lowest_arv" in mcp_server.INSTRUCTIONS
+
+
+class TestHardMoneyInterestPaidMonthlyIsRateOverTwelve:
+    """Each full month of hard-money interest is the loan x the annual rate / 12 (1% at 12%), whatever the month's
+    length (tasks/todo/LiquidityDealTransactionsAndHmlMonthlyInterest.md, A). Only the partial months are per diem."""
+
+    # 2026-12-10 -> 2027-07-08: December's rest is prepaid at the closing; January (31), February (28), March (31),
+    # April (30), May (31) and June (30) are paid on Feb 1 .. Jul 1; July 1 .. 7 are inside the payoff.
+    MIXED_MONTH_LENGTHS = {"buyClosingDate": "2026-12-10", "contractDate": "2026-12-01", "daysUntilRefi": 210, "HMLInterestRate": 12}
+
+    def test_every_monthly_row_is_exactly_one_twelfth_of_the_annual_rate(self, brrrr_payload):
+        results = _compute(brrrr_payload, self.MIXED_MONTH_LENGTHS)
+        monthly_payment = (results.hml_amount * Decimal("12") / Decimal("12") / Decimal("100")).quantize(ONE_CENT)
+        rows = _rows_of(results, "hml_interest_paid_monthly")
+        assert [row.date for row in rows] == [date(2027, month, 1) for month in range(2, 8)]
+        assert {-row.signed_amount_dollars for row in rows} == {monthly_payment}
+        assert monthly_payment == (results.hml_amount / Decimal("100")).quantize(ONE_CENT)   # 1% at 12%
+
+    def test_the_total_is_the_prepaid_days_plus_the_monthly_payments_plus_the_payoff_days(self, brrrr_payload):
+        results = _compute(brrrr_payload, self.MIXED_MONTH_LENGTHS)
+        per_diem = results.hml_amount * Decimal("12") / Decimal("360") / Decimal("100")
+        assert results.prepaid_interest_buy == per_diem * 22                      # Dec 10 .. Dec 31
+        assert results.hml_interest_paid_monthly == results.hml_amount * Decimal("0.01") * 6
+        assert results.hml_interest_accrued_into_refi_payoff == per_diem * results.hml_interest_days_accrued_into_refi_payoff
+        assert results.hml_interest == (results.prepaid_interest_buy + results.hml_interest_paid_monthly
+                                        + results.hml_interest_accrued_into_refi_payoff)
+
+    def test_the_schedule_still_adds_up_to_cash_needed(self, brrrr_payload):
+        results = _compute(brrrr_payload, self.MIXED_MONTH_LENGTHS)
+        total = sum(row.signed_amount_dollars for row in results.cash_needed_schedule_at_lowest_arv.dated_cash_rows)
+        assert total == -results.total_cash_needed

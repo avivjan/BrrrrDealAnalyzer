@@ -17,6 +17,7 @@ from BL.analyze.brrr_results_with_intermediates import BrrrResultsWithIntermedia
 from BL.analyze.common.calc_breakdown import CalcBreakdown, check, fmt_money, fmt_pct, fmt_num
 from BL.analyze.common.deal_math import (
     calc_hml_interest,
+    calc_hml_monthly_interest_payment,
     calc_prepaid_interest_refi,
     calc_mortgage_payment,
     calc_cash_on_cash,
@@ -222,15 +223,22 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
         f"{fmt_pct(payload.HML_points)} × Hard Money Loan ({fmt_money(results.hml_amount)}) = {fmt_money(results.hml_points)}",
     )
     check(results.hml_per_diem == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, 1), "HML per diem")
-    check(results.hml_interest == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, payload.days_until_refi), "HML interest")
+    hml_interest_monthly_payment = calc_hml_monthly_interest_payment(results.hml_amount, payload.HML_interest_rate)
+    hml_interest_monthly_payment_count = len(results.hml_interest_monthly_payment_dates)
+    check(results.hml_interest == results.prepaid_interest_buy + results.hml_interest_paid_monthly + results.hml_interest_accrued_into_refi_payoff, "HML interest")
     breakdown.add(
         HM_COST, "HML Interest (until refi)", results.hml_interest,
-        f"Hard Money Loan ({fmt_money(results.hml_amount)}) × {fmt_pct(payload.HML_interest_rate)}/yr ÷ 360 = {fmt_money(results.hml_per_diem)} per diem × {payload.days_until_refi} days = {fmt_money(results.hml_interest)}",
-        note="Hard money accrues per diem on a 360-day year.",
+        f"Prepaid Interest (Buy) {fmt_money(results.prepaid_interest_buy)} ({results.hml_interest_days_prepaid_at_purchase_closing} days × {fmt_money(results.hml_per_diem)}) "
+        f"+ {hml_interest_monthly_payment_count} monthly payment{'' if hml_interest_monthly_payment_count == 1 else 's'} × {fmt_money(hml_interest_monthly_payment)} "
+        f"+ Accrued Interest inside the payoff {fmt_money(results.hml_interest_accrued_into_refi_payoff)} ({results.hml_interest_days_accrued_into_refi_payoff} days × {fmt_money(results.hml_per_diem)}) "
+        f"= {fmt_money(results.hml_interest)}",
+        note=(f"Each full month is Hard Money Loan ({fmt_money(results.hml_amount)}) × {fmt_pct(payload.HML_interest_rate)}/yr ÷ 12 = {fmt_money(hml_interest_monthly_payment)}, "
+              f"whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: "
+              f"{fmt_pct(payload.HML_interest_rate)}/yr ÷ 360 = {fmt_money(results.hml_per_diem)} a day."),
     )
     check(results.prepaid_interest_buy == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, results.hml_interest_days_prepaid_at_purchase_closing), "prepaid interest (buy)")
     check(results.hml_interest_accrued_into_refi_payoff == calc_hml_interest(results.hml_amount, payload.HML_interest_rate, results.hml_interest_days_accrued_into_refi_payoff), "accrued interest at payoff")
-    check(results.hml_interest_paid_monthly == results.hml_interest - results.prepaid_interest_buy - results.hml_interest_accrued_into_refi_payoff, "interest split")
+    check(results.hml_interest_paid_monthly == hml_interest_monthly_payment * hml_interest_monthly_payment_count, "interest split")
     breakdown.add(
         CLOSE, "Prepaid Interest (Buy)", results.prepaid_interest_buy,
         f"Per diem ({fmt_money(results.hml_per_diem)}) × {results.hml_interest_days_prepaid_at_purchase_closing} days from {results.buy_closing_date.isoformat()} through month end = {fmt_money(results.prepaid_interest_buy)}",
@@ -238,14 +246,13 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
               f"({fmt_money(results.hml_interest_paid_monthly)}), {results.hml_interest_days_accrued_into_refi_payoff} days inside the payoff ({fmt_money(results.hml_interest_accrued_into_refi_payoff)})."),
     )
     # The part of the HML interest paid out of pocket on the 1st of each month: each 1st pays the month
-    # before it, its real days. Filed under the Total Cash Invested sections so that sum links it.
+    # before it, a full month at rate / 12. Filed under the Total Cash Invested sections so that sum links it.
     check(results.hml_interest_days_paid_monthly == sum(days_in_month(last_day_of_previous_month(payment_date))
                                                         for payment_date in results.hml_interest_monthly_payment_dates), "HML days paid monthly")
-    check(abs(results.hml_per_diem * results.hml_interest_days_paid_monthly - results.hml_interest_paid_monthly) < Decimal("0.005"), "HML interest paid monthly")
     breakdown.add(
         [CASH_NEEDED, "cash_out"], "HML Interest paid monthly", results.hml_interest_paid_monthly,
-        f"Per diem ({fmt_money(results.hml_per_diem)}) × the days of each month, paid on the 1st after it: "
-        f"{_monthly_payment_dates_text(results.hml_interest_monthly_payment_dates)} ({results.hml_interest_days_paid_monthly} days) = {fmt_money(results.hml_interest_paid_monthly)}",
+        f"{fmt_money(hml_interest_monthly_payment)} a month (Hard Money Loan × {fmt_pct(payload.HML_interest_rate)}/yr ÷ 12), paid on the 1st after each month: "
+        f"{_monthly_payment_dates_text(results.hml_interest_monthly_payment_dates)} ({hml_interest_monthly_payment_count} × {fmt_money(hml_interest_monthly_payment)}) = {fmt_money(results.hml_interest_paid_monthly)}",
         note=(f"Of the HML Interest until refi ({fmt_money(results.hml_interest)}, {payload.days_until_refi} days): "
               f"− Prepaid Interest (Buy) {fmt_money(results.prepaid_interest_buy)} ({results.hml_interest_days_prepaid_at_purchase_closing} days, already in Cash to Close) "
               f"− Accrued Interest inside the HML payoff {fmt_money(results.hml_interest_accrued_into_refi_payoff)} ({results.hml_interest_days_accrued_into_refi_payoff} days, paid by the refi wire) "
