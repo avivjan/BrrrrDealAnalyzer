@@ -163,7 +163,7 @@ test('a milestone can be marked done on another date, from the deals sheet', asy
   await expect(contractSigned).toContainText('Aug 21, 2026');
 });
 
-test("the legend lists a deal's open rows by month, and a row opens its day", async ({ page, seed, request, settle }) => {
+test("the legend lists a deal's key dates and transactions by month, and a row opens its day", async ({ page, seed, request, settle }) => {
   await seedSettings(request);
   const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
   await importDeal(request, deal.id);
@@ -171,15 +171,64 @@ test("the legend lists a deal's open rows by month, and a row opens its day", as
   await page.goto('/liquidity');
   const legend = await openLegend(page, settle);
   await legend.getByTestId('theater.legend.deal.toggle').click();
-  await legend.getByTestId('theater.legend.deal.open-rows-section').click();
-  const firstMonth = legend.getByTestId('theater.legend.open-rows-month').first();
-  await expect(firstMonth).toHaveAttribute('data-month', '2026-08');
-  const firstRow = firstMonth.locator('[data-testid^="theater.legend.open-row."]').first();
+  await legend.getByTestId('theater.legend.deal.transactions-section').click();
+  // "Today" is Sep 4: September opens first; August holds the contract, the EMD and the closing.
+  const august = legend.locator('[data-testid="theater.legend.transactions-month"][data-month="2026-08"]');
+  await august.getByTestId('theater.legend.transactions-month.toggle').click();
+  await expect(august.locator('[data-testid="theater.legend.key-date"][data-key-date="contract_signed"]')).toContainText('Contract signed');
+  await expect(august.locator('[data-testid="theater.legend.key-date"][data-key-date="purchase_closed"]')).toContainText('overdue');
+  const firstRow = august.locator('[data-testid^="theater.legend.transaction."][data-done="false"]').first();
   await expect(firstRow).toContainText('Aug 20');
   await firstRow.click();
   const dayModal = page.getByTestId('theater.day-modal');
   await expect(dayModal).toBeVisible();
   await expect(dayModal).toContainText('August 20, 2026');
+});
+
+test('a row marked Done by mistake is struck through in the legend and in its day, and Undo reopens it', async ({ page, seed, request, settle }) => {
+  await seedSettings(request);
+  const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
+  await importDeal(request, deal.id);
+
+  await page.goto('/liquidity');
+  const legend = await openLegend(page, settle);
+  const dealEntry = legend.getByTestId('theater.legend.deal');
+  const overduePill = dealEntry.getByTestId('theater.legend.deal.overdue');
+  const overdueCountBefore = Number((await overduePill.innerText()).split(' ')[0]);
+  await dealEntry.getByTestId('theater.legend.deal.toggle').click();
+  const overdueRow = dealEntry.locator('[data-testid^="theater.legend.overdue-row."]').first();
+  const rowId = (await overdueRow.getAttribute('data-testid'))!.replace('theater.legend.overdue-row.', '');
+  await overdueRow.locator(`[data-testid="rowactions.${rowId}.done"]`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Marked done.');
+  // The toast and its Undo go away.
+  await settle(5000);
+  await expect(page.getByTestId('liquidity.toast')).toHaveCount(0);
+  await expect(overduePill).toContainText(`${overdueCountBefore - 1} overdue`);
+
+  await dealEntry.getByTestId('theater.legend.deal.transactions-section').click();
+  await dealEntry.locator('[data-testid="theater.legend.transactions-month"][data-month="2026-08"]').getByTestId('theater.legend.transactions-month.toggle').click();
+  const doneRow = dealEntry.getByTestId(`theater.legend.transaction.${rowId}`);
+  await expect(doneRow).toHaveAttribute('data-done', 'true');
+  await doneRow.getByTestId(`theater.legend.transaction.${rowId}.undo`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Reopened.');
+  await expect(overduePill).toContainText(`${overdueCountBefore} overdue`);
+  await expect(dealEntry.getByTestId(`theater.legend.overdue-row.${rowId}`)).toBeVisible();
+
+  // Done again, then undone from its day.
+  await dealEntry.locator(`[data-testid="rowactions.${rowId}.done"]`).click();
+  await settle(5000);
+  await expect(dealEntry.getByTestId(`theater.legend.transaction.${rowId}`)).toHaveAttribute('data-done', 'true');
+  const doneRowDate = (await doneRow.locator('span').first().innerText()).trim();
+  expect(doneRowDate).toBe('Aug 20');   // the EMD, the earliest overdue row, on the contract day
+  await dealEntry.locator('[data-testid="theater.legend.key-date"][data-key-date="contract_signed"]').click();
+  const dayModal = page.getByTestId('theater.day-modal');
+  await expect(dayModal).toBeVisible();
+  // The contract day is Aug 20, the EMD's day: the done row shows struck through there.
+  const doneInDay = dayModal.getByTestId(`theater.day-modal.done-row.${rowId}`);
+  await expect(doneInDay).toBeVisible();
+  await doneInDay.getByTestId(`theater.day-modal.done-row.${rowId}.undo`).click();
+  await expect(page.getByTestId('liquidity.toast')).toContainText('Reopened.');
+  await expect(doneInDay).toHaveCount(0);
 });
 
 test('hovering a day previews it; a click opens the day in full, with every action', async ({ page, request, settle }, testInfo) => {

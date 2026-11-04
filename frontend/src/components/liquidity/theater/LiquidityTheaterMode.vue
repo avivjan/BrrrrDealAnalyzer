@@ -25,6 +25,7 @@ import { useLiquidityStore } from '../../../stores/liquidityStore'
 import type { DealMilestone, DealMilestoneState, ImportedLiquidityDeal } from '../../../types/liquidity'
 import { todayISO } from '../../../utils/liquidityEngine'
 import { lowestBalanceInNextDays, nextOpenTransaction } from '../../../utils/liquidityUpcoming'
+import { doneTransactionsOnDate } from './legendRows'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import DealAttributionTag from '../DealAttributionTag.vue'
 import OverdueTransactionsStrip from '../OverdueTransactionsStrip.vue'
@@ -63,6 +64,8 @@ const emit = defineEmits<{
   (e: 'editRecurring', ruleId: string): void
   (e: 'deleteRecurring', ruleId: string): void
   (e: 'markDone', id: string): void
+  /** Undo a Done (from the legend's Transactions or the day modal). */
+  (e: 'markNotDone', id: string): void
   (e: 'moveToDate', id: string, newEffectiveDate: string): void
   (e: 'changeAmount', id: string, newAmountDollars: number): void
   (e: 'bulkMarkDone', ids: string[]): void
@@ -142,6 +145,7 @@ const milestonesOnTheModalDay = computed(() => {
   }
   return entries
 })
+const doneTransactionsOfTheModalDay = computed(() => dayModalDate.value ? doneTransactionsOnDate(store.transactions, dayModalDate.value) : [])
 function stepDayModal(direction: -1 | 1) {
   const next = store.series.days[dayModalIndex.value + direction]
   if (next) dayModalDate.value = next.date
@@ -519,6 +523,7 @@ const SHORTCUTS = [
                 @edit-recurring="(ruleId) => emit('editRecurring', ruleId)"
                 @delete-recurring="(ruleId) => emit('deleteRecurring', ruleId)"
                 @open-day="onOpenDay"
+                @mark-not-done="(id) => emit('markNotDone', id)"
               />
             </div>
           </Transition>
@@ -543,6 +548,8 @@ const SHORTCUTS = [
           :milestones-on-this-day="milestonesOnTheModalDay"
           :can-step-to-previous-day="dayModalIndex > 0"
           :can-step-to-next-day="dayModalIndex < store.series.days.length - 1"
+          :done-transactions-of-this-day="doneTransactionsOfTheModalDay"
+          @mark-not-done="(id) => emit('markNotDone', id)"
           @close="dayModalDate = null"
           @step-day="stepDayModal"
           @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"

@@ -132,4 +132,21 @@ describe("LiquidityTheaterMode", () => {
     await chip.trigger("click");
     expect(wrapper.get('[data-testid="theater.overdue-popover"]').text()).toContain("Utilities");
   });
+
+  it("passes an Undo of Done from the day modal on to the view", async () => {
+    const store = useLiquidityStore();
+    store.settings = { opening_balance_dollars: 42106, opening_balance_date: "2026-11-03", reserve_dollars: 5000 };
+    store.transactions = [
+      { id: "plumber", effective_date: "2026-11-05", description: "Plumber", amount_dollars: -100 },
+      { id: "paid", effective_date: "2026-11-05", description: "Survey", amount_dollars: -385, done_at: "2026-11-05T10:00:00Z" },
+    ];
+    const wrapper = mountTheater();
+    await wrapper.vm.$nextTick();
+    // Open the day through the legend-less path: the chart's openDay.
+    wrapper.findComponent({ name: "TimelineChart" }).vm.$emit("openDay", "2026-11-05");
+    await wrapper.vm.$nextTick();
+    const doneRow = wrapper.get('[data-testid="theater.day-modal.done-row.paid"]');
+    await doneRow.get('[data-testid="theater.day-modal.done-row.paid.undo"]').trigger("click");
+    expect(wrapper.emitted("markNotDone")).toEqual([["paid"]]);
+  });
 });

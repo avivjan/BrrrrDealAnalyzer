@@ -69,18 +69,18 @@ describe("DealLegendPanel", () => {
     expect(wrapper.emitted("highlightDeal")).toEqual([["my_deals:d1"], [null]]);
   });
 
-  it("lists a deal's open rows by month, collapsed until asked, and a row opens its day", async () => {
+  it("lists a deal's transactions by month, collapsed until asked, and an open row opens its day", async () => {
     const wrapper = mountLegend();
     await wrapper.findAll('[data-testid="theater.legend.deal.toggle"]')[0]!.trigger("click");
-    const section = wrapper.get('[data-testid="theater.legend.deal.open-rows-section"]');
-    expect(section.text()).toContain("Open rows (2)");
-    expect(wrapper.find('[data-testid="theater.legend.deal.open-rows"]').exists()).toBe(false);
+    const section = wrapper.get('[data-testid="theater.legend.deal.transactions-section"]');
+    expect(section.text()).toContain("Transactions (2)");
+    expect(wrapper.find('[data-testid="theater.legend.deal.transactions"]').exists()).toBe(false);
     await section.trigger("click");
-    const months = wrapper.findAll('[data-testid="theater.legend.open-rows-month"]');
+    const months = wrapper.findAll('[data-testid="theater.legend.transactions-month"]');
     expect(months.map((month) => month.attributes("data-month"))).toEqual(["2026-09"]);
     expect(months[0]!.text()).toContain("Sep 2026");
     expect(months[0]!.text()).toContain("2 rows");
-    await wrapper.get('[data-testid="theater.legend.open-row.a"]').trigger("click");
+    await wrapper.get('[data-testid="theater.legend.transaction.a"]').trigger("click");
     expect(wrapper.emitted("openDay")).toEqual([["2026-09-01"]]);
   });
 
@@ -89,9 +89,75 @@ describe("DealLegendPanel", () => {
     await wrapper.findAll('[data-testid="theater.legend.deal.toggle"]')[0]!.trigger("click");
     await wrapper.get('[data-testid="theater.legend.deal.overdue-section"]').trigger("click");
     expect(wrapper.find('[data-testid="theater.legend.overdue-row.a"]').exists()).toBe(false);
-    await wrapper.get('[data-testid="theater.legend.deal.open-rows-section"]').trigger("click");
-    await wrapper.get('[data-testid="theater.legend.open-rows-month.toggle"]').trigger("click");
-    expect(wrapper.find('[data-testid="theater.legend.open-row.a"]').exists()).toBe(false);
+    await wrapper.get('[data-testid="theater.legend.deal.transactions-section"]').trigger("click");
+    await wrapper.get('[data-testid="theater.legend.transactions-month.toggle"]').trigger("click");
+    expect(wrapper.find('[data-testid="theater.legend.transaction.a"]').exists()).toBe(false);
+  });
+
+  it("shows a done row greyed out and struck through, and Undo reopens it", async () => {
+    const doneRow = { ...row("paid", "d1"), effective_date: "2026-09-02", done_at: "2026-09-03T10:00:00Z" };
+    const wrapper = mount(DealLegendPanel, {
+      props: {
+        importedDeals: [deal("d1", "4431 Victor St")], overdueMoneyOut: [row("a", "d1")], expectedMoneyInNotCounted: [],
+        transactions: [row("a", "d1"), doneRow], recurringRules: [],
+      },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await wrapper.get('[data-testid="theater.legend.deal.toggle"]').trigger("click");
+    const section = wrapper.get('[data-testid="theater.legend.deal.transactions-section"]');
+    expect(section.text()).toContain("Transactions (2) · 1 done");
+    await section.trigger("click");
+    const done = wrapper.get('[data-testid="theater.legend.transaction.paid"]');
+    expect(done.attributes("data-done")).toBe("true");
+    expect(done.classes()).toContain("opacity-60");
+    expect(done.find(".line-through").text()).toBe("Sep 2");
+    await done.get('[data-testid="theater.legend.transaction.paid.undo"]').trigger("click");
+    expect(wrapper.emitted("markNotDone")).toEqual([["paid"]]);
+  });
+
+  it("puts the key dates among the transactions, with each milestone's state", async () => {
+    const wrapper = mount(DealLegendPanel, {
+      props: {
+        importedDeals: [deal("d1", "4431 Victor St", {
+          milestones: [{ milestone: "purchase_closed", planned_date: "2026-09-01", approved_at: "2026-09-01T12:00:00Z", is_overdue: false }],
+          key_dates: [
+            { key: "purchase_closed", date: "2026-09-01", description: "Purchase closing" },
+            { key: "property_tax_bill_paid_on_november_30", date: "2026-11-30", description: "Property tax bill paid from the tax bucket (Nov 30)" },
+          ],
+        })],
+        overdueMoneyOut: [], expectedMoneyInNotCounted: [], transactions: [row("a", "d1")], recurringRules: [],
+      },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await wrapper.get('[data-testid="theater.legend.deal.toggle"]').trigger("click");
+    await wrapper.get('[data-testid="theater.legend.deal.transactions-section"]').trigger("click");
+    const septemberItems = wrapper.get('[data-testid="theater.legend.transactions-month"]').findAll("li");
+    expect(septemberItems[0]!.text()).toContain("Purchase closing");
+    expect(septemberItems[0]!.text()).toContain("done");
+    expect(septemberItems[1]!.text()).toContain("Row a");
+    const novemberToggle = wrapper.findAll('[data-testid="theater.legend.transactions-month.toggle"]')[1]!;
+    await novemberToggle.trigger("click");
+    const taxBill = wrapper.get('[data-testid="theater.legend.key-date"][data-key-date="property_tax_bill_paid_on_november_30"]');
+    await taxBill.trigger("click");
+    expect(wrapper.emitted("openDay")).toEqual([["2026-11-30"]]);
+  });
+
+  it("keeps a deal whose rows are all done under Finished deals, its transactions open at once", async () => {
+    const wrapper = mount(DealLegendPanel, {
+      props: {
+        importedDeals: [deal("d9", "9 Done Rd", { open_row_count: 0, done_row_count: 1, overdue_open_row_count: 0 })],
+        overdueMoneyOut: [], expectedMoneyInNotCounted: [],
+        transactions: [{ ...row("x", "d9"), done_at: "2026-09-02T00:00:00Z" }], recurringRules: [],
+      },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    expect(wrapper.find('[data-testid="theater.legend.deal"]').exists()).toBe(false);
+    await wrapper.get('[data-testid="theater.legend.finished-deals"]').trigger("click");
+    const finished = wrapper.get('[data-testid="theater.legend.deal"]');
+    expect(finished.attributes("data-finished")).toBe("true");
+    expect(finished.find('[data-testid="theater.legend.deal.remove"]').exists()).toBe(false);
+    await finished.get('[data-testid="theater.legend.deal.toggle"]').trigger("click");
+    expect(wrapper.find('[data-testid="theater.legend.transaction.x.undo"]').exists()).toBe(true);
   });
 
   it("says how many rows a late refi added", async () => {

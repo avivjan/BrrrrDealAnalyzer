@@ -272,6 +272,16 @@ export interface ImportedLiquidityDeal {
   late_refi_row_count: number
   refi_is_late: boolean
   milestones: DealMilestoneState[]
+  /** The deal's key dates as its Cash Needed table shows them, in date order (markers, not cash). */
+  key_dates?: DealKeyDate[]
+}
+
+export type DealKeyDateKey = DealMilestone | 'property_tax_bill_paid_on_november_30'
+
+export interface DealKeyDate {
+  key: DealKeyDateKey
+  date: string
+  description: string
 }
 
 export interface DealMilestoneChangeReq {

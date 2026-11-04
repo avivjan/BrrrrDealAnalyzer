@@ -411,6 +411,10 @@ async function onMarkTransactionDone(id: string) {
   await runQuickAction(() => store.markTransactionDone(id), 'Marked done.', () => store.markTransactionNotDone(id))
 }
 
+async function onMarkTransactionNotDone(id: string) {
+  await runQuickAction(() => store.markTransactionNotDone(id), 'Reopened.', () => store.markTransactionDone(id))
+}
+
 async function onMoveTransactionToDate(id: string, newEffectiveDate: string) {
   const previousDate = findOneOffTransaction(id)?.effective_date
   await runQuickAction(
@@ -519,6 +523,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null, actio
       @edit-recurring="openEditRecurring"
       @delete-recurring="onDeleteRecurringRule"
       @mark-done="onMarkTransactionDone"
+      @mark-not-done="onMarkTransactionNotDone"
       @move-to-date="onMoveTransactionToDate"
       @change-amount="onChangeTransactionAmount"
       @bulk-mark-done="onBulkMarkDone"

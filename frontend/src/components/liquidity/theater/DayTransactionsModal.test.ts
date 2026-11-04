@@ -70,6 +70,27 @@ describe("DayTransactionsModal", () => {
     approved.unmount();
   });
 
+  it("lists the day's done rows greyed out and struck through, and Undo reopens one", async () => {
+    const doneRow = { id: "cushion", effective_date: "2026-11-20", description: "Rehab cushion", amount_dollars: -5000,
+      source_deal_board: "my_deals" as const, source_deal_id: "d1", done_at: "2026-11-21T09:00:00Z" };
+    const wrapper = mountModal({ doneTransactionsOfThisDay: [doneRow] });
+    const section = wrapper.get('[data-testid="theater.day-modal.done-rows"]');
+    expect(section.text()).toContain("Done on this day (1)");
+    const item = section.get('[data-testid="theater.day-modal.done-row.cushion"]');
+    expect(item.classes()).toContain("opacity-60");
+    expect(item.findAll(".line-through").map((element) => element.text())).toEqual(["Rehab cushion", "-$5,000"]);
+    expect(item.text()).toContain("done Nov 21");
+    await item.get('[data-testid="theater.day-modal.done-row.cushion.undo"]').trigger("click");
+    expect(wrapper.emitted("markNotDone")).toEqual([["cushion"]]);
+    wrapper.unmount();
+  });
+
+  it("shows no done list on a day with none", () => {
+    const wrapper = mountModal();
+    expect(wrapper.find('[data-testid="theater.day-modal.done-rows"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
   it("carries every row's actions through to the view", async () => {
     const wrapper = mountModal();
     await wrapper.get('[data-testid="rowactions.survey.done"]').trigger("click");

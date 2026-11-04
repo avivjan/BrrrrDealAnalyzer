@@ -205,24 +205,35 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     return updated
   }
 
+  /**
+   * After a Done or its undo: the rows again, and the imported deals too when a deal's row changed (their open /
+   * done counts decide whether the legend lists the deal in the timeline or under Finished deals).
+   */
+  async function reloadAfterDoneChange(changedTransactionIds: string[]): Promise<void> {
+    const aDealRowChanged = transactions.value.some(transaction => changedTransactionIds.includes(transaction.id) && !!transaction.source_deal_id)
+    if (aDealRowChanged) {
+      await reloadTransactionsAndImportedDeals()
+      return
+    }
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
+  }
+
   /** Done: the money moved (or the hold was released), so the row leaves the timeline. */
   async function markTransactionDone(id: string): Promise<void> {
     await liquidityApi.markTransactionDone(id)
-    transactions.value = await liquidityApi.getTransactions()
-    _version.value++
+    await reloadAfterDoneChange([id])
   }
 
   /** Undo of Done: the row is open again. */
   async function markTransactionNotDone(id: string): Promise<void> {
     await liquidityApi.markTransactionNotDone(id)
-    transactions.value = await liquidityApi.getTransactions()
-    _version.value++
+    await reloadAfterDoneChange([id])
   }
 
   async function applyBulkTransactionAction(data: LiquidityTransactionBulkActionReq): Promise<void> {
     await liquidityApi.applyBulkTransactionAction(data)
-    transactions.value = await liquidityApi.getTransactions()
-    _version.value++
+    await reloadAfterDoneChange(data.transaction_ids)
   }
 
   async function reloadTransactionsAndImportedDeals(): Promise<void> {
