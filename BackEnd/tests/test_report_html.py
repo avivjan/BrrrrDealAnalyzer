@@ -226,7 +226,7 @@ class TestEveryCardIsThePopup:
         for label in ("HML Interest paid monthly", "Deed Transfer Tax (Buy)", "Title & Escrow (Buy)"):
             assert steps_by_label[label]["formula"] in texts, label
             assert steps_by_label[label]["note"] in texts, label
-        assert "paid on the 1st after it" in hml_monthly["formula"]
+        assert "paid on the 1st after each month" in hml_monthly["formula"]
 
 
 # -- self-contained and locked down ---------------------------------------------------------------
