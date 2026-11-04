@@ -39,6 +39,8 @@ def update_recurring(db: Session, rule_id: str, data: LiquidityRecurringTransact
         rule.frequency = data.frequency
     if data.interval is not None:
         rule.interval = data.interval
+    if data.occurrences_can_be_overdue_from is not None:
+        rule.occurrences_can_be_overdue_from = data.occurrences_can_be_overdue_from
 
     if rule.end_date is not None and rule.end_date < rule.start_date:
         raise ValueError("end_date must be on or after start_date.")

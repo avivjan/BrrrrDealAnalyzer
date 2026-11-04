@@ -205,24 +205,62 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     return updated
   }
 
+  /**
+   * After a Done or its undo: the rows again, and the imported deals too when a deal's row changed (their open /
+   * done counts decide whether the legend lists the deal in the timeline or under Finished deals).
+   */
+  async function reloadAfterDoneChange(changedTransactionIds: string[]): Promise<void> {
+    const aDealRowChanged = transactions.value.some(transaction => changedTransactionIds.includes(transaction.id) && !!transaction.source_deal_id)
+    if (aDealRowChanged) {
+      await reloadTransactionsAndImportedDeals()
+      return
+    }
+    transactions.value = await liquidityApi.getTransactions()
+    _version.value++
+  }
+
   /** Done: the money moved (or the hold was released), so the row leaves the timeline. */
   async function markTransactionDone(id: string): Promise<void> {
     await liquidityApi.markTransactionDone(id)
-    transactions.value = await liquidityApi.getTransactions()
-    _version.value++
+    await reloadAfterDoneChange([id])
   }
 
   /** Undo of Done: the row is open again. */
   async function markTransactionNotDone(id: string): Promise<void> {
     await liquidityApi.markTransactionNotDone(id)
-    transactions.value = await liquidityApi.getTransactions()
-    _version.value++
+    await reloadAfterDoneChange([id])
   }
 
   async function applyBulkTransactionAction(data: LiquidityTransactionBulkActionReq): Promise<void> {
     await liquidityApi.applyBulkTransactionAction(data)
-    transactions.value = await liquidityApi.getTransactions()
+    if (data.recurring_occurrences?.length) recurringRules.value = await liquidityApi.getRecurring()
+    await reloadAfterDoneChange(data.transaction_ids)
+  }
+
+  /** A recurring occurrence from its row id (`recurring:<rule>:<index>`): its rule and the date the rule gives it. */
+  function recurringOccurrenceOf(transactionId: string): { ruleId: string; scheduledDate: string; effectiveDate: string } | null {
+    if (!transactionId.startsWith('recurring:')) return null
+    const occurrence = transactionsInWindow.value.find(transaction => transaction.id === transactionId)
+    if (!occurrence?.recurring_rule_id || !occurrence.recurring_scheduled_date) return null
+    return { ruleId: occurrence.recurring_rule_id, scheduledDate: occurrence.recurring_scheduled_date, effectiveDate: occurrence.effective_date }
+  }
+
+  /** The rule answers with its states: replace it in place, so the timeline re-expands it. */
+  function replaceRecurringRule(rule: LiquidityRecurringTransaction): void {
+    recurringRules.value = recurringRules.value.map(existing => (existing.id === rule.id ? rule : existing))
     _version.value++
+  }
+
+  async function markRecurringOccurrenceDone(ruleId: string, scheduledDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.markRecurringOccurrenceDone(ruleId, scheduledDate))
+  }
+
+  async function markRecurringOccurrenceNotDone(ruleId: string, scheduledDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.markRecurringOccurrenceNotDone(ruleId, scheduledDate))
+  }
+
+  async function moveRecurringOccurrence(ruleId: string, scheduledDate: string, newEffectiveDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.moveRecurringOccurrence(ruleId, scheduledDate, newEffectiveDate))
   }
 
   async function reloadTransactionsAndImportedDeals(): Promise<void> {
@@ -403,6 +441,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     markTransactionDone,
     markTransactionNotDone,
     applyBulkTransactionAction,
+    transactionsInWindow,
+    recurringOccurrenceOf,
+    markRecurringOccurrenceDone,
+    markRecurringOccurrenceNotDone,
+    moveRecurringOccurrence,
     addRecurring,
     updateRecurring,
     deleteRecurring,

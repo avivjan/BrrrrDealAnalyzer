@@ -63,7 +63,8 @@ function daysBetween(from: string, to: string): number {
  * - an open money-out row dated before today is counted on today, the safe side: today's projected
  *   balance is the bank balance minus what is still owed;
  * - an open money-in row dated before today is shown but not counted, until it is re-dated or marked done;
- * - recurring occurrences (`recurring_rule_id`) keep their old behaviour: they cannot be marked done.
+ * - recurring occurrences follow the same rules (tasks/todo/DealImpactSimulator.md, E): one marked done is left
+ *   out, a missed one is overdue; one before its rule's `occurrences_can_be_overdue_from` is history (left out).
  */
 export function projectTransactionsOntoToday(
   transactions: LiquidityTransaction[],
@@ -73,10 +74,7 @@ export function projectTransactionsOntoToday(
   const overdueMoneyOut: LiquidityTransaction[] = []
   const expectedMoneyInNotCounted: LiquidityTransaction[] = []
   for (const txn of transactions) {
-    if (txn.recurring_rule_id) {
-      countedTransactions.push(txn)
-      continue
-    }
+    if (txn.recurring_is_history) continue
     if (txn.done_at) continue
     if (txn.effective_date >= todayIsoDate) {
       countedTransactions.push(txn)
@@ -380,6 +378,11 @@ export function expandRecurringRule(
 ): LiquidityTransaction[] {
   if (rule.start_date > rangeEnd) return []
 
+  // Done / moved occurrences, by the date the rule gives them. An occurrence from `overdueFrom` on that falls
+  // before the range is still expanded (it may be overdue, or done and listed), and so is a moved one whose new
+  // date is in the range.
+  const stateByScheduledDate = new Map((rule.occurrence_states ?? []).map(state => [state.scheduled_date, state]))
+  const overdueFrom = rule.occurrences_can_be_overdue_from ?? null
   const out: LiquidityTransaction[] = []
   const maxOccurrences = Math.min(
     rule.occurrences ?? safetyCap,
@@ -388,19 +391,33 @@ export function expandRecurringRule(
 
   for (let i = 0; i < maxOccurrences; i++) {
     const date = dateForOccurrence(rule, i)
-    if (date > rangeEnd) break
+    if (date > rangeEnd && !hasMovedOccurrenceAfter(stateByScheduledDate, date)) break
     if (rule.end_date && date > rule.end_date) break
-    if (date < rangeStart) continue
+    const state = stateByScheduledDate.get(date)
+    const effectiveDate = state?.moved_to_date ?? date
+    const isHistory = overdueFrom !== null && date < overdueFrom
+    const isInRange = effectiveDate >= rangeStart && effectiveDate <= rangeEnd
+    const isBeforeTheRangeButMayBeOverdue = !isHistory && overdueFrom !== null && effectiveDate < rangeStart
+    if (!isInRange && !isBeforeTheRangeButMayBeOverdue) continue
     out.push({
       id: `recurring:${rule.id}:${i}`,
-      effective_date: date,
+      effective_date: effectiveDate,
       description: rule.description,
       amount_dollars: rule.amount_dollars,
       recurring_rule_id: rule.id,
       recurring_index: i,
+      recurring_scheduled_date: date,
+      done_at: state?.done_at ?? null,
+      ...(isHistory ? { recurring_is_history: true } : {}),
     })
   }
   return out
+}
+
+/** A moved occurrence scheduled after `date` can still land inside the range: keep expanding until past them. */
+function hasMovedOccurrenceAfter(stateByScheduledDate: Map<string, { moved_to_date: string | null }>, date: string): boolean {
+  for (const [scheduledDate, state] of stateByScheduledDate) if (scheduledDate > date && state.moved_to_date) return true
+  return false
 }
 
 /** Expand every recurring rule across the current display range. */

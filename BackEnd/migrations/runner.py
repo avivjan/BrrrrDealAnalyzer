@@ -121,10 +121,12 @@ def _run_migrations_locked(engine):
                         f"ALTER TABLE liquidity_transactions DROP COLUMN {col}"
                     ))
 
-    # `liquidity_recurring_transactions` is created by `Base.metadata.create_all`
-    # on first boot; nothing else to migrate yet. If we later evolve the schema
-    # (e.g. add `notes` or `category` columns) the per-column backfill goes
-    # here, mirroring the pattern used for `liquidity_transactions` above.
+    # `liquidity_recurring_transactions` is created by `Base.metadata.create_all` on first boot; columns added
+    # later are backfilled here. An existing rule's occurrences before today are history (already in the bank
+    # balance): they can be overdue from the migration date on, so the series do not all turn overdue at once.
+    if "liquidity_recurring_transactions" in table_names:
+        add_column_if_missing(engine, inspector, "liquidity_recurring_transactions",
+                              "occurrences_can_be_overdue_from", "DATE", "CURRENT_DATE")
 
     if "liquidity_settings" in table_names:
         columns = [col["name"] for col in inspector.get_columns("liquidity_settings")]

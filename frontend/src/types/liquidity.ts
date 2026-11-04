@@ -16,6 +16,10 @@ export interface LiquidityTransaction {
   recurring_rule_id?: string
   /** 0-based occurrence index within the rule. Only set when recurring_rule_id is set. */
   recurring_index?: number
+  /** A recurring occurrence's identity: the date the rule gives it (its `effective_date` differs once moved). */
+  recurring_scheduled_date?: string
+  /** A recurring occurrence before the rule's `occurrences_can_be_overdue_from`: history, never counted or overdue. */
+  recurring_is_history?: boolean
   /** When the row was marked done (the money moved, or the hold was released); null = still open. */
   done_at?: string | null
   /** The date the row was first created or imported with. */
@@ -54,6 +58,8 @@ export type LiquidityTransactionBulkAction = 'mark_done' | 'mark_not_done' | 'mo
 
 export interface LiquidityTransactionBulkActionReq {
   transaction_ids: string[]
+  /** Recurring occurrences the same action applies to. */
+  recurring_occurrences?: LiquidityRecurringOccurrenceRef[]
   action: LiquidityTransactionBulkAction
   new_effective_date?: string
   postpone_by_days?: number
@@ -96,8 +102,23 @@ export interface LiquidityRecurringTransaction {
   occurrences: number | null
   frequency: LiquidityRecurringFrequency
   interval: number
+  /** An occurrence before this date is history (already in the bank balance), never overdue. */
+  occurrences_can_be_overdue_from?: string | null
+  /** The occurrences marked done or moved; every other one is open on its scheduled date. */
+  occurrence_states?: LiquidityRecurringOccurrenceState[]
   created_at?: string
   updated_at?: string
+}
+
+export interface LiquidityRecurringOccurrenceState {
+  scheduled_date: string
+  done_at: string | null
+  moved_to_date: string | null
+}
+
+export interface LiquidityRecurringOccurrenceRef {
+  recurring_rule_id: string
+  scheduled_date: string
 }
 
 export interface LiquidityRecurringTransactionCreate {
@@ -251,6 +272,8 @@ export interface DealCashRowChanges {
   changes: DealCashRowChange[]
   change_counts: DealCashRowChangeCounts
   milestone_date_changes: DealMilestoneDateChange[]
+  /** An import preview / import: the deal's key dates as its Cash Needed table shows them. */
+  key_dates?: DealKeyDate[]
 }
 
 export interface DealMilestoneState {
@@ -272,6 +295,16 @@ export interface ImportedLiquidityDeal {
   late_refi_row_count: number
   refi_is_late: boolean
   milestones: DealMilestoneState[]
+  /** The deal's key dates as its Cash Needed table shows them, in date order (markers, not cash). */
+  key_dates?: DealKeyDate[]
+}
+
+export type DealKeyDateKey = DealMilestone | 'property_tax_bill_paid_on_november_30'
+
+export interface DealKeyDate {
+  key: DealKeyDateKey
+  date: string
+  description: string
 }
 
 export interface DealMilestoneChangeReq {

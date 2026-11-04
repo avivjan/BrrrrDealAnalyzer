@@ -91,6 +91,8 @@ class DealCashRowChangesRes(BaseModel):
     change_counts: DealCashRowChangeCountsRes
     milestone_date_changes: list[DealMilestoneDateChangeRes] = Field(default_factory=list, description=(
         "A milestone change only: every milestone whose date moves (moving the purchase closing moves the later ones)."))
+    key_dates: list["DealKeyDateRes"] = Field(default_factory=list, description=(
+        "An import preview / import only: the deal's key dates as its Cash Needed table shows them, in date order."))
 
 
 class DealMilestoneRes(BaseModel):
@@ -98,6 +100,13 @@ class DealMilestoneRes(BaseModel):
     planned_date: date
     approved_at: Optional[datetime] = Field(None, description="When it was approved; null = still planned.")
     is_overdue: bool = Field(..., description="The planned date passed and it is not approved.")
+
+
+class DealKeyDateRes(BaseModel):
+    key: str = Field(..., description=(
+        "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed."))
+    date: date
+    description: str
 
 
 class ImportedLiquidityDealRes(BaseModel):
@@ -113,6 +122,9 @@ class ImportedLiquidityDealRes(BaseModel):
     late_refi_row_count: int
     refi_is_late: bool
     milestones: list[DealMilestoneRes]
+    key_dates: list[DealKeyDateRes] = Field(default_factory=list, description=(
+        "The deal's key dates as its Cash Needed table shows them, in date order (markers, not cash): the five "
+        "milestones and the Nov 30 tax bill paid from the tax bucket while it falls inside the hold."))
 
 
 class LateRefiRefreshDealRes(BaseModel):
@@ -130,3 +142,6 @@ class LateRefiRefreshRes(BaseModel):
 class RemoveOpenDealRowsRes(BaseModel):
     removed_row_count: int
     earnest_money_refund_transaction_id: Optional[str] = None
+
+
+DealCashRowChangesRes.model_rebuild()

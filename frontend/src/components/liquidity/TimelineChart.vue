@@ -383,10 +383,34 @@ function indexAt(clientX: number): number | null {
   return indexForOffsetX(clientX - rect.left, scrollX.value, count.value)
 }
 
+/**
+ * Today stays centred until the user scrolls: the days and the width can still change after the chart mounts (the
+ * data loading, earlier days back to the opening balance, the legend opening), and each change re-centres it.
+ */
+let keepsTodayCentred = true
+
 function centerOnToday() {
+  keepsTodayCentred = true
   const todayIdx = props.days.findIndex((d) => d.date === today)
   if (todayIdx < 0) return
   scrollX.value = scrollToCentre(todayIdx, width.value, count.value)
+}
+
+/** A scroll the user made (drag, wheel, arrow keys, "Lowest"): today no longer pulls the view back. */
+function scrollByTheUser(newScrollX: number) {
+  if (newScrollX !== scrollX.value) keepsTodayCentred = false
+  scrollX.value = newScrollX
+}
+
+/** Centre a day and select it, as the arrow keys do, so its tooltip shows (the theater's "Lowest" button). */
+function centerOnDate(isoDate: string) {
+  const dayIdx = props.days.findIndex((d) => d.date === isoDate)
+  if (dayIdx < 0) return
+  keepsTodayCentred = false
+  scrollX.value = scrollToCentre(dayIdx, width.value, count.value)
+  selectedIndex.value = dayIdx
+  selectedByKeyboard.value = true
+  emit('selectDay', isoDate)
 }
 
 function onPointerDown(e: PointerEvent) {
@@ -405,7 +429,7 @@ function onPointerMove(e: PointerEvent) {
     return
   }
   dragTravel = Math.max(dragTravel, Math.abs(e.clientX - dragStartX))
-  scrollX.value = clampScroll(dragStartScroll - (e.clientX - dragStartX), count.value, width.value)
+  scrollByTheUser(clampScroll(dragStartScroll - (e.clientX - dragStartX), count.value, width.value))
   hoveredIndex.value = idx
 }
 
@@ -448,7 +472,7 @@ function onPointerLeave() {
 }
 
 function onWheel(e: WheelEvent) {
-  scrollX.value = clampScroll(scrollX.value + (e.deltaX || e.deltaY), count.value, width.value)
+  scrollByTheUser(clampScroll(scrollX.value + (e.deltaX || e.deltaY), count.value, width.value))
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -459,7 +483,7 @@ function onKeyDown(e: KeyboardEvent) {
     if (next === null) return
     selectedIndex.value = next
     selectedByKeyboard.value = true
-    scrollX.value = scrollToReveal(next, scrollX.value, width.value, count.value)
+    scrollByTheUser(scrollToReveal(next, scrollX.value, width.value, count.value))
     emit('selectDay', props.days[next]!.date)
   } else if (e.key === 'Enter' && current !== null && props.days[current]) {
     emit('selectDay', props.days[current]!.date)
@@ -478,7 +502,8 @@ function measure() {
   if (!el) return
   width.value = el.clientWidth
   height.value = el.clientHeight
-  scrollX.value = clampScroll(scrollX.value, count.value, width.value)
+  if (keepsTodayCentred) centerOnToday()
+  else scrollX.value = clampScroll(scrollX.value, count.value, width.value)
 }
 
 onMounted(() => {
@@ -500,13 +525,14 @@ onUnmounted(() => {
 watch(
   () => props.days,
   () => {
-    scrollX.value = clampScroll(scrollX.value, count.value, width.value)
+    if (keepsTodayCentred) centerOnToday()
+    else scrollX.value = clampScroll(scrollX.value, count.value, width.value)
     if (selectedIndex.value !== null && selectedIndex.value >= count.value) selectedIndex.value = null
     if (hoveredIndex.value !== null && hoveredIndex.value >= count.value) hoveredIndex.value = null
   },
 )
 
-defineExpose({ centerOnToday })
+defineExpose({ centerOnToday, centerOnDate })
 </script>
 
 <template>

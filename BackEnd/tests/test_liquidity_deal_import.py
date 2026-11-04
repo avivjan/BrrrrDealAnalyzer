@@ -322,3 +322,29 @@ class TestTimezoneSetting:
 def test_today_defaults_to_the_settings_time_zone(client, brrrr_payload, today):
     deal = _create_my_deals_deal(client, brrrr_payload)
     assert client.post(f"/liquidity/deals/my_deals/{deal['id']}/import-preview", json={}).status_code == 200
+
+
+class TestImportedDealKeyDates:
+    """The legend's Transactions show the deal's key dates as its Cash Needed table does
+    (tasks/todo/LiquidityDealTransactionsAndHmlMonthlyInterest.md, B)."""
+
+    def test_the_key_dates_are_the_schedule_markers_including_the_november_30_bill_inside_the_hold(self, client, brrrr_payload):
+        deal = _create_my_deals_deal(client, {**brrrr_payload, "buyClosingDate": "2026-08-20", "contractDate": "2026-08-01",
+                                              "daysUntilRefi": 200})
+        _import(client, deal["id"], today="2026-07-01")
+        listed = next(listed for listed in client.get("/liquidity/deals", params={"today": "2026-07-01"}).json()
+                      if listed["deal_id"] == deal["id"])
+        schedule_markers = [(marker["milestone_key"], marker["date"])
+                            for marker in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]]
+        assert [(key_date["key"], key_date["date"]) for key_date in listed["key_dates"]] == schedule_markers
+        assert ("property_tax_bill_paid_on_november_30", "2026-11-30") in schedule_markers
+        assert [key_date["date"] for key_date in listed["key_dates"]] == sorted(key_date["date"] for key_date in listed["key_dates"])
+
+
+def test_the_import_preview_carries_the_deals_key_dates(client, brrrr_payload):
+    deal = _create_my_deals_deal(client, {**brrrr_payload, "buyClosingDate": "2026-08-20", "contractDate": "2026-08-01",
+                                          "daysUntilRefi": 200})
+    preview = _preview(client, deal["id"], today="2026-07-01").json()
+    schedule_markers = [(marker["milestone_key"], marker["date"]) for marker in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]]
+    assert [(key_date["key"], key_date["date"]) for key_date in preview["key_dates"]] == schedule_markers
+    assert ("property_tax_bill_paid_on_november_30", "2026-11-30") in schedule_markers

@@ -2,6 +2,7 @@ from DAL.data_models import LiquidityTransaction, LiquidityRecurringTransaction,
 from ReqRes.common.liquidity_schemas import (
     LiquidityTransactionRes,
     LiquidityRecurringTransactionRes,
+    LiquidityRecurringOccurrenceStateRes,
     LiquiditySettingsRes,
 )
 
@@ -38,6 +39,15 @@ def recurring_to_res(rule: LiquidityRecurringTransaction) -> LiquidityRecurringT
         occurrences=rule.occurrences,
         frequency=rule.frequency,  # type: ignore[arg-type]
         interval=int(rule.interval or 1),
+        occurrences_can_be_overdue_from=rule.occurrences_can_be_overdue_from,
+        occurrence_states=[
+            LiquidityRecurringOccurrenceStateRes(
+                scheduled_date=state.scheduled_date,
+                done_at=state.done_at.isoformat() if state.done_at else None,
+                moved_to_date=state.moved_to_date,
+            )
+            for state in rule.occurrence_states
+        ],
         created_at=rule.created_at.isoformat() if rule.created_at else None,
         updated_at=rule.updated_at.isoformat() if rule.updated_at else None,
     )

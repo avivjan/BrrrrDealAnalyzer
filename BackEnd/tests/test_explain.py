@@ -467,7 +467,7 @@ def _step_by_label_anywhere(breakdowns: dict, step_label: str) -> dict:
 
 
 class TestHmlInterestPaidMonthlyIsExplained:
-    """The Total Cash Invested operand opens onto its own step: the per diem × the real days of each month paid on a 1st."""
+    """The Total Cash Invested operand opens onto its own step: a full month at the loan × rate ÷ 12, × the 1sts it is paid on."""
 
     @pytest.mark.parametrize("scenario", ["base", "same_month_refi"])
     def test_monthly_interest_times_months(self, brrrr_payload, scenario):
@@ -477,17 +477,18 @@ class TestHmlInterestPaidMonthlyIsExplained:
         assert invested["HML Interest paid monthly"] == "HML Interest paid monthly"
         step = _step_by_label(breakdowns, "total_cash_needed_for_deal", "HML Interest paid monthly")
 
-        assert abs(results_w_intermediates.hml_per_diem * results_w_intermediates.hml_interest_days_paid_monthly
-                   - results_w_intermediates.hml_interest_paid_monthly) < Decimal("0.005")
+        payment_count = len(results_w_intermediates.hml_interest_monthly_payment_dates)
+        monthly_payment = results_w_intermediates.hml_amount * req.HML_interest_rate / Decimal("12") / Decimal("100")
+        assert results_w_intermediates.hml_interest_paid_monthly == monthly_payment * payment_count
         assert step["value"] == float(results_w_intermediates.hml_interest_paid_monthly)
-        assert step["formula"].startswith("Per diem (") and "paid on the 1st after it" in step["formula"]
-        assert f"({results_w_intermediates.hml_interest_days_paid_monthly} days)" in step["formula"]
+        assert "a month (Hard Money Loan ×" in step["formula"] and "÷ 12), paid on the 1st after each month" in step["formula"]
 
     def test_base_deal_reads_five_real_months(self, brrrr_payload):
         req, results_w_intermediates = _brrr(brrrr_payload, {})
         step = _step_by_label(explain_brrr(req, results_w_intermediates), "cash_out", "HML Interest paid monthly")
-        # $215,000 × 11% ÷ 360 = $65.69 a day; Jan 10 → Jul 9: Feb to Jun (150 days) paid on Mar 1 .. Jul 1.
-        assert step["formula"].endswith("5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17")
+        # $215,000 × 11% ÷ 12 = $1,970.83 a month; Jan 10 → Jul 9: Feb to Jun paid on Mar 1 .. Jul 1.
+        assert step["formula"].startswith("$1,970.83 a month (Hard Money Loan × 11%/yr ÷ 12)")
+        assert step["formula"].endswith("5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 × $1,970.83) = $9,854.17")
         assert "Prepaid Interest (Buy)" in step["note"] and "Accrued Interest inside the HML payoff" in step["note"]
 
 

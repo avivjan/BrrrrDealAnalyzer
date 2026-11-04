@@ -27,7 +27,7 @@ from decimal import Decimal
 from typing import NamedTuple
 
 from BL.analyze.common.deal_math import (
-    calc_hml_interest, days_in_month, first_of_month_dates, last_day_of_previous_month, round_to_cents,
+    calc_hml_monthly_interest_payment, first_of_month_dates, last_day_of_previous_month, round_to_cents,
 )
 
 SELLER_TAX_CREDIT_SET_ASIDE_DAYS_AFTER_BUY_CLOSING = 1
@@ -147,7 +147,7 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
     for payment_date in timeline.hml_interest_monthly_payment_dates:
         month_paid_for = last_day_of_previous_month(payment_date)
         money_out(payment_date, "hml_interest_paid_monthly", f"HML interest for {month_paid_for.strftime('%B %Y')}",
-                  calc_hml_interest(hml_amount, payload.HML_interest_rate, days_in_month(month_paid_for)))
+                  calc_hml_monthly_interest_payment(hml_amount, payload.HML_interest_rate))
     for payment_date in timeline.first_of_month_dates_after_closing_through_refi:
         money_out(payment_date, "hoa_dues", "HOA dues", payload.montly_hoa)
         money_out(payment_date, "insurance_paid_monthly_until_refi", "Insurance (monthly)", payload.monthly_insurance_until_refi)

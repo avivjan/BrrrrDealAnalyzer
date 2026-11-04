@@ -230,7 +230,7 @@
               "value": 215000
             },
             {
-              "formula": "Per diem ($65.69) × the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan × 11%/yr ÷ 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 × $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): − Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) − Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -1570,7 +1570,7 @@
               "value": 40000
             },
             {
-              "formula": "Per diem ($65.69) × the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan × 11%/yr ÷ 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 × $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): − Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) − Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -2047,9 +2047,9 @@
               "value": 4300
             },
             {
-              "formula": "Hard Money Loan ($215,000) × 11%/yr ÷ 360 = $65.69 per diem × 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days × $65.69) + 5 monthly payments × $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days × $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) × 11%/yr ÷ 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr ÷ 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825
@@ -2167,7 +2167,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -2195,7 +2195,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -2223,7 +2223,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -2258,7 +2258,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",

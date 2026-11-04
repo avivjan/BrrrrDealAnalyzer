@@ -17,6 +17,7 @@ from DAL.data_models.boughtDeal.deals import BoughtBrrrDeal, BoughtFlipDeal
 from DAL.data_models.liquidity.models import (
     LiquidityTransaction,
     LiquidityRecurringTransaction,
+    LiquidityRecurringOccurrenceState,
     LiquiditySettings,
 )
 from DAL.data_models.pipelineTemplate.models import PipelineTemplate
@@ -61,6 +62,7 @@ __all__ = [
     "BoughtFlipDeal",
     "LiquidityTransaction",
     "LiquidityRecurringTransaction",
+    "LiquidityRecurringOccurrenceState",
     "LiquiditySettings",
     "PipelineTemplate",
     "AuditLog",

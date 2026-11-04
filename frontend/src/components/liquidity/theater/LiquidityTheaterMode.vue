@@ -25,6 +25,7 @@ import { useLiquidityStore } from '../../../stores/liquidityStore'
 import type { DealMilestone, DealMilestoneState, ImportedLiquidityDeal } from '../../../types/liquidity'
 import { todayISO } from '../../../utils/liquidityEngine'
 import { lowestBalanceInNextDays, nextOpenTransaction } from '../../../utils/liquidityUpcoming'
+import { doneTransactionsOnDate } from './legendRows'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import DealAttributionTag from '../DealAttributionTag.vue'
 import OverdueTransactionsStrip from '../OverdueTransactionsStrip.vue'
@@ -63,6 +64,8 @@ const emit = defineEmits<{
   (e: 'editRecurring', ruleId: string): void
   (e: 'deleteRecurring', ruleId: string): void
   (e: 'markDone', id: string): void
+  /** Undo a Done (from the legend's Transactions or the day modal). */
+  (e: 'markNotDone', id: string): void
   (e: 'moveToDate', id: string, newEffectiveDate: string): void
   (e: 'changeAmount', id: string, newAmountDollars: number): void
   (e: 'bulkMarkDone', ids: string[]): void
@@ -142,6 +145,8 @@ const milestonesOnTheModalDay = computed(() => {
   }
   return entries
 })
+const doneTransactionsOfTheModalDay = computed(() => dayModalDate.value ? doneTransactionsOnDate(store.transactionsInWindow, dayModalDate.value) : [])
+const recurringOccurrences = computed(() => store.transactionsInWindow.filter(transaction => !!transaction.recurring_rule_id))
 function stepDayModal(direction: -1 | 1) {
   const next = store.series.days[dayModalIndex.value + direction]
   if (next) dayModalDate.value = next.date
@@ -156,6 +161,16 @@ const todayIsoDate = todayISO()
 const lowestBalanceInNext90Days = computed(() => lowestBalanceInNextDays(store.series, todayIsoDate, 90))
 const nextMoneyOut = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_out'))
 const nextMoneyIn = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_in'))
+/** The timeline's lowest balance: the "Lowest" button brings it into view. */
+const lowestDay = computed(() => {
+  const lowestDate = store.series.globalMinDates[0]
+  return lowestDate ? store.series.days.find(day => day.date === lowestDate) ?? null : null
+})
+const lowestButtonTitle = computed(() => lowestDay.value
+  ? `Lowest balance: ${formatMoney(Math.round(lowestDay.value.balance_dollars))} on ${shortDate(lowestDay.value.date)}` : 'Lowest balance')
+function showLowestDay() {
+  if (lowestDay.value) chartRef.value?.centerOnDate(lowestDay.value.date)
+}
 const overdueRowCount = computed(() => store.overdueMoneyOut.length + store.expectedMoneyInNotCounted.length)
 const overdueMoneyOutTotalDollars = computed(() => store.overdueMoneyOut.reduce((total, txn) => total + txn.amount_dollars, 0))
 
@@ -339,6 +354,18 @@ const SHORTCUTS = [
               <UiButton data-testid="theater.today" variant="ghost" size="sm" class="gap-1.5 rounded-full" @click="chartRef?.centerOnToday()">
                 <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
               </UiButton>
+              <UiButton
+                data-testid="theater.lowest"
+                variant="ghost"
+                size="sm"
+                class="gap-1.5 rounded-full"
+                :disabled="!lowestDay"
+                :title="lowestButtonTitle"
+                :aria-label="lowestButtonTitle"
+                @click="showLowestDay"
+              >
+                <i class="pi pi-arrow-down text-[10px]" aria-hidden="true"></i> Lowest
+              </UiButton>
               <UiIconButton
                 data-testid="theater.mercury-sync"
                 :label="store.mercurySyncing ? 'Syncing from Mercury' : 'Re-sync the opening balance from Mercury'"
@@ -454,6 +481,7 @@ const SHORTCUTS = [
           </Transition>
           <Transition name="theater-pop">
             <div v-if="moreActionsMenuOpen" data-testid="theater.more-menu" class="absolute top-full z-30 mt-2 rounded-card border-ui border-line bg-surface p-4 shadow-3 right-3 w-56 p-1">
+              <button data-testid="theater.more.lowest" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="!lowestDay" @click="moreActionsMenuOpen = false; showLowestDay()"><i class="pi pi-arrow-down" aria-hidden="true"></i> Lowest balance</button>
               <button data-testid="theater.more.today" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
               <button data-testid="theater.more.mercury-sync" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
               <button data-testid="theater.more.settings" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
@@ -508,6 +536,7 @@ const SHORTCUTS = [
                 :expected-money-in-not-counted="store.expectedMoneyInNotCounted"
                 :transactions="store.transactions"
                 :recurring-rules="store.recurringRules"
+                :recurring-occurrences="recurringOccurrences"
                 class="pointer-events-auto max-h-full"
                 @close="legendOpen = false"
                 @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"
@@ -519,6 +548,7 @@ const SHORTCUTS = [
                 @edit-recurring="(ruleId) => emit('editRecurring', ruleId)"
                 @delete-recurring="(ruleId) => emit('deleteRecurring', ruleId)"
                 @open-day="onOpenDay"
+                @mark-not-done="(id) => emit('markNotDone', id)"
               />
             </div>
           </Transition>
@@ -543,6 +573,8 @@ const SHORTCUTS = [
           :milestones-on-this-day="milestonesOnTheModalDay"
           :can-step-to-previous-day="dayModalIndex > 0"
           :can-step-to-next-day="dayModalIndex < store.series.days.length - 1"
+          :done-transactions-of-this-day="doneTransactionsOfTheModalDay"
+          @mark-not-done="(id) => emit('markNotDone', id)"
           @close="dayModalDate = null"
           @step-day="stepDayModal"
           @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"

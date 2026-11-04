@@ -8,8 +8,9 @@ import {
   computeDefaultRange,
   projectTransactionsOntoToday,
   firstOfNextMonth,
+  expandRecurringRule,
 } from './liquidityEngine'
-import type { LiquidityTransaction } from '../types/liquidity'
+import type { LiquidityRecurringTransaction, LiquidityTransaction } from '../types/liquidity'
 
 function txn(id: string, date: string, amount_dollars: number, description = 'test'): LiquidityTransaction {
   return { id, effective_date: date, description, amount_dollars }
@@ -257,9 +258,13 @@ describe("projectTransactionsOntoToday — a row leaves only when marked done", 
     expect(result).toEqual({ countedTransactions: [], overdueMoneyOut: [], expectedMoneyInNotCounted: [] });
   });
 
-  it("keeps recurring occurrences as before (they cannot be marked done)", () => {
-    const occurrence = row({ id: "rule-1:0", effective_date: "2026-10-01", recurring_rule_id: "rule-1", recurring_index: 0 });
-    expect(projectTransactionsOntoToday([occurrence], TODAY).countedTransactions).toEqual([occurrence]);
+  it("treats a recurring occurrence like a one-off row: a missed one is overdue, a done one is left out", () => {
+    const missed = row({ id: "recurring:rule-1:2", effective_date: "2026-11-01", amount_dollars: -1500, recurring_rule_id: "rule-1", recurring_index: 2 });
+    const done = row({ id: "recurring:rule-1:1", effective_date: "2026-10-01", recurring_rule_id: "rule-1", recurring_index: 1, done_at: "2026-10-01T00:00:00Z" });
+    const history = row({ id: "recurring:rule-1:0", effective_date: "2026-09-01", recurring_rule_id: "rule-1", recurring_index: 0, recurring_is_history: true });
+    const { countedTransactions, overdueMoneyOut } = projectTransactionsOntoToday([missed, done, history], TODAY);
+    expect(overdueMoneyOut.map((txn) => txn.id)).toEqual(["recurring:rule-1:2"]);
+    expect(countedTransactions).toEqual([{ ...missed, effective_date: TODAY, overdue_since_date: "2026-11-01" }]);
   });
 
   it("lowers today's balance by what is still owed", () => {
@@ -273,5 +278,49 @@ describe("firstOfNextMonth", () => {
   it("is the first 1st strictly after the date", () => {
     expect(firstOfNextMonth("2026-11-04")).toBe("2026-12-01");
     expect(firstOfNextMonth("2026-12-01")).toBe("2027-01-01");
+  });
+});
+
+
+describe("expandRecurringRule: occurrence states (tasks/todo/DealImpactSimulator.md, E)", () => {
+  const RULE: LiquidityRecurringTransaction = {
+    id: "rule-1", description: "Misc", amount_dollars: -1500, start_date: "2026-08-01", end_date: null, occurrences: null,
+    frequency: "monthly", interval: 1, occurrences_can_be_overdue_from: "2026-09-15", occurrence_states: [],
+  };
+
+  it("expands the occurrences from the overdue-from date even before the range, and marks earlier ones history", () => {
+    const occurrences = expandRecurringRule(RULE, "2026-11-04", "2027-01-31");
+    expect(occurrences.map((occurrence) => [occurrence.recurring_scheduled_date, occurrence.recurring_is_history ?? false])).toEqual([
+      ["2026-10-01", false], ["2026-11-01", false], ["2026-12-01", false], ["2027-01-01", false],
+    ]);
+  });
+
+  it("carries a done state and moves a moved occurrence to its new date", () => {
+    const occurrences = expandRecurringRule({ ...RULE, occurrence_states: [
+      { scheduled_date: "2026-10-01", done_at: "2026-10-02T00:00:00Z", moved_to_date: null },
+      { scheduled_date: "2026-11-01", done_at: null, moved_to_date: "2026-11-08" },
+    ] }, "2026-11-04", "2027-01-31");
+    const byScheduledDate = new Map(occurrences.map((occurrence) => [occurrence.recurring_scheduled_date, occurrence]));
+    expect(byScheduledDate.get("2026-10-01")!.done_at).toBe("2026-10-02T00:00:00Z");
+    expect(byScheduledDate.get("2026-11-01")!.effective_date).toBe("2026-11-08");
+  });
+
+  it("keeps an occurrence's state when the amount is edited", () => {
+    const states = [{ scheduled_date: "2026-12-01", done_at: "2026-11-30T00:00:00Z", moved_to_date: null }];
+    const before = expandRecurringRule({ ...RULE, occurrence_states: states }, "2026-11-04", "2027-01-31");
+    const after = expandRecurringRule({ ...RULE, amount_dollars: -1600, occurrence_states: states }, "2026-11-04", "2027-01-31");
+    expect(after.find((occurrence) => occurrence.recurring_scheduled_date === "2026-12-01")!.done_at)
+      .toBe(before.find((occurrence) => occurrence.recurring_scheduled_date === "2026-12-01")!.done_at);
+  });
+
+  it("a missed monthly payment is overdue on today, the next ones count on their dates", () => {
+    const { overdueMoneyOut, countedTransactions } = projectTransactionsOntoToday(expandRecurringRule(RULE, "2026-11-04", "2026-12-31"), "2026-11-04");
+    expect(overdueMoneyOut.map((occurrence) => occurrence.recurring_scheduled_date)).toEqual(["2026-10-01", "2026-11-01"]);
+    expect(countedTransactions.map((occurrence) => occurrence.effective_date)).toEqual(["2026-11-04", "2026-11-04", "2026-12-01"]);
+  });
+
+  it("without an overdue-from date (an older client) only the range is expanded, as before", () => {
+    const occurrences = expandRecurringRule({ ...RULE, occurrences_can_be_overdue_from: null }, "2026-11-04", "2026-12-31");
+    expect(occurrences.map((occurrence) => occurrence.effective_date)).toEqual(["2026-12-01"]);
   });
 });

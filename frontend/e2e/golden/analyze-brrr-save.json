@@ -275,7 +275,7 @@
               "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,574.24) = -$55,036.79",
+              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,508.54) = -$54,971.10",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -295,19 +295,19 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56574.23515981735
+                  "value": 56508.54071537291
                 }
               ],
               "unit": "money",
-              "value": -55036.79159563336
+              "value": -54971.097151188915
             },
             {
-              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($55,036.79) × 100 = 2.12%",
+              "formula": "Annual Cash Flow ($1,164.44) ÷ |Cash Out| ($54,971.10) × 100 = 2.12%",
               "label": "Cash on Cash",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 2.1157500094809882
+              "value": 2.1182784840550704
             }
           ],
           "cash_out": [
@@ -341,12 +341,12 @@
               "value": 215000
             },
             {
-              "formula": "Per diem ($65.69) × the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-11-01 to 2027-03-01 (151 days) = $9,919.86",
+              "formula": "$1,970.83 a month (Hard Money Loan × 11%/yr ÷ 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-11-01 to 2027-03-01 (5 × $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
-              "note": "Of the HML Interest until refi ($11,825, 180 days): − Prepaid Interest (Buy) $1,116.81 (17 days, already in Cash to Close) − Accrued Interest inside the HML payoff $788.33 (12 days, paid by the refi wire) = $9,919.86 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
+              "note": "Of the HML Interest until refi ($11,759.31, 180 days): − Prepaid Interest (Buy) $1,116.81 (17 days, already in Cash to Close) − Accrued Interest inside the HML payoff $788.33 (12 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
               "unit": "money",
-              "value": 9919.861111111111
+              "value": 9854.166666666666
             },
             {
               "formula": "Credit received at closing ($2,524.93) → put in the property's tax bucket the day after",
@@ -549,7 +549,7 @@
               "value": 1085
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,599.37) + Seller Tax Credit set aside in the tax bucket ($2,524.93) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,795.07) + Tax Bucket Shortfall topped up on Nov 30 ($0.00) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,574.24",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,599.37) + Seller Tax Credit set aside in the tax bucket ($2,524.93) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,795.07) + Tax Bucket Shortfall topped up on Nov 30 ($0.00) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,508.54",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -587,7 +587,7 @@
                   "label": "HML Interest paid monthly",
                   "sign": "+",
                   "step_label": "HML Interest paid monthly",
-                  "value": 9919.861111111111
+                  "value": 9854.166666666666
                 },
                 {
                   "label": "HOA until Refi",
@@ -657,7 +657,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56574.23515981735
+              "value": 56508.54071537291
             },
             {
               "formula": "Refi Loan ($240,000) − HML Payoff ($215,788.33) − Closing Costs (Refi) ($10,700) − Prepaid Interest (Refi) ($823.33) = $12,688.33",
@@ -693,7 +693,7 @@
               "value": 12688.333333333334
             },
             {
-              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,574.24) = -$55,036.79",
+              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,508.54) = -$54,971.10",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -713,11 +713,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56574.23515981735
+                  "value": 56508.54071537291
                 }
               ],
               "unit": "money",
-              "value": -55036.79159563336
+              "value": -54971.097151188915
             }
           ],
           "cash_out_routi": [
@@ -1155,7 +1155,7 @@
             {
               "formula": "Per diem ($65.69) × 17 days from 2026-09-14 through month end = $1,116.81",
               "label": "Prepaid Interest (Buy)",
-              "note": "Interest is paid in arrears on the 1st: 17 days prepaid here, 151 days paid monthly ($9,919.86), 12 days inside the payoff ($788.33).",
+              "note": "Interest is paid in arrears on the 1st: 17 days prepaid here, 151 days paid monthly ($9,854.17), 12 days inside the payoff ($788.33).",
               "terms": null,
               "unit": "money",
               "value": 1116.8055555555557
@@ -1484,7 +1484,7 @@
           ],
           "net_profit": [
             {
-              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,574.24) = -$55,036.79",
+              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,508.54) = -$54,971.10",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -1504,11 +1504,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56574.23515981735
+                  "value": 56508.54071537291
                 }
               ],
               "unit": "money",
-              "value": -55036.79159563336
+              "value": -54971.097151188915
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
@@ -1519,7 +1519,7 @@
               "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($91,150.89) + Cash Out (-$55,036.79) = $36,114.10",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,971.10) = $36,179.79",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1533,11 +1533,11 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -55036.79159563336
+                  "value": -54971.097151188915
                 }
               ],
               "unit": "money",
-              "value": 36114.09817351598
+              "value": 36179.792617960426
             }
           ],
           "roi": [
@@ -1563,7 +1563,7 @@
               "value": 97.03674361688704
             },
             {
-              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,574.24) = -$55,036.79",
+              "formula": "Cash-Out Wire ($12,688.33) − Reserves set aside at Refi ($11,150.89) − Total Cash Invested ($56,508.54) = -$54,971.10",
               "label": "Cash Out from Deal",
               "note": "Negative: that much of your own money is still left in the deal after the refi, the reserves included.",
               "terms": [
@@ -1583,11 +1583,11 @@
                   "label": "Total Cash Invested",
                   "sign": "-",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56574.23515981735
+                  "value": 56508.54071537291
                 }
               ],
               "unit": "money",
-              "value": -55036.79159563336
+              "value": -54971.097151188915
             },
             {
               "formula": "ARV ($320,000) × (1 − LTV 75%) + Reserves ($11,150.89) = $91,150.89",
@@ -1598,7 +1598,7 @@
               "value": 91150.88976914933
             },
             {
-              "formula": "Equity ($91,150.89) + Cash Out (-$55,036.79) = $36,114.10",
+              "formula": "Equity ($91,150.89) + Cash Out (-$54,971.10) = $36,179.79",
               "label": "Net Profit",
               "note": null,
               "terms": [
@@ -1612,19 +1612,19 @@
                   "label": "Cash Out",
                   "sign": "+",
                   "step_label": "Cash Out from Deal",
-                  "value": -55036.79159563336
+                  "value": -54971.097151188915
                 }
               ],
               "unit": "money",
-              "value": 36114.09817351598
+              "value": 36179.792617960426
             },
             {
-              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($36,114.10)) ÷ |Cash Out| ($55,036.79) × 100 = 67.73%",
+              "formula": "(Annual Cash Flow ($1,164.44) + Net Profit ($36,179.79)) ÷ |Cash Out| ($54,971.10) × 100 = 67.93%",
               "label": "ROI",
               "note": null,
               "terms": null,
               "unit": "pct",
-              "value": 67.73385223981029
+              "value": 67.93430634766835
             }
           ],
           "stolen_money": [
@@ -1681,12 +1681,12 @@
               "value": 40000
             },
             {
-              "formula": "Per diem ($65.69) × the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-11-01 to 2027-03-01 (151 days) = $9,919.86",
+              "formula": "$1,970.83 a month (Hard Money Loan × 11%/yr ÷ 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-11-01 to 2027-03-01 (5 × $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
-              "note": "Of the HML Interest until refi ($11,825, 180 days): − Prepaid Interest (Buy) $1,116.81 (17 days, already in Cash to Close) − Accrued Interest inside the HML payoff $788.33 (12 days, paid by the refi wire) = $9,919.86 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
+              "note": "Of the HML Interest until refi ($11,759.31, 180 days): − Prepaid Interest (Buy) $1,116.81 (17 days, already in Cash to Close) − Accrued Interest inside the HML payoff $788.33 (12 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
               "unit": "money",
-              "value": 9919.861111111111
+              "value": 9854.166666666666
             },
             {
               "formula": "Loan Charges ($900) + Recording & Transfer ($1,432.50) + Title & Escrow ($925) + Online Notary ($250) + Other ($0) + Insurance Bill (inside closing) ($1,200) + Property Tax Bill (paid at closing) ($0) = $4,707.50",
@@ -1959,7 +1959,7 @@
               "value": 1085
             },
             {
-              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,599.37) + Seller Tax Credit set aside in the tax bucket ($2,524.93) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,919.86) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,795.07) + Tax Bucket Shortfall topped up on Nov 30 ($0.00) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,574.24",
+              "formula": "Earnest Money Deposit ($5,000) + Cash to Close (Buy) ($42,599.37) + Seller Tax Credit set aside in the tax bucket ($2,524.93) + Insurance Bill at Purchase (outside closing) ($0) + Rehab Out-of-Pocket ($0) + HML Interest paid monthly ($9,854.17) + HOA until Refi ($0) + Insurance paid monthly until Refi ($0) + Tax paid into the Bucket until Refi ($1,795.07) + Tax Bucket Shortfall topped up on Nov 30 ($0.00) + Utilities until Rented ($320) + Maintenance before Refi ($500) + Appliances ($630) + Appraisal & Survey ($1,085) + Insurance Bill at Refi (outside closing) ($0) − Pre-Refi Rental Income ($7,800) − Tax Bucket Balance released at Refi ($0) = $56,508.54",
               "label": "Total Cash Invested (pre-refi)",
               "note": "Every dollar actually spent before the refinance, plus the seller tax credit put back into the tax bucket the day after closing; the rehab cushion is held, not spent, so it is not here.",
               "terms": [
@@ -1997,7 +1997,7 @@
                   "label": "HML Interest paid monthly",
                   "sign": "+",
                   "step_label": "HML Interest paid monthly",
-                  "value": 9919.861111111111
+                  "value": 9854.166666666666
                 },
                 {
                   "label": "HOA until Refi",
@@ -2067,7 +2067,7 @@
                 }
               ],
               "unit": "money",
-              "value": 56574.23515981735
+              "value": 56508.54071537291
             },
             {
               "formula": "Wire (-$10,629.33) is negative → $10,629.33 brought to the table",
@@ -2086,7 +2086,7 @@
               "value": 11150.889769149338
             },
             {
-              "formula": "Total Cash Invested ($56,574.24) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,629.33) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,354.46",
+              "formula": "Total Cash Invested ($56,508.54) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,629.33) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,288.76",
               "label": "Cash Needed",
               "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 6 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
@@ -2094,7 +2094,7 @@
                   "label": "Total Cash Invested",
                   "sign": "+",
                   "step_label": "Total Cash Invested (pre-refi)",
-                  "value": 56574.23515981735
+                  "value": 56508.54071537291
                 },
                 {
                   "label": "Rehab Cushion",
@@ -2116,7 +2116,7 @@
                 }
               ],
               "unit": "money",
-              "value": 83354.46
+              "value": 83288.76
             }
           ],
           "total_hard_money_cost": [
@@ -2158,15 +2158,15 @@
               "value": 4300
             },
             {
-              "formula": "Hard Money Loan ($215,000) × 11%/yr ÷ 360 = $65.69 per diem × 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,116.81 (17 days × $65.69) + 5 monthly payments × $1,970.83 + Accrued Interest inside the payoff $788.33 (12 days × $65.69) = $11,759.31",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) × 11%/yr ÷ 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr ÷ 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
-              "value": 11825
+              "value": 11759.305555555555
             },
             {
-              "formula": "HML Points ($4,300) + HML Interest ($11,825) + Loan Charges (Buy) ($900) = $17,025",
+              "formula": "HML Points ($4,300) + HML Interest ($11,759.31) + Loan Charges (Buy) ($900) = $16,959.31",
               "label": "Total Hard Money Cost",
               "note": null,
               "terms": [
@@ -2180,7 +2180,7 @@
                   "label": "HML Interest",
                   "sign": "+",
                   "step_label": "HML Interest (until refi)",
-                  "value": 11825
+                  "value": 11759.305555555555
                 },
                 {
                   "label": "Loan Charges (Buy)",
@@ -2190,7 +2190,7 @@
                 }
               ],
               "unit": "money",
-              "value": 17025
+              "value": 16959.305555555555
             }
           ]
         },
@@ -2278,7 +2278,7 @@
               "description": "HML interest for October 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-11-01",
@@ -2306,7 +2306,7 @@
               "description": "HML interest for November 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-12-01",
@@ -2334,7 +2334,7 @@
               "description": "HML interest for December 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2027-01-01",
@@ -2369,7 +2369,7 @@
               "description": "HML interest for January 2027",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2027-02-01",
@@ -2397,7 +2397,7 @@
               "description": "HML interest for February 2027",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.45"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2027-03-01",
@@ -2461,8 +2461,8 @@
             }
           ]
         },
-        "cash_on_cash": 2.1157500094809882,
-        "cash_out": -55036.79159563336,
+        "cash_on_cash": 2.1182784840550704,
+        "cash_out": -54971.097151188915,
         "cash_out_routi": 12688.333333333334,
         "cash_out_routi_conservative": -10629.333333333334,
         "cash_to_close_buy": 42599.37404870624,
@@ -2519,7 +2519,7 @@
         "monthly_insurance_after_refi_effective": 100,
         "monthly_property_tax_after_refi": 288,
         "montly_hoa": "0.00",
-        "net_profit": 36114.09817351598,
+        "net_profit": 36179.792617960426,
         "niche": null,
         "notes": null,
         "onlineNotaryBuy": true,
@@ -2562,7 +2562,7 @@
         "rent_comps": null,
         "reserves_funded_from_own_pocket_at_lowest_arv": 11150.889769149338,
         "reserves_total": 11150.889769149338,
-        "roi": 67.73385223981029,
+        "roi": 67.93430634766835,
         "section": 2,
         "sellerPaidCurrentYearTaxes": null,
         "sellerTaxCreditAtPurchaseClosing": null,
@@ -2580,9 +2580,9 @@
         "title_escrow_buy_effective": 925,
         "title_escrow_refi_effective": 1880,
         "title_office_and_search_fees_buy": 600,
-        "total_cash_invested": 56574.23515981735,
-        "total_cash_needed_for_deal": 83354.46,
-        "total_hard_money_cost": 17025,
+        "total_cash_invested": 56508.54071537291,
+        "total_cash_needed_for_deal": 83288.76,
+        "total_hard_money_cost": 16959.305555555555,
         "updated_at": "<redacted>",
         "use_HM_for_rehab": true,
         "vacancyPercent": "5.00",
@@ -2594,14 +2594,14 @@
   ],
   "rendered": {
     "cash_flow": "$97",
-    "cash_out": "-$55,037",
+    "cash_out": "-$54,971",
     "cash_out_routi": "$12,688",
     "cash_on_cash": "2.12%",
     "dscr": "1.36",
     "equity": "$91,151",
-    "roi": "67.73%",
-    "net_profit": "$36,114",
-    "total_cash_needed_for_deal": "$83,354",
+    "roi": "67.93%",
+    "net_profit": "$36,180",
+    "total_cash_needed_for_deal": "$83,289",
     "cash_to_close_buy": "$42,599",
     "cash_out_routi_conservative": "-$10,629",
     "stolen_money": "$0"

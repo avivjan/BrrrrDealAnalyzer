@@ -2,7 +2,8 @@
 /**
  * A day of the full-screen timeline, in full (tasks/todo/LiquidityTheaterMode.md, section E): the opening and
  * end-of-day balance, money in and out, the imported deals' milestones planned that day (Approve, Done on another
- * date, Move), and
+ * date, Move), every row with its deal tag and all its actions through the existing DayDetail, and the rows of
+ * the day already marked done (greyed out and struck through, with Undo), and
  * every row with its deal tag and all its actions (Done, Postpone, Move, amount, edit, delete) through the
  * existing DayDetail. ‹ › and the arrow keys step to the previous / next day.
  *
@@ -10,12 +11,13 @@
  */
 import { computed, nextTick, onMounted, ref, useId } from 'vue'
 
-import type { DayBucket, DealMilestone, DealMilestoneState, ImportedLiquidityDeal } from '../../../types/liquidity'
+import type { DayBucket, DealMilestone, DealMilestoneState, ImportedLiquidityDeal, LiquidityTransaction } from '../../../types/liquidity'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import { useInjectedDealAttributionLookup } from '../../../composables/useLiquidityDealAttribution'
 import { dealKeyOf, NEUTRAL_DEAL_COLOR_HEX, shortDealAddress } from '../dealColors'
 import { DEAL_MILESTONE_LABELS } from '../dealMilestoneLabels'
 import DayDetail from '../DayDetail.vue'
+import DealAttributionTag from '../DealAttributionTag.vue'
 
 const props = defineProps<{
   bucket: DayBucket
@@ -24,6 +26,8 @@ const props = defineProps<{
   milestonesOnThisDay: { deal: ImportedLiquidityDeal; state: DealMilestoneState }[]
   canStepToPreviousDay: boolean
   canStepToNextDay: boolean
+  /** The one-off rows of this day already marked done: shown struck through, with Undo. */
+  doneTransactionsOfThisDay?: LiquidityTransaction[]
 }>()
 
 const emit = defineEmits<{
@@ -38,7 +42,14 @@ const emit = defineEmits<{
   (e: 'markDone', id: string): void
   (e: 'moveToDate', id: string, newEffectiveDate: string): void
   (e: 'changeAmount', id: string, newAmountDollars: number): void
+  (e: 'markNotDone', id: string): void
 }>()
+
+const MONTH_ABBREVIATIONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+function shortDoneDate(doneAt: string): string {
+  const [, month, day] = doneAt.slice(0, 10).split('-')
+  return `${MONTH_ABBREVIATIONS[Number(month) - 1] ?? ''} ${Number(day)}`
+}
 
 const headingId = useId()
 const dealAttributionLookup = useInjectedDealAttributionLookup()
@@ -185,6 +196,33 @@ onMounted(() => nextTick(() => panelRef.value?.focus()))
           @move-to-date="(id, date) => emit('moveToDate', id, date)"
           @change-amount="(id, dollars) => emit('changeAmount', id, dollars)"
         />
+
+        <!-- The rows of this day already marked done: greyed out, struck through, with Undo -->
+        <section v-if="doneTransactionsOfThisDay?.length" data-testid="theater.day-modal.done-rows" aria-label="Done on this day">
+          <h3 class="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Done on this day ({{ doneTransactionsOfThisDay.length }})</h3>
+          <ul class="space-y-1">
+            <li
+              v-for="transaction in doneTransactionsOfThisDay"
+              :key="transaction.id"
+              :data-testid="`theater.day-modal.done-row.${transaction.id}`"
+              class="flex flex-wrap items-center gap-2 rounded-ctl bg-surface-2/60 px-3 py-2 opacity-60"
+            >
+              <i class="pi pi-check-circle text-xs text-positive" aria-hidden="true"></i>
+              <span class="min-w-0 flex-1 truncate text-xs text-fg-muted line-through">{{ transaction.description }}</span>
+              <DealAttributionTag :txn="transaction" class="shrink-0" />
+              <span class="text-[10px] text-fg-muted">done {{ shortDoneDate(transaction.done_at!) }}</span>
+              <span class="numeric shrink-0 text-xs text-fg-muted line-through">{{ formatSignedMoney(transaction.amount_dollars) }}</span>
+              <UiButton
+                :data-testid="`theater.day-modal.done-row.${transaction.id}.undo`"
+                size="sm"
+                variant="ghost"
+                class="min-h-7 touch:min-h-11 text-primary"
+                :aria-label="`Undo done: ${transaction.description}`"
+                @click="emit('markNotDone', transaction.id)"
+              ><i class="pi pi-undo text-[10px]" aria-hidden="true"></i> Undo</UiButton>
+            </li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>

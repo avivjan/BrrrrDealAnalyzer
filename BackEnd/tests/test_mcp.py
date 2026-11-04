@@ -199,7 +199,9 @@ class TestEveryToolSchema:
         # 473 kB with the Florida title lines, the four monthly-reserve dollar inputs, the Cash Needed schedule's
         # key dates and the "we pay this year's tax bill at closing" input (tasks/todo/SettlementStatementFloridaTitle.md,
         # tasks/todo/CashNeededScheduleMilestones.md).
-        assert len(payload) < 480_000, f"tools/list is {len(payload)} bytes"
+        # 490 kB with the deals' key_dates, the three recurring-occurrence tools and the occurrence states on every
+        # recurring rule (tasks/todo/LiquidityDealTransactionsAndHmlMonthlyInterest.md, tasks/todo/DealImpactSimulator.md).
+        assert len(payload) < 500_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:
