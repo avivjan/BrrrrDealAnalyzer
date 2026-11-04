@@ -10888,6 +10888,19 @@
             "description": "Optional cap on the number of occurrences (1-based).",
             "title": "Occurrences"
           },
+          "occurrences_can_be_overdue_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occurrences from this date on can be overdue (missed); earlier ones are history. Default: today.",
+            "title": "Occurrences Can Be Overdue From"
+          },
           "start_date": {
             "format": "date",
             "title": "Start Date",
@@ -11103,6 +11116,19 @@
               }
             ],
             "title": "Occurrences"
+          },
+          "occurrences_can_be_overdue_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occurrences from this date on can be overdue (missed); earlier ones are history.",
+            "title": "Occurrences Can Be Overdue From"
           },
           "start_date": {
             "anyOf": [

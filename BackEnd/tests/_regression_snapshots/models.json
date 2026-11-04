@@ -5022,6 +5022,13 @@
           "default_factory": null,
           "required": false
         },
+        "occurrences_can_be_overdue_from": {
+          "alias": null,
+          "annotation": "Optional[date]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
         "start_date": {
           "alias": null,
           "annotation": "<class 'date'>",
@@ -5165,6 +5172,13 @@
         "occurrences": {
           "alias": null,
           "annotation": "Optional[int]",
+          "default": "None",
+          "default_factory": null,
+          "required": false
+        },
+        "occurrences_can_be_overdue_from": {
+          "alias": null,
+          "annotation": "Optional[date]",
           "default": "None",
           "default_factory": null,
           "required": false
@@ -10566,6 +10580,7 @@
         "frequency": "monthly",
         "interval": 1,
         "occurrences": 12,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05"
       },
       "dump_by_field": {
@@ -10575,9 +10590,10 @@
         "frequency": "monthly",
         "interval": 1,
         "occurrences": 12,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05"
       },
-      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('2600'), 'start_date': datetime.date(2024, 3, 5), 'end_date': datetime.date(2025, 3, 5), 'occurrences': 12, 'frequency': 'monthly', 'interval': 1}",
+      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('2600'), 'start_date': datetime.date(2024, 3, 5), 'end_date': datetime.date(2025, 3, 5), 'occurrences': 12, 'frequency': 'monthly', 'interval': 1, 'occurrences_can_be_overdue_from': None}",
       "exclude_unset": {
         "amount_dollars": "2600",
         "description": "rent",
@@ -10610,6 +10626,7 @@
         "frequency": "weekly",
         "interval": 1,
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05"
       },
       "dump_by_field": {
@@ -10619,9 +10636,10 @@
         "frequency": "weekly",
         "interval": 1,
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": "2024-03-05"
       },
-      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('1000'), 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'weekly', 'interval': 1}",
+      "dump_python_repr": "{'description': 'rent', 'amount_dollars': Decimal('1000'), 'start_date': datetime.date(2024, 3, 5), 'end_date': None, 'occurrences': None, 'frequency': 'weekly', 'interval': 1, 'occurrences_can_be_overdue_from': None}",
       "exclude_unset": {
         "amount_dollars": "1000",
         "description": "rent",
@@ -10728,6 +10746,7 @@
         "frequency": null,
         "interval": null,
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": null
       },
       "dump_by_field": {
@@ -10737,9 +10756,10 @@
         "frequency": null,
         "interval": null,
         "occurrences": null,
+        "occurrences_can_be_overdue_from": null,
         "start_date": null
       },
-      "dump_python_repr": "{'description': None, 'amount_dollars': None, 'start_date': None, 'end_date': None, 'occurrences': None, 'frequency': None, 'interval': None}",
+      "dump_python_repr": "{'description': None, 'amount_dollars': None, 'start_date': None, 'end_date': None, 'occurrences': None, 'frequency': None, 'interval': None, 'occurrences_can_be_overdue_from': None}",
       "exclude_unset": {},
       "ok": true
     },
@@ -24972,6 +24992,20 @@
           "description": "Optional cap on the number of occurrences (1-based).",
           "title": "Occurrences"
         },
+        "occurrences_can_be_overdue_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Occurrences from this date on can be overdue (missed); earlier ones are history. Default: today.",
+          "title": "Occurrences Can Be Overdue From"
+        },
         "start_date": {
           "format": "date",
           "title": "Start Date",
@@ -25242,6 +25276,20 @@
           ],
           "default": null,
           "title": "Occurrences"
+        },
+        "occurrences_can_be_overdue_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Occurrences from this date on can be overdue (missed); earlier ones are history.",
+          "title": "Occurrences Can Be Overdue From"
         },
         "start_date": {
           "anyOf": [
