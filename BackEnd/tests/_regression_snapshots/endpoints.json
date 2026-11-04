@@ -221,7 +221,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -1561,7 +1561,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -2038,9 +2038,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -2158,7 +2158,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -2186,7 +2186,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -2214,7 +2214,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -2249,7 +2249,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -3341,7 +3341,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -4681,7 +4681,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -5158,9 +5158,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -5278,7 +5278,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -5306,7 +5306,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -5334,7 +5334,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -5369,7 +5369,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -5817,7 +5817,7 @@
               "value": 215000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -7157,7 +7157,7 @@
               "value": 40000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -7634,9 +7634,9 @@
               "value": 4300.0
             },
             {
-              "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825.0
@@ -7754,7 +7754,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -7782,7 +7782,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -7810,7 +7810,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -7845,7 +7845,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",
@@ -8913,7 +8913,7 @@
             "value": 223000.0
           },
           {
-            "formula": "Per diem ($68.14) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $10,220.83",
+            "formula": "$2,044.17 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $2,044.17) = $10,220.83",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($12,265, 180 days): \u2212 Prepaid Interest (Buy) $1,499.06 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $545.11 (8 days, paid by the refi wire) = $10,220.83 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -10253,7 +10253,7 @@
             "value": 42000.0
           },
           {
-            "formula": "Per diem ($68.14) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $10,220.83",
+            "formula": "$2,044.17 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $2,044.17) = $10,220.83",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($12,265, 180 days): \u2212 Prepaid Interest (Buy) $1,499.06 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $545.11 (8 days, paid by the refi wire) = $10,220.83 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -10730,9 +10730,9 @@
             "value": 4460.0
           },
           {
-            "formula": "Hard Money Loan ($223,000) \u00d7 11%/yr \u00f7 360 = $68.14 per diem \u00d7 180 days = $12,265",
+            "formula": "Prepaid Interest (Buy) $1,499.06 (22 days \u00d7 $68.14) + 5 monthly payments \u00d7 $2,044.17 + Accrued Interest inside the payoff $545.11 (8 days \u00d7 $68.14) = $12,265",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($223,000) \u00d7 11%/yr \u00f7 12 = $2,044.17, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $68.14 a day.",
             "terms": null,
             "unit": "money",
             "value": 12265.0
@@ -10850,7 +10850,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1907.89"
+            "signed_amount_dollars": "-2044.16"
           },
           {
             "date": "2026-03-01",
@@ -10878,7 +10878,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2112.30"
+            "signed_amount_dollars": "-2044.17"
           },
           {
             "date": "2026-04-01",
@@ -10941,7 +10941,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2112.30"
+            "signed_amount_dollars": "-2044.16"
           },
           {
             "date": "2026-06-01",
@@ -11382,7 +11382,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -12722,7 +12722,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -13199,9 +13199,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -13319,7 +13319,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -13347,7 +13347,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -13375,7 +13375,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -13410,7 +13410,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -14484,7 +14484,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -15824,7 +15824,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -16301,9 +16301,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -16421,7 +16421,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -16449,7 +16449,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -16477,7 +16477,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -16512,7 +16512,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -16984,7 +16984,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -18324,7 +18324,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -18801,9 +18801,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -18921,7 +18921,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -18949,7 +18949,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -18977,7 +18977,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -19012,7 +19012,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -20097,7 +20097,7 @@
               "value": 215000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -21437,7 +21437,7 @@
               "value": 40000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -21914,9 +21914,9 @@
               "value": 4300.0
             },
             {
-              "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825.0
@@ -22034,7 +22034,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -22062,7 +22062,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -22090,7 +22090,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -22125,7 +22125,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",
@@ -23199,7 +23199,7 @@
             "value": 215000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -24539,7 +24539,7 @@
             "value": 40000.0
           },
           {
-            "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+            "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
             "label": "HML Interest paid monthly",
             "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
             "terms": null,
@@ -25016,9 +25016,9 @@
             "value": 4300.0
           },
           {
-            "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+            "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
             "label": "HML Interest (until refi)",
-            "note": "Hard money accrues per diem on a 360-day year.",
+            "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
             "terms": null,
             "unit": "money",
             "value": 11825.0
@@ -25143,7 +25143,7 @@
             "description": "HML interest for February 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1839.44"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-03-01",
@@ -25171,7 +25171,7 @@
             "description": "HML interest for March 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.53"
+            "signed_amount_dollars": "-1970.84"
           },
           {
             "date": "2026-04-01",
@@ -25199,7 +25199,7 @@
             "description": "HML interest for April 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-1970.84"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-05-01",
@@ -25234,7 +25234,7 @@
             "description": "HML interest for May 2026",
             "item_key": "hml_interest_paid_monthly",
             "sequence_within_day": 0,
-            "signed_amount_dollars": "-2036.52"
+            "signed_amount_dollars": "-1970.83"
           },
           {
             "date": "2026-06-01",
@@ -26584,7 +26584,7 @@
               "value": 215000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -27924,7 +27924,7 @@
               "value": 40000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -28401,9 +28401,9 @@
               "value": 4300.0
             },
             {
-              "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825.0
@@ -28521,7 +28521,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -28549,7 +28549,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -28577,7 +28577,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -28612,7 +28612,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",
@@ -29677,7 +29677,7 @@
               "value": 215000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -31017,7 +31017,7 @@
               "value": 40000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -31494,9 +31494,9 @@
               "value": 4300.0
             },
             {
-              "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825.0
@@ -31621,7 +31621,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -31649,7 +31649,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -31677,7 +31677,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -31712,7 +31712,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",
@@ -32154,7 +32154,7 @@
               "value": 215000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -33494,7 +33494,7 @@
               "value": 40000.0
             },
             {
-              "formula": "Per diem ($65.69) \u00d7 the days of each month, paid on the 1st after it: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (150 days) = $9,854.17",
+              "formula": "$1,970.83 a month (Hard Money Loan \u00d7 11%/yr \u00f7 12), paid on the 1st after each month: 5 payments on the 1sts from 2026-03-01 to 2026-07-01 (5 \u00d7 $1,970.83) = $9,854.17",
               "label": "HML Interest paid monthly",
               "note": "Of the HML Interest until refi ($11,825, 180 days): \u2212 Prepaid Interest (Buy) $1,445.28 (22 days, already in Cash to Close) \u2212 Accrued Interest inside the HML payoff $525.56 (8 days, paid by the refi wire) = $9,854.17 paid from your pocket on the 1st of each month. The purchase month is prepaid, so its 1st pays nothing; a month whose 1st is the refi day or later is inside the payoff.",
               "terms": null,
@@ -33971,9 +33971,9 @@
               "value": 4300.0
             },
             {
-              "formula": "Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 360 = $65.69 per diem \u00d7 180 days = $11,825",
+              "formula": "Prepaid Interest (Buy) $1,445.28 (22 days \u00d7 $65.69) + 5 monthly payments \u00d7 $1,970.83 + Accrued Interest inside the payoff $525.56 (8 days \u00d7 $65.69) = $11,825",
               "label": "HML Interest (until refi)",
-              "note": "Hard money accrues per diem on a 360-day year.",
+              "note": "Each full month is Hard Money Loan ($215,000) \u00d7 11%/yr \u00f7 12 = $1,970.83, whatever the month's length. The partial months (the rest of the purchase month, and the payoff month) are per diem: 11%/yr \u00f7 360 = $65.69 a day.",
               "terms": null,
               "unit": "money",
               "value": 11825.0
@@ -34091,7 +34091,7 @@
               "description": "HML interest for February 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1839.44"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-03-01",
@@ -34119,7 +34119,7 @@
               "description": "HML interest for March 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.53"
+              "signed_amount_dollars": "-1970.84"
             },
             {
               "date": "2026-04-01",
@@ -34147,7 +34147,7 @@
               "description": "HML interest for April 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-1970.84"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-05-01",
@@ -34182,7 +34182,7 @@
               "description": "HML interest for May 2026",
               "item_key": "hml_interest_paid_monthly",
               "sequence_within_day": 0,
-              "signed_amount_dollars": "-2036.52"
+              "signed_amount_dollars": "-1970.83"
             },
             {
               "date": "2026-06-01",

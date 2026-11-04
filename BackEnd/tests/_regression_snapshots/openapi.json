@@ -8323,6 +8323,31 @@
         "title": "DealDetail",
         "type": "object"
       },
+      "DealKeyDateRes": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "description": "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed.",
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "date",
+          "description"
+        ],
+        "title": "DealKeyDateRes",
+        "type": "object"
+      },
       "DealMilestoneChangeReq": {
         "properties": {
           "approve": {
@@ -9990,6 +10015,14 @@
           "done_row_count": {
             "title": "Done Row Count",
             "type": "integer"
+          },
+          "key_dates": {
+            "description": "The deal's key dates as its Cash Needed table shows them, in date order (markers, not cash): the five milestones and the Nov 30 tax bill paid from the tax bucket while it falls inside the hold.",
+            "items": {
+              "$ref": "#/components/schemas/DealKeyDateRes"
+            },
+            "title": "Key Dates",
+            "type": "array"
           },
           "late_refi_row_count": {
             "title": "Late Refi Row Count",
