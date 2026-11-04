@@ -170,4 +170,44 @@ describe("TimelineChart in theater mode", () => {
     expect(wrapper.find('[data-date="2026-11-20"]').exists()).toBe(true);
     wrapper.unmount();
   });
+  describe("opens on today, wherever the data and the size settle", () => {
+    const DAYS_FROM_TODAY = DAYS.filter((day) => day.date >= TODAY);
+
+    /** Where today sits when the chart mounts with every day already there. */
+    async function centredTodayClientX() {
+      const wrapper = mountChart();
+      await wrapper.vm.$nextTick();
+      const centredX = todayClientX(wrapper);
+      wrapper.unmount();
+      return centredX;
+    }
+
+    it("re-centres on today when earlier days arrive after the chart mounted", async () => {
+      const centredX = await centredTodayClientX();
+      const wrapper = mountChart({ days: DAYS_FROM_TODAY });
+      await wrapper.vm.$nextTick();
+      await wrapper.setProps({ days: DAYS });
+      expect(todayClientX(wrapper)).toBe(centredX);
+      expect(wrapper.find('[data-testid="chart.today-edge-chip"]').exists()).toBe(false);
+      wrapper.unmount();
+    });
+
+    it("centres on today once the days load, when it mounted with none", async () => {
+      const centredX = await centredTodayClientX();
+      const wrapper = mountChart({ days: [] });
+      await wrapper.vm.$nextTick();
+      await wrapper.setProps({ days: DAYS });
+      expect(todayClientX(wrapper)).toBe(centredX);
+      wrapper.unmount();
+    });
+
+    it("stops following today once the user scrolls", async () => {
+      const wrapper = mountChart({ days: DAYS_FROM_TODAY });
+      await wrapper.vm.$nextTick();
+      await wrapper.get('[data-testid="chart.svg"]').trigger("wheel", { deltaY: 5000 });
+      await wrapper.setProps({ days: DAYS });
+      expect(wrapper.find('[data-testid="chart.today-edge-chip"]').exists()).toBe(true);
+      wrapper.unmount();
+    });
+  });
 });

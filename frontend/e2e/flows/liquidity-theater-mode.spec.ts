@@ -88,6 +88,46 @@ test('/liquidity is the theater over the whole viewport; Esc and × leave to the
   await expect(theater).toHaveCount(0);
 });
 
+test('the timeline always opens centred on today: a direct link, in-app navigation, and data that arrives late', async ({ page, request, settle }) => {
+  // Rows from six months back: the timeline starts there, long before the 90 days it shows while the data loads.
+  const response = await request.put(`${API_ORIGIN}/liquidity/settings`, {
+    headers: SEED_HEADERS,
+    data: { opening_balance_dollars: 150000, opening_balance_date: '2026-03-01', reserve_dollars: 5000 },
+  });
+  expect(response.ok()).toBe(true);
+  await seedTransaction(request, '2026-03-15', -1200, 'Plumber');
+
+  async function expectTodayCentred() {
+    const chart = page.getByTestId('theater.root').getByTestId('chart.container');
+    await expect(chart.locator('[data-part="today-pill"]')).toHaveCount(1);
+    await settle(TRANSITION_MS);
+    const chartBox = (await chart.boundingBox())!;
+    const todayPill = (await chart.locator('[data-part="today-pill"] rect').boundingBox())!;
+    const todayCentreX = todayPill.x + todayPill.width / 2;
+    // Within a fifth of the width of the middle (the chart keeps a y-axis gutter on the left).
+    expect(Math.abs(todayCentreX - (chartBox.x + chartBox.width / 2))).toBeLessThan(chartBox.width / 5);
+  }
+
+  // The liquidity data answers late: the chart has mounted before the earlier days arrive.
+  await page.route(/\/liquidity\/(settings|transactions)(\?|$)/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.continue();
+  });
+  const lateDataArrived = Promise.all([
+    page.waitForResponse(/\/liquidity\/settings(\?|$)/), page.waitForResponse(/\/liquidity\/transactions(\?|$)/),
+  ]);
+  await page.goto('/liquidity');
+  await lateDataArrived;
+  await expectTodayCentred();
+
+  await page.keyboard.press('Escape');
+  await settle(TRANSITION_MS);
+  await page.goto('/my-deals');
+  await expect(page.getByTestId('mydeals.add-deal')).toBeVisible();
+  await page.locator('a[href="/liquidity"]:visible').first().click();
+  await expectTodayCentred();
+});
+
 test('the legend lists a deal with its overdue rows; Done clears one, and the deal can leave the timeline', async ({ page, seed, request, dialogs, settle }) => {
   await seedSettings(request);
   const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
