@@ -52,12 +52,23 @@ test('a deal is imported only after its preview, from the My Deals modal', async
   await page.getByTestId('import-to-liquidity').click();
   const preview = page.getByTestId('deal-import-preview');
   await expect(preview).toBeVisible();
+  // The full-screen decision view: the verdict first, the chart of both lines, the insights.
+  const viewportWidth = page.viewportSize()!.width;
+  expect((await preview.boundingBox())!.width).toBeGreaterThan(viewportWidth - 2);
+  await expect(preview.getByTestId('deal-impact.verdict')).toHaveAttribute('data-risk-level', 'stays_above_reserve');
+  await expect(preview.getByTestId('deal-impact.verdict.headline')).toContainText('You stay above your $5,000 reserve');
+  await expect(preview.locator('[data-part="before-line"]')).toHaveCount(1);
+  await expect(preview.locator('[data-part="after-line"]')).toHaveCount(1);
+  await expect(preview.locator('[data-part="key-date-flag"][data-key-date="purchase_closed"]')).toHaveCount(1);
   await expect(preview.getByTestId('deal-import-preview.insights')).toContainText('Lowest balance');
   await expect(preview.getByTestId('deal-import-preview.insights')).toContainText('Largest single-day outflow');
-  await expect(preview.locator('[data-part="balance-with-the-deal-line"]')).toHaveCount(1);
+  // The rows are on demand for an import.
+  await expect(preview.locator('[data-testid="deal-cash-row-change"]')).toHaveCount(0);
+  await preview.getByTestId('deal-impact.rows.toggle').click();
   await expect(preview.locator('[data-testid="deal-cash-row-change"][data-change-kind="added"]').first()).toBeVisible();
 
-  await preview.getByTestId('deal-import-preview.confirm').click();
+  const confirm = preview.getByTestId('deal-import-preview.confirm');
+  await (await confirm.isVisible() ? confirm : preview.getByTestId('deal-import-preview.confirm-phone')).click();
   await settle(TRANSITION_MS);
   await expect(preview).toHaveCount(0);
   await expect(page.getByTestId('import-to-liquidity')).toHaveText(/Re-sync liquidity/);

@@ -280,7 +280,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown, { capture
                       <dt class="text-fg-muted">To stay above zero</dt>
                       <dd class="text-right"><span class="numeric font-semibold text-fg">{{ money(decision.cashToStayAboveZero.amountDollars) }}</span><span class="block text-[10px] text-fg-muted">by {{ formatDecisionDate(decision.cashToStayAboveZero.neededByDate) }}</span></dd>
                     </div>
-                    <p v-if="!decision.cashToKeepTheReserve" class="text-xs text-positive"><i class="pi pi-check mr-1 text-[10px]" aria-hidden="true"></i>No extra cash needed.</p>
+                    <div v-if="!decision.cashToKeepTheReserve" class="text-xs text-positive">
+                      <dt class="sr-only">Extra cash needed</dt>
+                      <dd><i class="pi pi-check mr-1 text-[10px]" aria-hidden="true"></i>No extra cash needed.</dd>
+                    </div>
                   </dl>
                 </section>
 

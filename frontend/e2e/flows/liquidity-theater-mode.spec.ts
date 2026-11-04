@@ -268,6 +268,21 @@ test('hovering a day previews it; a click opens the day in full, with every acti
   await expect(theater).toBeVisible();
 });
 
+test('the deal impact view has no serious accessibility violations', async ({ page, seed, request }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'axe runs on chromium only');
+  await seedSettings(request);
+  const deal = await seed.seedActiveDeal('BRRRR', DEAL_WITH_OVERDUE_ROWS);
+  await page.goto('/my-deals');
+  await page.getByTestId(`mydeals.card.${deal.id}`).click();
+  await page.getByTestId('import-to-liquidity').click();
+  await expect(page.getByTestId('deal-impact.verdict')).toBeVisible();
+  await page.getByTestId('deal-impact.rows.toggle').click();
+  await page.clock.resume();
+  const results = await new AxeBuilder({ page }).include('[data-testid="deal-import-preview"]').analyze();
+  const seriousViolations = results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
+  expect(seriousViolations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`)).toEqual([]);
+});
+
 test('theater mode has no serious accessibility violations', async ({ page, seed, request, settle }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'axe runs on chromium only');
   await seedSettings(request);
