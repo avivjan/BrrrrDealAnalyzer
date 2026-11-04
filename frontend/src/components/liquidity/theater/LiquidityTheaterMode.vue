@@ -160,6 +160,16 @@ const todayIsoDate = todayISO()
 const lowestBalanceInNext90Days = computed(() => lowestBalanceInNextDays(store.series, todayIsoDate, 90))
 const nextMoneyOut = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_out'))
 const nextMoneyIn = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_in'))
+/** The timeline's lowest balance: the "Lowest" button brings it into view. */
+const lowestDay = computed(() => {
+  const lowestDate = store.series.globalMinDates[0]
+  return lowestDate ? store.series.days.find(day => day.date === lowestDate) ?? null : null
+})
+const lowestButtonTitle = computed(() => lowestDay.value
+  ? `Lowest balance: ${formatMoney(Math.round(lowestDay.value.balance_dollars))} on ${shortDate(lowestDay.value.date)}` : 'Lowest balance')
+function showLowestDay() {
+  if (lowestDay.value) chartRef.value?.centerOnDate(lowestDay.value.date)
+}
 const overdueRowCount = computed(() => store.overdueMoneyOut.length + store.expectedMoneyInNotCounted.length)
 const overdueMoneyOutTotalDollars = computed(() => store.overdueMoneyOut.reduce((total, txn) => total + txn.amount_dollars, 0))
 
@@ -343,6 +353,18 @@ const SHORTCUTS = [
               <UiButton data-testid="theater.today" variant="ghost" size="sm" class="gap-1.5 rounded-full" @click="chartRef?.centerOnToday()">
                 <i class="pi pi-crosshair text-[10px]" aria-hidden="true"></i> Today
               </UiButton>
+              <UiButton
+                data-testid="theater.lowest"
+                variant="ghost"
+                size="sm"
+                class="gap-1.5 rounded-full"
+                :disabled="!lowestDay"
+                :title="lowestButtonTitle"
+                :aria-label="lowestButtonTitle"
+                @click="showLowestDay"
+              >
+                <i class="pi pi-arrow-down text-[10px]" aria-hidden="true"></i> Lowest
+              </UiButton>
               <UiIconButton
                 data-testid="theater.mercury-sync"
                 :label="store.mercurySyncing ? 'Syncing from Mercury' : 'Re-sync the opening balance from Mercury'"
@@ -458,6 +480,7 @@ const SHORTCUTS = [
           </Transition>
           <Transition name="theater-pop">
             <div v-if="moreActionsMenuOpen" data-testid="theater.more-menu" class="absolute top-full z-30 mt-2 rounded-card border-ui border-line bg-surface p-4 shadow-3 right-3 w-56 p-1">
+              <button data-testid="theater.more.lowest" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="!lowestDay" @click="moreActionsMenuOpen = false; showLowestDay()"><i class="pi pi-arrow-down" aria-hidden="true"></i> Lowest balance</button>
               <button data-testid="theater.more.today" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
               <button data-testid="theater.more.mercury-sync" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
               <button data-testid="theater.more.settings" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>

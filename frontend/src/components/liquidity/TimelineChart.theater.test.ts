@@ -158,4 +158,16 @@ describe("TimelineChart in theater mode", () => {
     expect(wrapper.find('[data-testid="deal-tag.groceries"]').exists()).toBe(false);
     wrapper.unmount();
   });
+
+  it("centres a day and selects it, its floating tooltip showing (the Lowest button)", async () => {
+    const wrapper = mountChart({ tooltipFollowsPointer: true });
+    await wrapper.vm.$nextTick();
+    const chart = wrapper.findComponent(TimelineChart);
+    (chart.vm as unknown as { centerOnDate: (isoDate: string) => void }).centerOnDate("2026-11-20");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get('[data-testid="chart.tooltip"]').text()).toContain("Nov 20");
+    expect(chart.emitted("selectDay")).toEqual([["2026-11-20"]]);
+    expect(wrapper.find('[data-date="2026-11-20"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
 });

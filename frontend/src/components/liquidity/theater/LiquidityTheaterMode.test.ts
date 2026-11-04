@@ -149,4 +149,19 @@ describe("LiquidityTheaterMode", () => {
     await doneRow.get('[data-testid="theater.day-modal.done-row.paid.undo"]').trigger("click");
     expect(wrapper.emitted("markNotDone")).toEqual([["paid"]]);
   });
+
+  it("brings the lowest balance into view with its tooltip from the Lowest button", async () => {
+    const store = useLiquidityStore();
+    store.settings = { opening_balance_dollars: 10_000, opening_balance_date: "2026-11-03", reserve_dollars: 5000 };
+    store.transactions = [
+      { id: "closing", effective_date: "2026-11-20", description: "Closing", amount_dollars: -9_000 },
+      { id: "refi", effective_date: "2026-12-10", description: "Refi", amount_dollars: 6_000 },
+    ];
+    const wrapper = mountTheater();
+    await wrapper.vm.$nextTick();
+    const lowest = wrapper.get('[data-testid="theater.lowest"]');
+    expect(lowest.attributes("title")).toBe("Lowest balance: $1,000 on Nov 20");
+    await lowest.trigger("click");
+    expect(wrapper.get('[data-testid="chart.tooltip"]').text()).toContain("Nov 20");
+  });
 });

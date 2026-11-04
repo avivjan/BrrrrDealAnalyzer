@@ -389,6 +389,16 @@ function centerOnToday() {
   scrollX.value = scrollToCentre(todayIdx, width.value, count.value)
 }
 
+/** Centre a day and select it, as the arrow keys do, so its tooltip shows (the theater's "Lowest" button). */
+function centerOnDate(isoDate: string) {
+  const dayIdx = props.days.findIndex((d) => d.date === isoDate)
+  if (dayIdx < 0) return
+  scrollX.value = scrollToCentre(dayIdx, width.value, count.value)
+  selectedIndex.value = dayIdx
+  selectedByKeyboard.value = true
+  emit('selectDay', isoDate)
+}
+
 function onPointerDown(e: PointerEvent) {
   isDragging.value = true
   dragStartX = e.clientX
@@ -506,7 +516,7 @@ watch(
   },
 )
 
-defineExpose({ centerOnToday })
+defineExpose({ centerOnToday, centerOnDate })
 </script>
 
 <template>
