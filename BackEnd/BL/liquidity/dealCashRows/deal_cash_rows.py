@@ -88,6 +88,12 @@ def planned_cash_rows_of_deal(deal) -> list[PlannedDealCashRow]:
     return _planned_rows_from_schedule(compute_brrr_with_intermediates(deal).cash_needed_schedule_at_lowest_arv)
 
 
+def key_dates_of_deal(deal) -> list[tuple[str, date, str]]:
+    """The deal's key dates as its Cash Needed table shows them (key, date, description), in date order."""
+    schedule = compute_brrr_with_intermediates(deal).cash_needed_schedule_at_lowest_arv
+    return [(milestone.milestone_key, milestone.date, milestone.description) for milestone in schedule.deal_milestones]
+
+
 def refi_closing_date_of_deal(deal) -> date:
     return deal.buy_closing_date + timedelta(days=int(deal.days_until_refi))
 

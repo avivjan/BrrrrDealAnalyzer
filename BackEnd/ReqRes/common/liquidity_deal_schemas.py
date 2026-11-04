@@ -100,6 +100,13 @@ class DealMilestoneRes(BaseModel):
     is_overdue: bool = Field(..., description="The planned date passed and it is not approved.")
 
 
+class DealKeyDateRes(BaseModel):
+    key: str = Field(..., description=(
+        "contract_signed, purchase_closed, rehab_completed, tenant_moved_in, property_tax_bill_paid_on_november_30 or refi_closed."))
+    date: date
+    description: str
+
+
 class ImportedLiquidityDealRes(BaseModel):
     deal_board: LiquidityDealBoard
     deal_id: str
@@ -113,6 +120,9 @@ class ImportedLiquidityDealRes(BaseModel):
     late_refi_row_count: int
     refi_is_late: bool
     milestones: list[DealMilestoneRes]
+    key_dates: list[DealKeyDateRes] = Field(default_factory=list, description=(
+        "The deal's key dates as its Cash Needed table shows them, in date order (markers, not cash): the five "
+        "milestones and the Nov 30 tax bill paid from the tax bucket while it falls inside the hold."))
 
 
 class LateRefiRefreshDealRes(BaseModel):

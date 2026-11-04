@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
 from BL.liquidity.dealCashRows.deal_cash_rows import (
     DEAL_BOARD_BOUGHT, DEAL_BOARD_MY_DEALS, DEAL_MODEL_BY_BOARD, DealBoard, DealCashRowChange,
-    apply_deal_cash_row_changes, deal_as_attributes, diff_deal_cash_rows, imported_rows_of_deal,
+    apply_deal_cash_row_changes, deal_as_attributes, diff_deal_cash_rows, imported_rows_of_deal, key_dates_of_deal,
     planned_cash_rows_including_late_refi_months, refi_is_late,
 )
 from BL.liquidity.dealCashRows.deal_milestones import (
@@ -29,7 +29,7 @@ from DAL.crud.liquidity import get_settings
 from DAL.data_models import BoughtBrrrDeal, LiquidityTransaction
 from ReqRes.common.liquidity_deal_schemas import (
     DealCashRowChangeCountsRes, DealCashRowChangeRes, DealCashRowChangesRes, DealMilestoneChangeReq,
-    DealMilestoneDateChangeRes, DealMilestoneRes, ImportedLiquidityDealRes, LateRefiRefreshDealRes, LateRefiRefreshRes,
+    DealKeyDateRes, DealMilestoneDateChangeRes, DealMilestoneRes, ImportedLiquidityDealRes, LateRefiRefreshDealRes, LateRefiRefreshRes,
     RemoveOpenDealRowsRes, UseDealValueForField,
 )
 
@@ -212,6 +212,22 @@ def refresh_late_refis(db: Session, today: Optional[date]) -> LateRefiRefreshRes
 
 # --- The Deals panel ----------------------------------------------------------------------------------------------
 
+_KEY_DATE_DESCRIPTION_OF_MILESTONE = {
+    "contract_signed": "Contract signed", "purchase_closed": "Purchase closing", "rehab_completed": "Rehab completed",
+    "tenant_moved_in": "Tenant moves in", "refi_closed": "Refi closing",
+}
+
+
+def _key_dates_res(deal) -> list[DealKeyDateRes]:
+    """The deal's Cash Needed key dates; if the deal cannot be analyzed right now, its five milestones' planned dates."""
+    try:
+        key_dates = key_dates_of_deal(deal)
+    except Exception:   # an invalid saved deal still lists its milestones
+        key_dates = sorted(((milestone, planned_date_of_milestone(deal, milestone), _KEY_DATE_DESCRIPTION_OF_MILESTONE[milestone])
+                            for milestone in DEAL_MILESTONES_IN_ORDER), key=lambda key_date: key_date[1])
+    return [DealKeyDateRes(key=key, date=key_date, description=description) for key, key_date, description in key_dates]
+
+
 def list_imported_deals(db: Session, today: Optional[date]) -> list[ImportedLiquidityDealRes]:
     resolved_today = today_for_liquidity(db, today)
     imported_deals = []
@@ -230,6 +246,7 @@ def list_imported_deals(db: Session, today: Optional[date]) -> list[ImportedLiqu
                                          approved_at=approved_at_of_milestone(deal, milestone),
                                          is_overdue=milestone_is_overdue(deal, milestone, resolved_today))
                         for milestone in DEAL_MILESTONES_IN_ORDER],
+            key_dates=_key_dates_res(deal),
         ))
     return imported_deals
 

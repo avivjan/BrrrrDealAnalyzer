@@ -269,8 +269,8 @@ DESCRIPTIONS: dict[str, str] = {
     "list_liquidity_deals": (
         "The BRRRR deals imported into the Liquidity timeline: board (my_deals / bought), address, open / done / overdue "
         "row counts, late-refi rows, liquidity_rows_out_of_date (a deal save changed its rows, not confirmed yet: "
-        "re-import to confirm) and the five milestones with planned_date, approved_at and is_overdue. open_row_count 0 = "
-        "out of the timeline."
+        "re-import to confirm), the five milestones (planned_date, approved_at, is_overdue) and key_dates (its Cash Needed "
+        "markers). open_row_count 0 = out of the timeline."
     ),
     "refresh_liquidity_late_refis": (
         "Add the carrying-cost months of every imported deal whose refi is late (planned date passed, refi_closed not "
