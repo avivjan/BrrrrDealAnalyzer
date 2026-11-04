@@ -439,6 +439,7 @@ VOLATILE_KEYS = {
     "sourceDealId",
     "source_deal_id",
     "opening_balance_date",  # GET /liquidity/settings auto-creates with today()
+    "occurrences_can_be_overdue_from",  # a recurring rule's creation day: today()
     "spreadsheet_id",
     "appended_range",
 }
