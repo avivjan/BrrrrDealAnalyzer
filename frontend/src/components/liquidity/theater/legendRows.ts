@@ -67,6 +67,19 @@ export function dealTimelineByMonth(
 }
 
 /** The month the Transactions open on: this month if the deal has anything in it, else the first month with an open row, else the first. */
+/**
+ * A recurring rule's recent occurrences for the legend: every one from its overdue-from date up to today (done,
+ * overdue or moved), then the next `upcomingCount`, in date order. History is left out.
+ */
+export function recentOccurrencesOfRule(occurrences: LiquidityTransaction[], ruleId: string, todayIsoDate: string, upcomingCount = 2): LiquidityTransaction[] {
+  const ofTheRule = occurrences
+    .filter(occurrence => occurrence.recurring_rule_id === ruleId && !occurrence.recurring_is_history)
+    .sort((first, second) => (first.recurring_scheduled_date ?? first.effective_date).localeCompare(second.recurring_scheduled_date ?? second.effective_date))
+  const pastOrToday = ofTheRule.filter(occurrence => (occurrence.recurring_scheduled_date ?? occurrence.effective_date) <= todayIsoDate)
+  const upcoming = ofTheRule.filter(occurrence => (occurrence.recurring_scheduled_date ?? occurrence.effective_date) > todayIsoDate).slice(0, upcomingCount)
+  return [...pastOrToday, ...upcoming]
+}
+
 export function monthToOpenFirst(months: DealTimelineMonth[], todayIsoDate: string): string | null {
   const thisMonthKey = todayIsoDate.slice(0, 7)
   if (months.some(month => month.monthKey === thisMonthKey)) return thisMonthKey
@@ -74,9 +87,9 @@ export function monthToOpenFirst(months: DealTimelineMonth[], todayIsoDate: stri
   return firstMonthWithAnOpenRow?.monthKey ?? months[0]?.monthKey ?? null
 }
 
-/** The one-off rows of a day that are marked done (the day modal's "Done on this day"). */
+/** The rows of a day that are marked done, one-off rows and recurring occurrences (the day modal's "Done on this day"). */
 export function doneTransactionsOnDate(transactions: LiquidityTransaction[], isoDate: string): LiquidityTransaction[] {
   return transactions
-    .filter(transaction => !!transaction.done_at && !transaction.recurring_rule_id && transaction.effective_date === isoDate)
+    .filter(transaction => !!transaction.done_at && !transaction.recurring_is_history && transaction.effective_date === isoDate)
     .sort((first, second) => (first.sequence_within_day ?? 0) - (second.sequence_within_day ?? 0))
 }

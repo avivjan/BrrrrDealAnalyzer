@@ -20,7 +20,7 @@ import { dealKeyOf, NEUTRAL_DEAL_COLOR_HEX, shortDealAddress } from '../dealColo
 import InlineAmountEditor from '../InlineAmountEditor.vue'
 import TransactionRowActions from '../TransactionRowActions.vue'
 import { todayISO } from '../../../utils/liquidityEngine'
-import { dealTimelineByMonth, monthToOpenFirst, type DealTimelineItem } from './legendRows'
+import { dealTimelineByMonth, monthToOpenFirst, recentOccurrencesOfRule, type DealTimelineItem } from './legendRows'
 
 const props = defineProps<{
   importedDeals: ImportedLiquidityDeal[]
@@ -30,6 +30,8 @@ const props = defineProps<{
   /** Every one-off row, for the "Other flows" count. */
   transactions: LiquidityTransaction[]
   recurringRules: LiquidityRecurringTransaction[]
+  /** The recurring rules' expanded occurrences (done, overdue, upcoming), for each series' list. */
+  recurringOccurrences?: LiquidityTransaction[]
 }>()
 
 const emit = defineEmits<{
@@ -141,6 +143,19 @@ function toggleMonth(monthKey: string) {
 }
 const overdueRowsOfTheExpandedDeal = computed(() => overdueRowsOfEveryDeal.value.filter(({ txn }) =>
   !!txn.source_deal_board && !!txn.source_deal_id && dealKeyOf(txn.source_deal_board, txn.source_deal_id) === expandedDealKey.value))
+
+/** Each recurring rule's overdue occurrences, live. */
+const overdueOccurrenceCountByRuleId = computed(() => {
+  const counts = new Map<string, number>()
+  for (const { txn } of overdueRowsOfEveryDeal.value) {
+    if (txn.recurring_rule_id) counts.set(txn.recurring_rule_id, (counts.get(txn.recurring_rule_id) ?? 0) + 1)
+  }
+  return counts
+})
+const overdueOccurrenceIds = computed(() => new Set(overdueRowsOfEveryDeal.value.filter(({ txn }) => txn.recurring_rule_id).map(({ txn }) => txn.id)))
+const expandedRuleId = ref<string | null>(null)
+const recentOccurrencesOfTheExpandedRule = computed(() => expandedRuleId.value
+  ? recentOccurrencesOfRule(props.recurringOccurrences ?? [], expandedRuleId.value, todayISO()) : [])
 
 const openManualRowCount = computed(() => props.transactions.filter(txn => !txn.source_deal_id && !txn.done_at).length)
 
@@ -416,12 +431,27 @@ function shortDate(isoDate: string): string {
             v-for="rule in recurringRules"
             :key="rule.id"
             :data-testid="`theater.legend.recurring.${rule.id}`"
-            class="group flex items-center gap-2 rounded-ctl px-2 py-1.5 hover:bg-surface-2"
+            class="group rounded-ctl px-2 py-1.5 hover:bg-surface-2"
+            :class="expandedRuleId === rule.id ? 'bg-surface-2' : ''"
           >
-            <div class="min-w-0 flex-1">
-              <div class="truncate text-xs text-fg">{{ rule.description }}</div>
+            <div class="flex items-center gap-2">
+            <button
+              type="button"
+              :data-testid="`theater.legend.recurring.${rule.id}.toggle`"
+              class="min-w-0 flex-1 text-left"
+              :aria-expanded="expandedRuleId === rule.id"
+              @click="expandedRuleId = expandedRuleId === rule.id ? null : rule.id"
+            >
+              <div class="flex items-center gap-1.5">
+                <span class="truncate text-xs text-fg">{{ rule.description }}</span>
+                <span
+                  v-if="overdueOccurrenceCountByRuleId.get(rule.id)"
+                  :data-testid="`theater.legend.recurring.${rule.id}.overdue`"
+                  class="shrink-0 rounded-full border-ui border-negative/40 bg-negative/10 px-1.5 py-px text-[9px] font-bold text-negative"
+                >{{ overdueOccurrenceCountByRuleId.get(rule.id) }} overdue</span>
+              </div>
               <div class="truncate text-[10px] text-fg-muted">{{ describeRecurrence(rule) }}</div>
-            </div>
+            </button>
             <span class="numeric shrink-0 text-xs font-bold" :class="rule.amount_dollars > 0 ? 'text-positive' : 'text-negative'">{{ formatSignedMoney(rule.amount_dollars) }}</span>
             <span class="flex shrink-0 gap-1 opacity-0 transition-opacity duration-fast ease-standard focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
               <UiIconButton :data-testid="`theater.legend.recurring.${rule.id}.edit`" label="Edit series" size="sm" @click="emit('editRecurring', rule.id)">
@@ -431,6 +461,48 @@ function shortDate(isoDate: string): string {
                 <i class="pi pi-trash text-[9px]" aria-hidden="true"></i>
               </UiIconButton>
             </span>
+            </div>
+            <!-- The series' recent occurrences: done ones struck through with Undo, missed ones with Done, the next ones open their day -->
+            <ul v-if="expandedRuleId === rule.id" :data-testid="`theater.legend.recurring.${rule.id}.occurrences`" class="mt-1 space-y-px">
+              <li v-if="!recentOccurrencesOfTheExpandedRule.length" class="px-1 text-[10px] text-fg-muted">No occurrence yet.</li>
+              <li
+                v-for="occurrence in recentOccurrencesOfTheExpandedRule"
+                :key="occurrence.id"
+                :data-testid="`theater.legend.occurrence.${occurrence.id}`"
+                :data-state="occurrence.done_at ? 'done' : overdueOccurrenceIds.has(occurrence.id) ? 'overdue' : 'open'"
+                class="flex items-center gap-2 rounded-ctl px-1 py-0.5 text-[11px]"
+                :class="occurrence.done_at ? 'opacity-60' : ''"
+              >
+                <button
+                  type="button"
+                  class="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  :title="`Open ${shortDate(occurrence.effective_date)}`"
+                  @click="emit('openDay', overdueOccurrenceIds.has(occurrence.id) ? todayISO() : occurrence.effective_date)"
+                >
+                  <span class="w-11 shrink-0 tabular-nums" :class="occurrence.done_at ? 'text-fg-muted line-through' : 'text-fg-muted'">{{ shortDate(occurrence.recurring_scheduled_date ?? occurrence.effective_date) }}</span>
+                  <span v-if="occurrence.done_at" class="text-fg-muted line-through">done</span>
+                  <span v-else-if="overdueOccurrenceIds.has(occurrence.id)" class="text-warning">overdue</span>
+                  <span v-else-if="occurrence.recurring_scheduled_date && occurrence.effective_date !== occurrence.recurring_scheduled_date" class="text-fg-muted">moved to {{ shortDate(occurrence.effective_date) }}</span>
+                  <span v-else class="text-fg-muted">upcoming</span>
+                </button>
+                <button
+                  v-if="occurrence.done_at"
+                  type="button"
+                  :data-testid="`theater.legend.occurrence.${occurrence.id}.undo`"
+                  class="shrink-0 rounded px-1.5 py-px text-[10px] font-semibold text-primary hover:bg-primary/10"
+                  :aria-label="`Undo done: ${rule.description} ${shortDate(occurrence.recurring_scheduled_date ?? occurrence.effective_date)}`"
+                  @click="emit('markNotDone', occurrence.id)"
+                >Undo</button>
+                <button
+                  v-else
+                  type="button"
+                  :data-testid="`theater.legend.occurrence.${occurrence.id}.done`"
+                  class="shrink-0 rounded px-1.5 py-px text-[10px] font-semibold text-positive hover:bg-positive/10"
+                  :aria-label="`Done: ${rule.description} ${shortDate(occurrence.recurring_scheduled_date ?? occurrence.effective_date)}`"
+                  @click="emit('markDone', occurrence.id)"
+                >Done</button>
+              </li>
+            </ul>
           </li>
         </ul>
       </div>

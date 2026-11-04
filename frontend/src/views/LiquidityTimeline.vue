@@ -407,21 +407,52 @@ async function runQuickAction(action: () => Promise<void>, message: string, undo
   }
 }
 
+// A recurring occurrence (`recurring:<rule>:<index>`) is done, reopened or moved on its own; the series stays.
+async function markDoneOrNot(id: string, isDone: boolean): Promise<void> {
+  const occurrence = store.recurringOccurrenceOf(id)
+  if (occurrence) {
+    if (isDone) await store.markRecurringOccurrenceDone(occurrence.ruleId, occurrence.scheduledDate)
+    else await store.markRecurringOccurrenceNotDone(occurrence.ruleId, occurrence.scheduledDate)
+  } else if (isDone) await store.markTransactionDone(id)
+  else await store.markTransactionNotDone(id)
+}
+
 async function onMarkTransactionDone(id: string) {
-  await runQuickAction(() => store.markTransactionDone(id), 'Marked done.', () => store.markTransactionNotDone(id))
+  await runQuickAction(() => markDoneOrNot(id, true), 'Marked done.', () => markDoneOrNot(id, false))
 }
 
 async function onMarkTransactionNotDone(id: string) {
-  await runQuickAction(() => store.markTransactionNotDone(id), 'Reopened.', () => store.markTransactionDone(id))
+  await runQuickAction(() => markDoneOrNot(id, false), 'Reopened.', () => markDoneOrNot(id, true))
 }
 
 async function onMoveTransactionToDate(id: string, newEffectiveDate: string) {
+  const occurrence = store.recurringOccurrenceOf(id)
+  if (occurrence) {
+    await runQuickAction(
+      () => store.moveRecurringOccurrence(occurrence.ruleId, occurrence.scheduledDate, newEffectiveDate),
+      `Moved to ${newEffectiveDate}.`,
+      () => store.moveRecurringOccurrence(occurrence.ruleId, occurrence.scheduledDate, occurrence.effectiveDate),
+    )
+    return
+  }
   const previousDate = findOneOffTransaction(id)?.effective_date
   await runQuickAction(
     async () => { await store.updateTransaction(id, { effective_date: newEffectiveDate }) },
     `Moved to ${newEffectiveDate}.`,
     previousDate ? async () => { await store.updateTransaction(id, { effective_date: previousDate }) } : null,
   )
+}
+
+/** The bulk bar's selection, split into one-off rows and recurring occurrences (the backend takes both). */
+function bulkSelectionOf(ids: string[]) {
+  const transactionIds: string[] = []
+  const recurringOccurrences: { recurring_rule_id: string; scheduled_date: string }[] = []
+  for (const id of ids) {
+    const occurrence = store.recurringOccurrenceOf(id)
+    if (occurrence) recurringOccurrences.push({ recurring_rule_id: occurrence.ruleId, scheduled_date: occurrence.scheduledDate })
+    else if (!id.startsWith('recurring:')) transactionIds.push(id)
+  }
+  return { transaction_ids: transactionIds, recurring_occurrences: recurringOccurrences }
 }
 
 async function onChangeTransactionAmount(id: string, newAmountDollars: number) {
@@ -434,16 +465,18 @@ async function onChangeTransactionAmount(id: string, newAmountDollars: number) {
 }
 
 async function onBulkMarkDone(ids: string[]) {
+  const selection = bulkSelectionOf(ids)
   await runQuickAction(
-    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'mark_done' }),
+    () => store.applyBulkTransactionAction({ ...selection, action: 'mark_done' }),
     `${ids.length} marked done.`,
-    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'mark_not_done' }),
+    () => store.applyBulkTransactionAction({ ...selection, action: 'mark_not_done' }),
   )
 }
 
 async function onBulkMoveToDate(ids: string[], newEffectiveDate: string) {
+  const selection = bulkSelectionOf(ids)
   await runQuickAction(
-    () => store.applyBulkTransactionAction({ transaction_ids: ids, action: 'move_to_date', new_effective_date: newEffectiveDate }),
+    () => store.applyBulkTransactionAction({ ...selection, action: 'move_to_date', new_effective_date: newEffectiveDate }),
     `${ids.length} moved to ${newEffectiveDate}.`,
     null,
   )

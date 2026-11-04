@@ -145,7 +145,8 @@ const milestonesOnTheModalDay = computed(() => {
   }
   return entries
 })
-const doneTransactionsOfTheModalDay = computed(() => dayModalDate.value ? doneTransactionsOnDate(store.transactions, dayModalDate.value) : [])
+const doneTransactionsOfTheModalDay = computed(() => dayModalDate.value ? doneTransactionsOnDate(store.transactionsInWindow, dayModalDate.value) : [])
+const recurringOccurrences = computed(() => store.transactionsInWindow.filter(transaction => !!transaction.recurring_rule_id))
 function stepDayModal(direction: -1 | 1) {
   const next = store.series.days[dayModalIndex.value + direction]
   if (next) dayModalDate.value = next.date
@@ -535,6 +536,7 @@ const SHORTCUTS = [
                 :expected-money-in-not-counted="store.expectedMoneyInNotCounted"
                 :transactions="store.transactions"
                 :recurring-rules="store.recurringRules"
+                :recurring-occurrences="recurringOccurrences"
                 class="pointer-events-auto max-h-full"
                 @close="legendOpen = false"
                 @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"

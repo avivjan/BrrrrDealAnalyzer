@@ -186,6 +186,24 @@ describe("DealLegendPanel", () => {
     expect(wrapper.emitted("reviewChanges")?.[0]?.[0]).toMatchObject({ deal_id: "d1" });
   });
 
+  it("shows a recurring series' overdue count and its occurrences, with Done on a missed one and Undo on a done one", async () => {
+    const RULE = { id: "r1", description: "Misc", amount_dollars: -1500, start_date: "2026-08-01", end_date: null, occurrences: null, frequency: "monthly" as const, interval: 1 };
+    const missed: LiquidityTransaction = { id: "recurring:r1:1", effective_date: "2026-09-01", description: "Misc", amount_dollars: -1500, recurring_rule_id: "r1", recurring_scheduled_date: "2026-09-01" };
+    const done: LiquidityTransaction = { ...missed, id: "recurring:r1:0", effective_date: "2026-08-01", recurring_scheduled_date: "2026-08-01", done_at: "2026-08-01T00:00:00Z" };
+    const wrapper = mount(DealLegendPanel, {
+      props: { importedDeals: [], overdueMoneyOut: [missed], expectedMoneyInNotCounted: [], transactions: [], recurringRules: [RULE], recurringOccurrences: [missed, done] },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    expect(wrapper.get('[data-testid="theater.legend.recurring.r1.overdue"]').text()).toBe("1 overdue");
+    await wrapper.get('[data-testid="theater.legend.recurring.r1.toggle"]').trigger("click");
+    const items = wrapper.findAll('[data-testid^="theater.legend.occurrence."][data-state]');
+    expect(items.map((item) => item.attributes("data-state"))).toEqual(["done", "overdue"]);
+    await wrapper.get('[data-testid="theater.legend.occurrence.recurring:r1:1.done"]').trigger("click");
+    await wrapper.get('[data-testid="theater.legend.occurrence.recurring:r1:0.undo"]').trigger("click");
+    expect(wrapper.emitted("markDone")).toEqual([["recurring:r1:1"]]);
+    expect(wrapper.emitted("markNotDone")).toEqual([["recurring:r1:0"]]);
+  });
+
   it("counts the open manual rows as Other flows and lists the recurring series", () => {
     const wrapper = mountLegend();
     expect(wrapper.get('[data-testid="theater.legend.other-flows"]').text()).toContain("2 open");

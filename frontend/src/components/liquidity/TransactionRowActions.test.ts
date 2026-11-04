@@ -41,9 +41,11 @@ describe("TransactionRowActions", () => {
     expect(wrapper.emitted("moveToDate")).toEqual([["t1", "2026-12-15"]]);
   });
 
-  it("offers nothing on a recurring occurrence", () => {
+  it("offers Done and the postpone chips on a recurring occurrence too, for that occurrence alone", async () => {
     const wrapper = mount(TransactionRowActions, { props: { txn: txn({ recurring_rule_id: "rule-1" }) } });
-    expect(wrapper.find('[data-testid="rowactions.t1"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="rowactions.t1"]').exists()).toBe(true);
+    await wrapper.get('[data-testid="rowactions.t1.done"]').trigger("click");
+    expect(wrapper.emitted("markDone")).toEqual([["t1"]]);
   });
 });
 

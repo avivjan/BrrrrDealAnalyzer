@@ -77,6 +77,26 @@ export const liquidityApi = {
     await apiClient.delete(`/liquidity/recurring/${id}`)
   },
 
+  /** One occurrence of a recurring rule, by the date the rule gives it: done, open again, or moved. */
+  async markRecurringOccurrenceDone(ruleId: string, scheduledDate: string): Promise<LiquidityRecurringTransaction> {
+    const res = await apiClient.post<LiquidityRecurringTransaction>(
+      `/liquidity/recurring/${encodeURIComponent(ruleId)}/occurrences/${encodeURIComponent(scheduledDate)}/done`)
+    return res.data
+  },
+
+  async markRecurringOccurrenceNotDone(ruleId: string, scheduledDate: string): Promise<LiquidityRecurringTransaction> {
+    const res = await apiClient.post<LiquidityRecurringTransaction>(
+      `/liquidity/recurring/${encodeURIComponent(ruleId)}/occurrences/${encodeURIComponent(scheduledDate)}/not-done`)
+    return res.data
+  },
+
+  async moveRecurringOccurrence(ruleId: string, scheduledDate: string, newEffectiveDate: string): Promise<LiquidityRecurringTransaction> {
+    const res = await apiClient.post<LiquidityRecurringTransaction>(
+      `/liquidity/recurring/${encodeURIComponent(ruleId)}/occurrences/${encodeURIComponent(scheduledDate)}/move`,
+      { new_effective_date: newEffectiveDate })
+    return res.data
+  },
+
   async getSettings(): Promise<LiquiditySettings> {
     const res = await apiClient.get<LiquiditySettings>('/liquidity/settings')
     return res.data

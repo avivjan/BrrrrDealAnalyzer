@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { DealKeyDate, DealMilestoneState, LiquidityTransaction } from "../../../types/liquidity";
-import { dealTimelineByMonth, doneTransactionsOnDate, monthToOpenFirst } from "./legendRows";
+import { dealTimelineByMonth, doneTransactionsOnDate, monthToOpenFirst, recentOccurrencesOfRule } from "./legendRows";
 
 const row = (id: string, effective_date: string, amount_dollars: number, over: Partial<LiquidityTransaction> = {}): LiquidityTransaction => ({
   id, effective_date, description: `Row ${id}`, amount_dollars, source_deal_board: "my_deals", source_deal_id: "d1", ...over,
@@ -75,5 +75,30 @@ describe("doneTransactionsOnDate", () => {
       row("other-day", "2026-11-06", -10, { done_at: "2026-11-06T00:00:00Z" }),
     ];
     expect(doneTransactionsOnDate(rows, "2026-11-05").map((item) => item.id)).toEqual(["done-deal", "done-manual"]);
+  });
+});
+
+describe("recurring occurrences in the legend and the day view", () => {
+  const occurrence = (index: number, scheduled: string, over: Partial<LiquidityTransaction> = {}): LiquidityTransaction => ({
+    id: `recurring:r1:${index}`, effective_date: scheduled, description: "Misc", amount_dollars: -1500,
+    recurring_rule_id: "r1", recurring_index: index, recurring_scheduled_date: scheduled, ...over,
+  });
+
+  it("lists a rule's occurrences up to today, then the next two, leaving history out", () => {
+    const occurrences = [
+      occurrence(0, "2026-08-01", { recurring_is_history: true }),
+      occurrence(3, "2026-11-01"), occurrence(1, "2026-09-01", { done_at: "x" }), occurrence(2, "2026-10-01"),
+      occurrence(4, "2026-12-01"), occurrence(5, "2027-01-01"), occurrence(6, "2027-02-01"),
+      { ...occurrence(1, "2026-09-01"), id: "recurring:other:1", recurring_rule_id: "other" },
+    ];
+    expect(recentOccurrencesOfRule(occurrences, "r1", "2026-11-04").map((item) => item.recurring_scheduled_date)).toEqual([
+      "2026-09-01", "2026-10-01", "2026-11-01", "2026-12-01", "2027-01-01",
+    ]);
+  });
+
+  it("puts a done occurrence in its day's done list, but not a historical one", () => {
+    const done = occurrence(1, "2026-11-05", { done_at: "2026-11-05T00:00:00Z" });
+    const history = occurrence(0, "2026-11-05", { done_at: "2026-11-05T00:00:00Z", recurring_is_history: true, id: "h" });
+    expect(doneTransactionsOnDate([done, history], "2026-11-05").map((item) => item.id)).toEqual(["recurring:r1:1"]);
   });
 });

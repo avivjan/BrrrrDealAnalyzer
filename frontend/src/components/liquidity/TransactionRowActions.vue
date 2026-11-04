@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * The one- or two-tap actions on a one-off liquidity row: ✓ Done, the postpone chips
- * (+1 day, +1 week, next 1st) and a date picker. A recurring occurrence has none: it is
- * edited through its rule. The chips count from today for an overdue row (moving it
- * relative to its past date would leave it overdue).
+ * (+1 day, +1 week, next 1st) and a date picker. On a recurring occurrence they act on that
+ * occurrence alone (tasks/todo/DealImpactSimulator.md, E); editing the series is the rule's own
+ * button. The chips count from today for an overdue row (moving it relative to its past date
+ * would leave it overdue).
  */
 import { computed, useId } from 'vue'
 
@@ -37,7 +38,7 @@ function onPickDate(event: Event) {
 </script>
 
 <template>
-  <div v-if="!txn.recurring_rule_id" :data-testid="`rowactions.${txn.id}`" class="flex flex-wrap items-center gap-1.5">
+  <div :data-testid="`rowactions.${txn.id}`" class="flex flex-wrap items-center gap-1.5">
     <UiButton
       :data-testid="`rowactions.${txn.id}.done`"
       variant="secondary"

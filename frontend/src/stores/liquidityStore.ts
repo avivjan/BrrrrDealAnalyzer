@@ -233,7 +233,34 @@ export const useLiquidityStore = defineStore('liquidity', () => {
 
   async function applyBulkTransactionAction(data: LiquidityTransactionBulkActionReq): Promise<void> {
     await liquidityApi.applyBulkTransactionAction(data)
+    if (data.recurring_occurrences?.length) recurringRules.value = await liquidityApi.getRecurring()
     await reloadAfterDoneChange(data.transaction_ids)
+  }
+
+  /** A recurring occurrence from its row id (`recurring:<rule>:<index>`): its rule and the date the rule gives it. */
+  function recurringOccurrenceOf(transactionId: string): { ruleId: string; scheduledDate: string; effectiveDate: string } | null {
+    if (!transactionId.startsWith('recurring:')) return null
+    const occurrence = transactionsInWindow.value.find(transaction => transaction.id === transactionId)
+    if (!occurrence?.recurring_rule_id || !occurrence.recurring_scheduled_date) return null
+    return { ruleId: occurrence.recurring_rule_id, scheduledDate: occurrence.recurring_scheduled_date, effectiveDate: occurrence.effective_date }
+  }
+
+  /** The rule answers with its states: replace it in place, so the timeline re-expands it. */
+  function replaceRecurringRule(rule: LiquidityRecurringTransaction): void {
+    recurringRules.value = recurringRules.value.map(existing => (existing.id === rule.id ? rule : existing))
+    _version.value++
+  }
+
+  async function markRecurringOccurrenceDone(ruleId: string, scheduledDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.markRecurringOccurrenceDone(ruleId, scheduledDate))
+  }
+
+  async function markRecurringOccurrenceNotDone(ruleId: string, scheduledDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.markRecurringOccurrenceNotDone(ruleId, scheduledDate))
+  }
+
+  async function moveRecurringOccurrence(ruleId: string, scheduledDate: string, newEffectiveDate: string): Promise<void> {
+    replaceRecurringRule(await liquidityApi.moveRecurringOccurrence(ruleId, scheduledDate, newEffectiveDate))
   }
 
   async function reloadTransactionsAndImportedDeals(): Promise<void> {
@@ -414,6 +441,11 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     markTransactionDone,
     markTransactionNotDone,
     applyBulkTransactionAction,
+    transactionsInWindow,
+    recurringOccurrenceOf,
+    markRecurringOccurrenceDone,
+    markRecurringOccurrenceNotDone,
+    moveRecurringOccurrence,
     addRecurring,
     updateRecurring,
     deleteRecurring,
