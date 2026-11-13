@@ -125,6 +125,7 @@ watch(amountText, () => {
 
 const OUTCOME_MESSAGES: Record<ConstructionAccountTransfer['transfer_outcome'], string> = {
   accepted_by_mercury: 'Mercury accepted the transfer. The timeline counts it now; the bank feed will show it shortly.',
+  waiting_for_approval_in_mercury: 'Mercury created the transfer request. Approve it in Mercury; the timeline counts it once Mercury sends it.',
   being_sent: 'The transfer is being sent.',
   refused_by_mercury: 'Mercury refused the transfer. Nothing was sent.',
   mercury_did_not_answer: 'Mercury did not answer. The transfer may have been made: check Mercury before trying again.',
@@ -145,7 +146,7 @@ const outcomeMessage = computed(() => {
   const message = OUTCOME_MESSAGES[transfer.transfer_outcome]
   return transfer.transfer_outcome === 'refused_by_mercury' ? message + refusalHintOf(transfer.mercury_refusal_http_status) : message
 })
-const outcomeTone = computed(() => sentTransfer.value?.transfer_outcome === 'accepted_by_mercury' ? 'positive' : 'warning')
+const outcomeTone = computed(() => ['accepted_by_mercury', 'waiting_for_approval_in_mercury'].includes(sentTransfer.value?.transfer_outcome ?? '') ? 'positive' : 'warning')
 
 async function sendTheTransfer() {
   if (!canSend.value || !props.status) return

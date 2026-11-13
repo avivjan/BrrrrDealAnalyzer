@@ -66,11 +66,13 @@ const ROW_LABELS: Record<string, string> = {
 
 const stateChip = computed(() => constructionAccountStateOf(props.status))
 const TRANSFER_OUTCOME_LABELS = {
-  being_sent: 'Being sent', accepted_by_mercury: 'Accepted', refused_by_mercury: 'Refused', mercury_did_not_answer: 'No answer: check Mercury',
+  being_sent: 'Being sent', accepted_by_mercury: 'Accepted', waiting_for_approval_in_mercury: 'Approve it in Mercury',
+  refused_by_mercury: 'Refused', mercury_did_not_answer: 'No answer: check Mercury',
   failed_or_cancelled_at_mercury: 'Failed or cancelled',
 } as const
 const TRANSFER_OUTCOME_TONES = {
-  being_sent: 'neutral', accepted_by_mercury: 'positive', refused_by_mercury: 'negative', mercury_did_not_answer: 'warning',
+  being_sent: 'neutral', accepted_by_mercury: 'positive', waiting_for_approval_in_mercury: 'warning', refused_by_mercury: 'negative',
+  mercury_did_not_answer: 'warning',
   failed_or_cancelled_at_mercury: 'negative',
 } as const
 

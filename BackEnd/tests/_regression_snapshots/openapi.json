@@ -9424,6 +9424,7 @@
             "enum": [
               "being_sent",
               "accepted_by_mercury",
+              "waiting_for_approval_in_mercury",
               "refused_by_mercury",
               "mercury_did_not_answer",
               "failed_or_cancelled_at_mercury"

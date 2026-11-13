@@ -42,13 +42,14 @@ from DAL.crud.liquidity_construction_account import get_transfer_by_idempotency_
 from DAL.data_models.liquidity.construction_account_models import (
     TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING, TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY,
     TRANSFER_OUTCOME_BEING_SENT, TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY, TRANSFER_OUTCOME_MERCURY_DID_NOT_ANSWER,
-    TRANSFER_OUTCOME_REFUSED_BY_MERCURY, LiquidityConstructionAccountTransfer,
+    TRANSFER_OUTCOME_REFUSED_BY_MERCURY, TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY, LiquidityConstructionAccountTransfer,
 )
 from ReqRes.common.liquidity_construction_account_schemas import ConstructionAccountTransferReq, ConstructionAccountTransferWriteRes
 from ReqRes.common.liquidity_deal_schemas import UseDealValueForField
 
 ONE_CENT = Decimal("0.01")
-MERCURY_STATUSES_THAT_MEAN_NOTHING_MOVED = {"failed", "cancelled"}
+MERCURY_STATUSES_THAT_MEAN_NOTHING_MOVED = {"failed", "cancelled", "rejected"}
+MERCURY_STATUSES_THAT_WAIT_FOR_AN_APPROVAL = {"pending_approval"}
 
 
 class ConstructionAccountTransferRefusedError(Exception):
@@ -141,8 +142,12 @@ def _ask_mercury(transfer: LiquidityConstructionAccountTransfer, deal_address: s
         return
     transfer.mercury_transfer_id = answer.mercury_transfer_id
     transfer.mercury_transfer_status = answer.mercury_transfer_status
-    transfer.transfer_outcome = (TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY if answer.mercury_transfer_status in MERCURY_STATUSES_THAT_MEAN_NOTHING_MOVED
-                                 else TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY)
+    if answer.mercury_transfer_status in MERCURY_STATUSES_THAT_MEAN_NOTHING_MOVED:
+        transfer.transfer_outcome = TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY
+    elif answer.mercury_transfer_status in MERCURY_STATUSES_THAT_WAIT_FOR_AN_APPROVAL:
+        transfer.transfer_outcome = TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY
+    else:
+        transfer.transfer_outcome = TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY
 
 
 def make_construction_account_transfer(db: Session, bought_deal_id: str, transfer_direction: str, data: ConstructionAccountTransferReq,
