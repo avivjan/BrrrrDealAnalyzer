@@ -46,7 +46,7 @@ def _project(transactions, overrides=None, **input_changes):
         loan_draws_pulled_before_construction_account_dollars=Decimal("0"),
         rehab_payments_made_before_construction_account_dollars=Decimal("0"),
         manual_draw_adjustments_dollars=Decimal("0"), manual_payment_adjustments_dollars=Decimal("0"),
-        planned_deposit_override_dollars=None, minimum_balance_to_keep_in_construction_account_dollars=Decimal("0"),
+        minimum_balance_to_keep_in_construction_account_dollars=Decimal("0"),
         deposit_row_is_done=False, is_closed_out=False,
     )
     inputs = replace(inputs, **{name: (Decimal(value) if isinstance(value, int) and not isinstance(value, bool) else value)
@@ -59,7 +59,7 @@ class TestTheProjectedReturn:
     def test_before_any_money_moves_the_deposit_is_due_and_the_cushion_and_the_spread_come_back(self):
         projection = _project([])
         assert projection.original_steal_dollars == 5000
-        assert (projection.planned_deposit_dollars, projection.remaining_deposit_dollars) == (20000, 20000)
+        assert (projection.total_to_deposit_dollars, projection.remaining_deposit_dollars) == (20000, 20000)
         assert projection.projected_return_at_rehab_end_dollars == 5000          # the spread alone: the account is empty
         assert projection.return_row_amount_dollars == 25000                     # + the deposit still to come
         assert (projection.deposit_row_amount_dollars, projection.top_up_needed_dollars) == (20000, 0)
@@ -187,13 +187,14 @@ class TestTheDepositAndTheStealLimits:
         assert projection.remaining_deposit_dollars == projection.deposit_row_amount_dollars == 8000
         assert projection.return_row_amount_dollars == 25000
 
-    def test_the_deposit_target_override_replaces_the_formula(self):
-        projection = _project([], planned_deposit_override_dollars=8000)
-        assert (projection.planned_deposit_dollars, projection.remaining_deposit_dollars) == (8000, 8000)
+    def test_the_cushion_is_the_one_deposit_figure(self):
+        projection = _project([], rehab_cushion_dollars=8000)
+        assert (projection.rehab_cushion_dollars, projection.rehab_beyond_the_construction_budget_dollars) == (8000, 0)
+        assert (projection.total_to_deposit_dollars, projection.remaining_deposit_dollars) == (8000, 8000)
 
     def test_a_rehab_beyond_the_budget_is_part_of_the_planned_deposit(self):
         projection = _project([], rehab_cost_dollars=110000)
-        assert projection.original_steal_dollars == -10000 and projection.planned_deposit_dollars == 30000
+        assert projection.original_steal_dollars == -10000 and projection.total_to_deposit_dollars == 30000
         assert projection.return_row_amount_dollars == 20000   # only the cushion comes back
 
     def test_a_deposit_row_marked_done_by_hand_asks_for_nothing_more(self):

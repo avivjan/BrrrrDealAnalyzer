@@ -60,5 +60,16 @@ def settings_to_res(settings: LiquiditySettings) -> LiquiditySettingsRes:
         reserve_dollars=float(settings.reserve_dollars),
         mercury_account_ids_counted_as_cash=settings.mercury_account_ids_counted_as_cash,
         timezone_name=settings.timezone_name or "America/New_York",
+        construction_account_refresh_interval_seconds=settings.construction_account_refresh_interval_seconds or 30,
+        construction_account_refresh_when_window_regains_focus=(
+            True if settings.construction_account_refresh_when_window_regains_focus is None
+            else bool(settings.construction_account_refresh_when_window_regains_focus)),
+        construction_account_in_app_transfers_enabled=(
+            True if settings.construction_account_in_app_transfers_enabled is None
+            else bool(settings.construction_account_in_app_transfers_enabled)),
+        construction_account_transfers_per_hour_limit=settings.construction_account_transfers_per_hour_limit or 5,
+        construction_account_maximum_single_transfer_dollars=float(
+            100000 if settings.construction_account_maximum_single_transfer_dollars is None
+            else settings.construction_account_maximum_single_transfer_dollars),
         updated_at=settings.updated_at.isoformat() if settings.updated_at else None,
     )

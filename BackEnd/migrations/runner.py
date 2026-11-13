@@ -153,6 +153,16 @@ def _run_migrations_locked(engine):
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "timezone_name",
                           "VARCHAR(64) DEFAULT 'America/New_York' NOT NULL", None)
+    # The construction account settings, edited in the UI (tasks/todo/ConstructionAccountPerRehab.md).
+    for column_name, column_ddl in (
+        ("construction_account_refresh_interval_seconds", "INTEGER DEFAULT 30 NOT NULL"),
+        ("construction_account_refresh_when_window_regains_focus", "BOOLEAN DEFAULT TRUE NOT NULL"),
+        ("construction_account_in_app_transfers_enabled", "BOOLEAN DEFAULT TRUE NOT NULL"),
+        ("construction_account_transfers_per_hour_limit", "INTEGER DEFAULT 5 NOT NULL"),
+        ("construction_account_maximum_single_transfer_dollars", "NUMERIC(16,2) DEFAULT 100000 NOT NULL"),
+    ):
+        if "liquidity_settings" in table_names:
+            add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", column_name, column_ddl, None)
     # The deal milestones approved in the liquidity timeline, and the "rows out of date" flag.
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
         for column_name, column_ddl in (

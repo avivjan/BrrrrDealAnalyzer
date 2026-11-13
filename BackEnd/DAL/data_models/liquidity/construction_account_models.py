@@ -47,8 +47,6 @@ class LiquidityConstructionAccount(Base):
     # Rehab money that moved before this account existed (or through an earlier account): always editable.
     loan_draws_pulled_before_construction_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
     rehab_payments_made_before_construction_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
-    # NULL = the formula: rehab cushion + the rehab beyond the construction budget.
-    planned_deposit_override_dollars = Column(Numeric(16, 2), nullable=True)
     # A float kept in the account (reimbursement draws): it lowers what is safe to steal.
     minimum_balance_to_keep_in_construction_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
     # What the bank feed said at the last refresh, after the overrides (NULL `bank_amounts_as_of` = never refreshed):
@@ -60,6 +58,9 @@ class LiquidityConstructionAccount(Base):
     bank_own_money_transferred_into_the_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
     bank_own_money_transferred_out_of_the_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
     bank_amounts_as_of = Column(DateTime(timezone=True), nullable=True)
+    # For the page only, never part of the projection: pending money in / out, the checking's available balance, the
+    # transaction counts, the last draw and the last payment, and the rehab paid per payee, as of that same refresh.
+    bank_feed_details_as_of_last_refresh = Column(JSON, nullable=True)
     marked_ready_for_close_out_at = Column(DateTime(timezone=True), nullable=True)
     closed_out_at = Column(DateTime(timezone=True), nullable=True)
     linked_at = Column(DateTime(timezone=True), server_default=func.now())

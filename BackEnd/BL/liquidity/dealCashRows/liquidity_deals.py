@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
 from BL.liquidity.dealCashRows.deal_cash_rows import (
-    DEAL_BOARD_BOUGHT, DEAL_BOARD_MY_DEALS, DEAL_MODEL_BY_BOARD, DealBoard, DealCashRowChange,
+    CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY, DEAL_BOARD_BOUGHT, DEAL_BOARD_MY_DEALS, DEAL_MODEL_BY_BOARD, DealBoard, DealCashRowChange,
     apply_deal_cash_row_changes, deal_as_attributes, diff_deal_cash_rows, imported_rows_of_deal, key_dates_of_deal,
     planned_cash_rows_including_late_refi_months, refi_is_late,
 )
@@ -114,6 +114,35 @@ def _changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange],
     )
 
 
+# The schedule's `rehab_cushion` row before the construction account rows replaced it (tasks/todo/ConstructionAccountPerRehab.md).
+LEGACY_REHAB_CUSHION_ITEM_KEY = "rehab_cushion"
+
+
+def deal_cash_row_changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange]) -> DealCashRowChangesRes:
+    """The before -> after list of a deal's rows, as every confirmation prompt shows it."""
+    return _changes_res(deal_board, deal, changes)
+
+
+def use_deal_value_for_pairs(use_deal_value_for: Iterable[UseDealValueForField]) -> frozenset:
+    return _use_deal_value_for_pairs(use_deal_value_for)
+
+
+def carry_a_done_legacy_cushion_over_to_the_deposit_row(db: Session, deal_board: DealBoard, deal_id, changes: list[DealCashRowChange]) -> bool:
+    """A deal imported before the construction account rows had a `rehab_cushion` row. If that row was already marked
+    done, the deposit row this sync just added is done too: the cushion decision was made, so no overdue deposit
+    appears. Only for a deposit row added by this very sync (a deposit row you re-opened later stays open)."""
+    if not any(change.change_kind == "added" and change.item_key == CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY for change in changes):
+        return False
+    db.flush()
+    rows = imported_rows_of_deal(db, deal_board, deal_id)
+    done_legacy_cushion_row = next((row for row in rows if row.source_item_key == LEGACY_REHAB_CUSHION_ITEM_KEY and row.done_at is not None), None)
+    open_deposit_row = next((row for row in rows if row.source_item_key == CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY and row.done_at is None), None)
+    if done_legacy_cushion_row is None or open_deposit_row is None:
+        return False
+    open_deposit_row.done_at = done_legacy_cushion_row.done_at
+    return True
+
+
 # --- Import and re-sync -------------------------------------------------------------------------------------------
 
 def preview_deal_import(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value_for: list[UseDealValueForField],
@@ -133,6 +162,7 @@ def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value
     _refuse_a_my_deals_deal_imported_through_its_bought_copy(db, deal_board, deal)
     planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, deal, today_for_liquidity(db, today))
     changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_rows, _use_deal_value_for_pairs(use_deal_value_for))
+    carry_a_done_legacy_cushion_over_to_the_deposit_row(db, deal_board, deal.id, changes)
     deal.liquidity_rows_out_of_date = False
     db.commit()
     return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
@@ -168,6 +198,7 @@ def apply_milestone_change(db: Session, deal_board: DealBoard, deal_id: str, cha
     changed_columns, changed_deal, milestone_date_changes = _deal_with_milestone_change(deal, change)
     planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, changed_deal, today_for_liquidity(db, change.today))
     changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_rows, _use_deal_value_for_pairs(change.use_deal_value_for))
+    carry_a_done_legacy_cushion_over_to_the_deposit_row(db, deal_board, deal.id, changes)
     for column_name, value in changed_columns.items():
         setattr(deal, column_name, value)
     deal.liquidity_rows_out_of_date = False

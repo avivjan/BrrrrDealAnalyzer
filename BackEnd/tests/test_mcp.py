@@ -201,8 +201,9 @@ class TestEveryToolSchema:
         # tasks/todo/CashNeededScheduleMilestones.md).
         # 490 kB with the deals' key_dates, the three recurring-occurrence tools and the occurrence states on every
         # recurring rule (tasks/todo/LiquidityDealTransactionsAndHmlMonthlyInterest.md, tasks/todo/DealImpactSimulator.md).
-        # 560 kB with the 15 construction account tools (tasks/todo/ConstructionAccountPerRehab.md): the account's status,
-        # with every sum by its source, is the answer of twelve of them and is inlined into each.
+        # 545 kB with the 18 construction account tools (tasks/todo/ConstructionAccountPerRehab.md). Their twelve writes
+        # answer the same shape, so it is written out once (list_liquidity_construction_accounts) and they point to it
+        # (mcp_server.CONSTRUCTION_ACCOUNT_WRITE_TOOLS); inlined into each, it was 702 kB.
         assert len(payload) < 575_000, f"tools/list is {len(payload)} bytes"
 
 

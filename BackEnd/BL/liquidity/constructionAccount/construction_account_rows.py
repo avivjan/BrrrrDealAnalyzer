@@ -38,9 +38,18 @@ def bank_sums_stored_on_the_link(link: LiquidityConstructionAccount) -> Construc
     )
 
 
+# The schedule's `rehab_cushion` row before the construction account rows replaced it.
+LEGACY_REHAB_CUSHION_ITEM_KEY = "rehab_cushion"
+
+
 def deposit_row_of_deal_is_done(db: Session, bought_brrr_deal_id) -> bool:
-    return any(row.source_item_key == CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY and row.done_at is not None
-               for row in imported_rows_of_deal(db, DEAL_BOARD_BOUGHT, bought_brrr_deal_id))
+    """The deposit row is marked done. A deal imported before the construction account rows has no deposit row yet:
+    there, a `rehab_cushion` row already marked done stands for it (the cushion decision was made)."""
+    rows = imported_rows_of_deal(db, DEAL_BOARD_BOUGHT, bought_brrr_deal_id)
+    deposit_rows = [row for row in rows if row.source_item_key == CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY]
+    if deposit_rows:
+        return any(row.done_at is not None for row in deposit_rows)
+    return any(row.source_item_key == LEGACY_REHAB_CUSHION_ITEM_KEY and row.done_at is not None for row in rows)
 
 
 def projection_of_linked_deal(db: Session, deal, link: LiquidityConstructionAccount,
@@ -63,8 +72,6 @@ def projection_of_linked_deal(db: Session, deal, link: LiquidityConstructionAcco
         rehab_payments_made_before_construction_account_dollars=Decimal(link.rehab_payments_made_before_construction_account_dollars or 0),
         manual_draw_adjustments_dollars=manual_sum_of(MANUAL_ADJUSTMENT_TYPE_MANUAL_DRAW),
         manual_payment_adjustments_dollars=manual_sum_of(MANUAL_ADJUSTMENT_TYPE_MANUAL_PAYMENT),
-        planned_deposit_override_dollars=(None if link.planned_deposit_override_dollars is None
-                                          else Decimal(link.planned_deposit_override_dollars)),
         minimum_balance_to_keep_in_construction_account_dollars=Decimal(link.minimum_balance_to_keep_in_construction_account_dollars or 0),
         deposit_row_is_done=deposit_row_of_deal_is_done(db, link.bought_brrr_deal_id),
         is_closed_out=link.closed_out_at is not None,

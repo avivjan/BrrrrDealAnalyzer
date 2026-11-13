@@ -365,9 +365,17 @@ class TestConstructionAccountTables:
         run_migrations(app_db.engine)
         assert {"bought_brrr_deal_id", "construction_mercury_account_id", "primary_checking_mercury_account_id",
                 "loan_draws_pulled_before_construction_account_dollars", "rehab_payments_made_before_construction_account_dollars",
-                "planned_deposit_override_dollars", "minimum_balance_to_keep_in_construction_account_dollars",
+                "minimum_balance_to_keep_in_construction_account_dollars", "bank_feed_details_as_of_last_refresh",
                 "bank_amounts_as_of", "marked_ready_for_close_out_at", "closed_out_at"} <= _column_names_of("liquidity_construction_accounts")
         assert {"bought_brrr_deal_id", "adjustment_type", "amount_dollars", "note", "date"} <= _column_names_of(
             "liquidity_construction_account_manual_adjustments")
         assert {"mercury_transaction_id", "bought_brrr_deal_id", "ignored", "category_override", "note"} <= _column_names_of(
             "liquidity_construction_account_transaction_overrides")
+        assert "planned_deposit_override_dollars" not in _column_names_of("liquidity_construction_accounts")   # the cushion is the one figure
+        assert {"accounts_snapshot", "last_mercury_read_at", "next_mercury_read_not_before", "consecutive_slow_down_answers",
+                "cash_balance_last_changed_at", "construction_accounts_last_changed_at"} <= _column_names_of("liquidity_mercury_workspace_reads")
+        assert {"receiving_path_token", "signing_secret", "last_valid_event_received_at", "last_webhook_error_message"} <= _column_names_of(
+            "liquidity_mercury_webhooks")
+        assert {"construction_account_refresh_interval_seconds", "construction_account_refresh_when_window_regains_focus",
+                "construction_account_in_app_transfers_enabled", "construction_account_transfers_per_hour_limit",
+                "construction_account_maximum_single_transfer_dollars"} <= _column_names_of("liquidity_settings")

@@ -49,6 +49,7 @@ MAX_TRANSACTION_PAGES = 20
 EARLIEST_TRANSACTION_DATE = "2015-01-01"
 INTERNAL_TRANSFER_KIND = "internalTransfer"
 FAILED_OR_CANCELLED_TRANSACTION_STATUSES = {"failed", "cancelled"}
+PENDING_TRANSACTION_STATUS = "pending"
 _transactions_cache: dict[tuple[str, str], tuple[float, list[dict[str, Any]]]] = {}
 
 # A successful summary is reused for this long so a page reload, or a run of
@@ -63,6 +64,28 @@ class MercuryConfigError(RuntimeError):
 
 class MercuryApiError(RuntimeError):
     """Mercury API returned a non-2xx response or unparseable body."""
+
+
+class MercurySlowDownError(MercuryApiError):
+    """Mercury answered 429: too many requests. `retry_after_seconds` is its Retry-After header, when it sent a usable one."""
+
+    def __init__(self, retry_after_seconds: int | None = None):
+        super().__init__("Mercury asked us to slow down (429)")
+        self.retry_after_seconds = retry_after_seconds
+
+
+def _raise_for_an_error_status(resp) -> None:
+    """Our own words for a refused request: upstream bodies are third-party text and are never relayed."""
+    if resp.status_code == 429:
+        try:
+            retry_after_seconds = int((getattr(resp, "headers", None) or {}).get("Retry-After", ""))
+        except (TypeError, ValueError):
+            retry_after_seconds = None
+        raise MercurySlowDownError(retry_after_seconds if retry_after_seconds and retry_after_seconds > 0 else None)
+    if resp.status_code in (401, 403):
+        raise MercuryApiError(f"auth failed ({resp.status_code})")
+    if not resp.ok:
+        raise MercuryApiError(f"HTTP {resp.status_code}")
 
 
 def discover_tokens() -> dict[str, Secret]:
@@ -105,11 +128,7 @@ def _fetch_accounts_for_token(token: Secret) -> list[dict[str, Any]]:
         logger.warning("Mercury request failed: %s", type(e).__name__)
         raise MercuryApiError("request failed") from e
 
-    if resp.status_code in (401, 403):
-        raise MercuryApiError(f"auth failed ({resp.status_code})")
-    if not resp.ok:
-        # Upstream bodies are third-party text; never relay them to the client.
-        raise MercuryApiError(f"HTTP {resp.status_code}")
+    _raise_for_an_error_status(resp)
 
     try:
         body = resp.json()
@@ -161,6 +180,31 @@ def _summarize_workspace(label: str, raw_accounts: list[dict[str, Any]]) -> dict
     }
 
 
+def fetch_workspace_summary(workspace_label: str) -> dict[str, Any]:
+    """One workspace's accounts, read from Mercury now (never cached here) and summarised like a `workspaces` entry of
+    `summarize_balance`. Raises `MercuryConfigError` (no token for that workspace), `MercurySlowDownError` or `MercuryApiError`."""
+    token = discover_tokens().get(workspace_label)
+    if token is None:
+        raise MercuryConfigError("No Mercury token for that workspace")
+    try:
+        return _summarize_workspace(workspace_label, _fetch_accounts_for_token(token))
+    finally:
+        token.wipe()
+
+
+def combine_workspace_summaries(workspaces: list[dict[str, Any]], errors: list[dict[str, str]]) -> dict[str, Any]:
+    """The `summarize_balance` shape from per-workspace summaries and per-workspace failures."""
+    return {
+        "total_balance_dollars": round(sum(workspace["total_balance_dollars"] for workspace in workspaces), 2),
+        "total_available_dollars": round(sum(workspace["total_available_dollars"] for workspace in workspaces), 2),
+        "account_count": sum(workspace["account_count"] for workspace in workspaces),
+        "workspace_count": len(workspaces),
+        "workspaces": workspaces,
+        "workspace_errors": errors,
+        "accounts": [account for workspace in workspaces for account in workspace["accounts"]],
+    }
+
+
 def cache_seconds() -> int:
     raw = (os.getenv("MERCURY_CACHE_SECONDS") or "").strip()
     try:
@@ -206,19 +250,21 @@ def _normalised_transaction(raw_transaction: dict[str, Any]) -> dict[str, Any]:
         "transaction_date": _transaction_date_of(raw_transaction),
         "is_internal_transfer": str(raw_transaction.get("kind") or "") == INTERNAL_TRANSFER_KIND,
         "is_failed_or_cancelled": status in FAILED_OR_CANCELLED_TRANSACTION_STATUSES,
+        "is_pending": status == PENDING_TRANSACTION_STATUS,
     }
 
 
-def fetch_account_transactions(workspace_label: str, account_id: str) -> list[dict[str, Any]]:
-    """Every transaction of one account, oldest first, with the workspace's read-only token. Cached like the balances.
+def fetch_account_transactions(workspace_label: str, account_id: str, use_cache: bool = True) -> list[dict[str, Any]]:
+    """Every transaction of one account, oldest first, with the workspace's read-only token. Cached like the balances;
+    `use_cache=False` always reads Mercury (and still leaves the fresh list in the cache).
 
-    Raises `MercuryConfigError` (no token for that workspace) or `MercuryApiError`.
+    Raises `MercuryConfigError` (no token for that workspace), `MercurySlowDownError` or `MercuryApiError`.
     """
     url = account_transactions_url(account_id)
     cache_key = (workspace_label, account_id)
     ttl = cache_seconds()
     cached = _transactions_cache.get(cache_key)
-    if cached is not None and ttl > 0 and time.monotonic() - cached[0] < ttl:
+    if use_cache and cached is not None and ttl > 0 and time.monotonic() - cached[0] < ttl:
         return cached[1]
     token = discover_tokens().get(workspace_label)
     if token is None:
@@ -234,10 +280,7 @@ def fetch_account_transactions(workspace_label: str, account_id: str) -> list[di
             except requests.RequestException as e:
                 logger.warning("Mercury request failed: %s", type(e).__name__)
                 raise MercuryApiError("request failed") from e
-            if resp.status_code in (401, 403):
-                raise MercuryApiError(f"auth failed ({resp.status_code})")
-            if not resp.ok:
-                raise MercuryApiError(f"HTTP {resp.status_code}")
+            _raise_for_an_error_status(resp)
             try:
                 page = resp.json().get("transactions")
             except (ValueError, AttributeError) as e:

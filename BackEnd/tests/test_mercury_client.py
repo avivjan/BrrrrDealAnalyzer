@@ -117,17 +117,21 @@ def _two_account_summary():
             "workspace_errors": [], "accounts": accounts}
 
 
+def _serve_the_two_account_summary(monkeypatch):
+    monkeypatch.setattr(mc, "fetch_workspace_summary", lambda label: _two_account_summary()["workspaces"][0])
+
+
 class TestTheAccountsCountedAsCash:
     """Only the accounts chosen in the liquidity settings anchor the timeline; null = every active account."""
 
     def test_every_active_account_counts_until_some_are_chosen(self, client, monkeypatch):
-        monkeypatch.setattr("BL.liquidity.mercuryBalance.summarize_balance", _two_account_summary)
+        _serve_the_two_account_summary(monkeypatch)
         body = client.get("/liquidity/mercury-balance").json()
         assert body["counted_as_cash_balance_dollars"] == 42000.75
         assert [a["is_counted_as_cash"] for a in body["accounts"]] == [True, True, False]
 
     def test_only_the_chosen_accounts_count_and_null_resets(self, client, monkeypatch):
-        monkeypatch.setattr("BL.liquidity.mercuryBalance.summarize_balance", _two_account_summary)
+        _serve_the_two_account_summary(monkeypatch)
         saved = client.put("/liquidity/settings", json={"mercury_account_ids_counted_as_cash": ["operating"]}).json()
         assert saved["mercury_account_ids_counted_as_cash"] == ["operating"]
         body = client.get("/liquidity/mercury-balance").json()

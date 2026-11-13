@@ -5,6 +5,14 @@ from ReqRes.common.liquidity_schemas import LiquiditySettingsUpdate
 from DAL.crud.liquidity import get_settings as _get_settings, insert_settings
 from BL.liquidity.common.mappers import settings_to_res
 
+CONSTRUCTION_ACCOUNT_SETTING_NAMES = (
+    "construction_account_refresh_interval_seconds",
+    "construction_account_refresh_when_window_regains_focus",
+    "construction_account_in_app_transfers_enabled",
+    "construction_account_transfers_per_hour_limit",
+    "construction_account_maximum_single_transfer_dollars",
+)
+
 # The soft-warning threshold of a fresh install: $5,000.
 DEFAULT_RESERVE_DOLLARS = 5000
 
@@ -30,6 +38,11 @@ def update_settings(db: Session, data: LiquiditySettingsUpdate):
         settings.mercury_account_ids_counted_as_cash = data.mercury_account_ids_counted_as_cash
     if data.timezone_name is not None:
         settings.timezone_name = data.timezone_name
+    # The construction account settings (tasks/todo/ConstructionAccountPerRehab.md): only the ones sent change.
+    for construction_account_setting_name in CONSTRUCTION_ACCOUNT_SETTING_NAMES:
+        new_value = getattr(data, construction_account_setting_name)
+        if new_value is not None:
+            setattr(settings, construction_account_setting_name, new_value)
     db.commit()
     db.refresh(settings)
     return settings_to_res(settings)

@@ -115,4 +115,12 @@ class LiquiditySettings(Base):
     mercury_account_ids_counted_as_cash = Column(JSON, nullable=True)
     # The owner's time zone: "today" for the backend (the late-refi rows on an MCP read). The browser sends its own date.
     timezone_name = Column(String(64), nullable=False, default="America/New_York", server_default="America/New_York")
+    # Construction accounts (tasks/todo/ConstructionAccountPerRehab.md): every setting lives here, edited in the UI.
+    # How often an open page re-reads Mercury, and whether it does so when its window regains focus.
+    construction_account_refresh_interval_seconds = Column(Integer, nullable=False, default=30, server_default="30")
+    construction_account_refresh_when_window_regains_focus = Column(Boolean, nullable=False, default=True, server_default="true")
+    # The kill switch and the limits of the in-app Deposit and Steal transfers.
+    construction_account_in_app_transfers_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    construction_account_transfers_per_hour_limit = Column(Integer, nullable=False, default=5, server_default="5")
+    construction_account_maximum_single_transfer_dollars = Column(Numeric(16, 2), nullable=False, default=100000, server_default="100000")
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

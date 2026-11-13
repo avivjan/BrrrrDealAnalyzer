@@ -126,7 +126,9 @@ INSTRUCTIONS = (
     "follow it: construction_account_deposit (what is still to deposit), construction_account_balance_returned_at_rehab_end "
     "and, while the account is projected to run short, construction_account_top_up_needed dated today. Appliances are "
     "not part of the rehab cost here. No tool moves money between bank accounts: a deposit or a steal is done by the "
-    "owner on the site. Call refresh_liquidity_construction_accounts before reading the timeline. "
+    "owner on the site. Every construction account write takes preview_only: call it with preview_only=true first, show "
+    "the owner its status_before -> status_after and liquidity_row_changes, and send it again without preview_only only "
+    "once they confirm. Call refresh_liquidity_construction_accounts before reading the timeline. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
     "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
@@ -344,8 +346,20 @@ DESCRIPTIONS: dict[str, str] = {
     "save_liquidity_construction_account_link": (
         "Link a Mercury construction account to a Bought BRRRR deal, or edit the link (any stage of the rehab; every field "
         "stays editable): the construction account and the same LLC's checking (ids from get_mercury_balance), the draws "
-        "pulled and rehab payments made before this account, an optional deposit target and a balance to keep. Confirm "
-        "with the owner first."
+        "pulled and rehab payments made before this account, and a balance to keep. Preview it first (preview_only) and "
+        "confirm with the owner."
+    ),
+    "save_liquidity_construction_account_rehab_figures": (
+        "Edit a Bought BRRRR deal's actual rehab cost, contingency %, construction budget or rehab cushion (the one deposit "
+        "figure: what goes into the account is the cushion plus any rehab beyond the budget). Written to the deal exactly "
+        "like a deal save, then its liquidity rows follow. Preview it first (preview_only) and confirm with the owner."
+    ),
+    "get_liquidity_construction_accounts_last_change": (
+        "When the cash on hand or a construction account last changed (database only, never a Mercury call)."
+    ),
+    "get_liquidity_mercury_connection_status": (
+        "Per LLC: whether the backend found its Mercury read token and transfer token, the exact setting names it reads "
+        "them from, and how instant updates (webhooks) are doing. Names and times only, never a token."
     ),
     "unlink_liquidity_construction_account": (
         "Remove a deal's construction account link together with its manual adjustments and transaction overrides; the "
@@ -621,6 +635,25 @@ LOOSE_DESCRIPTION = (
     "metric's meaning and sign convention, is the output schema of get_deal."
 )
 
+# The construction account writes all answer the same shape, with the account's full status twice: written out once
+# per tool it would be most of tools/list. Its field-by-field schema is carried by list_liquidity_construction_accounts
+# (one status per deal) and import_liquidity_deal (the row changes) instead.
+CONSTRUCTION_ACCOUNT_WRITE_TOOLS = {
+    "save_liquidity_construction_account_link", "save_liquidity_construction_account_rehab_figures",
+    "unlink_liquidity_construction_account", "switch_liquidity_construction_account",
+    "add_liquidity_construction_account_manual_adjustment", "update_liquidity_construction_account_manual_adjustment",
+    "delete_liquidity_construction_account_manual_adjustment", "set_liquidity_construction_account_transaction_override",
+    "clear_liquidity_construction_account_transaction_override", "mark_liquidity_construction_account_ready_for_close_out",
+    "mark_liquidity_construction_account_closed_out", "reopen_liquidity_construction_account",
+}
+CONSTRUCTION_ACCOUNT_WRITE_DESCRIPTION = (
+    "What the write changes (with preview_only=true: what it would change; nothing was saved): was_preview_only; "
+    "status_before and status_after, each one deal's construction account status, field by field as in the output "
+    "schema of list_liquidity_construction_accounts (accounts[]); changes_the_liquidity_timeline; liquidity_row_changes, "
+    "the deal's rows before -> after in the shape of import_liquidity_deal's answer (null for a deal not in the "
+    "timeline); row_descriptions_marked_done; balance_left_in_the_account_dollars (only when closing out)."
+)
+
 
 def _strip_titles(node: Any) -> Any:
     """Drop pydantic's per-field `title` keys: no information, a fifth of the bytes."""
@@ -647,8 +680,9 @@ def _output_schema(name: str, op: dict[str, Any], defs: dict[str, Any]) -> tuple
     schema = dict(content["application/json"].get("schema") or {})
     if not schema:                                   # no response model (plain dicts, PDFs): unknown shape
         return None, False
-    if name in LOOSE_OUTPUT:                         # full deal records: get_deal carries the canonical schema
-        loose = {"type": "object", "additionalProperties": True, "description": LOOSE_DESCRIPTION}
+    if name in LOOSE_OUTPUT or name in CONSTRUCTION_ACCOUNT_WRITE_TOOLS:   # another tool carries the canonical schema
+        description = CONSTRUCTION_ACCOUNT_WRITE_DESCRIPTION if name in CONSTRUCTION_ACCOUNT_WRITE_TOOLS else LOOSE_DESCRIPTION
+        loose = {"type": "object", "additionalProperties": True, "description": description}
         if schema.get("type") == "array":
             return {"type": "object", "properties": {ITEMS: {"type": "array", "items": loose}}, "required": [ITEMS]}, True
         return loose, False

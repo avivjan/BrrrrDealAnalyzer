@@ -63,9 +63,10 @@ class TestConstructionAccountTools:
     and never moves money between bank accounts."""
 
     READ_TOOLS = {"list_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
-                  "preview_liquidity_construction_account_switch"}
+                  "preview_liquidity_construction_account_switch", "get_liquidity_construction_accounts_last_change"}
     WRITE_TOOLS_ON_THE_APPS_OWN_DATA = {
         "refresh_liquidity_construction_accounts", "save_liquidity_construction_account_link",
+        "save_liquidity_construction_account_rehab_figures",
         "add_liquidity_construction_account_manual_adjustment", "update_liquidity_construction_account_manual_adjustment",
         "set_liquidity_construction_account_transaction_override", "mark_liquidity_construction_account_ready_for_close_out",
         "mark_liquidity_construction_account_closed_out", "reopen_liquidity_construction_account",
@@ -77,6 +78,7 @@ class TestConstructionAccountTools:
     def test_every_construction_account_tool_is_listed_with_its_annotations(self):
         tools = mcp_server.tools()
         construction_account_tools = {name for name in tools if "construction_account" in name}
+        assert "get_liquidity_mercury_connection_status" in tools and tools["get_liquidity_mercury_connection_status"]["tool"].annotations.readOnlyHint
         assert construction_account_tools == self.READ_TOOLS | self.WRITE_TOOLS_ON_THE_APPS_OWN_DATA | self.DESTRUCTIVE_TOOLS
         for name in self.READ_TOOLS:
             assert tools[name]["tool"].annotations.readOnlyHint is True, name
@@ -95,3 +97,12 @@ class TestConstructionAccountTools:
     def test_no_tool_moves_money_between_bank_accounts(self):
         assert not [name for name in mcp_server.tools() if "deposit" in name or "steal" in name or "transfer" in name]
         assert "No tool moves money between bank accounts" in mcp_server.INSTRUCTIONS
+
+
+    def test_every_write_takes_preview_only_and_points_to_the_full_status_schema(self):
+        tools = mcp_server.tools()
+        for name in mcp_server.CONSTRUCTION_ACCOUNT_WRITE_TOOLS:
+            tool = tools[name]["tool"]
+            assert "preview_only" in tool.inputSchema["properties"], name
+            assert "list_liquidity_construction_accounts" in tool.outputSchema["description"], name
+        assert "preview_only=true first" in mcp_server.INSTRUCTIONS

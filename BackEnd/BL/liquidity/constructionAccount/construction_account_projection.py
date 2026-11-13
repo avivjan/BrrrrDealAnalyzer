@@ -23,6 +23,10 @@ TRANSACTION_CATEGORY_LOAN_DRAW = "loan_draw"
 TRANSACTION_CATEGORY_REHAB_PAYMENT = "rehab_payment"
 TRANSACTION_CATEGORY_OWN_MONEY = "own_money"
 
+SAFE_TO_STEAL_CAPPED_BY_AVAILABLE_BALANCE = "available_balance"
+SAFE_TO_STEAL_CAPPED_BY_BUFFER_TO_KEEP = "buffer_to_keep"
+SAFE_TO_STEAL_CAPPED_BY_PROJECTED_RETURN = "projected_return"
+
 ZERO_DOLLARS = Decimal("0")
 
 
@@ -34,6 +38,7 @@ class ConstructionAccountBankTransaction:
     signed_amount_dollars: Decimal        # positive = into the construction account
     is_internal_transfer: bool            # between two accounts of the same Mercury workspace
     is_failed_or_cancelled: bool
+    is_pending: bool = False              # accepted by the bank, not settled yet
 
 
 @dataclass(frozen=True)
@@ -73,7 +78,6 @@ class ConstructionAccountProjectionInputs:
     rehab_payments_made_before_construction_account_dollars: Decimal
     manual_draw_adjustments_dollars: Decimal
     manual_payment_adjustments_dollars: Decimal
-    planned_deposit_override_dollars: Optional[Decimal]
     minimum_balance_to_keep_in_construction_account_dollars: Decimal
     deposit_row_is_done: bool
     is_closed_out: bool
@@ -101,10 +105,20 @@ class ConstructionAccountProjection:
     own_money_transferred_into_the_account_dollars: Decimal
     own_money_transferred_out_of_the_account_dollars: Decimal
     original_steal_dollars: Decimal
-    planned_deposit_dollars: Decimal
+    # The one deposit figure: the rehab cushion, plus the rehab the construction budget does not cover.
+    rehab_cushion_dollars: Decimal
+    rehab_beyond_the_construction_budget_dollars: Decimal
+    total_to_deposit_dollars: Decimal
     remaining_deposit_dollars: Decimal
+    # deposited - stolen; negative once more was taken out than was put in (spread already taken).
+    own_money_still_in_the_account_dollars: Decimal
+    spread_already_taken_dollars: Decimal
     projected_return_at_rehab_end_dollars: Decimal
+    # The projected return's two parts: the owner's own money coming back, and the lender's spread.
+    own_money_back_at_rehab_end_dollars: Decimal
+    spread_at_rehab_end_dollars: Decimal
     safe_to_steal_now_dollars: Decimal
+    safe_to_steal_now_is_capped_by: str             # "available_balance", "buffer_to_keep" or "projected_return"
     # the three liquidity rows
     deposit_row_amount_dollars: Decimal             # money out, >= 0
     return_row_amount_dollars: Decimal              # money in, >= 0
@@ -158,6 +172,45 @@ def sum_categorised_transactions(current_balance_dollars: Decimal, available_bal
         own_money_transferred_out_of_the_account_dollars=own_money_out)
 
 
+def bank_feed_details_of(categorised_transactions: Iterable[CategorisedConstructionAccountTransaction]) -> dict:
+    """For the page only, never part of the projection: pending money, the counts, the last draw and the last payment,
+    and the rehab paid per payee. JSON-ready (amounts as strings, dates as ISO strings)."""
+    categorised_transactions = list(categorised_transactions)
+    counted = [row for row in categorised_transactions if row.effective_category is not None]
+    pending = [row for row in counted if row.transaction.is_pending]
+    draws = [row for row in counted if row.effective_category == TRANSACTION_CATEGORY_LOAN_DRAW and row.transaction.signed_amount_dollars > 0]
+    payments = [row for row in counted if row.effective_category == TRANSACTION_CATEGORY_REHAB_PAYMENT]
+
+    def last_of(rows: list[CategorisedConstructionAccountTransaction]) -> Optional[dict]:
+        dated = [row for row in rows if row.transaction.transaction_date is not None]
+        if not dated:
+            return None
+        last = max(dated, key=lambda row: row.transaction.transaction_date)
+        return {"date": last.transaction.transaction_date.isoformat(), "amount_dollars": str(abs(last.transaction.signed_amount_dollars)),
+                "counterparty_name": last.transaction.counterparty_name}
+
+    paid_by_payee: dict[str, Decimal] = {}
+    for row in payments:
+        payee = row.transaction.counterparty_name or "Unknown payee"
+        paid_by_payee[payee] = paid_by_payee.get(payee, ZERO_DOLLARS) - row.transaction.signed_amount_dollars
+    transaction_dates = [row.transaction.transaction_date for row in categorised_transactions if row.transaction.transaction_date is not None]
+    return {
+        "pending_money_in_dollars": str(sum((row.transaction.signed_amount_dollars for row in pending if row.transaction.signed_amount_dollars > 0), ZERO_DOLLARS)),
+        "pending_money_out_dollars": str(-sum((row.transaction.signed_amount_dollars for row in pending if row.transaction.signed_amount_dollars < 0), ZERO_DOLLARS)),
+        "transactions_counted_count": len(counted),
+        "transactions_ignored_count": sum(1 for row in categorised_transactions if row.override is not None and row.override.ignored),
+        "transactions_recategorised_count": sum(1 for row in counted if row.override is not None and row.override.category_override
+                                                and row.override.category_override != row.automatic_category),
+        "transactions_failed_or_cancelled_count": sum(1 for row in categorised_transactions if row.transaction.is_failed_or_cancelled),
+        "loan_draw_count": len(draws),
+        "last_loan_draw": last_of(draws),
+        "last_rehab_payment": last_of([row for row in payments if row.transaction.signed_amount_dollars < 0]),
+        "last_transaction_date": max(transaction_dates).isoformat() if transaction_dates else None,
+        "rehab_paid_by_payee": [{"payee_name": payee, "amount_dollars": str(amount)}
+                                for payee, amount in sorted(paid_by_payee.items(), key=lambda item: (-item[1], item[0]))],
+    }
+
+
 def project_construction_account(inputs: ConstructionAccountProjectionInputs, bank_sums: ConstructionAccountBankSums,
                                  ) -> ConstructionAccountProjection:
     bank_loan_draws = bank_sums.bank_loan_draws_dollars
@@ -174,13 +227,20 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs, ba
     projected_return_at_rehab_end = bank_sums.current_balance_dollars + loan_draws_remaining_to_pull - unpaid_rehab_remaining
 
     original_steal = inputs.construction_budget_dollars - inputs.rehab_cost_dollars
-    planned_deposit = (inputs.planned_deposit_override_dollars if inputs.planned_deposit_override_dollars is not None
-                       else inputs.rehab_cushion_dollars + max(ZERO_DOLLARS, -original_steal))
+    rehab_beyond_the_construction_budget = max(ZERO_DOLLARS, -original_steal)
+    total_to_deposit = inputs.rehab_cushion_dollars + rehab_beyond_the_construction_budget
     remaining_deposit = (ZERO_DOLLARS if inputs.deposit_row_is_done or inputs.is_closed_out
-                         else max(ZERO_DOLLARS, planned_deposit - own_money_in))
-    safe_to_steal_now = max(ZERO_DOLLARS, min(
-        bank_sums.available_balance_dollars - inputs.minimum_balance_to_keep_in_construction_account_dollars,
-        projected_return_at_rehab_end))
+                         else max(ZERO_DOLLARS, total_to_deposit - own_money_in))
+    balance_free_to_take = bank_sums.available_balance_dollars - inputs.minimum_balance_to_keep_in_construction_account_dollars
+    safe_to_steal_now = max(ZERO_DOLLARS, min(balance_free_to_take, projected_return_at_rehab_end))
+    if projected_return_at_rehab_end < balance_free_to_take:
+        safe_to_steal_now_is_capped_by = SAFE_TO_STEAL_CAPPED_BY_PROJECTED_RETURN
+    elif inputs.minimum_balance_to_keep_in_construction_account_dollars > 0:
+        safe_to_steal_now_is_capped_by = SAFE_TO_STEAL_CAPPED_BY_BUFFER_TO_KEEP
+    else:
+        safe_to_steal_now_is_capped_by = SAFE_TO_STEAL_CAPPED_BY_AVAILABLE_BALANCE
+    own_money_still_in_the_account = own_money_in - own_money_out
+    own_money_back_at_rehab_end = max(ZERO_DOLLARS, min(projected_return_at_rehab_end, own_money_still_in_the_account))
 
     # The deposit still to come will land in the balance, so the return row counts it.
     return_after_the_remaining_deposit = projected_return_at_rehab_end + remaining_deposit
@@ -208,10 +268,17 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs, ba
         own_money_transferred_into_the_account_dollars=own_money_in,
         own_money_transferred_out_of_the_account_dollars=own_money_out,
         original_steal_dollars=original_steal,
-        planned_deposit_dollars=planned_deposit,
+        rehab_cushion_dollars=inputs.rehab_cushion_dollars,
+        rehab_beyond_the_construction_budget_dollars=rehab_beyond_the_construction_budget,
+        total_to_deposit_dollars=total_to_deposit,
         remaining_deposit_dollars=remaining_deposit,
+        own_money_still_in_the_account_dollars=own_money_still_in_the_account,
+        spread_already_taken_dollars=max(ZERO_DOLLARS, -own_money_still_in_the_account),
         projected_return_at_rehab_end_dollars=projected_return_at_rehab_end,
+        own_money_back_at_rehab_end_dollars=own_money_back_at_rehab_end,
+        spread_at_rehab_end_dollars=projected_return_at_rehab_end - own_money_back_at_rehab_end,
         safe_to_steal_now_dollars=safe_to_steal_now,
+        safe_to_steal_now_is_capped_by=safe_to_steal_now_is_capped_by,
         deposit_row_amount_dollars=remaining_deposit,
         return_row_amount_dollars=return_row_amount,
         top_up_needed_dollars=top_up_needed,
