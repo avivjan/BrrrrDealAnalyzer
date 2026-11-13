@@ -56,3 +56,42 @@ class TestAudit:
         with SessionLocal() as s:
             rows = s.execute(select(AuditLog).where(AuditLog.event == "mcp_tool_call")).scalars().all()
         assert [r.detail for r in rows] == [{"tool": "helloworld", "status": 200}]
+
+
+class TestConstructionAccountTools:
+    """tasks/todo/ConstructionAccountPerRehab.md: Claude reads a rehab's construction account and corrects its numbers,
+    and never moves money between bank accounts."""
+
+    READ_TOOLS = {"list_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
+                  "preview_liquidity_construction_account_switch"}
+    WRITE_TOOLS_ON_THE_APPS_OWN_DATA = {
+        "refresh_liquidity_construction_accounts", "save_liquidity_construction_account_link",
+        "add_liquidity_construction_account_manual_adjustment", "update_liquidity_construction_account_manual_adjustment",
+        "set_liquidity_construction_account_transaction_override", "mark_liquidity_construction_account_ready_for_close_out",
+        "mark_liquidity_construction_account_closed_out", "reopen_liquidity_construction_account",
+    }
+    DESTRUCTIVE_TOOLS = {"unlink_liquidity_construction_account", "switch_liquidity_construction_account",
+                         "delete_liquidity_construction_account_manual_adjustment",
+                         "clear_liquidity_construction_account_transaction_override"}
+
+    def test_every_construction_account_tool_is_listed_with_its_annotations(self):
+        tools = mcp_server.tools()
+        construction_account_tools = {name for name in tools if "construction_account" in name}
+        assert construction_account_tools == self.READ_TOOLS | self.WRITE_TOOLS_ON_THE_APPS_OWN_DATA | self.DESTRUCTIVE_TOOLS
+        for name in self.READ_TOOLS:
+            assert tools[name]["tool"].annotations.readOnlyHint is True, name
+        for name in self.WRITE_TOOLS_ON_THE_APPS_OWN_DATA:
+            annotations = tools[name]["tool"].annotations
+            assert (annotations.readOnlyHint, annotations.destructiveHint) == (False, False), name
+        for name in self.DESTRUCTIVE_TOOLS:
+            assert tools[name]["tool"].annotations.destructiveHint is True, name
+
+    def test_the_tools_that_read_the_bank_are_open_world(self):
+        tools = mcp_server.tools()
+        for name in ("refresh_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
+                     "preview_liquidity_construction_account_switch"):
+            assert tools[name]["tool"].annotations.openWorldHint is True, name
+
+    def test_no_tool_moves_money_between_bank_accounts(self):
+        assert not [name for name in mcp_server.tools() if "deposit" in name or "steal" in name or "transfer" in name]
+        assert "No tool moves money between bank accounts" in mcp_server.INSTRUCTIONS

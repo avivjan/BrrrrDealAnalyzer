@@ -358,3 +358,16 @@ class TestConstructionAccountRowsReplaceTheCushionAndStolenMoneyRows:
         deal = self._import_a_deal(client, brrrr_payload)
         run_migrations(app_db.engine)
         assert self._flag(client, deal["id"]) is False
+
+
+class TestConstructionAccountTables:
+    def test_the_tables_exist_with_their_columns(self, client):
+        run_migrations(app_db.engine)
+        assert {"bought_brrr_deal_id", "construction_mercury_account_id", "primary_checking_mercury_account_id",
+                "loan_draws_pulled_before_construction_account_dollars", "rehab_payments_made_before_construction_account_dollars",
+                "planned_deposit_override_dollars", "minimum_balance_to_keep_in_construction_account_dollars",
+                "bank_amounts_as_of", "marked_ready_for_close_out_at", "closed_out_at"} <= _column_names_of("liquidity_construction_accounts")
+        assert {"bought_brrr_deal_id", "adjustment_type", "amount_dollars", "note", "date"} <= _column_names_of(
+            "liquidity_construction_account_manual_adjustments")
+        assert {"mercury_transaction_id", "bought_brrr_deal_id", "ignored", "category_override", "note"} <= _column_names_of(
+            "liquidity_construction_account_transaction_overrides")

@@ -21,6 +21,7 @@ from BL.liquidity.dealCashRows.deal_cash_rows import (
     apply_deal_cash_row_changes, deal_as_attributes, diff_deal_cash_rows, imported_rows_of_deal, key_dates_of_deal,
     planned_cash_rows_including_late_refi_months, refi_is_late,
 )
+from BL.liquidity.constructionAccount.construction_account_rows import planned_cash_rows_of_deal_in_liquidity
 from BL.liquidity.dealCashRows.deal_milestones import (
     DEAL_MILESTONES_IN_ORDER, DealMilestone, approved_at_of_milestone, deal_columns_with_milestone_on,
     milestone_is_overdue, planned_date_of_milestone,
@@ -119,7 +120,7 @@ def preview_deal_import(db: Session, deal_board: DealBoard, deal_id: str, use_de
                         today: Optional[date]) -> DealCashRowChangesRes:
     deal = find_brrr_deal(db, deal_board, deal_id)
     _refuse_a_my_deals_deal_imported_through_its_bought_copy(db, deal_board, deal)
-    planned_rows = planned_cash_rows_including_late_refi_months(deal, today_for_liquidity(db, today))
+    planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, deal, today_for_liquidity(db, today))
     changes = diff_deal_cash_rows(planned_rows, imported_rows_of_deal(db, deal_board, deal.id), _use_deal_value_for_pairs(use_deal_value_for))
     # The key dates are the preview chart's flags (contract, closing, rehab, the Nov 30 bill, refi).
     return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
@@ -130,7 +131,7 @@ def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value
     """Import the deal's rows, or re-sync them (the same call: safe to press twice). Clears 'liquidity out of date'."""
     deal = find_brrr_deal(db, deal_board, deal_id)
     _refuse_a_my_deals_deal_imported_through_its_bought_copy(db, deal_board, deal)
-    planned_rows = planned_cash_rows_including_late_refi_months(deal, today_for_liquidity(db, today))
+    planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, deal, today_for_liquidity(db, today))
     changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_rows, _use_deal_value_for_pairs(use_deal_value_for))
     deal.liquidity_rows_out_of_date = False
     db.commit()
@@ -156,7 +157,7 @@ def _deal_with_milestone_change(deal, change: DealMilestoneChangeReq):
 def preview_milestone_change(db: Session, deal_board: DealBoard, deal_id: str, change: DealMilestoneChangeReq) -> DealCashRowChangesRes:
     deal = find_brrr_deal(db, deal_board, deal_id)
     _changed_columns, changed_deal, milestone_date_changes = _deal_with_milestone_change(deal, change)
-    planned_rows = planned_cash_rows_including_late_refi_months(changed_deal, today_for_liquidity(db, change.today))
+    planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, changed_deal, today_for_liquidity(db, change.today))
     changes = diff_deal_cash_rows(planned_rows, imported_rows_of_deal(db, deal_board, deal.id), _use_deal_value_for_pairs(change.use_deal_value_for))
     return _changes_res(deal_board, deal, changes, milestone_date_changes)
 
@@ -165,7 +166,7 @@ def apply_milestone_change(db: Session, deal_board: DealBoard, deal_id: str, cha
     """Write the milestone's date (and approval) to the deal and re-sync its rows, in one transaction."""
     deal = find_brrr_deal(db, deal_board, deal_id)
     changed_columns, changed_deal, milestone_date_changes = _deal_with_milestone_change(deal, change)
-    planned_rows = planned_cash_rows_including_late_refi_months(changed_deal, today_for_liquidity(db, change.today))
+    planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, changed_deal, today_for_liquidity(db, change.today))
     changes = apply_deal_cash_row_changes(db, deal_board, deal.id, planned_rows, _use_deal_value_for_pairs(change.use_deal_value_for))
     for column_name, value in changed_columns.items():
         setattr(deal, column_name, value)
@@ -264,7 +265,7 @@ def mark_liquidity_rows_out_of_date_if_the_save_changed_them(db: Session, deal_b
     if not imported_rows:
         return
     flagged_row_ids = {str(row.id) for row in imported_rows if row.no_longer_in_the_deal}
-    planned_rows = planned_cash_rows_including_late_refi_months(deal, today_for_liquidity(db, None))
+    planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, deal, today_for_liquidity(db, None))
     rows_would_change = any(
         _the_change_writes_a_row(change, flagged_row_ids) for change in diff_deal_cash_rows(planned_rows, imported_rows))
     if bool(deal.liquidity_rows_out_of_date) != rows_would_change:

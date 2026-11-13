@@ -118,6 +118,15 @@ INSTRUCTIONS = (
     "approved or moved with the milestone preview / apply tools, which write the dates back to the deal. Always show "
     "the owner a preview before an import or a milestone change. Call refresh_liquidity_late_refis before reading "
     "the timeline. 'Today' is the liquidity settings' timezone_name unless a today date is sent. "
+    "A rehab runs through its own Mercury construction account, linked to its Bought BRRRR deal "
+    "(list_liquidity_construction_accounts): the lender wires the draws there and the rehab payments leave from it, so "
+    "neither is a liquidity row. projected_return_at_rehab_end = current balance + (construction budget - loan draws "
+    "pulled) - (rehab cost - rehab payments made); loan draws pulled and rehab payments made are each the bank feed "
+    "(without ignored transactions) + the amount before this account + the manual adjustments. The deal's three rows "
+    "follow it: construction_account_deposit (what is still to deposit), construction_account_balance_returned_at_rehab_end "
+    "and, while the account is projected to run short, construction_account_top_up_needed dated today. Appliances are "
+    "not part of the rehab cost here. No tool moves money between bank accounts: a deposit or a steal is done by the "
+    "owner on the site. Call refresh_liquidity_construction_accounts before reading the timeline. "
     "Each breakdown step carries a unit ('money' = dollars, 'pct' = percent, 'ratio' = a plain "
     "multiple such as DSCR), the formula with the numbers filled in, an optional note, and on "
     "sum-type steps the terms (label, value, sign) that add up to its value; a term that is itself a "
@@ -319,6 +328,67 @@ DESCRIPTIONS: dict[str, str] = {
         "money comes back as money in on that date. Done rows stay as history; a re-import brings the open rows back. "
         "The deal itself stays on its board. Confirm with the owner first."
     ),
+    # --- Construction accounts (one per rehab) ---
+    "list_liquidity_construction_accounts": (
+        "The Bought BRRRR deals between purchase and refi that are in the Liquidity timeline, each with its linked "
+        "construction account: balance, loan draws pulled / remaining, rehab payments made / unpaid (each split into bank "
+        "feed, before this account, entered by hand), remaining deposit, projected return at rehab end, safe to steal now, "
+        "top-up needed. Amounts are as of the last refresh (amounts_as_of)."
+    ),
+    "refresh_liquidity_construction_accounts": (
+        "Read every linked construction account from Mercury (balance and transactions) and bring each deal's deposit, "
+        "return and top-up rows in step. Idempotent; a deal that is 'liquidity out of date' keeps its rows until the owner "
+        "re-syncs it; while Mercury is unavailable nothing changes (mercury_is_unavailable). Call it before reading the "
+        "timeline or the construction accounts."
+    ),
+    "save_liquidity_construction_account_link": (
+        "Link a Mercury construction account to a Bought BRRRR deal, or edit the link (any stage of the rehab; every field "
+        "stays editable): the construction account and the same LLC's checking (ids from get_mercury_balance), the draws "
+        "pulled and rehab payments made before this account, an optional deposit target and a balance to keep. Confirm "
+        "with the owner first."
+    ),
+    "unlink_liquidity_construction_account": (
+        "Remove a deal's construction account link together with its manual adjustments and transaction overrides; the "
+        "deal's liquidity rows go back to the schedule's plan and the account counts as cash again if the settings say "
+        "so. Nothing moves at the bank. Confirm with the owner first."
+    ),
+    "preview_liquidity_construction_account_switch": (
+        "Before replacing a deal's construction account mid-rehab: the old account's balance (it must be $0 first) and "
+        "the two 'before this account' amounts that carry its draws and rehab payments over. Reads Mercury."
+    ),
+    "switch_liquidity_construction_account": (
+        "Replace a deal's construction account mid-rehab with another account of the same workspace, saving the 'before "
+        "this account' amounts the preview proposed (or the owner corrected). 409 while the old account still holds "
+        "money. The old account is kept in the history; its transaction overrides no longer apply. Confirm with the owner first."
+    ),
+    "add_liquidity_construction_account_manual_adjustment": (
+        "Record rehab money that never touched the construction account: manual_payment (a contractor paid from another "
+        "account, a credit-card material run, cash) adds to rehab payments made; manual_draw (a draw the lender wired "
+        "elsewhere) adds to loan draws pulled. amount_dollars is positive; date and an optional note."
+    ),
+    "update_liquidity_construction_account_manual_adjustment": "Change one manual payment or manual draw of a construction account (send every field).",
+    "delete_liquidity_construction_account_manual_adjustment": "Remove one manual payment or manual draw of a construction account.",
+    "list_liquidity_construction_account_transactions": (
+        "A construction account's bank transactions, newest first (reads Mercury): signed_amount_dollars (positive = in), "
+        "automatic_category (loan_draw = external money in, rehab_payment = external money out, own_money = an internal "
+        "transfer), the owner's override, and effective_category (null = counts for nothing)."
+    ),
+    "set_liquidity_construction_account_transaction_override": (
+        "Correct one bank transaction of a deal's construction account: ignored=true leaves it out of both sums (a "
+        "mistaken transfer, materials for another property), or category_override counts it as loan_draw, rehab_payment "
+        "(a refund then counts negative) or own_money; an optional note. Only a transaction of that account."
+    ),
+    "clear_liquidity_construction_account_transaction_override": "Put one bank transaction of a construction account back on its automatic category.",
+    "mark_liquidity_construction_account_ready_for_close_out": (
+        "Mark a construction account ready for close-out: the rehab is over as far as the account goes, before the "
+        "rehab_completed milestone is approved."
+    ),
+    "mark_liquidity_construction_account_closed_out": (
+        "Close a construction account out without a transfer (the owner emptied it in Mercury): its return row is marked "
+        "done and it is no longer refreshed. balance_left_in_the_account_dollars says what is still in it. Undo with "
+        "reopen_liquidity_construction_account."
+    ),
+    "reopen_liquidity_construction_account": "Undo a construction account's close-out: it is refreshed again and its return row counts again.",
     "get_mercury_balance": (
         "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "
         "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
@@ -418,11 +488,16 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 # an LLM should never run without a human confirming: annotated so a client
 # can ask first (MCP `ToolAnnotations`). Everything else is plain CRUD on the
 # site's own data; GET tools are read-only.
-OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude"}
+OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude",
+                    # They read the bank (never write to it): tasks/todo/ConstructionAccountPerRehab.md.
+                    "refresh_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
+                    "preview_liquidity_construction_account_switch"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
                      "apply_liquidity_transaction_bulk_action", "import_liquidity_deal", "apply_liquidity_deal_milestone_change",
-                     "remove_liquidity_deal_open_rows"}
+                     "remove_liquidity_deal_open_rows",
+                     "unlink_liquidity_construction_account", "switch_liquidity_construction_account",
+                     "clear_liquidity_construction_account_transaction_override"}
 
 
 def tool_annotations(name: str, method: str) -> t.ToolAnnotations:

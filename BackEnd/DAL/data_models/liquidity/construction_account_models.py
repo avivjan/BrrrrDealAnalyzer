@@ -36,6 +36,12 @@ class LiquidityConstructionAccount(Base):
     construction_mercury_account_id = Column(String(80), nullable=False, unique=True)
     # Where a steal goes and where the deposit comes from: the same LLC's checking, counted as cash.
     primary_checking_mercury_account_id = Column(String(80), nullable=False)
+    # The two accounts as Mercury named them when the link was last saved or refreshed, so the page can show them
+    # without calling Mercury. Only the last four digits of a number are ever stored.
+    construction_account_name = Column(String(200), nullable=False, default="", server_default="")
+    construction_account_number_last_four = Column(String(4), nullable=False, default="", server_default="")
+    primary_checking_account_name = Column(String(200), nullable=False, default="", server_default="")
+    primary_checking_account_number_last_four = Column(String(4), nullable=False, default="", server_default="")
     # Accounts this rehab used before a switch, oldest first: [{"mercury_account_id": ..., "switched_away_at": ...}].
     previous_construction_mercury_account_ids = Column(JSON, nullable=False, default=list)
     # Rehab money that moved before this account existed (or through an earlier account): always editable.

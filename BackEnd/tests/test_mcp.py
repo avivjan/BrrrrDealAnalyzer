@@ -201,7 +201,9 @@ class TestEveryToolSchema:
         # tasks/todo/CashNeededScheduleMilestones.md).
         # 490 kB with the deals' key_dates, the three recurring-occurrence tools and the occurrence states on every
         # recurring rule (tasks/todo/LiquidityDealTransactionsAndHmlMonthlyInterest.md, tasks/todo/DealImpactSimulator.md).
-        assert len(payload) < 500_000, f"tools/list is {len(payload)} bytes"
+        # 560 kB with the 15 construction account tools (tasks/todo/ConstructionAccountPerRehab.md): the account's status,
+        # with every sum by its source, is the answer of twelve of them and is inlined into each.
+        assert len(payload) < 575_000, f"tools/list is {len(payload)} bytes"
 
 
 class TestTransportEdges:

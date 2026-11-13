@@ -53,6 +53,9 @@ class PlannedDealCashRow:
     sequence_within_day: int
     # A month of carrying costs after the planned refi, while the refi is late (not approved yet).
     created_because_refi_is_late: bool = False
+    # A row computed live from a linked construction account: a hand-edited amount (or date) never holds it back.
+    amount_always_follows_the_deal: bool = False
+    date_always_follows_the_deal: bool = False
 
     @property
     def identity(self) -> tuple[str, int]:
@@ -125,6 +128,51 @@ def planned_cash_rows_including_late_refi_months(deal, today: date) -> list[Plan
     return sorted(planned_rows + late_refi_rows, key=lambda row: (row.effective_date, row.sequence_within_day))
 
 
+CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY = "construction_account_deposit"
+CONSTRUCTION_ACCOUNT_RETURN_ITEM_KEY = "construction_account_balance_returned_at_rehab_end"
+# Never a schedule row: it exists only while a linked construction account is projected to run short.
+CONSTRUCTION_ACCOUNT_TOP_UP_ITEM_KEY = "construction_account_top_up_needed"
+CONSTRUCTION_ACCOUNT_ITEM_KEYS = frozenset({
+    CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY, CONSTRUCTION_ACCOUNT_RETURN_ITEM_KEY, CONSTRUCTION_ACCOUNT_TOP_UP_ITEM_KEY,
+})
+
+
+@dataclass(frozen=True)
+class ConstructionAccountLiveRowAmounts:
+    """The three liquidity rows of a linked construction account, each a positive amount (0 = no row)."""
+    deposit_row_amount_dollars: Decimal
+    return_row_amount_dollars: Decimal
+    top_up_needed_dollars: Decimal
+
+
+def planned_cash_rows_including_construction_account_live_amounts(
+        planned_rows: Iterable[PlannedDealCashRow], live_amounts: ConstructionAccountLiveRowAmounts,
+        purchase_closing_date: date, rehab_completed_date: date, today: date) -> list[PlannedDealCashRow]:
+    """The deal's rows with the schedule's two construction-account rows replaced by the linked account's live ones
+    (tasks/todo/ConstructionAccountPerRehab.md): the deposit still to make, what the account will give back, and a
+    top-up dated today while it is projected to run short. Their amounts always follow the account."""
+    planned_rows = list(planned_rows)
+    schedule_row_by_item_key = {row.item_key: row for row in planned_rows if row.item_key in CONSTRUCTION_ACCOUNT_ITEM_KEYS}
+    rows = [row for row in planned_rows if row.item_key not in CONSTRUCTION_ACCOUNT_ITEM_KEYS]
+
+    def live_row(item_key: str, effective_date: date, signed_amount_dollars: Decimal, description: str, date_always_follows: bool) -> None:
+        if signed_amount_dollars == 0:
+            return
+        schedule_row = schedule_row_by_item_key.get(item_key)
+        rows.append(PlannedDealCashRow(
+            item_key=item_key, occurrence_number=1, effective_date=effective_date, amount_dollars=signed_amount_dollars,
+            description=description, sequence_within_day=schedule_row.sequence_within_day if schedule_row else 0,
+            amount_always_follows_the_deal=True, date_always_follows_the_deal=date_always_follows))
+
+    live_row(CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY, purchase_closing_date, -live_amounts.deposit_row_amount_dollars,
+             "Deposit into the construction account (still to deposit)", False)
+    live_row(CONSTRUCTION_ACCOUNT_RETURN_ITEM_KEY, rehab_completed_date, live_amounts.return_row_amount_dollars,
+             "Construction account balance returned at rehab end (live from the account)", False)
+    live_row(CONSTRUCTION_ACCOUNT_TOP_UP_ITEM_KEY, today, -live_amounts.top_up_needed_dollars,
+             "Top-up needed in the construction account", True)
+    return sorted(rows, key=lambda row: (row.effective_date, row.sequence_within_day))
+
+
 def _months_after(day: date, months: int) -> date:
     """The 1st of the month `months` after `day`'s month."""
     month_index = day.year * 12 + day.month - 1 + months
@@ -170,8 +218,10 @@ def diff_deal_cash_rows(planned_rows: Iterable[PlannedDealCashRow], imported_row
                                              before_date, before_date, before_amount, before_amount,
                                              created_because_refi_is_late=bool(txn.created_because_refi_is_late)))
             continue
-        keeps_users_date = bool(txn.user_overrode_date) and (str(txn.id), "date") not in use_deal_value_for
-        keeps_users_amount = bool(txn.user_overrode_amount) and (str(txn.id), "amount") not in use_deal_value_for
+        keeps_users_date = (bool(txn.user_overrode_date) and (str(txn.id), "date") not in use_deal_value_for
+                            and not planned.date_always_follows_the_deal)
+        keeps_users_amount = (bool(txn.user_overrode_amount) and (str(txn.id), "amount") not in use_deal_value_for
+                              and not planned.amount_always_follows_the_deal)
         after_date = before_date if keeps_users_date else planned.effective_date
         after_amount = before_amount if keeps_users_amount else planned.amount_dollars
         changed = (after_date != before_date or after_amount != before_amount or planned.description != txn.description
@@ -202,9 +252,11 @@ def diff_deal_cash_rows(planned_rows: Iterable[PlannedDealCashRow], imported_row
 
 def apply_deal_cash_row_changes(db: Session, deal_board: DealBoard, deal_id, planned_rows: Iterable[PlannedDealCashRow],
                                 use_deal_value_for: frozenset[tuple[str, DealCashRowField]] = frozenset(),
-                                only_add_missing_late_refi_rows: bool = False) -> list[DealCashRowChange]:
+                                only_add_missing_late_refi_rows: bool = False,
+                                only_item_keys: Optional[frozenset[str]] = None) -> list[DealCashRowChange]:
     """Write the re-sync to the deal's rows (no commit). `only_add_missing_late_refi_rows` adds the late-refi months
-    still missing and touches nothing else (a row you deleted by hand is never brought back by it)."""
+    still missing and touches nothing else (a row you deleted by hand is never brought back by it). `only_item_keys`
+    writes the rows of those items and touches nothing else (the construction account's live rows)."""
     planned_rows = list(planned_rows)
     imported_rows = imported_rows_of_deal(db, deal_board, deal_id)
     changes = diff_deal_cash_rows(planned_rows, imported_rows, use_deal_value_for)
@@ -214,6 +266,8 @@ def apply_deal_cash_row_changes(db: Session, deal_board: DealBoard, deal_id, pla
     for change in changes:
         planned = planned_by_identity.get((change.item_key, change.occurrence_number))
         if only_add_missing_late_refi_rows and not (change.change_kind == "added" and planned.created_because_refi_is_late):
+            continue
+        if only_item_keys is not None and change.item_key not in only_item_keys:
             continue
         if change.change_kind == "added":
             db.add(LiquidityTransaction(
