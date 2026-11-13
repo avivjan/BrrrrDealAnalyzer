@@ -15,7 +15,7 @@ import {
   MERCURY_WEB_APP_URL, dealOnItsBoard, dealOnTheLiquidityTimeline, transactionOnTheLiquidityTimeline, type ConstructionAccountSection,
 } from '../../../navigation/appLinks'
 import { useConstructionAccountStore } from '../../../stores/constructionAccountStore'
-import type { ConstructionAccountRehabFiguresReq, ConstructionAccountStatus, ConstructionAccountTimelineRow } from '../../../types/constructionAccount'
+import type { ConstructionAccountRehabFiguresReq, ConstructionAccountStatus, ConstructionAccountTimelineRow, ConstructionAccountTransfer } from '../../../types/constructionAccount'
 import { todayISO } from '../../../utils/liquidityEngine'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import type { ConstructionAccountTransferKind } from '../../../utils/constructionAccountTransferRules'
@@ -70,6 +70,13 @@ const TRANSFER_OUTCOME_LABELS = {
   refused_by_mercury: 'Refused', mercury_did_not_answer: 'No answer: check Mercury',
   failed_or_cancelled_at_mercury: 'Failed or cancelled',
 } as const
+/** What Mercury said about an approval request: rejected or cancelled there, or approved and not sent yet. */
+function transferOutcomeLabel(transfer: ConstructionAccountTransfer): string {
+  if (transfer.transfer_outcome === 'failed_or_cancelled_at_mercury' && transfer.mercury_transfer_status === 'rejected') return 'Rejected in Mercury'
+  if (transfer.transfer_outcome === 'failed_or_cancelled_at_mercury' && transfer.mercury_transfer_status === 'cancelled') return 'Cancelled in Mercury'
+  if (transfer.transfer_outcome === 'waiting_for_approval_in_mercury' && transfer.mercury_transfer_status === 'approved') return 'Approved, waiting for Mercury to send it'
+  return TRANSFER_OUTCOME_LABELS[transfer.transfer_outcome]
+}
 const TRANSFER_OUTCOME_TONES = {
   being_sent: 'neutral', accepted_by_mercury: 'positive', waiting_for_approval_in_mercury: 'warning', refused_by_mercury: 'negative',
   mercury_did_not_answer: 'warning',
@@ -396,7 +403,7 @@ function shortDateTime(iso: string | null): string {
             <span>
               {{ transfer.transfer_direction === 'deposit_into_construction_account' ? 'Deposit' : 'Steal' }}
               <span class="ml-1 text-xs text-fg-muted">{{ shortDateTime(transfer.requested_at) }}</span>
-              <UiBadge :tone="TRANSFER_OUTCOME_TONES[transfer.transfer_outcome]" class="ml-1">{{ TRANSFER_OUTCOME_LABELS[transfer.transfer_outcome] }}<template v-if="transfer.mercury_refusal_http_status"> ({{ transfer.mercury_refusal_http_status }})</template></UiBadge>
+              <UiBadge :tone="TRANSFER_OUTCOME_TONES[transfer.transfer_outcome]" class="ml-1">{{ transferOutcomeLabel(transfer) }}<template v-if="transfer.mercury_refusal_http_status"> ({{ transfer.mercury_refusal_http_status }})</template></UiBadge>
               <span v-if="transfer.transfer_outcome === 'accepted_by_mercury'" class="ml-1 text-xs text-fg-muted">
                 {{ transfer.is_in_the_bank_feed ? 'in the bank feed' : 'not in the bank feed yet' }}
               </span>

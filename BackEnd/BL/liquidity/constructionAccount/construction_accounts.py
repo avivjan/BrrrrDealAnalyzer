@@ -14,6 +14,7 @@ the rows as they are.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -24,6 +25,7 @@ from sqlalchemy.orm import Session
 from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
 from BL.liquidity.common import mercury_reads
+from BL.liquidity.common.mercury_transfers import fetch_transfer_approval_request_status
 from BL.liquidity.common.mercury_client import (
     ACTIVE_ACCOUNT_STATUSES, MercuryApiError, MercuryConfigError, MercurySlowDownError, fetch_account_transactions,
 )
@@ -73,6 +75,8 @@ from ReqRes.common.liquidity_construction_account_schemas import (
     ConstructionAccountWriteRes, MercuryAccountNameRes, MercuryConnectionStatusRes, MercuryLastChangeRes, MercuryWorkspaceConnectionRes,
 )
 from ReqRes.common.liquidity_deal_schemas import UseDealValueForField
+
+logger = logging.getLogger(__name__)
 
 ONE_CENT = Decimal("0.01")
 DOLLARS_PER_THOUSAND = Decimal("1000")
@@ -806,6 +810,41 @@ def reopen_construction_account(db: Session, bought_deal_id: str, today: Optiona
 
 # --- Live Mercury: the refresh, the last change, the connection ---------------------------------------------------
 
+TRANSFER_APPROVAL_REQUEST_STATUSES_THAT_END_THE_REQUEST = ("rejected", "cancelled")
+TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED = "approved"
+
+
+def _settle_the_in_app_transfers_rejected_or_cancelled_in_mercury(db: Session, mercury_workspace_label: str) -> bool:
+    """An in-app transfer waiting for its approval in Mercury never reaches the bank feed if the request is rejected or
+    cancelled there: ask Mercury for each one still waiting (zero calls when none is). Rejected or cancelled: the
+    transfer stops counting (failed_or_cancelled_at_mercury). Approved: only the status is kept; the bank feed counts
+    the money when it arrives. Any error leaves the transfer as it is and never fails the refresh. True when a transfer
+    changed."""
+    some_transfer_changed = False
+    for link in get_all_construction_accounts(db):
+        if link.mercury_workspace_label != mercury_workspace_label or link.closed_out_at is not None:
+            continue
+        transfers_waiting_for_approval = [
+            transfer for transfer in get_transfers_of_construction_account(db, link.bought_brrr_deal_id, link.construction_mercury_account_id)
+            if transfer.transfer_outcome == TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY and transfer.mercury_transfer_id
+            and transfer.seen_in_the_bank_feed_at is None]
+        for transfer in transfers_waiting_for_approval:
+            try:
+                transfer_approval_request_status = fetch_transfer_approval_request_status(mercury_workspace_label, transfer.mercury_transfer_id)
+            except Exception as error:   # a missing scope (401/403), no answer, no token: try again at the next refresh
+                logger.warning("Mercury transfer approval status not read (%s)", type(error).__name__)
+                continue
+            if transfer_approval_request_status in TRANSFER_APPROVAL_REQUEST_STATUSES_THAT_END_THE_REQUEST:
+                transfer.transfer_outcome = TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY
+                transfer.mercury_transfer_status = transfer_approval_request_status
+                some_transfer_changed = True
+            elif (transfer_approval_request_status == TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED
+                  and transfer.mercury_transfer_status != TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED):
+                transfer.mercury_transfer_status = TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED
+                some_transfer_changed = True
+    return some_transfer_changed
+
+
 def refresh_one_workspace(db: Session, mercury_workspace_label: str, workspace_read: mercury_reads.WorkspaceReadResult,
                           today: date) -> tuple[int, int, bool, list, bool]:
     """After a read of one workspace: its linked construction accounts take the new balances (their transactions are
@@ -835,6 +874,8 @@ def refresh_one_workspace(db: Session, mercury_workspace_label: str, workspace_r
         if reported or marked_done:
             construction_accounts_changed = True
             bank_reported_row_changes.append(deal_cash_row_changes_res(DEAL_BOARD_BOUGHT, deal, reported))
+    if workspace_read.was_read_from_mercury_now and _settle_the_in_app_transfers_rejected_or_cancelled_in_mercury(db, mercury_workspace_label):
+        construction_accounts_changed = True
     if construction_accounts_changed:
         mercury_reads.mark_construction_accounts_changed(db, mercury_workspace_label)
     return refreshed_deal_count, changed_row_count, construction_accounts_changed, bank_reported_row_changes, mercury_failed
