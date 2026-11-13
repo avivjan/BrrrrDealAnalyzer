@@ -106,11 +106,11 @@ def next_read_time_of(row: LiquidityMercuryWorkspaceRead) -> Optional[datetime]:
     return max(candidates) if candidates else None
 
 
-def discard_snapshot_of_workspace(db: Session, mercury_workspace_label: str, now: Optional[datetime] = None) -> None:
-    """A webhook said something moved in this workspace: its cached balances are no longer offered, and the next
-    allowed read is a fresh one whoever asks."""
+def ask_for_a_fresh_read_of_workspace(db: Session, mercury_workspace_label: str, now: Optional[datetime] = None) -> None:
+    """Something moved in this workspace (a webhook, a transfer): the in-memory summary cache is dropped, and the next
+    allowed read is a fresh one whoever asks. Until then (inside the floor or a back-off) the last snapshot still
+    answers, so the balances never go blank."""
     row = workspace_read_row(db, mercury_workspace_label, lock_it=True)
-    row.accounts_snapshot = None
     row.fresh_read_requested_at = now or utc_now()
     mercury_client.clear_cache()
 

@@ -27,6 +27,10 @@ class LiquidityMercuryWorkspaceRead(Base):
     fresh_read_requested_at = Column(DateTime(timezone=True), nullable=True)
     cash_balance_last_changed_at = Column(DateTime(timezone=True), nullable=True)
     construction_accounts_last_changed_at = Column(DateTime(timezone=True), nullable=True)
+    # The rows an instant update (a webhook) changed, so an open page can show "Timeline updated from the bank": a list
+    # of DealCashRowChangesRes as JSON, and when. Rows and amounts of this app's own timeline only, never Mercury's text.
+    last_instant_update_at = Column(DateTime(timezone=True), nullable=True)
+    bank_reported_row_changes_of_last_instant_update = Column(JSON, nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 

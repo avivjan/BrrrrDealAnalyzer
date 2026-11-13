@@ -163,6 +163,11 @@ def _run_migrations_locked(engine):
     ):
         if "liquidity_settings" in table_names:
             add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", column_name, column_ddl, None)
+    # What the last instant update (a Mercury webhook) changed, for the open pages (ConstructionAccountPerRehab, Step F).
+    if "liquidity_mercury_workspace_reads" in table_names:
+        for column_name, column_ddl in (("last_instant_update_at", "TIMESTAMP WITH TIME ZONE"),
+                                        ("bank_reported_row_changes_of_last_instant_update", "JSON")):
+            add_column_if_missing(engine, sa_inspect(engine), "liquidity_mercury_workspace_reads", column_name, column_ddl, None)
     # The deal milestones approved in the liquidity timeline, and the "rows out of date" flag.
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
         for column_name, column_ddl in (

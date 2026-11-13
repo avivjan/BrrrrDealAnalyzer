@@ -62,7 +62,7 @@ from DAL.data_models.liquidity.construction_account_models import (
     TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY, TRANSFER_OUTCOMES_THAT_COUNT,
     LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride,
 )
-from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook
+from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook, LiquidityMercuryWorkspaceRead
 from ReqRes.common.liquidity_construction_account_schemas import (
     ConstructionAccountDatedAmountRes, ConstructionAccountLinkReq, ConstructionAccountListRes, ConstructionAccountManualAdjustmentReq,
     ConstructionAccountManualAdjustmentRes, ConstructionAccountPayeeTotalRes, ConstructionAccountRefreshRes,
@@ -872,9 +872,14 @@ def refresh_construction_accounts(db: Session, today: Optional[date], want_fresh
 def last_mercury_change(db: Session) -> MercuryLastChangeRes:
     cash_balance_last_changed_at, construction_accounts_last_changed_at = mercury_reads.last_change_times(db)
     candidates = [moment for moment in (cash_balance_last_changed_at, construction_accounts_last_changed_at) if moment is not None]
+    instant_updates = [row for row in db.query(LiquidityMercuryWorkspaceRead).all() if row.last_instant_update_at is not None]
+    latest_instant_update = max(instant_updates, key=lambda row: row.last_instant_update_at) if instant_updates else None
     return MercuryLastChangeRes(last_changed_at=max(candidates) if candidates else None,
                                 cash_balance_last_changed_at=cash_balance_last_changed_at,
-                                construction_accounts_last_changed_at=construction_accounts_last_changed_at)
+                                construction_accounts_last_changed_at=construction_accounts_last_changed_at,
+                                last_instant_update_at=latest_instant_update.last_instant_update_at if latest_instant_update else None,
+                                bank_reported_row_changes_of_last_instant_update=(
+                                    latest_instant_update.bank_reported_row_changes_of_last_instant_update or [] if latest_instant_update else []))
 
 
 def mercury_connection_status(db: Session) -> MercuryConnectionStatusRes:

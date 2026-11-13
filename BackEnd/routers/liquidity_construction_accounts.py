@@ -23,6 +23,7 @@ from BL.auth.common.audit import record as audit
 from BL.auth.common.session_dependency import require_recent_auth
 from BL.liquidity.constructionAccount import construction_account_transfers as construction_account_transfers_bl
 from BL.liquidity.constructionAccount import construction_accounts as construction_accounts_bl
+from BL.liquidity.constructionAccount import mercury_instant_updates as instant_updates_bl
 from DAL.data_models.liquidity.construction_account_models import (
     TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING,
 )
@@ -336,3 +337,46 @@ def steal_from_liquidity_construction_account(bought_deal_id: str, data: Constru
     """Move money from the deal's construction account back to the LLC's primary checking, through Mercury."""
     return _transfer(db, request, bought_deal_id, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING, data, preview_only, today,
                      use_the_new_value_for)
+
+
+# --- Instant updates: register this app's address at Mercury (a passkey step-up; never MCP tools) --------------
+
+def _public_https_origin_of(request: Request) -> str:
+    """This app's own origin, as the browser reached it (Render terminates https and says so in X-Forwarded-Proto)."""
+    scheme = (request.headers.get("x-forwarded-proto") or request.url.scheme).split(",")[0].strip().lower()
+    host = (request.headers.get("host") or request.url.netloc).strip()
+    return f"{scheme}://{host}"
+
+
+def _instant_updates(db: Session, request: Request, event: str, mercury_workspace_label: str, change) -> MercuryConnectionStatusRes:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", mercury_workspace_label):
+        raise HTTPException(status_code=422, detail="Not an LLC label")
+    require_recent_auth(request, db)
+    try:
+        change()
+    except instant_updates_bl.InstantUpdatesRefusedError as error:
+        if error.was_recorded:
+            db.commit()   # the drawer shows why
+        else:
+            db.rollback()
+        raise HTTPException(status_code=error.http_status, detail=str(error))
+    except Exception:
+        db.rollback()
+        raise
+    db.commit()
+    audit(event, request, detail={"mercury_workspace_label": mercury_workspace_label})
+    return construction_accounts_bl.mercury_connection_status(db)
+
+
+@router.post("/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-on", response_model=MercuryConnectionStatusRes)
+def turn_on_liquidity_mercury_instant_updates(mercury_workspace_label: str, request: Request, db: Session = Depends(get_db)):
+    """Register this app's address with the LLC's Mercury workspace, so every change there is read at once."""
+    return _instant_updates(db, request, "liquidity_mercury_instant_updates_turned_on", mercury_workspace_label,
+                            lambda: instant_updates_bl.turn_on_instant_updates(db, mercury_workspace_label, _public_https_origin_of(request)))
+
+
+@router.post("/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-off", response_model=MercuryConnectionStatusRes)
+def turn_off_liquidity_mercury_instant_updates(mercury_workspace_label: str, request: Request, db: Session = Depends(get_db)):
+    """Remove this app's address at Mercury: the LLC is read on the page's interval again."""
+    return _instant_updates(db, request, "liquidity_mercury_instant_updates_turned_off", mercury_workspace_label,
+                            lambda: instant_updates_bl.turn_off_instant_updates(db, mercury_workspace_label))

@@ -492,13 +492,15 @@ BODY_ARG = "body"
 # Authentication plumbing never becomes a tool: an LLM must not enroll a
 # passkey, approve a device or mint a session. The Member Loan is restricted to
 # its two members on a passkey (decision D12), so it is never a tool either.
-EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-loan")
+EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-loan", "/webhooks")
 
 # Routes whose request or answer is a binary image: the camera upload and the
 # JPEG downloads of the inspection walkthrough are for the browser, not a tool.
 EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnail", "get_inspection_photo_full_image",
                        # They move real money at Mercury: Claude never does (tasks/todo/ConstructionAccountPerRehab.md, Step E).
-                       "deposit_into_liquidity_construction_account", "steal_from_liquidity_construction_account"}
+                       "deposit_into_liquidity_construction_account", "steal_from_liquidity_construction_account",
+                       # They register or remove this app's address at Mercury: the owner does it on the site.
+                       "turn_on_liquidity_mercury_instant_updates", "turn_off_liquidity_mercury_instant_updates"}
 
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client

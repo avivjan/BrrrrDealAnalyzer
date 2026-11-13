@@ -311,6 +311,9 @@ class MercuryLastChangeRes(BaseModel):
     last_changed_at: Optional[datetime] = None
     cash_balance_last_changed_at: Optional[datetime] = None
     construction_accounts_last_changed_at: Optional[datetime] = None
+    last_instant_update_at: Optional[datetime] = Field(None, description="When a Mercury event last changed timeline rows.")
+    bank_reported_row_changes_of_last_instant_update: List[DealCashRowChangesRes] = Field(
+        default_factory=list, description="The rows that event changed, per deal: the 'Timeline updated from the bank' window.")
 
 
 class MercuryWorkspaceConnectionRes(BaseModel):

@@ -169,8 +169,8 @@ def make_construction_account_transfer(db: Session, bought_deal_id: str, transfe
     _ask_mercury(transfer, deal.address or "")
     db.flush()
     if transfer.transfer_outcome == TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY:
-        # The balances moved: the next read of this LLC goes to Mercury, and the open pages reload.
-        mercury_reads.discard_snapshot_of_workspace(db, link.mercury_workspace_label)
+        # The balances moved: the next allowed read of this LLC goes to Mercury, and the open pages reload.
+        mercury_reads.ask_for_a_fresh_read_of_workspace(db, link.mercury_workspace_label)
         mercury_reads.mark_construction_accounts_changed(db, link.mercury_workspace_label, now)
     answer = construction_accounts_bl._write(db, deal, resolved_today, use_deal_value_for, False, lambda: None, status_before=status_before)
     return ConstructionAccountTransferWriteRes(**answer.model_dump(), transfer=transfer_res(transfer))
