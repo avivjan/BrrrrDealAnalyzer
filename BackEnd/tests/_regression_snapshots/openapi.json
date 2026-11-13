@@ -8351,6 +8351,124 @@
         "title": "ConstructionAccountRehabFiguresReq",
         "type": "object"
       },
+      "ConstructionAccountRehabSummaryRes": {
+        "description": "A rehab summary (made at close-out, or sent again) and where it was delivered. Never the file itself, never an\naddress or an error text: only the type name of what failed.",
+        "properties": {
+          "created_at": {
+            "description": "When the summary was made: the close-out, or a Send again.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "drive_delivery_status": {
+            "description": "The save of the PDF and the CSV to the owner's Google Drive.",
+            "enum": [
+              "pending",
+              "delivered",
+              "failed"
+            ],
+            "title": "Drive Delivery Status",
+            "type": "string"
+          },
+          "drive_folder_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's folder in the owner's Google Drive (a drive.google.com link).",
+            "title": "Drive Folder Url"
+          },
+          "drive_last_error_type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The type name of the Drive save's last failure, never its text.",
+            "title": "Drive Last Error Type Name"
+          },
+          "email_delivery_status": {
+            "description": "The e-mail to the owner.",
+            "enum": [
+              "pending",
+              "delivered",
+              "failed"
+            ],
+            "title": "Email Delivery Status",
+            "type": "string"
+          },
+          "email_last_error_type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The type name of the e-mail's last failure, never its text.",
+            "title": "Email Last Error Type Name"
+          },
+          "emailed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the e-mail was sent.",
+            "title": "Emailed At"
+          },
+          "overall_delivery_state": {
+            "description": "delivered = e-mailed and saved to Drive; will_retry = a channel failed and is retried every 30 minutes; failed = out of its 3 attempts (send it again).",
+            "enum": [
+              "sending",
+              "delivered",
+              "will_retry",
+              "failed"
+            ],
+            "title": "Overall Delivery State",
+            "type": "string"
+          },
+          "rehab_summary_id": {
+            "description": "The summary's id (its PDF and CSV download from the site).",
+            "title": "Rehab Summary Id",
+            "type": "string"
+          },
+          "saved_to_drive_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When both files were saved to Drive.",
+            "title": "Saved To Drive At"
+          }
+        },
+        "required": [
+          "rehab_summary_id",
+          "created_at",
+          "overall_delivery_state",
+          "email_delivery_status",
+          "drive_delivery_status"
+        ],
+        "title": "ConstructionAccountRehabSummaryRes",
+        "type": "object"
+      },
       "ConstructionAccountStatusRes": {
         "description": "One Bought BRRRR deal on the Construction Accounts page: every number tied to its construction account, each\nwith its source.",
         "properties": {
@@ -8494,6 +8612,17 @@
               }
             ],
             "title": "Last Transaction Date"
+          },
+          "latest_rehab_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountRehabSummaryRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest rehab summary of this deal (made at close-out), and whether it was e-mailed and saved to Drive."
           },
           "liquidity_rows_are_out_of_date": {
             "description": "A change to the deal still waits for its confirmation prompt.",
@@ -21415,7 +21544,7 @@
     },
     "/liquidity/construction-accounts/{bought_deal_id}/mark-closed-out": {
       "post": {
-        "description": "Close the account out without a transfer (you emptied it in Mercury): its return row is marked done.",
+        "description": "Close the account out without a transfer (you emptied it in Mercury): its return row is marked done. The first\nclose-out also makes the rehab summary (a PDF and a CSV of every transaction), e-mailed to the owner and saved to\nthe owner's Google Drive in the background.",
         "operationId": "mark_liquidity_construction_account_closed_out_liquidity_construction_accounts__bought_deal_id__mark_closed_out_post",
         "parameters": [
           {
@@ -21700,6 +21829,182 @@
           }
         },
         "summary": "Save Liquidity Construction Account Rehab Figures"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries": {
+      "get": {
+        "description": "The deal's rehab summaries, newest first: when each was made, and whether it was e-mailed and saved to Drive\n(only the type name of a failure, never its text).",
+        "operationId": "list_liquidity_construction_account_rehab_summaries_liquidity_construction_accounts__bought_deal_id__rehab_summaries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConstructionAccountRehabSummaryRes"
+                  },
+                  "title": "Response List Liquidity Construction Account Rehab Summaries Liquidity Construction Accounts  Bought Deal Id  Rehab Summaries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Liquidity Construction Account Rehab Summaries"
+      },
+      "post": {
+        "description": "Make a new rehab summary of a closed-out construction account, as things are now, and e-mail it and save it to\nDrive (409 until the account is closed out; 429 after 10 a day per deal).",
+        "operationId": "send_liquidity_construction_account_rehab_summary_again_liquidity_construction_accounts__bought_deal_id__rehab_summaries_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountRehabSummaryRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Liquidity Construction Account Rehab Summary Again"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries/{rehab_summary_id}/csv": {
+      "get": {
+        "description": "The rehab summary's transactions as a CSV, as it was made.",
+        "operationId": "download_liquidity_construction_account_rehab_summary_csv_liquidity_construction_accounts__bought_deal_id__rehab_summaries__rehab_summary_id__csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rehab_summary_id",
+            "required": true,
+            "schema": {
+              "title": "Rehab Summary Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Liquidity Construction Account Rehab Summary Csv"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries/{rehab_summary_id}/pdf": {
+      "get": {
+        "description": "The rehab summary's PDF, as it was made.",
+        "operationId": "download_liquidity_construction_account_rehab_summary_pdf_liquidity_construction_accounts__bought_deal_id__rehab_summaries__rehab_summary_id__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rehab_summary_id",
+            "required": true,
+            "schema": {
+              "title": "Rehab Summary Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Liquidity Construction Account Rehab Summary Pdf"
       }
     },
     "/liquidity/construction-accounts/{bought_deal_id}/reopen": {
