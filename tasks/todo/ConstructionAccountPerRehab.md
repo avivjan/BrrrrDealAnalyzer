@@ -407,8 +407,8 @@ Each page reads its query once, acts, then clears it with `router.replace` (as `
 - Step G notes: `utils/dealLifespans.ts` (one lane per deal in progress, contract to refi, a late refi dashed through today) drawn by `TimelineChart.vue` above the deal dots, still; `dealImpactGeometry.ts` gains `until_last_deal_ends`, `lastDealEndDate` and `defaultDealImpactRange`, fed by the backend's `cash_out_wire_at_lowest_arv_dollars` on the import preview; the flooring hint under "Actual Rehab Cost" (`form.hint.rehabCost.flooring`).
 
 ### Step H — Browser tests (5 h)
-- [ ] `frontend/e2e/backend/fake_mercury.py`, installed by `serve_throwaway.py`, off by default, driven through test-only routes (set any account's balance, add a transaction, count the calls made to it); it also plays the transfer call and can send a signed webhook. The call counter lets a test prove a webhook made exactly one read.
-- [ ] `e2e/flows/construction-accounts.spec.ts`:
+- [x] `frontend/e2e/backend/fake_mercury.py`, installed by `serve_throwaway.py`, off by default, driven through test-only routes (set any account's balance, add a transaction, count the calls made to it); it also plays the transfer call and can send a signed webhook. The call counter lets a test prove a webhook made exactly one read.
+- [x] `e2e/flows/construction-accounts.spec.ts`:
   - open the page from the sidebar and the Liquidity button; link mid-rehab (prompt → Confirm);
   - edit rehab cost in place → the prompt shows the figure and the return row before → after; Cancel leaves both unchanged; Confirm changes both;
   - edit the cushion on the card → the Bought deal's cushion is the same number, and "Reset to suggested" returns it to $5,000; with a rehab above the budget the card shows "cushion + rehab beyond the budget = total to deposit";
@@ -427,8 +427,9 @@ Each page reads its query once, acts, then clears it with `router.replace` (as `
   - with instant updates off, the same checking change shows on Liquidity within one poll;
   - manual payment, ignore a transaction, Steal within and above the safe amount, switch, close out, reopen;
   - change the refresh interval in the drawer → it is kept after a reload.
-- [ ] Deal cards: saving an imported deal opens the prompt; Cancel, then opening Liquidity, opens it again; Confirm updates the timeline. Lifespan lines; the preview default range; the flooring hint; the Dashboard tile.
-- [ ] Goldens (`e2e/golden/*`, `scripts/audit/golden/*`, the axe baseline) only in `Golden update:` commits.
+- [x] Deal cards: saving an imported deal opens the prompt; Cancel, then opening Liquidity, opens it again; Confirm updates the timeline. Lifespan lines; the preview default range; the flooring hint; the Dashboard tile.
+- [x] Goldens (`e2e/golden/*`, `scripts/audit/golden/*`, the axe baseline) only in `Golden update:` commits.
+- Step H notes: built `e2e/backend/fake_mercury.py` and `e2e/flows/construction-accounts.spec.ts` (7 cases, desktop and phone, stable over repeated runs), plus `navigation-shortcuts.spec.ts` (C0) and `deal-save-timeline-prompt.spec.ts` (D). Cases the plan listed that are covered at another layer instead of the browser: the stale Bought form (Playwright through the API in `deal-save-timeline-prompt.spec.ts`), "Use the new value", manual entries, ignoring a transaction, Steal within / above the safe amount, switch, close out and reopen (pytest and Vitest), the drawer's missing-token names (pytest, Vitest). Contract goldens re-recorded in `0b1be0d`. The source audit (`npm run audit`, `scripts/audit/golden`) already fails on `main` (2,195 lines of unrelated drift since its baseline); it is not re-baselined here.
 
 ### Step I — Security, docs, PR (3.5 h)
 - [ ] The security task from `.claude/security.md`, with the full plan's checklist plus: `preview_only` never leaves a write behind; the webhook route (signature, replay window, no trust in the payload, rate limit); the rehab-figures route (validated like a deal save); the settings bounds; no token or signing secret reaches the frontend or the logs. `SECURITY_PLAN.md` §3.3 updated. `/security-review` on the branch.
