@@ -8445,6 +8445,16 @@
             "description": "The Bought deal's last change: a deal form loaded before it is stale.",
             "title": "Deal Updated At"
           },
+          "has_a_transfer_token": {
+            "default": false,
+            "title": "Has A Transfer Token",
+            "type": "boolean"
+          },
+          "in_app_transfers_are_enabled": {
+            "default": false,
+            "title": "In App Transfers Are Enabled",
+            "type": "boolean"
+          },
           "is_in_the_liquidity_timeline": {
             "title": "Is In The Liquidity Timeline",
             "type": "boolean"
@@ -8551,6 +8561,17 @@
               }
             ],
             "title": "Marked Ready For Close Out At"
+          },
+          "maximum_single_transfer_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Single Transfer Dollars"
           },
           "mercury_is_unavailable": {
             "default": false,
@@ -8926,6 +8947,35 @@
             ],
             "title": "Transactions Recategorised Count"
           },
+          "transfer_token_environment_variable_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfer Token Environment Variable Name"
+          },
+          "transfers_left_this_hour": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfers Left This Hour"
+          },
+          "transfers_made_in_the_app": {
+            "items": {
+              "$ref": "#/components/schemas/ConstructionAccountTransferRes"
+            },
+            "title": "Transfers Made In The App",
+            "type": "array"
+          },
           "unpaid_rehab_remaining_dollars": {
             "anyOf": [
               {
@@ -9285,6 +9335,167 @@
           "ignored"
         ],
         "title": "ConstructionAccountTransactionRes",
+        "type": "object"
+      },
+      "ConstructionAccountTransferReq": {
+        "description": "A Deposit (checking -> construction account) or a Steal (construction account -> checking). The two accounts\nare always the ones linked to the deal: the request cannot name an account.",
+        "properties": {
+          "amount_dollars": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 50000000.0,
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "confirm_amount_exceeds_safe_to_steal": {
+            "default": false,
+            "description": "A Steal above 'safe to steal now' is refused (409) unless this confirms the top-up it will need.",
+            "title": "Confirm Amount Exceeds Safe To Steal",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "description": "One per open transfer window: the same key never makes a second transfer.",
+            "maxLength": 80,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "title": "Idempotency Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount_dollars",
+          "idempotency_key"
+        ],
+        "title": "ConstructionAccountTransferReq",
+        "type": "object"
+      },
+      "ConstructionAccountTransferRes": {
+        "properties": {
+          "amount_dollars": {
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "is_in_the_bank_feed": {
+            "description": "The bank feed shows it (it then counts from the feed, once).",
+            "title": "Is In The Bank Feed",
+            "type": "boolean"
+          },
+          "mercury_transfer_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "pending / sent / cancelled / failed / unknown, as Mercury said.",
+            "title": "Mercury Transfer Status"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "transfer_direction": {
+            "enum": [
+              "deposit_into_construction_account",
+              "steal_to_primary_checking"
+            ],
+            "title": "Transfer Direction",
+            "type": "string"
+          },
+          "transfer_id": {
+            "title": "Transfer Id",
+            "type": "string"
+          },
+          "transfer_outcome": {
+            "enum": [
+              "being_sent",
+              "accepted_by_mercury",
+              "refused_by_mercury",
+              "mercury_did_not_answer",
+              "failed_or_cancelled_at_mercury"
+            ],
+            "title": "Transfer Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transfer_id",
+          "transfer_direction",
+          "amount_dollars",
+          "transfer_outcome",
+          "requested_at",
+          "is_in_the_bank_feed"
+        ],
+        "title": "ConstructionAccountTransferRes",
+        "type": "object"
+      },
+      "ConstructionAccountTransferWriteRes": {
+        "description": "A Deposit or a Steal: the write's answer, plus the transfer (null for a preview: nothing was asked of Mercury).",
+        "properties": {
+          "balance_left_in_the_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when closing out: not $0 means money is still in the account (move it in Mercury, or Reopen).",
+            "title": "Balance Left In The Account Dollars"
+          },
+          "changes_the_liquidity_timeline": {
+            "title": "Changes The Liquidity Timeline",
+            "type": "boolean"
+          },
+          "liquidity_row_changes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DealCashRowChangesRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's rows before -> after; null for a deal that is not in the liquidity timeline."
+          },
+          "row_descriptions_marked_done": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Row Descriptions Marked Done",
+            "type": "array"
+          },
+          "status_after": {
+            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          },
+          "status_before": {
+            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          },
+          "transfer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountTransferRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "was_preview_only": {
+            "title": "Was Preview Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "was_preview_only",
+          "status_before",
+          "status_after",
+          "changes_the_liquidity_timeline"
+        ],
+        "title": "ConstructionAccountTransferWriteRes",
         "type": "object"
       },
       "ConstructionAccountWriteRes": {
@@ -20740,6 +20951,109 @@
         "summary": "Save Liquidity Construction Account Link"
       }
     },
+    "/liquidity/construction-accounts/{bought_deal_id}/deposit": {
+      "post": {
+        "description": "Move money from the LLC's primary checking into the deal's construction account, through Mercury.",
+        "operationId": "deposit_into_liquidity_construction_account_liquidity_construction_accounts__bought_deal_id__deposit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountTransferReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountTransferWriteRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deposit Into Liquidity Construction Account"
+      }
+    },
     "/liquidity/construction-accounts/{bought_deal_id}/manual-adjustments": {
       "post": {
         "description": "Record rehab money that never touched the construction account: a payment made from another account, by credit\ncard or in cash (`manual_payment`), or a draw the lender wired elsewhere (`manual_draw`).",
@@ -21433,6 +21747,109 @@
           }
         },
         "summary": "Reopen Liquidity Construction Account"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/steal": {
+      "post": {
+        "description": "Move money from the deal's construction account back to the LLC's primary checking, through Mercury.",
+        "operationId": "steal_from_liquidity_construction_account_liquidity_construction_accounts__bought_deal_id__steal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountTransferReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountTransferWriteRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Steal From Liquidity Construction Account"
       }
     },
     "/liquidity/construction-accounts/{bought_deal_id}/switch-account": {
