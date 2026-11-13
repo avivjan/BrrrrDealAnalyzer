@@ -108,18 +108,23 @@ The first three are what you asked for. I propose the rest after reviewing the w
 ## Todo
 
 ### Phase 0 — Setup (0.75 h)
-- [ ] Branch `ConstructionAccountPerRehab` from the latest `main`; commit this plan as `tasks/todo/ConstructionAccountPerRehab.md` (15 min)
-- [ ] **Mercury API check (time-boxed):**
+- [x] Branch `ConstructionAccountPerRehab` from the latest `main`; commit this plan as `tasks/todo/ConstructionAccountPerRehab.md` (15 min)
+- [x] **Mercury API check (time-boxed):**
   - the transactions endpoint and its fields (a stable transaction id, `kind` for internal transfers, `status`, signed `amount`, counterparty name, paging);
   - the internal-transfer endpoint (source, destination, amount, idempotency key, and whether Mercury approval policies can leave a transfer pending);
   - the narrowest token type that can create internal transfers.
 
   If Mercury can't do internal transfers through the API, stop and tell you before building Phase 6 (30 min)
 
+  **Result of the check (2026-11-13).** `docs.mercury.com` is not reachable from the build session, so this comes from search results of Mercury's reference pages and third-party clients, not from reading the pages:
+  - transactions: `GET /api/v1/account/{id}/transactions`; `kind` includes `internalTransfer`, `externalTransfer`, `outgoingPayment`, card and wire kinds; `status` is `pending` / `sent` / `cancelled` / `failed`; filters by date range and status;
+  - internal transfer: `POST /api/v1/transfer` with `sourceAccountId`, `destinationAccountId`, `amount` (≥ 0.01) and `idempotencyKey`, all required, plus an optional note; both accounts in the same organization. So internal transfers are possible and Phase 6 goes ahead;
+  - **not confirmed:** the transfer's response body (id and status fields), whether a repeated idempotency key answers 409, and whether a transfer can come back pending approval. The transfer code treats every one of these defensively, and the first real transfer must be a small one, checked in Mercury.
+
 ### Phase 1 — Schedule: deposit and return rows (3.5 h)
-- [ ] `cash_needed_schedule.py`: replace the `rehab_cushion` and `stolen_money` rows with `construction_account_deposit` and `construction_account_balance_returned_at_rehab_end`; leave `appliances` untouched. Update the catalogue tuple, the docstring and the "never a row" note; pin the rounding target to `−(total_cash_needed − rehab_cushion)` (2 h)
-- [ ] Explain text, the MCP glossary (`mcp_server.py`, the stolen-money definition), and the labels in `CashNeededScheduleTable.vue` and `DealCashRowChangesList` for the new keys (0.75 h)
-- [ ] Migration step (`migrations/steps/`, registered in `runner.py`): set `liquidity_rows_out_of_date = true` on every imported BRRRR deal, so each shows Re-sync with the before → after list. No row changes silently (0.75 h)
+- [x] `cash_needed_schedule.py`: replace the `rehab_cushion` and `stolen_money` rows with `construction_account_deposit` and `construction_account_balance_returned_at_rehab_end`; leave `appliances` untouched. Update the catalogue tuple, the docstring and the "never a row" note; pin the rounding target to `−(total_cash_needed − rehab_cushion)` (2 h)
+- [x] Explain text, the MCP glossary (`mcp_server.py`, the stolen-money definition), and the labels in `CashNeededScheduleTable.vue` and `DealCashRowChangesList` for the new keys (0.75 h)
+- [x] Migration step (`migrations/steps/`, registered in `runner.py`): set `liquidity_rows_out_of_date = true` on every imported BRRRR deal, so each shows Re-sync with the before → after list. No row changes silently (0.75 h)
 
 ### Phase 2 — DAL, projection and endpoints (12 h)
 - [ ] **Tables** (DAL models + one migration step) (3 h):
