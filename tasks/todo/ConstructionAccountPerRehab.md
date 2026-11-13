@@ -169,6 +169,230 @@ The first three are what you asked for. I propose the rest after reviewing the w
 - **The MCP descriptions and annotations of these 15 tools are done here** (the tests require them with the routes); Phase 7 keeps only the deposit / steal exclusion.
 - **Not done yet:** matching in-app transfers against the bank feed (it belongs with the transfer log in Phase 6).
 
+## Remaining work, revised on 2026-11-13 (this replaces Phases 3–9 below)
+
+Branch `ConstructionAccountPerRehab`, pushed. The full plan with its decisions and model is `tasks/todo/ConstructionAccountPerRehab.md`; this file covers what is left. Step A copies it into that file.
+
+## Context
+
+Phases 0–2 are built, tested and pushed: the schedule's deposit and return rows, the construction account tables, the projection, the Mercury transactions read, the 15 `/liquidity/construction-accounts/*` routes with their MCP tools, and the three live liquidity rows.
+
+Four requirements reshape the rest:
+1. **Every change that affects the timeline opens a confirmation prompt at once.** Nothing waits passively, and nothing changes the timeline silently.
+2. **Every number tied to the construction account is on its page**, and every number you can decide is editable there.
+3. **Nothing in a config file.** Every setting is in the UI and the database.
+4. **Mercury as close to real time as it allows.**
+
+## Decisions
+
+**From your answers**
+- **Mercury tokens stay in the hosting dashboard's secret settings** (read tokens as today, plus one transfer token per LLC). The UI shows which LLCs have which token and what is missing. Everything else is UI + database.
+- **Polling and webhooks are both built now.** The webhook part ships untested against the real Mercury: I could confirm its format only from third-party guides.
+- **Rehab cushion and deposit target are one figure, stored once.** The number is the Bought deal's `rehab_cushion`; the construction account has no deposit target of its own, so the two cards can never disagree. The `planned_deposit_override_dollars` column added in Phase 2 is removed (it was never deployed). When the rehab costs more than the construction budget, that extra is added automatically and shown beside the figure: "cushion $5,000 + rehab beyond the budget $10,000 = $15,000 to deposit". The suggested value is the app's default cushion ($5,000), with a one-click "Reset to suggested".
+
+**Requirement 1 — always a prompt, at the point of the change**
+
+One prompt everywhere: **"This changes the liquidity timeline"**, with the before → after list of rows (the existing `DealCashRowChangesList`), any row you edited by hand that the change disagrees with ("Use the new value" per row), and two buttons: **Confirm** and **Cancel**.
+
+- **An edit on the Construction Accounts page** (rehab cost, budget, contingency, cushion, deposit target, a baseline, a manual payment or draw, ignoring or re-categorising a transaction, link, switch, unlink, close out, reopen):
+  - the prompt opens before anything is saved, showing the figures before → after and the rows before → after;
+  - Confirm saves the edit and updates the timeline together;
+  - Cancel discards the edit. Nothing is saved.
+- **Deposit and Steal:** their own modal is the prompt. It shows the rows before → after next to the amount; there is no second prompt.
+- **A deal card save** (My Deals, Bought; cards autosave):
+  - when the save changes the deal's liquidity rows, the prompt opens as soon as the save lands;
+  - Confirm updates the timeline;
+  - Cancel leaves the rows as they are. The prompt opens again on the next save of that deal and whenever Liquidity or Construction Accounts opens. There is no passive banner to find.
+- **A change made outside the browser** (through the Claude connector, or the deploy that introduces these rows): the prompt opens the next time Liquidity or Construction Accounts opens, one deal at a time.
+- **A change the bank reports** (a transfer you made in Mercury itself, found by a poll or a webhook) is not an edit, so there is nothing to cancel. It is applied at once, and a **"Timeline updated from the bank"** modal opens with the same before → after list and one button, **OK**. The daily move of a top-up row to today's date does not open it.
+- **An edit that changes no timeline row** (the buffer to keep, a note, a setting) saves directly, with a short "Saved" notice.
+- **Feedback never stacks.** After a Confirm, one "Liquidity timeline updated" notice shows; editing several figures in a row updates that same notice in place ("3 edits · 5 rows") instead of adding one per edit. If a change for a deal arrives while that deal's prompt is already open (a bank-reported change, or a second pending change), its rows and any new disagreements are merged into the open prompt; a second prompt never opens on top.
+- The "rows wait for a Re-sync" banner and the `rows_wait_for_a_resync` field are removed. The existing "Liquidity out of date" badge on a deal card becomes a button that opens the same prompt.
+- A legacy cushion row you had already marked Done becomes a deposit row that is already Done when you confirm, so no overdue deposit appears.
+
+**Requirement 2 — every number, on one sheet per deal**
+
+Editable in place (tap the figure, type, Enter → the prompt of Requirement 1):
+
+| Group | Editable figures |
+|---|---|
+| Rehab | actual rehab cost; contingency %; construction budget (written to the Bought deal, validated like a deal save) |
+| Your own money | **rehab cushion / deposit target** (one figure, written to the Bought deal; the suggested $5,000 and "Reset to suggested" beside it); buffer to keep in the account |
+| Before this account | loan draws pulled before; rehab paid before |
+| By hand | each manual payment and manual draw (amount, date, note) |
+| Bank transactions | each transaction's category, ignored flag and note |
+| Dates | rehab completed and refi dates, through the existing milestone modal; the return row's date |
+
+Shown (derived or from the bank), each with a one-line "how this is computed":
+
+| Group | Figures |
+|---|---|
+| Account now | current balance; available balance; pending money in and pending money out (not settled yet); the primary checking's available balance; amounts as of; next Mercury read |
+| Rehab cost | actual + contingency = rehab cost; over or under the budget (the original spread) |
+| Loan draws | pulled until now = bank feed + before this account + by hand; remaining to pull; % of the budget pulled; last draw (date, amount); number of draws |
+| Rehab paid | paid until now = bank feed + before this account + by hand; unpaid remaining; % of the rehab paid; **paid per payee** (GC, electrician, …); last payment (date, amount) |
+| Your own money | total to deposit = cushion + rehab beyond the budget; deposited so far; remaining deposit; stolen so far; your own money still in the account (deposited − stolen); lender's spread already taken vs still to take |
+| Outcome | projected return at rehab end, split into "your own money back" and "spread"; safe to steal now, and which limit caps it (balance, buffer or projection); top-up needed |
+| On the timeline | the deposit, return and top-up rows as the timeline has them: date, amount, Done or open, overdue |
+| Not in this account | appliances (amount, date): its own timeline row, paid from checking |
+| Bank feed health | transactions counted; ignored; re-categorised; failed or cancelled; last transaction date |
+| Transfers made in the app | each Deposit and Steal: date, amount, status at Mercury; transfers left this hour; the per-transfer maximum |
+| History | previous construction accounts and what each carried over |
+
+Above the cards, **totals across every account**: balance, projected return, safe to steal, remaining deposits, top-ups needed, and how many accounts need attention (deposit due, top-up needed, Mercury unavailable).
+
+**Requirement 3 — settings in the UI, stored in the database**
+- New columns on `liquidity_settings`, edited in a "Construction account settings" drawer on the page through the existing `PUT /liquidity/settings`:
+  - `construction_account_refresh_interval_seconds` (default 30, 15–600);
+  - `construction_account_refresh_when_window_regains_focus` (default on);
+  - `construction_account_in_app_transfers_enabled` (default on: a kill switch);
+  - `construction_account_transfers_per_hour_limit` (default 5);
+  - `construction_account_maximum_single_transfer_dollars` (default 100,000).
+- These replace the two environment variables the earlier plan introduced. No new environment variable is added except the transfer tokens.
+- A read-only "Mercury connection" block in the same drawer, per LLC. It never shows a token or a secret's value.
+  - **Tokens:** read token present or missing; transfer token present or missing. For a missing one, the exact name the backend expects, ready to copy: `MERCURY_API_TOKEN_<LABEL>` and `MERCURY_TRANSFER_API_TOKEN_<LABEL>` with the LLC's label filled in. For an LLC with no token yet, a small box takes its label and shows both names.
+  - **Instant updates:** on or off; "Last instant event: 2m ago" or "Waiting for the first event"; and the most recent registration or verification error with its time, if there was one.
+
+**The same deal edited in two places**
+- The four rehab figures live on the Bought deal, so the Bought deal card and the Construction Accounts card edit the same stored numbers.
+- A confirmed edit on the Construction Accounts card bumps the deal's `updated_at` and reloads the deal in the frontend's Bought deal store, so the Bought board shows the new figures without a reload.
+- A Bought deal form that was open somewhere else (another tab or device) cannot silently overwrite them: the Bought deal save sends the `updated_at` the form was loaded with, and the server refuses a stale save (409). The form then reloads the deal and says "This deal was changed elsewhere; your form was refreshed".
+- Editing the cushion on the Bought deal card changes the same figure the Construction Accounts card shows, and opens the timeline prompt like any other deal save.
+
+**Requirement 4 — live Mercury**
+- **Polling.** While the Construction Accounts or Liquidity page is open and the tab is visible, the app re-reads Mercury every `construction_account_refresh_interval_seconds`, and at once when the window regains focus. These reads bypass the 60-second cache.
+- **Burst after a transfer.** After a Deposit, Steal or Switch: read at once, then at 2, 5, 10, 20 and 40 seconds, stopping when the bank feed shows the transfer.
+- **One live read covers the whole LLC.** A read of an LLC fetches all of its accounts (every balance, not only construction accounts) and the transactions of its linked construction accounts. So the main Liquidity cash balance is live too, whether or not any construction account is linked.
+- **One gate per LLC, shared by every reader.** The general balance read (`GET /liquidity/mercury-balance`), the construction account refresh, and the webhook all go through one function. It keeps, per LLC in the database (so every server process shares it): the last accounts snapshot, when it was read, and when the next read is allowed.
+  - At most one Mercury read per LLC every 10 seconds, however many tabs, pages or readers ask. A reader that asks sooner gets the stored snapshot, never a second call.
+  - On a "slow down" answer (429) to any call, that LLC backs off for all readers, doubling up to 5 minutes (honouring `Retry-After`), and the pages say when the next read is.
+  - Mercury's limits are not published, so these numbers are conservative guesses.
+- **`last_changed_at` moves when either thing changes:** a linked construction account's numbers, or the LLC's overall cash balance (the accounts counted as cash).
+- **Webhooks.** A "Turn on instant updates" button per LLC registers our address with Mercury. A webhook is registered per LLC, so every valid event means "something moved in this LLC". On each one the server discards that LLC's cached balances, reads the LLC fresh at once, stores the new balances, refreshes its linked construction accounts and writes their rows. The event's contents are never trusted or stored: it only says "look now". With instant updates on, the open page checks our own database every 5 seconds (no Mercury call) and reloads what changed; polling continues as a safety net.
+- **Both pages show it without a reload.** When a poll or the 5-second check finds a change, the browser reloads the construction account cards and the main Liquidity cash balance (the header figure and the timeline's starting balance). A cash balance change is the bank's fact, not a row change, so it opens no prompt.
+- Poll reads are audited only when they change something or fail, so the audit log is not flooded. Manual refreshes and every write are still audited.
+
+**Carried over from the previous revision**
+- The page is in the sidebar and command palette, not the phone's seven-tab bottom bar; on a phone it is reached from the Liquidity button and the Dashboard tile.
+- The Dashboard tile is a plain link (the Dashboard makes no request of its own).
+- The import preview gets `cash_out_wire_at_lowest_arv_dollars` from the backend for its default range.
+- Browser tests get a fake Mercury inside the test server only.
+- The transfer backend is built before the Deposit / Steal modal.
+
+## Todo
+
+### Step A — Plan file (15 min)
+- [ ] Copy this revision into `tasks/todo/ConstructionAccountPerRehab.md`; commit.
+
+### Step B — Backend for the four requirements (15.5 h)
+- [ ] **Preview before every construction account write** (2.5 h): each write route takes `preview_only` (query, default false). With it, the route does the whole change inside the database transaction, builds its answer, and rolls back. The business functions stop committing; the router commits or rolls back. Every answer carries `status_before`, `status_after` and `liquidity_row_changes` (the `DealCashRowChangesRes` shape, with the hand-edited rows that disagree and `use_the_new_value_for`).
+- [ ] **A confirmed write syncs the whole deal** (1 h): `write_construction_account_rows_of_deal` no longer skips a flagged deal on a confirmed write; it runs the full sync and clears the flag. A background refresh still leaves a flagged deal's rows to its prompt. `rows_wait_for_a_resync` is removed.
+- [ ] **Deal saves keep flagging; the prompt is the frontend's** (0.5 h): the save path is unchanged (`mark_liquidity_rows_out_of_date_if_the_save_changed_them`); the existing `import-preview` / `import` routes are the prompt's preview and confirm. New: a Done legacy `rehab_cushion` row makes the new deposit row Done at confirm.
+- [ ] **Rehab figures route** (1.5 h): `PUT /liquidity/construction-accounts/{bought_deal_id}/rehab-figures` (any of `actual_rehab_cost_dollars`, `rehab_contingency_percent`, `construction_budget_dollars`, `rehab_cushion_dollars`; `preview_only`). Validated with `validate_brrr_inputs_for_saved_deal` on `deal_as_attributes(deal, **changes)` (the pattern of `apply_milestone_change`), written to the Bought deal with its `updated_at` set to now, then the full sync. Works for an unlinked deal too. The answer carries the deal's new `updated_at`.
+- [ ] **One cushion figure** (1 h): remove `planned_deposit_override_dollars` from the model, the link request, the status and the projection inputs (`planned_deposit = rehab_cushion + max(0, −original_steal)`, always); the status answers `rehab_cushion_dollars`, `rehab_beyond_the_construction_budget_dollars`, `total_to_deposit_dollars` and `suggested_rehab_cushion_dollars` (the default of `BrrrLifecycleColumns.rehab_cushion`). Tests of Phase 2 updated.
+- [ ] **Stale Bought deal saves** (1.5 h): `BoughtBrrrDealCreate` gains the optional `updated_at_the_form_was_loaded_with`; `update_bought_deal` answers 409 when it is older than the stored `updated_at` (compared to the microsecond the response gave). Without the field (the Claude connector, older clients) a save behaves as today.
+- [ ] **The extra numbers** (2.5 h):
+  - stored on the link at each refresh, next to the bank sums: pending money in / out, the checking's available balance, the counts (counted, ignored, re-categorised, failed), the last draw and last payment, the number of draws, and rehab paid per payee (JSON);
+  - computed in the status: the percentages, deposited / stolen / own money still inside, the return's split, which limit caps safe-to-steal, the three timeline rows, the appliances row, the rehab-completed and refi dates with their approval;
+  - `GET /liquidity/construction-accounts` also answers the totals across accounts.
+- [ ] **Bank-reported changes** (0.5 h): the refresh answers, per deal, the row changes it just applied, for the "Timeline updated from the bank" modal (a top-up row's date-only move is left out).
+- [ ] **Settings** (1 h): the five columns (model, migration step, `LiquiditySettingsUpdate` / `Res` with bounds); `GET /liquidity/mercury-connection-status`, per LLC label (every label with a token, a link or a webhook): `has_read_token`, `has_transfer_token`, `read_token_environment_variable_name`, `transfer_token_environment_variable_name`, `instant_updates_are_on`, `last_valid_event_received_at`, `last_webhook_error_message`, `last_webhook_error_at`. Names and times only, never a value.
+- [ ] **One shared, paced Mercury reader** (3.5 h): `BL/liquidity/common/mercury_reads.py`, the only caller of `mercury_client` from now on.
+  - Table `liquidity_mercury_workspace_reads`, one row per LLC label: `accounts_snapshot` (JSON: the summarised accounts, as `mercury_client` already returns them, with no token and only the last four digits of a number), `counted_as_cash_balance_dollars`, `last_mercury_read_at`, `next_mercury_read_not_before`, `consecutive_slow_down_answers`, `last_changed_at`.
+  - `mercury_client` gains a per-LLC accounts read and `use_cache=False` on both reads; a 429 raises a `MercurySlowDownError` carrying `Retry-After`.
+  - `read_workspace(db, label, linked_construction_account_ids, want_fresh)`: inside the floor or the back-off it answers the stored snapshot; otherwise it reads the accounts once and each linked account's transactions, stores the snapshot, and moves `last_changed_at` when the counted-as-cash balance or a linked account's sums changed. A row lock makes two processes asking together do one read.
+  - `get_mercury_balance` (the general endpoint) and `refresh_construction_accounts` both use it, so neither ever makes a call the other just made. `GET /liquidity/mercury-balance` takes `fresh` (default false: the snapshot if it is younger than the cache time, as today).
+  - The refresh reads every LLC with a token, not only LLCs with a linked account. It answers `next_mercury_read_not_before`, `last_changed_at`, `cash_balance_changed` and `construction_accounts_changed`.
+  - `GET /liquidity/construction-accounts/last-change` (database only): `last_changed_at`, `cash_balance_last_changed_at`, `construction_accounts_last_changed_at`.
+  - Poll refreshes send `is_a_background_poll: true` and are audited only on change or failure.
+- [ ] MCP: descriptions and annotations for the new and changed routes; `INSTRUCTIONS` says to show the owner a `preview_only` answer before confirming a write.
+
+### Step C — Construction Accounts page (15 h)
+- [ ] **Types, API, store** (2 h): `src/types/constructionAccount.ts`, `src/api/constructionAccount.ts`, `src/stores/constructionAccountStore.ts`. Every edit goes through one store function: preview → prompt → confirm (or cancel), then it replaces the deal's status, reloads the liquidity rows, and after a rehab-figures edit reloads that deal in `boughtDealStore`.
+- [ ] **The prompt and the notice** (2 h):
+  - `components/liquidity/LiquidityTimelineChangePrompt.vue`: figures before → after, rows before → after through `DealCashRowChangesList.vue`, Confirm / Cancel; an OK-only mode for bank-reported changes.
+  - One prompt per deal: a queue opens pending prompts one at a time, and a change for the deal whose prompt is open is merged into it (the preview is re-read; new disagreements are added to the list).
+  - `components/liquidity/LiquidityRowsChangedNotice.vue`: the single "Liquidity timeline updated" notice, updated in place with a running count of edits and rows while it is visible.
+- [ ] **Route and navigation** (1 h): route `/liquidity/construction-accounts`; `shell/nav.ts` item with `shownInThePhoneBottomBar: false`, filtered in `AppMobileNav.vue`; a button in the Liquidity top bar and its phone ⋯ menu (`theater/LiquidityTheaterMode.vue`); a link per Bought deal in `theater/DealLegendPanel.vue`; a plain Dashboard tile (`LandingPage.vue`).
+- [ ] **Page, totals and card** (4.5 h): `views/ConstructionAccounts.vue`, `ConstructionAccountTotals.vue`, `ConstructionAccountCard.vue` with one small component per group of the Requirement 2 tables, and `ConstructionAccountEditableFigure.vue` (tap to edit, Enter saves, Escape cancels; modelled on `liquidity/InlineAmountEditor.vue`).
+  - Header: "Refresh from Mercury", "amounts as of <time>", the next-read time while backing off, a banner while Mercury is unavailable.
+  - Each card opens on the outcome and the account-now figures; the other groups expand.
+  - Actions: Link, Switch account, Unlink, Mark ready for close-out, Mark closed out, Reopen; Deposit, Steal and Close out arrive in Step E.
+- [ ] **Link and switch modals** (2 h): `ConstructionAccountSettingsModal.vue` (first link: the two account pickers from `liquidityApi.getMercuryBalance()`, checking limited to accounts counted as cash in the same LLC, plus the baselines; no deposit target field: it is the cushion on the card) and `ConstructionAccountSwitchModal.vue`.
+- [ ] **Lists** (2 h): `ConstructionAccountManualAdjustmentsList.vue`, `ConstructionAccountTransactionsList.vue` (ignore, category, note, restore, filters) and the paid-per-payee table.
+- [ ] **Settings drawer** (1.5 h): `ConstructionAccountSettingsDrawer.vue` with the five settings and the Mercury connection block (token status with the expected names to copy, the label box for a new LLC, instant updates on / off, the last event time, the last error).
+
+### Step D — Prompts on deal cards, and live refresh (6 h)
+- [ ] **Deal cards** (1.5 h): in `MyDeals.vue` and `BoughtDeals.vue`, after an imported deal's save lands with its rows changed, the prompt opens (preview from `import-preview`, Confirm calls `import`). The "Liquidity out of date" badge (`ImportDealToLiquidityButton.vue`, `DealLegendPanel.vue`) opens the same prompt.
+- [ ] **Stale Bought forms** (1 h): the Bought deal save sends `updated_at_the_form_was_loaded_with`; on 409 the form reloads the deal from the server, keeps nothing of the stale edit, and shows "This deal was changed elsewhere; your form was refreshed". `boughtDealStore` gains a "reload one deal" action, also used after a confirmed rehab-figures edit.
+- [ ] **On opening Liquidity or Construction Accounts** (0.5 h): every deal still out of date is queued for its prompt.
+- [ ] **Live refresh** (3 h): `src/composables/useLiveMercuryRefresh.ts` (it covers more than construction accounts, so it is not named after them), used by both pages.
+  - The interval poll, the focus / visibility refresh (not more than once per 5 seconds), pausing while the tab is hidden, the post-transfer burst, the 5-second database check while instant updates are on, and respect for `next_mercury_read_not_before`.
+  - On `construction_accounts_changed`: reload the cards and the liquidity rows, and open the "Timeline updated from the bank" modal when rows changed.
+  - On `cash_balance_changed`: `liquidityStore` gets `applyMercuryBalance()`, split out of `syncFromMercury`, which reads `GET /liquidity/mercury-balance` (served from the snapshot the poll or the webhook just stored, so no second Mercury call), updates the header's balance and popover, and re-anchors the timeline's starting balance to today. No prompt.
+  - `liquidityStore.fetchAll` calls the refresh after `refreshLateRefis`; the page's own Mercury sync on load goes through the same shared reader.
+
+### Step E — Transfers (8.5 h)
+- [ ] **Backend** (6 h), as in the full plan, with these changes: the hourly limit, the per-transfer maximum and the kill switch come from the settings; `preview_only` answers the rows before → after for the modal; in-app transfers are matched to the bank feed so each counts once; the code tolerates a missing id or an unknown status in Mercury's answer and never retries on its own; deposit and steal are excluded from MCP.
+- [ ] **Modal** (2.5 h): `ConstructionAccountTransferModal.vue` for Deposit, Steal and Close out, showing the rows before → after; one idempotency key per open modal; starts the burst refresh on success.
+
+### Step F — Webhooks (5 h)
+- [ ] Table `liquidity_mercury_webhooks`: `mercury_workspace_label` (unique), `mercury_webhook_endpoint_id`, `signing_secret`, `receiving_path_token`, `turned_on_at`, `last_valid_event_received_at`, `last_webhook_error_message`, `last_webhook_error_at`. The secret is never returned by any route and is redacted from logs.
+- [ ] Errors recorded for the drawer, in our own words (never Mercury's raw text): a registration Mercury refused, and a received event that failed its signature or timestamp check. A valid event clears nothing: the drawer shows both the last valid event and the last error with their times.
+- [ ] `POST /liquidity/mercury-webhooks/{workspace_label}/turn-on` and `/turn-off` (passkey step-up): register or delete the endpoint at Mercury. The address is this app's public address taken from the request (https only) plus `/webhooks/mercury/{receiving_path_token}`.
+- [ ] `POST /webhooks/mercury/{receiving_path_token}`: public, self-protected. It checks the `Mercury-Signature` header (HMAC-SHA256 over the timestamp and the raw body, constant-time compare), refuses a timestamp older than 5 minutes, and limits the body size and the rate. Excluded from MCP.
+- [ ] On a valid event, for that LLC: discard the stored accounts snapshot and the in-memory summary cache, read the LLC fresh through the shared reader (`want_fresh`, bypassing the cache but still inside the 10-second floor and any back-off: a burst of events makes one read, and an event inside the floor schedules one read at the floor's end), store every account's balance and the counted-as-cash total, refresh the linked construction accounts and write their rows, and move `last_changed_at` if the cash balance or a linked account changed.
+- [ ] **Unverified, said on screen if it fails:** which token Mercury accepts for registering (the transfer token is tried first, then the read token), and the exact event names.
+
+### Step G — Timeline and preview (6 h)
+- [ ] Deal lifespans (2.5 h), the "Until last deal ends" range and its default (2 h), the backend field for it (1 h), the flooring hint (0.5 h) — as in the previous revision.
+
+### Step H — Browser tests (5 h)
+- [ ] `frontend/e2e/backend/fake_mercury.py`, installed by `serve_throwaway.py`, off by default, driven through test-only routes (set any account's balance, add a transaction, count the calls made to it); it also plays the transfer call and can send a signed webhook. The call counter lets a test prove a webhook made exactly one read.
+- [ ] `e2e/flows/construction-accounts.spec.ts`:
+  - open the page from the sidebar and the Liquidity button; link mid-rehab (prompt → Confirm);
+  - edit rehab cost in place → the prompt shows the figure and the return row before → after; Cancel leaves both unchanged; Confirm changes both;
+  - edit the cushion on the card → the Bought deal's cushion is the same number, and "Reset to suggested" returns it to $5,000; with a rehab above the budget the card shows "cushion + rehab beyond the budget = total to deposit";
+  - edit three figures in a row → one notice, updated in place, never three;
+  - a bank-reported change arrives while the deal's prompt is open → it is merged into that prompt;
+  - with a Bought deal form open in a second tab, edit rehab cost on the card, then save the stale form → it is refused, reloaded, and the card's figure survives;
+  - the drawer shows the expected token names for an LLC without a transfer token, "Waiting for the first event" before a webhook, the time of the last event after one, and the error after a wrongly signed one;
+  - edit the buffer to keep → saved with no prompt;
+  - an edit that disagrees with a hand-edited row → the prompt lists it with "Use the new value";
+  - every group of the Requirement 2 tables shows its figures, and the totals add up;
+  - Deposit → step-up → the deposit row is Done;
+  - a fake draw arrives → it shows within one poll, with no modal (no row changed);
+  - a steal made at the fake bank → the "Timeline updated from the bank" modal opens;
+  - a signed webhook → the change shows without waiting for the poll;
+  - **a signed webhook after money lands in a checking account that is not a construction account → the main Liquidity cash balance in the header changes, and the timeline's starting balance with it, with no page reload and no prompt** (in `liquidity.spec.ts`, with the poll interval set long so only the webhook can explain it);
+  - with instant updates off, the same checking change shows on Liquidity within one poll;
+  - manual payment, ignore a transaction, Steal within and above the safe amount, switch, close out, reopen;
+  - change the refresh interval in the drawer → it is kept after a reload.
+- [ ] Deal cards: saving an imported deal opens the prompt; Cancel, then opening Liquidity, opens it again; Confirm updates the timeline. Lifespan lines; the preview default range; the flooring hint; the Dashboard tile.
+- [ ] Goldens (`e2e/golden/*`, `scripts/audit/golden/*`, the axe baseline) only in `Golden update:` commits.
+
+### Step I — Security, docs, PR (3.5 h)
+- [ ] The security task from `.claude/security.md`, with the full plan's checklist plus: `preview_only` never leaves a write behind; the webhook route (signature, replay window, no trust in the payload, rate limit); the rehab-figures route (validated like a deal save); the settings bounds; no token or signing secret reaches the frontend or the logs. `SECURITY_PLAN.md` §3.3 updated. `/security-review` on the branch.
+- [ ] README, plan checked off, push, open the PR.
+
+## Tests by layer
+- **Unit (pytest):** `preview_only` answers the same changes a confirmed write then makes, and leaves no row, link, adjustment or override behind; the Done carry-over of a legacy cushion; rehab-figures validation and the `updated_at` bump; the total to deposit with and without a rehab beyond the budget; a stale Bought deal save refused, a save without the field accepted; the connection status (expected names per label, last event, last error, never a value); each extra number (pending sums, per-payee totals, percentages, the return's split, the cap on safe-to-steal, totals); bank-reported changes without the top-up date move; settings bounds; webhook signature (valid, wrong secret, old timestamp, altered body); transfer guards and matching.
+- **Unit (pytest), the shared reader:** a general balance read and a construction refresh inside 10 seconds make one Mercury accounts call between them; a 429 on either puts the LLC in back-off for both, doubling and honouring `Retry-After`; `last_changed_at` moves on a cash balance change with no construction account linked, on a linked account's change, and not when nothing changed; an LLC with no linked account is still read.
+- **Unit (Vitest):** the prompt (Confirm, Cancel, OK-only, "Use the new value", the queue, merging into the open prompt); the notice updating in place; the stale-save handling of the Bought form; the drawer's connection block; the editable figure; each group of the card and the totals; each modal, list and the drawer; the live-refresh composable with fake timers (interval, focus, hidden tab, burst, back-off, the bank modal, and a cash balance change updating the store's balance and starting balance with no prompt); nav; lane layout; the preview range and default.
+- **Integration (pytest):** every new and changed route in both modes; a deal save flags, `import-preview` lists and `import` applies; the webhook route end to end against the fake: **a signed event discards the LLC's cached `summarize_balance` data and the stored snapshot, makes one fresh accounts read, and `GET /liquidity/mercury-balance` then answers the new balance of a non-construction checking account without another Mercury call; the linked construction account and its rows are refreshed in the same event; `last-change` moves; a second event inside the floor makes no second call; an unsigned or wrongly signed event changes nothing and is recorded as the last error**; deposit / steal with step-up, idempotency, limits from the settings and the kill switch; MCP tool list and annotations.
+- **E2E (Playwright):** Step H.
+
+## Verification
+- `pytest` and `python verify_regression.py verify` in `BackEnd/`; `npm run test`, `npm run build` and `npm run audit` in `frontend/`; the Playwright specs of Step H.
+- In the running app against the fake Mercury: edit rehab cost on the card, read the prompt, cancel, edit again, confirm, and watch the timeline change without a reload; add a fake transaction and watch it appear within the interval, then at once with instant updates on.
+- **Only you can verify against the real Mercury:** the first transfer (make it a small one), and turning on instant updates.
+
+Remaining estimate: about 65 h.
+
+---
+
+## The first version of Phases 3–9 (superseded by the revision above; kept for the record)
+
 ### Phase 3 — Construction Accounts page, card and controls (10 h)
 - [ ] Route `/liquidity/construction-accounts` (name `construction-accounts`) in `router/index.ts`. Add the entry to `shell/nav.ts` (sidebar, command palette) and keep `nav.test.ts` in step. Check the phone bottom nav at 390 px: if an eighth item doesn't fit, the page is in the sidebar and palette only, and is reached on a phone from the Liquidity page button (1 h)
 - [ ] Direct links: a "Construction accounts" button in the Liquidity page header (theater mode), a link on each deal in the deal bar / `DealLegendPanel`, and a tile on the Dashboard (`LandingPage.vue`) with the total projected return and the count of deals needing a link or a top-up (1 h)
