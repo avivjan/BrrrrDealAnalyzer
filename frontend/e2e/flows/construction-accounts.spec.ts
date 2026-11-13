@@ -10,7 +10,7 @@ import { API_ORIGIN } from '../fixtures/env';
  * (tasks/todo/ConstructionAccountPerRehab.md, Step H): linking mid-rehab, every edit asking first, one notice that
  * updates in place, a Deposit with the passkey step-up, the bank's own changes, and instant updates.
  *
- * The fake is one LLC, E2E: a checking (E2E Checking, $80,000), a construction account (Oak Rehab Construction, $0)
+ * The fake is one LLC, E2E: a checking (E2E Checking ••4242, $80,000), a construction account (Oak Rehab Construction, $0)
  * and a tax bucket ($4,000). The browser clock is frozen on 2026-09-04 (fixtures/clock.ts); specs advance it with
  * `settle(ms)` to run the page's own timers (the poll, the 5-second instant-update check).
  */
@@ -33,13 +33,13 @@ async function fakeMercury(request: APIRequestContext, path: string, data?: unkn
 }
 
 /** A Bought BRRRR deal in the timeline, its construction account linked through the API. */
-async function seedLinkedDeal(request: APIRequestContext, seed: Seed, link = true): Promise<string> {
+async function seedLinkedDeal(request: APIRequestContext, seed: Seed, link = true, dealOverrides: Record<string, unknown> = {}): Promise<string> {
   const settings = await request.put(`${API_ORIGIN}/liquidity/settings`, {
     headers: SEED_HEADERS,
     data: { opening_balance_dollars: 150000, opening_balance_date: '2026-09-04', reserve_dollars: 5000, construction_account_refresh_interval_seconds: 30 },
   });
   expect(settings.ok()).toBe(true);
-  const deal = await seed.seedBoughtDeal('BRRRR', DEAL);
+  const deal = await seed.seedBoughtDeal('BRRRR', { ...DEAL, ...dealOverrides });
   expect((await request.post(`${API_ORIGIN}/liquidity/deals/bought/${deal.id}/import`, { headers: SEED_HEADERS, data: { today: '2026-09-04' } })).ok()).toBe(true);
   if (link) {
     const linked = await request.put(`${API_ORIGIN}/liquidity/construction-accounts/${deal.id}`, {
@@ -73,6 +73,7 @@ async function openTheCard(page: Page, dealId: string) {
   await page.goto(`/liquidity/construction-accounts?deal=${dealId}`);
   const card = page.getByTestId(`ca.${dealId}`);
   await expect(card).toBeVisible();
+  await expect(card).toHaveAttribute('data-expanded', 'true');   // a link to one deal opens its card
   // The page's first Mercury read must land before a spec changes the fake bank: a read that saw the balance before
   // a change and the transactions after it would report a change that never happened.
   await page.waitForLoadState('networkidle');
@@ -129,15 +130,14 @@ test('link a construction account mid-rehab: the page is in the sidebar and on t
   await expect(page.getByTestId('timeline-prompt.root')).toBeVisible();
   await confirmThePrompt(page, settle);
   await expect(page.getByTestId(`ca.${dealId}.state`)).not.toHaveText('Not linked');
-  await expect(page.getByTestId(`ca.${dealId}.balance`)).toBeVisible();
+  await expect(page.getByTestId(`ca.${dealId}.summary.balance`)).toBeVisible();
   // No sideways scroll on a phone: the longest page title must not widen the shell (it truncates in the top bar).
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
 
 test('an edit that moves the timeline asks first: Cancel keeps it, Confirm saves it; one notice for several edits', async ({ page, seed, request, settle }) => {
   const dealId = await seedLinkedDeal(request, seed);
-  await openTheCard(page, dealId);
-  await page.getByTestId(`ca.${dealId}.rehab`).locator('summary').click();
+  await openTheCard(page, dealId);   // a link opens the card on its Overview, where the rehab figures are
 
   const hook = `ca.${dealId}.actual-rehab-cost`;
   const before = await page.getByTestId(hook).innerText();
@@ -185,7 +185,7 @@ test('Deposit asks for the passkey, sends once, and marks the deposit row done',
   await settle(TRANSITION_MS);
   await expect(transfer).toHaveCount(0);
 
-  await page.getByTestId(`ca.${dealId}.timeline-rows`).locator('summary').click();
+  await page.getByTestId(`ca.${dealId}.tab.timeline`).click();
   await expect(page.getByTestId(`ca.${dealId}.timeline-row.construction_account_deposit`)).toContainText('Done');
 });
 
@@ -261,4 +261,28 @@ test('the refresh interval set in the drawer is kept after a reload', async ({ p
   await settle(TRANSITION_MS);
   await page.goto('/liquidity/construction-accounts?open=settings');
   await expect(page.getByTestId('ca-settings.refresh-interval')).toHaveValue('45');
+});
+
+test('compact cards: every rehab shows closed, a click opens one, a link opens it on its tab, and the account digits show once', async ({ page, seed, request }) => {
+  const firstDealId = await seedLinkedDeal(request, seed);
+  const secondDealId = await seedLinkedDeal(request, seed, false, { address: '22 Elm Rehab Rd' });
+  await page.goto('/liquidity/construction-accounts');
+  for (const dealId of [firstDealId, secondDealId]) {
+    await expect(page.getByTestId(`ca.${dealId}.toggle`)).toBeVisible();
+    await expect(page.getByTestId(`ca.${dealId}`)).toHaveAttribute('data-expanded', 'false');
+  }
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.draws`)).toContainText('of $70,000 budget');
+  await expect(page.getByTestId(`ca.${secondDealId}.summary.plan`)).toContainText('Under budget, you keep $20,000');
+
+  await page.getByTestId(`ca.${firstDealId}.toggle`).click();
+  await expect(page.getByTestId(`ca.${firstDealId}.panel.overview`)).toBeVisible();
+  // The fake's checking is named "E2E Checking ••4242", as Mercury names it: the digits show once.
+  await expect(page.getByTestId(`ca.${firstDealId}.accounts`)).toContainText('E2E Checking ••4242');
+  await expect(page.getByTestId(`ca.${firstDealId}.accounts`)).not.toContainText('4242 ••4242');
+  await page.getByTestId(`ca.${firstDealId}.toggle`).click();
+  await expect(page.getByTestId(`ca.${firstDealId}.detail`)).toHaveCount(0);
+
+  await page.goto(`/liquidity/construction-accounts?deal=${firstDealId}&open=transactions`);
+  await expect(page.getByTestId(`ca.${firstDealId}.transactions-section`)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });

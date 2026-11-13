@@ -32,18 +32,18 @@ The Construction Accounts page gets compact cards that open on click, with plain
 - [x] Use it in `ConstructionAccountCard.vue` (header), `ConstructionAccountSettingsModal.vue` (both pickers) and `ConstructionAccountSwitchModal.vue` (15 min)
 
 ### Step 2: Compact cards and a clearer page (8 h)
-- [ ] **Pure figures helper** `frontend/src/utils/constructionAccountSummaryFigures.ts`. From a `ConstructionAccountStatus` it computes what the compact card shows (1.5 h):
+- [x] **Pure figures helper** `frontend/src/utils/constructionAccountSummaryFigures.ts`. From a `ConstructionAccountStatus` it computes what the compact card shows (1.5 h):
   - money in the account;
   - lender draws received vs. the lender budget (dollars and a 0–100 % bar);
   - paid to contractors vs. the rehab cost (dollars and a bar);
   - the end outcome: "Back to you at the end $X", or "You need to add $X" when there's a top-up;
   - the most urgent action, e.g. "Deposit $5 due" or "Top-up $1,200 needed".
-- [ ] **New `ConstructionAccountSummaryCard.vue`**, the closed card, about 2 lines tall (2.5 h):
+- [x] **New `ConstructionAccountSummaryCard.vue`**, the closed card, about 2 lines tall (2.5 h):
   - Row 1: the address, the state badge (`constructionAccountStateOf`), the urgent-action chip and a chevron.
   - Row 2, when linked: four labelled figures. "In the account", "Lender draws $A of $B budget" with a bar, "Paid to contractors $C of $D rehab cost" with a bar, and "Back to you at the end".
   - Row 2, when not linked: "Rehab cost $65,000 · Lender budget $73,000 · Under budget: you keep $8,000" and the Link button.
   - The whole card is a `button`, keyboard-accessible and `aria-expanded`. Clicking opens the detail in place, under the card.
-- [ ] **Restructure `ConstructionAccountCard.vue` as the open detail**, using the existing `UiTabs`. Every editable figure, every action and every `data-testid` hook stays (3 h):
+- [x] **Restructure `ConstructionAccountCard.vue` as the open detail**, using the existing `UiTabs`. Every editable figure, every action and every `data-testid` hook stays (3 h):
   - **Always visible:** the action bar (Deposit / Steal / Close out) and the error line.
   - **Overview** tab, three plain blocks:
     - "The rehab plan": rehab cost, contingency and lender budget, editable, with "Under budget: you keep $X" or "Over budget: you cover $X".
@@ -55,7 +55,7 @@ The Construction Accounts page gets compact cards that open on click, with plain
   - **Transfers & timeline** tab: the in-app transfers, the limits and the timeline rows.
   - **Account** tab: the linked accounts, settings, switch, mark ready, close out, reopen and unlink; the rehab summary status for closed-out accounts (Step 4).
   - Deep links (`?deal=&open=transactions|manual-entries|…`) open the card and select the matching tab.
-- [ ] **Plain wording** (1 h):
+- [x] **Plain wording** (1 h):
 
   | Now | New |
   |---|---|
@@ -71,7 +71,8 @@ The Construction Accounts page gets compact cards that open on click, with plain
   | Before this account | Paid or drawn before this account existed |
 
   The long paragraph repeated on every unlinked card is removed; the page header already says it. The KPI labels in `ConstructionAccountTotals.vue` follow the same wording.
-- [ ] **Page** `ConstructionAccounts.vue`: a list of summary cards. Several can be open at once. A deep link opens and scrolls to its card. Attention cards sort first; closed-out cards go last (30 min).
+- [x] **Page** `ConstructionAccounts.vue`: a list of summary cards. Several can be open at once. A deep link opens and scrolls to its card. Attention cards sort first; closed-out cards go last (30 min).
+  - Done, with one addition found in the phone screenshots: the six total tiles became one compact strip, so the first property shows on the first screen. The strip's "Back to you when the rehabs end" adds up the cards' own figure, so the strip and the cards agree.
 
 ### Step 3: Rehab summary backend (9 h)
 - [ ] **Table** `liquidity_construction_account_rehab_summaries`, a DAL model plus a migration step registered in `runner.py` (1 h). Columns:

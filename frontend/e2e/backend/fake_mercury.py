@@ -42,7 +42,8 @@ ORIGINAL_MINIMUM_SECONDS_BETWEEN_READS = mercury_reads.MINIMUM_SECONDS_BETWEEN_M
 WEBHOOK_SIGNING_SECRET = "e2e-fake-mercury-webhook-secret"
 PUBLIC_ORIGIN_FOR_WEBHOOKS = "https://e2e.example"
 STARTING_ACCOUNTS = {
-    "e2e-checking": ("E2E Checking", 80000),
+    # Named the way Mercury names a checking: its last four digits already in the name.
+    "e2e-checking": ("E2E Checking ••4242", 80000),
     "e2e-construction": ("Oak Rehab Construction", 0),
     "e2e-tax": ("E2E Tax Bucket", 4000),
 }
