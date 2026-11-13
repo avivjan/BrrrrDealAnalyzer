@@ -421,6 +421,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     series,
     importedDeals,
     fetchImportedDeals,
+    reloadTransactionsAndImportedDeals,
     seriesWithAndWithoutDealChanges,
     previewDealImport,
     importDeal,

@@ -149,6 +149,12 @@ export interface LiquiditySettings {
   mercury_account_ids_counted_as_cash?: string[] | null
   /** The owner's IANA time zone: "today" when no date is sent (an MCP call). */
   timezone_name?: string
+  /** The construction account settings (tasks/todo/ConstructionAccountPerRehab.md): all edited in the UI. */
+  construction_account_refresh_interval_seconds?: number
+  construction_account_refresh_when_window_regains_focus?: boolean
+  construction_account_in_app_transfers_enabled?: boolean
+  construction_account_transfers_per_hour_limit?: number
+  construction_account_maximum_single_transfer_dollars?: number
   updated_at?: string
 }
 
@@ -158,6 +164,11 @@ export interface LiquiditySettingsUpdate {
   reserve_dollars?: number
   /** Null = count every active account again. */
   mercury_account_ids_counted_as_cash?: string[] | null
+  construction_account_refresh_interval_seconds?: number
+  construction_account_refresh_when_window_regains_focus?: boolean
+  construction_account_in_app_transfers_enabled?: boolean
+  construction_account_transfers_per_hour_limit?: number
+  construction_account_maximum_single_transfer_dollars?: number
 }
 
 export interface DayBucket {
@@ -193,6 +204,10 @@ export interface MercuryAccountSummary {
   workspace: string
   /** Whether this account's balance is cash on hand for the liquidity timeline (chosen in the settings). */
   is_counted_as_cash: boolean
+  /** A rehab's linked construction account: never cash on hand (tasks/todo/ConstructionAccountPerRehab.md). */
+  is_a_linked_construction_account?: boolean
+  /** Enough to tell two accounts apart; the full number never reaches the browser. */
+  account_number_last_four?: string
 }
 
 export interface MercuryWorkspaceSummary {
@@ -219,6 +234,8 @@ export interface MercuryBalanceResponse {
   /** The balance the timeline anchors on: only the accounts counted as cash. */
   counted_as_cash_balance_dollars: number
   mercury_account_ids_counted_as_cash: string[] | null
+  /** The shared pace: Mercury is not read again before this (tasks/todo/ConstructionAccountPerRehab.md). */
+  next_mercury_read_not_before?: string | null
 }
 
 // --- A BRRRR deal's Cash Needed rows in the timeline (BackEnd/ReqRes/common/liquidity_deal_schemas.py) ---

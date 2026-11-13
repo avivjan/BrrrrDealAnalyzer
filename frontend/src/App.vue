@@ -8,6 +8,8 @@ import router from "./router";
 import AppShell from "./components/shell/AppShell.vue";
 import AppKeyGate from "./components/shell/AppKeyGate.vue";
 import SecurityBar from "./components/shell/SecurityBar.vue";
+import LiquidityTimelineChangePrompt from "./components/liquidity/LiquidityTimelineChangePrompt.vue";
+import LiquidityRowsChangedNotice from "./components/liquidity/LiquidityRowsChangedNotice.vue";
 
 const connectionStore = useConnectionStore();
 const dealStore = useDealStore();
@@ -66,4 +68,7 @@ onMounted(() => {
     <RouterView v-slot="{ Component }"><UiTransition preset="page" appear><component :is="Component" /></UiTransition></RouterView>
   </AppShell>
   <AppKeyGate />
+  <!-- "This changes the liquidity timeline" and its one notice: any page can ask (tasks/todo/ConstructionAccountPerRehab.md). -->
+  <LiquidityTimelineChangePrompt />
+  <LiquidityRowsChangedNotice />
 </template>
