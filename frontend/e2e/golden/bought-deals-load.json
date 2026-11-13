@@ -15,6 +15,10 @@
     {
       "method": "GET",
       "path": "/pipeline-templates"
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/construction-accounts"
     }
   ]
 }
