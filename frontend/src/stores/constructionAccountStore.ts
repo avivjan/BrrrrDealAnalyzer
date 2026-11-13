@@ -165,7 +165,7 @@ export const useConstructionAccountStore = defineStore('constructionAccounts', (
 
   return {
     accounts, totals, isLoading, hasLoaded, loadErrorMessage, transactionsByDealId, connectionStatus, nextMercuryReadNotBefore, accountById,
-    load, loadConnectionStatus, loadTransactions, edit,
+    load, loadConnectionStatus, loadTransactions, edit, reloadWhatShowsTheSameData,
     saveRehabFigures, saveLink, unlink, switchAccount, addManualAdjustment, updateManualAdjustment, deleteManualAdjustment,
     setTransactionOverride, clearTransactionOverride, markReadyForCloseOut, markClosedOut, reopen,
   }

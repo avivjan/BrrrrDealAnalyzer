@@ -18,6 +18,7 @@ import { useConstructionAccountStore } from '../../../stores/constructionAccount
 import type { ConstructionAccountRehabFiguresReq, ConstructionAccountStatus, ConstructionAccountTimelineRow } from '../../../types/constructionAccount'
 import { todayISO } from '../../../utils/liquidityEngine'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
+import type { ConstructionAccountTransferKind } from '../../../utils/constructionAccountTransferRules'
 import ConstructionAccountEditableFigure from './ConstructionAccountEditableFigure.vue'
 import ConstructionAccountFigure from './ConstructionAccountFigure.vue'
 import ConstructionAccountManualAdjustmentsList from './ConstructionAccountManualAdjustmentsList.vue'
@@ -33,6 +34,8 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'link', status: ConstructionAccountStatus): void
   (e: 'switchAccount', status: ConstructionAccountStatus): void
+  /** Deposit, Steal or Close out: the page opens the transfer window. */
+  (e: 'transfer', status: ConstructionAccountStatus, kind: ConstructionAccountTransferKind): void
 }>()
 
 const store = useConstructionAccountStore()
@@ -62,6 +65,14 @@ const ROW_LABELS: Record<string, string> = {
 }
 
 const stateChip = computed(() => constructionAccountStateOf(props.status))
+const TRANSFER_OUTCOME_LABELS = {
+  being_sent: 'Being sent', accepted_by_mercury: 'Accepted', refused_by_mercury: 'Refused', mercury_did_not_answer: 'No answer: check Mercury',
+  failed_or_cancelled_at_mercury: 'Failed or cancelled',
+} as const
+const TRANSFER_OUTCOME_TONES = {
+  being_sent: 'neutral', accepted_by_mercury: 'positive', refused_by_mercury: 'negative', mercury_did_not_answer: 'warning',
+  failed_or_cancelled_at_mercury: 'negative',
+} as const
 
 function timelineRowOf(itemKey: string): ConstructionAccountTimelineRow | undefined {
   return props.status.timeline_rows.find(row => row.item_key === itemKey && !row.is_done)
@@ -175,7 +186,11 @@ function shortDateTime(iso: string | null): string {
 
     <div v-if="status.needs_attention_because.length" :data-testid="hook('attention')" class="flex flex-wrap gap-2">
       <template v-for="reason in status.needs_attention_because" :key="reason">
-        <RouterLink v-if="attentionLink(reason)" :data-testid="hook(`attention.${reason}`)" :to="attentionLink(reason)!"
+        <button v-if="reason === 'deposit_due' && isLive" type="button" :data-testid="hook(`attention.${reason}`)" @click="emit('transfer', status, 'deposit')"
+                class="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-medium text-warning hover:bg-warning/20">
+          <i class="pi pi-exclamation-triangle text-[10px]" aria-hidden="true"></i>{{ ATTENTION_LABELS[reason] }} — deposit now
+        </button>
+        <RouterLink v-else-if="attentionLink(reason)" :data-testid="hook(`attention.${reason}`)" :to="attentionLink(reason)!"
                     class="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-medium text-warning hover:bg-warning/20">
           <i class="pi pi-exclamation-triangle text-[10px]" aria-hidden="true"></i>{{ ATTENTION_LABELS[reason] }} — see it on the timeline
         </RouterLink>
@@ -223,6 +238,17 @@ function shortDateTime(iso: string | null): string {
           <UiButton variant="ghost" size="sm" :data-testid="hook('refresh')" :loading="savingFigure === 'refresh'" @click="refreshFromMercury">Refresh</UiButton>
         </div>
       </section>
+    </div>
+
+    <!-- Move money: the app asks Mercury (each one asks for your passkey) -->
+    <div v-if="isLive" :data-testid="hook('transfer-actions')" class="flex flex-wrap gap-2">
+      <UiButton size="sm" :data-testid="hook('deposit')" @click="emit('transfer', status, 'deposit')">
+        <i class="pi pi-arrow-down mr-1.5 text-xs" aria-hidden="true"></i>Deposit
+      </UiButton>
+      <UiButton size="sm" variant="secondary" :data-testid="hook('steal')" @click="emit('transfer', status, 'steal')">
+        <i class="pi pi-arrow-up mr-1.5 text-xs" aria-hidden="true"></i>Steal
+      </UiButton>
+      <UiButton size="sm" variant="secondary" :data-testid="hook('close-out')" @click="emit('transfer', status, 'close_out')">Close out</UiButton>
     </div>
 
     <!-- Rehab: the deal's own figures, editable here (written to the Bought deal) -->
@@ -348,6 +374,36 @@ function shortDateTime(iso: string | null): string {
         </div>
       </details>
     </template>
+
+    <!-- Transfers made in the app -->
+    <details v-if="status.is_linked" :data-testid="hook('transfers')" class="rounded-ctl border border-line">
+      <summary class="flex cursor-pointer items-center justify-between px-3 py-2 text-sm font-medium text-fg">
+        Transfers made in the app <span class="text-xs text-fg-muted">{{ status.transfers_made_in_the_app.length }}</span>
+      </summary>
+      <div class="space-y-2 border-t border-line p-3 text-sm">
+        <p :data-testid="hook('transfer-limits')" class="text-xs text-fg-muted">
+          {{ status.transfers_left_this_hour ?? '—' }} left this hour · at most {{ formatMoney(status.maximum_single_transfer_dollars) }} each ·
+          <template v-if="!status.in_app_transfers_are_enabled">turned off in the settings · </template>
+          <template v-if="status.has_a_transfer_token">transfer token found</template>
+          <template v-else>no transfer token: add <code class="font-mono">{{ status.transfer_token_environment_variable_name }}</code> to the hosting secrets</template>
+        </p>
+        <p v-if="!status.transfers_made_in_the_app.length" class="text-xs text-fg-muted">None yet. Transfers you make in Mercury itself show in the bank transactions.</p>
+        <ul v-else class="divide-y divide-line">
+          <li v-for="transfer in status.transfers_made_in_the_app" :key="transfer.transfer_id" :data-testid="hook(`transfer.${transfer.transfer_id}`)"
+              class="flex flex-wrap items-center justify-between gap-2 py-1.5">
+            <span>
+              {{ transfer.transfer_direction === 'deposit_into_construction_account' ? 'Deposit' : 'Steal' }}
+              <span class="ml-1 text-xs text-fg-muted">{{ shortDateTime(transfer.requested_at) }}</span>
+              <UiBadge :tone="TRANSFER_OUTCOME_TONES[transfer.transfer_outcome]" class="ml-1">{{ TRANSFER_OUTCOME_LABELS[transfer.transfer_outcome] }}</UiBadge>
+              <span v-if="transfer.transfer_outcome === 'accepted_by_mercury'" class="ml-1 text-xs text-fg-muted">
+                {{ transfer.is_in_the_bank_feed ? 'in the bank feed' : 'not in the bank feed yet' }}
+              </span>
+            </span>
+            <span class="numeric font-semibold">{{ formatMoney(transfer.amount_dollars) }}</span>
+          </li>
+        </ul>
+      </div>
+    </details>
 
     <!-- On the timeline, and what is not in this account -->
     <details :data-testid="hook('timeline-rows')" class="rounded-ctl border border-line">

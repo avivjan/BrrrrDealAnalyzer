@@ -120,7 +120,35 @@ export interface ConstructionAccountStatus {
   marked_ready_for_close_out_at: string | null
   closed_out_at: string | null
   manual_adjustments: ConstructionAccountManualAdjustment[]
+  transfers_made_in_the_app: ConstructionAccountTransfer[]
+  in_app_transfers_are_enabled: boolean
+  has_a_transfer_token: boolean
+  transfer_token_environment_variable_name: string | null
+  transfers_left_this_hour: number | null
+  maximum_single_transfer_dollars: number | null
   needs_attention_because: ConstructionAccountAttentionReason[]
+}
+
+export type ConstructionAccountTransferDirection = 'deposit_into_construction_account' | 'steal_to_primary_checking'
+export type ConstructionAccountTransferOutcome =
+  | 'being_sent' | 'accepted_by_mercury' | 'refused_by_mercury' | 'mercury_did_not_answer' | 'failed_or_cancelled_at_mercury'
+
+/** A Deposit or a Steal the app asked Mercury to make (tasks/todo/ConstructionAccountPerRehab.md, Step E). */
+export interface ConstructionAccountTransfer {
+  transfer_id: string
+  transfer_direction: ConstructionAccountTransferDirection
+  amount_dollars: number
+  transfer_outcome: ConstructionAccountTransferOutcome
+  mercury_transfer_status: string | null
+  requested_at: string
+  is_in_the_bank_feed: boolean
+}
+
+/** The accounts always come from the stored link: a transfer names only its amount and its key. */
+export interface ConstructionAccountTransferReq {
+  amount_dollars: number
+  idempotency_key: string
+  confirm_amount_exceeds_safe_to_steal?: boolean
 }
 
 export interface ConstructionAccountTotals {
@@ -147,6 +175,11 @@ export interface ConstructionAccountWriteResult {
   liquidity_row_changes: DealCashRowChanges | null
   row_descriptions_marked_done: string[]
   balance_left_in_the_account_dollars: number | null
+}
+
+/** A Deposit or a Steal: the write's answer and the transfer (null for a preview: nothing was asked of Mercury). */
+export interface ConstructionAccountTransferWriteResult extends ConstructionAccountWriteResult {
+  transfer: ConstructionAccountTransfer | null
 }
 
 export interface ConstructionAccountLinkReq {

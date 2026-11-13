@@ -13,6 +13,7 @@ import ConstructionAccountSettingsDrawer from '../components/liquidity/construct
 import ConstructionAccountSettingsModal from '../components/liquidity/constructionAccount/ConstructionAccountSettingsModal.vue'
 import ConstructionAccountSwitchModal from '../components/liquidity/constructionAccount/ConstructionAccountSwitchModal.vue'
 import ConstructionAccountTotals from '../components/liquidity/constructionAccount/ConstructionAccountTotals.vue'
+import ConstructionAccountTransferModal from '../components/liquidity/constructionAccount/ConstructionAccountTransferModal.vue'
 import { useDealLiquidityRows } from '../composables/useDealLiquidityRows'
 import { useDeepLinkQuery } from '../composables/useDeepLinkQuery'
 import { useLiveMercuryRefresh } from '../composables/useLiveMercuryRefresh'
@@ -20,11 +21,13 @@ import { readConstructionAccountLinkQuery, type ConstructionAccountSection } fro
 import { useConstructionAccountStore } from '../stores/constructionAccountStore'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import type { ConstructionAccountStatus } from '../types/constructionAccount'
+import type { ConstructionAccountTransferKind } from '../utils/constructionAccountTransferRules'
 
 const store = useConstructionAccountStore()
 const { refreshImportedDeals, askToSyncEveryDealStillOutOfDate } = useDealLiquidityRows()
 const linkingStatus = ref<ConstructionAccountStatus | null>(null)
 const switchingStatus = ref<ConstructionAccountStatus | null>(null)
+const transferring = ref<{ status: ConstructionAccountStatus; kind: ConstructionAccountTransferKind } | null>(null)
 const settingsOpen = ref(false)
 const refreshMessage = ref<string | null>(null)
 const highlightedDealId = ref<string | null>(null)
@@ -38,7 +41,7 @@ const lastAmountsAsOf = computed(() => {
 
 // Live: the interval, focus and instant-update reads (Requirement 4). The button is a read you asked for.
 const liquidityStore = useLiquidityStore()
-const { isRefreshing, refreshNow } = useLiveMercuryRefresh()
+const { isRefreshing, refreshNow, refreshInABurst } = useLiveMercuryRefresh()
 
 async function refreshFromMercury() {
   refreshMessage.value = null
@@ -125,11 +128,15 @@ onMounted(async () => {
         :open-section="sectionOpenedByALink?.dealId === status.bought_deal_id ? sectionOpenedByALink.section : null"
         @link="(chosen) => (linkingStatus = chosen)"
         @switch-account="(chosen) => (switchingStatus = chosen)"
+        @transfer="(chosen, kind) => (transferring = { status: chosen, kind })"
       />
     </div>
 
     <ConstructionAccountSettingsModal :open="linkingStatus !== null" :status="linkingStatus" @close="linkingStatus = null" />
     <ConstructionAccountSwitchModal :open="switchingStatus !== null" :status="switchingStatus" @close="switchingStatus = null" />
+    <!-- After a transfer: read the bank at once, then at 2, 5, 10, 20 and 40 s, until the feed shows it. -->
+    <ConstructionAccountTransferModal :open="transferring !== null" :status="transferring?.status ?? null" :kind="transferring?.kind ?? 'deposit'"
+                                      @close="transferring = null" @transferred="refreshInABurst(result => result.construction_accounts_changed)" />
     <ConstructionAccountSettingsDrawer :open="settingsOpen" @close="settingsOpen = false" @saved="liquidityStore.useSavedSettings" />
   </section>
 </template>

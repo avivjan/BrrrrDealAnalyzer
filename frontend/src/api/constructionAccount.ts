@@ -7,7 +7,8 @@ import { apiClient } from './index'
 import type {
   ConstructionAccountLinkReq, ConstructionAccountList, ConstructionAccountManualAdjustmentReq, ConstructionAccountRefreshResult,
   ConstructionAccountRehabFiguresReq, ConstructionAccountSwitchPreview, ConstructionAccountSwitchReq, ConstructionAccountTransaction,
-  ConstructionAccountTransactionOverrideReq, ConstructionAccountWriteOptions, ConstructionAccountWriteResult, MercuryConnectionStatus,
+  ConstructionAccountTransactionOverrideReq, ConstructionAccountTransferReq, ConstructionAccountTransferWriteResult,
+  ConstructionAccountWriteOptions, ConstructionAccountWriteResult, MercuryConnectionStatus,
   MercuryLastChange,
 } from '../types/constructionAccount'
 
@@ -100,6 +101,17 @@ export const constructionAccountApi = {
 
   async markClosedOut(boughtDealId: string, options?: ConstructionAccountWriteOptions) {
     return (await apiClient.post<ConstructionAccountWriteResult>(dealUrl(boughtDealId, '/mark-closed-out'), null, { params: writeParams(options) })).data
+  },
+
+  // --- Transfers: the app moves money at Mercury. The real send asks for your passkey (the client retries the same
+  // request, so the same idempotency key, after it); a preview asks Mercury nothing.
+
+  async deposit(boughtDealId: string, data: ConstructionAccountTransferReq, options?: ConstructionAccountWriteOptions) {
+    return (await apiClient.post<ConstructionAccountTransferWriteResult>(dealUrl(boughtDealId, '/deposit'), data, { params: writeParams(options) })).data
+  },
+
+  async steal(boughtDealId: string, data: ConstructionAccountTransferReq, options?: ConstructionAccountWriteOptions) {
+    return (await apiClient.post<ConstructionAccountTransferWriteResult>(dealUrl(boughtDealId, '/steal'), data, { params: writeParams(options) })).data
   },
 
   async reopen(boughtDealId: string, options?: ConstructionAccountWriteOptions) {
