@@ -14790,6 +14790,14 @@
       "MercuryLastChangeRes": {
         "description": "From the database only, never a Mercury call: cheap enough to ask every few seconds.",
         "properties": {
+          "bank_reported_row_changes_of_last_instant_update": {
+            "description": "The rows that event changed, per deal: the 'Timeline updated from the bank' window.",
+            "items": {
+              "$ref": "#/components/schemas/DealCashRowChangesRes"
+            },
+            "title": "Bank Reported Row Changes Of Last Instant Update",
+            "type": "array"
+          },
           "cash_balance_last_changed_at": {
             "anyOf": [
               {
@@ -14825,6 +14833,19 @@
               }
             ],
             "title": "Last Changed At"
+          },
+          "last_instant_update_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When a Mercury event last changed timeline rows.",
+            "title": "Last Instant Update At"
           }
         },
         "title": "MercuryLastChangeRes",
@@ -22706,6 +22727,86 @@
           }
         },
         "summary": "Get Liquidity Mercury Connection Status"
+      }
+    },
+    "/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-off": {
+      "post": {
+        "description": "Remove this app's address at Mercury: the LLC is read on the page's interval again.",
+        "operationId": "turn_off_liquidity_mercury_instant_updates_liquidity_mercury_webhooks__mercury_workspace_label__turn_off_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mercury_workspace_label",
+            "required": true,
+            "schema": {
+              "title": "Mercury Workspace Label",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MercuryConnectionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Turn Off Liquidity Mercury Instant Updates"
+      }
+    },
+    "/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-on": {
+      "post": {
+        "description": "Register this app's address with the LLC's Mercury workspace, so every change there is read at once.",
+        "operationId": "turn_on_liquidity_mercury_instant_updates_liquidity_mercury_webhooks__mercury_workspace_label__turn_on_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mercury_workspace_label",
+            "required": true,
+            "schema": {
+              "title": "Mercury Workspace Label",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MercuryConnectionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Turn On Liquidity Mercury Instant Updates"
       }
     },
     "/liquidity/recurring": {
