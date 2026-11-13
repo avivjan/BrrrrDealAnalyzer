@@ -9781,6 +9781,18 @@
       "DealCashRowChangesRes": {
         "description": "The before -> after list of an import, a re-sync or a milestone change. A preview changes nothing.",
         "properties": {
+          "cash_out_wire_at_lowest_arv_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An import preview / import only: the refi's cash-out wire if the appraisal comes in at the lowest ARV (negative = cash brought to the table). The preview chart opens on 'Until last deal ends' when it is 0 or below.",
+            "title": "Cash Out Wire At Lowest Arv Dollars"
+          },
           "change_counts": {
             "$ref": "#/components/schemas/DealCashRowChangeCountsRes"
           },
