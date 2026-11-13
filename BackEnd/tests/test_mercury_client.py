@@ -138,3 +138,70 @@ class TestTheAccountsCountedAsCash:
         assert client.get("/liquidity/settings").json()["mercury_account_ids_counted_as_cash"] == ["operating"]
         client.put("/liquidity/settings", json={"mercury_account_ids_counted_as_cash": None})
         assert client.get("/liquidity/mercury-balance").json()["counted_as_cash_balance_dollars"] == 42000.75
+
+
+# --- One account's transactions (a rehab's construction account, tasks/todo/ConstructionAccountPerRehab.md) --------
+
+def _transactions_page(*raw_transactions):
+    return _Resp(200, {"total": len(raw_transactions), "transactions": list(raw_transactions)})
+
+
+def test_account_transactions_are_read_with_the_read_token_from_that_accounts_url_only(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        calls.append((url, headers, params, timeout))
+        return _transactions_page(
+            {"id": "t2", "amount": -1250.5, "kind": "outgoingPayment", "status": "sent", "counterpartyName": "GC LLC", "postedAt": "2026-03-02T10:00:00Z"},
+            {"id": "t1", "amount": 30000, "kind": "incomingDomesticWire", "status": "sent", "counterpartyName": "Lender", "postedAt": "2026-03-01T10:00:00Z"},
+            {"id": "t3", "amount": 5000, "kind": "internalTransfer", "status": "pending", "counterpartyName": "Ops", "createdAt": "2026-03-03T09:00:00Z"},
+            {"id": "t4", "amount": -700, "kind": "outgoingPayment", "status": "failed", "counterpartyName": "Electrician"},
+        )
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    transactions = mc.fetch_account_transactions("AJYK", "acct-123")
+
+    assert [call[0] for call in calls] == [f"{mc.MERCURY_API_BASE}/account/acct-123/transactions"]
+    assert calls[0][1]["Authorization"] == "Bearer sekrit-token-ajyk-0001"
+    assert calls[0][2]["start"] == mc.EARLIEST_TRANSACTION_DATE and calls[0][3] == mc.MERCURY_TIMEOUT_SECONDS
+    assert [transaction["id"] for transaction in transactions] == ["t1", "t2", "t3", "t4"]   # oldest first, undated last
+    by_id = {transaction["id"]: transaction for transaction in transactions}
+    assert str(by_id["t2"]["signed_amount_dollars"]) == "-1250.50" and by_id["t2"]["counterparty_name"] == "GC LLC"
+    assert by_id["t3"]["is_internal_transfer"] is True and by_id["t1"]["is_internal_transfer"] is False
+    assert by_id["t4"]["is_failed_or_cancelled"] is True and by_id["t4"]["transaction_date"] is None
+    assert "sekrit" not in repr(transactions)
+
+
+def test_account_transactions_are_paged_and_cached(monkeypatch):
+    monkeypatch.setattr(mc, "TRANSACTIONS_PAGE_SIZE", 2)
+    offsets = []
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        offsets.append(params["offset"])
+        rows = [{"id": f"t{number}", "amount": 1, "kind": "x", "status": "sent", "postedAt": "2026-03-01T00:00:00Z"} for number in range(5)]
+        return _transactions_page(*rows[params["offset"]:params["offset"] + 2])
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    assert len(mc.fetch_account_transactions("AJYK", "acct-123")) == 5
+    assert offsets == [0, 2, 4]
+    mc.fetch_account_transactions("AJYK", "acct-123")
+    assert offsets == [0, 2, 4]   # the second read is the cache
+    mc.clear_cache()
+    mc.fetch_account_transactions("AJYK", "acct-123")
+    assert len(offsets) == 6
+
+
+@pytest.mark.parametrize("account_id", ["", "../accounts", "acct/123", "acct?x=1", "a" * 81])
+def test_an_account_id_that_is_not_a_plain_id_never_reaches_the_url(monkeypatch, account_id):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: pytest.fail("no request may be made"))
+    with pytest.raises(mc.MercuryApiError):
+        mc.fetch_account_transactions("AJYK", account_id)
+
+
+def test_account_transactions_need_a_token_for_that_workspace_and_never_relay_upstream_text(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: _Resp(500, text="internal id 42 for token sekrit"))
+    with pytest.raises(mc.MercuryConfigError):
+        mc.fetch_account_transactions("OTHER", "acct-123")
+    with pytest.raises(mc.MercuryApiError) as error:
+        mc.fetch_account_transactions("AJYK", "acct-123")
+    assert "sekrit" not in str(error.value) and "internal id" not in str(error.value)

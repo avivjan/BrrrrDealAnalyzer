@@ -45,6 +45,15 @@ class LiquidityConstructionAccount(Base):
     planned_deposit_override_dollars = Column(Numeric(16, 2), nullable=True)
     # A float kept in the account (reimbursement draws): it lowers what is safe to steal.
     minimum_balance_to_keep_in_construction_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    # What the bank feed said at the last refresh, after the overrides (NULL `bank_amounts_as_of` = never refreshed):
+    # the projection is recomputed from these without Mercury on a deal save, a re-sync, or an outage.
+    bank_current_balance_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_available_balance_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_loan_draws_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_rehab_payments_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_own_money_transferred_into_the_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_own_money_transferred_out_of_the_account_dollars = Column(Numeric(16, 2), nullable=False, default=0, server_default="0")
+    bank_amounts_as_of = Column(DateTime(timezone=True), nullable=True)
     marked_ready_for_close_out_at = Column(DateTime(timezone=True), nullable=True)
     closed_out_at = Column(DateTime(timezone=True), nullable=True)
     linked_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -11,7 +11,7 @@ from decimal import Decimal
 from BL.liquidity.constructionAccount.construction_account_projection import (
     ConstructionAccountBankTransaction, ConstructionAccountProjectionInputs, ConstructionAccountTransactionOverride,
     TRANSACTION_CATEGORY_LOAN_DRAW, TRANSACTION_CATEGORY_OWN_MONEY, TRANSACTION_CATEGORY_REHAB_PAYMENT,
-    categorise_transactions, project_construction_account,
+    categorise_transactions, project_construction_account, sum_categorised_transactions,
 )
 
 BUDGET, REHAB_COST, CUSHION = Decimal("100000"), Decimal("95000"), Decimal("20000")
@@ -42,7 +42,6 @@ def _payment(amount: int, transaction_id: str = "payment") -> ConstructionAccoun
 def _project(transactions, overrides=None, **input_changes):
     balance = sum((transaction.signed_amount_dollars for transaction in transactions if not transaction.is_failed_or_cancelled), Decimal("0"))
     inputs = ConstructionAccountProjectionInputs(
-        current_balance_dollars=balance, available_balance_dollars=balance,
         construction_budget_dollars=BUDGET, rehab_cost_dollars=REHAB_COST, rehab_cushion_dollars=CUSHION,
         loan_draws_pulled_before_construction_account_dollars=Decimal("0"),
         rehab_payments_made_before_construction_account_dollars=Decimal("0"),
@@ -52,7 +51,8 @@ def _project(transactions, overrides=None, **input_changes):
     )
     inputs = replace(inputs, **{name: (Decimal(value) if isinstance(value, int) and not isinstance(value, bool) else value)
                                 for name, value in input_changes.items()})
-    return project_construction_account(inputs, categorise_transactions(transactions, overrides or {}))
+    return project_construction_account(
+        inputs, sum_categorised_transactions(balance, balance, categorise_transactions(transactions, overrides or {})))
 
 
 class TestTheProjectedReturn:

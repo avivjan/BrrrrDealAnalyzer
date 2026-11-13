@@ -13,7 +13,10 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import requests
@@ -31,10 +34,22 @@ ACTIVE_ACCOUNT_STATUSES = {"active"}
 # Env var prefix; vars like MERCURY_API_TOKEN_AJYK become workspace "AJYK".
 _TOKEN_ENV_PREFIX = "MERCURY_API_TOKEN"
 
-# The only Mercury endpoint this module ever calls. Tokens are read-only and
-# IP-allow-listed on the Mercury side (SECURITY_PLAN.md §3.3); the code side of
-# that promise is that nothing else is requested (tests pin this).
+# The only Mercury endpoints this module ever calls, both read-only: the accounts, and one account's
+# transactions (a rehab's construction account, tasks/todo/ConstructionAccountPerRehab.md). Tokens are
+# read-only and IP-allow-listed on the Mercury side (SECURITY_PLAN.md §3.3); the code side of that
+# promise is that nothing else is requested (tests pin this).
 ACCOUNTS_URL = f"{MERCURY_API_BASE}/accounts"
+
+# An account id goes into the transactions URL: only this shape is ever put there.
+_MERCURY_ID_PATTERN = re.compile(r"[A-Za-z0-9-]{1,80}")
+TRANSACTIONS_PAGE_SIZE = 500
+# A construction account lives for one rehab: far fewer rows than this. The cap bounds a runaway loop.
+MAX_TRANSACTION_PAGES = 20
+# Mercury lists only recent transactions unless a start date is given.
+EARLIEST_TRANSACTION_DATE = "2015-01-01"
+INTERNAL_TRANSFER_KIND = "internalTransfer"
+FAILED_OR_CANCELLED_TRANSACTION_STATUSES = {"failed", "cancelled"}
+_transactions_cache: dict[tuple[str, str], tuple[float, list[dict[str, Any]]]] = {}
 
 # A successful summary is reused for this long so a page reload, or a run of
 # MCP calls, does not fan out to Mercury every time.
@@ -127,6 +142,8 @@ def _summarize_workspace(label: str, raw_accounts: list[dict[str, Any]]) -> dict
 
         accounts.append({
             "id": str(acct.get("id", "")),
+            # Enough to tell two accounts apart on screen; the full number never leaves this module.
+            "account_number_last_four": str(acct.get("accountNumber") or "")[-4:],
             "name": str(acct.get("name") or acct.get("nickname") or ""),
             "type": str(acct.get("type") or ""),
             "status": status,
@@ -155,6 +172,88 @@ def cache_seconds() -> int:
 def clear_cache() -> None:
     global _cache
     _cache = None
+    _transactions_cache.clear()
+
+
+def account_transactions_url(account_id: str) -> str:
+    if not _MERCURY_ID_PATTERN.fullmatch(account_id or ""):
+        raise MercuryApiError("invalid account id")
+    return f"{MERCURY_API_BASE}/account/{account_id}/transactions"
+
+
+def _transaction_date_of(raw_transaction: dict[str, Any]) -> date | None:
+    for key in ("postedAt", "createdAt"):
+        try:
+            return date.fromisoformat(str(raw_transaction.get(key) or "")[:10])
+        except ValueError:
+            continue
+    return None
+
+
+def _normalised_transaction(raw_transaction: dict[str, Any]) -> dict[str, Any]:
+    try:
+        signed_amount_dollars = Decimal(str(raw_transaction.get("amount") or 0)).quantize(Decimal("0.01"))
+    except InvalidOperation as e:
+        raise MercuryApiError("transaction without a numeric amount") from e
+    status = str(raw_transaction.get("status") or "").lower()
+    return {
+        "id": str(raw_transaction.get("id", "")),
+        "signed_amount_dollars": signed_amount_dollars,   # positive = into the account
+        "kind": str(raw_transaction.get("kind") or ""),
+        "status": status,
+        "counterparty_name": str(raw_transaction.get("counterpartyNickname") or raw_transaction.get("counterpartyName")
+                                 or raw_transaction.get("bankDescription") or "")[:200],
+        "transaction_date": _transaction_date_of(raw_transaction),
+        "is_internal_transfer": str(raw_transaction.get("kind") or "") == INTERNAL_TRANSFER_KIND,
+        "is_failed_or_cancelled": status in FAILED_OR_CANCELLED_TRANSACTION_STATUSES,
+    }
+
+
+def fetch_account_transactions(workspace_label: str, account_id: str) -> list[dict[str, Any]]:
+    """Every transaction of one account, oldest first, with the workspace's read-only token. Cached like the balances.
+
+    Raises `MercuryConfigError` (no token for that workspace) or `MercuryApiError`.
+    """
+    url = account_transactions_url(account_id)
+    cache_key = (workspace_label, account_id)
+    ttl = cache_seconds()
+    cached = _transactions_cache.get(cache_key)
+    if cached is not None and ttl > 0 and time.monotonic() - cached[0] < ttl:
+        return cached[1]
+    token = discover_tokens().get(workspace_label)
+    if token is None:
+        raise MercuryConfigError("No Mercury token for that workspace")
+    headers = {"Authorization": f"Bearer {token.reveal()}", "Accept": "application/json"}
+    transactions: list[dict[str, Any]] = []
+    try:
+        for page_number in range(MAX_TRANSACTION_PAGES):
+            params = {"limit": TRANSACTIONS_PAGE_SIZE, "offset": page_number * TRANSACTIONS_PAGE_SIZE,
+                      "start": EARLIEST_TRANSACTION_DATE, "order": "asc"}
+            try:
+                resp = requests.get(url, headers=headers, params=params, timeout=MERCURY_TIMEOUT_SECONDS)
+            except requests.RequestException as e:
+                logger.warning("Mercury request failed: %s", type(e).__name__)
+                raise MercuryApiError("request failed") from e
+            if resp.status_code in (401, 403):
+                raise MercuryApiError(f"auth failed ({resp.status_code})")
+            if not resp.ok:
+                raise MercuryApiError(f"HTTP {resp.status_code}")
+            try:
+                page = resp.json().get("transactions")
+            except (ValueError, AttributeError) as e:
+                raise MercuryApiError("non-JSON body") from e
+            if not isinstance(page, list):
+                raise MercuryApiError("response missing 'transactions' array")
+            transactions.extend(_normalised_transaction(raw_transaction) for raw_transaction in page)
+            if len(page) < TRANSACTIONS_PAGE_SIZE:
+                break
+        else:
+            raise MercuryApiError("too many transactions")
+    finally:
+        token.wipe()
+    transactions.sort(key=lambda transaction: (transaction["transaction_date"] or date.max, transaction["id"]))
+    _transactions_cache[cache_key] = (time.monotonic(), transactions)
+    return transactions
 
 
 def summarize_balance() -> dict[str, Any]:

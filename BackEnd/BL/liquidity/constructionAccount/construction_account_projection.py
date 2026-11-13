@@ -53,9 +53,19 @@ class CategorisedConstructionAccountTransaction:
 
 
 @dataclass(frozen=True)
-class ConstructionAccountProjectionInputs:
+class ConstructionAccountBankSums:
+    """What the bank feed says, after the overrides: the balance and the categorised sums. Stored on the link at every
+    refresh, so the projection can be recomputed without Mercury (a deal save, a re-sync, an outage)."""
     current_balance_dollars: Decimal
     available_balance_dollars: Decimal
+    bank_loan_draws_dollars: Decimal
+    bank_rehab_payments_dollars: Decimal
+    own_money_transferred_into_the_account_dollars: Decimal
+    own_money_transferred_out_of_the_account_dollars: Decimal
+
+
+@dataclass(frozen=True)
+class ConstructionAccountProjectionInputs:
     construction_budget_dollars: Decimal
     rehab_cost_dollars: Decimal                     # actual rehab with its contingency; appliances are not part of it
     rehab_cushion_dollars: Decimal
@@ -123,9 +133,9 @@ def categorise_transactions(
     return categorised
 
 
-def project_construction_account(inputs: ConstructionAccountProjectionInputs,
+def sum_categorised_transactions(current_balance_dollars: Decimal, available_balance_dollars: Decimal,
                                  categorised_transactions: Iterable[CategorisedConstructionAccountTransaction],
-                                 ) -> ConstructionAccountProjection:
+                                 ) -> ConstructionAccountBankSums:
     bank_loan_draws = ZERO_DOLLARS
     bank_rehab_payments = ZERO_DOLLARS
     own_money_in = ZERO_DOLLARS
@@ -141,6 +151,19 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs,
                 own_money_in += signed_amount
             else:
                 own_money_out += -signed_amount
+    return ConstructionAccountBankSums(
+        current_balance_dollars=current_balance_dollars, available_balance_dollars=available_balance_dollars,
+        bank_loan_draws_dollars=bank_loan_draws, bank_rehab_payments_dollars=bank_rehab_payments,
+        own_money_transferred_into_the_account_dollars=own_money_in,
+        own_money_transferred_out_of_the_account_dollars=own_money_out)
+
+
+def project_construction_account(inputs: ConstructionAccountProjectionInputs, bank_sums: ConstructionAccountBankSums,
+                                 ) -> ConstructionAccountProjection:
+    bank_loan_draws = bank_sums.bank_loan_draws_dollars
+    bank_rehab_payments = bank_sums.bank_rehab_payments_dollars
+    own_money_in = bank_sums.own_money_transferred_into_the_account_dollars
+    own_money_out = bank_sums.own_money_transferred_out_of_the_account_dollars
 
     loan_draws_pulled = (bank_loan_draws + inputs.loan_draws_pulled_before_construction_account_dollars
                          + inputs.manual_draw_adjustments_dollars)
@@ -148,7 +171,7 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs,
                            + inputs.manual_payment_adjustments_dollars)
     loan_draws_remaining_to_pull = inputs.construction_budget_dollars - loan_draws_pulled
     unpaid_rehab_remaining = inputs.rehab_cost_dollars - rehab_payments_made
-    projected_return_at_rehab_end = inputs.current_balance_dollars + loan_draws_remaining_to_pull - unpaid_rehab_remaining
+    projected_return_at_rehab_end = bank_sums.current_balance_dollars + loan_draws_remaining_to_pull - unpaid_rehab_remaining
 
     original_steal = inputs.construction_budget_dollars - inputs.rehab_cost_dollars
     planned_deposit = (inputs.planned_deposit_override_dollars if inputs.planned_deposit_override_dollars is not None
@@ -156,7 +179,7 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs,
     remaining_deposit = (ZERO_DOLLARS if inputs.deposit_row_is_done or inputs.is_closed_out
                          else max(ZERO_DOLLARS, planned_deposit - own_money_in))
     safe_to_steal_now = max(ZERO_DOLLARS, min(
-        inputs.available_balance_dollars - inputs.minimum_balance_to_keep_in_construction_account_dollars,
+        bank_sums.available_balance_dollars - inputs.minimum_balance_to_keep_in_construction_account_dollars,
         projected_return_at_rehab_end))
 
     # The deposit still to come will land in the balance, so the return row counts it.
@@ -168,8 +191,8 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs,
         top_up_needed = max(ZERO_DOLLARS, -return_after_the_remaining_deposit)
 
     return ConstructionAccountProjection(
-        current_balance_dollars=inputs.current_balance_dollars,
-        available_balance_dollars=inputs.available_balance_dollars,
+        current_balance_dollars=bank_sums.current_balance_dollars,
+        available_balance_dollars=bank_sums.available_balance_dollars,
         construction_budget_dollars=inputs.construction_budget_dollars,
         rehab_cost_dollars=inputs.rehab_cost_dollars,
         bank_loan_draws_dollars=bank_loan_draws,
