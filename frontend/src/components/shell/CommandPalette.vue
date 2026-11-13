@@ -10,7 +10,9 @@ import { useRouter } from "vue-router";
 
 import { inertOutside } from "../ui/inertOutside";
 import { setLook, setTheme, toggleTheme } from "../../design/theme";
-import { buildCommands, filterCommands, type Command } from "./commands";
+import { apiClient } from "../../api";
+import type { ImportedLiquidityDeal } from "../../types/liquidity";
+import { buildCommands, buildDealCommands, filterCommands, type Command, type PaletteDeal } from "./commands";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: []; openSettings: [] }>();
@@ -24,6 +26,27 @@ const commands = buildCommands({
   openSettings: () => emit("openSettings"),
 });
 
+/**
+ * Every deal, read once when the palette first opens (the compact cross-board list, and which deals are in the
+ * liquidity timeline), so "Open <address>" works from anywhere. A failed read leaves only the page commands.
+ */
+const dealCommands = ref<Command[]>([]);
+let dealsWereRead = false;
+async function readDealsOnce(): Promise<void> {
+  if (dealsWereRead) return;
+  dealsWereRead = true;
+  const [dealList, importedDeals] = await Promise.allSettled([
+    apiClient.get<PaletteDeal[]>("/deals", { params: { limit: 500 } }),
+    apiClient.get<ImportedLiquidityDeal[]>("/liquidity/deals"),
+  ]);
+  if (dealList.status !== "fulfilled") {
+    dealsWereRead = false;
+    return;
+  }
+  const inTheTimeline = new Set(importedDeals.status === "fulfilled" ? importedDeals.value.data.map((deal) => `${deal.deal_board}:${deal.deal_id}`) : []);
+  dealCommands.value = buildDealCommands(dealList.value.data, router, (board, dealId) => inTheTimeline.has(`${board}:${dealId}`));
+}
+
 const query = ref("");
 const activeIndex = ref(0);
 const input = ref<HTMLInputElement | null>(null);
@@ -31,7 +54,8 @@ const listId = useId();
 let restoreTo: HTMLElement | null = null;
 let releaseInert: (() => void) | null = null;
 
-const results = computed(() => filterCommands(commands, query.value));
+// The deals are many: they show once something is typed.
+const results = computed(() => filterCommands(query.value.trim() ? [...commands, ...dealCommands.value] : commands, query.value));
 const active = computed<Command | undefined>(() => results.value[activeIndex.value]);
 
 /** Groups in first-seen order, for the headings between rows. */
@@ -57,6 +81,7 @@ watch(
   async (open) => {
     if (typeof document === "undefined") return;
     if (open) {
+      void readDealsOnce();
       restoreTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       query.value = "";
       activeIndex.value = 0;

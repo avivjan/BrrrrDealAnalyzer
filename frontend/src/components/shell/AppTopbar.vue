@@ -16,7 +16,7 @@ const emit = defineEmits<{ openSettings: []; openPalette: [] }>();
 <template>
   <header
     data-testid="shell.topbar"
-    class="glass sticky top-0 z-30 flex min-h-topbar items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-3 pt-[max(0px,env(safe-area-inset-top))] sm:px-5 lg:static"
+    class="glass sticky top-0 z-30 flex min-h-topbar min-w-0 items-center gap-3 rounded-none border-x-0 border-t-0 border-b-ui border-line/60 px-3 pt-[max(0px,env(safe-area-inset-top))] sm:px-5 lg:static"
   >
     <span aria-hidden="true" class="grid h-8 w-8 shrink-0 place-items-center rounded-ctl bg-brand text-primary-fg lg:hidden">
       <i class="pi pi-bolt text-sm" />

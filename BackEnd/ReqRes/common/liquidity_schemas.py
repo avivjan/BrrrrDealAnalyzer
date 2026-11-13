@@ -189,6 +189,16 @@ class LiquiditySettingsUpdate(BaseModel):
     mercury_account_ids_counted_as_cash: Optional[list[MercuryAccountId]] = Field(
         None, max_length=100, description=_MERCURY_ACCOUNTS_COUNTED_AS_CASH)
     timezone_name: Optional[str] = Field(None, max_length=64, description=_TIMEZONE_NAME)
+    construction_account_refresh_interval_seconds: Optional[int] = Field(
+        None, ge=15, le=600, description="How often an open page re-reads Mercury, in seconds (15 to 600).")
+    construction_account_refresh_when_window_regains_focus: Optional[bool] = Field(
+        None, description="Re-read Mercury at once when the page's window regains focus.")
+    construction_account_in_app_transfers_enabled: Optional[bool] = Field(
+        None, description="The kill switch of the in-app Deposit and Steal transfers.")
+    construction_account_transfers_per_hour_limit: Optional[int] = Field(
+        None, ge=1, le=60, description="How many in-app transfers may be made in one hour (1 to 60).")
+    construction_account_maximum_single_transfer_dollars: Optional[Decimal] = Field(
+        None, gt=0, le=10_000_000, description="The largest single in-app transfer, in dollars.")
 
     @field_validator("timezone_name")
     @classmethod
@@ -204,6 +214,11 @@ class LiquiditySettingsRes(BaseModel):
     reserve_dollars: float
     mercury_account_ids_counted_as_cash: Optional[list[str]] = Field(None, description=_MERCURY_ACCOUNTS_COUNTED_AS_CASH)
     timezone_name: str = Field("America/New_York", description=_TIMEZONE_NAME)
+    construction_account_refresh_interval_seconds: int = 30
+    construction_account_refresh_when_window_regains_focus: bool = True
+    construction_account_in_app_transfers_enabled: bool = True
+    construction_account_transfers_per_hour_limit: int = 5
+    construction_account_maximum_single_transfer_dollars: float = 100000
     updated_at: Optional[str] = None
 
     model_config = {"from_attributes": True}

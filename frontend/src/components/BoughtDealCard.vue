@@ -17,6 +17,9 @@ import { formatMoney } from "../utils/money";
 import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import { safeHref } from "../utils/safeHref";
+import { constructionAccountOfDeal } from "../navigation/appLinks";
+import type { ConstructionAccountStatus } from "../types/constructionAccount";
+import { constructionAccountStateOf } from "../utils/constructionAccountState";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import {
@@ -29,6 +32,8 @@ import {
 } from "../config/boughtDealStages";
 
 const props = defineProps<{
+  /** Its rehab's construction account, when the deal is on the Construction Accounts page: the link shows its state. */
+  constructionAccountStatus?: ConstructionAccountStatus | null;
   deal: BoughtDealRes;
 }>();
 
@@ -44,6 +49,8 @@ const isCopied = ref(false);
 
 const isBrrr = computed(() => !props.deal.deal_type || props.deal.deal_type === "BRRRR");
 const isFlip = computed(() => props.deal.deal_type === "FLIP");
+const constructionAccountState = computed(() => props.constructionAccountStatus ? constructionAccountStateOf(props.constructionAccountStatus) : null);
+const CONSTRUCTION_ACCOUNT_STATE_TEXT_CLASS = { neutral: "text-fg-muted", positive: "text-positive", warning: "text-warning", negative: "text-negative" } as const;
 
 const brrrDeal = computed(() => isBrrr.value ? (props.deal as BoughtBrrrDealRes) : null);
 const flipDeal = computed(() => isFlip.value ? (props.deal as BoughtFlipDealRes) : null);
@@ -248,6 +255,7 @@ const onToggleSubstage = (substageId: string) => {
         `@click.stop` so opening the folder never opens the card's modal; `safeHref`
         drops anything that is not http(s). A static inline glyph: no external fetch.
       -->
+      <div class="flex shrink-0 items-center gap-1">
       <a
         v-if="deal.google_drive_link"
         data-testid="boughtcard.google-drive-link"
@@ -269,6 +277,26 @@ const onToggleSubstage = (substageId: string) => {
         </svg>
         Drive
       </a>
+      <!-- Its rehab's construction account, one click from the card (tasks/todo/ConstructionAccountPerRehab.md, Step C0) -->
+      <RouterLink
+        v-if="isBrrr"
+        data-testid="boughtcard.construction-account-link"
+        :to="constructionAccountOfDeal(deal.id)"
+        :aria-label="`Open the construction account of ${deal.address || 'this deal'}`"
+        title="Open the construction account"
+        class="inline-flex shrink-0 items-center gap-1 rounded-ctl border-ui border-line bg-surface px-2 py-1 text-xs font-medium text-fg transition-colors duration-fast ease-standard hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        @click.stop
+      >
+        <i class="pi pi-building-columns text-[11px]" aria-hidden="true"></i>
+        Account
+        <span
+          v-if="constructionAccountState"
+          data-testid="boughtcard.construction-account-state"
+          :data-state="constructionAccountState.label"
+          :class="CONSTRUCTION_ACCOUNT_STATE_TEXT_CLASS[constructionAccountState.tone]"
+        >· {{ constructionAccountState.label }}</span>
+      </RouterLink>
+      </div>
     </div>
     </div>
 

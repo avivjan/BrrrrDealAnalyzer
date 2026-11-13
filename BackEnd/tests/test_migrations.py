@@ -294,3 +294,88 @@ class TestLiquidityAmountsMoveToDollars:
         settings_columns = _column_names_of("liquidity_settings")
         assert {"opening_balance_dollars", "reserve_dollars"} <= settings_columns
         assert not {"opening_balance_k", "reserve_k"} & settings_columns
+
+
+class TestConstructionAccountRowsReplaceTheCushionAndStolenMoneyRows:
+    """Deals imported before the construction account rows still hold `rehab_cushion` / `stolen_money` liquidity rows:
+    each is flagged 'liquidity out of date' once, so the user re-syncs after seeing the before -> after list."""
+
+    @staticmethod
+    def _import_a_deal(client, brrrr_payload) -> dict:
+        deal = client.post("/active-deals", json={**brrrr_payload, "constructionLoanBudget": 70, "rehabContingency": 0}).json()
+        client.post(f"/liquidity/deals/my_deals/{deal['id']}/import", json={"today": "2025-12-01"})
+        return deal
+
+    @staticmethod
+    def _rename_the_new_rows_back_to_the_legacy_rows(deal_id: str) -> None:
+        with app_db.engine.begin() as conn:
+            for new_item_key, legacy_item_key in (("construction_account_deposit", "rehab_cushion"),
+                                                  ("construction_account_balance_returned_at_rehab_end", "stolen_money")):
+                conn.execute(text("UPDATE liquidity_transactions SET source_item_key = :legacy WHERE source_item_key = :new "
+                                  "AND source_deal_id = :deal_id"), {"legacy": legacy_item_key, "new": new_item_key, "deal_id": deal_id})
+
+    @staticmethod
+    def _flag(client, deal_id: str) -> bool:
+        return next(deal for deal in client.get("/liquidity/deals", params={"today": "2025-12-01"}).json()
+                    if deal["deal_id"] == deal_id)["liquidity_rows_out_of_date"]
+
+    @staticmethod
+    def _rows(client, deal_id: str) -> list[dict]:
+        return [row for row in client.get("/liquidity/transactions").json() if row.get("source_deal_id") == deal_id]
+
+    def test_a_deal_with_legacy_rows_is_flagged_and_its_rows_are_left_as_they_are(self, client, brrrr_payload):
+        deal = self._import_a_deal(client, brrrr_payload)
+        self._rename_the_new_rows_back_to_the_legacy_rows(deal["id"])
+        rows_before = self._rows(client, deal["id"])
+        assert self._flag(client, deal["id"]) is False
+
+        run_migrations(app_db.engine)
+        run_migrations(app_db.engine)
+
+        assert self._flag(client, deal["id"]) is True
+        assert self._rows(client, deal["id"]) == rows_before   # open rows: nothing changes without a confirm
+
+    def test_after_the_resync_the_deal_is_never_flagged_again(self, client, brrrr_payload):
+        deal = self._import_a_deal(client, brrrr_payload)
+        self._rename_the_new_rows_back_to_the_legacy_rows(deal["id"])
+        cushion = next(row for row in self._rows(client, deal["id"]) if row["source_item_key"] == "rehab_cushion")
+        client.post(f"/liquidity/transactions/{cushion['id']}/done")   # a done row is never touched by a re-sync
+        run_migrations(app_db.engine)
+        assert self._flag(client, deal["id"]) is True
+
+        client.post(f"/liquidity/deals/my_deals/{deal['id']}/import", json={"today": "2025-12-01"})   # the re-sync
+        assert self._flag(client, deal["id"]) is False
+        run_migrations(app_db.engine)
+
+        assert self._flag(client, deal["id"]) is False
+        item_keys = {row["source_item_key"] for row in self._rows(client, deal["id"])}
+        assert "stolen_money" not in item_keys   # the open legacy row was removed by the re-sync
+        assert {"construction_account_deposit", "construction_account_balance_returned_at_rehab_end"} <= item_keys
+        done_cushion = next(row for row in self._rows(client, deal["id"]) if row["source_item_key"] == "rehab_cushion")
+        assert done_cushion["done_at"] is not None and done_cushion["no_longer_in_the_deal"] is True
+
+    def test_a_deal_without_legacy_rows_is_not_flagged(self, client, brrrr_payload):
+        deal = self._import_a_deal(client, brrrr_payload)
+        run_migrations(app_db.engine)
+        assert self._flag(client, deal["id"]) is False
+
+
+class TestConstructionAccountTables:
+    def test_the_tables_exist_with_their_columns(self, client):
+        run_migrations(app_db.engine)
+        assert {"bought_brrr_deal_id", "construction_mercury_account_id", "primary_checking_mercury_account_id",
+                "loan_draws_pulled_before_construction_account_dollars", "rehab_payments_made_before_construction_account_dollars",
+                "minimum_balance_to_keep_in_construction_account_dollars", "bank_feed_details_as_of_last_refresh",
+                "bank_amounts_as_of", "marked_ready_for_close_out_at", "closed_out_at"} <= _column_names_of("liquidity_construction_accounts")
+        assert {"bought_brrr_deal_id", "adjustment_type", "amount_dollars", "note", "date"} <= _column_names_of(
+            "liquidity_construction_account_manual_adjustments")
+        assert {"mercury_transaction_id", "bought_brrr_deal_id", "ignored", "category_override", "note"} <= _column_names_of(
+            "liquidity_construction_account_transaction_overrides")
+        assert "planned_deposit_override_dollars" not in _column_names_of("liquidity_construction_accounts")   # the cushion is the one figure
+        assert {"accounts_snapshot", "last_mercury_read_at", "next_mercury_read_not_before", "consecutive_slow_down_answers",
+                "cash_balance_last_changed_at", "construction_accounts_last_changed_at"} <= _column_names_of("liquidity_mercury_workspace_reads")
+        assert {"receiving_path_token", "signing_secret", "last_valid_event_received_at", "last_webhook_error_message"} <= _column_names_of(
+            "liquidity_mercury_webhooks")
+        assert {"construction_account_refresh_interval_seconds", "construction_account_refresh_when_window_regains_focus",
+                "construction_account_in_app_transfers_enabled", "construction_account_transfers_per_hour_limit",
+                "construction_account_maximum_single_transfer_dollars"} <= _column_names_of("liquidity_settings")

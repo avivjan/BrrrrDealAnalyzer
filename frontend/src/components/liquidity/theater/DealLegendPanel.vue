@@ -10,12 +10,13 @@
  *
  * Non-modal on purpose: the chart beside it stays interactive.
  */
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { useInjectedDealAttributionLookup } from '../../../composables/useLiquidityDealAttribution'
 import type { ImportedLiquidityDeal, LiquidityRecurringTransaction, LiquidityTransaction } from '../../../types/liquidity'
 import { describeRecurrence } from '../../../utils/liquidityEngine'
 import { formatSignedMoney } from '../../../utils/money'
+import { constructionAccountOfDeal, dealOnItsBoard } from '../../../navigation/appLinks'
 import { dealKeyOf, NEUTRAL_DEAL_COLOR_HEX, shortDealAddress } from '../dealColors'
 import InlineAmountEditor from '../InlineAmountEditor.vue'
 import TransactionRowActions from '../TransactionRowActions.vue'
@@ -32,6 +33,8 @@ const props = defineProps<{
   recurringRules: LiquidityRecurringTransaction[]
   /** The recurring rules' expanded occurrences (done, overdue, upcoming), for each series' list. */
   recurringOccurrences?: LiquidityTransaction[]
+  /** A link opened the timeline on this deal: its entry is expanded (and scrolled to). */
+  dealKeyToExpand?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -94,6 +97,12 @@ const overdueRowCountByDealKey = computed(() => {
 })
 
 const expandedDealKey = ref<string | null>(null)
+watch(() => props.dealKeyToExpand, (dealKey) => {
+  if (!dealKey) return
+  expandedDealKey.value = dealKey
+  emit('highlightDeal', dealKey)
+  void nextTick(() => document.querySelector(`[data-testid="theater.legend.deal"][data-deal-key="${dealKey}"]`)?.scrollIntoView({ block: 'nearest' }))
+}, { immediate: true })
 const overdueSectionOpen = ref(true)
 const transactionsSectionOpen = ref(false)
 const expandedMonthKeys = ref<string[]>([])
@@ -159,8 +168,9 @@ const recentOccurrencesOfTheExpandedRule = computed(() => expandedRuleId.value
 
 const openManualRowCount = computed(() => props.transactions.filter(txn => !txn.source_deal_id && !txn.done_at).length)
 
-function boardLink(deal: ImportedLiquidityDeal): string {
-  return deal.deal_board === 'bought' ? '/bought-deals' : '/my-deals'
+/** The deal's own modal on its board (tasks/todo/ConstructionAccountPerRehab.md, Step C0). */
+function boardLink(deal: ImportedLiquidityDeal) {
+  return dealOnItsBoard(deal.deal_board, deal.deal_id)
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -244,12 +254,23 @@ function shortDate(isoDate: string): string {
                 <i class="pi pi-exclamation-triangle text-[10px]" aria-hidden="true"></i>
               </UiIconButton>
               <RouterLink
+                data-testid="theater.legend.deal.open-deal"
                 :to="boardLink(entry.deal)"
                 class="flex h-7 w-7 shrink-0 items-center justify-center rounded-ctl text-fg-muted hover:bg-surface hover:text-primary"
                 :aria-label="`Open ${entry.deal.deal_address} on ${entry.deal.deal_board === 'bought' ? 'Bought' : 'My Deals'}`"
-                :title="entry.deal.deal_board === 'bought' ? 'Open on Bought' : 'Open on My Deals'"
+                :title="entry.deal.deal_board === 'bought' ? 'Open the deal on Bought' : 'Open the deal on My Deals'"
               >
                 <i class="pi pi-external-link text-[10px]" aria-hidden="true"></i>
+              </RouterLink>
+              <RouterLink
+                v-if="entry.deal.deal_board === 'bought'"
+                data-testid="theater.legend.deal.construction-account"
+                :to="constructionAccountOfDeal(entry.deal.deal_id)"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-ctl text-fg-muted hover:bg-surface hover:text-primary"
+                :aria-label="`Construction account of ${entry.deal.deal_address}`"
+                title="Construction account"
+              >
+                <i class="pi pi-building-columns text-[10px]" aria-hidden="true"></i>
               </RouterLink>
               <UiIconButton
                 v-if="!entry.isFinished"

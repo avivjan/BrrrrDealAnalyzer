@@ -2,9 +2,14 @@
 
 One row per individual cash item, never grouped by date: each row is one future transaction of the
 liquidity timeline (its date, a description, a signed amount in dollars, a stable item key). Positive
-= money in, negative = money out. Every row counts toward Cash Needed. The rehab cushion is an ordinary
-row on the purchase closing date: in the liquidity timeline you postpone it until you mark it done
-(that is its release), like any other row.
+= money in, negative = money out.
+
+The rehab runs through its own construction account (tasks/todo/ConstructionAccountPerRehab.md): the lender
+wires the draws there and every rehab payment leaves from it, so neither is ever a row. Two rows stand for it:
+the deposit into the account on the purchase closing date (the rehab cushion, plus the rehab beyond the
+construction budget) and what the account gives back on the rehab completion (the cushion, plus the draw
+spread). The cushion goes out and comes back, so the rows add up to -(Cash Needed - rehab cushion): Cash
+Needed still counts the cushion as cash committed to the deal.
 
 Timing rule: money in as late as reasonable, money out as early as reasonable, so an error in the
 estimate only makes the timeline look worse than reality, never better. No money-out row falls after
@@ -14,12 +19,12 @@ order (the order of `CASH_NEEDED_SCHEDULE_ITEM_KEYS`).
 Never a row: the refi wire, the full reserves transfer (the reserves live in their own account),
 insurance bill C paid inside the refi closing and the tax lump (both inside the wire), anything
 already inside Cash to Close (Buy) (the points, the prepaid interest, the seller credit, insurance
-bill A paid inside the closing, the closing costs), the construction draws and the GC payments (that
-money moves from the lender to the GC; only the spread is ours).
+bill A paid inside the closing, the closing costs), the construction draws and the rehab payments (they
+move through the construction account; only the deposit into it and what it gives back are ours).
 
 Rounding: every row is whole cents. The rows are rounded on their running total, item by item in
-catalogue order then by date, and the last running total is pinned to -total_cash_needed; so each
-row is within a cent of its exact amount and each item's rows add up to its exact total within a cent.
+catalogue order then by date, and the last running total is pinned to -(total_cash_needed - rehab_cushion);
+so each row is within a cent of its exact amount and each item's rows add up to its exact total within a cent.
 """
 
 from datetime import date, timedelta
@@ -37,7 +42,7 @@ CASH_NEEDED_SCHEDULE_ITEM_KEYS = (
     "earnest_money_deposit",
     "cash_to_close_buy",
     "insurance_bill_at_purchase_outside_closing",
-    "rehab_cushion",
+    "construction_account_deposit",
     "seller_tax_credit_set_aside_in_tax_bucket",
     "property_tax_bucket_deposit",
     "property_tax_bucket_deposit_after_first_payment",
@@ -50,7 +55,7 @@ CASH_NEEDED_SCHEDULE_ITEM_KEYS = (
     "appliances",
     "appraisal_fee",
     "survey_fee",
-    "stolen_money",
+    "construction_account_balance_returned_at_rehab_end",
     "pre_refi_rental_income",
     "cash_to_refi_table_conservative",
     "reserves_funded_from_own_pocket_at_lowest_arv",
@@ -129,8 +134,11 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
     money_out(buy_closing_date, "cash_to_close_buy", "Cash to close (the purchase wire)", buy_settlement.cash_to_close_buy)
     money_out(buy_closing_date, "insurance_bill_at_purchase_outside_closing", "Insurance bill at purchase (paid outside the closing)",
               insurance.insurance_bill_at_purchase_outside_closing)
-    # Held, not spent: postponed in the liquidity timeline until it is no longer needed (marked done).
-    money_out(buy_closing_date, "rehab_cushion", "Rehab cushion (a hold: mark it done when you no longer need it)", payload.rehab_cushion)
+    # The construction account's bootstrap deposit: the cushion, plus the rehab the construction budget does not cover.
+    original_steal = stolen_money
+    money_out(buy_closing_date, "construction_account_deposit",
+              "Deposit into the construction account (rehab cushion" + (" + rehab beyond the construction budget)" if original_steal < 0 else ")"),
+              payload.rehab_cushion + max(Decimal("0"), -original_steal))
     money_out(buy_closing_date + timedelta(days=SELLER_TAX_CREDIT_SET_ASIDE_DAYS_AFTER_BUY_CLOSING), "seller_tax_credit_set_aside_in_tax_bucket",
               "Seller tax credit set aside in the tax bucket", buy_settlement.seller_tax_credit_set_aside_in_tax_bucket)
 
@@ -165,11 +173,11 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
     money_out(rehab_completed_date, "appliances", "Appliances", payload.appliances)
     money_out(rehab_completed_date, "appraisal_fee", "Appraisal (paid outside the refi closing)", payload.appraisal_fee)
     money_out(rehab_completed_date, "survey_fee", "Survey (paid outside the refi closing)", payload.survey_fee)
-    # Stolen money: one row. The draws and the GC payments move lender -> GC and are never tracked.
-    if stolen_money >= 0:
-        money_in(rehab_completed_date, "stolen_money", "Stolen money: the draw spread comes back to you", stolen_money)
-    else:
-        money_in(buy_closing_date, "stolen_money", "Rehab beyond the construction budget, funded by you", stolen_money)
+    # What the construction account gives back once the rehab is paid: the cushion, plus the draw spread (stolen money).
+    # The draws and the rehab payments move through that account and are never rows.
+    money_in(rehab_completed_date, "construction_account_balance_returned_at_rehab_end",
+             "Construction account balance returned at rehab end (cushion" + (" + draw spread)" if original_steal > 0 else ")"),
+             payload.rehab_cushion + max(Decimal("0"), original_steal))
 
     # -- Rent, on the 1sts after the tenant moves in
     for collection_date in timeline.rent_collection_dates_before_refi:
@@ -186,7 +194,7 @@ def cash_needed_schedule_step(payload, timeline, hml_amount, hml_and_holding, bu
              property_tax_bucket.property_tax_bucket_balance_released_at_refi)
 
     non_zero_exact_rows = [row for row in exact_rows if row[3] != 0]
-    rounded_amount_by_exact_row = _rounded_on_the_running_total(non_zero_exact_rows, target_signed_total=-total_cash_needed)
+    rounded_amount_by_exact_row = _rounded_on_the_running_total(non_zero_exact_rows, target_signed_total=-(total_cash_needed - payload.rehab_cushion))
 
     rows_in_date_order = sorted(
         non_zero_exact_rows,

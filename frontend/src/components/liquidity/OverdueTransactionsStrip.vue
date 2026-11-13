@@ -130,7 +130,7 @@ function bulkMarkDone() {
           <div class="min-w-0 flex-1">
             <div class="flex min-w-0 items-center gap-2">
               <span class="truncate text-sm text-fg">{{ row.txn.description }}</span>
-              <DealAttributionTag :txn="row.txn" class="shrink-0" />
+              <DealAttributionTag :txn="row.txn" links-to-the-deal class="shrink-0" />
             </div>
             <div class="text-xs" :class="row.isCounted ? 'text-warning' : 'text-fg-muted'">
               <template v-if="row.isCounted">overdue since {{ shortDate(row.txn.effective_date) }} · counted on today</template>

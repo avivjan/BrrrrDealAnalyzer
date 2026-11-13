@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  defaultDealImpactRange,
   gapPolygonPath,
+  lastDealEndDate,
   monthTicks,
   runsBelow,
   stackLabels,
@@ -72,5 +74,32 @@ describe("shapes", () => {
 
   it("ticks the 1sts of the months, with the year on January", () => {
     expect(monthTicks(DATES, { first: 0, last: 120 }).map((tick) => tick.label)).toEqual(["Oct", "Nov", "Dec", "Jan '27"]);
+  });
+});
+
+
+describe("until the last deal ends (ConstructionAccountPerRehab, Step G)", () => {
+  it("runs from a week before today to the latest refi of the deals in progress", () => {
+    const window = windowForRange(DATES, "until_last_deal_ends", TODAY, { refiDate: "2027-03-03", lowestDate: null, lastDealEndDate: "2027-08-01" });
+    expect(DATES[window.last]).toBe("2027-08-01");
+  });
+
+  it("without any deal end, it is the deal lifecycle", () => {
+    const untilTheLastDeal = windowForRange(DATES, "until_last_deal_ends", TODAY, { refiDate: "2027-03-03", lowestDate: null, lastDealEndDate: null });
+    const lifecycle = windowForRange(DATES, "deal_lifecycle", TODAY, { refiDate: "2027-03-03", lowestDate: null });
+    expect(untilTheLastDeal).toEqual(lifecycle);
+  });
+
+  it("a refi already late ends today; the latest end wins", () => {
+    expect(lastDealEndDate(["2026-10-01", "2027-02-01", null], "2026-11-05")).toBe("2027-02-01");
+    expect(lastDealEndDate(["2026-10-01"], "2026-11-05")).toBe("2026-11-05");
+    expect(lastDealEndDate([], "2026-11-05")).toBeNull();
+  });
+
+  it("opens on it when the refi at the lowest ARV brings nothing back", () => {
+    expect(defaultDealImpactRange(-12000)).toBe("until_last_deal_ends");
+    expect(defaultDealImpactRange(0)).toBe("until_last_deal_ends");
+    expect(defaultDealImpactRange(15000)).toBe("deal_lifecycle");
+    expect(defaultDealImpactRange(null)).toBe("deal_lifecycle");
   });
 });

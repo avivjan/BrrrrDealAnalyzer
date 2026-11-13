@@ -26,7 +26,7 @@ describe("AppSidebar", () => {
     const links = wrapper.findAll("nav a");
     expect(links.map((a) => a.attributes("data-testid"))).toEqual(NAV_ITEMS.map((i) => `shell.nav.${i.name}`));
     expect(links.map((a) => a.attributes("href"))).toEqual(NAV_ITEMS.map((i) => i.to));
-    expect(links.map((a) => a.attributes("aria-current"))).toEqual([undefined, undefined, undefined, undefined, "page", undefined, undefined]);
+    expect(links.map((a) => a.attributes("aria-current"))).toEqual([undefined, undefined, undefined, undefined, "page", undefined, undefined, undefined]);
     expect(wrapper.get('[data-part="active-indicator"]').attributes("style")).toContain("translateY(192px)");
   });
 

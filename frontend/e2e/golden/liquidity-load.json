@@ -37,6 +37,18 @@
     {
       "method": "GET",
       "path": "/liquidity/mercury-balance"
+    },
+    {
+      "method": "POST",
+      "path": "/liquidity/construction-accounts/refresh",
+      "body": {
+        "is_a_background_poll": true,
+        "today": "2026-09-04"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/liquidity/mercury-connection-status"
     }
   ]
 }

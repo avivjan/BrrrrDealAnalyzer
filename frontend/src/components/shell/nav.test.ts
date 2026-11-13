@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { NAV_ITEMS, navItemForPath } from "./nav";
+import { NAV_ITEMS, PHONE_BOTTOM_BAR_ITEMS, navItemForPath } from "./nav";
 
 /** The frozen router, read as text: its `path`/`name` pairs are the truth this file mirrors. */
 const routerSource = readFileSync(new URL("../../router/index.ts", import.meta.url), "utf8");
@@ -17,13 +17,19 @@ const routes = [...routerSource.matchAll(/path:\s*['"]([^'"]+)['"],\s*name:\s*['
 
 describe("the primary navigation", () => {
   it("mirrors every route the frozen router declares, by path and name", () => {
-    expect(routes.length).toBe(7);
+    expect(routes.length).toBe(8);
     expect(NAV_ITEMS.map((item) => ({ path: item.to, name: item.name }))).toEqual(routes);
   });
 
   it("finds an item by path and nothing for an unknown path", () => {
     expect(navItemForPath("/liquidity")?.title).toBe("Liquidity");
     expect(navItemForPath("/nope")).toBeUndefined();
+  });
+
+  it("keeps the phone's bottom bar at seven tabs and gives every item its own go-to key", () => {
+    expect(PHONE_BOTTOM_BAR_ITEMS).toHaveLength(7);
+    expect(PHONE_BOTTOM_BAR_ITEMS.map((item) => item.name)).not.toContain("construction-accounts");
+    expect(new Set(NAV_ITEMS.map((item) => item.goToKey)).size).toBe(NAV_ITEMS.length);
   });
 
   it("gives every item an icon and distinct labels", () => {

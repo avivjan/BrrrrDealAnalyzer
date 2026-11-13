@@ -28,6 +28,8 @@ const props = defineProps<{
   canStepToNextDay: boolean
   /** The one-off rows of this day already marked done: shown struck through, with Undo. */
   doneTransactionsOfThisDay?: LiquidityTransaction[]
+  /** A link opened the day on this row: it is outlined. */
+  highlightedTransactionId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -188,6 +190,7 @@ onMounted(() => nextTick(() => panelRef.value?.focus()))
         <DayDetail
           :bucket="bucket"
           hide-day-heading
+          :highlighted-transaction-id="highlightedTransactionId"
           class="!border-0 !bg-transparent !p-0 !shadow-none"
           @edit-txn="(id) => emit('editTxn', id)"
           @delete-txn="(id) => emit('deleteTxn', id)"
@@ -209,7 +212,7 @@ onMounted(() => nextTick(() => panelRef.value?.focus()))
             >
               <i class="pi pi-check-circle text-xs text-positive" aria-hidden="true"></i>
               <span class="min-w-0 flex-1 truncate text-xs text-fg-muted line-through">{{ transaction.description }}</span>
-              <DealAttributionTag :txn="transaction" class="shrink-0" />
+              <DealAttributionTag :txn="transaction" links-to-the-deal class="shrink-0" />
               <span class="text-[10px] text-fg-muted">done {{ shortDoneDate(transaction.done_at!) }}</span>
               <span class="numeric shrink-0 text-xs text-fg-muted line-through">{{ formatSignedMoney(transaction.amount_dollars) }}</span>
               <UiButton

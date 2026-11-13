@@ -713,6 +713,7 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `VITE_API_URL` | `frontend/src/api/index.ts` | Build-time. Defaults to `http://localhost:8000` |
 | `EMAIL_PASSWORD` | `/send-offer` | Gmail app password for the sending account; unset → `{success: false}` |
 | `MERCURY_API_TOKEN`, `MERCURY_API_TOKEN_<LABEL>` | `/liquidity/mercury-balance` | One per workspace; the suffix is the label |
+| `MERCURY_TRANSFER_API_TOKEN_<LABEL>` | Deposit and Steal on the Construction Accounts page | Write-capable, separate from the read token, IP-allow-listed; only `BL/liquidity/common/mercury_transfers.py` reads it (`SECURITY_PLAN.md` §3.3.1) |
 | `REPS_SHEET_ID_AVIV`, `REPS_SHEET_ID_YARDEN` | REPS | One Google Sheet per user |
 | `REPS_GCS_BUCKET`, `REPS_GCS_BASE_PREFIX` | REPS | Evidence bucket and prefix (default `evidence/2026`) |
 | `REPS_SHEET_TAB` | REPS | Default `Log` |
@@ -806,6 +807,25 @@ HMAC-signed and at most five minutes old, so the URL alone lets nobody write to 
 
 **Owner to check:** the Render Postgres plan and its backup retention. The loan's history lives
 only in this database.
+
+### Construction accounts
+
+One Mercury construction account per rehab (plan, decisions and tests: `tasks/todo/ConstructionAccountPerRehab.md`).
+The lender's draws land in it and the rehab is paid from it, so the liquidity timeline shows only your own money: the
+deposit at the purchase closing, what comes back at rehab end, and a top-up when the account runs short.
+
+- **Page:** `/liquidity/construction-accounts` (sidebar, ⌘K, `g c`, the Liquidity bar, the Dashboard tile). One card per
+  Bought BRRRR deal with every number and where it comes from; rehab figures, the cushion, the buffer and the
+  before-this-account amounts edit in place.
+- **Every change that moves the timeline asks first** ("This changes the liquidity timeline", Confirm or Cancel); what the
+  bank changed opens an OK-only window. Every write route takes `preview_only`.
+- **Deposit / Steal / Close out** move money at Mercury: a passkey step-up each, the accounts from the stored link, the kill
+  switch and limits in the page's settings, one idempotency key per transfer. Never MCP tools.
+- **Live:** one paced Mercury read per LLC (10 s floor, back-off on 429) shared by every reader; the pages poll, refresh on
+  focus, and with **instant updates** (a Mercury webhook to `POST /webhooks/mercury/<token>`, signed) change within seconds.
+- **Settings:** in the page's drawer (stored in `liquidity_settings`); tokens stay in the hosting secrets, and the drawer
+  shows which ones the backend found and the exact names of the missing ones.
+- **Verify against the real Mercury yourself:** the first transfer (make it $1), and turning on instant updates.
 
 ### Property inspections
 

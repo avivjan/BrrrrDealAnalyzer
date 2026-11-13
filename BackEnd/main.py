@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from db import engine, SessionLocal
 import bootstrap
-from routers import ALL_ROUTERS, auth as auth_router, devices as devices_router, health as health_router, member_loan as member_loan_router, public_inspection as public_inspection_router
+from routers import ALL_ROUTERS, auth as auth_router, devices as devices_router, health as health_router, member_loan as member_loan_router, mercury_webhooks as mercury_webhooks_router, public_inspection as public_inspection_router
 from BL.auth.common.app_key import require_app_key
 from BL.auth.common.session_dependency import require_session
 from BL.common.body_limit import BodyLimitMiddleware
@@ -86,7 +86,9 @@ app.add_middleware(
 # `public_inspection` is open to anyone with an inspection's link and protects
 # itself with rate limits and validation (routers/public_inspection.py); only its
 # `/public/inspections/...` routes are public, never a list of inspections.
-PUBLIC_ROUTERS = (health_router, auth_router, devices_router, member_loan_router, public_inspection_router)
+# `mercury_webhooks` is Mercury's instant-update address: it checks each event's signature, age, size and rate itself
+# (routers/mercury_webhooks.py), and a valid event only triggers a re-read.
+PUBLIC_ROUTERS = (health_router, auth_router, devices_router, member_loan_router, public_inspection_router, mercury_webhooks_router)
 
 
 def install_routers(target: FastAPI) -> None:

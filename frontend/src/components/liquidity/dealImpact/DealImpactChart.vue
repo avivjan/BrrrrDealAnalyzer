@@ -47,6 +47,10 @@ const props = defineProps<{
   lowestAfter: DatedAmount | null
   backAboveReserveDate: string | null
   refiDate: string | null
+  /** The latest refi among the deals in the timeline and this one: the end of "Until last deal ends". */
+  lastDealEndDate?: string | null
+  /** The range the chart opens on (Step G: from the lowest-ARV cash-out). */
+  initialRange?: DealImpactRange
   keyDates: DealKeyDate[]
   dealRowsByDate: Record<string, DealRowOnADay[]>
 }>()
@@ -90,9 +94,9 @@ onMounted(() => {
 onUnmounted(() => resizeObserver?.disconnect())
 
 // --- window and scales ---------------------------------------------------------------------------------------
-const range = ref<DealImpactRange>('deal_lifecycle')
+const range = ref<DealImpactRange>(props.initialRange ?? 'deal_lifecycle')
 const window_ = computed(() => windowForRange(props.dates, range.value, props.todayIsoDate,
-  { refiDate: props.refiDate, lowestDate: props.lowestAfter?.date ?? null }))
+  { refiDate: props.refiDate, lowestDate: props.lowestAfter?.date ?? null, lastDealEndDate: props.lastDealEndDate ?? null }))
 const indexOfDate = (isoDate: string) => props.dates.indexOf(isoDate)
 const isInWindow = (index: number) => index >= window_.value.first && index <= window_.value.last
 

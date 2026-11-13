@@ -62,7 +62,9 @@ describe("CommandPalette", () => {
     input().value = "liquid";
     input().dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
-    expect(options().map((o) => o.getAttribute("data-testid"))).toEqual(["shell.command.item.go-liquidity"]);
+    expect(options().map((o) => o.getAttribute("data-testid"))).toEqual([
+      "shell.command.item.go-liquidity", "shell.command.item.go-construction-accounts", "shell.command.item.liquidity-settings",
+    ]);
     input().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     await nextTick();
     expect(wrapper!.emitted("close")).toHaveLength(1);

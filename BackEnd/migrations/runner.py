@@ -28,6 +28,9 @@ from migrations.steps.liquidity_amounts_in_dollars import convert_liquidity_amou
 from migrations.steps.brrr_contract_date_and_required_buy_closing_date import require_brrr_contract_date_and_buy_closing_date
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
+from migrations.steps.construction_account_rows_replace_cushion_and_stolen_money import (
+    flag_deals_with_cushion_or_stolen_money_rows_as_liquidity_out_of_date,
+)
 
 
 # Arbitrary but fixed key identifying "this app's schema migration".
@@ -150,6 +153,21 @@ def _run_migrations_locked(engine):
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "mercury_account_ids_counted_as_cash", "JSON", None)
     add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", "timezone_name",
                           "VARCHAR(64) DEFAULT 'America/New_York' NOT NULL", None)
+    # The construction account settings, edited in the UI (tasks/todo/ConstructionAccountPerRehab.md).
+    for column_name, column_ddl in (
+        ("construction_account_refresh_interval_seconds", "INTEGER DEFAULT 30 NOT NULL"),
+        ("construction_account_refresh_when_window_regains_focus", "BOOLEAN DEFAULT TRUE NOT NULL"),
+        ("construction_account_in_app_transfers_enabled", "BOOLEAN DEFAULT TRUE NOT NULL"),
+        ("construction_account_transfers_per_hour_limit", "INTEGER DEFAULT 5 NOT NULL"),
+        ("construction_account_maximum_single_transfer_dollars", "NUMERIC(16,2) DEFAULT 100000 NOT NULL"),
+    ):
+        if "liquidity_settings" in table_names:
+            add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", column_name, column_ddl, None)
+    # What the last instant update (a Mercury webhook) changed, for the open pages (ConstructionAccountPerRehab, Step F).
+    if "liquidity_mercury_workspace_reads" in table_names:
+        for column_name, column_ddl in (("last_instant_update_at", "TIMESTAMP WITH TIME ZONE"),
+                                        ("bank_reported_row_changes_of_last_instant_update", "JSON")):
+            add_column_if_missing(engine, sa_inspect(engine), "liquidity_mercury_workspace_reads", column_name, column_ddl, None)
     # The deal milestones approved in the liquidity timeline, and the "rows out of date" flag.
     for brrr_table in ("active_deals", "bought_brrrr_deals"):
         for column_name, column_ddl in (
@@ -228,3 +246,7 @@ def _run_migrations_locked(engine):
 
     # An inspection may link to a My Deals deal too (tasks/todo/InspectionLinkToMyDeals.md).
     add_inspection_links_to_active_deals(engine, sa_inspect(engine))
+
+    # The schedule's `rehab_cushion` and `stolen_money` rows became the construction account's deposit and return rows
+    # (tasks/todo/ConstructionAccountPerRehab.md): deals that still have a legacy row show Re-sync. Flags each deal once.
+    flag_deals_with_cushion_or_stolen_money_rows_as_liquidity_out_of_date(engine, sa_inspect(engine))

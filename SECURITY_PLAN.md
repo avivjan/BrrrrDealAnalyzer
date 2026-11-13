@@ -355,6 +355,33 @@ sequenceDiagram
     end
 ```
 
+#### 3.3.1 Write-capable transfer tokens and instant updates (tasks/todo/ConstructionAccountPerRehab.md)
+
+The Construction Accounts page moves money: **Deposit** (an LLC's checking → a rehab's construction account) and **Steal**
+(back). That adds a write-capable secret per LLC, `MERCURY_TRANSFER_API_TOKEN_<LABEL>`, kept apart from the read-only
+`MERCURY_API_TOKEN_<LABEL>`, and a webhook signing secret per LLC for "instant updates".
+
+| Control | What ships | Threat it closes |
+| --- | --- | --- |
+| Separate token, narrowest scope | `BL/liquidity/common/mercury_transfers.py` is the only reader of the transfer token, by its exact name, at the moment of the call, into the `Authorization` header (`Secret`, wiped after). No read path imports it; transfers never use a read token. Create it in Mercury with the narrowest scope that allows internal transfers, and **IP-allow-list it** like the read tokens | A leaked read token still cannot move money; a copied transfer token is inert off-platform |
+| One pinned endpoint | `POST /api/v1/transfer` only; account ids and the idempotency key are pattern-checked; never retried (a lost answer is stored as "Mercury did not answer") | No SSRF-style misuse of the token; no double transfer from a retry |
+| Accounts from the link | Source and destination come from the stored link, never the request (the request carries an amount and a key) | A tampered request cannot send money anywhere else |
+| A person, just now | `require_recent_auth` on the real send (a web owner session, CSRF, a passkey used in the last minutes), whatever `AUTH_MODE` says; not MCP tools (`EXCLUDED_TOOL_NAMES`) | A stolen session or the Claude connector cannot move money |
+| Exactly once | The idempotency key is stored (unique) and committed before Mercury is asked; the same key answers the stored transfer; Mercury gets the key too | Double taps, the passkey retry, and two racing requests make one transfer |
+| Limits in the UI | Kill switch, per-transfer maximum and hourly limit in the settings (`liquidity_settings`); amount ≤ the source's available balance; a Steal above "safe to steal now" needs an explicit confirmation | Bounds the damage of a mistake or a compromised session |
+| Attribution | `liquidity_construction_account_transfer` audit rows: deal, direction, transfer id, outcome; never the amount | Every transfer is traceable |
+| Webhook secret | Stored in `liquidity_mercury_webhooks.signing_secret` (database, plaintext); never returned by a route or logged. An event only ever means "read this LLC now" (its contents are never trusted or stored), so a forged event can at most trigger a paced re-read | A database reader who forges events gains nothing but extra reads |
+| Webhook endpoint | `POST /webhooks/mercury/{random 256-bit token}`: HMAC-SHA256 signature (constant time), 5-minute replay window, 64 KB body cap, a rate limit per sending IP; not in the OpenAPI schema; registering or removing it needs the passkey step-up | Spoofed, replayed or flooding events |
+
+**Rotation runbook (transfer token):** on incident, or yearly: create a new token in Mercury (narrowest scope, IP-allow-listed) →
+set `MERCURY_TRANSFER_API_TOKEN_<LABEL>` in Render → deploy → make a $1 Deposit from a trusted device and check it in Mercury →
+revoke the old token. To stop all in-app transfers at once without a deploy, turn off "Allow transfers from the app" in the
+Construction Accounts settings. **Webhook secret:** turn instant updates off and on again (a new address and secret).
+
+**Unverified against the real Mercury** (no sandbox access while building): the transfer answer's shape, and the webhook
+registration and signature format. The code reads them defensively and records failures in our own words; the first real
+transfer must be small and checked in Mercury.
+
 ### 3.4 Pillar 3 — Trusted device management and allowlisting
 
 What each layer proves, and does not prove:

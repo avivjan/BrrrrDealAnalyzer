@@ -1,8 +1,9 @@
 """The dated Cash Needed schedule (Lowest ARV): one row per cash item, every dollar of Cash Needed accounted for.
 
-Every dollar of Cash Needed is a dated row, the rehab cushion included (a hold on the purchase closing date): the
-rows add up exactly to -total_cash_needed on every scenario (an internal check; nothing on screen shows it). Plus
-the timing and shape rules:
+Every dollar of Cash Needed is a dated row. The rehab cushion goes into the construction account on the purchase
+closing date and comes back from it on the rehab completion (tasks/todo/ConstructionAccountPerRehab.md), so the
+rows add up exactly to -(total_cash_needed - rehab_cushion) on every scenario (an internal check; nothing on
+screen shows it). Plus the timing and shape rules:
 no money-out row after the refi, money out before money in on a shared date, (item_key, date) unique, whole cents,
 the refi-day rows in their order, and none of the rows that must never exist.
 """
@@ -60,10 +61,11 @@ def _rows_of(results, item_key: str):
 
 @pytest.mark.parametrize("scenario", list(RECONCILIATION_SCENARIOS))
 class TestTheScheduleAccountsForEveryDollarOfCashNeeded:
-    def test_the_dated_rows_add_up_exactly_to_cash_needed(self, brrrr_payload, scenario):
+    def test_the_dated_rows_add_up_exactly_to_cash_needed_less_the_cushion_that_comes_back(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, RECONCILIATION_SCENARIOS[scenario])
         schedule = results.cash_needed_schedule_at_lowest_arv
-        assert sum(row.signed_amount_dollars for row in schedule.dated_cash_rows) == -results.total_cash_needed
+        rehab_cushion = Decimal(str({**brrrr_payload, **RECONCILIATION_SCENARIOS[scenario]}["rehabCushion"]))
+        assert sum(row.signed_amount_dollars for row in schedule.dated_cash_rows) == -(results.total_cash_needed - rehab_cushion)
 
     def test_the_shape_and_timing_rules(self, brrrr_payload, scenario):
         results = _compute(brrrr_payload, RECONCILIATION_SCENARIOS[scenario])
@@ -91,7 +93,10 @@ class TestTheScheduleAccountsForEveryDollarOfCashNeeded:
         assert not item_keys & {"cash_out_routi_conservative", "cash_out_routi", "reserves_total", "insurance_bill_at_refi_inside_closing",
                                 "property_tax_lump_sum_at_refi_closing", "hml_points", "prepaid_interest_buy",
                                 "seller_tax_credit", "insurance_bill_at_purchase_inside_closing", "closing_costs_buy_total"}
-        assert len(_rows_of(results, "stolen_money")) <= 1
+        # The draws and the rehab payments move through the construction account: never rows, and no stolen-money row.
+        assert not item_keys & {"rehab_cushion", "stolen_money", "construction_draw", "rehab_payment"}
+        assert len(_rows_of(results, "construction_account_deposit")) <= 1
+        assert len(_rows_of(results, "construction_account_balance_returned_at_rehab_end")) <= 1
 
     def test_each_items_rows_add_up_to_the_engines_figure_for_it_within_a_cent(self, brrrr_payload, scenario):
         """The rows are pinned to add up to Cash Needed; this proves no item absorbed someone else's dollars."""
@@ -102,7 +107,7 @@ class TestTheScheduleAccountsForEveryDollarOfCashNeeded:
             "earnest_money_deposit": -money("earnestMoneyDeposit"),
             "cash_to_close_buy": -results.cash_to_close_buy,
             "insurance_bill_at_purchase_outside_closing": -results.insurance_bill_at_purchase_outside_closing,
-            "rehab_cushion": -money("rehabCushion"),
+            "construction_account_deposit": -(money("rehabCushion") + max(Decimal("0"), -results.stolen_money)),
             "seller_tax_credit_set_aside_in_tax_bucket": -results.seller_tax_credit_set_aside_in_tax_bucket,
             "property_tax_bucket_deposit": -results.property_tax_bucket_deposit * results.property_tax_bucket_first_bill_deposit_count_until_refi,
             "property_tax_bucket_deposit_after_first_payment":
@@ -116,7 +121,7 @@ class TestTheScheduleAccountsForEveryDollarOfCashNeeded:
             "appliances": -money("appliances"),
             "appraisal_fee": -money("appraisalFee"),
             "survey_fee": -money("surveyFee"),
-            "stolen_money": results.stolen_money,
+            "construction_account_balance_returned_at_rehab_end": money("rehabCushion") + max(Decimal("0"), results.stolen_money),
             "pre_refi_rental_income": results.pre_refi_rental_income,
             "cash_to_refi_table_conservative": -results.cash_to_refi_table_conservative,
             "reserves_funded_from_own_pocket_at_lowest_arv": -results.reserves_funded_from_own_pocket_at_lowest_arv,
@@ -149,7 +154,8 @@ class TestEachItemOnItsDate:
         assert dates_of("utilities") == [date(2026, month, 1) for month in range(2, 6)]
         assert dates_of("maintenance_before_refi") == [date(2026, month, 1) for month in range(3, 8)]
         assert dates_of("appliances") == [date(2026, 2, 24)]   # on the rehab completion
-        assert dates_of("rehab_cushion") == [date(2026, 1, 10)]
+        assert dates_of("construction_account_deposit") == [date(2026, 1, 10)]   # on the purchase closing
+        assert dates_of("construction_account_balance_returned_at_rehab_end") == [date(2026, 2, 24)]   # on the rehab completion
         assert dates_of("appraisal_fee") == dates_of("survey_fee") == [date(2026, 2, 24)]
         assert dates_of("pre_refi_rental_income") == [date(2026, 5, 1), date(2026, 6, 1), date(2026, 7, 1)]
         assert dates_of("cash_to_refi_table_conservative") == dates_of("reserves_funded_from_own_pocket_at_lowest_arv") == [date(2026, 7, 9)]
@@ -157,22 +163,45 @@ class TestEachItemOnItsDate:
         assert all("Lowest-ARV refi" in row.description for row in results.cash_needed_schedule_at_lowest_arv.dated_cash_rows
                    if row.date == results.refi_closing_date)
 
-    def test_the_cushion_is_an_ordinary_row_on_the_purchase_closing(self, brrrr_payload):
+    def test_the_cushion_is_deposited_into_the_construction_account_on_the_purchase_closing(self, brrrr_payload):
         results = _compute(brrrr_payload, {})
-        (cushion,) = _rows_of(results, "rehab_cushion")
-        assert (cushion.date, cushion.signed_amount_dollars) == (date(2026, 1, 10), Decimal("-5000.00"))
-        assert "hold" in cushion.description
+        (deposit,) = _rows_of(results, "construction_account_deposit")
+        assert (deposit.date, deposit.signed_amount_dollars) == (date(2026, 1, 10), Decimal("-5000.00"))
+        assert "construction account" in deposit.description
         # Money out on the closing day: after the cash to close, in catalogue order.
         closing_day = [row.item_key for row in results.cash_needed_schedule_at_lowest_arv.dated_cash_rows if row.date == date(2026, 1, 10)]
-        assert closing_day[:2] == ["cash_to_close_buy", "rehab_cushion"]
-        assert _rows_of(_compute(brrrr_payload, {"rehabCushion": 0}), "rehab_cushion") == []
+        assert closing_day[:2] == ["cash_to_close_buy", "construction_account_deposit"]
+        no_cushion_no_spread = _compute(brrrr_payload, {"rehabCushion": 0})
+        assert _rows_of(no_cushion_no_spread, "construction_account_deposit") == []
+        assert _rows_of(no_cushion_no_spread, "construction_account_balance_returned_at_rehab_end") == []
 
-    def test_stolen_money_comes_back_on_the_rehab_completion_or_goes_out_at_closing(self, brrrr_payload):
-        (positive,) = _rows_of(_compute(brrrr_payload, {"constructionLoanBudget": 70, "rehabContingency": 0}), "stolen_money")
-        assert (positive.date, positive.signed_amount_dollars) == (date(2026, 2, 24), Decimal("20000.00"))
-        (negative,) = _rows_of(_compute(brrrr_payload, {"constructionLoanBudget": 40}), "stolen_money")
-        assert (negative.date, negative.signed_amount_dollars) == (date(2026, 1, 10), Decimal("-15000.00"))
-        assert _rows_of(_compute(brrrr_payload, {}), "stolen_money") == []
+    def test_the_construction_account_gives_back_the_cushion_and_the_draw_spread_on_the_rehab_completion(self, brrrr_payload):
+        positive_steal = _compute(brrrr_payload, {"constructionLoanBudget": 70, "rehabContingency": 0})   # spread +$20,000
+        (deposit,) = _rows_of(positive_steal, "construction_account_deposit")
+        (returned,) = _rows_of(positive_steal, "construction_account_balance_returned_at_rehab_end")
+        assert (deposit.date, deposit.signed_amount_dollars) == (date(2026, 1, 10), Decimal("-5000.00"))
+        assert (returned.date, returned.signed_amount_dollars) == (date(2026, 2, 24), Decimal("25000.00"))
+        assert "draw spread" in returned.description
+
+    def test_a_rehab_beyond_the_construction_budget_is_deposited_with_the_cushion_and_only_the_cushion_comes_back(self, brrrr_payload):
+        negative_steal = _compute(brrrr_payload, {"constructionLoanBudget": 40})   # rehab $55,000, budget $40,000
+        (deposit,) = _rows_of(negative_steal, "construction_account_deposit")
+        (returned,) = _rows_of(negative_steal, "construction_account_balance_returned_at_rehab_end")
+        assert (deposit.date, deposit.signed_amount_dollars) == (date(2026, 1, 10), Decimal("-20000.00"))
+        assert "beyond the construction budget" in deposit.description
+        assert (returned.date, returned.signed_amount_dollars) == (date(2026, 2, 24), Decimal("5000.00"))
+
+    def test_a_cash_rehab_deposits_the_whole_rehab(self, brrrr_payload):
+        cash_rehab = _compute(brrrr_payload, {"constructionLoanBudget": 0})
+        (deposit,) = _rows_of(cash_rehab, "construction_account_deposit")
+        assert deposit.signed_amount_dollars == -(Decimal("5000.00") + cash_rehab.rehab_cost)
+
+    def test_appliances_stay_their_own_row_outside_the_construction_account(self, brrrr_payload):
+        results = _compute(brrrr_payload, {"constructionLoanBudget": 70, "rehabContingency": 0})
+        (appliances,) = _rows_of(results, "appliances")
+        assert appliances.signed_amount_dollars == -Decimal(str(brrrr_payload["appliances"]))
+        (returned,) = _rows_of(results, "construction_account_balance_returned_at_rehab_end")
+        assert returned.signed_amount_dollars == Decimal("5000.00") + results.stolen_money   # appliances never reduce it
 
     def test_the_refi_day_rows_in_their_order(self, brrrr_payload):
         results = _compute(brrrr_payload, {"arv_in_thousands": 250, "maintenanceReserve": 30_000,
@@ -260,7 +289,8 @@ class TestTheDealsKeyDatesAmongTheRows:
         milestone_descriptions = {milestone.description for milestone in schedule.deal_milestones}
         assert not milestone_descriptions & {row.description for row in schedule.dated_cash_rows}
         assert {row.item_key for row in schedule.dated_cash_rows} <= set(CASH_NEEDED_SCHEDULE_ITEM_KEYS)
-        assert -sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")) == results.total_cash_needed
+        rehab_cushion = Decimal(str({**brrrr_payload, **RECONCILIATION_SCENARIOS[scenario]}["rehabCushion"]))
+        assert -sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")) == results.total_cash_needed - rehab_cushion
 
 
 class TestTheScheduleOnTheApi:
@@ -271,7 +301,7 @@ class TestTheScheduleOnTheApi:
         assert set(schedule["deal_milestones"][0]) == {"date", "milestone_key", "description"}
         rows = schedule["dated_cash_rows"]
         assert set(rows[0]) == {"date", "sequence_within_day", "description", "signed_amount_dollars", "item_key"}
-        assert float(-sum(Decimal(row["signed_amount_dollars"]) for row in rows)) == body["total_cash_needed_for_deal"]
+        assert float(-sum(Decimal(row["signed_amount_dollars"]) for row in rows)) == body["total_cash_needed_for_deal"] - brrrr_payload["rehabCushion"]
 
     def test_a_saved_deal_carries_the_schedule(self, client, brrrr_payload):
         deal = client.post("/active-deals", json=brrrr_payload).json()
@@ -283,7 +313,8 @@ class TestTheScheduleOnTheApi:
         from tests.mcp_helpers import call_json
         analyzed = call_json("analyze_brrr", body=brrrr_payload)
         schedule = analyzed["cash_needed_schedule_at_lowest_arv"]
-        assert float(-sum(Decimal(row["signed_amount_dollars"]) for row in schedule["dated_cash_rows"])) == analyzed["total_cash_needed_for_deal"]
+        assert (float(-sum(Decimal(row["signed_amount_dollars"]) for row in schedule["dated_cash_rows"]))
+                == analyzed["total_cash_needed_for_deal"] - brrrr_payload["rehabCushion"])
 
     def test_the_mcp_instructions_say_the_dates_are_required_and_describe_the_schedule(self):
         import mcp_server
@@ -319,4 +350,4 @@ class TestHardMoneyInterestPaidMonthlyIsRateOverTwelve:
     def test_the_schedule_still_adds_up_to_cash_needed(self, brrrr_payload):
         results = _compute(brrrr_payload, self.MIXED_MONTH_LENGTHS)
         total = sum(row.signed_amount_dollars for row in results.cash_needed_schedule_at_lowest_arv.dated_cash_rows)
-        assert total == -results.total_cash_needed
+        assert total == -(results.total_cash_needed - Decimal(str(brrrr_payload["rehabCushion"])))

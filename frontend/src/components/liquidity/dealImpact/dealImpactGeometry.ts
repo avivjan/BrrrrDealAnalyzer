@@ -5,10 +5,11 @@
  */
 import type { Point } from '../chart/geometry'
 
-export type DealImpactRange = 'deal_lifecycle' | 'six_months' | 'one_year' | 'all'
+export type DealImpactRange = 'deal_lifecycle' | 'until_last_deal_ends' | 'six_months' | 'one_year' | 'all'
 
 export const DEAL_IMPACT_RANGES: { key: DealImpactRange; label: string }[] = [
   { key: 'deal_lifecycle', label: 'Deal lifecycle' },
+  { key: 'until_last_deal_ends', label: 'Until last deal ends' },
   { key: 'six_months', label: '6 months' },
   { key: 'one_year', label: '1 year' },
   { key: 'all', label: 'All' },
@@ -37,13 +38,15 @@ function lastIndexOnOrBefore(dates: readonly string[], isoDate: string): number 
 
 /**
  * The days a range shows. "Deal lifecycle": a week before today through 60 days after the refi (or 30 after the low
- * point, or 60 after today, whichever is latest). The fixed ranges start a week before today. Always inside the series.
+ * point, or 60 after today, whichever is latest). "Until last deal ends": a week before today through the latest refi
+ * among the deals in the timeline and the incoming one (tasks/todo/ConstructionAccountPerRehab.md, Step G); without
+ * one, as "Deal lifecycle". The fixed ranges start a week before today. Always inside the series.
  */
 export function windowForRange(
   dates: readonly string[],
   range: DealImpactRange,
   todayIsoDate: string,
-  milestones: { refiDate: string | null; lowestDate: string | null },
+  milestones: { refiDate: string | null; lowestDate: string | null; lastDealEndDate?: string | null },
 ): IndexWindow {
   if (dates.length === 0) return { first: 0, last: -1 }
   if (range === 'all') return { first: 0, last: dates.length - 1 }
@@ -51,6 +54,7 @@ export function windowForRange(
   let endDate: string
   if (range === 'six_months') endDate = addDays(todayIsoDate, 183)
   else if (range === 'one_year') endDate = addDays(todayIsoDate, 365)
+  else if (range === 'until_last_deal_ends' && milestones.lastDealEndDate) endDate = milestones.lastDealEndDate
   else {
     const candidates = [addDays(todayIsoDate, 60)]
     if (milestones.refiDate) candidates.push(addDays(milestones.refiDate, 60))
@@ -162,4 +166,17 @@ export function monthTicks(dates: readonly string[], window: IndexWindow): { ind
     ticks.push({ index, label: month === '01' ? `${monthName} '${year!.slice(2)}` : monthName })
   }
   return ticks
+}
+
+
+/** The chart opens on "Until last deal ends" when the refi at the lowest ARV brings nothing back (or costs money):
+ * the question then is whether the money holds until every deal is out. Otherwise on the deal's own lifecycle. */
+export function defaultDealImpactRange(cashOutWireAtLowestArvDollars: number | null | undefined): DealImpactRange {
+  return cashOutWireAtLowestArvDollars != null && cashOutWireAtLowestArvDollars <= 0 ? 'until_last_deal_ends' : 'deal_lifecycle'
+}
+
+/** The last day of the deals in the timeline and the incoming one: each one's refi, or today for a refi already late. */
+export function lastDealEndDate(refiDates: readonly (string | null | undefined)[], todayIsoDate: string): string | null {
+  const ends = refiDates.filter((date): date is string => !!date).map(date => (date < todayIsoDate ? todayIsoDate : date)).sort()
+  return ends.length ? ends[ends.length - 1]! : null
 }

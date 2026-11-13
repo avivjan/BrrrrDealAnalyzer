@@ -1,8 +1,9 @@
 """/bought-deals CRUD + move-from-active."""
 
-from typing import Union, List
+from datetime import datetime
+from typing import Optional, Union, List
 
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -12,7 +13,7 @@ from ReqRes.common.bought_deal_schemas import (
 )
 from BL.boughtDeal.getBoughtDeals import get_bought_deals as get_bought_deals_bl
 from BL.boughtDeal.addBoughtDeal import add_bought_deal as add_bought_deal_bl
-from BL.boughtDeal.updateBoughtDeal import update_bought_deal as update_bought_deal_bl
+from BL.boughtDeal.updateBoughtDeal import StaleDealFormError, update_bought_deal as update_bought_deal_bl
 from BL.boughtDeal.deleteBoughtDeal import delete_bought_deal as delete_bought_deal_bl
 from BL.boughtDeal.moveToBought import move_to_bought as move_to_bought_bl
 from DAL.crud.active_deal import get_brrr_deal, get_flip_deal
@@ -35,8 +36,15 @@ def add_bought_deal(
     raise HTTPException(status_code=400, detail="Invalid deal type")
 
 @router.put("/bought-deals/{deal_id}", response_model=Union[BoughtBrrrDealRes, BoughtFlipDealRes])
-def update_bought_deal(deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate], db: Session = Depends(get_db)):
-    result = update_bought_deal_bl(db, deal_id, deal)
+def update_bought_deal(deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate],
+                       updated_at_the_form_was_loaded_with: Optional[datetime] = Query(
+                           None, description="The deal's updated_at when your form was loaded: a save is refused (409) if the "
+                                             "deal changed since. Leave it out to save regardless."),
+                       db: Session = Depends(get_db)):
+    try:
+        result = update_bought_deal_bl(db, deal_id, deal, updated_at_the_form_was_loaded_with)
+    except StaleDealFormError:
+        raise HTTPException(status_code=409, detail="This deal was changed elsewhere since your form was loaded")
     if result is not None:
         return result
     raise HTTPException(status_code=404, detail="Bought deal not found")

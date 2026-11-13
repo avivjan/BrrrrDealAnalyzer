@@ -17,6 +17,7 @@
  * Only `opacity` animates on this root and the chart's ancestors: the chart re-measures from a ResizeObserver.
  * The legend, the sheet and the popovers move with `transform` beside it.
  */
+import { dealLifespansOf } from '../../../utils/dealLifespans'
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { OPEN_COMMAND_PALETTE_INJECTION_KEY } from '../../shell/commandPaletteInjection'
@@ -33,6 +34,7 @@ import TimelineChart from '../TimelineChart.vue'
 import DayTransactionsModal from './DayTransactionsModal.vue'
 import DealLegendPanel from './DealLegendPanel.vue'
 import DealMilestonesBottomSheet from './DealMilestonesBottomSheet.vue'
+import { CONSTRUCTION_ACCOUNTS_PATH } from '../../../navigation/appLinks'
 
 /** The view's headline figures, already formatted (the same four as its KPI cards). */
 export interface LiquidityHeadlineFigures {
@@ -51,6 +53,12 @@ const props = defineProps<{
   /** One of the view's own modals is open: it owns Esc and the keyboard. */
   isAnotherDialogOpen: boolean
   milestoneKeyBeingApproved?: string | null
+  /**
+   * A link opened the timeline on something (tasks/todo/ConstructionAccountPerRehab.md, Step C0): a deal (its legend
+   * entry opens and its rows are highlighted), or a day (the chart centres on it and its day view opens, with one
+   * row highlighted). A new object each time, so the same link twice acts twice.
+   */
+  linkFocus?: { dealKey: string | null; day: string | null; transactionId: string | null } | null
 }>()
 
 const emit = defineEmits<{
@@ -156,8 +164,29 @@ function onOpenDay(date: string) {
   dayModalDate.value = date
 }
 
+const dealKeyToExpandInTheLegend = ref<string | null>(null)
+const transactionIdHighlightedInTheDayView = ref<string | null>(null)
+watch(() => props.linkFocus, async (focus) => {
+  if (!focus) return
+  if (focus.dealKey) {
+    legendOpen.value = true
+    highlightedDealKey.value = focus.dealKey
+    dealKeyToExpandInTheLegend.value = null
+    await nextTick()
+    dealKeyToExpandInTheLegend.value = focus.dealKey
+  }
+  if (focus.day) {
+    await nextTick()
+    chartRef.value?.centerOnDate(focus.day)
+    transactionIdHighlightedInTheDayView.value = focus.transactionId
+    onOpenDay(focus.day)
+  }
+}, { immediate: true })
+
 // --- figures --------------------------------------------------------------------------------------------------
 const todayIsoDate = todayISO()
+/** Each deal in progress, contract to refi, under the balance line (Step G). */
+const dealLifespans = computed(() => dealLifespansOf(store.importedDeals, todayIsoDate))
 const lowestBalanceInNext90Days = computed(() => lowestBalanceInNextDays(store.series, todayIsoDate, 90))
 const nextMoneyOut = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_out'))
 const nextMoneyIn = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_in'))
@@ -374,6 +403,10 @@ const SHORTCUTS = [
               >
                 <i :class="store.mercurySyncing ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" class="text-xs" aria-hidden="true"></i>
               </UiIconButton>
+              <RouterLink data-testid="theater.construction-accounts" :to="CONSTRUCTION_ACCOUNTS_PATH" title="Construction accounts"
+                          aria-label="Construction accounts" class="grid h-8 w-8 place-items-center rounded-ctl text-fg-muted hover:bg-surface-2 hover:text-primary">
+                <i class="pi pi-building-columns text-xs" aria-hidden="true"></i>
+              </RouterLink>
               <UiIconButton data-testid="theater.settings" label="Liquidity settings" @click="emit('openSettings')">
                 <i class="pi pi-cog text-xs" aria-hidden="true"></i>
               </UiIconButton>
@@ -485,6 +518,7 @@ const SHORTCUTS = [
               <button data-testid="theater.more.today" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; chartRef?.centerOnToday()"><i class="pi pi-crosshair" aria-hidden="true"></i> Today</button>
               <button data-testid="theater.more.mercury-sync" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" :disabled="store.mercurySyncing" @click="moreActionsMenuOpen = false; emit('syncMercury')"><i class="pi pi-sync" aria-hidden="true"></i> Sync Mercury</button>
               <button data-testid="theater.more.settings" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; emit('openSettings')"><i class="pi pi-cog" aria-hidden="true"></i> Settings</button>
+              <RouterLink data-testid="theater.more.construction-accounts" :to="CONSTRUCTION_ACCOUNTS_PATH" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2" @click="moreActionsMenuOpen = false"><i class="pi pi-building-columns" aria-hidden="true"></i> Construction accounts</RouterLink>
               <button data-testid="theater.more.search" v-if="openCommandPalette" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; openCommandPalette()"><i class="pi pi-search" aria-hidden="true"></i> Search</button>
               <button type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="toggleTheme()"><i :class="resolvedTheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true"></i> {{ resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode' }}</button>
               <button v-if="browserFullscreenIsSupported" type="button" class="flex w-full items-center gap-2 rounded-ctl px-3 py-2 text-left text-sm text-fg hover:bg-surface-2 disabled:opacity-50" @click="moreActionsMenuOpen = false; toggleBrowserFullscreen()"><i class="pi pi-window-maximize" aria-hidden="true"></i> {{ isBrowserFullscreen ? 'Exit browser fullscreen' : 'Browser fullscreen' }}</button>
@@ -515,6 +549,7 @@ const SHORTCUTS = [
               :reserve-dollars="store.settings.reserve_dollars"
               :tooltip-follows-pointer="true"
               :highlighted-deal-key="highlightedDealKey"
+              :deal-lifespans="dealLifespans"
               @open-day="onOpenDay"
             />
             <div
@@ -537,6 +572,7 @@ const SHORTCUTS = [
                 :transactions="store.transactions"
                 :recurring-rules="store.recurringRules"
                 :recurring-occurrences="recurringOccurrences"
+                :deal-key-to-expand="dealKeyToExpandInTheLegend"
                 class="pointer-events-auto max-h-full"
                 @close="legendOpen = false"
                 @highlight-deal="(dealKey) => (highlightedDealKey = dealKey)"
@@ -574,8 +610,9 @@ const SHORTCUTS = [
           :can-step-to-previous-day="dayModalIndex > 0"
           :can-step-to-next-day="dayModalIndex < store.series.days.length - 1"
           :done-transactions-of-this-day="doneTransactionsOfTheModalDay"
+          :highlighted-transaction-id="transactionIdHighlightedInTheDayView"
           @mark-not-done="(id) => emit('markNotDone', id)"
-          @close="dayModalDate = null"
+          @close="dayModalDate = null; transactionIdHighlightedInTheDayView = null"
           @step-day="stepDayModal"
           @approve-milestone="(deal, milestone) => emit('approveMilestone', deal, milestone)"
           @approve-milestone-on-another-date="(deal, milestone) => emit('changeMilestone', deal, milestone, true)"

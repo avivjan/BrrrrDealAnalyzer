@@ -165,7 +165,7 @@ def update_liquidity_settings(data: LiquiditySettingsUpdate, db: Session = Depen
 
 
 @router.get("/liquidity/mercury-balance")
-def get_mercury_balance(request: Request, db: Session = Depends(get_db)):
+def get_mercury_balance(request: Request, fresh: bool = False, db: Session = Depends(get_db)):
     """
     Fetch the live Mercury account balances, in dollars, and the cash on hand among them
     (`counted_as_cash_balance_dollars`: the accounts chosen in the liquidity settings).
@@ -173,9 +173,14 @@ def get_mercury_balance(request: Request, db: Session = Depends(get_db)):
     The frontend uses this to re-anchor the liquidity timeline's opening
     balance to today on page load. Every call leaves an audit row (who, from
     where, which workspaces answered) -- never a token.
+
+    Read through the shared pace (tasks/todo/ConstructionAccountPerRehab.md): a
+    workspace is read from Mercury at most once every 10 seconds, whoever asks;
+    in between, and during a back-off after a 429, its last snapshot answers.
+    `fresh=true` asks for a new read as soon as the pace allows.
     """
     try:
-        result = get_mercury_balance_bl(db)
+        result = get_mercury_balance_bl(db, fresh=fresh)
     except MercuryConfigError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except MercuryApiError as e:

@@ -4,6 +4,7 @@ import AnalyzeDeal from '../views/AnalyzeDeal.vue'
 import MyDeals from '../views/MyDeals.vue'
 import BoughtDeals from '../views/BoughtDeals.vue'
 import LiquidityTimeline from '../views/LiquidityTimeline.vue'
+import ConstructionAccounts from '../views/ConstructionAccounts.vue'
 import RepsTracker from '../views/RepsTracker.vue'
 import LoginView from '../views/LoginView.vue'
 import EnrollView from '../views/EnrollView.vue'
@@ -54,6 +55,11 @@ const router = createRouter({
       path: '/liquidity',
       name: 'liquidity',
       component: LiquidityTimeline
+    },
+    {
+      path: '/liquidity/construction-accounts',
+      name: 'construction-accounts',
+      component: ConstructionAccounts
     },
     {
       path: '/reps',

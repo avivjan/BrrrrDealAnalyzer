@@ -15,7 +15,9 @@
  * ResizeObserver repaint through the whole transition.
  */
 import { computed, onBeforeUnmount, onMounted, provide, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+
+import { useGoToKeyboardShortcuts } from "../../composables/useGoToKeyboardShortcuts";
 
 import { cn } from "../../design/cn";
 import AppMobileNav from "./AppMobileNav.vue";
@@ -23,6 +25,7 @@ import AppSettings from "./AppSettings.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppTopbar from "./AppTopbar.vue";
 import CommandPalette from "./CommandPalette.vue";
+import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp.vue";
 import { OPEN_COMMAND_PALETTE_INJECTION_KEY } from "./commandPaletteInjection";
 import { navItemForPath } from "./nav";
 
@@ -55,6 +58,11 @@ function setCollapsed(value: boolean) {
 }
 
 const route = useRoute();
+// `g` then a page's key (`g c` Construction accounts, …): navigation only, like the palette. `?` lists them all.
+const shortcutListOpen = ref(false);
+useGoToKeyboardShortcuts(useRouter(), () => {
+  shortcutListOpen.value = true;
+});
 const title = computed(() => navItemForPath(route.path)?.title ?? "BigWhales");
 
 function onKeydown(event: KeyboardEvent) {
@@ -109,6 +117,7 @@ const rootClass = computed(() =>
 
     <CommandPalette :open="paletteOpen" @close="paletteOpen = false" @open-settings="settingsOpen = true" />
     <AppSettings :open="settingsOpen" @close="settingsOpen = false" />
+    <KeyboardShortcutsHelp :open="shortcutListOpen" @close="shortcutListOpen = false" />
   </div>
 </template>
 

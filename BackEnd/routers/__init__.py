@@ -20,6 +20,8 @@ from routers.arv_estimate import router as arv_estimate
 from routers.public_inspection import router as public_inspection
 from routers.inspection import router as inspection
 from routers.liquidity_deals import router as liquidity_deals
+from routers.liquidity_construction_accounts import router as liquidity_construction_accounts
+from routers.mercury_webhooks import router as mercury_webhooks
 
 # Matches the top-to-bottom endpoint definition order in the pre-refactor
 # main.py.
@@ -41,4 +43,6 @@ ALL_ROUTERS = [
     public_inspection,  # public by link, self-protected (tasks/todo/PropertyInspection.md)
     inspection,  # list, delete and deal links: behind the normal gates
     liquidity_deals,  # a deal's Cash Needed rows in the liquidity timeline (tasks/todo/DealCashInLiquidity.md)
+    liquidity_construction_accounts,  # a rehab's own Mercury construction account (tasks/todo/ConstructionAccountPerRehab.md)
+    mercury_webhooks,  # Mercury's instant-update events: public, self-protected (tasks/todo/ConstructionAccountPerRehab.md)
 ]

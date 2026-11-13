@@ -325,13 +325,15 @@ export default {
     }
   },
 
-  async updateBoughtDeal(deal: BoughtDealRes): Promise<BoughtDealRes> {
+  /** `updatedAtTheFormWasLoadedWith`: the server refuses (409) a form loaded before the deal's last change. */
+  async updateBoughtDeal(deal: BoughtDealRes, updatedAtTheFormWasLoadedWith?: string | null): Promise<BoughtDealRes> {
     const type = deal.deal_type || 'BRRRR';
     const logPrefix = `[BoughtDeal:${type}]`;
     console.group(`API: updateBoughtDeal (${type})`);
     console.log(`${logPrefix} Request Payload:`, deal);
     try {
-      const response = await apiClient.put<BoughtDealRes>(`/bought-deals/${deal.id}`, deal);
+      const response = await apiClient.put<BoughtDealRes>(`/bought-deals/${deal.id}`, deal,
+        updatedAtTheFormWasLoadedWith ? { params: { updated_at_the_form_was_loaded_with: updatedAtTheFormWasLoadedWith } } : undefined);
       console.log(`${logPrefix} Response Status:`, response.status);
       console.log(`${logPrefix} Updated Deal:`, response.data);
       console.groupEnd();
