@@ -32,7 +32,8 @@ from BL.liquidity.common import mercury_reads
 from BL.liquidity.common.mercury_client import MercuryApiError, MercurySlowDownError
 from BL.liquidity.common.mercury_token_names import transfer_token_environment_variable_name, workspace_has_a_transfer_token
 from BL.liquidity.common.mercury_transfers import (
-    UNKNOWN_MERCURY_TRANSFER_STATUS, MercuryTransferNotAnsweredError, MercuryTransferTokenMissingError, send_internal_transfer,
+    UNKNOWN_MERCURY_TRANSFER_STATUS, MercuryTransferNotAnsweredError, MercuryTransferRefusedError, MercuryTransferTokenMissingError,
+    send_internal_transfer,
 )
 from BL.liquidity.constructionAccount import construction_accounts as construction_accounts_bl
 from BL.liquidity.constructionAccount.construction_account_rows import projection_of_linked_deal
@@ -127,7 +128,15 @@ def _ask_mercury(transfer: LiquidityConstructionAccountTransfer, deal_address: s
         transfer.transfer_outcome = TRANSFER_OUTCOME_MERCURY_DID_NOT_ANSWER
         transfer.mercury_transfer_status = UNKNOWN_MERCURY_TRANSFER_STATUS
         return
-    except (MercuryTransferTokenMissingError, MercurySlowDownError, MercuryApiError):
+    except MercuryTransferRefusedError as refusal:
+        transfer.transfer_outcome = TRANSFER_OUTCOME_REFUSED_BY_MERCURY
+        transfer.mercury_refusal_http_status = refusal.http_status
+        return
+    except MercurySlowDownError:
+        transfer.transfer_outcome = TRANSFER_OUTCOME_REFUSED_BY_MERCURY
+        transfer.mercury_refusal_http_status = 429
+        return
+    except (MercuryTransferTokenMissingError, MercuryApiError):
         transfer.transfer_outcome = TRANSFER_OUTCOME_REFUSED_BY_MERCURY
         return
     transfer.mercury_transfer_id = answer.mercury_transfer_id

@@ -9,7 +9,7 @@ payments and draws, and the per-transaction overrides below correct it by hand. 
 
 import uuid
 
-from sqlalchemy import Boolean, Column, Date, DateTime, JSON, Numeric, String, Uuid, func
+from sqlalchemy import Boolean, Column, Date, DateTime, Integer, JSON, Numeric, String, Uuid, func
 
 from db import Base
 
@@ -127,6 +127,8 @@ class LiquidityConstructionAccountTransfer(Base):
     transfer_outcome = Column(String(40), nullable=False)
     mercury_transfer_id = Column(String(80), nullable=True)
     mercury_transfer_status = Column(String(20), nullable=True)   # pending / sent / cancelled / failed / unknown
+    # Mercury refused it: the HTTP status it answered (401/403 the token, 400/422 the request, 429 slow down).
+    mercury_refusal_http_status = Column(Integer, nullable=True)
     requested_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     requested_by_user_id = Column(Uuid(as_uuid=True), nullable=True)
     # The bank transaction this transfer was matched to, once the feed shows it.

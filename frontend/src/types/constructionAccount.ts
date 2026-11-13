@@ -140,6 +140,8 @@ export interface ConstructionAccountTransfer {
   amount_dollars: number
   transfer_outcome: ConstructionAccountTransferOutcome
   mercury_transfer_status: string | null
+  /** Mercury refused it: the HTTP status it answered (401/403 the token, 400/422 the request, 429 slow down). */
+  mercury_refusal_http_status?: number | null
   requested_at: string
   is_in_the_bank_feed: boolean
 }

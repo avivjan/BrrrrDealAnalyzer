@@ -46,6 +46,15 @@ class MercuryTransferTokenMissingError(RuntimeError):
         self.transfer_token_environment_variable_name = transfer_token_environment_variable_name
 
 
+class MercuryTransferRefusedError(MercuryApiError):
+    """Mercury answered the transfer with an error status (4xx): nothing was sent. Carries the status code only, never
+    Mercury's text, so the owner can see why (a token's permissions or allowed IPs, the request, a slow-down)."""
+
+    def __init__(self, http_status: int):
+        super().__init__(f"HTTP {http_status}")
+        self.http_status = http_status
+
+
 class MercuryTransferNotAnsweredError(MercuryApiError):
     """The request left, but no usable answer came back: the transfer may or may not have been made."""
 
@@ -116,7 +125,11 @@ def send_internal_transfer(mercury_workspace_label: str, source_mercury_account_
         token.wipe()
     if response.status_code >= 500:
         raise MercuryTransferNotAnsweredError(f"HTTP {response.status_code}")
-    _raise_for_an_error_status(response)
+    if response.status_code == 429:
+        _raise_for_an_error_status(response)   # Mercury's slow-down, with its Retry-After
+    if not response.ok:
+        logger.warning("Mercury refused a transfer: HTTP %s", response.status_code)
+        raise MercuryTransferRefusedError(response.status_code)
     try:
         body = response.json()
     except ValueError:

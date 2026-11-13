@@ -394,7 +394,7 @@ function shortDateTime(iso: string | null): string {
             <span>
               {{ transfer.transfer_direction === 'deposit_into_construction_account' ? 'Deposit' : 'Steal' }}
               <span class="ml-1 text-xs text-fg-muted">{{ shortDateTime(transfer.requested_at) }}</span>
-              <UiBadge :tone="TRANSFER_OUTCOME_TONES[transfer.transfer_outcome]" class="ml-1">{{ TRANSFER_OUTCOME_LABELS[transfer.transfer_outcome] }}</UiBadge>
+              <UiBadge :tone="TRANSFER_OUTCOME_TONES[transfer.transfer_outcome]" class="ml-1">{{ TRANSFER_OUTCOME_LABELS[transfer.transfer_outcome] }}<template v-if="transfer.mercury_refusal_http_status"> ({{ transfer.mercury_refusal_http_status }})</template></UiBadge>
               <span v-if="transfer.transfer_outcome === 'accepted_by_mercury'" class="ml-1 text-xs text-fg-muted">
                 {{ transfer.is_in_the_bank_feed ? 'in the bank feed' : 'not in the bank feed yet' }}
               </span>

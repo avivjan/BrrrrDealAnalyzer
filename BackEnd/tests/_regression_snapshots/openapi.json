@@ -9379,6 +9379,18 @@
             "title": "Is In The Bank Feed",
             "type": "boolean"
           },
+          "mercury_refusal_http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mercury refused it: the HTTP status it answered (401/403 the token, 400/422 the request, 429 slow down).",
+            "title": "Mercury Refusal Http Status"
+          },
           "mercury_transfer_status": {
             "anyOf": [
               {
