@@ -53,7 +53,7 @@ describe("DealImpactView", () => {
   afterEach(() => vi.useRealTimers());
 
   it("leads with the verdict when the deal goes negative, and the primary says Import anyway", async () => {
-    const { wrapper } = await mountView(preview([change({}), change({ item_key: "stolen_money", description: "Stolen money", date_after: "2027-01-05", amount_dollars_after: 10_000 })]));
+    const { wrapper } = await mountView(preview([change({}), change({ item_key: "construction_account_balance_returned_at_rehab_end", description: "Construction account balance returned at rehab end (cushion + draw spread)", date_after: "2027-01-05", amount_dollars_after: 10_000 })]));
     const verdict = wrapper.get('[data-testid="deal-impact.verdict"]');
     expect(verdict.attributes("data-risk-level")).toBe("goes_negative");
     expect(verdict.get('[data-testid="deal-impact.verdict.headline"]').text()).toBe(

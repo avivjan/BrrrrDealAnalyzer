@@ -554,12 +554,13 @@ class TestBreakdownExplanationsFromPr83ReachThePdf:
 
 
 class TestTheCashNeededSectionCarriesItsSchedule:
-    def test_the_schedule_rows_with_the_cushion(self, client, brrrr_payload):
+    def test_the_schedule_rows_with_the_construction_account_deposit_and_return(self, client, brrrr_payload):
         response = client.post("/reports/brrr-pdf", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]})
         text = _pdf_text(response.content)
         assert "CASH SCHEDULE (LOWEST ARV)" in text
         assert "Jan 3, 2026 Earnest money deposit -$5,000" in text
-        assert "Rehab cushion (a hold: mark it done when you no longer need it) -$5,000" in text
+        assert "Deposit into the construction account (rehab cushion) -$5,000" in text
+        assert "Construction account balance returned at rehab end (cushion) $5,000" in text
         assert "Must stay in the account" not in text
         # The deal's key dates are uppercase markers among the rows, each first on its day.
         assert "Jan 10, 2026 PURCHASE CLOSING" in text

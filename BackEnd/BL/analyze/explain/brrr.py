@@ -663,9 +663,10 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
     breakdown.add("roi", "ROI", results.roi, roi_formula, unit="pct")
 
     # -- cash needed -----------------------------------------------------------
-    # The dated schedule (Lowest ARV): every dollar of Cash Needed on the day it moves, the cushion included.
+    # The dated schedule (Lowest ARV): every dollar of Cash Needed on the day it moves. The rehab cushion goes into the
+    # construction account at the closing and comes back from it at the rehab end, so the rows net it out.
     schedule = results.cash_needed_schedule_at_lowest_arv
-    check(-sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")) == results.total_cash_needed,
+    check(-sum((row.signed_amount_dollars for row in schedule.dated_cash_rows), Decimal("0")) == results.total_cash_needed - payload.rehab_cushion,
           "cash needed schedule adds up")
     check(all(row.signed_amount_dollars >= 0 or row.date <= results.refi_closing_date for row in schedule.dated_cash_rows),
           "no money out after the refi")
@@ -673,7 +674,8 @@ def explain_brrr(payload, results: BrrrResultsWithIntermediates) -> dict[str, li
           "schedule rows are whole cents")
     check(list(schedule.deal_milestones) == sorted(schedule.deal_milestones, key=lambda milestone: milestone.date),
           "schedule milestones in date order")
-    schedule_note = (f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows, the rehab cushion one of them, "
+    schedule_note = (f" Dated schedule (Lowest ARV): {len(schedule.dated_cash_rows)} cash rows; the rehab cushion goes into the "
+                     f"construction account at the closing and comes back from it at the rehab end, "
                      f"with the deal's {len(schedule.deal_milestones)} key dates (closing, rehab completed, refi...) shown among them.")
     breakdown.add_sum(CASH_NEEDED, "Cash Needed", results.total_cash_needed, [
         ("Total Cash Invested", results.total_cash_invested),

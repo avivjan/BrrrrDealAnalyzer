@@ -18,7 +18,7 @@ const CHANGES = [
   change({}),
   change({ change_kind: "updated", item_key: "cash_to_close_buy", transaction_id: "txn-close", description: "Cash to close",
     date_before: "2026-01-10", date_after: "2026-01-12", amount_dollars_before: -50000, amount_dollars_after: -50100 }),
-  change({ change_kind: "updated", item_key: "rehab_cushion", transaction_id: "txn-cushion", description: "Rehab cushion",
+  change({ change_kind: "updated", item_key: "construction_account_deposit", transaction_id: "txn-cushion", description: "Deposit into the construction account (rehab cushion)",
     date_before: "2026-01-10", date_after: "2026-01-12", amount_dollars_before: -1800, amount_dollars_after: -1800,
     deal_amount_dollars_not_applied_because_you_changed_it: -2100 }),
   change({ change_kind: "added", item_key: "hml_interest_paid_monthly", occurrence_number: 7, transaction_id: null, description: "HML interest",

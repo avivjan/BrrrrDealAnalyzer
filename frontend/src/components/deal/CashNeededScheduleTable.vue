@@ -4,9 +4,10 @@
  * breakdown in `CalculationBreakdownPopup`, as the HTML report and the PDF show it
  * (`BackEnd/BL/reports/common/cash_needed_schedule_report.py`).
  *
- * One row per cash item in date order (money in reads in the positive colour), the rehab
- * cushion among them: a hold on the purchase closing date, postponed in the liquidity timeline
- * until it is marked done. It computes nothing: the amounts are the engine's, exact to the cent;
+ * One row per cash item in date order (money in reads in the positive colour), the construction
+ * account's two rows among them: the deposit into it on the purchase closing date (the rehab
+ * cushion, plus any rehab beyond the budget) and what it gives back on the rehab completion.
+ * It computes nothing: the amounts are the engine's, exact to the cent;
  * there is no running balance.
  *
  * The deal's key dates (contract signed, purchase closing, rehab completed, tenant moves in, the

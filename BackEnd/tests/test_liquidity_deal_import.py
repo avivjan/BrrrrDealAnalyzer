@@ -47,7 +47,9 @@ class TestImportPreviewAndImport:
         schedule_rows = deal["cash_needed_schedule_at_lowest_arv"]["dated_cash_rows"]
         assert preview["change_counts"]["added"] == len(schedule_rows) > 0
         assert preview["deal_address"] == "1 Shared Form St"
-        assert sum(Decimal(str(change["amount_dollars_after"])) for change in preview["changes"]) == -Decimal(str(deal["total_cash_needed_for_deal"]))
+        # The rehab cushion goes into the construction account and comes back, so the rows net it out of Cash Needed.
+        assert (sum(Decimal(str(change["amount_dollars_after"])) for change in preview["changes"])
+                == -(Decimal(str(deal["total_cash_needed_for_deal"])) - Decimal(str(brrrr_payload["rehabCushion"]))))
         assert client.get("/liquidity/transactions").json() == []
 
     def test_import_creates_one_tagged_row_per_schedule_row(self, client, brrrr_payload):
@@ -60,9 +62,11 @@ class TestImportPreviewAndImport:
         milestone_descriptions = {milestone["description"] for milestone in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]}
         assert not milestone_descriptions & {row["description"] for row in rows}
         assert {row["source_deal_board"] for row in rows} == {"my_deals"}
-        cushion = _row(rows, "rehab_cushion")
-        assert (cushion["effective_date"], cushion["amount_dollars"]) == ("2026-01-10", -5000.0)
-        assert cushion["originally_planned_date"] == "2026-01-10" and cushion["done_at"] is None
+        deposit = _row(rows, "construction_account_deposit")
+        assert (deposit["effective_date"], deposit["amount_dollars"]) == ("2026-01-10", -5000.0)
+        assert deposit["originally_planned_date"] == "2026-01-10" and deposit["done_at"] is None
+        returned = _row(rows, "construction_account_balance_returned_at_rehab_end")
+        assert (returned["effective_date"], returned["amount_dollars"]) == ("2026-02-24", 5000.0)
         assert _row(rows, "appliances")["effective_date"] == "2026-02-24"
 
     def test_importing_twice_changes_nothing(self, client, brrrr_payload):
@@ -105,15 +109,15 @@ class TestResyncKeepsYourChangesPerField:
     def test_an_edited_amount_is_kept_and_use_the_deals_value_takes_it_back(self, client, brrrr_payload):
         deal = _create_my_deals_deal(client, brrrr_payload)
         _import(client, deal["id"])
-        cushion = _row(_deal_rows(client, deal["id"]), "rehab_cushion")
-        client.put(f"/liquidity/transactions/{cushion['id']}", json={"amount_dollars": -1800})
+        deposit = _row(_deal_rows(client, deal["id"]), "construction_account_deposit")
+        client.put(f"/liquidity/transactions/{deposit['id']}", json={"amount_dollars": -1800})
         client.put(f"/active-deals/{deal['id']}", json={**brrrr_payload, "rehabCushion": 2100})
 
-        kept = _change(_preview(client, deal["id"]).json(), "rehab_cushion")
+        kept = _change(_preview(client, deal["id"]).json(), "construction_account_deposit")
         assert kept["amount_dollars_after"] == -1800 and kept["deal_amount_dollars_not_applied_because_you_changed_it"] == -2100
 
-        _import(client, deal["id"], use_deal_value_for=[{"transaction_id": cushion["id"], "field": "amount"}])
-        taken = _row(_deal_rows(client, deal["id"]), "rehab_cushion")
+        _import(client, deal["id"], use_deal_value_for=[{"transaction_id": deposit["id"], "field": "amount"}])
+        taken = _row(_deal_rows(client, deal["id"]), "construction_account_deposit")
         assert (taken["amount_dollars"], taken["user_overrode_amount"]) == (-2100, False)
 
     def test_a_done_row_is_never_touched(self, client, brrrr_payload):
@@ -150,7 +154,7 @@ class TestADealSaveFlagsTheRowsOutOfDate:
         assert self._flag(client, deal["id"]) is False
         client.put(f"/active-deals/{deal['id']}", json={**brrrr_payload, "rehabCushion": 7000})
         assert self._flag(client, deal["id"]) is True
-        assert _row(_deal_rows(client, deal["id"]), "rehab_cushion")["amount_dollars"] == -5000   # never silently
+        assert _row(_deal_rows(client, deal["id"]), "construction_account_deposit")["amount_dollars"] == -5000   # never silently
         _import(client, deal["id"])
         assert self._flag(client, deal["id"]) is False
 

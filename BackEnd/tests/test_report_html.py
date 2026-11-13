@@ -299,16 +299,17 @@ class TestHtmlReportEndpoints:
 
 
 class TestTheCashNeededCardCarriesItsSchedule:
-    """The Cash Needed card shows the dated schedule (Lowest ARV), one row per cash item, the rehab cushion among them."""
+    """The Cash Needed card shows the dated schedule (Lowest ARV), one row per cash item, the construction account's deposit and return among them."""
 
-    def test_the_schedule_rows_with_the_cushion(self, client, brrrr_payload):
+    def test_the_schedule_rows_with_the_construction_account_deposit_and_return(self, client, brrrr_payload):
         body = client.post("/analyze/brrr", json=brrrr_payload).json()
         html = client.post("/reports/brrr-html", json=brrrr_payload, params={"selected_result_keys": ["total_cash_needed_for_deal"]}).text
         schedule = body["cash_needed_schedule_at_lowest_arv"]
         assert "Cash schedule (Lowest ARV)" in html and "Must stay in the account" not in html
         assert html.count('<tr class="out">') + html.count('<tr class="in">') == len(schedule["dated_cash_rows"])
         assert "Jan 3, 2026" in html and "Earnest money deposit" in html and "-$5,000" in html
-        assert "Rehab cushion (a hold: mark it done when you no longer need it)" in html
+        assert "Deposit into the construction account (rehab cushion)" in html
+        assert "Construction account balance returned at rehab end (cushion)" in html
 
     def test_the_deals_key_dates_sit_among_the_rows_as_markers(self, client, brrrr_payload):
         body = client.post("/analyze/brrr", json=brrrr_payload).json()

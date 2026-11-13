@@ -28,6 +28,9 @@ from migrations.steps.liquidity_amounts_in_dollars import convert_liquidity_amou
 from migrations.steps.brrr_contract_date_and_required_buy_closing_date import require_brrr_contract_date_and_buy_closing_date
 from migrations.steps.member_loan_append_only_triggers import add_member_loan_append_only_triggers
 from migrations.steps.inspection_link_to_active_deals import add_inspection_links_to_active_deals
+from migrations.steps.construction_account_rows_replace_cushion_and_stolen_money import (
+    flag_deals_with_cushion_or_stolen_money_rows_as_liquidity_out_of_date,
+)
 
 
 # Arbitrary but fixed key identifying "this app's schema migration".
@@ -228,3 +231,7 @@ def _run_migrations_locked(engine):
 
     # An inspection may link to a My Deals deal too (tasks/todo/InspectionLinkToMyDeals.md).
     add_inspection_links_to_active_deals(engine, sa_inspect(engine))
+
+    # The schedule's `rehab_cushion` and `stolen_money` rows became the construction account's deposit and return rows
+    # (tasks/todo/ConstructionAccountPerRehab.md): deals that still have a legacy row show Re-sync. Flags each deal once.
+    flag_deals_with_cushion_or_stolen_money_rows_as_liquidity_out_of_date(engine, sa_inspect(engine))
