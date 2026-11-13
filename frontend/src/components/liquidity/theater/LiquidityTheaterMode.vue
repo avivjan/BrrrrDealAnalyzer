@@ -17,6 +17,7 @@
  * Only `opacity` animates on this root and the chart's ancestors: the chart re-measures from a ResizeObserver.
  * The legend, the sheet and the popovers move with `transform` beside it.
  */
+import { dealLifespansOf } from '../../../utils/dealLifespans'
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { OPEN_COMMAND_PALETTE_INJECTION_KEY } from '../../shell/commandPaletteInjection'
@@ -184,6 +185,8 @@ watch(() => props.linkFocus, async (focus) => {
 
 // --- figures --------------------------------------------------------------------------------------------------
 const todayIsoDate = todayISO()
+/** Each deal in progress, contract to refi, under the balance line (Step G). */
+const dealLifespans = computed(() => dealLifespansOf(store.importedDeals, todayIsoDate))
 const lowestBalanceInNext90Days = computed(() => lowestBalanceInNextDays(store.series, todayIsoDate, 90))
 const nextMoneyOut = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_out'))
 const nextMoneyIn = computed(() => nextOpenTransaction(store.transactions, todayIsoDate, 'money_in'))
@@ -546,6 +549,7 @@ const SHORTCUTS = [
               :reserve-dollars="store.settings.reserve_dollars"
               :tooltip-follows-pointer="true"
               :highlighted-deal-key="highlightedDealKey"
+              :deal-lifespans="dealLifespans"
               @open-day="onOpenDay"
             />
             <div

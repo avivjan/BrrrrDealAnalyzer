@@ -210,4 +210,21 @@ describe("TimelineChart in theater mode", () => {
       wrapper.unmount();
     });
   });
+
+  it("draws one lifespan line per deal in its own lane, in the deal's colour, still (ConstructionAccountPerRehab, Step G)", async () => {
+    const wrapper = mountChart({
+      dealLifespans: [
+        { dealKey: "my_deals:d1", startDate: "2026-10-05", endDate: "2026-11-20", refiIsLate: false, laneIndex: 0 },
+        { dealKey: "my_deals:other", startDate: "2026-10-10", endDate: "2026-11-25", refiIsLate: true, laneIndex: 1 },
+      ],
+    }, true);
+    await wrapper.vm.$nextTick();
+    const lines = wrapper.findAll('[data-part="deal-lifespan"]');
+    expect(lines.map((line) => line.attributes("data-deal-key"))).toEqual(["my_deals:d1", "my_deals:other"]);
+    const ys = lines.map((line) => line.get("line").attributes("y1"));
+    expect(new Set(ys).size).toBe(2);
+    expect(lines[1]!.get("line").attributes("stroke-dasharray")).toBe("4 3");
+    expect(wrapper.find('[data-part="deal-lifespans"]').attributes("class") ?? "").not.toContain("animate");
+    wrapper.unmount();
+  });
 });

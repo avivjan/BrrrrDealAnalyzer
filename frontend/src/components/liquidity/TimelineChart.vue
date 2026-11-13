@@ -36,6 +36,7 @@
 import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 
 import { dealAccentStyleForTransaction, useInjectedDealAttributionLookup, type DealAttribution } from '../../composables/useLiquidityDealAttribution'
+import type { DealLifespan } from '../../utils/dealLifespans'
 import { chartToken } from '../../design/chartTokens'
 import { themeEpoch } from '../../design/theme'
 import type { DayBucket } from '../../types/liquidity'
@@ -86,6 +87,8 @@ const props = defineProps<{
   tooltipFollowsPointer?: boolean
   /** A deal to bring forward: every other deal's dots are dimmed. */
   highlightedDealKey?: string | null
+  /** Each deal in progress, contract to refi: one thin line per deal above the deal dots (one lane each). */
+  dealLifespans?: DealLifespan[]
 }>()
 
 const emit = defineEmits<{
@@ -238,6 +241,39 @@ interface DayShape {
 }
 
 const DEAL_DOT_SPACING = 7
+
+// --- Deal lifespans (tasks/todo/ConstructionAccountPerRehab.md, Step G) ---------------------------------------
+const LIFESPAN_LOWEST_LANE_OFFSET = 16   // above the deal dots
+const LIFESPAN_LANE_HEIGHT = 6
+const lifespanLines = computed(() => {
+  const days = props.days
+  if (!days.length || !props.dealLifespans?.length) return []
+  const firstDate = days[0]!.date
+  const lastDate = days[days.length - 1]!.date
+  const indexOfDate = new Map(days.map((day, index) => [day.date, index]))
+  const indexOnOrBefore = (isoDate: string) => {
+    if (isoDate <= firstDate) return 0
+    if (isoDate >= lastDate) return days.length - 1
+    let index = indexOfDate.get(isoDate)
+    if (index !== undefined) return index
+    index = days.findIndex(day => day.date > isoDate)
+    return Math.max(0, index - 1)
+  }
+  return props.dealLifespans
+    .filter(lifespan => lifespan.endDate >= firstDate && lifespan.startDate <= lastDate)
+    .map((lifespan) => {
+      const attribution = dealAttributionLookup?.value.attributionForDealKey(lifespan.dealKey) ?? null
+      const x1 = Math.max(PAD_LEFT, x(indexOnOrBefore(lifespan.startDate)))
+      const x2 = Math.max(PAD_LEFT, x(indexOnOrBefore(lifespan.endDate)))
+      return {
+        dealKey: lifespan.dealKey, x1, x2, refiIsLate: lifespan.refiIsLate,
+        y: plotBottom.value - LIFESPAN_LOWEST_LANE_OFFSET - lifespan.laneIndex * LIFESPAN_LANE_HEIGHT,
+        colorHex: attribution?.dealColorHex ?? C.value.axisText,
+        label: attribution?.shortDealAddress ?? '',
+      }
+    })
+    .filter(line => line.x2 > PAD_LEFT && line.x1 < width.value)
+})
 
 /** The distinct deals of a day's rows, in row order. */
 function dealsOfDay(day: DayBucket): DealAttribution[] {
@@ -732,6 +768,16 @@ defineExpose({ centerOnToday, centerOnDate })
               class="transition-opacity duration-fast ease-standard"
             />
           </template>
+        </g>
+
+        <!-- Deal lifespans: contract to refi, one lane per deal; drawn still (no animation) -->
+        <g v-if="lifespanLines.length" data-part="deal-lifespans" aria-hidden="true">
+          <g v-for="line in lifespanLines" :key="line.dealKey" data-part="deal-lifespan" :data-deal-key="line.dealKey"
+             :opacity="highlightedDealKey && highlightedDealKey !== line.dealKey ? 0.25 : 1">
+            <line :x1="line.x1" :x2="line.x2" :y1="line.y" :y2="line.y" :stroke="line.colorHex" stroke-width="2" stroke-linecap="round"
+                  :stroke-dasharray="line.refiIsLate ? '4 3' : undefined" />
+            <text v-if="line.label && line.x2 - line.x1 > 60" :x="line.x1 + 4" :y="line.y - 2" font-size="8" font-weight="600" :fill="line.colorHex">{{ line.label }}</text>
+          </g>
         </g>
 
         <!-- Crosshair + y badge for the active day -->

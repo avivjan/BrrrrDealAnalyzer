@@ -291,6 +291,8 @@ export interface DealCashRowChanges {
   milestone_date_changes: DealMilestoneDateChange[]
   /** An import preview / import: the deal's key dates as its Cash Needed table shows them. */
   key_dates?: DealKeyDate[]
+  /** An import preview / import: the refi's cash-out wire at the lowest ARV (≤ 0 = brings nothing back). */
+  cash_out_wire_at_lowest_arv_dollars?: number | null
 }
 
 export interface DealMilestoneState {

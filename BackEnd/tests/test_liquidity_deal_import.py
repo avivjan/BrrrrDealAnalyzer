@@ -352,3 +352,12 @@ def test_the_import_preview_carries_the_deals_key_dates(client, brrrr_payload):
     schedule_markers = [(marker["milestone_key"], marker["date"]) for marker in deal["cash_needed_schedule_at_lowest_arv"]["deal_milestones"]]
     assert [(key_date["key"], key_date["date"]) for key_date in preview["key_dates"]] == schedule_markers
     assert ("property_tax_bill_paid_on_november_30", "2026-11-30") in schedule_markers
+
+
+def test_the_import_preview_carries_the_cash_out_wire_at_the_lowest_arv(client, brrrr_payload):
+    """The preview chart's default range follows it (tasks/todo/ConstructionAccountPerRehab.md, Step G)."""
+    deal = _create_my_deals_deal(client, brrrr_payload)
+    analysis = client.post("/analyze/brrr", json=brrrr_payload).json()
+    preview = _preview(client, deal["id"]).json()
+    assert preview["cash_out_wire_at_lowest_arv_dollars"] == pytest.approx(analysis["cash_out_routi_conservative"], abs=0.01)
+    assert _import(client, deal["id"]).json()["cash_out_wire_at_lowest_arv_dollars"] == preview["cash_out_wire_at_lowest_arv_dollars"]

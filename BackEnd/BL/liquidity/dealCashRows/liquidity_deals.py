@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
+from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
 from BL.liquidity.dealCashRows.deal_cash_rows import (
     CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY, DEAL_BOARD_BOUGHT, DEAL_BOARD_MY_DEALS, DEAL_MODEL_BY_BOARD, DealBoard, DealCashRowChange,
     apply_deal_cash_row_changes, deal_as_attributes, diff_deal_cash_rows, imported_rows_of_deal, key_dates_of_deal,
@@ -96,7 +97,8 @@ def _change_to_res(change: DealCashRowChange) -> DealCashRowChangeRes:
 
 def _changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange],
                  milestone_date_changes: Optional[list[DealMilestoneDateChangeRes]] = None,
-                 key_dates: Optional[list[DealKeyDateRes]] = None) -> DealCashRowChangesRes:
+                 key_dates: Optional[list[DealKeyDateRes]] = None,
+                 cash_out_wire_at_lowest_arv_dollars: Optional[float] = None) -> DealCashRowChangesRes:
     def count_of(change_kind: str) -> int:
         return sum(1 for change in changes if change.change_kind == change_kind)
     return DealCashRowChangesRes(
@@ -111,6 +113,7 @@ def _changes_res(deal_board: DealBoard, deal, changes: list[DealCashRowChange],
         ),
         milestone_date_changes=milestone_date_changes or [],
         key_dates=key_dates or [],
+        cash_out_wire_at_lowest_arv_dollars=cash_out_wire_at_lowest_arv_dollars,
     )
 
 
@@ -152,7 +155,8 @@ def preview_deal_import(db: Session, deal_board: DealBoard, deal_id: str, use_de
     planned_rows = planned_cash_rows_of_deal_in_liquidity(db, deal_board, deal, today_for_liquidity(db, today))
     changes = diff_deal_cash_rows(planned_rows, imported_rows_of_deal(db, deal_board, deal.id), _use_deal_value_for_pairs(use_deal_value_for))
     # The key dates are the preview chart's flags (contract, closing, rehab, the Nov 30 bill, refi).
-    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
+    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal),
+                        cash_out_wire_at_lowest_arv_dollars=_cash_out_wire_at_lowest_arv_dollars(deal))
 
 
 def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value_for: list[UseDealValueForField],
@@ -165,7 +169,8 @@ def import_deal(db: Session, deal_board: DealBoard, deal_id: str, use_deal_value
     carry_a_done_legacy_cushion_over_to_the_deposit_row(db, deal_board, deal.id, changes)
     deal.liquidity_rows_out_of_date = False
     db.commit()
-    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal))
+    return _changes_res(deal_board, deal, changes, key_dates=_key_dates_res(deal),
+                        cash_out_wire_at_lowest_arv_dollars=_cash_out_wire_at_lowest_arv_dollars(deal))
 
 
 # --- Milestones ---------------------------------------------------------------------------------------------------
@@ -251,6 +256,15 @@ _KEY_DATE_DESCRIPTION_OF_MILESTONE = {
     "contract_signed": "Contract signed", "purchase_closed": "Purchase closing", "rehab_completed": "Rehab completed",
     "tenant_moved_in": "Tenant moves in", "refi_closed": "Refi closing",
 }
+
+
+def _cash_out_wire_at_lowest_arv_dollars(deal) -> Optional[float]:
+    """The refi's cash-out at the lowest ARV (the "Cash-Out Routi (Lowest ARV)" result); None when the deal cannot be
+    analyzed right now."""
+    try:
+        return float(compute_brrr_with_intermediates(deal).cash_out_routi_conservative)
+    except Exception:   # an invalid saved deal still previews its rows
+        return None
 
 
 def _key_dates_res(deal) -> list[DealKeyDateRes]:

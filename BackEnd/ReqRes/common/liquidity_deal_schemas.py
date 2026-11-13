@@ -93,6 +93,9 @@ class DealCashRowChangesRes(BaseModel):
         "A milestone change only: every milestone whose date moves (moving the purchase closing moves the later ones)."))
     key_dates: list["DealKeyDateRes"] = Field(default_factory=list, description=(
         "An import preview / import only: the deal's key dates as its Cash Needed table shows them, in date order."))
+    cash_out_wire_at_lowest_arv_dollars: Optional[float] = Field(None, description=(
+        "An import preview / import only: the refi's cash-out wire if the appraisal comes in at the lowest ARV (negative = "
+        "cash brought to the table). The preview chart opens on 'Until last deal ends' when it is 0 or below."))
 
 
 class DealMilestoneRes(BaseModel):

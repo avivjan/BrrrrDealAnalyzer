@@ -66,16 +66,22 @@ const stolenLabel = computed(() =>
 <template>
   <LifecycleSection title="Rehab" icon="pi-wrench" :surface="surface">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <MoneyInput
-        data-testid="form.field.rehabCost"
-        :error-message="fieldErrorMessages?.rehabCost"
-        :model-value="field.get('rehabCost')"
-        @update:model-value="setActualRehabCost"
-        label="Actual Rehab Cost"
-        :inThousands="true"
-        :needed-to-run-analysis="true"
-        :info="impactText('rehabCost')"
-      />
+      <div class="space-y-1">
+        <MoneyInput
+          data-testid="form.field.rehabCost"
+          :error-message="fieldErrorMessages?.rehabCost"
+          :model-value="field.get('rehabCost')"
+          @update:model-value="setActualRehabCost"
+          label="Actual Rehab Cost"
+          :inThousands="true"
+          :needed-to-run-analysis="true"
+          :info="impactText('rehabCost')"
+        />
+        <!-- The line most often missed in a rehab estimate (tasks/todo/ConstructionAccountPerRehab.md, Step G). -->
+        <p data-testid="form.hint.rehabCost.flooring" class="text-xs text-fg-muted">
+          <i class="pi pi-info-circle mr-1 text-[10px]" aria-hidden="true"></i>Did you include flooring? Double-check the square footage and the labor.
+        </p>
+      </div>
       <MoneyInput
         data-testid="form.field.constructionLoanBudget"
         :error-message="fieldErrorMessages?.constructionLoanBudget"

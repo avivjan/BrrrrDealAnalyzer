@@ -18,6 +18,7 @@ import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import DealCashRowChangesList from '../DealCashRowChangesList.vue'
 import { assignDealColorSlotByDealKey, dealColorHexForSlot, dealKeyOf } from '../dealColors'
 import DealImpactChart, { type DealRowOnADay } from './DealImpactChart.vue'
+import { defaultDealImpactRange, lastDealEndDate } from './dealImpactGeometry'
 
 import { dealOnTheLiquidityTimeline } from '../../../navigation/appLinks'
 import { useLiquidityTimelineChangePromptStore } from '../../../stores/liquidityTimelineChangePromptStore'
@@ -40,6 +41,19 @@ const loadingPreview = ref(true)
 const importing = ref(false)
 const errorMessage = ref<string | null>(null)
 const todayIsoDate = todayISO()
+
+/** "Until last deal ends": the latest refi among the deals still in progress in the timeline and this one. */
+const endOfTheLastDeal = computed(() => {
+  const refiOfEachDealInProgress = liquidityStore.importedDeals
+    .filter(deal => !(deal.deal_board === props.dealBoard && deal.deal_id === props.dealId))
+    .map(deal => deal.milestones.find(milestone => milestone.milestone === 'refi_closed'))
+    .filter(refi => refi && !refi.approved_at)
+    .map(refi => refi!.planned_date)
+  const refiOfThisDeal = preview.value?.key_dates?.find(keyDate => keyDate.key === 'refi_closed')?.date ?? null
+  return lastDealEndDate([...refiOfEachDealInProgress, refiOfThisDeal], todayIsoDate)
+})
+/** The chart opens on "Until last deal ends" when the refi at the lowest ARV brings nothing back. */
+const chartOpensOnRange = computed(() => defaultDealImpactRange(preview.value?.cash_out_wire_at_lowest_arv_dollars))
 
 async function loadPreview() {
   loadingPreview.value = true
@@ -260,6 +274,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown, { capture
                   :lowest-after="decision.lowestAfter"
                   :back-above-reserve-date="decision.backAboveReserveAfterTheRefi?.date ?? null"
                   :refi-date="decision.refi?.date ?? null"
+                  :last-deal-end-date="endOfTheLastDeal"
+                  :initial-range="chartOpensOnRange"
                   :key-dates="preview.key_dates ?? []"
                   :deal-rows-by-date="dealRowsByDate"
                 />

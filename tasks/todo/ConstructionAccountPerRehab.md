@@ -403,7 +403,8 @@ Each page reads its query once, acts, then clears it with `router.replace` (as `
 - Step F notes: the receiver is `routers/mercury_webhooks.py` (public, not in the OpenAPI schema, never MCP). A webhook or a transfer asks for a fresh read without blanking the stored snapshot (`ask_for_a_fresh_read_of_workspace`). What an event changed on the timeline is kept on the workspace row and answered by `last-change`, so the 5-second check opens "Timeline updated from the bank" (the Step D leftover, done). Tests: pytest `test_mercury_instant_updates.py`; Vitest in `useLiveMercuryRefresh.test.ts`.
 
 ### Step G — Timeline and preview (6 h)
-- [ ] Deal lifespans (2.5 h), the "Until last deal ends" range and its default (2 h), the backend field for it (1 h), the flooring hint (0.5 h) — as in the previous revision.
+- [x] Deal lifespans (2.5 h), the "Until last deal ends" range and its default (2 h), the backend field for it (1 h), the flooring hint (0.5 h) — as in the previous revision.
+- Step G notes: `utils/dealLifespans.ts` (one lane per deal in progress, contract to refi, a late refi dashed through today) drawn by `TimelineChart.vue` above the deal dots, still; `dealImpactGeometry.ts` gains `until_last_deal_ends`, `lastDealEndDate` and `defaultDealImpactRange`, fed by the backend's `cash_out_wire_at_lowest_arv_dollars` on the import preview; the flooring hint under "Actual Rehab Cost" (`form.hint.rehabCost.flooring`).
 
 ### Step H — Browser tests (5 h)
 - [ ] `frontend/e2e/backend/fake_mercury.py`, installed by `serve_throwaway.py`, off by default, driven through test-only routes (set any account's balance, add a transaction, count the calls made to it); it also plays the transfer call and can send a signed webhook. The call counter lets a test prove a webhook made exactly one read.
