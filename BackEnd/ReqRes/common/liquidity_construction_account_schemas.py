@@ -107,6 +107,8 @@ class ConstructionAccountTransferRes(BaseModel):
     transfer_outcome: Literal["being_sent", "accepted_by_mercury", "refused_by_mercury", "mercury_did_not_answer",
                               "failed_or_cancelled_at_mercury"]
     mercury_transfer_status: Optional[str] = Field(None, description="pending / sent / cancelled / failed / unknown, as Mercury said.")
+    mercury_refusal_http_status: Optional[int] = Field(
+        None, description="Mercury refused it: the HTTP status it answered (401/403 the token, 400/422 the request, 429 slow down).")
     requested_at: datetime
     is_in_the_bank_feed: bool = Field(..., description="The bank feed shows it (it then counts from the feed, once).")
 

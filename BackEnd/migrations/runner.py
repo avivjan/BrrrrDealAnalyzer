@@ -163,6 +163,9 @@ def _run_migrations_locked(engine):
     ):
         if "liquidity_settings" in table_names:
             add_column_if_missing(engine, sa_inspect(engine), "liquidity_settings", column_name, column_ddl, None)
+    # Why Mercury refused an in-app transfer: its HTTP status (tasks/todo/MercuryTransferRefusalReason.md).
+    if "liquidity_construction_account_transfers" in table_names:
+        add_column_if_missing(engine, sa_inspect(engine), "liquidity_construction_account_transfers", "mercury_refusal_http_status", "INTEGER", None)
     # What the last instant update (a Mercury webhook) changed, for the open pages (ConstructionAccountPerRehab, Step F).
     if "liquidity_mercury_workspace_reads" in table_names:
         for column_name, column_ddl in (("last_instant_update_at", "TIMESTAMP WITH TIME ZONE"),

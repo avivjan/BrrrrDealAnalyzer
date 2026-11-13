@@ -130,7 +130,21 @@ const OUTCOME_MESSAGES: Record<ConstructionAccountTransfer['transfer_outcome'], 
   mercury_did_not_answer: 'Mercury did not answer. The transfer may have been made: check Mercury before trying again.',
   failed_or_cancelled_at_mercury: 'Mercury says the transfer failed or was cancelled. Nothing moved.',
 }
-const outcomeMessage = computed(() => sentTransfer.value ? OUTCOME_MESSAGES[sentTransfer.value.transfer_outcome] : null)
+/** Why Mercury refused, from the HTTP status it answered (never Mercury's own text). */
+function refusalHintOf(httpStatus: number | null | undefined): string {
+  if (httpStatus === 401 || httpStatus === 403) {
+    return ` Mercury answered ${httpStatus}: the transfer token is not allowed. In Mercury → Settings → API → Tokens, check that it can make transfers and that its allowed IPs include the server's.`
+  }
+  if (httpStatus === 400 || httpStatus === 422) return ` Mercury answered ${httpStatus}: it did not accept the request.`
+  if (httpStatus === 429) return ' Mercury answered 429: it asked to slow down. Try again in a few minutes.'
+  return httpStatus ? ` Mercury answered ${httpStatus}.` : ''
+}
+const outcomeMessage = computed(() => {
+  const transfer = sentTransfer.value
+  if (!transfer) return null
+  const message = OUTCOME_MESSAGES[transfer.transfer_outcome]
+  return transfer.transfer_outcome === 'refused_by_mercury' ? message + refusalHintOf(transfer.mercury_refusal_http_status) : message
+})
 const outcomeTone = computed(() => sentTransfer.value?.transfer_outcome === 'accepted_by_mercury' ? 'positive' : 'warning')
 
 async function sendTheTransfer() {

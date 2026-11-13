@@ -48,6 +48,7 @@ def transfer_res(transfer) -> ConstructionAccountTransferRes:
     return ConstructionAccountTransferRes(
         transfer_id=str(transfer.id), transfer_direction=transfer.transfer_direction, amount_dollars=float(transfer.amount_dollars),
         transfer_outcome=transfer.transfer_outcome, mercury_transfer_status=transfer.mercury_transfer_status,
+        mercury_refusal_http_status=transfer.mercury_refusal_http_status,
         requested_at=transfer.requested_at, is_in_the_bank_feed=transfer.seen_in_the_bank_feed_at is not None,
     )
 
