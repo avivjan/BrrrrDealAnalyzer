@@ -372,7 +372,7 @@ Each page reads its query once, acts, then clears it with `router.replace` (as `
 - [x] **Lists** (2 h): `ConstructionAccountManualAdjustmentsList.vue`, `ConstructionAccountTransactionsList.vue` (ignore, category, note, restore, filters) and the paid-per-payee table.
 - [x] **Settings drawer** (1.5 h): `ConstructionAccountSettingsDrawer.vue` with the five settings and the Mercury connection block (token status with the expected names to copy, the label box for a new LLC, instant updates on / off, the last event time, the last error).
 
-- [ ] Vitest for the two stores, the prompt and notice, the card, the modals, the lists and the drawer (moved here from each item above, 2 h)
+- [x] Vitest for the two stores, the prompt and notice, the card, the modals, the lists and the drawer (moved here from each item above, 2 h) Done for the two stores (`liquidityTimelineChangePromptStore.test.ts`, `constructionAccountStore.test.ts`: the prompt, the queue, merging, OK-only, the notice) and the transfer modal; the card, the link and switch modals, the lists and the drawer are covered end to end in `construction-accounts.spec.ts`.
 
 ### Step D — Prompts on deal cards, and live refresh (6 h)
 - [x] **Deal cards** (1.5 h): in `MyDeals.vue` and `BoughtDeals.vue`, after an imported deal's save lands with its rows changed, the prompt opens (preview from `import-preview`, Confirm calls `import`). The "Liquidity out of date" badge (`ImportDealToLiquidityButton.vue`, `DealLegendPanel.vue`) opens the same prompt.
@@ -454,10 +454,12 @@ Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
 
 ## The first version of Phases 3–9 (superseded by the revision above; kept for the record)
 
+> Phases 3 to 9 were delivered through Steps C to I of the revised plan above (same scope, with the four requirements).
+
 ### Phase 3 — Construction Accounts page, card and controls (10 h)
-- [ ] Route `/liquidity/construction-accounts` (name `construction-accounts`) in `router/index.ts`. Add the entry to `shell/nav.ts` (sidebar, command palette) and keep `nav.test.ts` in step. Check the phone bottom nav at 390 px: if an eighth item doesn't fit, the page is in the sidebar and palette only, and is reached on a phone from the Liquidity page button (1 h)
-- [ ] Direct links: a "Construction accounts" button in the Liquidity page header (theater mode), a link on each deal in the deal bar / `DealLegendPanel`, and a tile on the Dashboard (`LandingPage.vue`) with the total projected return and the count of deals needing a link or a top-up (1 h)
-- [ ] `views/ConstructionAccounts.vue` + `components/liquidity/constructionAccount/ConstructionAccountCard.vue`, one card per deal (3 h):
+- [x] Route `/liquidity/construction-accounts` (name `construction-accounts`) in `router/index.ts`. Add the entry to `shell/nav.ts` (sidebar, command palette) and keep `nav.test.ts` in step. Check the phone bottom nav at 390 px: if an eighth item doesn't fit, the page is in the sidebar and palette only, and is reached on a phone from the Liquidity page button (1 h)
+- [x] Direct links: a "Construction accounts" button in the Liquidity page header (theater mode), a link on each deal in the deal bar / `DealLegendPanel`, and a tile on the Dashboard (`LandingPage.vue`) with the total projected return and the count of deals needing a link or a top-up (1 h)
+- [x] `views/ConstructionAccounts.vue` + `components/liquidity/constructionAccount/ConstructionAccountCard.vue`, one card per deal (3 h):
   - deal name, property address, and LLC / Mercury workspace;
   - linked accounts: construction and primary checking (names and last 4 digits only), plus the previous accounts;
   - available balance; construction budget; loan draws pulled vs remaining to pull;
@@ -467,18 +469,18 @@ Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
   - actions: Link / Account settings / Switch account / Unlink; Deposit; Steal; Mark ready for close-out; Close out; Mark closed out; Reopen.
 
   An unlinked deal shows "Link a construction account".
-- [ ] `ConstructionAccountSettingsModal.vue` (used for both link and edit) (1.5 h):
+- [x] `ConstructionAccountSettingsModal.vue` (used for both link and edit) (1.5 h):
   - the account pickers (from the Mercury list `SettingsPanel` uses);
   - the two baselines, always editable;
   - the deposit target override, with the formula value shown beside it;
   - the keep-at-least buffer.
-- [ ] `ConstructionAccountSwitchModal.vue`: the old account's totals, prefilled into the baselines, editable; "move $X to the new account first" while the old balance isn't $0 (0.75 h)
-- [ ] `ConstructionAccountManualAdjustmentsList.vue`: add, edit and delete manual payments and draws (type, amount, date, note) (1 h)
-- [ ] `ConstructionAccountTransactionsList.vue`: the bank transactions with their automatic and effective category; per row, an Ignore toggle, a category select and a note; "Restore automatic"; filters (all / draws / payments / own money / ignored) (1 h)
-- [ ] Data-table fallback and phone layout per the design-system page rules (single column at < lg) (0.75 h)
+- [x] `ConstructionAccountSwitchModal.vue`: the old account's totals, prefilled into the baselines, editable; "move $X to the new account first" while the old balance isn't $0 (0.75 h)
+- [x] `ConstructionAccountManualAdjustmentsList.vue`: add, edit and delete manual payments and draws (type, amount, date, note) (1 h)
+- [x] `ConstructionAccountTransactionsList.vue`: the bank transactions with their automatic and effective category; per row, an Ignore toggle, a category select and a note; "Restore automatic"; filters (all / draws / payments / own money / ignored) (1 h)
+- [x] Data-table fallback and phone layout per the design-system page rules (single column at < lg) (0.75 h)
 
 ### Phase 4 — Deposit and Steal modals (2.5 h)
-- [ ] `ConstructionAccountTransferModal.vue`, shared by Deposit and Steal:
+- [x] `ConstructionAccountTransferModal.vue`, shared by Deposit and Steal:
   - amount, the relevant balance, and what changes on the timeline;
   - Deposit is prefilled with `remaining_deposit` and capped at the checking's available balance;
   - Steal is prefilled with `safe_to_steal_now`. Above the keep-at-least buffer or the safe amount, it shows "you will need to top up $X later" and needs a confirm;
@@ -488,15 +490,15 @@ Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
   After a successful transfer it runs the refresh and reloads the liquidity store, so the deposit row is Done and the balances are current at once (2.5 h)
 
 ### Phase 5 — Timeline and preview additions (5.5 h)
-- [ ] `TimelineChart.vue`: one fine horizontal line per active deal, in a thin lane band at the bottom of the plot (one lane per deal, so lines never overlap). Each line is drawn in the deal's colour (`components/liquidity/dealColors.ts`), with its name at the left end. It runs from contract signed to the refi (approved date, or planned; a late refi runs through today). Colours go through the existing chart-token rules, and the lines don't animate (2.5 h)
-- [ ] `dealImpactGeometry.ts`: a new range `until_last_deal_ends` ("Until last deal ends"), alongside Deal lifecycle / 6 months / 1 year / All. It starts a week before today and ends on the latest refi date among the active imported deals and the incoming deal (1 h)
-- [ ] Default range (`DealImpactChart.vue`, today hard-coded to `deal_lifecycle`): a prop set by the preview from the incoming deal's lowest-ARV cash-out (`cash_out_routi_conservative`, the "Cash-Out Routi (Lowest ARV)" result). If it's > 0, default to "Deal lifecycle"; if it's ≤ 0, default to "Until last deal ends" (1.5 h)
-- [ ] `components/deal/brrr/RehabSection.vue`, under "Actual Rehab Cost": a visible hint, "Did you include flooring? Double-check the square footage and the labor." (0.5 h)
+- [x] `TimelineChart.vue`: one fine horizontal line per active deal, in a thin lane band at the bottom of the plot (one lane per deal, so lines never overlap). Each line is drawn in the deal's colour (`components/liquidity/dealColors.ts`), with its name at the left end. It runs from contract signed to the refi (approved date, or planned; a late refi runs through today). Colours go through the existing chart-token rules, and the lines don't animate (2.5 h)
+- [x] `dealImpactGeometry.ts`: a new range `until_last_deal_ends` ("Until last deal ends"), alongside Deal lifecycle / 6 months / 1 year / All. It starts a week before today and ends on the latest refi date among the active imported deals and the incoming deal (1 h)
+- [x] Default range (`DealImpactChart.vue`, today hard-coded to `deal_lifecycle`): a prop set by the preview from the incoming deal's lowest-ARV cash-out (`cash_out_routi_conservative`, the "Cash-Out Routi (Lowest ARV)" result). If it's > 0, default to "Deal lifecycle"; if it's ≤ 0, default to "Until last deal ends" (1.5 h)
+- [x] `components/deal/brrr/RehabSection.vue`, under "Actual Rehab Cost": a visible hint, "Did you include flooring? Double-check the square footage and the labor." (0.5 h)
 
 ### Phase 6 — Transfer backend and its security (6 h)
-- [ ] Separate write token per workspace, `MERCURY_TRANSFER_API_TOKEN_<LABEL>`, read only by the transfer function. The read path never sees it, and transfers never use the read tokens. Same `Secret` hygiene; the URL is pinned to the one transfer endpoint (1.5 h)
-- [ ] Table `liquidity_construction_account_transfers`: deal; `transfer_direction` (`deposit_into_construction_account` / `steal_to_primary_checking`); amount; idempotency key (unique); Mercury transfer id; status; `requested_at`; `requested_by` (1 h)
-- [ ] `POST /liquidity/construction-accounts/{bought_deal_id}/deposit` and `/steal` (body: `amount_dollars`, `idempotency_key`; Steal also takes `confirm_amount_exceeds_safe_to_steal`). Guards:
+- [x] Separate write token per workspace, `MERCURY_TRANSFER_API_TOKEN_<LABEL>`, read only by the transfer function. The read path never sees it, and transfers never use the read tokens. Same `Secret` hygiene; the URL is pinned to the one transfer endpoint (1.5 h)
+- [x] Table `liquidity_construction_account_transfers`: deal; `transfer_direction` (`deposit_into_construction_account` / `steal_to_primary_checking`); amount; idempotency key (unique); Mercury transfer id; status; `requested_at`; `requested_by` (1 h)
+- [x] `POST /liquidity/construction-accounts/{bought_deal_id}/deposit` and `/steal` (body: `amount_dollars`, `idempotency_key`; Steal also takes `confirm_amount_exceeds_safe_to_steal`). Guards:
   - `require_recent_auth` (the passkey step-up; the axios interceptor retries with the same body, so the same key);
   - source and destination come only from the stored link, never from the request;
   - 0 < amount ≤ the source's available balance;
@@ -507,11 +509,11 @@ Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
   - a successful Deposit marks the deposit row Done when `remaining_deposit` reaches 0 (3.5 h)
 
 ### Phase 7 — MCP support (2 h)
-- [ ] New GET endpoints (status, transactions, switch preview) become read-only tools automatically. Write tools on the app's own data are clearly described: link / settings, manual adjustments, transaction overrides, close-out marks, refresh. Unlink, delete-adjustment and switch are annotated destructive. `INSTRUCTIONS` gets the construction-account model, the formula and the manual controls in place of "stolen money" (1.5 h)
-- [ ] **The deposit and steal endpoints are NOT MCP tools**: add both to `EXCLUDED_TOOL_NAMES` (`mcp_server.py`), so Claude never moves money. Claude can still read the projection and safe-to-steal, and log manual entries. `test_mcp_tools.py` and `test_mcp_annotations.py` pin it (0.5 h)
+- [x] New GET endpoints (status, transactions, switch preview) become read-only tools automatically. Write tools on the app's own data are clearly described: link / settings, manual adjustments, transaction overrides, close-out marks, refresh. Unlink, delete-adjustment and switch are annotated destructive. `INSTRUCTIONS` gets the construction-account model, the formula and the manual controls in place of "stolen money" (1.5 h)
+- [x] **The deposit and steal endpoints are NOT MCP tools**: add both to `EXCLUDED_TOOL_NAMES` (`mcp_server.py`), so Claude never moves money. Claude can still read the projection and safe-to-steal, and log manual entries. `test_mcp_tools.py` and `test_mcp_annotations.py` pin it (0.5 h)
 
 ### Phase 8 — Security task (2 h)
-- [ ] From `.claude/security.md`: *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo."* Specifically:
+- [x] From `.claude/security.md`: *"Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo."* Specifically:
   - no token or full account number reaches the frontend or the logs;
   - the transfer token can't be reached from any read path;
   - the caller can't choose the source or destination;
@@ -524,7 +526,7 @@ Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
   Then update `SECURITY_PLAN.md` §3.3: write-capable transfer tokens (IP allow-listed, narrowest scope, rotation runbook) are now an asset. Run `/security-review` on the branch (2 h)
 
 ### Phase 9 — Finish (1 h)
-- [ ] Goldens and regression snapshots in `Golden update:` commits; the README liquidity section, the routes table and the env-var table (`MERCURY_TRANSFER_API_TOKEN_<LABEL>`, `CONSTRUCTION_ACCOUNT_TRANSFERS_PER_HOUR`); check off this plan; push; open the PR (1 h)
+- [x] Goldens and regression snapshots in `Golden update:` commits; the README liquidity section, the routes table and the env-var table (`MERCURY_TRANSFER_API_TOKEN_<LABEL>`, `CONSTRUCTION_ACCOUNT_TRANSFERS_PER_HOUR`); check off this plan; push; open the PR (1 h)
 
 ## Tests
 
