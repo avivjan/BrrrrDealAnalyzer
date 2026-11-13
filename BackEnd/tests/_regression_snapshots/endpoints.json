@@ -1968,7 +1968,7 @@
           {
             "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -2099,8 +2099,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -2152,6 +2152,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -5088,7 +5095,7 @@
           {
             "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -5219,8 +5226,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -5272,6 +5279,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -7564,7 +7578,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -7695,8 +7709,8 @@
             },
             {
               "date": "2026-01-10",
-              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-              "item_key": "rehab_cushion",
+              "description": "Deposit into the construction account (rehab cushion)",
+              "item_key": "construction_account_deposit",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-5000.00"
             },
@@ -7748,6 +7762,13 @@
               "item_key": "survey_fee",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Construction account balance returned at rehab end (cushion)",
+              "item_key": "construction_account_balance_returned_at_rehab_end",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "5000.00"
             },
             {
               "date": "2026-03-01",
@@ -10660,7 +10681,7 @@
           {
             "formula": "Total Cash Invested ($59,043.06) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($18,937.11) + Reserves the Lowest-ARV Wire cannot fund ($11,300.89) = $94,281.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -10791,8 +10812,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -10844,6 +10865,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -13129,7 +13157,7 @@
           {
             "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -13260,8 +13288,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -13313,6 +13341,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -16231,7 +16266,7 @@
           {
             "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -16362,8 +16397,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -16415,6 +16450,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -18731,7 +18773,7 @@
           {
             "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -18862,8 +18904,8 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
             "signed_amount_dollars": "-5000.00"
           },
@@ -18915,6 +18957,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -21844,7 +21893,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -21975,8 +22024,8 @@
             },
             {
               "date": "2026-01-10",
-              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-              "item_key": "rehab_cushion",
+              "description": "Deposit into the construction account (rehab cushion)",
+              "item_key": "construction_account_deposit",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-5000.00"
             },
@@ -22028,6 +22077,13 @@
               "item_key": "survey_fee",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Construction account balance returned at rehab end (cushion)",
+              "item_key": "construction_account_balance_returned_at_rehab_end",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "5000.00"
             },
             {
               "date": "2026-03-01",
@@ -24946,7 +25002,7 @@
           {
             "formula": "Total Cash Invested ($73,378.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $100,447.06",
             "label": "Cash Needed",
-            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+            "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
             "terms": [
               {
                 "label": "Total Cash Invested",
@@ -25077,17 +25133,10 @@
           },
           {
             "date": "2026-01-10",
-            "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-            "item_key": "rehab_cushion",
+            "description": "Deposit into the construction account (rehab cushion + rehab beyond the construction budget)",
+            "item_key": "construction_account_deposit",
             "sequence_within_day": 1,
-            "signed_amount_dollars": "-5000.00"
-          },
-          {
-            "date": "2026-01-10",
-            "description": "Rehab beyond the construction budget, funded by you",
-            "item_key": "stolen_money",
-            "sequence_within_day": 2,
-            "signed_amount_dollars": "-16500.00"
+            "signed_amount_dollars": "-21500.00"
           },
           {
             "date": "2026-01-11",
@@ -25137,6 +25186,13 @@
             "item_key": "survey_fee",
             "sequence_within_day": 2,
             "signed_amount_dollars": "-385.00"
+          },
+          {
+            "date": "2026-02-24",
+            "description": "Construction account balance returned at rehab end (cushion)",
+            "item_key": "construction_account_balance_returned_at_rehab_end",
+            "sequence_within_day": 3,
+            "signed_amount_dollars": "5000.00"
           },
           {
             "date": "2026-03-01",
@@ -28331,7 +28387,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -28462,8 +28518,8 @@
             },
             {
               "date": "2026-01-10",
-              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-              "item_key": "rehab_cushion",
+              "description": "Deposit into the construction account (rehab cushion)",
+              "item_key": "construction_account_deposit",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-5000.00"
             },
@@ -28515,6 +28571,13 @@
               "item_key": "survey_fee",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Construction account balance returned at rehab end (cushion)",
+              "item_key": "construction_account_balance_returned_at_rehab_end",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "5000.00"
             },
             {
               "date": "2026-03-01",
@@ -31424,7 +31487,7 @@
             {
               "formula": "Total Cash Invested ($73,378.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $100,447.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -31555,17 +31618,10 @@
             },
             {
               "date": "2026-01-10",
-              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-              "item_key": "rehab_cushion",
+              "description": "Deposit into the construction account (rehab cushion + rehab beyond the construction budget)",
+              "item_key": "construction_account_deposit",
               "sequence_within_day": 1,
-              "signed_amount_dollars": "-5000.00"
-            },
-            {
-              "date": "2026-01-10",
-              "description": "Rehab beyond the construction budget, funded by you",
-              "item_key": "stolen_money",
-              "sequence_within_day": 2,
-              "signed_amount_dollars": "-16500.00"
+              "signed_amount_dollars": "-21500.00"
             },
             {
               "date": "2026-01-11",
@@ -31615,6 +31671,13 @@
               "item_key": "survey_fee",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Construction account balance returned at rehab end (cushion)",
+              "item_key": "construction_account_balance_returned_at_rehab_end",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "5000.00"
             },
             {
               "date": "2026-03-01",
@@ -33901,7 +33964,7 @@
             {
               "formula": "Total Cash Invested ($56,878.62) + Rehab Cushion ($5,000) + Cash to Refi Table (Lowest ARV) ($10,917.56) + Reserves the Lowest-ARV Wire cannot fund ($11,150.89) = $83,947.06",
               "label": "Cash Needed",
-              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 32 cash rows, the rehab cushion one of them, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
+              "note": "Everything spent through the refinance, plus the cushion, plus the cash brought to the refi table and the reserves the wire cannot fund if the appraisal comes in at the lowest ARV: the single out-of-pocket figure, to the cent, never clamped. Dated schedule (Lowest ARV): 33 cash rows; the rehab cushion goes into the construction account at the closing and comes back from it at the rehab end, with the deal's 5 key dates (closing, rehab completed, refi...) shown among them.",
               "terms": [
                 {
                   "label": "Total Cash Invested",
@@ -34032,8 +34095,8 @@
             },
             {
               "date": "2026-01-10",
-              "description": "Rehab cushion (a hold: mark it done when you no longer need it)",
-              "item_key": "rehab_cushion",
+              "description": "Deposit into the construction account (rehab cushion)",
+              "item_key": "construction_account_deposit",
               "sequence_within_day": 1,
               "signed_amount_dollars": "-5000.00"
             },
@@ -34085,6 +34148,13 @@
               "item_key": "survey_fee",
               "sequence_within_day": 2,
               "signed_amount_dollars": "-385.00"
+            },
+            {
+              "date": "2026-02-24",
+              "description": "Construction account balance returned at rehab end (cushion)",
+              "item_key": "construction_account_balance_returned_at_rehab_end",
+              "sequence_within_day": 3,
+              "signed_amount_dollars": "5000.00"
             },
             {
               "date": "2026-03-01",
