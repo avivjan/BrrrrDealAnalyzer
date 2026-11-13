@@ -12,6 +12,7 @@ import { inspectionApi } from "../api/inspection";
 import { forgetInspectionOnDevice, readRecentInspectionsOnDevice, type RecentInspectionOnDevice } from "../inspection/inspectionRecentOnDevice";
 import { useAuthStore } from "../stores/authStore";
 import type { InspectionListRowRes } from "../types/inspection";
+import { dealOnItsBoard } from "../navigation/appLinks";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -121,6 +122,11 @@ onMounted(async () => {
               <span v-if="row.linked_deal"><i class="pi pi-link text-xs" aria-hidden="true"></i> {{ row.linked_deal.deal_board === "my_deals" ? "My Deals" : "Bought" }} · {{ row.linked_deal.property_address }}</span>
             </span>
           </button>
+          <RouterLink v-if="row.linked_deal" :data-testid="`inspections.all.${row.id}.open-deal`"
+                      :to="dealOnItsBoard(row.linked_deal.deal_board, row.linked_deal.deal_id, row.linked_deal.deal_type)"
+                      class="inline-flex min-h-11 items-center gap-1 rounded-ctl px-2 text-sm font-medium text-primary hover:bg-primary/10">
+            <i class="pi pi-external-link text-xs" aria-hidden="true"></i>Open deal
+          </RouterLink>
           <UiBadge :tone="row.inspection_status === 'completed' ? 'positive' : 'neutral'">{{ row.inspection_status === "completed" ? "Completed" : "Draft" }}</UiBadge>
           <template v-if="inspectionIdAwaitingDeleteConfirmation === row.id">
             <UiButton variant="danger" size="sm" :data-testid="`inspections.all.${row.id}.confirm-delete`" :loading="deletingInspectionId === row.id" @click="deleteInspection(row.id)">Delete</UiButton>

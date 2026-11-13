@@ -21,6 +21,8 @@ import NumberInput from "../components/ui/NumberInput.vue";
 import CalculationBreakdownPopup from "../components/deal/CalculationBreakdownPopup.vue";
 import ResultTileWithCalculationButton from "../components/deal/ResultTileWithCalculationButton.vue";
 import type { BoughtDealRes, AnalyzeDealReq } from "../types";
+import { useDeepLinkQuery } from "../composables/useDeepLinkQuery";
+import { readDealLinkQuery } from "../navigation/appLinks";
 import { ensureBrrrLegacyDefaults } from "../utils/dealUtils";
 import {
   resolveStage,
@@ -75,6 +77,8 @@ watch(
   { deep: true }
 );
 
+const boardIsLoaded = ref(false);
+
 onMounted(async () => {
   await Promise.all([
     store.fetchBoughtDeals(),
@@ -83,7 +87,19 @@ onMounted(async () => {
   refreshColumns();
   await nextTick();
   centreBusiestColumn();
+  boardIsLoaded.value = true;
 });
+
+// A link opens a deal's modal (`/bought-deals?openDeal=…&dealType=…`, tasks/todo/ConstructionAccountPerRehab.md, Step C0).
+const { notFoundMessage: deepLinkNotFoundMessage } = useDeepLinkQuery(readDealLinkQuery, async (link) => {
+  const dealToOpen = store.boughtDeals.find((deal) => deal.id === link.dealId);
+  if (!dealToOpen) return false;
+  activeTab.value = dealToOpen.deal_type === "FLIP" ? "FLIP" : "BRRRR";
+  await nextTick();
+  refreshColumns();
+  openDeal(dealToOpen);
+  return true;
+}, boardIsLoaded);
 
 // UI v3 (4.3): the stage rail.
 const railEl = ref<HTMLElement | null>(null);
@@ -611,6 +627,10 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
     carries its own header. The shell owns the viewport and the page scroller.
   -->
   <div class="flex min-h-full flex-col text-fg">
+    <p v-if="deepLinkNotFoundMessage" data-testid="boughtdeals.deep-link-not-found" role="status"
+       class="mx-auto mt-4 w-full max-w-[1920px] rounded-ctl border border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning md:px-6">
+      {{ deepLinkNotFoundMessage }}
+    </p>
     <UiTransition preset="hero" appear>
       <header class="mx-auto w-full max-w-[1920px] px-4 pt-4 md:px-6 md:pt-6">
         <div class="flex flex-wrap items-end gap-3">

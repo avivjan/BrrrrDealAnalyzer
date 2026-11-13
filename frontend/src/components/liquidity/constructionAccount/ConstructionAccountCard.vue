@@ -146,6 +146,7 @@ function shortDateTime(iso: string | null): string {
     padding="md"
     class="scroll-mt-24 space-y-4"
     :class="isHighlighted ? 'ring-2 ring-primary' : ''"
+    :data-highlighted="isHighlighted ? 'true' : undefined"
   >
     <!-- Header: the deal, its state, its links -->
     <header class="flex flex-wrap items-start justify-between gap-3">

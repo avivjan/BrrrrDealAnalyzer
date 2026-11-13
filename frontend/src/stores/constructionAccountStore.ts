@@ -16,6 +16,7 @@ import type {
 import type { UseDealValueForField } from '../types/liquidity'
 import { todayISO } from '../utils/liquidityEngine'
 import { formatMoney } from '../utils/money'
+import { dealOnTheLiquidityTimeline } from '../navigation/appLinks'
 import { useBoughtDealStore } from './boughtDealStore'
 import { useLiquidityStore } from './liquidityStore'
 import {
@@ -118,6 +119,7 @@ export const useConstructionAccountStore = defineStore('constructionAccounts', (
     return promptStore.ask({
       dealKey: `bought:${boughtDealId}`,
       title,
+      timelineLink: dealOnTheLiquidityTimeline('bought', boughtDealId),
       loadPreview: async (useTheNewValueFor: UseDealValueForField[]) => {
         const preview = previewAlreadyRead && !useTheNewValueFor.length ? previewAlreadyRead : await write({ previewOnly: true, today, useTheNewValueFor })
         previewAlreadyRead = null

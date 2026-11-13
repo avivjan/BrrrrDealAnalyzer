@@ -17,6 +17,7 @@ import { formatMoney } from "../utils/money";
 import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../types";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import { safeHref } from "../utils/safeHref";
+import { constructionAccountOfDeal } from "../navigation/appLinks";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import {
@@ -248,6 +249,7 @@ const onToggleSubstage = (substageId: string) => {
         `@click.stop` so opening the folder never opens the card's modal; `safeHref`
         drops anything that is not http(s). A static inline glyph: no external fetch.
       -->
+      <div class="flex shrink-0 items-center gap-1">
       <a
         v-if="deal.google_drive_link"
         data-testid="boughtcard.google-drive-link"
@@ -269,6 +271,20 @@ const onToggleSubstage = (substageId: string) => {
         </svg>
         Drive
       </a>
+      <!-- Its rehab's construction account, one click from the card (tasks/todo/ConstructionAccountPerRehab.md, Step C0) -->
+      <RouterLink
+        v-if="isBrrr"
+        data-testid="boughtcard.construction-account-link"
+        :to="constructionAccountOfDeal(deal.id)"
+        :aria-label="`Open the construction account of ${deal.address || 'this deal'}`"
+        title="Open the construction account"
+        class="inline-flex shrink-0 items-center gap-1 rounded-ctl border-ui border-line bg-surface px-2 py-1 text-xs font-medium text-fg transition-colors duration-fast ease-standard hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        @click.stop
+      >
+        <i class="pi pi-building-columns text-[11px]" aria-hidden="true"></i>
+        Account
+      </RouterLink>
+      </div>
     </div>
     </div>
 

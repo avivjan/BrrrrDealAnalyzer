@@ -19,6 +19,9 @@ import DealCashRowChangesList from '../DealCashRowChangesList.vue'
 import { assignDealColorSlotByDealKey, dealColorHexForSlot, dealKeyOf } from '../dealColors'
 import DealImpactChart, { type DealRowOnADay } from './DealImpactChart.vue'
 
+import { dealOnTheLiquidityTimeline } from '../../../navigation/appLinks'
+import { useLiquidityTimelineChangePromptStore } from '../../../stores/liquidityTimelineChangePromptStore'
+
 const props = defineProps<{
   dealBoard: LiquidityDealBoard
   dealId: string
@@ -137,6 +140,10 @@ async function confirmImport() {
   errorMessage.value = null
   try {
     const result = await liquidityStore.importDeal(props.dealBoard, props.dealId, useDealValueFor.value)
+    // The one notice, with a link straight to this deal's rows (tasks/todo/ConstructionAccountPerRehab.md, Step C0).
+    const counts = result.change_counts
+    useLiquidityTimelineChangePromptStore().showTimelineUpdated(counts.added + counts.updated + counts.removed,
+      dealOnTheLiquidityTimeline(props.dealBoard, props.dealId))
     emit('imported', result)
     emit('close')
   } catch (error: any) {

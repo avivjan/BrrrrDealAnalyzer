@@ -12,6 +12,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
+import type { RouteLocationRaw } from 'vue-router'
+
 import type { DealCashRowChanges, UseDealValueForField } from '../types/liquidity'
 
 /** A figure the change moves, shown above the rows: "Rehab cost $50,000 → $58,000". */
@@ -35,6 +37,8 @@ export interface LiquidityTimelineChangeRequest {
   loadPreview: (useTheNewValueFor: UseDealValueForField[]) => Promise<LiquidityTimelineChangePreview>
   /** Save the change. Answers how many timeline rows it changed. */
   confirm: (useTheNewValueFor: UseDealValueForField[]) => Promise<number>
+  /** Where the notice's "View on the timeline" goes after Confirm: this deal's rows. */
+  timelineLink?: RouteLocationRaw
 }
 
 /** What already happened, shown with OK only. */
@@ -77,7 +81,7 @@ export const useLiquidityTimelineChangePromptStore = defineStore('liquidityTimel
   const open = ref<OpenPrompt | null>(null)
   const queue = ref<QueuedPrompt[]>([])
 
-  const notice = ref<{ editCount: number; rowCount: number; message: string } | null>(null)
+  const notice = ref<{ editCount: number; rowCount: number; message: string; timelineLink: RouteLocationRaw } | null>(null)
   let noticeTimer: ReturnType<typeof setTimeout> | null = null
 
   const isOpen = computed(() => open.value !== null)
@@ -160,12 +164,12 @@ export const useLiquidityTimelineChangePromptStore = defineStore('liquidityTimel
     void loadOpenPreview()
   }
 
-  function showTimelineUpdated(rowCount: number): void {
+  function showTimelineUpdated(rowCount: number, timelineLink: RouteLocationRaw = '/liquidity'): void {
     if (noticeTimer) clearTimeout(noticeTimer)
     const editCount = (notice.value?.editCount ?? 0) + 1
     const totalRowCount = (notice.value?.rowCount ?? 0) + rowCount
     notice.value = {
-      editCount, rowCount: totalRowCount,
+      editCount, rowCount: totalRowCount, timelineLink,
       message: editCount === 1
         ? `Liquidity timeline updated: ${totalRowCount} ${totalRowCount === 1 ? 'row' : 'rows'}`
         : `Liquidity timeline updated: ${editCount} edits · ${totalRowCount} ${totalRowCount === 1 ? 'row' : 'rows'}`,
@@ -176,7 +180,7 @@ export const useLiquidityTimelineChangePromptStore = defineStore('liquidityTimel
   /** An edit that moved no timeline row: a short notice, not a prompt. */
   function showSaved(message = 'Saved'): void {
     if (noticeTimer) clearTimeout(noticeTimer)
-    notice.value = { editCount: 0, rowCount: 0, message }
+    notice.value = { editCount: 0, rowCount: 0, message, timelineLink: '/liquidity' }
     noticeTimer = setTimeout(dismissNotice, NOTICE_VISIBLE_MILLISECONDS)
   }
 
@@ -197,7 +201,7 @@ export const useLiquidityTimelineChangePromptStore = defineStore('liquidityTimel
     current.errorMessage = null
     try {
       const rowCount = await current.request.confirm(current.useTheNewValueFor)
-      showTimelineUpdated(rowCount)
+      showTimelineUpdated(rowCount, current.request.timelineLink)
       close(true)
     } catch (error) {
       current.errorMessage = errorMessageOf(error)

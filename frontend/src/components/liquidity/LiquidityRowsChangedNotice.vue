@@ -14,8 +14,9 @@ const promptStore = useLiquidityTimelineChangePromptStore()
          class="pointer-events-auto flex items-center gap-3 rounded-full border-ui border-line bg-surface px-4 py-2 text-sm text-fg shadow-3">
       <i class="pi pi-check-circle text-positive" aria-hidden="true"></i>
       <span data-testid="timeline-notice.message">{{ promptStore.notice.message }}</span>
-      <RouterLink v-if="promptStore.notice.rowCount" data-testid="timeline-notice.open-timeline" to="/liquidity" class="font-medium text-primary underline-offset-2 hover:underline">
-        View timeline
+      <RouterLink v-if="promptStore.notice.rowCount" data-testid="timeline-notice.open-timeline" :to="promptStore.notice.timelineLink"
+                  class="font-medium text-primary underline-offset-2 hover:underline">
+        View on the timeline
       </RouterLink>
       <UiIconButton data-testid="timeline-notice.dismiss" label="Dismiss" size="sm" @click="promptStore.dismissNotice()">
         <i class="pi pi-times text-xs" aria-hidden="true"></i>

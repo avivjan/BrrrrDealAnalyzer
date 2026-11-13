@@ -10,6 +10,8 @@ defineProps<{
   bucket: DayBucket | null
   /** The caller already shows the date, the net and the end-of-day balance (the theater's day modal). */
   hideDayHeading?: boolean
+  /** A link opened the day on this row: it is outlined. */
+  highlightedTransactionId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -73,7 +75,8 @@ function formatDate(iso: string): string {
         :key="txn.id"
         :data-testid="`daydetail.txn.${txn.id}`"
         class="group rounded-ctl bg-surface-2 px-3 py-2"
-        :class="txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : ''"
+        :class="[txn.recurring_rule_id ? 'ring-1 ring-inset ring-primary/30' : '', highlightedTransactionId === txn.id ? 'ring-2 ring-primary' : '']"
+        :data-highlighted="highlightedTransactionId === txn.id || undefined"
         :style="dealAccentStyleForTransaction(dealAttributionLookup, txn)"
       >
         <div class="flex items-center gap-2">
@@ -83,7 +86,7 @@ function formatDate(iso: string): string {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
             <div class="min-w-0 break-words text-xs text-fg line-clamp-2">{{ txn.description }}</div>
-            <DealAttributionTag :txn="txn" class="shrink-0" />
+            <DealAttributionTag :txn="txn" links-to-the-deal class="shrink-0" />
             <UiBadge
               v-if="txn.recurring_rule_id"
               tone="primary"

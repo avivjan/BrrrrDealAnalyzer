@@ -97,6 +97,13 @@ const cards: FeatureCard[] = [
     action: "internal",
     route: "/liquidity",
   },
+  {
+    title: "Construction Accounts",
+    subtitle: "Rehab money",
+    icon: "pi pi-building-columns",
+    action: "internal",
+    route: "/liquidity/construction-accounts",
+  },
 ];
 
 interface ResourceLink {

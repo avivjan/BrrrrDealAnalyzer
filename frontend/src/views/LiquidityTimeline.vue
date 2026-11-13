@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, toRef } from 'vue'
+import { ref, computed, onMounted, toRef, watch } from 'vue'
+import { useDeepLinkQuery } from '../composables/useDeepLinkQuery'
+import { readLiquidityLinkQuery } from '../navigation/appLinks'
 import { useRouter } from 'vue-router'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import { provideLiquidityDealAttribution } from '../composables/useLiquidityDealAttribution'
@@ -111,8 +113,28 @@ async function loadLiquidityData() {
   if (store.error) showToast('Failed to load: ' + store.error, loadLiquidityData, 'Retry')
 }
 
+const liquidityDataIsLoaded = ref(false)
+const linkFocus = ref<{ dealKey: string | null; day: string | null; transactionId: string | null } | null>(null)
+/**
+ * A link opens the timeline on a deal (`?deal=<board>:<id>`), a day or a row (`?transaction=…&day=…`), or with its
+ * settings open (`?open=settings`): tasks/todo/ConstructionAccountPerRehab.md, Step C0.
+ */
+const { notFoundMessage: deepLinkNotFoundMessage } = useDeepLinkQuery(readLiquidityLinkQuery, (link) => {
+  if (link.openSettings) settingsOpen.value = true
+  const dealKey = link.deal ? `${link.deal.board}:${link.deal.dealId}` : null
+  const dealIsHere = !link.deal || store.importedDeals.some(deal => deal.deal_board === link.deal!.board && deal.deal_id === link.deal!.dealId)
+  const transaction = link.transactionId ? store.transactions.find(txn => txn.id === link.transactionId) : null
+  if (!dealIsHere || (link.transactionId && !transaction)) return false
+  const day = link.day ?? transaction?.effective_date ?? null
+  if (dealKey || day) linkFocus.value = { dealKey, day, transactionId: link.transactionId }
+  return true
+}, liquidityDataIsLoaded)
+
+watch(deepLinkNotFoundMessage, (message) => { if (message) showToast(message) })
+
 onMounted(async () => {
   await loadLiquidityData()
+  liquidityDataIsLoaded.value = true
   await store.syncFromMercury()
   if (store.mercuryError) {
     showToast('Mercury sync failed: ' + store.mercuryError)
@@ -545,6 +567,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null, actio
   <div class="text-fg">
     <LiquidityTheaterMode
       :headline-figures="kpis"
+      :link-focus="linkFocus"
       :is-another-dialog-open="anotherLiquidityDialogIsOpen"
       :milestone-key-being-approved="milestoneKeyBeingApproved"
       @leave="leaveLiquidityPage"

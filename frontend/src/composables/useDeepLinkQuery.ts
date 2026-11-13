@@ -18,6 +18,7 @@ export function useDeepLinkQuery<T>(read: (query: LocationQuery) => T | null, ac
   const router = useRouter()
   const notFoundMessage = ref<string | null>(null)
   let lastHandledFullPath: string | null = null
+  if (!route) return { notFoundMessage }   // mounted without a router (component tests): no link to read
 
   async function handle(): Promise<void> {
     if (!isReady.value || route.fullPath === lastHandledFullPath) return
