@@ -102,6 +102,9 @@ CONSTRUCTION_ACCOUNT_TRANSFER_DIRECTIONS = (TRANSFER_DIRECTION_DEPOSIT_INTO_CONS
 # What became of a transfer the app asked Mercury for.
 TRANSFER_OUTCOME_BEING_SENT = "being_sent"                      # the row is saved, the request is on its way
 TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY = "accepted_by_mercury"    # counts at once (until the bank feed shows it)
+# Created at Mercury as a transfer request: nothing moves until it is approved in Mercury. Not counted; the bank feed
+# counts the money once Mercury sends it, and the request is then matched to that transaction.
+TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY = "waiting_for_approval_in_mercury"
 TRANSFER_OUTCOME_REFUSED_BY_MERCURY = "refused_by_mercury"      # nothing was sent
 TRANSFER_OUTCOME_MERCURY_DID_NOT_ANSWER = "mercury_did_not_answer"   # maybe sent: check Mercury before trying again
 TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY = "failed_or_cancelled_at_mercury"   # the bank feed says so

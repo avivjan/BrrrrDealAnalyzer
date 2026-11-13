@@ -29,11 +29,15 @@ from BL.liquidity.common.mercury_token_names import transfer_token_environment_v
 
 logger = logging.getLogger(__name__)
 
-TRANSFER_URL = f"{MERCURY_API_BASE}/transfer"
+# The approval-gated internal transfer (the token's "Transfer Money with Approval" scope): Mercury sends it once the
+# organization's approval rules are met (an approval in the Mercury app). Same body as POST /transfer.
+TRANSFER_URL = f"{MERCURY_API_BASE}/request-transfer"
 _MERCURY_ID_PATTERN = re.compile(r"[A-Za-z0-9-]{1,80}")
 _IDEMPOTENCY_KEY_PATTERN = re.compile(r"[A-Za-z0-9-]{8,80}")
 # Mercury's transaction statuses; anything else is stored as "unknown".
-KNOWN_MERCURY_TRANSFER_STATUSES = {"pending", "sent", "cancelled", "failed"}
+# A transfer's statuses, and an approval request's (stored in snake case: pendingApproval -> pending_approval).
+KNOWN_MERCURY_TRANSFER_STATUSES = {"pending", "sent", "cancelled", "failed", "pending_approval", "approved", "rejected"}
+_APPROVAL_REQUEST_STATUS_NAMES = {"pendingapproval": "pending_approval", "approved": "approved", "rejected": "rejected", "cancelled": "cancelled"}
 UNKNOWN_MERCURY_TRANSFER_STATUS = "unknown"
 TRANSFER_NOTE_MAXIMUM_LENGTH = 120
 
@@ -80,18 +84,20 @@ def _answer_of(body: object) -> MercuryTransferAnswer:
     candidates = [body] + [body[key] for key in ("transaction", "transfer") if isinstance(body.get(key), dict)]
     transfer_id, status = None, UNKNOWN_MERCURY_TRANSFER_STATUS
     for candidate in candidates:
-        raw_id = candidate.get("id")
+        raw_id = candidate.get("id") or candidate.get("requestId")
         if transfer_id is None and isinstance(raw_id, str) and _MERCURY_ID_PATTERN.fullmatch(raw_id):
             transfer_id = raw_id
         raw_status = candidate.get("status")
-        if status == UNKNOWN_MERCURY_TRANSFER_STATUS and isinstance(raw_status, str) and raw_status.lower() in KNOWN_MERCURY_TRANSFER_STATUSES:
-            status = raw_status.lower()
+        if status == UNKNOWN_MERCURY_TRANSFER_STATUS and isinstance(raw_status, str):
+            named = _APPROVAL_REQUEST_STATUS_NAMES.get(raw_status.lower(), raw_status.lower())
+            if named in KNOWN_MERCURY_TRANSFER_STATUSES:
+                status = named
     return MercuryTransferAnswer(transfer_id, status)
 
 
 def send_internal_transfer(mercury_workspace_label: str, source_mercury_account_id: str, destination_mercury_account_id: str,
                            amount_dollars: Decimal, idempotency_key: str, note: str) -> MercuryTransferAnswer:
-    """`POST /transfer` between two accounts of one LLC. Raises `MercuryTransferTokenMissingError`, `MercuryApiError`
+    """`POST /request-transfer` between two accounts of one LLC (it waits for an approval in Mercury). Raises `MercuryTransferTokenMissingError`, `MercuryApiError`
     (refused: nothing was sent), `MercurySlowDownError`, or `MercuryTransferNotAnsweredError` (maybe sent)."""
     for account_id in (source_mercury_account_id, destination_mercury_account_id):
         if not _MERCURY_ID_PATTERN.fullmatch(account_id or ""):

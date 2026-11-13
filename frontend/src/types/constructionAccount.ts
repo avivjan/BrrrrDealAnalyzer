@@ -131,7 +131,8 @@ export interface ConstructionAccountStatus {
 
 export type ConstructionAccountTransferDirection = 'deposit_into_construction_account' | 'steal_to_primary_checking'
 export type ConstructionAccountTransferOutcome =
-  | 'being_sent' | 'accepted_by_mercury' | 'refused_by_mercury' | 'mercury_did_not_answer' | 'failed_or_cancelled_at_mercury'
+  | 'being_sent' | 'accepted_by_mercury' | 'waiting_for_approval_in_mercury' | 'refused_by_mercury' | 'mercury_did_not_answer'
+  | 'failed_or_cancelled_at_mercury'
 
 /** A Deposit or a Steal the app asked Mercury to make (tasks/todo/ConstructionAccountPerRehab.md, Step E). */
 export interface ConstructionAccountTransfer {

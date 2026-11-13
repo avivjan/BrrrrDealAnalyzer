@@ -57,7 +57,7 @@ def test_one_pinned_url_the_transfer_token_and_the_body_mercury_documents(posts)
     answers.append(FakeResponse(200, {"id": "mercury-transfer-1", "status": "sent"}))
     answer = _send()
     assert (answer.mercury_transfer_id, answer.mercury_transfer_status) == ("mercury-transfer-1", "sent")
-    assert [call["url"] for call in calls] == [TRANSFER_URL] == ["https://api.mercury.com/api/v1/transfer"]
+    assert [call["url"] for call in calls] == [TRANSFER_URL] == ["https://api.mercury.com/api/v1/request-transfer"]
     assert calls[0]["headers"]["Authorization"] == "Bearer the-transfer-token"
     assert calls[0]["json"] == {"sourceAccountId": "checking", "destinationAccountId": "construction", "amount": 5000.0,
                                 "idempotencyKey": "transfer-key-0001", "note": "Deposit: 12 Oak St"}

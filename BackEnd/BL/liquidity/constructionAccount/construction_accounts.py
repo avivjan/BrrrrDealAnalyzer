@@ -59,7 +59,8 @@ from DAL.crud.liquidity_construction_account import (
 from DAL.data_models import BoughtBrrrDeal, LiquidityTransaction
 from DAL.data_models.common.brrr_lifecycle import BrrrLifecycleColumns
 from DAL.data_models.liquidity.construction_account_models import (
-    TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY, TRANSFER_OUTCOMES_THAT_COUNT,
+    TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY, TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY,
+    TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY, TRANSFER_OUTCOMES_THAT_COUNT,
     LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride,
 )
 from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook, LiquidityMercuryWorkspaceRead
@@ -222,7 +223,8 @@ def _match_the_in_app_transfers_to_the_bank_feed(db: Session, link: LiquidityCon
     """An in-app transfer the feed now shows stops counting on its own (the feed counts it): each counts once. One the
     feed shows as failed or cancelled stops counting at all."""
     transfers = get_transfers_of_construction_account(db, link.bought_brrr_deal_id, link.construction_mercury_account_id)
-    waiting = [transfer for transfer in transfers if transfer.transfer_outcome in TRANSFER_OUTCOMES_THAT_COUNT and transfer.seen_in_the_bank_feed_at is None]
+    waiting = [transfer for transfer in transfers if transfer.seen_in_the_bank_feed_at is None
+               and transfer.transfer_outcome in (*TRANSFER_OUTCOMES_THAT_COUNT, TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY)]
     if not waiting:
         return
     matched = match_in_app_transfers_to_the_bank_feed(
@@ -241,6 +243,8 @@ def _match_the_in_app_transfers_to_the_bank_feed(db: Session, link: LiquidityCon
         transfer.seen_in_the_bank_feed_at = _utc_now()
         if transaction.is_failed_or_cancelled:
             transfer.transfer_outcome = TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY
+        elif transfer.transfer_outcome == TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY:
+            transfer.transfer_outcome = TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY   # approved and sent: the feed counts it
 
 
 def _store_account_names(link: LiquidityConstructionAccount, accounts_by_id: dict[str, dict]) -> None:
