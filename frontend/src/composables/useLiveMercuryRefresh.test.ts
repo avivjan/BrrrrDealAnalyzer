@@ -74,6 +74,13 @@ describe('useLiveMercuryRefresh', () => {
     expect(api.refresh).toHaveBeenCalledWith(expect.any(String), false)
   })
 
+  it('a wait far beyond the longest back-off is a clock difference, not a back-off: the read goes ahead', async () => {
+    mountThePage()
+    useConstructionAccountStore().nextMercuryReadNotBefore = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString()
+    await live.refreshNow()
+    expect(api.refresh).toHaveBeenCalledTimes(1)
+  })
+
   it('reads when the window regains focus, at most once per 5 seconds', async () => {
     mountThePage()
     window.dispatchEvent(new Event('focus'))
@@ -140,7 +147,7 @@ describe('useLiveMercuryRefresh', () => {
     }
     await flushPromises()
     await vi.advanceTimersByTimeAsync(10_000)
-    expect(api.lastChange).toHaveBeenCalledTimes(2)
+    expect(api.lastChange).toHaveBeenCalledTimes(3)   // the baseline at once, then every 5 seconds
     expect(api.list).toHaveBeenCalledTimes(1)
     expect(api.refresh).not.toHaveBeenCalled()
   })

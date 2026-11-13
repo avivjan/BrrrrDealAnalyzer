@@ -137,7 +137,7 @@ function timeAgo(iso: string | null): string {
           <input v-model="inAppTransfersEnabled" data-testid="ca-settings.transfers-enabled" type="checkbox" class="h-4 w-4 accent-primary" />
           Allow transfers from the app
         </label>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <UiField>
             <template #label>Per hour, at most</template>
             <template #default="{ id }"><input :id="id" v-model="transfersPerHourLimit" data-testid="ca-settings.transfers-per-hour" type="number" min="1" max="60" class="ui-input numeric" /></template>

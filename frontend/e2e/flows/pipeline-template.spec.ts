@@ -18,6 +18,8 @@ test('opening the editor loads the templates and both stats', async ({
 
   await page.goto('/bought-deals');
   await expect(page.getByTestId('boughtdeals.edit-pipeline')).toBeVisible();
+  // The board also loads each card's construction account state, after it shows: let that land before recording.
+  await page.waitForLoadState('networkidle');
 
   api.reset();
 

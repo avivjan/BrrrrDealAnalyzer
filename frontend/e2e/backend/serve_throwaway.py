@@ -45,6 +45,11 @@ os.environ.setdefault("MEMBER_LOAN_ALLOWED_USERNAMES", "e2e-aviv,e2e-yarden")
 import main  # noqa: E402
 import uvicorn  # noqa: E402
 
+# A fake Mercury for e2e/flows/construction-accounts.spec.ts, off until a spec turns it on (e2e/backend/fake_mercury.py).
+import fake_mercury  # noqa: E402
+
+fake_mercury.install(main.app)
+
 # `main` configures INFO logging on import and the suite deliberately walks
 # error paths; keep the Playwright output readable.
 logging.getLogger().setLevel(logging.WARNING)

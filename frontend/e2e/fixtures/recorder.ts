@@ -47,6 +47,8 @@ const REDACTED_KEYS = new Set([
   'opening_balance_date',
   'spreadsheet_id',
   'appended_range',
+  // The Bought deal form's load time, sent with each save (tasks/todo/ConstructionAccountPerRehab.md, Step D).
+  'updated_at_the_form_was_loaded_with',
 ]);
 
 /** Any key ending in `_id` is an identifier too (`recurring_rule_id`, ...). */
@@ -119,8 +121,9 @@ function sortedQuery(url: URL): Record<string, string> | undefined {
   const keys = [...new Set(url.searchParams.keys())].sort();
   if (keys.length === 0) return undefined;
   const out: Record<string, string> = {};
-  // A repeated key (a list parameter such as `selected_result_keys`) keeps every value, in order.
-  for (const key of keys) out[key] = url.searchParams.getAll(key).join(',');
+  // A repeated key (a list parameter such as `selected_result_keys`) keeps every value, in order. A volatile one is
+  // redacted like a body key.
+  for (const key of keys) out[key] = isRedactedKey(key) ? REDACTED : url.searchParams.getAll(key).join(',');
   return out;
 }
 

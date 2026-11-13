@@ -25,6 +25,8 @@ export const DEFAULT_REFRESH_INTERVAL_SECONDS = 30
 export const MINIMUM_MILLISECONDS_BETWEEN_FOCUS_REFRESHES = 5000
 export const INSTANT_UPDATES_CHECK_MILLISECONDS = 5000
 export const BURST_READ_OFFSETS_SECONDS = [0, 2, 5, 10, 20, 40] as const
+/** The server's longest back-off (BL/liquidity/common/mercury_reads.py), plus a margin. */
+export const LONGEST_SERVER_BACK_OFF_MILLISECONDS = 6 * 60 * 1000
 
 function changedRowCount(rowChanges: ConstructionAccountRefreshResult['bank_reported_row_changes'][number]): number {
   const counts = rowChanges.change_counts
@@ -49,9 +51,13 @@ export function useLiveMercuryRefresh() {
   const tabIsVisible = () => typeof document === 'undefined' || document.visibilityState !== 'hidden'
   const timelineIsLoaded = () => liquidityStore.transactions.length > 0 || liquidityStore.importedDeals.length > 0
 
+  /** The server's time, against this device's clock: a wait longer than the longest back-off (5 minutes) means the
+   * clocks disagree, not that Mercury asked, and is ignored (the server paces every read itself anyway). */
   function serverAsksToWait(): boolean {
     const notBefore = constructionAccountStore.nextMercuryReadNotBefore
-    return !!notBefore && Date.parse(notBefore) > Date.now()
+    if (!notBefore) return false
+    const waitMilliseconds = Date.parse(notBefore) - Date.now()
+    return waitMilliseconds > 0 && waitMilliseconds <= LONGEST_SERVER_BACK_OFF_MILLISECONDS
   }
 
   async function showWhatChanged(cashBalanceChanged: boolean, constructionAccountsChanged: boolean): Promise<void> {
@@ -146,6 +152,7 @@ export function useLiveMercuryRefresh() {
   function startTheInstantUpdatesCheckWhenOn(): void {
     const instantUpdatesAreOn = constructionAccountStore.connectionStatus?.workspaces.some(workspace => workspace.instant_updates_are_on) ?? false
     if (instantUpdatesAreOn && !instantUpdatesTimer) {
+      void checkForAnInstantUpdate()   // the baseline now, so an event before the first tick is still seen
       instantUpdatesTimer = setInterval(() => { void checkForAnInstantUpdate() }, INSTANT_UPDATES_CHECK_MILLISECONDS)
     } else if (!instantUpdatesAreOn && instantUpdatesTimer) {
       clearInterval(instantUpdatesTimer)
