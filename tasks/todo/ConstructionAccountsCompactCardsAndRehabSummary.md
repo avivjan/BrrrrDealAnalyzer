@@ -112,7 +112,7 @@ The Construction Accounts page gets compact cards that open on click, with plain
 - [x] `mcp_server.py`: tool descriptions for `list_liquidity_construction_account_rehab_summaries` and `send_liquidity_construction_account_rehab_summary_again`. Exclude the PDF and CSV download routes (files for the browser), like the photo routes. `mark_liquidity_construction_account_closed_out` and Send again are now open-world (they e-mail). Update the glossary: a close-out sends the summary. Add the tools to `tests/test_mcp_tools.py` (45 min)
 
 ### Step 7: Security (1 h)
-- [ ] From `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely:
+- [x] From `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely:
   - no address, secret or token in the frontend bundle or in the repo;
   - every new route is behind the auth gate (the auth-gate test lists them);
   - PDF, e-mail and CSV escaping, including the formula-injection guard;
@@ -124,7 +124,7 @@ The Construction Accounts page gets compact cards that open on click, with plain
   Run `/security-review` on the branch diff and record the results in `SECURITY_PLAN.md` (1 h)
 
 ### Step 8: Docs, PR (30 min)
-- [ ] README: the Construction accounts section (compact cards, rehab summary, env vars); check off this plan; push; open the PR (30 min)
+- [x] README: the Construction accounts section (compact cards, rehab summary, env vars); check off this plan; push; open the PR (30 min)
 
 ## Tests
 
