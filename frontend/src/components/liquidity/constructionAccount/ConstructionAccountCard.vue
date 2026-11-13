@@ -17,6 +17,7 @@ import {
 import { useConstructionAccountStore } from '../../../stores/constructionAccountStore'
 import type { ConstructionAccountRehabFiguresReq, ConstructionAccountStatus, ConstructionAccountTimelineRow, ConstructionAccountTransfer } from '../../../types/constructionAccount'
 import { todayISO } from '../../../utils/liquidityEngine'
+import { mercuryAccountDisplayName } from '../../../utils/mercuryAccountDisplayName'
 import { formatMoney, formatSignedMoney } from '../../../utils/money'
 import type { ConstructionAccountTransferKind } from '../../../utils/constructionAccountTransferRules'
 import ConstructionAccountEditableFigure from './ConstructionAccountEditableFigure.vue'
@@ -170,8 +171,8 @@ function shortDateTime(iso: string | null): string {
         <p class="mt-0.5 text-xs text-fg-muted">
           <template v-if="status.mercury_workspace_label">LLC {{ status.mercury_workspace_label }} · </template>
           <template v-if="status.construction_account">
-            {{ status.construction_account.name }} ••{{ status.construction_account.account_number_last_four }}
-            → {{ status.primary_checking_account?.name }} ••{{ status.primary_checking_account?.account_number_last_four }}
+            {{ mercuryAccountDisplayName(status.construction_account) }}
+            → {{ mercuryAccountDisplayName(status.primary_checking_account) }}
           </template>
           <template v-else>No construction account linked yet</template>
         </p>

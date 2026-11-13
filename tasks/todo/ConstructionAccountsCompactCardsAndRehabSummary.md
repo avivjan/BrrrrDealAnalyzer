@@ -28,8 +28,8 @@ The Construction Accounts page gets compact cards that open on click, with plain
 - [x] Done in Part B: the shared branch exists and both plans are committed
 
 ### Step 1: Fix the doubled last-four digits (30 min)
-- [ ] Add `mercuryAccountDisplayName(account)` to `frontend/src/utils/mercuryAccountDisplayName.ts`. It returns `name ••1234`, or just `name` when the name already ends with those four digits (with or without `••`, `•`, `*` or `x` in front) (15 min)
-- [ ] Use it in `ConstructionAccountCard.vue` (header), `ConstructionAccountSettingsModal.vue` (both pickers) and `ConstructionAccountSwitchModal.vue` (15 min)
+- [x] Add `mercuryAccountDisplayName(account)` to `frontend/src/utils/mercuryAccountDisplayName.ts`. It returns `name ••1234`, or just `name` when the name already ends with those four digits (with or without `••`, `•`, `*` or `x` in front) (15 min)
+- [x] Use it in `ConstructionAccountCard.vue` (header), `ConstructionAccountSettingsModal.vue` (both pickers) and `ConstructionAccountSwitchModal.vue` (15 min)
 
 ### Step 2: Compact cards and a clearer page (8 h)
 - [ ] **Pure figures helper** `frontend/src/utils/constructionAccountSummaryFigures.ts`. From a `ConstructionAccountStatus` it computes what the compact card shows (1.5 h):
