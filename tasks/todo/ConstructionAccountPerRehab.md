@@ -127,7 +127,7 @@ The first three are what you asked for. I propose the rest after reviewing the w
 - [x] Migration step (`migrations/steps/`, registered in `runner.py`): set `liquidity_rows_out_of_date = true` on every imported BRRRR deal, so each shows Re-sync with the before → after list. No row changes silently (0.75 h)
 
 ### Phase 2 — DAL, projection and endpoints (12 h)
-- [ ] **Tables** (DAL models + one migration step) (3 h):
+- [x] **Tables** (DAL models + one migration step) (3 h):
   - `liquidity_construction_accounts`, one per Bought BRRRR deal:
     - `bought_brrr_deal_id` (unique), `mercury_workspace_label`;
     - `construction_mercury_account_id` (unique), `primary_checking_mercury_account_id`, `previous_construction_mercury_account_ids` (JSON history);
@@ -138,26 +138,36 @@ The first three are what you asked for. I propose the rest after reviewing the w
   - `liquidity_construction_account_transaction_overrides`: `mercury_transaction_id` (unique), `bought_brrr_deal_id`, `ignored` (bool), `category_override` (nullable: `loan_draw` / `rehab_payment` / `own_money`), `note`, `updated_at`.
   - `liquidity_construction_account_transfers`: see Phase 6.
   - Deleting the Bought deal deletes all of its rows (`BL/boughtDeal/deleteBoughtDeal.py`).
-- [ ] **Link and settings** (2 h):
+- [x] **Link and settings** (2 h):
   - `PUT /liquidity/construction-accounts/{bought_deal_id}` creates or edits the link. Everything stays editable at any time: baselines, checking, deposit target override, keep-at-least buffer.
   - Validation: both accounts are in the same workspace; the checking is counted as cash; the construction account isn't linked to another deal; amounts are ≥ 0.
   - `DELETE` unlinks, after a confirm that names the manual entries and overrides that go with it.
-- [ ] **Switch account** (1 h): `POST .../switch-account` (body: the new account id, plus the baselines to save). `GET .../switch-account-preview` returns the old account's categorised draws and payments and its balance. A 409 while the old balance isn't $0. On save: the baselines get the confirmed values, the old id moves into the history, and the overrides of the old account's transactions stay stored but are no longer used.
-- [ ] **Manual adjustments** (1 h): `POST /liquidity/construction-accounts/{bought_deal_id}/manual-adjustments`, `PUT` / `DELETE .../manual-adjustments/{adjustment_id}`. Validation: amount > 0 and under a sane cap, note ≤ 500 characters, a date.
-- [ ] **Transactions and overrides** (1.5 h):
+- [x] **Switch account** (1 h): `POST .../switch-account` (body: the new account id, plus the baselines to save). `GET .../switch-account-preview` returns the old account's categorised draws and payments and its balance. A 409 while the old balance isn't $0. On save: the baselines get the confirmed values, the old id moves into the history, and the overrides of the old account's transactions stay stored but are no longer used.
+- [x] **Manual adjustments** (1 h): `POST /liquidity/construction-accounts/{bought_deal_id}/manual-adjustments`, `PUT` / `DELETE .../manual-adjustments/{adjustment_id}`. Validation: amount > 0 and under a sane cap, note ≤ 500 characters, a date.
+- [x] **Transactions and overrides** (1.5 h):
   - `GET .../transactions` lists the account's transactions: date, counterparty, amount, automatic category, override, effective category.
   - `PUT .../transactions/{mercury_transaction_id}/override` takes `ignored`, `category_override` and `note`. It's refused unless the id is one of that deal's account transactions (checked against the fetched list). `DELETE` restores automatic.
-- [ ] **Close-out controls** (0.5 h): `POST .../mark-ready-for-close-out`, `POST .../mark-closed-out` (no transfer; the answer says if the balance isn't $0), and `POST .../reopen`.
-- [ ] `BL/liquidity/mercuryBalance.py`: a linked construction account is never counted as cash, even while `mercury_account_ids_counted_as_cash` is null (0.5 h)
-- [ ] `mercury_client.py`: `fetch_account_transactions(account_id, since)` with the read token, paged and cached like balances. `GET /account/{id}/transactions` joins `/accounts` as the only read URLs (1 h)
-- [ ] `BL/liquidity/constructionAccount/construction_account_projection.py` (pure):
+- [x] **Close-out controls** (0.5 h): `POST .../mark-ready-for-close-out`, `POST .../mark-closed-out` (no transfer; the answer says if the balance isn't $0), and `POST .../reopen`.
+- [x] `BL/liquidity/mercuryBalance.py`: a linked construction account is never counted as cash, even while `mercury_account_ids_counted_as_cash` is null (0.5 h)
+- [x] `mercury_client.py`: `fetch_account_transactions(account_id, since)` with the read token, paged and cached like balances. `GET /account/{id}/transactions` joins `/accounts` as the only read URLs (1 h)
+- [x] `BL/liquidity/constructionAccount/construction_account_projection.py` (pure):
   - takes the transactions, overrides, manual adjustments, link settings and the transfer log;
   - returns the model above plus a breakdown of each sum by source (bank / before-link / manual) for the page (1 h)
-- [ ] Reuse the deal-row machinery: `planned_cash_rows_including_construction_account_live_amounts(deal, projection)` next to `planned_cash_rows_including_late_refi_months` (`deal_cash_rows.py`), so re-sync and refresh agree. Live amounts always win on the three rows; the return row's date can still be postponed (0.5 h)
-- [ ] `POST /liquidity/construction-accounts/refresh` (body: `today`), called on timeline load next to `refreshLateRefis` (`frontend/src/api/liquidity.ts`), and after every write above.
+- [x] Reuse the deal-row machinery: `planned_cash_rows_including_construction_account_live_amounts(deal, projection)` next to `planned_cash_rows_including_late_refi_months` (`deal_cash_rows.py`), so re-sync and refresh agree. Live amounts always win on the three rows; the return row's date can still be postponed (0.5 h)
+- [x] `POST /liquidity/construction-accounts/refresh` (body: `today`), called on timeline load next to `refreshLateRefis` (`frontend/src/api/liquidity.ts`), and after every write above.
   - `GET /liquidity/construction-accounts` returns every eligible deal, linked or not, with the page's fields and `amounts_as_of`.
   - If Mercury fails, rows keep their last amounts.
   - Idempotent by identity; every write audited without amounts (0.5 h)
+
+
+**How Phase 2 was built (2026-11-13), where it differs from the list above:**
+- **The link stores the bank sums of the last refresh** (balance, categorised draws, payments, own money in / out, `bank_amounts_as_of`) and the two accounts' names with their last four digits. Every number is recomputed from those without Mercury, so a deal save, a re-sync and an outage all see the same three rows, and `GET /liquidity/construction-accounts` never calls Mercury.
+- **A change order waits for the Re-sync.** A deal that is "liquidity out of date" keeps its three rows until you confirm the re-sync (which aims for the live amounts). The page shows the new projection at once and says the rows are waiting.
+- **Marked done, not deleted.** The deposit row is marked Done when your own money in the account reaches the deposit target; the return row is marked Done at close-out.
+- **Unlink** puts the three rows back on the schedule's plan.
+- **Editing a link** uses the same `PUT`; changing the construction account itself is only the switch.
+- **The MCP descriptions and annotations of these 15 tools are done here** (the tests require them with the routes); Phase 7 keeps only the deposit / steal exclusion.
+- **Not done yet:** matching in-app transfers against the bank feed (it belongs with the transfer log in Phase 6).
 
 ### Phase 3 — Construction Accounts page, card and controls (10 h)
 - [ ] Route `/liquidity/construction-accounts` (name `construction-accounts`) in `router/index.ts`. Add the entry to `shell/nav.ts` (sidebar, command palette) and keep `nav.test.ts` in step. Check the phone bottom nav at 390 px: if an eighth item doesn't fit, the page is in the sidebar and palette only, and is reached on a phone from the Liquidity page button (1 h)
