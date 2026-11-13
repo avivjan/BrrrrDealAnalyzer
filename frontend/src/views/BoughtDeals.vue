@@ -2,6 +2,7 @@
 import { safeHref } from "../utils/safeHref";
 import { ref, watch, onMounted, computed, nextTick } from "vue";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
+import { useConstructionAccountStore } from "../stores/constructionAccountStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
@@ -33,7 +34,8 @@ import {
 } from "../config/boughtDealStages";
 
 const store = useBoughtDealStore();
-const { offerEarnestMoneyRefundBeforeDeletingDeal } = useDealLiquidityRows();
+const { offerEarnestMoneyRefundBeforeDeletingDeal, askToSyncDealRowsIfTheSaveChangedThem } = useDealLiquidityRows();
+const constructionAccountStore = useConstructionAccountStore();
 const pipelineStore = usePipelineTemplateStore();
 
 const activeTab = ref<"FLIP" | "BRRRR">("BRRRR");
@@ -88,6 +90,7 @@ onMounted(async () => {
   await nextTick();
   centreBusiestColumn();
   boardIsLoaded.value = true;
+  void constructionAccountStore.load();   // each BRRRR card's construction account state (it never blocks the board)
 });
 
 // A link opens a deal's modal (`/bought-deals?openDeal=…&dealType=…`, tasks/todo/ConstructionAccountPerRehab.md, Step C0).
@@ -307,6 +310,29 @@ let isInitialLoad = true;
 let settleUntilMs = 0;
 const MODAL_SETTLE_MS = 250;
 let savedTimeoutId: ReturnType<typeof setTimeout> | null = null;
+/**
+ * The deal's `updated_at` when this form was loaded (or last saved): sent with each save, so a form left open while
+ * the deal changed elsewhere (another tab, the Construction Accounts card) cannot overwrite it.
+ */
+let updatedAtTheFormWasLoadedWith: string | null = null;
+const STALE_FORM_MESSAGE = "This deal was changed elsewhere; your form was refreshed.";
+const staleFormMessage = ref<string | null>(null);
+/** Bumped when the form is refreshed from the server: its fields bind to the deal they were made with, so they are made again. */
+const formReloadCount = ref(0);
+
+function isAStaleFormRefusal(error: unknown): boolean {
+  return (error as { response?: { status?: number } })?.response?.status === 409;
+}
+
+/** Refused as stale: nothing of the stale edit is kept; the form shows the deal as the server has it. */
+async function reloadTheFormAfterAChangeElsewhere(dealId: string) {
+  const freshDeal = await store.reloadBoughtDeal(dealId);
+  if (freshDeal && showDetailModal.value && editingDeal.value?.id === dealId) {
+    openDeal(freshDeal);
+    formReloadCount.value += 1;
+    staleFormMessage.value = STALE_FORM_MESSAGE;
+  }
+}
 
 const performSave = async () => {
   if (!editingDeal.value || !isDirty) return;
@@ -318,10 +344,14 @@ const performSave = async () => {
   isDirty = false;
   saveStatus.value = "saving";
   try {
-    const updatedDeal = await store.updateBoughtDeal(editingDeal.value);
+    const savedDeal = editingDeal.value;
+    const updatedDeal = await store.updateBoughtDeal(savedDeal, updatedAtTheFormWasLoadedWith);
     if (updatedDeal) {
-      currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
+      currentAnalysis.value = { ...savedDeal, ...updatedDeal };
+      updatedAtTheFormWasLoadedWith = updatedDeal.updated_at ?? updatedAtTheFormWasLoadedWith;
     }
+    staleFormMessage.value = null;
+    if (savedDeal.deal_type !== "FLIP") void askToSyncDealRowsIfTheSaveChangedThem("bought", savedDeal.id, savedDeal.address);
     lastSavedDealSnapshot = JSON.parse(JSON.stringify(editingDeal.value));
     if (isDirty) {
       debouncedAutoSave();
@@ -332,7 +362,12 @@ const performSave = async () => {
         saveStatus.value = "idle";
       }, 2000);
     }
-  } catch {
+  } catch (error) {
+    if (isAStaleFormRefusal(error) && editingDeal.value) {
+      saveStatus.value = "idle";
+      await reloadTheFormAfterAChangeElsewhere(editingDeal.value.id);
+      return;
+    }
     isDirty = true;
     saveStatus.value = "error";
   }
@@ -372,6 +407,8 @@ const openDeal = (deal: BoughtDealRes) => {
   const clone = JSON.parse(JSON.stringify(deal)) as BoughtDealRes;
   ensureBrrrLegacyDefaults(clone);
   editingDeal.value = clone;
+  updatedAtTheFormWasLoadedWith = clone.updated_at ?? null;
+  staleFormMessage.value = null;
   lastSavedDealSnapshot = JSON.parse(JSON.stringify(clone));
   modalOpenStage.value = clone.boughtStage;
   currentAnalysis.value = JSON.parse(JSON.stringify(clone));
@@ -773,6 +810,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             >
               <BoughtDealCard
                 :deal="deal"
+                :construction-account-status="constructionAccountStore.accountById.get(deal.id) ?? null"
                 @delete="confirmDelete(deal)"
                 @advance="advanceDeal(deal)"
                 class="h-full"
@@ -1179,6 +1217,7 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
             <!-- Analyze Deal Fields -->
             <div class="border-t border-line pt-6 space-y-6">
               <DealInputsForm
+                :key="`${editingDeal.id}:${formReloadCount}`"
                 :deal="editingDeal"
                 :deal-type="editingDealType"
                 surface="panel"
@@ -1488,6 +1527,9 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                 }}
               </div>
               <div class="flex flex-wrap items-center gap-2">
+                <p v-if="staleFormMessage" data-testid="boughtdeals.modal.stale-form" role="alert" class="text-xs font-medium text-warning">
+                  {{ staleFormMessage }}
+                </p>
                 <UiSaveStatus
                   data-testid="boughtdeals.modal.save-status"
                   :data-state="hasInvalidDealInputs ? 'error' : saveStatus"

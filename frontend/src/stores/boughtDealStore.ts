@@ -35,6 +35,12 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     }
   }
 
+  /** One deal as the server has it now (after a stale form was refused): the board is read again. */
+  async function reloadBoughtDeal(dealId: string): Promise<BoughtDealRes | null> {
+    await fetchBoughtDeals();
+    return boughtDeals.value.find(d => d.id === dealId) ?? null;
+  }
+
   async function analyze(data: AnalyzeDealReq, type: 'BRRRR' | 'FLIP'): Promise<AnalyzeDealRes | null> {
     try {
       return await api.analyzeDeal(data, type);
@@ -44,11 +50,11 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     }
   }
 
-  async function updateBoughtDeal(deal: BoughtDealRes) {
+  async function updateBoughtDeal(deal: BoughtDealRes, updatedAtTheFormWasLoadedWith?: string | null) {
     console.group('BoughtDealStore: updateBoughtDeal');
     isLoading.value = true;
     try {
-      const updatedDeal = await api.updateBoughtDeal(deal);
+      const updatedDeal = await api.updateBoughtDeal(deal, updatedAtTheFormWasLoadedWith);
       const index = boughtDeals.value.findIndex(d => d.id === deal.id);
       if (index !== -1) {
         boughtDeals.value[index] = updatedDeal;
@@ -198,6 +204,7 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     dealsByType,
     countByType,
     fetchBoughtDeals,
+    reloadBoughtDeal,
     analyze,
     updateBoughtDeal,
     deleteBoughtDeal,

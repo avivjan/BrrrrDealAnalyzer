@@ -18,6 +18,8 @@ import type { BoughtDealRes, BoughtBrrrDealRes, BoughtFlipDealRes } from "../typ
 import { formatDealForClipboard } from "../utils/dealUtils";
 import { safeHref } from "../utils/safeHref";
 import { constructionAccountOfDeal } from "../navigation/appLinks";
+import type { ConstructionAccountStatus } from "../types/constructionAccount";
+import { constructionAccountStateOf } from "../utils/constructionAccountState";
 import { useBoughtDealStore } from "../stores/boughtDealStore";
 import { usePipelineTemplateStore } from "../stores/pipelineTemplateStore";
 import {
@@ -30,6 +32,8 @@ import {
 } from "../config/boughtDealStages";
 
 const props = defineProps<{
+  /** Its rehab's construction account, when the deal is on the Construction Accounts page: the link shows its state. */
+  constructionAccountStatus?: ConstructionAccountStatus | null;
   deal: BoughtDealRes;
 }>();
 
@@ -45,6 +49,8 @@ const isCopied = ref(false);
 
 const isBrrr = computed(() => !props.deal.deal_type || props.deal.deal_type === "BRRRR");
 const isFlip = computed(() => props.deal.deal_type === "FLIP");
+const constructionAccountState = computed(() => props.constructionAccountStatus ? constructionAccountStateOf(props.constructionAccountStatus) : null);
+const CONSTRUCTION_ACCOUNT_STATE_TEXT_CLASS = { neutral: "text-fg-muted", positive: "text-positive", warning: "text-warning", negative: "text-negative" } as const;
 
 const brrrDeal = computed(() => isBrrr.value ? (props.deal as BoughtBrrrDealRes) : null);
 const flipDeal = computed(() => isFlip.value ? (props.deal as BoughtFlipDealRes) : null);
@@ -283,6 +289,12 @@ const onToggleSubstage = (substageId: string) => {
       >
         <i class="pi pi-building-columns text-[11px]" aria-hidden="true"></i>
         Account
+        <span
+          v-if="constructionAccountState"
+          data-testid="boughtcard.construction-account-state"
+          :data-state="constructionAccountState.label"
+          :class="CONSTRUCTION_ACCOUNT_STATE_TEXT_CLASS[constructionAccountState.tone]"
+        >· {{ constructionAccountState.label }}</span>
       </RouterLink>
       </div>
     </div>

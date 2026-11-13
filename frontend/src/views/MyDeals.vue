@@ -30,7 +30,7 @@ console.log("Component setup started");
 
 const boughtStore = useBoughtDealStore();
 const store = useDealStore();
-const { offerToRemoveOpenRowsOfDeadDeal, offerEarnestMoneyRefundBeforeDeletingDeal } = useDealLiquidityRows();
+const { offerToRemoveOpenRowsOfDeadDeal, offerEarnestMoneyRefundBeforeDeletingDeal, askToSyncDealRowsIfTheSaveChangedThem } = useDealLiquidityRows();
 
 /** A BRRRR deal just marked Dead: offer to take its open rows out of the liquidity timeline. */
 const offerLiquidityCleanupWhenDealDies = (deal: { id: string; address: string; deal_type?: string }, newStage: number, oldStage: number) => {
@@ -402,6 +402,7 @@ const performSave = async () => {
       currentAnalysis.value = { ...editingDeal.value, ...updatedDeal };
     }
     offerLiquidityCleanupWhenDealDies(editingDeal.value, Number(editingDeal.value.stage), stageBeforeThisSave);
+    if (editingDeal.value.deal_type !== 'FLIP') void askToSyncDealRowsIfTheSaveChangedThem('my_deals', editingDeal.value.id, editingDeal.value.address);
     lastSavedDealSnapshot = JSON.parse(JSON.stringify(editingDeal.value));
     if (isDirty) {
       debouncedAutoSave();

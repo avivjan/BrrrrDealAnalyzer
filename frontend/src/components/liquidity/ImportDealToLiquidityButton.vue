@@ -21,15 +21,18 @@ const props = defineProps<{
   savePendingChanges: () => Promise<boolean>
 }>()
 
-const { importedDeal, boughtCopyInLiquidity, refreshImportedDeals } = useDealLiquidityRows()
+const { importedDeal, boughtCopyInLiquidity, refreshImportedDeals, askToSyncDealRows } = useDealLiquidityRows()
 onMounted(refreshImportedDeals)
 
 const thisImportedDeal = computed(() => importedDeal(props.dealBoard, props.dealId))
 const importedThroughBoughtCopy = computed(() => props.dealBoard === 'my_deals' ? boughtCopyInLiquidity(props.dealId) : null)
 const previewOpen = ref(false)
 
+/** Out of date: the same "This changes the liquidity timeline" prompt as after a save; otherwise the full preview. */
 async function openPreview() {
-  if (await props.savePendingChanges()) previewOpen.value = true
+  if (!(await props.savePendingChanges())) return
+  if (thisImportedDeal.value?.liquidity_rows_out_of_date) void askToSyncDealRows(props.dealBoard, props.dealId, props.dealAddress)
+  else previewOpen.value = true
 }
 </script>
 

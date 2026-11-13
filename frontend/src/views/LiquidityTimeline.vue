@@ -3,6 +3,7 @@ import { ref, computed, onMounted, toRef, watch } from 'vue'
 import { useDeepLinkQuery } from '../composables/useDeepLinkQuery'
 import { readLiquidityLinkQuery } from '../navigation/appLinks'
 import { useRouter } from 'vue-router'
+import { useConstructionAccountStore } from '../stores/constructionAccountStore'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import { provideLiquidityDealAttribution } from '../composables/useLiquidityDealAttribution'
 import { useOneTapMilestoneApproval } from '../composables/useOneTapMilestoneApproval'
@@ -22,7 +23,9 @@ import TransactionForm from '../components/liquidity/TransactionForm.vue'
 import SimulationWarning from '../components/liquidity/SimulationWarning.vue'
 import SettingsPanel from '../components/liquidity/SettingsPanel.vue'
 import DealMilestoneChangeModal from '../components/liquidity/DealMilestoneChangeModal.vue'
-import DealImportPreviewModal from '../components/liquidity/DealImportPreviewModal.vue'
+import { useDealLiquidityRows } from '../composables/useDealLiquidityRows'
+import { useLiveMercuryRefresh } from '../composables/useLiveMercuryRefresh'
+import { useLiquidityTimelineChangePromptStore } from '../stores/liquidityTimelineChangePromptStore'
 import LiquidityTheaterMode from '../components/liquidity/theater/LiquidityTheaterMode.vue'
 
 
@@ -132,13 +135,19 @@ const { notFoundMessage: deepLinkNotFoundMessage } = useDeepLinkQuery(readLiquid
 
 watch(deepLinkNotFoundMessage, (message) => { if (message) showToast(message) })
 
+// Live Mercury: the cash balance and the construction account rows update without a reload (Requirement 4).
+const { refreshNow: refreshFromMercuryInTheBackground } = useLiveMercuryRefresh()
+
 onMounted(async () => {
   await loadLiquidityData()
   liquidityDataIsLoaded.value = true
+  askToSyncEveryDealStillOutOfDate()
   await store.syncFromMercury()
   if (store.mercuryError) {
     showToast('Mercury sync failed: ' + store.mercuryError)
   }
+  void refreshFromMercuryInTheBackground()
+  void useConstructionAccountStore().loadConnectionStatus().catch(() => undefined)   // turns the instant-update check on
 })
 
 async function refreshFromMercury() {
@@ -514,7 +523,9 @@ async function onUndo() {
 
 // --- Imported deals: milestones, re-sync after a deal edit, a dead deal ---
 const milestoneChange = ref<{ deal: ImportedLiquidityDeal; milestone: DealMilestone; approve: boolean } | null>(null)
-const dealToResync = ref<ImportedLiquidityDeal | null>(null)
+// A deal whose rows a save changed: "This changes the liquidity timeline", with Confirm and Cancel (Requirement 1).
+const { askToSyncDealRows, askToSyncEveryDealStillOutOfDate } = useDealLiquidityRows()
+const timelineChangePromptStore = useLiquidityTimelineChangePromptStore()
 
 function onChangeMilestone(deal: ImportedLiquidityDeal, milestone: DealMilestone, approve: boolean) {
   milestoneChange.value = { deal, milestone, approve }
@@ -535,7 +546,7 @@ const { milestoneKeyBeingApproved, approveMilestoneOnItsPlannedDate } = useOneTa
 
 /** One of this view's own dialogs is open: theater mode leaves Esc and its shortcuts to it. */
 const anotherLiquidityDialogIsOpen = computed(() =>
-  formOpen.value || settingsOpen.value || warningOpen.value || !!milestoneChange.value || !!dealToResync.value)
+  formOpen.value || settingsOpen.value || warningOpen.value || !!milestoneChange.value || timelineChangePromptStore.isOpen)
 
 async function onRemoveOpenDealRows(deal: ImportedLiquidityDeal) {
   if (!window.confirm(`Remove the ${deal.open_row_count} open liquidity rows of ${deal.deal_address}? Done rows stay.`)) return
@@ -586,7 +597,7 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null, actio
       @bulk-move-to-date="onBulkMoveToDate"
       @approve-milestone="approveMilestoneOnItsPlannedDate"
       @change-milestone="onChangeMilestone"
-      @review-changes="(deal) => (dealToResync = deal)"
+      @review-changes="(deal) => askToSyncDealRows(deal.deal_board, deal.deal_id, deal.deal_address)"
       @remove-deal-from-timeline="onRemoveOpenDealRows"
     />
 
@@ -623,15 +634,6 @@ function showToast(msg: string, undo: (() => Promise<void>) | null = null, actio
       :approve="milestoneChange.approve"
       @close="milestoneChange = null"
       @applied="(result) => showToast(`Milestone saved: ${describeRowChanges(result)}`)"
-    />
-
-    <DealImportPreviewModal
-      v-if="dealToResync"
-      :deal-board="dealToResync.deal_board"
-      :deal-id="dealToResync.deal_id"
-      :deal-address="dealToResync.deal_address"
-      @close="dealToResync = null"
-      @imported="(result) => showToast(`Re-synced: ${describeRowChanges(result)}`)"
     />
 
     <!-- Toast -->

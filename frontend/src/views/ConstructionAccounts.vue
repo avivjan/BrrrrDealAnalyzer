@@ -13,18 +13,19 @@ import ConstructionAccountSettingsDrawer from '../components/liquidity/construct
 import ConstructionAccountSettingsModal from '../components/liquidity/constructionAccount/ConstructionAccountSettingsModal.vue'
 import ConstructionAccountSwitchModal from '../components/liquidity/constructionAccount/ConstructionAccountSwitchModal.vue'
 import ConstructionAccountTotals from '../components/liquidity/constructionAccount/ConstructionAccountTotals.vue'
-import { constructionAccountApi } from '../api/constructionAccount'
+import { useDealLiquidityRows } from '../composables/useDealLiquidityRows'
 import { useDeepLinkQuery } from '../composables/useDeepLinkQuery'
+import { useLiveMercuryRefresh } from '../composables/useLiveMercuryRefresh'
 import { readConstructionAccountLinkQuery, type ConstructionAccountSection } from '../navigation/appLinks'
 import { useConstructionAccountStore } from '../stores/constructionAccountStore'
+import { useLiquidityStore } from '../stores/liquidityStore'
 import type { ConstructionAccountStatus } from '../types/constructionAccount'
-import { todayISO } from '../utils/liquidityEngine'
 
 const store = useConstructionAccountStore()
+const { refreshImportedDeals, askToSyncEveryDealStillOutOfDate } = useDealLiquidityRows()
 const linkingStatus = ref<ConstructionAccountStatus | null>(null)
 const switchingStatus = ref<ConstructionAccountStatus | null>(null)
 const settingsOpen = ref(false)
-const isRefreshing = ref(false)
 const refreshMessage = ref<string | null>(null)
 const highlightedDealId = ref<string | null>(null)
 const sectionOpenedByALink = ref<{ dealId: string; section: ConstructionAccountSection } | null>(null)
@@ -35,19 +36,16 @@ const lastAmountsAsOf = computed(() => {
   return times.length ? new Date(times[times.length - 1]!).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : null
 })
 
+// Live: the interval, focus and instant-update reads (Requirement 4). The button is a read you asked for.
+const liquidityStore = useLiquidityStore()
+const { isRefreshing, refreshNow } = useLiveMercuryRefresh()
+
 async function refreshFromMercury() {
-  isRefreshing.value = true
   refreshMessage.value = null
-  try {
-    const result = await constructionAccountApi.refresh(todayISO())
-    store.nextMercuryReadNotBefore = result.next_mercury_read_not_before
-    if (result.mercury_is_unavailable) refreshMessage.value = 'Mercury did not answer; the amounts are those of the last read.'
-    await store.load()
-  } catch {
-    refreshMessage.value = 'Mercury could not be read right now.'
-  } finally {
-    isRefreshing.value = false
-  }
+  const result = await refreshNow({ isABackgroundPoll: false })
+  if (!result) refreshMessage.value = 'Mercury could not be read right now.'
+  else if (result.mercury_is_unavailable) refreshMessage.value = 'Mercury did not answer; the amounts are those of the last read.'
+  else await store.load()
 }
 
 const isReady = computed(() => store.hasLoaded)
@@ -67,7 +65,9 @@ const { notFoundMessage } = useDeepLinkQuery(readConstructionAccountLinkQuery, a
 }, isReady)
 
 onMounted(async () => {
-  await store.load()
+  await Promise.all([store.load(), refreshImportedDeals(), liquidityStore.loadSettings().catch(() => undefined),
+    store.loadConnectionStatus().catch(() => undefined)])
+  askToSyncEveryDealStillOutOfDate()
   void refreshFromMercury()
 })
 </script>
@@ -130,6 +130,6 @@ onMounted(async () => {
 
     <ConstructionAccountSettingsModal :open="linkingStatus !== null" :status="linkingStatus" @close="linkingStatus = null" />
     <ConstructionAccountSwitchModal :open="switchingStatus !== null" :status="switchingStatus" @close="switchingStatus = null" />
-    <ConstructionAccountSettingsDrawer :open="settingsOpen" @close="settingsOpen = false" />
+    <ConstructionAccountSettingsDrawer :open="settingsOpen" @close="settingsOpen = false" @saved="liquidityStore.useSavedSettings" />
   </section>
 </template>

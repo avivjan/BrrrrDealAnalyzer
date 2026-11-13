@@ -7,6 +7,7 @@
  * Opens on the outcome and the account now; the other groups expand. Its links reach the same deal everywhere else:
  * its modal on the Bought board, its rows on the timeline, and Mercury (Step C0).
  */
+import { constructionAccountStateOf } from '../../../utils/constructionAccountState'
 import { computed, ref, watch } from 'vue'
 
 import { constructionAccountApi } from '../../../api/constructionAccount'
@@ -60,13 +61,7 @@ const ROW_LABELS: Record<string, string> = {
   construction_account_top_up_needed: 'Top-up needed', appliances: 'Appliances',
 }
 
-const stateChip = computed<{ label: string; tone: 'neutral' | 'positive' | 'warning' | 'negative' }>(() => {
-  if (!props.status.is_linked) return { label: 'Not linked', tone: 'neutral' }
-  if (props.status.closed_out_at) return { label: 'Closed out', tone: 'neutral' }
-  if (props.status.needs_attention_because.includes('top_up_needed')) return { label: 'Top-up needed', tone: 'negative' }
-  if (props.status.needs_attention_because.includes('deposit_due')) return { label: 'Deposit due', tone: 'warning' }
-  return { label: 'Live', tone: 'positive' }
-})
+const stateChip = computed(() => constructionAccountStateOf(props.status))
 
 function timelineRowOf(itemKey: string): ConstructionAccountTimelineRow | undefined {
   return props.status.timeline_rows.find(row => row.item_key === itemKey && !row.is_done)

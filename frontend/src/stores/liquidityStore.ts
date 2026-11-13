@@ -380,27 +380,7 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     mercurySyncing.value = true
     mercuryError.value = null
     try {
-      const balance = await liquidityApi.getMercuryBalance()
-      mercuryBalance.value = balance
-      mercuryLastSyncedAt.value = new Date().toISOString()
-
-      if (balance.workspace_errors.length > 0) {
-        mercuryError.value = balance.workspace_errors
-          .map(w => `${w.workspace}: ${w.error}`)
-          .join('; ')
-        return
-      }
-
-      const today = todayISO()
-      const needsUpdate =
-        settings.value.opening_balance_dollars !== balance.counted_as_cash_balance_dollars ||
-        settings.value.opening_balance_date !== today
-      if (needsUpdate) {
-        await updateSettings({
-          opening_balance_dollars: balance.counted_as_cash_balance_dollars,
-          opening_balance_date: today,
-        })
-      }
+      await applyMercuryBalance()
     } catch (e: any) {
       mercuryError.value =
         e?.response?.data?.detail || e?.message || 'Failed to sync from Mercury'
@@ -409,7 +389,49 @@ export const useLiquidityStore = defineStore('liquidity', () => {
     }
   }
 
+  /**
+   * Read the balances (the snapshot a live read or a webhook just stored: no second Mercury call) and re-anchor the
+   * starting balance to today on them. Also used by the live refresh when the LLC's cash moved, with no spinner.
+   */
+  async function applyMercuryBalance(): Promise<void> {
+    const balance = await liquidityApi.getMercuryBalance()
+    mercuryBalance.value = balance
+    mercuryLastSyncedAt.value = new Date().toISOString()
+
+    if (balance.workspace_errors.length > 0) {
+      mercuryError.value = balance.workspace_errors
+        .map(w => `${w.workspace}: ${w.error}`)
+        .join('; ')
+      return
+    }
+    mercuryError.value = null
+
+    const today = todayISO()
+    const needsUpdate =
+      settings.value.opening_balance_dollars !== balance.counted_as_cash_balance_dollars ||
+      settings.value.opening_balance_date !== today
+    if (needsUpdate) {
+      await updateSettings({
+        opening_balance_dollars: balance.counted_as_cash_balance_dollars,
+        opening_balance_date: today,
+      })
+    }
+  }
+
+  /** Only the settings (a page that shows no timeline, like Construction Accounts). */
+  async function loadSettings(): Promise<void> {
+    settings.value = await liquidityApi.getSettings()
+  }
+
+  /** Settings saved by a panel that wrote them itself. */
+  function useSavedSettings(saved: LiquiditySettings): void {
+    settings.value = saved
+  }
+
   return {
+    applyMercuryBalance,
+    loadSettings,
+    useSavedSettings,
     transactions,
     recurringRules,
     effectiveTransactions,
