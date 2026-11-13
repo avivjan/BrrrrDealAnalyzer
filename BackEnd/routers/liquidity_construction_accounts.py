@@ -15,7 +15,8 @@ import re
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -24,12 +25,13 @@ from BL.auth.common.session_dependency import require_recent_auth
 from BL.liquidity.constructionAccount import construction_account_transfers as construction_account_transfers_bl
 from BL.liquidity.constructionAccount import construction_accounts as construction_accounts_bl
 from BL.liquidity.constructionAccount import mercury_instant_updates as instant_updates_bl
+from BL.liquidity.constructionAccount import rehab_summary_delivery as rehab_summary_delivery_bl
 from DAL.data_models.liquidity.construction_account_models import (
     TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING,
 )
 from ReqRes.common.liquidity_construction_account_schemas import (
     ConstructionAccountLinkReq, ConstructionAccountListRes, ConstructionAccountManualAdjustmentReq, ConstructionAccountRefreshReq,
-    ConstructionAccountRefreshRes, ConstructionAccountRehabFiguresReq, ConstructionAccountSwitchPreviewRes,
+    ConstructionAccountRefreshRes, ConstructionAccountRehabFiguresReq, ConstructionAccountRehabSummaryRes, ConstructionAccountSwitchPreviewRes,
     ConstructionAccountSwitchReq, ConstructionAccountTransactionOverrideReq, ConstructionAccountTransactionRes,
     ConstructionAccountTransferReq, ConstructionAccountTransferWriteRes, ConstructionAccountWriteRes, MercuryConnectionStatusRes,
     MercuryLastChangeRes,
@@ -81,6 +83,9 @@ def _run(db: Session, action, commit: bool = True):
     except construction_accounts_bl.ConstructionAccountConflictError as error:
         db.rollback()
         raise HTTPException(status_code=409, detail=str(error))
+    except construction_accounts_bl.ConstructionAccountRateLimitedError as error:
+        db.rollback()
+        raise HTTPException(status_code=429, detail=str(error))
     except construction_account_transfers_bl.ConstructionAccountTransferRefusedError as error:
         db.rollback()
         raise HTTPException(status_code=error.http_status, detail=str(error))
@@ -281,14 +286,67 @@ def mark_liquidity_construction_account_ready_for_close_out(bought_deal_id: str,
 
 
 @router.post("/liquidity/construction-accounts/{bought_deal_id}/mark-closed-out", response_model=ConstructionAccountWriteRes)
-def mark_liquidity_construction_account_closed_out(bought_deal_id: str, request: Request, preview_only: bool = PREVIEW_ONLY,
-                                                   today: Optional[date] = TODAY,
+def mark_liquidity_construction_account_closed_out(bought_deal_id: str, request: Request, background_tasks: BackgroundTasks,
+                                                   preview_only: bool = PREVIEW_ONLY, today: Optional[date] = TODAY,
                                                    use_the_new_value_for: Optional[List[str]] = USE_THE_NEW_VALUE_FOR,
                                                    db: Session = Depends(get_db)):
-    """Close the account out without a transfer (you emptied it in Mercury): its return row is marked done."""
+    """Close the account out without a transfer (you emptied it in Mercury): its return row is marked done. The first
+    close-out also makes the rehab summary (a PDF and a CSV of every transaction), e-mailed to the owner and saved to
+    the owner's Google Drive in the background."""
     choices = _use_the_new_value_for(use_the_new_value_for)
-    return _write(db, request, "liquidity_construction_account_closed_out", bought_deal_id, preview_only,
-                  lambda: construction_accounts_bl.mark_closed_out(db, bought_deal_id, today, choices, preview_only))
+    result = _write(db, request, "liquidity_construction_account_closed_out", bought_deal_id, preview_only,
+                    lambda: construction_accounts_bl.mark_closed_out(db, bought_deal_id, today, choices, preview_only))
+    if not preview_only:
+        background_tasks.add_task(rehab_summary_delivery_bl.deliver_the_new_rehab_summaries_of_deal_after_commit, bought_deal_id)
+    return result
+
+
+# --- The rehab summary (made at close-out) ------------------------------------------------------------------------
+
+@router.get("/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries", response_model=List[ConstructionAccountRehabSummaryRes])
+def list_liquidity_construction_account_rehab_summaries(bought_deal_id: str, db: Session = Depends(get_db)):
+    """The deal's rehab summaries, newest first: when each was made, and whether it was e-mailed and saved to Drive
+    (only the type name of a failure, never its text)."""
+    return _run(db, lambda: construction_accounts_bl.list_rehab_summaries_of_deal(db, bought_deal_id), commit=False)
+
+
+@router.post("/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries", response_model=ConstructionAccountRehabSummaryRes)
+def send_liquidity_construction_account_rehab_summary_again(bought_deal_id: str, request: Request, background_tasks: BackgroundTasks,
+                                                           db: Session = Depends(get_db)):
+    """Make a new rehab summary of a closed-out construction account, as things are now, and e-mail it and save it to
+    Drive (409 until the account is closed out; 429 after 10 a day per deal)."""
+    result = _run(db, lambda: construction_accounts_bl.send_the_rehab_summary_again(db, bought_deal_id))
+    audit("liquidity_construction_account_rehab_summary_sent_again", request, detail={"bought_deal_id": bought_deal_id})
+    background_tasks.add_task(rehab_summary_delivery_bl.deliver_the_new_rehab_summaries_of_deal_after_commit, bought_deal_id)
+    return result
+
+
+def _rehab_summary_file(db: Session, bought_deal_id: str, rehab_summary_id: str):
+    summary = rehab_summary_delivery_bl.rehab_summary_of_deal(db, bought_deal_id, rehab_summary_id)
+    if summary is None:
+        raise HTTPException(status_code=404, detail="Rehab summary not found")
+    return summary
+
+
+def _attachment_header(file_name: str) -> dict:
+    # The base name is already limited to letters, digits, spaces and , . # ( ) _ - (rehab_summary_report.py).
+    return {"Content-Disposition": f'attachment; filename="{file_name}"', "Cache-Control": "no-store"}
+
+
+@router.get("/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries/{rehab_summary_id}/pdf")
+def download_liquidity_construction_account_rehab_summary_pdf(bought_deal_id: str, rehab_summary_id: str, db: Session = Depends(get_db)):
+    """The rehab summary's PDF, as it was made."""
+    summary = _rehab_summary_file(db, bought_deal_id, rehab_summary_id)
+    return Response(content=summary.summary_pdf_bytes, media_type="application/pdf",
+                    headers=_attachment_header(f"{summary.summary_file_base_name}.pdf"))
+
+
+@router.get("/liquidity/construction-accounts/{bought_deal_id}/rehab-summaries/{rehab_summary_id}/csv")
+def download_liquidity_construction_account_rehab_summary_csv(bought_deal_id: str, rehab_summary_id: str, db: Session = Depends(get_db)):
+    """The rehab summary's transactions as a CSV, as it was made."""
+    summary = _rehab_summary_file(db, bought_deal_id, rehab_summary_id)
+    return Response(content=summary.summary_transactions_csv_text.encode("utf-8"), media_type="text/csv; charset=utf-8",
+                    headers=_attachment_header(f"{summary.summary_file_base_name} transactions.csv"))
 
 
 @router.post("/liquidity/construction-accounts/{bought_deal_id}/reopen", response_model=ConstructionAccountWriteRes)

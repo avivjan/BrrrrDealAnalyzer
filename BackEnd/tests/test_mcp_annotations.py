@@ -63,13 +63,15 @@ class TestConstructionAccountTools:
     and never moves money between bank accounts."""
 
     READ_TOOLS = {"list_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
-                  "preview_liquidity_construction_account_switch", "get_liquidity_construction_accounts_last_change"}
+                  "preview_liquidity_construction_account_switch", "get_liquidity_construction_accounts_last_change",
+                  "list_liquidity_construction_account_rehab_summaries"}
     WRITE_TOOLS_ON_THE_APPS_OWN_DATA = {
         "refresh_liquidity_construction_accounts", "save_liquidity_construction_account_link",
         "save_liquidity_construction_account_rehab_figures",
         "add_liquidity_construction_account_manual_adjustment", "update_liquidity_construction_account_manual_adjustment",
         "set_liquidity_construction_account_transaction_override", "mark_liquidity_construction_account_ready_for_close_out",
         "mark_liquidity_construction_account_closed_out", "reopen_liquidity_construction_account",
+        "send_liquidity_construction_account_rehab_summary_again",
     }
     DESTRUCTIVE_TOOLS = {"unlink_liquidity_construction_account", "switch_liquidity_construction_account",
                          "delete_liquidity_construction_account_manual_adjustment",
@@ -87,6 +89,11 @@ class TestConstructionAccountTools:
             assert (annotations.readOnlyHint, annotations.destructiveHint) == (False, False), name
         for name in self.DESTRUCTIVE_TOOLS:
             assert tools[name]["tool"].annotations.destructiveHint is True, name
+
+    def test_the_tools_that_e_mail_the_rehab_summary_are_open_world(self):
+        tools = mcp_server.tools()
+        for name in ("mark_liquidity_construction_account_closed_out", "send_liquidity_construction_account_rehab_summary_again"):
+            assert tools[name]["tool"].annotations.openWorldHint is True, name
 
     def test_the_tools_that_read_the_bank_are_open_world(self):
         tools = mcp_server.tools()

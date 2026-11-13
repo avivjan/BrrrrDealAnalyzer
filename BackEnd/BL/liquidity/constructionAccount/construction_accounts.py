@@ -14,6 +14,7 @@ the rows as they are.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -24,6 +25,7 @@ from sqlalchemy.orm import Session
 from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal
 from BL.liquidity.common import mercury_reads
+from BL.liquidity.common.mercury_transfers import fetch_transfer_approval_request_status
 from BL.liquidity.common.mercury_client import (
     ACTIVE_ACCOUNT_STATUSES, MercuryApiError, MercuryConfigError, MercurySlowDownError, fetch_account_transactions,
 )
@@ -38,6 +40,11 @@ from BL.liquidity.constructionAccount.construction_account_projection import (
     match_in_app_transfers_to_the_bank_feed, sum_categorised_transactions,
 )
 from BL.liquidity.constructionAccount.construction_account_transfer_settings import transfer_figures_of_link
+from BL.liquidity.constructionAccount.rehab_summary_delivery import (
+    MAXIMUM_REHAB_SUMMARIES_PER_DEAL_PER_DAY, count_rehab_summaries_of_deal_today, latest_rehab_summary_res, record_rehab_summary,
+    rehab_summary_res,
+)
+from BL.liquidity.constructionAccount.rehab_summary_report import closed_out_on_of
 from BL.liquidity.constructionAccount.construction_account_rows import (
     bank_sums_stored_on_the_link, planned_cash_rows_of_deal_in_liquidity, projection_of_linked_deal, rehab_completed_date_of_deal,
 )
@@ -54,7 +61,7 @@ from BL.liquidity.mercuryBalance import mercury_balance_from_workspace_reads
 from DAL.crud.liquidity_construction_account import (
     delete_everything_of_deal, get_all_construction_accounts, get_construction_account_by_mercury_account_id,
     get_construction_account_of_deal, get_manual_adjustment, get_manual_adjustments_of_deal, get_transaction_override,
-    get_transaction_overrides_of_deal, get_transfers_of_construction_account,
+    get_rehab_summaries_of_deal, get_transaction_overrides_of_deal, get_transfers_of_construction_account,
 )
 from DAL.data_models import BoughtBrrrDeal, LiquidityTransaction
 from DAL.data_models.common.brrr_lifecycle import BrrrLifecycleColumns
@@ -66,13 +73,15 @@ from DAL.data_models.liquidity.construction_account_models import (
 from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook, LiquidityMercuryWorkspaceRead
 from ReqRes.common.liquidity_construction_account_schemas import (
     ConstructionAccountDatedAmountRes, ConstructionAccountLinkReq, ConstructionAccountListRes, ConstructionAccountManualAdjustmentReq,
-    ConstructionAccountManualAdjustmentRes, ConstructionAccountPayeeTotalRes, ConstructionAccountRefreshRes,
+    ConstructionAccountManualAdjustmentRes, ConstructionAccountPayeeTotalRes, ConstructionAccountRefreshRes, ConstructionAccountRehabSummaryRes,
     ConstructionAccountRehabFiguresReq, ConstructionAccountStatusRes, ConstructionAccountSumBySourceRes,
     ConstructionAccountSwitchPreviewRes, ConstructionAccountSwitchReq, ConstructionAccountTimelineRowRes,
     ConstructionAccountTotalsRes, ConstructionAccountTransactionOverrideReq, ConstructionAccountTransactionRes,
     ConstructionAccountWriteRes, MercuryAccountNameRes, MercuryConnectionStatusRes, MercuryLastChangeRes, MercuryWorkspaceConnectionRes,
 )
 from ReqRes.common.liquidity_deal_schemas import UseDealValueForField
+
+logger = logging.getLogger(__name__)
 
 ONE_CENT = Decimal("0.01")
 DOLLARS_PER_THOUSAND = Decimal("1000")
@@ -102,6 +111,10 @@ class ConstructionAccountValidationError(Exception):
 
 class ConstructionAccountConflictError(Exception):
     """The request conflicts with the current state (the message is safe to show)."""
+
+
+class ConstructionAccountRateLimitedError(Exception):
+    """Too many of one action today (the message is safe to show)."""
 
 
 class MercuryUnavailableError(Exception):
@@ -377,6 +390,7 @@ def status_of_deal(db: Session, deal: BoughtBrrrDeal, today: Optional[date] = No
             is_overdue=row.done_at is None and row.effective_date < resolved_today)
             for row in imported_rows if row.source_item_key in TIMELINE_ROW_ITEM_KEYS_SHOWN_ON_THE_CARD],
         appliances_dollars=float(deal.appliances or 0),
+        latest_rehab_summary=latest_rehab_summary_res(db, deal.id),
     )
     if link is None:
         return status
@@ -779,13 +793,50 @@ def mark_closed_out(db: Session, bought_deal_id: str, today: Optional[date], use
     account is no longer refreshed. The answer says what is still in it, if anything."""
     deal, link = _find_linked(db, bought_deal_id)
 
+    was_closed_out_before = link.closed_out_at is not None
+
     def close_it() -> _WriteOutcome:
         _read_the_bank_into_the_link(db, link, _accounts_by_id(db, want_fresh=True), use_cached_transactions=False)
         if link.closed_out_at is None:
             link.closed_out_at = _utc_now()
         return _WriteOutcome(balance_left_in_the_account_dollars=Decimal(link.bank_current_balance_dollars or 0))
 
-    return _write(db, deal, today, use_deal_value_for, preview_only, close_it)
+    result = _write(db, deal, today, use_deal_value_for, preview_only, close_it)
+    if not preview_only and not was_closed_out_before:
+        # The rehab is over: its summary is made now, as things are, and delivered after the commit.
+        _record_the_rehab_summary(db, deal, link, result.status_after)
+        result = result.model_copy(update={"status_after": status_of_deal(db, deal, today_for_liquidity(db, today))})
+    return result
+
+
+def _record_the_rehab_summary(db: Session, deal: BoughtBrrrDeal, link: LiquidityConstructionAccount,
+                              status: ConstructionAccountStatusRes) -> None:
+    """The summary of the rehab as it is now. Its bank transactions come from the read the close-out just made; if
+    Mercury cannot answer, the summary says so and Send again makes a complete one later."""
+    try:
+        transactions = list_construction_account_transactions(db, str(deal.id))
+    except MercuryUnavailableError:
+        transactions = None
+    record_rehab_summary(db, status, transactions, closed_out_on_of(link.closed_out_at))
+    db.flush()
+
+
+def list_rehab_summaries_of_deal(db: Session, bought_deal_id: str) -> list[ConstructionAccountRehabSummaryRes]:
+    deal = _find_bought_deal(db, bought_deal_id)
+    return [rehab_summary_res(summary) for summary in get_rehab_summaries_of_deal(db, deal.id)]
+
+
+def send_the_rehab_summary_again(db: Session, bought_deal_id: str) -> ConstructionAccountRehabSummaryRes:
+    """A new summary of a closed-out rehab, as things are now (after a correction, or when the first one failed for
+    good). At most MAXIMUM_REHAB_SUMMARIES_PER_DEAL_PER_DAY a day per deal. The router commits, then delivers it."""
+    deal, link = _find_linked(db, bought_deal_id)
+    if link.closed_out_at is None:
+        raise ConstructionAccountConflictError("Close the construction account out first: the summary is sent when the rehab is over")
+    if count_rehab_summaries_of_deal_today(db, deal.id) >= MAXIMUM_REHAB_SUMMARIES_PER_DEAL_PER_DAY:
+        raise ConstructionAccountRateLimitedError(
+            f"At most {MAXIMUM_REHAB_SUMMARIES_PER_DEAL_PER_DAY} rehab summaries a day per deal: try again tomorrow")
+    _record_the_rehab_summary(db, deal, link, status_of_deal(db, deal))
+    return latest_rehab_summary_res(db, deal.id)
 
 
 def reopen_construction_account(db: Session, bought_deal_id: str, today: Optional[date], use_deal_value_for: list[UseDealValueForField],
@@ -805,6 +856,41 @@ def reopen_construction_account(db: Session, bought_deal_id: str, today: Optiona
 
 
 # --- Live Mercury: the refresh, the last change, the connection ---------------------------------------------------
+
+TRANSFER_APPROVAL_REQUEST_STATUSES_THAT_END_THE_REQUEST = ("rejected", "cancelled")
+TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED = "approved"
+
+
+def _settle_the_in_app_transfers_rejected_or_cancelled_in_mercury(db: Session, mercury_workspace_label: str) -> bool:
+    """An in-app transfer waiting for its approval in Mercury never reaches the bank feed if the request is rejected or
+    cancelled there: ask Mercury for each one still waiting (zero calls when none is). Rejected or cancelled: the
+    transfer stops counting (failed_or_cancelled_at_mercury). Approved: only the status is kept; the bank feed counts
+    the money when it arrives. Any error leaves the transfer as it is and never fails the refresh. True when a transfer
+    changed."""
+    some_transfer_changed = False
+    for link in get_all_construction_accounts(db):
+        if link.mercury_workspace_label != mercury_workspace_label or link.closed_out_at is not None:
+            continue
+        transfers_waiting_for_approval = [
+            transfer for transfer in get_transfers_of_construction_account(db, link.bought_brrr_deal_id, link.construction_mercury_account_id)
+            if transfer.transfer_outcome == TRANSFER_OUTCOME_WAITING_FOR_APPROVAL_IN_MERCURY and transfer.mercury_transfer_id
+            and transfer.seen_in_the_bank_feed_at is None]
+        for transfer in transfers_waiting_for_approval:
+            try:
+                transfer_approval_request_status = fetch_transfer_approval_request_status(mercury_workspace_label, transfer.mercury_transfer_id)
+            except Exception as error:   # a missing scope (401/403), no answer, no token: try again at the next refresh
+                logger.warning("Mercury transfer approval status not read (%s)", type(error).__name__)
+                continue
+            if transfer_approval_request_status in TRANSFER_APPROVAL_REQUEST_STATUSES_THAT_END_THE_REQUEST:
+                transfer.transfer_outcome = TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY
+                transfer.mercury_transfer_status = transfer_approval_request_status
+                some_transfer_changed = True
+            elif (transfer_approval_request_status == TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED
+                  and transfer.mercury_transfer_status != TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED):
+                transfer.mercury_transfer_status = TRANSFER_APPROVAL_REQUEST_STATUS_APPROVED
+                some_transfer_changed = True
+    return some_transfer_changed
+
 
 def refresh_one_workspace(db: Session, mercury_workspace_label: str, workspace_read: mercury_reads.WorkspaceReadResult,
                           today: date) -> tuple[int, int, bool, list, bool]:
@@ -835,6 +921,8 @@ def refresh_one_workspace(db: Session, mercury_workspace_label: str, workspace_r
         if reported or marked_done:
             construction_accounts_changed = True
             bank_reported_row_changes.append(deal_cash_row_changes_res(DEAL_BOARD_BOUGHT, deal, reported))
+    if workspace_read.was_read_from_mercury_now and _settle_the_in_app_transfers_rejected_or_cancelled_in_mercury(db, mercury_workspace_label):
+        construction_accounts_changed = True
     if construction_accounts_changed:
         mercury_reads.mark_construction_accounts_changed(db, mercury_workspace_label)
     return refreshed_deal_count, changed_row_count, construction_accounts_changed, bank_reported_row_changes, mercury_failed

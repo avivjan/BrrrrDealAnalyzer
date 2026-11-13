@@ -2,8 +2,9 @@
 
 A service account cannot keep files in a personal Gmail account's Drive (it has
 no storage quota), so the upload goes through a small Google Apps Script web
-app owned by bigwhalesllc@gmail.com (`BackEnd/integrations/google_drive_loan_agreements.gs`).
-The script creates the folder if needed and saves the PDF there.
+app owned by the owner's personal Google account (`BackEnd/integrations/google_drive_loan_agreements.gs`;
+moved there from the company account, tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md). The script
+creates the folder if needed and saves the PDF there.
 
 Every request is signed: HMAC-SHA256 with the shared secret over
 "<timestamp>\\n<file name>\\n<SHA-256 of the PDF>". The script refuses a wrong

@@ -9,8 +9,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from DAL.data_models.liquidity.construction_account_models import (
-    LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride,
-    LiquidityConstructionAccountTransfer,
+    LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountRehabSummary,
+    LiquidityConstructionAccountTransactionOverride, LiquidityConstructionAccountTransfer,
 )
 
 
@@ -76,3 +76,16 @@ def get_transfer_by_idempotency_key(db: Session, idempotency_key: str) -> Option
 def count_transfers_requested_since(db: Session, since) -> int:
     """Every transfer asked of Mercury since `since`, refused ones included (the hourly limit counts attempts)."""
     return db.query(LiquidityConstructionAccountTransfer).filter(LiquidityConstructionAccountTransfer.requested_at >= since).count()
+
+
+def get_rehab_summaries_of_deal(db: Session, bought_brrr_deal_id) -> list[LiquidityConstructionAccountRehabSummary]:
+    """The deal's rehab summaries, newest first."""
+    return (db.query(LiquidityConstructionAccountRehabSummary)
+            .filter(LiquidityConstructionAccountRehabSummary.bought_brrr_deal_id == bought_brrr_deal_id)
+            .order_by(LiquidityConstructionAccountRehabSummary.created_at.desc()).all())
+
+
+def delete_rehab_summaries_of_deal(db: Session, bought_brrr_deal_id) -> None:
+    """Only with the Bought deal itself: an unlink keeps them (they are the record of a finished rehab)."""
+    (db.query(LiquidityConstructionAccountRehabSummary)
+     .filter(LiquidityConstructionAccountRehabSummary.bought_brrr_deal_id == bought_brrr_deal_id).delete(synchronize_session=False))

@@ -180,6 +180,25 @@ def inspection_reports_never_leave_the_test(monkeypatch):
     monkeypatch.setattr(inspection_report_delivery, "save_inspection_report_pdf_to_drive", drive_not_configured)
 
 
+@pytest.fixture(autouse=True)
+def rehab_summaries_never_leave_the_test(monkeypatch):
+    """Closing a construction account out e-mails a rehab summary and saves it to Drive. No test may reach real Gmail
+    or Drive: both channels fail as "not configured" unless a test installs its own fakes."""
+
+    from BL.liquidity.constructionAccount import rehab_summary_delivery
+    from BL.liquidity.constructionAccount.rehab_summary_google_drive import RehabSummaryDriveUploadFailed
+    from BL.memberLoan.common.member_loan_mail_transport import MemberLoanEmailNotSent
+
+    def email_not_configured(*args, **kwargs):
+        raise MemberLoanEmailNotSent("not configured in tests")
+
+    def drive_not_configured(*args, **kwargs):
+        raise RehabSummaryDriveUploadFailed("not configured in tests")
+
+    monkeypatch.setattr(rehab_summary_delivery, "send_rehab_summary_email", email_not_configured)
+    monkeypatch.setattr(rehab_summary_delivery, "save_rehab_summary_file_to_drive", drive_not_configured)
+
+
 @pytest.fixture
 def client():
     from fastapi.testclient import TestClient

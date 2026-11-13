@@ -3,8 +3,11 @@
  * Construction accounts (tasks/todo/ConstructionAccountPerRehab.md): one card per Bought BRRRR deal between its
  * purchase and its refi, with every number of its rehab's own Mercury account, and the totals across them.
  *
- * A link opens it on one deal (`?deal=<id>&open=<section>`): the card is scrolled to and highlighted, and a section
- * opens (Step C0). `?open=settings` opens the settings drawer.
+ * Each card starts closed, as a two-row summary, so every rehab fits on one screen; a click opens its detail
+ * (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md). Cards needing you come first, closed-out ones last.
+ *
+ * A link opens it on one deal (`?deal=<id>&open=<section>`): the card is opened, scrolled to and highlighted, and a
+ * section opens (Step C0). `?open=settings` opens the settings drawer.
  */
 import { computed, nextTick, onMounted, ref } from 'vue'
 
@@ -21,6 +24,7 @@ import { readConstructionAccountLinkQuery, type ConstructionAccountSection } fro
 import { useConstructionAccountStore } from '../stores/constructionAccountStore'
 import { useLiquidityStore } from '../stores/liquidityStore'
 import type { ConstructionAccountStatus } from '../types/constructionAccount'
+import { constructionAccountDisplayRank, moneyBackToYouAtTheEndDollars } from '../utils/constructionAccountSummaryFigures'
 import type { ConstructionAccountTransferKind } from '../utils/constructionAccountTransferRules'
 
 const store = useConstructionAccountStore()
@@ -32,6 +36,23 @@ const settingsOpen = ref(false)
 const refreshMessage = ref<string | null>(null)
 const highlightedDealId = ref<string | null>(null)
 const sectionOpenedByALink = ref<{ dealId: string; section: ConstructionAccountSection } | null>(null)
+const expandedDealIds = ref<Set<string>>(new Set())
+
+function toggleExpanded(boughtDealId: string) {
+  const nextExpandedDealIds = new Set(expandedDealIds.value)
+  if (nextExpandedDealIds.has(boughtDealId)) nextExpandedDealIds.delete(boughtDealId)
+  else nextExpandedDealIds.add(boughtDealId)
+  expandedDealIds.value = nextExpandedDealIds
+}
+
+const moneyBackToYouAtTheEndTotalDollars = computed(() => store.accounts
+  .filter(status => status.is_linked && !status.closed_out_at)
+  .reduce((totalDollars, status) => totalDollars + moneyBackToYouAtTheEndDollars(status), 0))
+
+const accountsInDisplayOrder = computed(() => [...store.accounts]
+  .map((status, loadedIndex) => ({ status, loadedIndex }))
+  .sort((first, second) => constructionAccountDisplayRank(first.status) - constructionAccountDisplayRank(second.status) || first.loadedIndex - second.loadedIndex)
+  .map(({ status }) => status))
 
 const mercuryIsUnavailable = computed(() => store.accounts.some(status => status.mercury_is_unavailable))
 const lastAmountsAsOf = computed(() => {
@@ -60,6 +81,7 @@ const { notFoundMessage } = useDeepLinkQuery(readConstructionAccountLinkQuery, a
   const status = link.boughtDealId ? store.accountById.get(link.boughtDealId) : undefined
   if (!status) return false
   highlightedDealId.value = status.bought_deal_id
+  expandedDealIds.value = new Set([...expandedDealIds.value, status.bought_deal_id])
   if (link.section === 'link' || link.section === 'settings') linkingStatus.value = status
   else if (link.section) sectionOpenedByALink.value = { dealId: status.bought_deal_id, section: link.section }
   await nextTick()
@@ -82,7 +104,7 @@ onMounted(async () => {
         <p class="text-xs font-medium uppercase tracking-[0.14em] text-fg-muted">Liquidity</p>
         <h1 class="mt-1 font-display text-3xl leading-tight text-fg">Construction accounts</h1>
         <p class="mt-1 max-w-2xl text-sm text-fg-muted">
-          Each rehab's own Mercury account: the lender's draws come in and the rehab is paid from it, so the timeline shows only your deposit and what comes back.
+          Each rehab has its own Mercury account: the lender's draws land there and the contractors are paid from it. Click a property to see everything about it.
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -106,7 +128,7 @@ onMounted(async () => {
     </p>
     <p v-if="store.loadErrorMessage" role="alert" class="rounded-ctl border border-negative/40 bg-negative/10 px-3 py-2 text-sm text-negative">{{ store.loadErrorMessage }}</p>
 
-    <ConstructionAccountTotals v-if="store.totals && store.totals.linked_account_count" :totals="store.totals" />
+    <ConstructionAccountTotals v-if="store.totals && store.totals.linked_account_count" :totals="store.totals" :money-back-to-you-at-the-end-total-dollars="moneyBackToYouAtTheEndTotalDollars" />
 
     <div v-if="store.isLoading && !store.hasLoaded" data-testid="ca.page.loading" class="space-y-3">
       <UiSkeleton class="h-40" /><UiSkeleton class="h-40" />
@@ -119,16 +141,18 @@ onMounted(async () => {
       </template>
     </UiEmptyState>
 
-    <div class="space-y-4">
+    <div class="space-y-3">
       <ConstructionAccountCard
-        v-for="status in store.accounts"
+        v-for="status in accountsInDisplayOrder"
         :key="status.bought_deal_id"
         :status="status"
+        :is-expanded="expandedDealIds.has(status.bought_deal_id)"
         :is-highlighted="highlightedDealId === status.bought_deal_id"
         :open-section="sectionOpenedByALink?.dealId === status.bought_deal_id ? sectionOpenedByALink.section : null"
         @link="(chosen) => (linkingStatus = chosen)"
         @switch-account="(chosen) => (switchingStatus = chosen)"
         @transfer="(chosen, kind) => (transferring = { status: chosen, kind })"
+        @toggle="(chosen) => toggleExpanded(chosen.bought_deal_id)"
       />
     </div>
 
