@@ -735,3 +735,60 @@ class TestTheSharedMercuryPace:
         moved = client.get("/liquidity/construction-accounts/last-change").json()
         assert moved["cash_balance_last_changed_at"] > last_change["cash_balance_last_changed_at"]
         assert client.get("/liquidity/mercury-balance").json()["counted_as_cash_balance_dollars"] == 80000 + 2500 + 9000
+
+
+class TestAStaleBoughtDealFormCannotUndoACardEdit:
+    def test_a_form_loaded_before_the_cards_edit_is_refused_and_a_save_without_the_time_still_works(self, client, mercury, bought_deal):
+        deal_id = bought_deal["id"]
+        form_loaded_at = bought_deal["updated_at"]
+        client.put(f"/liquidity/construction-accounts/{deal_id}/rehab-figures", json={"actual_rehab_cost_dollars": 58000})
+
+        stale = client.put(f"/bought-deals/{deal_id}", json={**bought_deal, "notes": "from an old tab"},
+                           params={"updated_at_the_form_was_loaded_with": form_loaded_at})
+        assert stale.status_code == 409 and "changed elsewhere" in stale.json()["detail"]
+        assert _status(client, deal_id)["rehab_cost_dollars"] == 58000        # the card's edit survives
+
+        fresh_deal = next(deal for deal in client.get("/bought-deals").json() if deal["id"] == deal_id)
+        fresh = client.put(f"/bought-deals/{deal_id}", json={**fresh_deal, "notes": "from a fresh form"},
+                           params={"updated_at_the_form_was_loaded_with": fresh_deal["updated_at"]})
+        assert fresh.status_code == 200 and fresh.json()["notes"] == "from a fresh form"
+        assert client.put(f"/bought-deals/{deal_id}", json={**bought_deal, "notes": "the connector"}).status_code == 200
+
+
+class TestTheSettingsLiveInTheDatabase:
+    def test_each_setting_is_saved_and_kept_within_its_bounds(self, client):
+        defaults = client.get("/liquidity/settings").json()
+        assert (defaults["construction_account_refresh_interval_seconds"], defaults["construction_account_refresh_when_window_regains_focus"],
+                defaults["construction_account_in_app_transfers_enabled"], defaults["construction_account_transfers_per_hour_limit"],
+                defaults["construction_account_maximum_single_transfer_dollars"]) == (30, True, True, 5, 100000)
+        saved = client.put("/liquidity/settings", json={"construction_account_refresh_interval_seconds": 120,
+                                                        "construction_account_in_app_transfers_enabled": False,
+                                                        "construction_account_maximum_single_transfer_dollars": 25000}).json()
+        assert (saved["construction_account_refresh_interval_seconds"], saved["construction_account_in_app_transfers_enabled"],
+                saved["construction_account_maximum_single_transfer_dollars"]) == (120, False, 25000)
+        assert client.put("/liquidity/settings", json={"reserve_dollars": 6000}).json()["construction_account_refresh_interval_seconds"] == 120
+        for out_of_bounds in ({"construction_account_refresh_interval_seconds": 14}, {"construction_account_refresh_interval_seconds": 601},
+                              {"construction_account_transfers_per_hour_limit": 0}, {"construction_account_maximum_single_transfer_dollars": 0}):
+            assert client.put("/liquidity/settings", json=out_of_bounds).status_code == 422, out_of_bounds
+
+
+class TestPollsAreAuditedOnlyWhenSomethingHappens:
+    @staticmethod
+    def _refresh_audit_rows() -> int:
+        from sqlalchemy import select, func
+        from DAL.data_models.audit.models import AuditLog
+        from db import SessionLocal
+        with SessionLocal() as session:
+            return session.execute(select(func.count()).select_from(AuditLog).where(AuditLog.event == "liquidity_construction_accounts_refreshed")).scalar()
+
+    def test_a_quiet_poll_leaves_no_row_and_a_manual_refresh_always_does(self, client, mercury, bought_deal):
+        _link(client, bought_deal["id"])
+        _refresh(client)
+        rows_before = self._refresh_audit_rows()
+        client.post("/liquidity/construction-accounts/refresh", json={"today": DURING_THE_REHAB, "is_a_background_poll": True})
+        assert self._refresh_audit_rows() == rows_before
+        mercury.balance_by_account_id["checking"] += 100
+        client.post("/liquidity/construction-accounts/refresh", json={"today": DURING_THE_REHAB, "is_a_background_poll": True})
+        assert self._refresh_audit_rows() == rows_before + 1
+        _refresh(client)
+        assert self._refresh_audit_rows() == rows_before + 2
