@@ -144,4 +144,20 @@ describe('useLiveMercuryRefresh', () => {
     expect(api.list).toHaveBeenCalledTimes(1)
     expect(api.refresh).not.toHaveBeenCalled()
   })
+
+  it('rows an instant update changed open the "updated from the bank" window', async () => {
+    mountThePage()
+    api.lastChange
+      .mockResolvedValueOnce({ last_changed_at: 'a', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'a', last_instant_update_at: null })
+      .mockResolvedValueOnce({ last_changed_at: 'b', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'b',
+                               last_instant_update_at: 'b', bank_reported_row_changes_of_last_instant_update: [rowChangesOfOneDeal(1)] })
+    useConstructionAccountStore().connectionStatus = {
+      workspaces: [{ instant_updates_are_on: true } as never], read_token_environment_variable_name_pattern: '', transfer_token_environment_variable_name_pattern: '',
+    }
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(10_000)
+    const promptStore = useLiquidityTimelineChangePromptStore()
+    expect(promptStore.isABankReport).toBe(true)
+    expect(promptStore.open?.bankReport?.dealKey).toBe('bought:deal-1')
+  })
 })

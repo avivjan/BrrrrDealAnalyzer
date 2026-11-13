@@ -43,6 +43,15 @@ export const constructionAccountApi = {
     return (await apiClient.get<MercuryConnectionStatus>('/liquidity/mercury-connection-status')).data
   },
 
+  /** Instant updates for one LLC: register this app's address at Mercury, or remove it (each asks for your passkey). */
+  async turnOnInstantUpdates(mercuryWorkspaceLabel: string): Promise<MercuryConnectionStatus> {
+    return (await apiClient.post<MercuryConnectionStatus>(`/liquidity/mercury-webhooks/${encodeURIComponent(mercuryWorkspaceLabel)}/turn-on`)).data
+  },
+
+  async turnOffInstantUpdates(mercuryWorkspaceLabel: string): Promise<MercuryConnectionStatus> {
+    return (await apiClient.post<MercuryConnectionStatus>(`/liquidity/mercury-webhooks/${encodeURIComponent(mercuryWorkspaceLabel)}/turn-off`)).data
+  },
+
   async transactions(boughtDealId: string): Promise<ConstructionAccountTransaction[]> {
     return (await apiClient.get<ConstructionAccountTransaction[]>(dealUrl(boughtDealId, '/transactions'))).data
   },

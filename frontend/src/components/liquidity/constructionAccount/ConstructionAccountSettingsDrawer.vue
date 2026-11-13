@@ -6,6 +6,7 @@
  */
 import { computed, ref, watch } from 'vue'
 
+import { constructionAccountApi } from '../../../api/constructionAccount'
 import { liquidityApi } from '../../../api/liquidity'
 import { useConstructionAccountStore } from '../../../stores/constructionAccountStore'
 import { useLiquidityTimelineChangePromptStore } from '../../../stores/liquidityTimelineChangePromptStore'
@@ -72,6 +73,26 @@ async function save() {
   }
 }
 
+// Instant updates: Mercury calls this app when something moves in the LLC (each change asks for your passkey).
+const instantUpdatesBeingChangedFor = ref<string | null>(null)
+const instantUpdatesErrorMessage = ref<string | null>(null)
+
+async function setInstantUpdates(mercuryWorkspaceLabel: string, turnOn: boolean) {
+  instantUpdatesBeingChangedFor.value = mercuryWorkspaceLabel
+  instantUpdatesErrorMessage.value = null
+  try {
+    store.connectionStatus = turnOn
+      ? await constructionAccountApi.turnOnInstantUpdates(mercuryWorkspaceLabel)
+      : await constructionAccountApi.turnOffInstantUpdates(mercuryWorkspaceLabel)
+  } catch (error) {
+    const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+    instantUpdatesErrorMessage.value = typeof detail === 'string' ? detail : 'That did not work. Nothing changed.'
+    await store.loadConnectionStatus().catch(() => undefined)   // a refusal Mercury gave is recorded: show it
+  } finally {
+    instantUpdatesBeingChangedFor.value = null
+  }
+}
+
 async function copy(name: string) {
   try {
     await navigator.clipboard.writeText(name)
@@ -133,6 +154,8 @@ function timeAgo(iso: string | null): string {
         <p class="text-xs text-fg-muted">
           Tokens are kept in the hosting dashboard's secret settings, never in the app. A missing one shows the exact name to add there.
         </p>
+        <p v-if="instantUpdatesErrorMessage" data-testid="ca-settings.instant-updates-error" role="alert"
+           class="rounded-ctl border border-negative/40 bg-negative/10 px-3 py-2 text-sm text-negative">{{ instantUpdatesErrorMessage }}</p>
         <ul class="space-y-2">
           <li v-for="workspace in connection?.workspaces ?? []" :key="workspace.mercury_workspace_label"
               :data-testid="`ca-settings.workspace.${workspace.mercury_workspace_label}`" class="space-y-1.5 rounded-ctl border border-line p-3 text-sm">
@@ -156,6 +179,12 @@ function timeAgo(iso: string | null): string {
             <p v-if="workspace.last_webhook_error_message" :data-testid="`ca-settings.workspace.${workspace.mercury_workspace_label}.error`" class="text-xs text-negative">
               {{ workspace.last_webhook_error_message }} ({{ timeAgo(workspace.last_webhook_error_at) }})
             </p>
+            <UiButton v-if="workspace.has_read_token" size="sm" :variant="workspace.instant_updates_are_on ? 'ghost' : 'secondary'"
+                      :data-testid="`ca-settings.workspace.${workspace.mercury_workspace_label}.${workspace.instant_updates_are_on ? 'turn-off' : 'turn-on'}`"
+                      :loading="instantUpdatesBeingChangedFor === workspace.mercury_workspace_label"
+                      @click="setInstantUpdates(workspace.mercury_workspace_label, !workspace.instant_updates_are_on)">
+              {{ workspace.instant_updates_are_on ? 'Turn off instant updates' : 'Turn on instant updates' }}
+            </UiButton>
           </li>
         </ul>
         <div class="space-y-1.5 rounded-ctl border border-dashed border-line p-3">

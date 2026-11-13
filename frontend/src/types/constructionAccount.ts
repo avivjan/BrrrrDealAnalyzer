@@ -253,6 +253,9 @@ export interface MercuryLastChange {
   last_changed_at: string | null
   cash_balance_last_changed_at: string | null
   construction_accounts_last_changed_at: string | null
+  /** When a Mercury event (instant updates) last changed timeline rows, and which: the "updated from the bank" window. */
+  last_instant_update_at?: string | null
+  bank_reported_row_changes_of_last_instant_update?: DealCashRowChanges[]
 }
 
 export interface MercuryWorkspaceConnection {

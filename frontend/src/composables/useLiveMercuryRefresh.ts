@@ -64,6 +64,18 @@ export function useLiveMercuryRefresh() {
     await Promise.all(reloads)
   }
 
+  /** "Timeline updated from the bank" (OK only), once per deal whose rows changed. */
+  function reportTheRowsTheBankChanged(bankReportedRowChanges: ConstructionAccountRefreshResult['bank_reported_row_changes']): void {
+    for (const rowChanges of bankReportedRowChanges) {
+      if (!changedRowCount(rowChanges)) continue
+      promptStore.reportFromTheBank({
+        dealKey: `${rowChanges.deal_board}:${rowChanges.deal_id}`,
+        title: `${rowChanges.deal_address}: timeline updated from the bank`,
+        preview: { rowChanges, figureChanges: [], rowDescriptionsMarkedDone: [] },
+      })
+    }
+  }
+
   /** One read. A background read is skipped while the server asks to wait or the tab is hidden. */
   async function refreshNow(options: { isABackgroundPoll?: boolean } = {}): Promise<ConstructionAccountRefreshResult | null> {
     const isABackgroundPoll = options.isABackgroundPoll ?? true
@@ -76,14 +88,7 @@ export function useLiveMercuryRefresh() {
       mercuryIsUnavailable.value = result.mercury_is_unavailable
       constructionAccountStore.nextMercuryReadNotBefore = result.next_mercury_read_not_before
       await showWhatChanged(result.cash_balance_changed, result.construction_accounts_changed)
-      for (const rowChanges of result.bank_reported_row_changes) {
-        if (!changedRowCount(rowChanges)) continue
-        promptStore.reportFromTheBank({
-          dealKey: `${rowChanges.deal_board}:${rowChanges.deal_id}`,
-          title: `${rowChanges.deal_address}: timeline updated from the bank`,
-          preview: { rowChanges, figureChanges: [], rowDescriptionsMarkedDone: [] },
-        })
-      }
+      reportTheRowsTheBankChanged(result.bank_reported_row_changes)
       return result
     } catch {
       lastRefreshFailed.value = true
@@ -127,6 +132,9 @@ export function useLiveMercuryRefresh() {
     if (!before) return
     await showWhatChanged(change.cash_balance_last_changed_at !== before.cash_balance_last_changed_at,
       change.construction_accounts_last_changed_at !== before.construction_accounts_last_changed_at)
+    if (change.last_instant_update_at && change.last_instant_update_at !== before.last_instant_update_at) {
+      reportTheRowsTheBankChanged(change.bank_reported_row_changes_of_last_instant_update ?? [])
+    }
   }
 
   function startTheInterval(): void {
