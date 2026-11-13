@@ -93,3 +93,42 @@ class LiquidityConstructionAccountTransactionOverride(Base):
     category_override = Column(String(20), nullable=True)   # one of CONSTRUCTION_ACCOUNT_TRANSACTION_CATEGORIES, or NULL
     note = Column(String(500), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT = "deposit_into_construction_account"
+TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING = "steal_to_primary_checking"
+CONSTRUCTION_ACCOUNT_TRANSFER_DIRECTIONS = (TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING)
+
+# What became of a transfer the app asked Mercury for.
+TRANSFER_OUTCOME_BEING_SENT = "being_sent"                      # the row is saved, the request is on its way
+TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY = "accepted_by_mercury"    # counts at once (until the bank feed shows it)
+TRANSFER_OUTCOME_REFUSED_BY_MERCURY = "refused_by_mercury"      # nothing was sent
+TRANSFER_OUTCOME_MERCURY_DID_NOT_ANSWER = "mercury_did_not_answer"   # maybe sent: check Mercury before trying again
+TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY = "failed_or_cancelled_at_mercury"   # the bank feed says so
+TRANSFER_OUTCOMES_THAT_COUNT = (TRANSFER_OUTCOME_ACCEPTED_BY_MERCURY,)
+
+
+class LiquidityConstructionAccountTransfer(Base):
+    """A Deposit or a Steal the app asked Mercury to make. Kept after an unlink or the deal's deletion: it is the record
+    of real money moved. It counts toward its account's own money from the moment Mercury accepts it, until the bank
+    feed shows it (then the feed counts it, once)."""
+    __tablename__ = "liquidity_construction_account_transfers"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bought_brrr_deal_id = Column(Uuid(as_uuid=True), nullable=False, index=True)
+    construction_mercury_account_id = Column(String(80), nullable=False, index=True)
+    source_mercury_account_id = Column(String(80), nullable=False)
+    destination_mercury_account_id = Column(String(80), nullable=False)
+    mercury_workspace_label = Column(String(80), nullable=False)
+    transfer_direction = Column(String(40), nullable=False)   # one of CONSTRUCTION_ACCOUNT_TRANSFER_DIRECTIONS
+    amount_dollars = Column(Numeric(16, 2), nullable=False)   # always positive
+    # One per open transfer window in the browser: the same key never makes a second transfer.
+    idempotency_key = Column(String(80), nullable=False, unique=True)
+    transfer_outcome = Column(String(40), nullable=False)
+    mercury_transfer_id = Column(String(80), nullable=True)
+    mercury_transfer_status = Column(String(20), nullable=True)   # pending / sent / cancelled / failed / unknown
+    requested_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    requested_by_user_id = Column(Uuid(as_uuid=True), nullable=True)
+    # The bank transaction this transfer was matched to, once the feed shows it.
+    mercury_transaction_id_in_the_bank_feed = Column(String(80), nullable=True, unique=True)
+    seen_in_the_bank_feed_at = Column(DateTime(timezone=True), nullable=True)

@@ -6,8 +6,9 @@ by hand, switch or close out the account, and keep the deal's liquidity rows in 
 **Every write can be previewed.** With `preview_only=true` the write runs inside the database transaction, its
 answer (the deal's figures and its liquidity rows before -> after) is built, and the transaction is rolled back:
 nothing is saved. That answer is the confirmation prompt the page shows before the same call is sent for real.
-Only this router commits. Mercury is only read here. Every confirmed write is audited (which deal, what kind of
-change), never an amount.
+Only this router commits, except a transfer, which stores its key before Mercury is asked. Mercury is only read
+here, except by Deposit and Steal (a passkey step-up each, never an MCP tool). Every confirmed write is audited (which
+deal, what kind of change), never an amount.
 """
 
 import re
@@ -19,12 +20,18 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 from BL.auth.common.audit import record as audit
+from BL.auth.common.session_dependency import require_recent_auth
+from BL.liquidity.constructionAccount import construction_account_transfers as construction_account_transfers_bl
 from BL.liquidity.constructionAccount import construction_accounts as construction_accounts_bl
+from DAL.data_models.liquidity.construction_account_models import (
+    TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING,
+)
 from ReqRes.common.liquidity_construction_account_schemas import (
     ConstructionAccountLinkReq, ConstructionAccountListRes, ConstructionAccountManualAdjustmentReq, ConstructionAccountRefreshReq,
     ConstructionAccountRefreshRes, ConstructionAccountRehabFiguresReq, ConstructionAccountSwitchPreviewRes,
     ConstructionAccountSwitchReq, ConstructionAccountTransactionOverrideReq, ConstructionAccountTransactionRes,
-    ConstructionAccountWriteRes, MercuryConnectionStatusRes, MercuryLastChangeRes,
+    ConstructionAccountTransferReq, ConstructionAccountTransferWriteRes, ConstructionAccountWriteRes, MercuryConnectionStatusRes,
+    MercuryLastChangeRes,
 )
 from ReqRes.common.liquidity_deal_schemas import UseDealValueForField
 
@@ -73,6 +80,9 @@ def _run(db: Session, action, commit: bool = True):
     except construction_accounts_bl.ConstructionAccountConflictError as error:
         db.rollback()
         raise HTTPException(status_code=409, detail=str(error))
+    except construction_account_transfers_bl.ConstructionAccountTransferRefusedError as error:
+        db.rollback()
+        raise HTTPException(status_code=error.http_status, detail=str(error))
     except construction_accounts_bl.MercuryUnavailableError:
         db.rollback()
         raise HTTPException(status_code=502, detail=_MERCURY_UNAVAILABLE)
@@ -289,3 +299,40 @@ def reopen_liquidity_construction_account(bought_deal_id: str, request: Request,
     choices = _use_the_new_value_for(use_the_new_value_for)
     return _write(db, request, "liquidity_construction_account_reopened", bought_deal_id, preview_only,
                   lambda: construction_accounts_bl.reopen_construction_account(db, bought_deal_id, today, choices, preview_only))
+
+
+# --- Transfers: the app moves money (a passkey step-up each; never MCP tools) -----------------------------------
+
+def _transfer(db: Session, request: Request, bought_deal_id: str, transfer_direction: str, data: ConstructionAccountTransferReq,
+              preview_only: bool, today: Optional[date], use_the_new_value_for: Optional[List[str]]) -> ConstructionAccountTransferWriteRes:
+    choices = _use_the_new_value_for(use_the_new_value_for)
+    # The preview asks Mercury nothing; the transfer needs a person who just used their passkey.
+    principal = None if preview_only else require_recent_auth(request, db)
+    result = _run(db, lambda: construction_account_transfers_bl.make_construction_account_transfer(
+        db, bought_deal_id, transfer_direction, data, today, choices, preview_only,
+        requested_by_user_id=principal.user.id if principal else None), commit=not preview_only)
+    if not preview_only and result.transfer is not None:
+        audit("liquidity_construction_account_transfer", request, detail={
+            "bought_deal_id": bought_deal_id, "transfer_direction": transfer_direction, "transfer_id": result.transfer.transfer_id,
+            "transfer_outcome": result.transfer.transfer_outcome})
+    return result
+
+
+@router.post("/liquidity/construction-accounts/{bought_deal_id}/deposit", response_model=ConstructionAccountTransferWriteRes)
+def deposit_into_liquidity_construction_account(bought_deal_id: str, data: ConstructionAccountTransferReq, request: Request,
+                                                preview_only: bool = PREVIEW_ONLY, today: Optional[date] = TODAY,
+                                                use_the_new_value_for: Optional[List[str]] = USE_THE_NEW_VALUE_FOR,
+                                                db: Session = Depends(get_db)):
+    """Move money from the LLC's primary checking into the deal's construction account, through Mercury."""
+    return _transfer(db, request, bought_deal_id, TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, data, preview_only, today,
+                     use_the_new_value_for)
+
+
+@router.post("/liquidity/construction-accounts/{bought_deal_id}/steal", response_model=ConstructionAccountTransferWriteRes)
+def steal_from_liquidity_construction_account(bought_deal_id: str, data: ConstructionAccountTransferReq, request: Request,
+                                              preview_only: bool = PREVIEW_ONLY, today: Optional[date] = TODAY,
+                                              use_the_new_value_for: Optional[List[str]] = USE_THE_NEW_VALUE_FOR,
+                                              db: Session = Depends(get_db)):
+    """Move money from the deal's construction account back to the LLC's primary checking, through Mercury."""
+    return _transfer(db, request, bought_deal_id, TRANSFER_DIRECTION_STEAL_TO_PRIMARY_CHECKING, data, preview_only, today,
+                     use_the_new_value_for)

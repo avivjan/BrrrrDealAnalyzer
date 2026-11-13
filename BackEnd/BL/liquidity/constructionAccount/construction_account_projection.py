@@ -283,3 +283,73 @@ def project_construction_account(inputs: ConstructionAccountProjectionInputs, ba
         return_row_amount_dollars=return_row_amount,
         top_up_needed_dollars=top_up_needed,
     )
+
+
+# --- In-app transfers (Step E): each one counts exactly once ---------------------------------------------------------
+
+@dataclass(frozen=True)
+class InAppTransferToMatch:
+    transfer_id: str
+    mercury_transfer_id: Optional[str]
+    signed_amount_dollars: Decimal        # positive = a deposit into the construction account, negative = a steal
+    requested_on: date
+
+
+def match_in_app_transfers_to_the_bank_feed(transfers: Iterable[InAppTransferToMatch],
+                                            transactions: Iterable[ConstructionAccountBankTransaction],
+                                            transaction_ids_already_matched: Iterable[str] = ()) -> dict[str, ConstructionAccountBankTransaction]:
+    """Which bank transaction each in-app transfer became: the one with Mercury's id for it, else (Mercury's answer had
+    no id) an internal transfer of the same signed amount on or after the day it was asked, oldest first. A transaction
+    is matched to one transfer at most. Answers {transfer_id: transaction}."""
+    transactions = list(transactions)
+    used_transaction_ids = set(transaction_ids_already_matched)
+    matched: dict[str, ConstructionAccountBankTransaction] = {}
+    pending_transfers = sorted(transfers, key=lambda transfer: transfer.requested_on)
+    for transfer in pending_transfers:
+        by_id = next((transaction for transaction in transactions if transfer.mercury_transfer_id
+                      and transaction.mercury_transaction_id == transfer.mercury_transfer_id
+                      and transaction.mercury_transaction_id not in used_transaction_ids), None)
+        if by_id is not None:
+            matched[transfer.transfer_id] = by_id
+            used_transaction_ids.add(by_id.mercury_transaction_id)
+    for transfer in pending_transfers:
+        if transfer.transfer_id in matched:
+            continue
+        candidates = sorted(
+            (transaction for transaction in transactions
+             if transaction.is_internal_transfer and transaction.mercury_transaction_id not in used_transaction_ids
+             and transaction.signed_amount_dollars == transfer.signed_amount_dollars
+             and (transaction.transaction_date is None or transaction.transaction_date >= transfer.requested_on)),
+            key=lambda transaction: transaction.transaction_date or date.max)
+        if candidates:
+            matched[transfer.transfer_id] = candidates[0]
+            used_transaction_ids.add(candidates[0].mercury_transaction_id)
+    return matched
+
+
+@dataclass(frozen=True)
+class InAppTransferNotYetInTheBankFeed:
+    signed_amount_dollars: Decimal        # positive = a deposit, negative = a steal
+    requested_after_the_last_bank_read: bool
+
+
+def bank_sums_with_in_app_transfers_not_yet_in_the_feed(bank_sums: ConstructionAccountBankSums,
+                                                        transfers: Iterable[InAppTransferNotYetInTheBankFeed]) -> ConstructionAccountBankSums:
+    """A transfer Mercury accepted counts at once as own money in or out. Its amount moves the balance too while the
+    last bank read is older than it (a later read already shows it in the balance)."""
+    own_money_in, own_money_out, balance_moved_by = ZERO_DOLLARS, ZERO_DOLLARS, ZERO_DOLLARS
+    for transfer in transfers:
+        if transfer.signed_amount_dollars > 0:
+            own_money_in += transfer.signed_amount_dollars
+        else:
+            own_money_out += -transfer.signed_amount_dollars
+        if transfer.requested_after_the_last_bank_read:
+            balance_moved_by += transfer.signed_amount_dollars
+    return ConstructionAccountBankSums(
+        current_balance_dollars=bank_sums.current_balance_dollars + balance_moved_by,
+        available_balance_dollars=bank_sums.available_balance_dollars + balance_moved_by,
+        bank_loan_draws_dollars=bank_sums.bank_loan_draws_dollars,
+        bank_rehab_payments_dollars=bank_sums.bank_rehab_payments_dollars,
+        own_money_transferred_into_the_account_dollars=bank_sums.own_money_transferred_into_the_account_dollars + own_money_in,
+        own_money_transferred_out_of_the_account_dollars=bank_sums.own_money_transferred_out_of_the_account_dollars + own_money_out,
+    )

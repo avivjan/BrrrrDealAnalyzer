@@ -15,15 +15,19 @@ from sqlalchemy.orm import Session
 
 from BL.analyze.analyzeBRRR import compute_brrr_with_intermediates
 from BL.liquidity.constructionAccount.construction_account_projection import (
-    ConstructionAccountBankSums, ConstructionAccountProjection, ConstructionAccountProjectionInputs, project_construction_account,
+    ConstructionAccountBankSums, ConstructionAccountProjection, ConstructionAccountProjectionInputs, InAppTransferNotYetInTheBankFeed,
+    bank_sums_with_in_app_transfers_not_yet_in_the_feed, project_construction_account,
 )
 from BL.liquidity.dealCashRows.deal_cash_rows import (
     CONSTRUCTION_ACCOUNT_DEPOSIT_ITEM_KEY, DEAL_BOARD_BOUGHT, ConstructionAccountLiveRowAmounts, DealBoard, PlannedDealCashRow,
     imported_rows_of_deal, planned_cash_rows_including_construction_account_live_amounts, planned_cash_rows_including_late_refi_months,
 )
-from DAL.crud.liquidity_construction_account import get_construction_account_of_deal, get_manual_adjustments_of_deal
+from DAL.crud.liquidity_construction_account import (
+    get_construction_account_of_deal, get_manual_adjustments_of_deal, get_transfers_of_construction_account,
+)
 from DAL.data_models.liquidity.construction_account_models import (
-    MANUAL_ADJUSTMENT_TYPE_MANUAL_DRAW, MANUAL_ADJUSTMENT_TYPE_MANUAL_PAYMENT, LiquidityConstructionAccount,
+    MANUAL_ADJUSTMENT_TYPE_MANUAL_DRAW, MANUAL_ADJUSTMENT_TYPE_MANUAL_PAYMENT, TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT,
+    TRANSFER_OUTCOMES_THAT_COUNT, LiquidityConstructionAccount,
 )
 
 
@@ -36,6 +40,20 @@ def bank_sums_stored_on_the_link(link: LiquidityConstructionAccount) -> Construc
         own_money_transferred_into_the_account_dollars=Decimal(link.bank_own_money_transferred_into_the_account_dollars or 0),
         own_money_transferred_out_of_the_account_dollars=Decimal(link.bank_own_money_transferred_out_of_the_account_dollars or 0),
     )
+
+
+def in_app_transfers_not_yet_in_the_bank_feed(db: Session, link: LiquidityConstructionAccount) -> list[InAppTransferNotYetInTheBankFeed]:
+    """The linked account's Deposits and Steals that Mercury accepted and the bank feed does not show yet."""
+    last_bank_read_at = link.bank_amounts_as_of
+    return [
+        InAppTransferNotYetInTheBankFeed(
+            signed_amount_dollars=(Decimal(transfer.amount_dollars) if transfer.transfer_direction == TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT
+                                   else -Decimal(transfer.amount_dollars)),
+            requested_after_the_last_bank_read=last_bank_read_at is None or transfer.requested_at > last_bank_read_at,
+        )
+        for transfer in get_transfers_of_construction_account(db, link.bought_brrr_deal_id, link.construction_mercury_account_id)
+        if transfer.transfer_outcome in TRANSFER_OUTCOMES_THAT_COUNT and transfer.seen_in_the_bank_feed_at is None
+    ]
 
 
 # The schedule's `rehab_cushion` row before the construction account rows replaced it.
@@ -55,8 +73,8 @@ def deposit_row_of_deal_is_done(db: Session, bought_brrr_deal_id) -> bool:
 def projection_of_linked_deal(db: Session, deal, link: LiquidityConstructionAccount,
                               bank_sums: Optional[ConstructionAccountBankSums] = None) -> ConstructionAccountProjection:
     """The projection from the deal as it is now (rehab cost, budget, cushion), the link's settings, the manual
-    adjustments, and `bank_sums` (default: the ones stored on the link at the last refresh). `deal` is an ORM row or
-    its attributes with some changed."""
+    adjustments, `bank_sums` (default: the ones stored on the link at the last refresh) and the in-app transfers the
+    bank feed does not show yet. `deal` is an ORM row or its attributes with some changed."""
     results = compute_brrr_with_intermediates(deal)
     manual_adjustments = get_manual_adjustments_of_deal(db, link.bought_brrr_deal_id)
 
@@ -76,7 +94,9 @@ def projection_of_linked_deal(db: Session, deal, link: LiquidityConstructionAcco
         deposit_row_is_done=deposit_row_of_deal_is_done(db, link.bought_brrr_deal_id),
         is_closed_out=link.closed_out_at is not None,
     )
-    return project_construction_account(inputs, bank_sums if bank_sums is not None else bank_sums_stored_on_the_link(link))
+    bank_sums = bank_sums if bank_sums is not None else bank_sums_stored_on_the_link(link)
+    return project_construction_account(inputs, bank_sums_with_in_app_transfers_not_yet_in_the_feed(
+        bank_sums, in_app_transfers_not_yet_in_the_bank_feed(db, link)))
 
 
 def rehab_completed_date_of_deal(deal) -> date:

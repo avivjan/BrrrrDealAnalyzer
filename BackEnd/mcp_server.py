@@ -496,7 +496,9 @@ EXCLUDED_PREFIXES = ("/auth", "/devices", "/sessions", "/credentials", "/member-
 
 # Routes whose request or answer is a binary image: the camera upload and the
 # JPEG downloads of the inspection walkthrough are for the browser, not a tool.
-EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnail", "get_inspection_photo_full_image"}
+EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnail", "get_inspection_photo_full_image",
+                       # They move real money at Mercury: Claude never does (tasks/todo/ConstructionAccountPerRehab.md, Step E).
+                       "deposit_into_liquidity_construction_account", "steal_from_liquidity_construction_account"}
 
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client

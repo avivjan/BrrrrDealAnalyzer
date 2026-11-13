@@ -6,6 +6,7 @@ Throughout: construction budget $100,000, rehab cost $95,000 (so the original st
 from __future__ import annotations
 
 from dataclasses import replace
+from datetime import date
 from decimal import Decimal
 
 from BL.liquidity.constructionAccount.construction_account_projection import (
@@ -217,3 +218,44 @@ class TestTheDepositAndTheStealLimits:
         projection = _project([_deposit(20000), _draw(100000), _payment(95000), _steal(25000)], is_closed_out=True)
         assert (projection.deposit_row_amount_dollars, projection.return_row_amount_dollars,
                 projection.top_up_needed_dollars, projection.safe_to_steal_now_dollars) == (0, 0, 0, 0)
+
+
+# --- In-app transfers (Step E) ---------------------------------------------------------------------------------
+
+from BL.liquidity.constructionAccount.construction_account_projection import (  # noqa: E402
+    ConstructionAccountBankSums, InAppTransferNotYetInTheBankFeed, InAppTransferToMatch, bank_sums_with_in_app_transfers_not_yet_in_the_feed,
+    match_in_app_transfers_to_the_bank_feed,
+)
+
+
+def _feed_row(transaction_id: str, signed_amount: int, on: date, internal: bool = True) -> ConstructionAccountBankTransaction:
+    return ConstructionAccountBankTransaction(mercury_transaction_id=transaction_id, transaction_date=on, counterparty_name="",
+                                              signed_amount_dollars=Decimal(signed_amount), is_internal_transfer=internal,
+                                              is_failed_or_cancelled=False)
+
+
+class TestInAppTransfers:
+    def test_matched_by_mercury_id_first_then_by_amount_and_date_each_row_once(self):
+        transfers = [
+            InAppTransferToMatch("a", "mercury-1", Decimal(5000), date(2026, 1, 10)),
+            InAppTransferToMatch("b", None, Decimal(5000), date(2026, 1, 10)),
+            InAppTransferToMatch("c", None, Decimal(-2000), date(2026, 1, 20)),
+        ]
+        feed = [_feed_row("mercury-1", 5000, date(2026, 1, 10)), _feed_row("feed-2", 5000, date(2026, 1, 11)),
+                _feed_row("too-early", -2000, date(2026, 1, 19)), _feed_row("a-wire", -2000, date(2026, 1, 21), internal=False)]
+        matched = match_in_app_transfers_to_the_bank_feed(transfers, feed)
+        assert {transfer_id: row.mercury_transaction_id for transfer_id, row in matched.items()} == {"a": "mercury-1", "b": "feed-2"}
+
+    def test_a_row_already_matched_to_an_earlier_transfer_is_not_matched_again(self):
+        matched = match_in_app_transfers_to_the_bank_feed(
+            [InAppTransferToMatch("b", None, Decimal(5000), date(2026, 1, 10))], [_feed_row("feed-2", 5000, date(2026, 1, 11))], ["feed-2"])
+        assert matched == {}
+
+    def test_an_accepted_transfer_counts_at_once_and_moves_the_balance_only_until_a_later_read(self):
+        sums = ConstructionAccountBankSums(Decimal(1000), Decimal(1000), Decimal(0), Decimal(0), Decimal(0), Decimal(0))
+        after = bank_sums_with_in_app_transfers_not_yet_in_the_feed(sums, [
+            InAppTransferNotYetInTheBankFeed(Decimal(5000), requested_after_the_last_bank_read=True),
+            InAppTransferNotYetInTheBankFeed(Decimal(-300), requested_after_the_last_bank_read=False),
+        ])
+        assert (after.own_money_transferred_into_the_account_dollars, after.own_money_transferred_out_of_the_account_dollars) == (5000, 300)
+        assert (after.current_balance_dollars, after.available_balance_dollars) == (6000, 6000)

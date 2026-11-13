@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from DAL.data_models.liquidity.construction_account_models import (
     LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride,
+    LiquidityConstructionAccountTransfer,
 )
 
 
@@ -58,3 +59,20 @@ def delete_everything_of_deal(db: Session, bought_brrr_deal_id) -> None:
     """The link, the manual adjustments and the overrides of one deal (an unlink, or the deal's deletion)."""
     for model in (LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride, LiquidityConstructionAccount):
         db.query(model).filter(model.bought_brrr_deal_id == bought_brrr_deal_id).delete(synchronize_session=False)
+
+
+def get_transfers_of_construction_account(db: Session, bought_brrr_deal_id, construction_mercury_account_id: str) -> list[LiquidityConstructionAccountTransfer]:
+    """The deal's in-app transfers of one construction account (an old account's transfers stay with that account)."""
+    return (db.query(LiquidityConstructionAccountTransfer)
+            .filter(LiquidityConstructionAccountTransfer.bought_brrr_deal_id == bought_brrr_deal_id,
+                    LiquidityConstructionAccountTransfer.construction_mercury_account_id == construction_mercury_account_id)
+            .order_by(LiquidityConstructionAccountTransfer.requested_at.desc()).all())
+
+
+def get_transfer_by_idempotency_key(db: Session, idempotency_key: str) -> Optional[LiquidityConstructionAccountTransfer]:
+    return db.query(LiquidityConstructionAccountTransfer).filter(LiquidityConstructionAccountTransfer.idempotency_key == idempotency_key).first()
+
+
+def count_transfers_requested_since(db: Session, since) -> int:
+    """Every transfer asked of Mercury since `since`, refused ones included (the hourly limit counts attempts)."""
+    return db.query(LiquidityConstructionAccountTransfer).filter(LiquidityConstructionAccountTransfer.requested_at >= since).count()

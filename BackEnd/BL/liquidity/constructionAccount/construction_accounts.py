@@ -34,8 +34,10 @@ from BL.liquidity.common.mercury_token_names import (
 )
 from BL.liquidity.constructionAccount.construction_account_projection import (
     CategorisedConstructionAccountTransaction, ConstructionAccountBankTransaction, ConstructionAccountProjection,
-    ConstructionAccountTransactionOverride, bank_feed_details_of, categorise_transactions, sum_categorised_transactions,
+    ConstructionAccountTransactionOverride, InAppTransferToMatch, bank_feed_details_of, categorise_transactions,
+    match_in_app_transfers_to_the_bank_feed, sum_categorised_transactions,
 )
+from BL.liquidity.constructionAccount.construction_account_transfer_settings import transfer_figures_of_link
 from BL.liquidity.constructionAccount.construction_account_rows import (
     bank_sums_stored_on_the_link, planned_cash_rows_of_deal_in_liquidity, projection_of_linked_deal, rehab_completed_date_of_deal,
 )
@@ -52,11 +54,12 @@ from BL.liquidity.mercuryBalance import mercury_balance_from_workspace_reads
 from DAL.crud.liquidity_construction_account import (
     delete_everything_of_deal, get_all_construction_accounts, get_construction_account_by_mercury_account_id,
     get_construction_account_of_deal, get_manual_adjustment, get_manual_adjustments_of_deal, get_transaction_override,
-    get_transaction_overrides_of_deal,
+    get_transaction_overrides_of_deal, get_transfers_of_construction_account,
 )
 from DAL.data_models import BoughtBrrrDeal, LiquidityTransaction
 from DAL.data_models.common.brrr_lifecycle import BrrrLifecycleColumns
 from DAL.data_models.liquidity.construction_account_models import (
+    TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT, TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY, TRANSFER_OUTCOMES_THAT_COUNT,
     LiquidityConstructionAccount, LiquidityConstructionAccountManualAdjustment, LiquidityConstructionAccountTransactionOverride,
 )
 from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook
@@ -194,6 +197,7 @@ def _read_the_bank_into_the_link(db: Session, link: LiquidityConstructionAccount
         _raw_transactions, categorised = _categorised_transactions_of_link(db, link, use_cache=use_cached_transactions)
     except MercuryUnavailableError:
         return False
+    _match_the_in_app_transfers_to_the_bank_feed(db, link, [entry.transaction for entry in categorised])
     account = accounts_by_id[link.construction_mercury_account_id]
     bank_sums = sum_categorised_transactions(_dollars(account["current_balance_dollars"]), _dollars(account["available_balance_dollars"]), categorised)
     link.bank_current_balance_dollars = bank_sums.current_balance_dollars
@@ -211,6 +215,32 @@ def _read_the_bank_into_the_link(db: Session, link: LiquidityConstructionAccount
     link.bank_amounts_as_of = _utc_now()
     _store_account_names(link, accounts_by_id)
     return True
+
+
+def _match_the_in_app_transfers_to_the_bank_feed(db: Session, link: LiquidityConstructionAccount,
+                                                 transactions: list[ConstructionAccountBankTransaction]) -> None:
+    """An in-app transfer the feed now shows stops counting on its own (the feed counts it): each counts once. One the
+    feed shows as failed or cancelled stops counting at all."""
+    transfers = get_transfers_of_construction_account(db, link.bought_brrr_deal_id, link.construction_mercury_account_id)
+    waiting = [transfer for transfer in transfers if transfer.transfer_outcome in TRANSFER_OUTCOMES_THAT_COUNT and transfer.seen_in_the_bank_feed_at is None]
+    if not waiting:
+        return
+    matched = match_in_app_transfers_to_the_bank_feed(
+        [InAppTransferToMatch(
+            transfer_id=str(transfer.id), mercury_transfer_id=transfer.mercury_transfer_id,
+            signed_amount_dollars=(Decimal(transfer.amount_dollars) if transfer.transfer_direction == TRANSFER_DIRECTION_DEPOSIT_INTO_CONSTRUCTION_ACCOUNT
+                                   else -Decimal(transfer.amount_dollars)),
+            requested_on=transfer.requested_at.date()) for transfer in waiting],
+        transactions,
+        [transfer.mercury_transaction_id_in_the_bank_feed for transfer in transfers if transfer.mercury_transaction_id_in_the_bank_feed])
+    for transfer in waiting:
+        transaction = matched.get(str(transfer.id))
+        if transaction is None:
+            continue
+        transfer.mercury_transaction_id_in_the_bank_feed = transaction.mercury_transaction_id
+        transfer.seen_in_the_bank_feed_at = _utc_now()
+        if transaction.is_failed_or_cancelled:
+            transfer.transfer_outcome = TRANSFER_OUTCOME_FAILED_OR_CANCELLED_AT_MERCURY
 
 
 def _store_account_names(link: LiquidityConstructionAccount, accounts_by_id: dict[str, dict]) -> None:
@@ -405,6 +435,7 @@ def status_of_deal(db: Session, deal: BoughtBrrrDeal, today: Optional[date] = No
         last_transaction_date=date.fromisoformat(details["last_transaction_date"]) if details.get("last_transaction_date") else None,
         marked_ready_for_close_out_at=link.marked_ready_for_close_out_at, closed_out_at=link.closed_out_at,
         manual_adjustments=[_manual_adjustment_res(adjustment) for adjustment in get_manual_adjustments_of_deal(db, deal.id)],
+        **transfer_figures_of_link(db, link),
         needs_attention_because=needs_attention_because,
     ))
 
@@ -452,11 +483,13 @@ class _WriteOutcome:
 
 
 def _write(db: Session, deal: BoughtBrrrDeal, today: Optional[date], use_deal_value_for: Iterable[UseDealValueForField],
-           preview_only: bool, action: Callable[[], Optional[_WriteOutcome]]) -> ConstructionAccountWriteRes:
+           preview_only: bool, action: Callable[[], Optional[_WriteOutcome]],
+           status_before: Optional[ConstructionAccountStatusRes] = None) -> ConstructionAccountWriteRes:
     """Run one change and the full sync of the deal's rows, and answer before -> after. Nothing is committed here:
-    the router commits a confirmed write and rolls a preview back."""
+    the router commits a confirmed write and rolls a preview back. `status_before`: when the change already happened
+    (a transfer Mercury answered), the status read before it."""
     resolved_today = today_for_liquidity(db, today)
-    status_before = status_of_deal(db, deal, resolved_today)
+    status_before = status_before or status_of_deal(db, deal, resolved_today)
     outcome = action() or _WriteOutcome()
     db.flush()
     changes, marked_done = sync_every_liquidity_row_of_deal(db, deal, resolved_today, use_deal_value_for_pairs(use_deal_value_for))

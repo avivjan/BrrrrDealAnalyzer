@@ -90,6 +90,27 @@ class ConstructionAccountRefreshReq(BaseModel):
 
 # --- The page -----------------------------------------------------------------------------------------------------
 
+class ConstructionAccountTransferReq(BaseModel):
+    """A Deposit (checking -> construction account) or a Steal (construction account -> checking). The two accounts
+    are always the ones linked to the deal: the request cannot name an account."""
+    amount_dollars: float = Field(..., gt=0, le=MAX_CONSTRUCTION_ACCOUNT_AMOUNT_DOLLARS)
+    idempotency_key: str = Field(..., min_length=8, max_length=80, pattern=r"^[A-Za-z0-9-]+$",
+                                 description="One per open transfer window: the same key never makes a second transfer.")
+    confirm_amount_exceeds_safe_to_steal: bool = Field(
+        False, description="A Steal above 'safe to steal now' is refused (409) unless this confirms the top-up it will need.")
+
+
+class ConstructionAccountTransferRes(BaseModel):
+    transfer_id: str
+    transfer_direction: Literal["deposit_into_construction_account", "steal_to_primary_checking"]
+    amount_dollars: float
+    transfer_outcome: Literal["being_sent", "accepted_by_mercury", "refused_by_mercury", "mercury_did_not_answer",
+                              "failed_or_cancelled_at_mercury"]
+    mercury_transfer_status: Optional[str] = Field(None, description="pending / sent / cancelled / failed / unknown, as Mercury said.")
+    requested_at: datetime
+    is_in_the_bank_feed: bool = Field(..., description="The bank feed shows it (it then counts from the feed, once).")
+
+
 class MercuryAccountNameRes(BaseModel):
     mercury_account_id: str
     name: str
@@ -205,6 +226,12 @@ class ConstructionAccountStatusRes(BaseModel):
     marked_ready_for_close_out_at: Optional[datetime] = None
     closed_out_at: Optional[datetime] = None
     manual_adjustments: List[ConstructionAccountManualAdjustmentRes] = Field(default_factory=list)
+    transfers_made_in_the_app: List[ConstructionAccountTransferRes] = Field(default_factory=list)
+    in_app_transfers_are_enabled: bool = False
+    has_a_transfer_token: bool = False
+    transfer_token_environment_variable_name: Optional[str] = None
+    transfers_left_this_hour: Optional[int] = None
+    maximum_single_transfer_dollars: Optional[float] = None
     needs_attention_because: List[Literal["deposit_due", "top_up_needed", "mercury_unavailable"]] = Field(default_factory=list)
 
 
@@ -235,6 +262,11 @@ class ConstructionAccountWriteRes(BaseModel):
     row_descriptions_marked_done: List[str] = Field(default_factory=list)
     balance_left_in_the_account_dollars: Optional[float] = Field(
         None, description="Only when closing out: not $0 means money is still in the account (move it in Mercury, or Reopen).")
+
+
+class ConstructionAccountTransferWriteRes(ConstructionAccountWriteRes):
+    """A Deposit or a Steal: the write's answer, plus the transfer (null for a preview: nothing was asked of Mercury)."""
+    transfer: Optional[ConstructionAccountTransferRes] = None
 
 
 class ConstructionAccountSwitchPreviewRes(BaseModel):
