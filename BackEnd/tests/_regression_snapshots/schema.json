@@ -4658,6 +4658,631 @@
       "id"
     ]
   },
+  "liquidity_construction_account_manual_adjustments": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "bought_brrr_deal_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "adjustment_type",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(20)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "amount_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "date",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "date",
+        "server_default": null,
+        "type": "DATE",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "created_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "bought_brrr_deal_id"
+        ],
+        "name": "ix_liquidity_construction_account_manual_adjustments_bought_brrr_deal_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "liquidity_construction_account_transaction_overrides": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "mercury_transaction_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "bought_brrr_deal_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "False",
+        "foreign_keys": [],
+        "index": null,
+        "name": "ignored",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bool",
+        "server_default": "false",
+        "type": "BOOLEAN",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "category_override",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(20)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "note",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(500)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "bought_brrr_deal_id"
+        ],
+        "name": "ix_liquidity_construction_account_transaction_overrides_bought_brrr_deal_id",
+        "unique": false
+      },
+      {
+        "columns": [
+          "mercury_transaction_id"
+        ],
+        "name": "ix_liquidity_construction_account_transaction_overrides_mercury_transaction_id",
+        "unique": true
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "liquidity_construction_accounts": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": "callable:uuid4",
+        "foreign_keys": [],
+        "index": null,
+        "name": "id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "bought_brrr_deal_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "UUID",
+        "server_default": null,
+        "type": "CHAR(32)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "mercury_workspace_label",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_mercury_account_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "primary_checking_mercury_account_id",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "''",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_name",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": "",
+        "type": "VARCHAR(200)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "''",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_number_last_four",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": "",
+        "type": "VARCHAR(4)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "''",
+        "foreign_keys": [],
+        "index": null,
+        "name": "primary_checking_account_name",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": "",
+        "type": "VARCHAR(200)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "''",
+        "foreign_keys": [],
+        "index": null,
+        "name": "primary_checking_account_number_last_four",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": "",
+        "type": "VARCHAR(4)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "callable:list",
+        "foreign_keys": [],
+        "index": null,
+        "name": "previous_construction_mercury_account_ids",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "loan_draws_pulled_before_construction_account_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "rehab_payments_made_before_construction_account_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "planned_deposit_override_dollars",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "minimum_balance_to_keep_in_construction_account_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_current_balance_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_available_balance_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_loan_draws_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_rehab_payments_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_own_money_transferred_into_the_account_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_own_money_transferred_out_of_the_account_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "0",
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "bank_amounts_as_of",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "marked_ready_for_close_out_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "closed_out_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "linked_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:id",
+      "UniqueConstraint:construction_mercury_account_id"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "bought_brrr_deal_id"
+        ],
+        "name": "ix_liquidity_construction_accounts_bought_brrr_deal_id",
+        "unique": true
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
   "liquidity_recurring_occurrence_states": {
     "columns": [
       {

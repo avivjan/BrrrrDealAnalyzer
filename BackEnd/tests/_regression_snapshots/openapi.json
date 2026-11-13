@@ -7985,6 +7985,784 @@
         "title": "CeremonyOptionsRes",
         "type": "object"
       },
+      "ConstructionAccountClosedOutRes": {
+        "properties": {
+          "balance_left_in_the_account_dollars": {
+            "description": "Not $0: move it to checking in Mercury (or Reopen).",
+            "title": "Balance Left In The Account Dollars",
+            "type": "number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          }
+        },
+        "required": [
+          "status",
+          "balance_left_in_the_account_dollars"
+        ],
+        "title": "ConstructionAccountClosedOutRes",
+        "type": "object"
+      },
+      "ConstructionAccountLinkReq": {
+        "description": "Link a construction account to a Bought BRRRR deal, or edit the link: every field stays editable at any time.",
+        "properties": {
+          "construction_mercury_account_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "title": "Construction Mercury Account Id",
+            "type": "string"
+          },
+          "loan_draws_pulled_before_construction_account_dollars": {
+            "default": 0,
+            "description": "Loan draws already pulled before this account existed (0 for a rehab that starts with the account).",
+            "maximum": 50000000.0,
+            "minimum": 0.0,
+            "title": "Loan Draws Pulled Before Construction Account Dollars",
+            "type": "number"
+          },
+          "minimum_balance_to_keep_in_construction_account_dollars": {
+            "default": 0,
+            "description": "A float to keep in the account (reimbursement draws); it lowers what is safe to steal.",
+            "maximum": 50000000.0,
+            "minimum": 0.0,
+            "title": "Minimum Balance To Keep In Construction Account Dollars",
+            "type": "number"
+          },
+          "planned_deposit_override_dollars": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your own deposit target. Null = the formula: rehab cushion + the rehab beyond the construction budget.",
+            "title": "Planned Deposit Override Dollars"
+          },
+          "primary_checking_mercury_account_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "title": "Primary Checking Mercury Account Id",
+            "type": "string"
+          },
+          "rehab_payments_made_before_construction_account_dollars": {
+            "default": 0,
+            "description": "Rehab payments already made before this account existed.",
+            "maximum": 50000000.0,
+            "minimum": 0.0,
+            "title": "Rehab Payments Made Before Construction Account Dollars",
+            "type": "number"
+          }
+        },
+        "required": [
+          "construction_mercury_account_id",
+          "primary_checking_mercury_account_id"
+        ],
+        "title": "ConstructionAccountLinkReq",
+        "type": "object"
+      },
+      "ConstructionAccountManualAdjustmentReq": {
+        "description": "Rehab money that never touched the construction account.",
+        "properties": {
+          "adjustment_type": {
+            "enum": [
+              "manual_payment",
+              "manual_draw"
+            ],
+            "title": "Adjustment Type",
+            "type": "string"
+          },
+          "amount_dollars": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 50000000.0,
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "adjustment_type",
+          "amount_dollars",
+          "date"
+        ],
+        "title": "ConstructionAccountManualAdjustmentReq",
+        "type": "object"
+      },
+      "ConstructionAccountManualAdjustmentRes": {
+        "properties": {
+          "adjustment_type": {
+            "enum": [
+              "manual_payment",
+              "manual_draw"
+            ],
+            "title": "Adjustment Type",
+            "type": "string"
+          },
+          "amount_dollars": {
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "id",
+          "adjustment_type",
+          "amount_dollars",
+          "date"
+        ],
+        "title": "ConstructionAccountManualAdjustmentRes",
+        "type": "object"
+      },
+      "ConstructionAccountRefreshReq": {
+        "properties": {
+          "today": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "title": "Today"
+          }
+        },
+        "title": "ConstructionAccountRefreshReq",
+        "type": "object"
+      },
+      "ConstructionAccountRefreshRes": {
+        "properties": {
+          "changed_row_count": {
+            "title": "Changed Row Count",
+            "type": "integer"
+          },
+          "mercury_is_unavailable": {
+            "title": "Mercury Is Unavailable",
+            "type": "boolean"
+          },
+          "refreshed_deal_count": {
+            "title": "Refreshed Deal Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "refreshed_deal_count",
+          "changed_row_count",
+          "mercury_is_unavailable"
+        ],
+        "title": "ConstructionAccountRefreshRes",
+        "type": "object"
+      },
+      "ConstructionAccountStatusRes": {
+        "description": "One Bought BRRRR deal on the Construction Accounts page: its link, and every number with its source.",
+        "properties": {
+          "amounts_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the bank amounts were last read from Mercury; null = never.",
+            "title": "Amounts As Of"
+          },
+          "available_balance_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Balance Dollars"
+          },
+          "bought_deal_id": {
+            "title": "Bought Deal Id",
+            "type": "string"
+          },
+          "closed_out_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Out At"
+          },
+          "construction_account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MercuryAccountNameRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "construction_budget_dollars": {
+            "title": "Construction Budget Dollars",
+            "type": "number"
+          },
+          "current_balance_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Balance Dollars"
+          },
+          "deal_address": {
+            "title": "Deal Address",
+            "type": "string"
+          },
+          "is_linked": {
+            "title": "Is Linked",
+            "type": "boolean"
+          },
+          "loan_draws_pulled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountSumBySourceRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loan_draws_pulled_before_construction_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loan Draws Pulled Before Construction Account Dollars"
+          },
+          "loan_draws_remaining_to_pull_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loan Draws Remaining To Pull Dollars"
+          },
+          "manual_adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/ConstructionAccountManualAdjustmentRes"
+            },
+            "title": "Manual Adjustments",
+            "type": "array"
+          },
+          "marked_ready_for_close_out_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marked Ready For Close Out At"
+          },
+          "mercury_is_unavailable": {
+            "default": false,
+            "title": "Mercury Is Unavailable",
+            "type": "boolean"
+          },
+          "mercury_workspace_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mercury Workspace Label"
+          },
+          "minimum_balance_to_keep_in_construction_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Balance To Keep In Construction Account Dollars"
+          },
+          "original_steal_dollars": {
+            "title": "Original Steal Dollars",
+            "type": "number"
+          },
+          "own_money_transferred_into_the_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Own Money Transferred Into The Account Dollars"
+          },
+          "own_money_transferred_out_of_the_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Own Money Transferred Out Of The Account Dollars"
+          },
+          "planned_deposit_by_the_formula_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Deposit By The Formula Dollars"
+          },
+          "planned_deposit_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Deposit Dollars"
+          },
+          "planned_deposit_override_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Deposit Override Dollars"
+          },
+          "previous_construction_mercury_account_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Previous Construction Mercury Account Ids",
+            "type": "array"
+          },
+          "primary_checking_account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MercuryAccountNameRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "projected_return_at_rehab_end_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Return At Rehab End Dollars"
+          },
+          "rehab_completed_is_approved": {
+            "title": "Rehab Completed Is Approved",
+            "type": "boolean"
+          },
+          "rehab_cost_dollars": {
+            "title": "Rehab Cost Dollars",
+            "type": "number"
+          },
+          "rehab_cushion_dollars": {
+            "title": "Rehab Cushion Dollars",
+            "type": "number"
+          },
+          "rehab_payments_made": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountSumBySourceRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rehab_payments_made_before_construction_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rehab Payments Made Before Construction Account Dollars"
+          },
+          "remaining_deposit_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Deposit Dollars"
+          },
+          "rows_wait_for_a_resync": {
+            "description": "The deal is 'liquidity out of date': its three construction rows follow after the Re-sync.",
+            "title": "Rows Wait For A Resync",
+            "type": "boolean"
+          },
+          "safe_to_steal_now_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safe To Steal Now Dollars"
+          },
+          "top_up_needed_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Up Needed Dollars"
+          },
+          "unpaid_rehab_remaining_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unpaid Rehab Remaining Dollars"
+          }
+        },
+        "required": [
+          "bought_deal_id",
+          "deal_address",
+          "is_linked",
+          "rows_wait_for_a_resync",
+          "rehab_completed_is_approved",
+          "construction_budget_dollars",
+          "rehab_cost_dollars",
+          "rehab_cushion_dollars",
+          "original_steal_dollars"
+        ],
+        "title": "ConstructionAccountStatusRes",
+        "type": "object"
+      },
+      "ConstructionAccountSumBySourceRes": {
+        "properties": {
+          "before_this_account_dollars": {
+            "title": "Before This Account Dollars",
+            "type": "number"
+          },
+          "entered_by_hand_dollars": {
+            "title": "Entered By Hand Dollars",
+            "type": "number"
+          },
+          "from_the_bank_feed_dollars": {
+            "title": "From The Bank Feed Dollars",
+            "type": "number"
+          },
+          "total_dollars": {
+            "title": "Total Dollars",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from_the_bank_feed_dollars",
+          "before_this_account_dollars",
+          "entered_by_hand_dollars",
+          "total_dollars"
+        ],
+        "title": "ConstructionAccountSumBySourceRes",
+        "type": "object"
+      },
+      "ConstructionAccountSwitchPreviewRes": {
+        "properties": {
+          "loan_draws_pulled_before_construction_account_dollars": {
+            "description": "The current baseline + the old account's categorised draws.",
+            "title": "Loan Draws Pulled Before Construction Account Dollars",
+            "type": "number"
+          },
+          "old_account_must_be_emptied_first": {
+            "title": "Old Account Must Be Emptied First",
+            "type": "boolean"
+          },
+          "old_construction_account_balance_dollars": {
+            "title": "Old Construction Account Balance Dollars",
+            "type": "number"
+          },
+          "rehab_payments_made_before_construction_account_dollars": {
+            "description": "The current baseline + the old account's categorised rehab payments.",
+            "title": "Rehab Payments Made Before Construction Account Dollars",
+            "type": "number"
+          }
+        },
+        "required": [
+          "old_construction_account_balance_dollars",
+          "old_account_must_be_emptied_first",
+          "loan_draws_pulled_before_construction_account_dollars",
+          "rehab_payments_made_before_construction_account_dollars"
+        ],
+        "title": "ConstructionAccountSwitchPreviewRes",
+        "type": "object"
+      },
+      "ConstructionAccountSwitchReq": {
+        "description": "Replace the deal's construction account mid-rehab. The old account's draws and payments move into the baselines.",
+        "properties": {
+          "loan_draws_pulled_before_construction_account_dollars": {
+            "description": "Draws pulled before the new account (prefilled by the preview).",
+            "maximum": 50000000.0,
+            "minimum": 0.0,
+            "title": "Loan Draws Pulled Before Construction Account Dollars",
+            "type": "number"
+          },
+          "new_construction_mercury_account_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "title": "New Construction Mercury Account Id",
+            "type": "string"
+          },
+          "rehab_payments_made_before_construction_account_dollars": {
+            "description": "Rehab payments made before the new account (prefilled by the preview).",
+            "maximum": 50000000.0,
+            "minimum": 0.0,
+            "title": "Rehab Payments Made Before Construction Account Dollars",
+            "type": "number"
+          }
+        },
+        "required": [
+          "new_construction_mercury_account_id",
+          "loan_draws_pulled_before_construction_account_dollars",
+          "rehab_payments_made_before_construction_account_dollars"
+        ],
+        "title": "ConstructionAccountSwitchReq",
+        "type": "object"
+      },
+      "ConstructionAccountTransactionOverrideReq": {
+        "properties": {
+          "category_override": {
+            "anyOf": [
+              {
+                "enum": [
+                  "loan_draw",
+                  "rehab_payment",
+                  "own_money"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Override"
+          },
+          "ignored": {
+            "default": false,
+            "title": "Ignored",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "ConstructionAccountTransactionOverrideReq",
+        "type": "object"
+      },
+      "ConstructionAccountTransactionRes": {
+        "properties": {
+          "automatic_category": {
+            "enum": [
+              "loan_draw",
+              "rehab_payment",
+              "own_money"
+            ],
+            "title": "Automatic Category",
+            "type": "string"
+          },
+          "bank_status": {
+            "title": "Bank Status",
+            "type": "string"
+          },
+          "category_override": {
+            "anyOf": [
+              {
+                "enum": [
+                  "loan_draw",
+                  "rehab_payment",
+                  "own_money"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Override"
+          },
+          "counterparty_name": {
+            "title": "Counterparty Name",
+            "type": "string"
+          },
+          "effective_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "loan_draw",
+                  "rehab_payment",
+                  "own_money"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null = counts for nothing: ignored by hand, or failed / cancelled at the bank.",
+            "title": "Effective Category"
+          },
+          "ignored": {
+            "title": "Ignored",
+            "type": "boolean"
+          },
+          "mercury_transaction_id": {
+            "title": "Mercury Transaction Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "signed_amount_dollars": {
+            "description": "Positive = into the construction account.",
+            "title": "Signed Amount Dollars",
+            "type": "number"
+          },
+          "transaction_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Date"
+          }
+        },
+        "required": [
+          "mercury_transaction_id",
+          "counterparty_name",
+          "signed_amount_dollars",
+          "bank_status",
+          "automatic_category",
+          "ignored"
+        ],
+        "title": "ConstructionAccountTransactionRes",
+        "type": "object"
+      },
       "CredentialRes": {
         "properties": {
           "backup_state": {
@@ -13071,6 +13849,29 @@
           "proposals_waiting_for_other_member"
         ],
         "title": "MemberLoanSummaryRes",
+        "type": "object"
+      },
+      "MercuryAccountNameRes": {
+        "properties": {
+          "account_number_last_four": {
+            "title": "Account Number Last Four",
+            "type": "string"
+          },
+          "mercury_account_id": {
+            "title": "Mercury Account Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mercury_account_id",
+          "name",
+          "account_number_last_four"
+        ],
+        "title": "MercuryAccountNameRes",
         "type": "object"
       },
       "OAuthApproveReq": {
@@ -18816,6 +19617,670 @@
           }
         },
         "summary": "Link Inspection To Deal"
+      }
+    },
+    "/liquidity/construction-accounts": {
+      "get": {
+        "description": "Every Bought BRRRR deal between its purchase and its refi that is in the liquidity timeline, with its\nconstruction account: balance, loan draws pulled and remaining, rehab payments made and remaining, the projected\nreturn at rehab end and what is safe to steal now. Amounts are those of the last refresh (`amounts_as_of`).",
+        "operationId": "list_liquidity_construction_accounts_liquidity_construction_accounts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  },
+                  "title": "Response List Liquidity Construction Accounts Liquidity Construction Accounts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Liquidity Construction Accounts"
+      }
+    },
+    "/liquidity/construction-accounts/refresh": {
+      "post": {
+        "description": "Read every linked construction account from Mercury and bring each deal's deposit, return and top-up rows in\nstep. Safe to call often: it changes nothing when nothing moved.",
+        "operationId": "refresh_liquidity_construction_accounts_liquidity_construction_accounts_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountRefreshReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountRefreshRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Liquidity Construction Accounts"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}": {
+      "delete": {
+        "description": "Remove the link, with its manual adjustments and transaction overrides. The deal's rows go back to the plan.",
+        "operationId": "unlink_liquidity_construction_account_liquidity_construction_accounts__bought_deal_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unlink Liquidity Construction Account"
+      },
+      "put": {
+        "description": "Link a Mercury construction account to a Bought BRRRR deal, or edit the link. Allowed at any stage of the rehab:\nthe two 'before this account' amounts say what was pulled and paid earlier, and stay editable.",
+        "operationId": "save_liquidity_construction_account_link_liquidity_construction_accounts__bought_deal_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountLinkReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Liquidity Construction Account Link"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/manual-adjustments": {
+      "post": {
+        "description": "Record rehab money that never touched the construction account: a payment made from another account, by credit\ncard or in cash (`manual_payment`), or a draw the lender wired elsewhere (`manual_draw`).",
+        "operationId": "add_liquidity_construction_account_manual_adjustment_liquidity_construction_accounts__bought_deal_id__manual_adjustments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountManualAdjustmentReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Liquidity Construction Account Manual Adjustment"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/manual-adjustments/{adjustment_id}": {
+      "delete": {
+        "operationId": "delete_liquidity_construction_account_manual_adjustment_liquidity_construction_accounts__bought_deal_id__manual_adjustments__adjustment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "adjustment_id",
+            "required": true,
+            "schema": {
+              "title": "Adjustment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Liquidity Construction Account Manual Adjustment"
+      },
+      "put": {
+        "operationId": "update_liquidity_construction_account_manual_adjustment_liquidity_construction_accounts__bought_deal_id__manual_adjustments__adjustment_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "adjustment_id",
+            "required": true,
+            "schema": {
+              "title": "Adjustment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountManualAdjustmentReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Liquidity Construction Account Manual Adjustment"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/mark-closed-out": {
+      "post": {
+        "description": "Close the account out without a transfer (you emptied it in Mercury): its return row is marked done.",
+        "operationId": "mark_liquidity_construction_account_closed_out_liquidity_construction_accounts__bought_deal_id__mark_closed_out_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountClosedOutRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Construction Account Closed Out"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/mark-ready-for-close-out": {
+      "post": {
+        "description": "The rehab is over as far as this account goes, before the rehab-completed milestone is approved.",
+        "operationId": "mark_liquidity_construction_account_ready_for_close_out_liquidity_construction_accounts__bought_deal_id__mark_ready_for_close_out_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Liquidity Construction Account Ready For Close Out"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/reopen": {
+      "post": {
+        "description": "Undo a close-out: the account is live again and its return row counts again.",
+        "operationId": "reopen_liquidity_construction_account_liquidity_construction_accounts__bought_deal_id__reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reopen Liquidity Construction Account"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/switch-account": {
+      "post": {
+        "description": "Replace the deal's construction account mid-rehab. Refused (409) while the old account still holds money.",
+        "operationId": "switch_liquidity_construction_account_liquidity_construction_accounts__bought_deal_id__switch_account_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountSwitchReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Switch Liquidity Construction Account"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/switch-account-preview": {
+      "get": {
+        "description": "Before replacing the construction account: the old account's balance (it must be $0) and the baselines that\ncarry its draws and payments over.",
+        "operationId": "preview_liquidity_construction_account_switch_liquidity_construction_accounts__bought_deal_id__switch_account_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountSwitchPreviewRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Liquidity Construction Account Switch"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/transactions": {
+      "get": {
+        "description": "The construction account's bank transactions, newest first, each with its automatic category (loan draw, rehab\npayment, own money) and what it counts as after your overrides.",
+        "operationId": "list_liquidity_construction_account_transactions_liquidity_construction_accounts__bought_deal_id__transactions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConstructionAccountTransactionRes"
+                  },
+                  "title": "Response List Liquidity Construction Account Transactions Liquidity Construction Accounts  Bought Deal Id  Transactions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Liquidity Construction Account Transactions"
+      }
+    },
+    "/liquidity/construction-accounts/{bought_deal_id}/transactions/{mercury_transaction_id}/override": {
+      "delete": {
+        "description": "Back to the transaction's automatic category.",
+        "operationId": "clear_liquidity_construction_account_transaction_override_liquidity_construction_accounts__bought_deal_id__transactions__mercury_transaction_id__override_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mercury_transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Mercury Transaction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clear Liquidity Construction Account Transaction Override"
+      },
+      "put": {
+        "description": "Ignore one bank transaction of the construction account, or count it in another category.",
+        "operationId": "set_liquidity_construction_account_transaction_override_liquidity_construction_accounts__bought_deal_id__transactions__mercury_transaction_id__override_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mercury_transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Mercury Transaction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountTransactionOverrideReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Liquidity Construction Account Transaction Override"
       }
     },
     "/liquidity/deals": {
