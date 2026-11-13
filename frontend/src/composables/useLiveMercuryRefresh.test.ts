@@ -48,7 +48,8 @@ beforeEach(() => {
   setActivePinia(createPinia())
   setTabVisibility('visible')
   api.refresh.mockReset().mockResolvedValue(refreshResult())
-  api.lastChange.mockReset()
+  // Every later check answers "nothing new" unless a test says otherwise.
+  api.lastChange.mockReset().mockResolvedValue({ last_changed_at: null, cash_balance_last_changed_at: null, construction_accounts_last_changed_at: null })
   api.list.mockReset().mockResolvedValue({ totals: null, accounts: [] })
 })
 afterEach(() => { unmount?.(); vi.useRealTimers() })
@@ -141,7 +142,7 @@ describe('useLiveMercuryRefresh', () => {
     mountThePage()
     api.lastChange
       .mockResolvedValueOnce({ last_changed_at: 'a', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'a' })
-      .mockResolvedValueOnce({ last_changed_at: 'b', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'b' })
+      .mockResolvedValue({ last_changed_at: 'b', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'b' })   // and stays
     constructionAccountStore.connectionStatus = {
       workspaces: [{ instant_updates_are_on: true } as never], read_token_environment_variable_name_pattern: '', transfer_token_environment_variable_name_pattern: '',
     }
@@ -156,7 +157,7 @@ describe('useLiveMercuryRefresh', () => {
     mountThePage()
     api.lastChange
       .mockResolvedValueOnce({ last_changed_at: 'a', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'a', last_instant_update_at: null })
-      .mockResolvedValueOnce({ last_changed_at: 'b', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'b',
+      .mockResolvedValue({ last_changed_at: 'b', cash_balance_last_changed_at: 'a', construction_accounts_last_changed_at: 'b',
                                last_instant_update_at: 'b', bank_reported_row_changes_of_last_instant_update: [rowChangesOfOneDeal(1)] })
     useConstructionAccountStore().connectionStatus = {
       workspaces: [{ instant_updates_are_on: true } as never], read_token_environment_variable_name_pattern: '', transfer_token_environment_variable_name_pattern: '',

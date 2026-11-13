@@ -41,6 +41,10 @@ PROTECTED = [
     if op[1] != "/helloworld"
     and not op[1].startswith(("/auth", "/devices", "/sessions", "/credentials", "/member-loan", "/public/inspections"))
 ]
+# Behind the key like every data route, and then gated again on a passkey used in the last minutes, whatever the
+# modes say: past the key they answer the passkey gate's own 401 (tests/test_mercury_instant_updates.py).
+SELF_GATED_ON_A_RECENT_PASSKEY = {"/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-on",
+                                  "/liquidity/mercury-webhooks/{mercury_workspace_label}/turn-off"}
 
 
 @pytest.fixture
@@ -62,7 +66,10 @@ class TestEnforce:
     @pytest.mark.parametrize("method,path", PROTECTED, ids=[f"{m} {p}" for m, p in PROTECTED])
     def test_every_data_operation_accepts_the_key(self, client, enforce, method, path):
         response = client.request(method, concrete(path), headers={HEADER: KEY})
-        assert response.status_code != 401
+        if path in SELF_GATED_ON_A_RECENT_PASSKEY:
+            assert response.status_code != 401 or response.json() != {"detail": DETAIL}   # past the key, at its own gate
+        else:
+            assert response.status_code != 401
 
     def test_a_wrong_key_is_rejected(self, client, enforce):
         response = client.get("/active-deals", headers={HEADER: KEY + "x"})

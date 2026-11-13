@@ -30,6 +30,8 @@ describe('every construction account edit (Requirement 1)', () => {
     api.saveLink.mockImplementation(async (_id, _data, options) => result(false, !!options?.previewOnly))
     const saved = await useConstructionAccountStore().saveLink('deal-1', {
       construction_mercury_account_id: 'construction', primary_checking_mercury_account_id: 'checking',
+      loan_draws_pulled_before_construction_account_dollars: 0, rehab_payments_made_before_construction_account_dollars: 0,
+      minimum_balance_to_keep_in_construction_account_dollars: 1000,
     })
     expect(saved).toBe(true)
     expect(api.saveLink.mock.calls.map(call => !!call[2]?.previewOnly)).toEqual([true, false])

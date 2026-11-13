@@ -133,6 +133,7 @@ export function useLiveMercuryRefresh() {
     } catch {
       return
     }
+    if (!change) return   // an empty answer is no news, not a change
     const before = lastSeenChange
     lastSeenChange = change
     if (!before) return
