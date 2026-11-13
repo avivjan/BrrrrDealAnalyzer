@@ -7985,26 +7985,32 @@
         "title": "CeremonyOptionsRes",
         "type": "object"
       },
-      "ConstructionAccountClosedOutRes": {
+      "ConstructionAccountDatedAmountRes": {
         "properties": {
-          "balance_left_in_the_account_dollars": {
-            "description": "Not $0: move it to checking in Mercury (or Reopen).",
-            "title": "Balance Left In The Account Dollars",
+          "amount_dollars": {
+            "title": "Amount Dollars",
             "type": "number"
           },
-          "status": {
-            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          "counterparty_name": {
+            "default": "",
+            "title": "Counterparty Name",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
           }
         },
         "required": [
-          "status",
-          "balance_left_in_the_account_dollars"
+          "date",
+          "amount_dollars"
         ],
-        "title": "ConstructionAccountClosedOutRes",
+        "title": "ConstructionAccountDatedAmountRes",
         "type": "object"
       },
       "ConstructionAccountLinkReq": {
-        "description": "Link a construction account to a Bought BRRRR deal, or edit the link: every field stays editable at any time.",
+        "description": "Link a construction account to a Bought BRRRR deal, or edit the link: every field stays editable at any time.\nThere is no deposit target here: what goes into the account is the deal's rehab cushion (plus any rehab beyond\nthe construction budget).",
         "properties": {
           "construction_mercury_account_id": {
             "maxLength": 80,
@@ -8029,20 +8035,6 @@
             "title": "Minimum Balance To Keep In Construction Account Dollars",
             "type": "number"
           },
-          "planned_deposit_override_dollars": {
-            "anyOf": [
-              {
-                "maximum": 50000000.0,
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Your own deposit target. Null = the formula: rehab cushion + the rehab beyond the construction budget.",
-            "title": "Planned Deposit Override Dollars"
-          },
           "primary_checking_mercury_account_id": {
             "maxLength": 80,
             "minLength": 1,
@@ -8064,6 +8056,26 @@
           "primary_checking_mercury_account_id"
         ],
         "title": "ConstructionAccountLinkReq",
+        "type": "object"
+      },
+      "ConstructionAccountListRes": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ConstructionAccountTotalsRes"
+          }
+        },
+        "required": [
+          "totals",
+          "accounts"
+        ],
+        "title": "ConstructionAccountListRes",
         "type": "object"
       },
       "ConstructionAccountManualAdjustmentReq": {
@@ -8153,8 +8165,32 @@
         "title": "ConstructionAccountManualAdjustmentRes",
         "type": "object"
       },
+      "ConstructionAccountPayeeTotalRes": {
+        "properties": {
+          "amount_dollars": {
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "payee_name": {
+            "title": "Payee Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payee_name",
+          "amount_dollars"
+        ],
+        "title": "ConstructionAccountPayeeTotalRes",
+        "type": "object"
+      },
       "ConstructionAccountRefreshReq": {
         "properties": {
+          "is_a_background_poll": {
+            "default": false,
+            "description": "True for an open page's automatic poll: audited only when it changes something or fails.",
+            "title": "Is A Background Poll",
+            "type": "boolean"
+          },
           "today": {
             "anyOf": [
               {
@@ -8174,13 +8210,68 @@
       },
       "ConstructionAccountRefreshRes": {
         "properties": {
+          "bank_reported_row_changes": {
+            "description": "Per deal, the rows this refresh changed because the bank reported something (already applied).",
+            "items": {
+              "$ref": "#/components/schemas/DealCashRowChangesRes"
+            },
+            "title": "Bank Reported Row Changes",
+            "type": "array"
+          },
+          "cash_balance_changed": {
+            "description": "The cash on hand (the accounts counted as cash) changed in this refresh.",
+            "title": "Cash Balance Changed",
+            "type": "boolean"
+          },
+          "cash_balance_last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash Balance Last Changed At"
+          },
           "changed_row_count": {
             "title": "Changed Row Count",
             "type": "integer"
           },
+          "construction_accounts_changed": {
+            "description": "A linked construction account's numbers or rows changed in this refresh.",
+            "title": "Construction Accounts Changed",
+            "type": "boolean"
+          },
+          "construction_accounts_last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Construction Accounts Last Changed At"
+          },
           "mercury_is_unavailable": {
             "title": "Mercury Is Unavailable",
             "type": "boolean"
+          },
+          "next_mercury_read_not_before": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mercury is not read again before this (the shared pace, or a back-off).",
+            "title": "Next Mercury Read Not Before"
           },
           "refreshed_deal_count": {
             "title": "Refreshed Deal Count",
@@ -8190,14 +8281,83 @@
         "required": [
           "refreshed_deal_count",
           "changed_row_count",
-          "mercury_is_unavailable"
+          "mercury_is_unavailable",
+          "cash_balance_changed",
+          "construction_accounts_changed"
         ],
         "title": "ConstructionAccountRefreshRes",
         "type": "object"
       },
-      "ConstructionAccountStatusRes": {
-        "description": "One Bought BRRRR deal on the Construction Accounts page: its link, and every number with its source.",
+      "ConstructionAccountRehabFiguresReq": {
+        "description": "The rehab figures of the Bought deal, edited from its construction account card. Only the fields sent change;\nthey are validated and written exactly like a save of the deal itself.",
         "properties": {
+          "actual_rehab_cost_dollars": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's actual rehab cost, before the contingency.",
+            "title": "Actual Rehab Cost Dollars"
+          },
+          "construction_budget_dollars": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lender's construction loan budget.",
+            "title": "Construction Budget Dollars"
+          },
+          "rehab_contingency_percent": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The contingency added on top of the actual rehab cost.",
+            "title": "Rehab Contingency Percent"
+          },
+          "rehab_cushion_dollars": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The rehab cushion: the one deposit figure. What you deposit into the account is this, plus any rehab beyond the budget.",
+            "title": "Rehab Cushion Dollars"
+          }
+        },
+        "title": "ConstructionAccountRehabFiguresReq",
+        "type": "object"
+      },
+      "ConstructionAccountStatusRes": {
+        "description": "One Bought BRRRR deal on the Construction Accounts page: every number tied to its construction account, each\nwith its source.",
+        "properties": {
+          "actual_rehab_cost_dollars": {
+            "title": "Actual Rehab Cost Dollars",
+            "type": "number"
+          },
           "amounts_as_of": {
             "anyOf": [
               {
@@ -8210,6 +8370,11 @@
             ],
             "description": "When the bank amounts were last read from Mercury; null = never.",
             "title": "Amounts As Of"
+          },
+          "appliances_dollars": {
+            "description": "Not in this account: its own timeline row, paid from checking.",
+            "title": "Appliances Dollars",
+            "type": "number"
           },
           "available_balance_dollars": {
             "anyOf": [
@@ -8267,9 +8432,74 @@
             "title": "Deal Address",
             "type": "string"
           },
+          "deal_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Bought deal's last change: a deal form loaded before it is stale.",
+            "title": "Deal Updated At"
+          },
+          "is_in_the_liquidity_timeline": {
+            "title": "Is In The Liquidity Timeline",
+            "type": "boolean"
+          },
           "is_linked": {
             "title": "Is Linked",
             "type": "boolean"
+          },
+          "last_loan_draw": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountDatedAmountRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_rehab_payment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionAccountDatedAmountRes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_transaction_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Transaction Date"
+          },
+          "liquidity_rows_are_out_of_date": {
+            "description": "A change to the deal still waits for its confirmation prompt.",
+            "title": "Liquidity Rows Are Out Of Date",
+            "type": "boolean"
+          },
+          "loan_draw_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loan Draw Count"
           },
           "loan_draws_pulled": {
             "anyOf": [
@@ -8349,9 +8579,44 @@
             ],
             "title": "Minimum Balance To Keep In Construction Account Dollars"
           },
+          "needs_attention_because": {
+            "items": {
+              "enum": [
+                "deposit_due",
+                "top_up_needed",
+                "mercury_unavailable"
+              ],
+              "type": "string"
+            },
+            "title": "Needs Attention Because",
+            "type": "array"
+          },
           "original_steal_dollars": {
+            "description": "Construction budget - rehab cost: positive = spread, negative = the rehab beyond the budget.",
             "title": "Original Steal Dollars",
             "type": "number"
+          },
+          "own_money_back_at_rehab_end_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Own Money Back At Rehab End Dollars"
+          },
+          "own_money_still_in_the_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Own Money Still In The Account Dollars"
           },
           "own_money_transferred_into_the_account_dollars": {
             "anyOf": [
@@ -8362,6 +8627,7 @@
                 "type": "null"
               }
             ],
+            "description": "Deposited so far.",
             "title": "Own Money Transferred Into The Account Dollars"
           },
           "own_money_transferred_out_of_the_account_dollars": {
@@ -8373,9 +8639,10 @@
                 "type": "null"
               }
             ],
+            "description": "Stolen so far.",
             "title": "Own Money Transferred Out Of The Account Dollars"
           },
-          "planned_deposit_by_the_formula_dollars": {
+          "pending_money_in_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -8384,9 +8651,9 @@
                 "type": "null"
               }
             ],
-            "title": "Planned Deposit By The Formula Dollars"
+            "title": "Pending Money In Dollars"
           },
-          "planned_deposit_dollars": {
+          "pending_money_out_dollars": {
             "anyOf": [
               {
                 "type": "number"
@@ -8395,9 +8662,9 @@
                 "type": "null"
               }
             ],
-            "title": "Planned Deposit Dollars"
+            "title": "Pending Money Out Dollars"
           },
-          "planned_deposit_override_dollars": {
+          "percent_of_the_construction_budget_pulled": {
             "anyOf": [
               {
                 "type": "number"
@@ -8406,7 +8673,18 @@
                 "type": "null"
               }
             ],
-            "title": "Planned Deposit Override Dollars"
+            "title": "Percent Of The Construction Budget Pulled"
+          },
+          "percent_of_the_rehab_paid": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Of The Rehab Paid"
           },
           "previous_construction_mercury_account_ids": {
             "items": {
@@ -8425,6 +8703,17 @@
               }
             ]
           },
+          "primary_checking_available_balance_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Checking Available Balance Dollars"
+          },
           "projected_return_at_rehab_end_dollars": {
             "anyOf": [
               {
@@ -8436,17 +8725,53 @@
             ],
             "title": "Projected Return At Rehab End Dollars"
           },
+          "purchase_closing_date": {
+            "format": "date",
+            "title": "Purchase Closing Date",
+            "type": "string"
+          },
+          "refi_closed_is_approved": {
+            "title": "Refi Closed Is Approved",
+            "type": "boolean"
+          },
+          "refi_closing_date": {
+            "format": "date",
+            "title": "Refi Closing Date",
+            "type": "string"
+          },
+          "rehab_beyond_the_construction_budget_dollars": {
+            "title": "Rehab Beyond The Construction Budget Dollars",
+            "type": "number"
+          },
+          "rehab_completed_date": {
+            "format": "date",
+            "title": "Rehab Completed Date",
+            "type": "string"
+          },
           "rehab_completed_is_approved": {
             "title": "Rehab Completed Is Approved",
             "type": "boolean"
           },
+          "rehab_contingency_percent": {
+            "title": "Rehab Contingency Percent",
+            "type": "number"
+          },
           "rehab_cost_dollars": {
+            "description": "Actual rehab cost + contingency. Appliances are not part of it.",
             "title": "Rehab Cost Dollars",
             "type": "number"
           },
           "rehab_cushion_dollars": {
+            "description": "The one deposit figure, stored on the Bought deal.",
             "title": "Rehab Cushion Dollars",
             "type": "number"
+          },
+          "rehab_paid_by_payee": {
+            "items": {
+              "$ref": "#/components/schemas/ConstructionAccountPayeeTotalRes"
+            },
+            "title": "Rehab Paid By Payee",
+            "type": "array"
           },
           "rehab_payments_made": {
             "anyOf": [
@@ -8480,11 +8805,6 @@
             ],
             "title": "Remaining Deposit Dollars"
           },
-          "rows_wait_for_a_resync": {
-            "description": "The deal is 'liquidity out of date': its three construction rows follow after the Re-sync.",
-            "title": "Rows Wait For A Resync",
-            "type": "boolean"
-          },
           "safe_to_steal_now_dollars": {
             "anyOf": [
               {
@@ -8496,6 +8816,56 @@
             ],
             "title": "Safe To Steal Now Dollars"
           },
+          "safe_to_steal_now_is_capped_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "available_balance",
+                  "buffer_to_keep",
+                  "projected_return"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safe To Steal Now Is Capped By"
+          },
+          "spread_already_taken_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread Already Taken Dollars"
+          },
+          "spread_at_rehab_end_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread At Rehab End Dollars"
+          },
+          "suggested_rehab_cushion_dollars": {
+            "title": "Suggested Rehab Cushion Dollars",
+            "type": "number"
+          },
+          "timeline_rows": {
+            "description": "The deposit, return, top-up and appliances rows as the timeline has them.",
+            "items": {
+              "$ref": "#/components/schemas/ConstructionAccountTimelineRowRes"
+            },
+            "title": "Timeline Rows",
+            "type": "array"
+          },
           "top_up_needed_dollars": {
             "anyOf": [
               {
@@ -8506,6 +8876,55 @@
               }
             ],
             "title": "Top Up Needed Dollars"
+          },
+          "total_to_deposit_dollars": {
+            "description": "Rehab cushion + rehab beyond the construction budget.",
+            "title": "Total To Deposit Dollars",
+            "type": "number"
+          },
+          "transactions_counted_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Counted Count"
+          },
+          "transactions_failed_or_cancelled_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Failed Or Cancelled Count"
+          },
+          "transactions_ignored_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Ignored Count"
+          },
+          "transactions_recategorised_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Recategorised Count"
           },
           "unpaid_rehab_remaining_dollars": {
             "anyOf": [
@@ -8523,12 +8942,23 @@
           "bought_deal_id",
           "deal_address",
           "is_linked",
-          "rows_wait_for_a_resync",
-          "rehab_completed_is_approved",
-          "construction_budget_dollars",
+          "is_in_the_liquidity_timeline",
+          "liquidity_rows_are_out_of_date",
+          "actual_rehab_cost_dollars",
+          "rehab_contingency_percent",
           "rehab_cost_dollars",
+          "construction_budget_dollars",
+          "original_steal_dollars",
           "rehab_cushion_dollars",
-          "original_steal_dollars"
+          "suggested_rehab_cushion_dollars",
+          "rehab_beyond_the_construction_budget_dollars",
+          "total_to_deposit_dollars",
+          "purchase_closing_date",
+          "rehab_completed_date",
+          "rehab_completed_is_approved",
+          "refi_closing_date",
+          "refi_closed_is_approved",
+          "appliances_dollars"
         ],
         "title": "ConstructionAccountStatusRes",
         "type": "object"
@@ -8622,6 +9052,95 @@
           "rehab_payments_made_before_construction_account_dollars"
         ],
         "title": "ConstructionAccountSwitchReq",
+        "type": "object"
+      },
+      "ConstructionAccountTimelineRowRes": {
+        "description": "One of the deal's rows as the liquidity timeline has it.",
+        "properties": {
+          "amount_dollars": {
+            "title": "Amount Dollars",
+            "type": "number"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "is_done": {
+            "title": "Is Done",
+            "type": "boolean"
+          },
+          "is_overdue": {
+            "title": "Is Overdue",
+            "type": "boolean"
+          },
+          "item_key": {
+            "title": "Item Key",
+            "type": "string"
+          },
+          "transaction_id": {
+            "title": "Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item_key",
+          "transaction_id",
+          "description",
+          "effective_date",
+          "amount_dollars",
+          "is_done",
+          "is_overdue"
+        ],
+        "title": "ConstructionAccountTimelineRowRes",
+        "type": "object"
+      },
+      "ConstructionAccountTotalsRes": {
+        "description": "Across every linked account that is not closed out.",
+        "properties": {
+          "accounts_needing_attention_count": {
+            "title": "Accounts Needing Attention Count",
+            "type": "integer"
+          },
+          "current_balance_dollars": {
+            "title": "Current Balance Dollars",
+            "type": "number"
+          },
+          "linked_account_count": {
+            "title": "Linked Account Count",
+            "type": "integer"
+          },
+          "projected_return_at_rehab_end_dollars": {
+            "title": "Projected Return At Rehab End Dollars",
+            "type": "number"
+          },
+          "remaining_deposit_dollars": {
+            "title": "Remaining Deposit Dollars",
+            "type": "number"
+          },
+          "safe_to_steal_now_dollars": {
+            "title": "Safe To Steal Now Dollars",
+            "type": "number"
+          },
+          "top_up_needed_dollars": {
+            "title": "Top Up Needed Dollars",
+            "type": "number"
+          }
+        },
+        "required": [
+          "linked_account_count",
+          "current_balance_dollars",
+          "projected_return_at_rehab_end_dollars",
+          "safe_to_steal_now_dollars",
+          "remaining_deposit_dollars",
+          "top_up_needed_dollars",
+          "accounts_needing_attention_count"
+        ],
+        "title": "ConstructionAccountTotalsRes",
         "type": "object"
       },
       "ConstructionAccountTransactionOverrideReq": {
@@ -8719,6 +9238,11 @@
             "title": "Ignored",
             "type": "boolean"
           },
+          "is_pending": {
+            "default": false,
+            "title": "Is Pending",
+            "type": "boolean"
+          },
           "mercury_transaction_id": {
             "title": "Mercury Transaction Id",
             "type": "string"
@@ -8761,6 +9285,63 @@
           "ignored"
         ],
         "title": "ConstructionAccountTransactionRes",
+        "type": "object"
+      },
+      "ConstructionAccountWriteRes": {
+        "description": "The answer of every write. With `preview_only` nothing was saved: this is what confirming would do.",
+        "properties": {
+          "balance_left_in_the_account_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when closing out: not $0 means money is still in the account (move it in Mercury, or Reopen).",
+            "title": "Balance Left In The Account Dollars"
+          },
+          "changes_the_liquidity_timeline": {
+            "title": "Changes The Liquidity Timeline",
+            "type": "boolean"
+          },
+          "liquidity_row_changes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DealCashRowChangesRes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's rows before -> after; null for a deal that is not in the liquidity timeline."
+          },
+          "row_descriptions_marked_done": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Row Descriptions Marked Done",
+            "type": "array"
+          },
+          "status_after": {
+            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          },
+          "status_before": {
+            "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+          },
+          "was_preview_only": {
+            "title": "Was Preview Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "was_preview_only",
+          "status_before",
+          "status_after",
+          "changes_the_liquidity_timeline"
+        ],
+        "title": "ConstructionAccountWriteRes",
         "type": "object"
       },
       "CredentialRes": {
@@ -11926,6 +12507,31 @@
       },
       "LiquiditySettingsRes": {
         "properties": {
+          "construction_account_in_app_transfers_enabled": {
+            "default": true,
+            "title": "Construction Account In App Transfers Enabled",
+            "type": "boolean"
+          },
+          "construction_account_maximum_single_transfer_dollars": {
+            "default": 100000,
+            "title": "Construction Account Maximum Single Transfer Dollars",
+            "type": "number"
+          },
+          "construction_account_refresh_interval_seconds": {
+            "default": 30,
+            "title": "Construction Account Refresh Interval Seconds",
+            "type": "integer"
+          },
+          "construction_account_refresh_when_window_regains_focus": {
+            "default": true,
+            "title": "Construction Account Refresh When Window Regains Focus",
+            "type": "boolean"
+          },
+          "construction_account_transfers_per_hour_limit": {
+            "default": 5,
+            "title": "Construction Account Transfers Per Hour Limit",
+            "type": "integer"
+          },
           "mercury_account_ids_counted_as_cash": {
             "anyOf": [
               {
@@ -11983,6 +12589,76 @@
       "LiquiditySettingsUpdate": {
         "description": "Partial update: only the fields sent change. Sending mercury_account_ids_counted_as_cash as null\ncounts every active account again.",
         "properties": {
+          "construction_account_in_app_transfers_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The kill switch of the in-app Deposit and Steal transfers.",
+            "title": "Construction Account In App Transfers Enabled"
+          },
+          "construction_account_maximum_single_transfer_dollars": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The largest single in-app transfer, in dollars.",
+            "title": "Construction Account Maximum Single Transfer Dollars"
+          },
+          "construction_account_refresh_interval_seconds": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 15.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How often an open page re-reads Mercury, in seconds (15 to 600).",
+            "title": "Construction Account Refresh Interval Seconds"
+          },
+          "construction_account_refresh_when_window_regains_focus": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Re-read Mercury at once when the page's window regains focus.",
+            "title": "Construction Account Refresh When Window Regains Focus"
+          },
+          "construction_account_transfers_per_hour_limit": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How many in-app transfers may be made in one hour (1 to 60).",
+            "title": "Construction Account Transfers Per Hour Limit"
+          },
           "mercury_account_ids_counted_as_cash": {
             "anyOf": [
               {
@@ -13872,6 +14548,161 @@
           "account_number_last_four"
         ],
         "title": "MercuryAccountNameRes",
+        "type": "object"
+      },
+      "MercuryConnectionStatusRes": {
+        "properties": {
+          "read_token_environment_variable_name_pattern": {
+            "title": "Read Token Environment Variable Name Pattern",
+            "type": "string"
+          },
+          "transfer_token_environment_variable_name_pattern": {
+            "title": "Transfer Token Environment Variable Name Pattern",
+            "type": "string"
+          },
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/MercuryWorkspaceConnectionRes"
+            },
+            "title": "Workspaces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "workspaces",
+          "read_token_environment_variable_name_pattern",
+          "transfer_token_environment_variable_name_pattern"
+        ],
+        "title": "MercuryConnectionStatusRes",
+        "type": "object"
+      },
+      "MercuryLastChangeRes": {
+        "description": "From the database only, never a Mercury call: cheap enough to ask every few seconds.",
+        "properties": {
+          "cash_balance_last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash Balance Last Changed At"
+          },
+          "construction_accounts_last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Construction Accounts Last Changed At"
+          },
+          "last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Changed At"
+          }
+        },
+        "title": "MercuryLastChangeRes",
+        "type": "object"
+      },
+      "MercuryWorkspaceConnectionRes": {
+        "description": "One LLC's connection to Mercury. Names and times only: never a token, never a secret.",
+        "properties": {
+          "has_read_token": {
+            "title": "Has Read Token",
+            "type": "boolean"
+          },
+          "has_transfer_token": {
+            "title": "Has Transfer Token",
+            "type": "boolean"
+          },
+          "instant_updates_are_on": {
+            "title": "Instant Updates Are On",
+            "type": "boolean"
+          },
+          "last_valid_event_received_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Valid Event Received At"
+          },
+          "last_webhook_error_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Webhook Error At"
+          },
+          "last_webhook_error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Webhook Error Message"
+          },
+          "mercury_workspace_label": {
+            "title": "Mercury Workspace Label",
+            "type": "string"
+          },
+          "next_mercury_read_not_before": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Mercury Read Not Before"
+          },
+          "read_token_environment_variable_name": {
+            "title": "Read Token Environment Variable Name",
+            "type": "string"
+          },
+          "transfer_token_environment_variable_name": {
+            "title": "Transfer Token Environment Variable Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mercury_workspace_label",
+          "has_read_token",
+          "has_transfer_token",
+          "read_token_environment_variable_name",
+          "transfer_token_environment_variable_name",
+          "instant_updates_are_on"
+        ],
+        "title": "MercuryWorkspaceConnectionRes",
         "type": "object"
       },
       "OAuthApproveReq": {
@@ -18780,6 +19611,25 @@
               "title": "Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "The deal's updated_at when your form was loaded: a save is refused (409) if the deal changed since. Leave it out to save regardless.",
+            "in": "query",
+            "name": "updated_at_the_form_was_loaded_with",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The deal's updated_at when your form was loaded: a save is refused (409) if the deal changed since. Leave it out to save regardless.",
+              "title": "Updated At The Form Was Loaded With"
+            }
           }
         ],
         "requestBody": {
@@ -19621,18 +20471,14 @@
     },
     "/liquidity/construction-accounts": {
       "get": {
-        "description": "Every Bought BRRRR deal between its purchase and its refi that is in the liquidity timeline, with its\nconstruction account: balance, loan draws pulled and remaining, rehab payments made and remaining, the projected\nreturn at rehab end and what is safe to steal now. Amounts are those of the last refresh (`amounts_as_of`).",
+        "description": "Every Bought BRRRR deal between its purchase and its refi that is in the liquidity timeline, with every number of\nits construction account, and the totals across them. Amounts are those of the last read (`amounts_as_of`).",
         "operationId": "list_liquidity_construction_accounts_liquidity_construction_accounts_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ConstructionAccountStatusRes"
-                  },
-                  "title": "Response List Liquidity Construction Accounts Liquidity Construction Accounts Get",
-                  "type": "array"
+                  "$ref": "#/components/schemas/ConstructionAccountListRes"
                 }
               }
             },
@@ -19642,9 +20488,28 @@
         "summary": "List Liquidity Construction Accounts"
       }
     },
+    "/liquidity/construction-accounts/last-change": {
+      "get": {
+        "description": "When the cash on hand or a construction account last changed, from the database only (never a Mercury call):\nan open page asks every few seconds and reloads when it moved.",
+        "operationId": "get_liquidity_construction_accounts_last_change_liquidity_construction_accounts_last_change_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MercuryLastChangeRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Liquidity Construction Accounts Last Change"
+      }
+    },
     "/liquidity/construction-accounts/refresh": {
       "post": {
-        "description": "Read every linked construction account from Mercury and bring each deal's deposit, return and top-up rows in\nstep. Safe to call often: it changes nothing when nothing moved.",
+        "description": "Read every Mercury workspace (through the shared pace: one read per workspace every 10 seconds at most, whoever\nasks; a back-off after a 429) and bring each linked construction account and its rows in step. Changes the bank\nreports are applied and listed in `bank_reported_row_changes`. Safe to call often.",
         "operationId": "refresh_liquidity_construction_accounts_liquidity_construction_accounts_refresh_post",
         "requestBody": {
           "content": {
@@ -19694,6 +20559,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -19701,7 +20619,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19732,6 +20650,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "requestBody": {
@@ -19749,7 +20720,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19782,6 +20753,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "requestBody": {
@@ -19799,7 +20823,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19840,6 +20864,59 @@
               "title": "Adjustment Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -19847,7 +20924,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19886,6 +20963,59 @@
               "title": "Adjustment Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "requestBody": {
@@ -19903,7 +21033,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19936,6 +21066,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -19943,7 +21126,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountClosedOutRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -19976,6 +21159,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -19983,7 +21219,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -20003,6 +21239,109 @@
         "summary": "Mark Liquidity Construction Account Ready For Close Out"
       }
     },
+    "/liquidity/construction-accounts/{bought_deal_id}/rehab-figures": {
+      "put": {
+        "description": "Edit the Bought deal's actual rehab cost, contingency, construction budget or rehab cushion (the one deposit\nfigure) from its construction account card: validated and written like a save of the deal, then its liquidity\nrows follow. Works for a deal with no account linked too.",
+        "operationId": "save_liquidity_construction_account_rehab_figures_liquidity_construction_accounts__bought_deal_id__rehab_figures_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bought_deal_id",
+            "required": true,
+            "schema": {
+              "title": "Bought Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionAccountRehabFiguresReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Liquidity Construction Account Rehab Figures"
+      }
+    },
     "/liquidity/construction-accounts/{bought_deal_id}/reopen": {
       "post": {
         "description": "Undo a close-out: the account is live again and its return row counts again.",
@@ -20016,6 +21355,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -20023,7 +21415,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -20056,6 +21448,59 @@
               "title": "Bought Deal Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "requestBody": {
@@ -20073,7 +21518,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -20199,6 +21644,59 @@
               "title": "Mercury Transaction Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "responses": {
@@ -20206,7 +21704,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -20246,6 +21744,59 @@
               "title": "Mercury Transaction Id",
               "type": "string"
             }
+          },
+          {
+            "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+            "in": "query",
+            "name": "preview_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "True = answer what this write would change, and save nothing (the confirmation prompt).",
+              "title": "Preview Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date; default: today in the liquidity settings' time zone.",
+              "title": "Today"
+            }
+          },
+          {
+            "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+            "in": "query",
+            "name": "use_the_new_value_for",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'<transaction id>:date' or '<transaction id>:amount' per row you edited by hand that should take the new value anyway.",
+              "title": "Use The New Value For"
+            }
           }
         ],
         "requestBody": {
@@ -20263,7 +21814,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConstructionAccountStatusRes"
+                  "$ref": "#/components/schemas/ConstructionAccountWriteRes"
                 }
               }
             },
@@ -20684,8 +22235,20 @@
     },
     "/liquidity/mercury-balance": {
       "get": {
-        "description": "Fetch the live Mercury account balances, in dollars, and the cash on hand among them\n(`counted_as_cash_balance_dollars`: the accounts chosen in the liquidity settings).\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.",
+        "description": "Fetch the live Mercury account balances, in dollars, and the cash on hand among them\n(`counted_as_cash_balance_dollars`: the accounts chosen in the liquidity settings).\n\nThe frontend uses this to re-anchor the liquidity timeline's opening\nbalance to today on page load. Every call leaves an audit row (who, from\nwhere, which workspaces answered) -- never a token.\n\nRead through the shared pace (tasks/todo/ConstructionAccountPerRehab.md): a\nworkspace is read from Mercury at most once every 10 seconds, whoever asks;\nin between, and during a back-off after a 429, its last snapshot answers.\n`fresh=true` asks for a new read as soon as the pace allows.",
         "operationId": "get_mercury_balance_liquidity_mercury_balance_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Fresh",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -20694,9 +22257,38 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Get Mercury Balance"
+      }
+    },
+    "/liquidity/mercury-connection-status": {
+      "get": {
+        "description": "Per LLC: whether the backend found its read token and its transfer token, the exact setting names it reads them\nfrom, and how instant updates are doing. Names and times only, never a token or a secret.",
+        "operationId": "get_liquidity_mercury_connection_status_liquidity_mercury_connection_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MercuryConnectionStatusRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Liquidity Mercury Connection Status"
       }
     },
     "/liquidity/recurring": {

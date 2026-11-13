@@ -34670,6 +34670,11 @@
   },
   "liquidity/settings_after_update": {
     "body": {
+      "construction_account_in_app_transfers_enabled": true,
+      "construction_account_maximum_single_transfer_dollars": 100000.0,
+      "construction_account_refresh_interval_seconds": 30,
+      "construction_account_refresh_when_window_regains_focus": true,
+      "construction_account_transfers_per_hour_limit": 5,
       "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,
@@ -34682,6 +34687,11 @@
   },
   "liquidity/settings_autocreate": {
     "body": {
+      "construction_account_in_app_transfers_enabled": true,
+      "construction_account_maximum_single_transfer_dollars": 100000.0,
+      "construction_account_refresh_interval_seconds": 30,
+      "construction_account_refresh_when_window_regains_focus": true,
+      "construction_account_transfers_per_hour_limit": 5,
       "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 0.0,
@@ -34694,6 +34704,11 @@
   },
   "liquidity/settings_partial": {
     "body": {
+      "construction_account_in_app_transfers_enabled": true,
+      "construction_account_maximum_single_transfer_dollars": 100000.0,
+      "construction_account_refresh_interval_seconds": 30,
+      "construction_account_refresh_when_window_regains_focus": true,
+      "construction_account_transfers_per_hour_limit": 5,
       "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,
@@ -34706,6 +34721,11 @@
   },
   "liquidity/settings_update": {
     "body": {
+      "construction_account_in_app_transfers_enabled": true,
+      "construction_account_maximum_single_transfer_dollars": 100000.0,
+      "construction_account_refresh_interval_seconds": 30,
+      "construction_account_refresh_when_window_regains_focus": true,
+      "construction_account_transfers_per_hour_limit": 5,
       "mercury_account_ids_counted_as_cash": null,
       "opening_balance_date": "<opening_balance_date>",
       "opening_balance_dollars": 123456.7,

@@ -5085,20 +5085,6 @@
       },
       {
         "autoincrement": "auto",
-        "default": null,
-        "foreign_keys": [],
-        "index": null,
-        "name": "planned_deposit_override_dollars",
-        "nullable": true,
-        "onupdate": null,
-        "primary_key": false,
-        "python_type": "Decimal",
-        "server_default": null,
-        "type": "NUMERIC(16, 2)",
-        "unique": null
-      },
-      {
-        "autoincrement": "auto",
         "default": "0",
         "foreign_keys": [],
         "index": null,
@@ -5214,6 +5200,20 @@
         "default": null,
         "foreign_keys": [],
         "index": null,
+        "name": "bank_feed_details_as_of_last_refresh",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
         "name": "marked_ready_for_close_out_at",
         "nullable": true,
         "onupdate": null,
@@ -5281,6 +5281,302 @@
     ],
     "primary_key": [
       "id"
+    ]
+  },
+  "liquidity_mercury_webhooks": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "mercury_workspace_label",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "mercury_webhook_endpoint_id",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(120)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "signing_secret",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(400)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": true,
+        "name": "receiving_path_token",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": true
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "turned_on_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "last_valid_event_received_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "last_webhook_error_message",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(300)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "last_webhook_error_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:mercury_workspace_label"
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "receiving_path_token"
+        ],
+        "name": "ix_liquidity_mercury_webhooks_receiving_path_token",
+        "unique": true
+      }
+    ],
+    "primary_key": [
+      "mercury_workspace_label"
+    ]
+  },
+  "liquidity_mercury_workspace_reads": {
+    "columns": [
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "mercury_workspace_label",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": true,
+        "python_type": "str",
+        "server_default": null,
+        "type": "VARCHAR(80)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "accounts_snapshot",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "dict",
+        "server_default": null,
+        "type": "JSON",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "counted_as_cash_balance_dollars",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": null,
+        "type": "NUMERIC(16, 2)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "last_mercury_read_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "next_mercury_read_not_before",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "0",
+        "foreign_keys": [],
+        "index": null,
+        "name": "consecutive_slow_down_answers",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": "0",
+        "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "fresh_read_requested_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "cash_balance_last_changed_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_accounts_last_changed_at",
+        "nullable": true,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": null,
+        "type": "DATETIME",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": null,
+        "foreign_keys": [],
+        "index": null,
+        "name": "updated_at",
+        "nullable": true,
+        "onupdate": "<sqlalchemy.sql.functions.now; now>",
+        "primary_key": false,
+        "python_type": "datetime",
+        "server_default": "now()",
+        "type": "DATETIME",
+        "unique": null
+      }
+    ],
+    "constraints": [
+      "PrimaryKeyConstraint:mercury_workspace_label"
+    ],
+    "indexes": [],
+    "primary_key": [
+      "mercury_workspace_label"
     ]
   },
   "liquidity_recurring_occurrence_states": {
@@ -5668,6 +5964,76 @@
         "python_type": "str",
         "server_default": "America/New_York",
         "type": "VARCHAR(64)",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "30",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_refresh_interval_seconds",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": "30",
+        "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "True",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_refresh_when_window_regains_focus",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bool",
+        "server_default": "true",
+        "type": "BOOLEAN",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "True",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_in_app_transfers_enabled",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "bool",
+        "server_default": "true",
+        "type": "BOOLEAN",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "5",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_transfers_per_hour_limit",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "int",
+        "server_default": "5",
+        "type": "INTEGER",
+        "unique": null
+      },
+      {
+        "autoincrement": "auto",
+        "default": "100000",
+        "foreign_keys": [],
+        "index": null,
+        "name": "construction_account_maximum_single_transfer_dollars",
+        "nullable": false,
+        "onupdate": null,
+        "primary_key": false,
+        "python_type": "Decimal",
+        "server_default": "100000",
+        "type": "NUMERIC(16, 2)",
         "unique": null
       },
       {
