@@ -25,6 +25,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from BL.liquidity.common import mercury_reads
@@ -164,7 +165,12 @@ def make_construction_account_transfer(db: Session, bought_deal_id: str, transfe
     status_before = construction_accounts_bl.status_of_deal(db, deal, resolved_today)
     transfer = _new_transfer_row(deal, link, transfer_direction, data, amount_dollars, TRANSFER_OUTCOME_BEING_SENT, now, requested_by_user_id)
     db.add(transfer)
-    db.commit()   # the key is stored before Mercury is asked (see the module docstring)
+    try:
+        db.commit()   # the key is stored before Mercury is asked (see the module docstring)
+    except IntegrityError:
+        # The same key, sent twice at once (a double tap): the first one is being sent; this one asks nothing.
+        db.rollback()
+        raise ConstructionAccountTransferRefusedError("This transfer is already being sent. Check the account in a moment.")
 
     _ask_mercury(transfer, deal.address or "")
     db.flush()

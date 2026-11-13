@@ -3,7 +3,7 @@ updates on (tasks/todo/ConstructionAccountPerRehab.md, Step F).
 
 Public (Mercury has no session), so it protects itself: the address carries a random token only Mercury knows, the
 `Mercury-Signature` header must match (HMAC-SHA256, constant-time) and be under 5 minutes old, the body is capped, and
-each address is rate limited. A valid event only means "read this LLC now": its contents are never trusted, stored or
+each sending IP is rate limited. A valid event only means "read this LLC now": its contents are never trusted, stored or
 logged. Never an MCP tool.
 """
 
@@ -19,6 +19,7 @@ from typing import Deque, Dict
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
+from BL.auth.common.audit import client_ip
 from BL.liquidity.common.mercury_webhooks import SIGNATURE_HEADER
 from BL.liquidity.constructionAccount import mercury_instant_updates as instant_updates_bl
 from BL.liquidity.dealCashRows.liquidity_deals import today_for_liquidity
@@ -28,7 +29,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MAXIMUM_EVENT_BODY_BYTES = 64 * 1024
+# Per sending IP, whatever address it calls: random addresses cannot reset or dodge the limit.
 EVENTS_PER_MINUTE_PER_ADDRESS = 120
+MAXIMUM_TRACKED_SENDERS = 1000
 LONGEST_DEFERRED_READ_WAIT_SECONDS = 300
 _event_times_by_address: Dict[str, Deque[float]] = {}
 _event_times_lock = threading.Lock()
@@ -42,12 +45,13 @@ def reset_mercury_webhook_rate_limits() -> None:
         _event_times_by_address.clear()
 
 
-def _within_the_rate_limit(receiving_path_token: str) -> bool:
+def _within_the_rate_limit(sender_ip_address: str) -> bool:
     now = time.monotonic()
     with _event_times_lock:
-        if len(_event_times_by_address) > 1000:
-            _event_times_by_address.clear()
-        times = _event_times_by_address.setdefault(receiving_path_token, deque())
+        if len(_event_times_by_address) > MAXIMUM_TRACKED_SENDERS:
+            for stale_sender in [sender for sender, times in _event_times_by_address.items() if not times or now - times[-1] > 60]:
+                del _event_times_by_address[stale_sender]
+        times = _event_times_by_address.setdefault(sender_ip_address, deque())
         while times and now - times[0] > 60:
             times.popleft()
         if len(times) >= EVENTS_PER_MINUTE_PER_ADDRESS:
@@ -78,8 +82,10 @@ def read_the_workspace_once_the_floor_ends(mercury_workspace_label: str, read_no
 @router.post("/webhooks/mercury/{receiving_path_token}", include_in_schema=False)
 async def receive_mercury_webhook_event(receiving_path_token: str, request: Request, background_tasks: BackgroundTasks,
                                         db: Session = Depends(get_db)):
-    if not (16 <= len(receiving_path_token) <= 80) or not _within_the_rate_limit(receiving_path_token):
-        raise HTTPException(status_code=429 if len(receiving_path_token) >= 16 else 404, detail="Not accepted")
+    if not _within_the_rate_limit(client_ip(request) or "unknown"):
+        raise HTTPException(status_code=429, detail="Not accepted")
+    if not (16 <= len(receiving_path_token) <= 80):
+        raise HTTPException(status_code=404, detail="Not found")
     raw_body = await request.body()
     if len(raw_body) > MAXIMUM_EVENT_BODY_BYTES:
         raise HTTPException(status_code=413, detail="Too large")

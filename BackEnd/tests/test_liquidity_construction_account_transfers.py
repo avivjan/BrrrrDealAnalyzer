@@ -247,3 +247,13 @@ class TestNeverAnMcpTool:
     def test_deposit_and_steal_are_not_tools(self):
         assert {"deposit_into_liquidity_construction_account", "steal_from_liquidity_construction_account"} <= mcp_server.EXCLUDED_TOOL_NAMES
         assert not [name for name in mcp_server.tools() if "deposit_into" in name or "steal_from" in name]
+
+
+class TestTheSameKeyAtOnce:
+    def test_a_second_request_racing_the_first_is_refused_and_asks_mercury_nothing(self, signed_in, transfers, linked, monkeypatch):
+        """Both pass the 'already asked?' check; the stored key lets only one through."""
+        monkeypatch.setattr(transfers_module, "get_transfer_by_idempotency_key", lambda db, key: None)
+        assert _send(signed_in, linked["id"], "deposit", 5000).status_code == 200
+        racing = _send(signed_in, linked["id"], "deposit", 5000)
+        assert racing.status_code == 409 and "already being sent" in racing.json()["detail"]
+        assert len(transfers.calls) == 1

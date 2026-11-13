@@ -208,11 +208,12 @@ class TestEvents:
         body = b"x" * (receiver_module.MAXIMUM_EVENT_BODY_BYTES + 1)
         assert _send_event(signed_in, _address(webhooks), body=body).status_code in (413, 422)
 
-    def test_each_address_is_rate_limited(self, signed_in, webhooks, monkeypatch):
+    def test_each_sender_is_rate_limited_whatever_address_it_calls(self, signed_in, webhooks, monkeypatch):
         _turn_on(signed_in)
-        monkeypatch.setattr(receiver_module, "EVENTS_PER_MINUTE_PER_ADDRESS", 2)
+        monkeypatch.setattr(receiver_module, "EVENTS_PER_MINUTE_PER_ADDRESS", 3)
         address = _address(webhooks)
-        assert [_send_event(signed_in, address).status_code for _ in range(3)] == [200, 200, 429]
+        unknown = "/webhooks/mercury/" + "y" * 43
+        assert [_send_event(signed_in, path).status_code for path in (address, unknown, address, address)] == [200, 404, 200, 429]
 
 
 class TestSignature:
