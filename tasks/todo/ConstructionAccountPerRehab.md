@@ -315,6 +315,45 @@ Above the cards, **totals across every account**: balance, projected return, saf
 - **Mercury reads inside a preview are rolled back with it**, pace included: a preview may cause one extra read later, never a write.
 - **Not done yet:** `cash_out_wire_at_lowest_arv_dollars` on the import preview (it belongs with Step G).
 
+### Step C0 — Navigation and shortcuts across the app (added on request, 7 h)
+
+Today only My Deals opens a deal from a link (`/my-deals?openDeal=…`); the Liquidity legend's deal link goes to the board, not the deal; inspections name their linked deal without linking to it. The rule from now on: **wherever a deal, a row or an account is shown, one click reaches the same thing everywhere else.**
+
+**One place builds every link** — `src/navigation/appLinks.ts`, pure functions returning router locations, used by every page (so a link can't drift from what the page reads):
+
+| Link | Opens |
+|---|---|
+| `dealOnItsBoard(board, id, type)` | `/my-deals?openDeal=…` (exists) or `/bought-deals?openDeal=…&dealType=…` (new): the deal's modal |
+| `dealOnTheLiquidityTimeline(board, id)` | `/liquidity?deal=<board>:<id>`: the legend opens on that deal, expanded and highlighted on the chart |
+| `transactionOnTheLiquidityTimeline(id, date)` | `/liquidity?transaction=<id>&day=<date>`: the chart centres on that day and its day view opens with the row highlighted |
+| `constructionAccountOfDeal(id, section?)` | `/liquidity/construction-accounts?deal=<id>&open=<section>`: scrolls to that card, highlights it, and opens a section (`transactions`, `manual-entries`, `settings`, `link`) |
+| `inspection(id)` | the inspection's summary (exists) |
+
+Each page reads its query once, acts, then clears it with `router.replace` (as `MyDeals.vue` does), so a refresh doesn't reopen it and Back returns to where you came from. An unknown id shows "That deal is no longer here" instead of failing silently.
+
+**The shortcuts, by place**
+
+| Where you are | What you can jump to |
+|---|---|
+| **Bought deal card and modal** | "On the timeline" (when imported); "Construction account" with its state as a chip (not linked / deposit due / top-up needed / live); its inspections |
+| **My Deals card and modal** | "On the timeline" (when imported); "Open its Bought copy" (opens the copy's modal, replacing today's link to the board) |
+| **Liquidity legend, per deal** | "Open deal" (the modal, not the board); "Construction account"; each overdue row → its day |
+| **Liquidity day view, per row** | "Open deal" for a deal's row; "Construction account" for a deposit, return or top-up row |
+| **Liquidity top bar** | "Construction accounts" (and in the phone's ⋯ menu) |
+| **Import preview** | after Import: "See it on the timeline" |
+| **Construction account card** | "Open deal"; "Show on the timeline"; each row of "On the timeline" → that row on the timeline; each "needs attention" chip → the action that fixes it (Deposit, the top-up row); "Open Mercury" (app.mercury.com, a new tab: for transfers you make there) |
+| **Inspections list and summary** | the linked deal → its modal |
+| **Dashboard** | "Construction accounts" tile |
+
+**Keyboard and command palette**
+- **Go-to keys** anywhere outside a text field: `g` then `d` Dashboard, `a` Analyze, `m` My Deals, `b` Bought, `l` Liquidity, `c` Construction accounts, `r` REPS, `i` Inspections. Listed in the palette as hints and in a `?` help sheet.
+- **Find any deal from ⌘K:** each deal gets "Open <address>", and when it applies "<address> on the timeline" and "<address> construction account". The list comes from the existing compact cross-board `GET /deals`, read once when the palette first opens (the palette's one network call; its golden is updated in a `Golden update:` commit).
+- Palette commands for "Construction account settings" and "Liquidity settings" (navigation with `open=settings`).
+
+**Files:** `src/navigation/appLinks.ts` (+ test), `src/composables/useDeepLinkQuery.ts` (read once, act, clear), `src/composables/useGoToKeyboardShortcuts.ts` (in `AppShell.vue`), `shell/commands.ts` and `CommandPalette.vue`, `views/BoughtDeals.vue`, `views/MyDeals.vue`, `components/BoughtDealCard.vue`, `components/DealCard.vue`, `liquidity/ImportDealToLiquidityButton.vue`, `liquidity/theater/LiquidityTheaterMode.vue`, `theater/DealLegendPanel.vue`, `theater/DayTransactionsModal.vue`, `liquidity/dealImpact/DealImpactView.vue`, `views/InspectionsHome.vue`, `views/InspectionSummary.vue`, and the new page.
+
+**Tests:** Vitest for `appLinks` (every link and what each page reads back), the deep-link composable (acts once, clears the query, unknown id), the go-to keys (ignored while typing), and the palette's deal commands. Playwright `e2e/flows/navigation-shortcuts.spec.ts`: Bought deal → timeline (legend open on it) → Construction account (card highlighted) → Open deal (modal) → Back returns each step; a day-view row → its deal; `g` `c` opens the page; ⌘K "construction" + an address opens that card; a deep link to a deleted deal shows the notice.
+
 ### Step C — Construction Accounts page (15 h)
 - [ ] **Types, API, store** (2 h): `src/types/constructionAccount.ts`, `src/api/constructionAccount.ts`, `src/stores/constructionAccountStore.ts`. Every edit goes through one store function: preview → prompt → confirm (or cancel), then it replaces the deal's status, reloads the liquidity rows, and after a rehab-figures edit reloads that deal in `boughtDealStore`.
 - [ ] **The prompt and the notice** (2 h):
@@ -395,7 +434,7 @@ Above the cards, **totals across every account**: balance, projected return, saf
 - In the running app against the fake Mercury: edit rehab cost on the card, read the prompt, cancel, edit again, confirm, and watch the timeline change without a reload; add a fake transaction and watch it appear within the interval, then at once with instant updates on.
 - **Only you can verify against the real Mercury:** the first transfer (make it a small one), and turning on instant updates.
 
-Remaining estimate: about 65 h.
+Remaining estimate: about 49 h (Steps A and B are done; Step C0 adds 7 h).
 
 ---
 
