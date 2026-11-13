@@ -24,6 +24,7 @@ import type { ConstructionAccountTransferKind } from '../../../utils/constructio
 import ConstructionAccountEditableFigure from './ConstructionAccountEditableFigure.vue'
 import ConstructionAccountFigure from './ConstructionAccountFigure.vue'
 import ConstructionAccountManualAdjustmentsList from './ConstructionAccountManualAdjustmentsList.vue'
+import ConstructionAccountRehabSummaryStatus from './ConstructionAccountRehabSummaryStatus.vue'
 import ConstructionAccountSummaryCard from './ConstructionAccountSummaryCard.vue'
 import ConstructionAccountTransactionsList from './ConstructionAccountTransactionsList.vue'
 
@@ -446,6 +447,8 @@ function shortDateTime(iso: string | null): string {
           <UiButton v-if="status.closed_out_at" variant="secondary" size="sm" :data-testid="hook('reopen')" @click="reopen">Reopen</UiButton>
           <UiButton variant="danger" size="sm" :data-testid="hook('unlink')" @click="unlink">Unlink</UiButton>
         </div>
+        <ConstructionAccountRehabSummaryStatus v-if="status.closed_out_at || status.latest_rehab_summary" :status="status"
+                                               @error="message => (errorMessage = message)" />
       </div>
     </div>
   </UiSurface>

@@ -53,6 +53,20 @@ export interface ConstructionAccountManualAdjustment {
   note: string | null
 }
 
+/** The rehab summary made at close-out (or sent again), and where it was delivered: e-mailed and saved to Drive. */
+export interface ConstructionAccountRehabSummary {
+  rehab_summary_id: string
+  created_at: string
+  overall_delivery_state: 'sending' | 'delivered' | 'will_retry' | 'failed'
+  email_delivery_status: 'pending' | 'delivered' | 'failed'
+  email_last_error_type_name: string | null
+  emailed_at: string | null
+  drive_delivery_status: 'pending' | 'delivered' | 'failed'
+  drive_last_error_type_name: string | null
+  saved_to_drive_at: string | null
+  drive_folder_url: string | null
+}
+
 /** One Bought BRRRR deal on the Construction Accounts page. The fields after `appliances_dollars` are null until an account is linked. */
 export interface ConstructionAccountStatus {
   bought_deal_id: string
@@ -127,6 +141,8 @@ export interface ConstructionAccountStatus {
   transfers_left_this_hour: number | null
   maximum_single_transfer_dollars: number | null
   needs_attention_because: ConstructionAccountAttentionReason[]
+  /** The newest rehab summary (made at close-out), if any. */
+  latest_rehab_summary?: ConstructionAccountRehabSummary | null
 }
 
 export type ConstructionAccountTransferDirection = 'deposit_into_construction_account' | 'steal_to_primary_checking'

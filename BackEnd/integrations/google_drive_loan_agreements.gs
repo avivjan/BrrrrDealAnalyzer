@@ -1,8 +1,9 @@
 /**
  * Big Whales Deal Analyzer: save signed Member Loan documents to Google Drive.
  *
- * Runs as a Google Apps Script web app owned by bigwhalesllc@gmail.com. The
- * web service POSTs each fully signed PDF here (BL/memberLoan/common/member_loan_google_drive.py);
+ * Runs as a Google Apps Script web app owned by the owner's personal Google
+ * account (it used to be the company account; signed PDFs saved before the
+ * move stay in that account's Drive). The web service POSTs each fully signed PDF here (BL/memberLoan/common/member_loan_google_drive.py);
  * this script saves it in the Drive folder "loan agreements", creating the
  * folder the first time.
  *
@@ -12,15 +13,18 @@
  * URL alone lets nobody write to the Drive.
  *
  * Set up (once):
- *   1. Signed in as bigwhalesllc@gmail.com, open https://script.google.com and
- *      create a new project. Paste this whole file over the default code.
+ *   1. Signed in as the owner's personal Google account, open https://script.google.com
+ *      and create a new project. Paste this whole file over the default code.
  *   2. Project Settings (gear) > Script Properties > Add property:
  *        MEMBER_LOAN_DRIVE_UPLOAD_SECRET = the same secret as on Render.
  *   3. Deploy > New deployment > type "Web app":
- *        Execute as: Me (bigwhalesllc@gmail.com)
+ *        Execute as: Me
  *        Who has access: Anyone
  *      Authorize when asked (Advanced > Go to project). Copy the web app URL
  *      (it ends in /exec): it becomes MEMBER_LOAN_DRIVE_UPLOAD_URL on Render.
+ *   4. Moving it to another account: do 1-3 there with a new secret, then set the
+ *      new MEMBER_LOAN_DRIVE_UPLOAD_URL and MEMBER_LOAN_DRIVE_UPLOAD_SECRET on Render.
+ *      Nothing else changes: the e-mailed signed copies keep their recipients.
  */
 
 var LARGEST_TIMESTAMP_AGE_SECONDS = 300;

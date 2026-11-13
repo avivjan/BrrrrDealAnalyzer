@@ -286,3 +286,29 @@ test('compact cards: every rehab shows closed, a click opens one, a link opens i
   await expect(page.getByTestId(`ca.${firstDealId}.transactions-section`)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
+
+test('closing out e-mails the rehab summary and saves it to Drive; its PDF downloads', async ({ page, seed, request, settle }) => {
+  const dealId = await seedLinkedDeal(request, seed);
+  await fakeMercury(request, 'transaction', { account_id: 'e2e-construction', transaction_id: 'draw-1', signed_amount_dollars: 30000, counterparty_name: 'Lender' });
+  await fakeMercury(request, 'transaction', { account_id: 'e2e-construction', transaction_id: 'pay-1', signed_amount_dollars: -12000, counterparty_name: 'ABC Builders' });
+  await openTheCard(page, dealId);
+
+  await page.getByTestId(`ca.${dealId}.tab.account`).click();
+  await page.getByTestId(`ca.${dealId}.mark-closed-out`).click();
+  await confirmThePrompt(page, settle);
+
+  // The summary is delivered in the background after the close-out: the next read shows it.
+  await expect.poll(async () => {
+    await page.goto(`/liquidity/construction-accounts?deal=${dealId}`);
+    await page.getByTestId(`ca.${dealId}.tab.account`).click();
+    return page.getByTestId(`ca.${dealId}.rehab-summary.state`).getAttribute('data-state');
+  }).toBe('delivered');
+  const calls = await fakeMercury(request, 'calls');
+  expect(calls.rehab_summary_emails_sent).toBe(1);
+  expect(calls.rehab_summary_files_saved_to_drive).toBe(2);   // the PDF and the CSV
+  await expect(page.getByTestId(`ca.${dealId}.summary.rehab-summary`)).toContainText('Summary e-mailed and saved to Drive');
+
+  const download = page.waitForEvent('download');
+  await page.getByTestId(`ca.${dealId}.rehab-summary.download-pdf`).click();
+  expect((await download).suggestedFilename()).toMatch(/^Rehab summary .*\.pdf$/);
+});

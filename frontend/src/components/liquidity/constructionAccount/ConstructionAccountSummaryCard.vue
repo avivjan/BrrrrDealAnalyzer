@@ -49,6 +49,10 @@ const closedOutOn = computed(() => props.status.closed_out_at
           <i class="pi pi-exclamation-triangle mr-1 text-[10px]" aria-hidden="true"></i>{{ summaryFigures.urgentAction.label }}
         </UiBadge>
         <span v-if="closedOutOn" class="text-xs text-fg-muted">Closed out {{ closedOutOn }}</span>
+        <span v-if="status.latest_rehab_summary" :data-testid="hook('summary.rehab-summary')" class="text-xs"
+              :class="status.latest_rehab_summary.overall_delivery_state === 'delivered' ? 'text-positive' : 'text-warning'">
+          {{ status.latest_rehab_summary.overall_delivery_state === 'delivered' ? '· Summary e-mailed and saved to Drive' : '· Summary not delivered yet' }}
+        </span>
       </span>
 
       <!-- Row 2, linked: the four numbers that matter -->

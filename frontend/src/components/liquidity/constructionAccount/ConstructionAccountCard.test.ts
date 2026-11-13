@@ -77,3 +77,28 @@ describe('the open card', () => {
     expect(card.get('[data-testid="ca.deal-1.transfer.t-1"]').text()).toContain('Rejected in Mercury')
   })
 })
+
+describe('the rehab summary', () => {
+  it('a closed-out account shows where its summary went, on the card and on the Account tab', async () => {
+    const card = mountTheCard({ isExpanded: true }, {
+      closed_out_at: '2026-03-01T12:00:00Z',
+      latest_rehab_summary: {
+        rehab_summary_id: 'summary-1', created_at: '2026-03-01T12:00:00Z', overall_delivery_state: 'delivered',
+        email_delivery_status: 'delivered', email_last_error_type_name: null, emailed_at: '2026-03-01T12:00:05Z',
+        drive_delivery_status: 'delivered', drive_last_error_type_name: null, saved_to_drive_at: '2026-03-01T12:00:03Z',
+        drive_folder_url: 'https://drive.google.com/drive/folders/x',
+      },
+    })
+    expect(card.get('[data-testid="ca.deal-1.summary.rehab-summary"]').text()).toContain('Summary e-mailed and saved to Drive')
+    await card.get('[data-testid="ca.deal-1.tab.account"]').trigger('click')
+    expect(card.get('[data-testid="ca.deal-1.rehab-summary.state"]').text()).toBe('E-mailed to you and saved to your Google Drive')
+    expect(card.find('[data-testid="ca.deal-1.rehab-summary.download-pdf"]').exists()).toBe(true)
+  })
+
+  it('a live account has no summary section yet', async () => {
+    const card = mountTheCard({ isExpanded: true })
+    await card.get('[data-testid="ca.deal-1.tab.account"]').trigger('click')
+    expect(card.find('[data-testid="ca.deal-1.rehab-summary.root"]').exists()).toBe(false)
+  })
+})
+

@@ -9,8 +9,8 @@ The Construction Accounts page gets compact cards that open on click, with plain
 
 `/liquidity/construction-accounts` (`frontend/src/views/ConstructionAccounts.vue`) shows one big `ConstructionAccountCard.vue` (~450 lines, 12 sections) per deal. One deal fills the screen, the key numbers are inside collapsed `<details>`, and summaries like "Rehab $65,000 of $73,000" don't say what the two numbers are. The owner wants:
 1. A short card per property that shows the most important numbers in plain words, so every project fits on one screen. A click opens the full detail, organised and easy to read.
-2. At rehab close-out: a summary (every transaction, the draws, the payments, the statistics) e-mailed to the owner and saved to the owner's Google Drive (avivjan2000@gmail.com).
-3. Signed loan documents saved to avivjan2000@gmail.com's Drive instead of bigwhalesllc@gmail.com's.
+2. At rehab close-out: a summary (every transaction, the draws, the payments, the statistics) e-mailed to the owner and saved to the owner's Google Drive (the owner's personal Gmail).
+3. Signed loan documents saved to the owner's personal Google Drive instead of bigwhalesllc@gmail.com's.
 4. A bug fix: "Mercury Checking ••8027 ••8027". Mercury's account name already ends with the last four digits, and the app adds them again.
 
 **Decisions (from the questions):**
@@ -75,41 +75,41 @@ The Construction Accounts page gets compact cards that open on click, with plain
   - Done, with one addition found in the phone screenshots: the six total tiles became one compact strip, so the first property shows on the first screen. The strip's "Back to you when the rehabs end" adds up the cards' own figure, so the strip and the cards agree.
 
 ### Step 3: Rehab summary backend (9 h)
-- [ ] **Table** `liquidity_construction_account_rehab_summaries`, a DAL model plus a migration step registered in `runner.py` (1 h). Columns:
+- [x] **Table** `liquidity_construction_account_rehab_summaries`, a DAL model (1 h). No migration step was needed: `create_all` creates a new table; only columns added to an existing table need one. The table also stores the statistics as JSON, so a retried e-mail still carries them. An unlink keeps the summaries; only deleting the deal removes them. Columns:
   - `id`, `bought_brrr_deal_id` (FK, cascade on delete; also covered in `deleteBoughtDeal.py`);
   - `summary_pdf_bytes`, `summary_transactions_csv_text`, `summary_file_base_name`;
   - `email_delivery_status`, `email_delivery_attempt_count`, `email_last_error_type_name`;
   - `drive_delivery_status`, `drive_delivery_attempt_count`, `drive_last_error_type_name`, `drive_file_id`;
   - `created_at`, `updated_at`.
-- [ ] **Content and PDF** `BL/liquidity/constructionAccount/rehab_summary_report.py`. It follows the ReportLab pattern of `BL/inspection/common/inspection_report.py` (`escape`, `escape_attribute`). It builds from `status_of_deal`, the categorised transactions (`_categorised_transactions_of_link`), the manual adjustments and the transfers (3 h):
+- [x] **Content and PDF** `BL/liquidity/constructionAccount/rehab_summary_report.py`. It follows the ReportLab pattern of `BL/inspection/common/inspection_report.py` (`escape`, `escape_attribute`). It builds from `status_of_deal`, the categorised transactions (`_categorised_transactions_of_link`), the manual adjustments and the transfers (3 h):
   - **Statistics:** budget vs. rehab cost, draws received with their count, paid to contractors, under or over budget, your deposit, money taken out, money returned, purchase → rehab completed → close-out dates and days, paid per payee.
   - **Tables:** every bank transaction (date, counterparty, amount, category, override note), the manual entries and the in-app transfers.
   - **A CSV** of every transaction. Cells starting with `= + - @` get a leading `'` (formula-injection guard).
   - The e-mail subject `Rehab completed – <address>`, plus its text and its escaped HTML body.
-- [ ] **Drive** (1.5 h):
+- [x] **Drive** (1.5 h):
   - `BL/liquidity/constructionAccount/rehab_summary_google_drive.py`: an HMAC-signed POST, the same as `member_loan_google_drive.py`. It sends the PDF and the CSV into `rehab summaries/<address> (<deal id>)/`.
   - The Apps Script `BackEnd/integrations/google_drive_rehab_summaries.gs`, copied from `google_drive_loan_agreements.gs`: `.pdf` / `.csv` only, a size cap, and only that folder tree.
   - Env vars: `REHAB_SUMMARY_DRIVE_UPLOAD_URL`, `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`.
-- [ ] **Delivery** `BL/liquidity/constructionAccount/rehab_summary_delivery.py`, mirroring `inspection_report_delivery.py` (1.5 h):
+- [x] **Delivery** `BL/liquidity/constructionAccount/rehab_summary_delivery.py`, mirroring `inspection_report_delivery.py` (1.5 h):
   - Recorded in the close-out transaction (`mark_closed_out`), only when `closed_out_at` goes from null to set and never on `preview_only`.
   - Delivered after commit as a background task: the e-mail goes through `deliver_member_loan_email` to `REHAB_SUMMARY_EMAIL`, with the PDF and CSV attached and the sender + `EMAIL_PASSWORD`; the Drive upload runs separately.
   - Each channel is tracked on its own. A failure is retried every 30 min, 3 attempts in all, with the retry loop started from `main.py`. Only error type names are stored.
-- [ ] **Endpoints** in `routers/liquidity_construction_accounts.py`, behind the same auth gate (1 h):
+- [x] **Endpoints** in `routers/liquidity_construction_accounts.py`, behind the same auth gate (1 h):
   - `GET .../{bought_deal_id}/rehab-summaries`: the delivery statuses.
   - `POST .../{bought_deal_id}/rehab-summaries`: build and send again; closed-out accounts only, at most 10 a day per deal; audited.
   - `GET .../{bought_deal_id}/rehab-summaries/{summary_id}/pdf`: download.
-- [ ] Add `rehab_summary_delivery_statuses` (the newest one) to the status response, both in `ReqRes` and in `types/constructionAccount.ts` (30 min)
+- [x] Add `latest_rehab_summary` (the newest one) to the status response, both in `ReqRes` and in `types/constructionAccount.ts` (30 min). Also added: `GET .../rehab-summaries/{summary_id}/csv`.
 
 ### Step 4: Rehab summary frontend (1.5 h)
-- [ ] API and store methods. On a closed-out card's Account tab and its summary card, show "Rehab summary: e-mailed ✓ · saved to Drive ✓", "sending…" or "will retry", plus the **Download PDF** and **Send again** buttons (1 h)
-- [ ] The Close out modal's text says the summary will be e-mailed and saved to Drive (30 min)
+- [x] API and store methods. On a closed-out card's Account tab and its summary card, show "Rehab summary: e-mailed ✓ · saved to Drive ✓", "sending…" or "will retry", plus the **Download PDF** and **Send again** buttons (1 h)
+- [x] The Close out modal's text says the summary will be e-mailed and saved to Drive (30 min)
 
 ### Step 5: Loan documents to the owner's Drive (45 min code + owner step)
-- [ ] Code doesn't change. Update the docstring in `member_loan_google_drive.py`, the setup header in `google_drive_loan_agreements.gs` and the README's "Saving signed copies" section: "owned by the owner's personal Google account", and the redeploy steps (30 min)
-- [ ] **Owner step (you, ~10 min, guided). This is the "ask the user to add" part:** signed in as avivjan2000@gmail.com, paste **both** scripts (loan agreements and rehab summaries) into script.google.com, set their script-property secrets, and deploy each as a web app. Then on Render, set the new `MEMBER_LOAN_DRIVE_UPLOAD_URL` / `_SECRET`, the `REHAB_SUMMARY_DRIVE_UPLOAD_URL` / `_SECRET`, and `REHAB_SUMMARY_EMAIL=avivjan2000@gmail.com`. I can set the Render env vars through the Render connector if you OK it. Existing PDFs stay in bigwhalesllc's Drive (15 min)
+- [x] Code doesn't change. Update the docstring in `member_loan_google_drive.py`, the setup header in `google_drive_loan_agreements.gs` and the README's "Saving signed copies" section: "owned by the owner's personal Google account", and the redeploy steps (30 min)
+- [x] **Owner step (you, ~10 min, guided). This is the "ask the user to add" part:** signed in as your personal Gmail, paste **both** scripts (loan agreements and rehab summaries) into script.google.com, set their script-property secrets, and deploy each as a web app. Then on Render, set the new `MEMBER_LOAN_DRIVE_UPLOAD_URL` / `_SECRET`, the `REHAB_SUMMARY_DRIVE_UPLOAD_URL` / `_SECRET`, and `REHAB_SUMMARY_EMAIL=<your personal Gmail>`. I can set the Render env vars through the Render connector if you OK it. Existing PDFs stay in bigwhalesllc's Drive (15 min)
 
 ### Step 6: MCP server support (45 min)
-- [ ] `mcp_server.py`: tool descriptions for `list_liquidity_construction_account_rehab_summaries` and `send_liquidity_construction_account_rehab_summary_again`. Exclude the binary PDF route, like the photo routes. Update the glossary: a close-out sends the summary. Add the tools to `tests/test_mcp_tools.py` (45 min)
+- [x] `mcp_server.py`: tool descriptions for `list_liquidity_construction_account_rehab_summaries` and `send_liquidity_construction_account_rehab_summary_again`. Exclude the PDF and CSV download routes (files for the browser), like the photo routes. `mark_liquidity_construction_account_closed_out` and Send again are now open-world (they e-mail). Update the glossary: a close-out sends the summary. Add the tools to `tests/test_mcp_tools.py` (45 min)
 
 ### Step 7: Security (1 h)
 - [ ] From `.claude/security.md`: "Please check through all the code you just wrote and make sure it follows security best practices. make sure there are no sensitive information in the frontend and there are no vulnerabilities that can be exploited throughout all the code in this repo". Concretely:

@@ -32,7 +32,7 @@ from pydantic import BaseModel
 from BL.liquidity.common import mercury_client, mercury_reads
 from BL.liquidity.common.mercury_transfers import MercuryTransferAnswer
 from BL.liquidity.common.mercury_webhooks import MercuryWebhookRegistration
-from BL.liquidity.constructionAccount import construction_account_transfers, construction_accounts, mercury_instant_updates
+from BL.liquidity.constructionAccount import construction_account_transfers, construction_accounts, mercury_instant_updates, rehab_summary_delivery
 from db import SessionLocal
 from DAL.data_models.liquidity.construction_account_models import LiquidityConstructionAccountTransfer
 from DAL.data_models.liquidity.mercury_models import LiquidityMercuryWebhook, LiquidityMercuryWorkspaceRead
@@ -59,6 +59,8 @@ class FakeMercury:
         self.transactions_by_account_id: dict[str, list[dict]] = {account_id: [] for account_id in STARTING_ACCOUNTS}
         self.accounts_read_count = 0
         self.transfer_count = 0
+        self.rehab_summary_emails_sent_count = 0
+        self.rehab_summary_files_saved_to_drive_count = 0
         self.registered_receiving_url: str | None = None
         for name in ("MERCURY_API_TOKEN_E2E", "MERCURY_TRANSFER_API_TOKEN_E2E"):
             if on:
@@ -101,6 +103,17 @@ class FakeMercury:
         self.add_transaction(source_account_id, transfer_id, -Decimal(amount_dollars), True, "Internal transfer")
         self.add_transaction(destination_account_id, transfer_id, Decimal(amount_dollars), True, "Internal transfer")
         return MercuryTransferAnswer(transfer_id, "sent")
+
+    def fetch_transfer_approval_request_status(self, workspace_label: str, transfer_approval_request_id: str) -> str:
+        # The fake sends every transfer at once, so a request is never left waiting; never a real Mercury call.
+        return "approved"
+
+    def send_rehab_summary_email(self, **email) -> None:
+        self.rehab_summary_emails_sent_count += 1
+
+    def save_rehab_summary_file_to_drive(self, folder_name: str, file_name: str, file_bytes: bytes) -> tuple[str, str]:
+        self.rehab_summary_files_saved_to_drive_count += 1
+        return f"e2e-drive-file-{self.rehab_summary_files_saved_to_drive_count}", "https://drive.google.com/drive/folders/e2e-rehab-summaries"
 
     def register_webhook(self, workspace_label: str, receiving_url: str) -> MercuryWebhookRegistration:
         self.registered_receiving_url = receiving_url
@@ -146,6 +159,11 @@ def install(app: FastAPI) -> FakeMercury:
     mercury_client.fetch_workspace_summary = fake.fetch_workspace_summary
     construction_accounts.fetch_account_transactions = fake.fetch_account_transactions
     construction_account_transfers.send_internal_transfer = fake.send_internal_transfer
+    construction_accounts.fetch_transfer_approval_request_status = fake.fetch_transfer_approval_request_status
+    # The rehab summary made at close-out is "e-mailed" and "saved to Drive" here, never through Gmail or Drive.
+    rehab_summary_delivery.send_rehab_summary_email = fake.send_rehab_summary_email
+    rehab_summary_delivery.save_rehab_summary_file_to_drive = fake.save_rehab_summary_file_to_drive
+    os.environ.setdefault("REHAB_SUMMARY_EMAIL", "owner@e2e.invalid")
     mercury_instant_updates.register_webhook = fake.register_webhook
     mercury_instant_updates.delete_webhook = fake.delete_webhook
     # The test server runs on http://127.0.0.1: instant updates need an https address, so they get a stand-in one.
@@ -177,7 +195,9 @@ def install(app: FastAPI) -> FakeMercury:
     def fake_mercury_calls():
         return {"accounts_reads": fake.accounts_read_count, "transfers": fake.transfer_count,
                 "transactions": sum(len(rows) for rows in fake.transactions_by_account_id.values()),
-                "webhook_is_registered": fake.registered_receiving_url is not None}
+                "webhook_is_registered": fake.registered_receiving_url is not None,
+                "rehab_summary_emails_sent": fake.rehab_summary_emails_sent_count,
+                "rehab_summary_files_saved_to_drive": fake.rehab_summary_files_saved_to_drive_count}
 
     @app.post("/e2e/fake-mercury/signed-event", include_in_schema=False)
     def fake_mercury_signed_event(data: SignedEventReq):
