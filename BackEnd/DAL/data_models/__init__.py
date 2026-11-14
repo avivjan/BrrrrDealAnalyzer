@@ -23,6 +23,7 @@ from DAL.data_models.liquidity.models import (
 from DAL.data_models.liquidity.construction_account_models import (
     LiquidityConstructionAccount,
     LiquidityConstructionAccountManualAdjustment,
+    LiquidityConstructionAccountRehabSummary,
     LiquidityConstructionAccountTransactionOverride,
     LiquidityConstructionAccountTransfer,
 )
@@ -74,6 +75,7 @@ __all__ = [
     "LiquidityMercuryWebhook",
     "LiquidityConstructionAccount",
     "LiquidityConstructionAccountManualAdjustment",
+    "LiquidityConstructionAccountRehabSummary",
     "LiquidityConstructionAccountTransactionOverride",
     "LiquiditySettings",
     "PipelineTemplate",

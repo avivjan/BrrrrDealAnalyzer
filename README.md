@@ -740,6 +740,7 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
 | `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos and finished reports in the Drive folder `inspections` (one sub-folder per inspection), and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
 | `INSPECTION_REPORT_EMAIL`, `INSPECTION_REPORT_SENDER`, `INSPECTION_APP_ORIGIN`, `INSPECTION_REPORT_RETRY_SCHEDULE` | `BackEnd/BL/inspection/common/inspection_report.py` | Where each finished inspection's PDF report is e-mailed and from which Gmail account (both default `bigwhalesllc@gmail.com`; the app password is `EMAIL_PASSWORD`), the site address for its links (default `AUTH_APP_ORIGIN`), and `off` to stop retrying failed deliveries |
+| `REHAB_SUMMARY_EMAIL`, `REHAB_SUMMARY_SENDER`, `REHAB_SUMMARY_DRIVE_UPLOAD_URL`, `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`, `REHAB_SUMMARY_RETRY_SCHEDULE` | `BackEnd/BL/liquidity/constructionAccount/rehab_summary_*.py` | Where each rehab summary is e-mailed (the owner's address; unset, the e-mail fails and is retried) and from which Gmail account (default the company Gmail; its app password is `EMAIL_PASSWORD`), the Apps Script that saves it to the owner's Google Drive, and `off` to stop retrying failed deliveries |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
 | `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
 | `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
@@ -797,7 +798,8 @@ acted gets one reminder a day, until both have or the 30 days to object end. Whi
 `MEMBER_LOAN_STATEMENT_SCHEDULE=off` turns the automatic send off.
 
 **Saving signed copies to Google Drive (once).** A service account cannot keep files in a
-personal Gmail Drive, so a small Apps Script owned by bigwhalesllc@gmail.com does it:
+personal Gmail Drive, so a small Apps Script owned by the owner's personal Google account does it
+(it moved there from the company account; the PDFs saved before stay in the company Drive):
 [`BackEnd/integrations/google_drive_loan_agreements.gs`](BackEnd/integrations/google_drive_loan_agreements.gs).
 Its header lists the three steps: paste it into a new project at script.google.com, add the
 script property `MEMBER_LOAN_DRIVE_UPLOAD_SECRET`, and deploy it as a web app (execute as me,
@@ -814,9 +816,20 @@ One Mercury construction account per rehab (plan, decisions and tests: `tasks/to
 The lender's draws land in it and the rehab is paid from it, so the liquidity timeline shows only your own money: the
 deposit at the purchase closing, what comes back at rehab end, and a top-up when the account runs short.
 
-- **Page:** `/liquidity/construction-accounts` (sidebar, ⌘K, `g c`, the Liquidity bar, the Dashboard tile). One card per
-  Bought BRRRR deal with every number and where it comes from; rehab figures, the cushion, the buffer and the
-  before-this-account amounts edit in place.
+- **Page:** `/liquidity/construction-accounts` (sidebar, ⌘K, `g c`, the Liquidity bar, the Dashboard tile). One compact
+  card per Bought BRRRR deal (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md): the money in the account,
+  the lender draws against the lender's budget, the money paid to contractors against the rehab cost, what comes back at
+  the end, and the one thing to do now. A click opens the detail in tabs (Overview, Draws & payments, Bank transactions,
+  Entered by hand, Timeline & transfers, Account), with every number and where it comes from; rehab figures, the
+  cushion, the buffer and the before-this-account amounts edit in place. Cards needing you come first.
+- **Rehab summary at close-out:** the first close-out (the Close out transfer or Mark closed out) makes a PDF of the
+  rehab's numbers, every bank transaction, the manual entries and the in-app transfers, plus a CSV of the transactions.
+  Both are e-mailed to `REHAB_SUMMARY_EMAIL` and saved to the owner's Google Drive under
+  `rehab summaries/<address> (<deal id>)/`, in the background; a failed channel is retried every 30 minutes, three tries
+  in all. The card's Account tab shows where it went, downloads both files, and has **Send again** (10 a day per deal).
+- **Transfer approvals:** Deposit and Steal are approval requests in Mercury. Each refresh asks Mercury about the ones
+  still waiting; one rejected or cancelled there shows "Rejected in Mercury" / "Cancelled in Mercury" and stops counting.
+  The transfer token needs the "Fetch Transfer Money Requests" scope for this (without it, the rows just keep waiting).
 - **Every change that moves the timeline asks first** ("This changes the liquidity timeline", Confirm or Cancel); what the
   bank changed opens an OK-only window. Every write route takes `preview_only`.
 - **Deposit / Steal / Close out** move money at Mercury: a passkey step-up each, the accounts from the stored link, the kill
@@ -826,6 +839,15 @@ deposit at the purchase closing, what comes back at rehab end, and a top-up when
 - **Settings:** in the page's drawer (stored in `liquidity_settings`); tokens stay in the hosting secrets, and the drawer
   shows which ones the backend found and the exact names of the missing ones.
 - **Verify against the real Mercury yourself:** the first transfer (make it $1), and turning on instant updates.
+
+**Saving rehab summaries to Google Drive (once).** Same pattern as the loan agreements, with its own script and secret:
+[`BackEnd/integrations/google_drive_rehab_summaries.gs`](BackEnd/integrations/google_drive_rehab_summaries.gs).
+Signed in as the owner's personal Google account, paste it into a new project at script.google.com, add the script
+property `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`, deploy it as a web app (execute as me, anyone may call it), and set the
+same secret and the web app URL (`…/exec`) on Render as `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET` and
+`REHAB_SUMMARY_DRIVE_UPLOAD_URL`. Set `REHAB_SUMMARY_EMAIL` to the owner's address. The script only creates files
+inside `rehab summaries`, only `.pdf` and `.csv`, and refuses any request that is not HMAC-signed and less than five
+minutes old.
 
 ### Property inspections
 

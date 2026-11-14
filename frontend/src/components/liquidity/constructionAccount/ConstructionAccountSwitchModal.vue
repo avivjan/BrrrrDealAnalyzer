@@ -11,6 +11,7 @@ import { liquidityApi } from '../../../api/liquidity'
 import { useConstructionAccountStore } from '../../../stores/constructionAccountStore'
 import type { ConstructionAccountStatus, ConstructionAccountSwitchPreview } from '../../../types/constructionAccount'
 import type { MercuryAccountSummary } from '../../../types/liquidity'
+import { mercuryAccountDisplayName } from '../../../utils/mercuryAccountDisplayName'
 import { formatMoney } from '../../../utils/money'
 
 const props = defineProps<{ open: boolean; status: ConstructionAccountStatus | null }>()
@@ -92,7 +93,7 @@ async function save() {
               <template #default="{ id }">
                 <select :id="id" v-model="newAccountId" data-testid="ca-switch.new-account" class="ui-input">
                   <option value="" disabled>Pick an account of the same LLC</option>
-                  <option v-for="account in newAccountChoices" :key="account.id" :value="account.id">{{ account.name }} ••{{ account.account_number_last_four }}</option>
+                  <option v-for="account in newAccountChoices" :key="account.id" :value="account.id">{{ mercuryAccountDisplayName(account) }}</option>
                 </select>
               </template>
             </UiField>

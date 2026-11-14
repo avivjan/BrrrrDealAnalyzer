@@ -6,7 +6,7 @@
 import { apiClient } from './index'
 import type {
   ConstructionAccountLinkReq, ConstructionAccountList, ConstructionAccountManualAdjustmentReq, ConstructionAccountRefreshResult,
-  ConstructionAccountRehabFiguresReq, ConstructionAccountSwitchPreview, ConstructionAccountSwitchReq, ConstructionAccountTransaction,
+  ConstructionAccountRehabFiguresReq, ConstructionAccountRehabSummary, ConstructionAccountSwitchPreview, ConstructionAccountSwitchReq, ConstructionAccountTransaction,
   ConstructionAccountTransactionOverrideReq, ConstructionAccountTransferReq, ConstructionAccountTransferWriteResult,
   ConstructionAccountWriteOptions, ConstructionAccountWriteResult, MercuryConnectionStatus,
   MercuryLastChange,
@@ -125,5 +125,20 @@ export const constructionAccountApi = {
 
   async reopen(boughtDealId: string, options?: ConstructionAccountWriteOptions) {
     return (await apiClient.post<ConstructionAccountWriteResult>(dealUrl(boughtDealId, '/reopen'), null, { params: writeParams(options) })).data
+  },
+
+  // --- The rehab summary made at close-out: e-mailed to you and saved to your Google Drive.
+
+  async listRehabSummaries(boughtDealId: string): Promise<ConstructionAccountRehabSummary[]> {
+    return (await apiClient.get<ConstructionAccountRehabSummary[]>(dealUrl(boughtDealId, '/rehab-summaries'))).data
+  },
+
+  async sendRehabSummaryAgain(boughtDealId: string): Promise<ConstructionAccountRehabSummary> {
+    return (await apiClient.post<ConstructionAccountRehabSummary>(dealUrl(boughtDealId, '/rehab-summaries'))).data
+  },
+
+  async rehabSummaryFile(boughtDealId: string, rehabSummaryId: string, fileKind: 'pdf' | 'csv'): Promise<Blob> {
+    return (await apiClient.get<Blob>(dealUrl(boughtDealId, `/rehab-summaries/${encodeURIComponent(rehabSummaryId)}/${fileKind}`),
+      { responseType: 'blob' })).data
   },
 }

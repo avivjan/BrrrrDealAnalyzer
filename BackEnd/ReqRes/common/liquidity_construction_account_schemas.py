@@ -156,6 +156,23 @@ class ConstructionAccountManualAdjustmentRes(BaseModel):
     note: Optional[str] = None
 
 
+class ConstructionAccountRehabSummaryRes(BaseModel):
+    """A rehab summary (made at close-out, or sent again) and where it was delivered. Never the file itself, never an
+    address or an error text: only the type name of what failed."""
+    rehab_summary_id: str = Field(..., description="The summary's id (its PDF and CSV download from the site).")
+    created_at: datetime = Field(..., description="When the summary was made: the close-out, or a Send again.")
+    overall_delivery_state: Literal["sending", "delivered", "will_retry", "failed"] = Field(
+        ..., description="delivered = e-mailed and saved to Drive; will_retry = a channel failed and is retried every 30 minutes; "
+                         "failed = out of its 3 attempts (send it again).")
+    email_delivery_status: Literal["pending", "delivered", "failed"] = Field(..., description="The e-mail to the owner.")
+    email_last_error_type_name: Optional[str] = Field(None, description="The type name of the e-mail's last failure, never its text.")
+    emailed_at: Optional[datetime] = Field(None, description="When the e-mail was sent.")
+    drive_delivery_status: Literal["pending", "delivered", "failed"] = Field(..., description="The save of the PDF and the CSV to the owner's Google Drive.")
+    drive_last_error_type_name: Optional[str] = Field(None, description="The type name of the Drive save's last failure, never its text.")
+    saved_to_drive_at: Optional[datetime] = Field(None, description="When both files were saved to Drive.")
+    drive_folder_url: Optional[str] = Field(None, description="The deal's folder in the owner's Google Drive (a drive.google.com link).")
+
+
 class ConstructionAccountStatusRes(BaseModel):
     """One Bought BRRRR deal on the Construction Accounts page: every number tied to its construction account, each
     with its source."""
@@ -235,6 +252,8 @@ class ConstructionAccountStatusRes(BaseModel):
     transfers_left_this_hour: Optional[int] = None
     maximum_single_transfer_dollars: Optional[float] = None
     needs_attention_because: List[Literal["deposit_due", "top_up_needed", "mercury_unavailable"]] = Field(default_factory=list)
+    latest_rehab_summary: Optional[ConstructionAccountRehabSummaryRes] = Field(
+        None, description="The newest rehab summary of this deal (made at close-out), and whether it was e-mailed and saved to Drive.")
 
 
 class ConstructionAccountTotalsRes(BaseModel):

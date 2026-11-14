@@ -195,7 +195,7 @@ async function sendTheTransfer() {
               <template v-else>Safe to steal now {{ formatMoney(status.safe_to_steal_now_dollars) }} · available in the account {{ formatMoney(status.available_balance_dollars) }}</template>
               · {{ status.transfers_left_this_hour ?? '—' }} transfers left this hour · at most {{ formatMoney(status.maximum_single_transfer_dollars) }} each
             </p>
-            <p v-if="kind === 'close_out'" class="text-sm text-fg">Then the account is marked closed out, and its return row is marked done.</p>
+            <p v-if="kind === 'close_out'" class="text-sm text-fg">Then the account is marked closed out, its return row is marked done, and the rehab summary (every number, draw, payment and transaction) is e-mailed to you and saved to your Google Drive.</p>
 
             <ul v-if="check?.blockingProblems.length && !sentTransfer" data-testid="ca-transfer.problems" role="alert"
                 class="space-y-1 rounded-ctl border border-negative/40 bg-negative/10 px-3 py-2 text-sm text-negative">

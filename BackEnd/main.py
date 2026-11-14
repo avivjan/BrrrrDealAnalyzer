@@ -118,3 +118,9 @@ start_member_loan_statement_schedule(IS_PRODUCTION)
 from BL.inspection.common.inspection_report_delivery import start_inspection_report_retry_schedule  # noqa: E402
 
 start_inspection_report_retry_schedule(IS_PRODUCTION)
+
+# Rehab summaries whose e-mail or Drive save failed are retried from here, in production only
+# (BL/liquidity/constructionAccount/rehab_summary_delivery.py).
+from BL.liquidity.constructionAccount.rehab_summary_delivery import start_rehab_summary_retry_schedule  # noqa: E402
+
+start_rehab_summary_retry_schedule(IS_PRODUCTION)

@@ -9,7 +9,7 @@ payments and draws, and the per-transaction overrides below correct it by hand. 
 
 import uuid
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Integer, JSON, Numeric, String, Uuid, func
+from sqlalchemy import Boolean, Column, Date, DateTime, Integer, JSON, LargeBinary, Numeric, String, Text, Uuid, func
 
 from db import Base
 
@@ -137,3 +137,37 @@ class LiquidityConstructionAccountTransfer(Base):
     # The bank transaction this transfer was matched to, once the feed shows it.
     mercury_transaction_id_in_the_bank_feed = Column(String(80), nullable=True, unique=True)
     seen_in_the_bank_feed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+REHAB_SUMMARY_DELIVERY_PENDING = "pending"
+REHAB_SUMMARY_DELIVERY_DELIVERED = "delivered"
+REHAB_SUMMARY_DELIVERY_FAILED = "failed"
+
+
+class LiquidityConstructionAccountRehabSummary(Base):
+    """The rehab summary made when a construction account is closed out (or sent again): a PDF and a CSV of every
+    transaction, as they were then, e-mailed to the owner and saved to the owner's Google Drive
+    (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md). E-mail and Drive are tracked and retried separately
+    (BL/liquidity/constructionAccount/rehab_summary_delivery.py). Kept after an unlink; deleted with the Bought deal."""
+    __tablename__ = "liquidity_construction_account_rehab_summaries"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bought_brrr_deal_id = Column(Uuid(as_uuid=True), nullable=False, index=True)
+    deal_address = Column(String(300), nullable=False)
+    summary_file_base_name = Column(String(160), nullable=False)
+    summary_pdf_bytes = Column(LargeBinary, nullable=False)
+    summary_transactions_csv_text = Column(Text, nullable=False)
+    # The statistics as [{"label": ..., "value": ...}], so a retried e-mail carries them too.
+    summary_statistics = Column(JSON, nullable=False, default=list)
+    email_delivery_status = Column(String(20), nullable=False, default=REHAB_SUMMARY_DELIVERY_PENDING)
+    email_delivery_attempt_count = Column(Integer, nullable=False, default=0)
+    email_last_error_type_name = Column(String(80), nullable=True)
+    emailed_at = Column(DateTime(timezone=True), nullable=True)
+    drive_delivery_status = Column(String(20), nullable=False, default=REHAB_SUMMARY_DELIVERY_PENDING)
+    drive_delivery_attempt_count = Column(Integer, nullable=False, default=0)
+    drive_last_error_type_name = Column(String(80), nullable=True)
+    drive_pdf_file_id = Column(String(200), nullable=True)
+    drive_csv_file_id = Column(String(200), nullable=True)
+    drive_folder_url = Column(String(500), nullable=True)
+    saved_to_drive_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)

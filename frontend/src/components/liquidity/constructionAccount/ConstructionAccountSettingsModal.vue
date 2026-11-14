@@ -11,6 +11,7 @@ import { liquidityApi } from '../../../api/liquidity'
 import { useConstructionAccountStore } from '../../../stores/constructionAccountStore'
 import type { ConstructionAccountStatus } from '../../../types/constructionAccount'
 import type { MercuryAccountSummary } from '../../../types/liquidity'
+import { mercuryAccountDisplayName } from '../../../utils/mercuryAccountDisplayName'
 import { formatMoney } from '../../../utils/money'
 
 const props = defineProps<{ open: boolean; status: ConstructionAccountStatus | null }>()
@@ -108,7 +109,7 @@ async function save() {
                 <select :id="id" v-model="constructionAccountId" :aria-describedby="describedBy" :disabled="isEditingALink" data-testid="ca-link.construction-account" class="ui-input">
                   <option value="" disabled>Pick the rehab's own account</option>
                   <option v-for="account in constructionAccountChoices" :key="account.id" :value="account.id">
-                    {{ account.name }} ••{{ account.account_number_last_four }} · {{ account.workspace }} · {{ formatMoney(account.current_balance_dollars) }}
+                    {{ mercuryAccountDisplayName(account) }} · {{ account.workspace }} · {{ formatMoney(account.current_balance_dollars) }}
                   </option>
                 </select>
               </template>
@@ -121,7 +122,7 @@ async function save() {
                 <select :id="id" v-model="checkingAccountId" :aria-describedby="describedBy" data-testid="ca-link.checking-account" class="ui-input">
                   <option value="" disabled>Pick the checking the deposit comes from</option>
                   <option v-for="account in checkingChoices" :key="account.id" :value="account.id">
-                    {{ account.name }} ••{{ account.account_number_last_four }} · {{ formatMoney(account.current_balance_dollars) }}
+                    {{ mercuryAccountDisplayName(account) }} · {{ formatMoney(account.current_balance_dollars) }}
                   </option>
                 </select>
               </template>

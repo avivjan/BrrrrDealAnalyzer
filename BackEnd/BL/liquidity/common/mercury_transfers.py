@@ -3,8 +3,9 @@ Step E). Deposit (an LLC's checking -> a rehab's construction account) and Steal
 same LLC's checking).
 
 The transfer token is separate from the read token and write-capable: `MERCURY_TRANSFER_API_TOKEN_<LABEL>`, read
-only here, only at the moment of the call, and only into the Authorization header. No read path imports this module,
-and this module never uses a read token. The URL is pinned to the one transfer endpoint, and the call is never
+only here, only at the moment of the call, and only into the Authorization header. This module never uses a read
+token. Its one read, `fetch_transfer_approval_request_status`, asks only for a request the app made itself (the
+refresh uses it to notice a request rejected or cancelled in Mercury). The URLs are pinned, and the calls are never
 retried: Mercury's own idempotency key and our stored transfer row make a repeat safe, but a silent retry could not
 tell "not sent" from "sent, answer lost".
 
@@ -32,6 +33,10 @@ logger = logging.getLogger(__name__)
 # The approval-gated internal transfer (the token's "Transfer Money with Approval" scope): Mercury sends it once the
 # organization's approval rules are met (an approval in the Mercury app). Same body as POST /transfer.
 TRANSFER_URL = f"{MERCURY_API_BASE}/request-transfer"
+# One transfer approval request by its id (the token's "Fetch Transfer Money Requests" scope). Its answer has the
+# request's top-level `requestId` and `status` (pendingApproval / approved / rejected / cancelled).
+TRANSFER_APPROVAL_REQUEST_URL_TEMPLATE = f"{MERCURY_API_BASE}/request-transfer/{{transfer_approval_request_id}}"
+_TRANSFER_APPROVAL_REQUEST_ID_PATTERN = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 _MERCURY_ID_PATTERN = re.compile(r"[A-Za-z0-9-]{1,80}")
 _IDEMPOTENCY_KEY_PATTERN = re.compile(r"[A-Za-z0-9-]{8,80}")
 # Mercury's transaction statuses; anything else is stored as "unknown".
@@ -141,3 +146,30 @@ def send_internal_transfer(mercury_workspace_label: str, source_mercury_account_
     except ValueError:
         body = None
     return _answer_of(body)
+
+
+def fetch_transfer_approval_request_status(mercury_workspace_label: str, transfer_approval_request_id: str) -> str:
+    """`GET /request-transfer/{requestId}`: the status of a transfer the app requested, normalised like the request's
+    own answer (pending_approval / approved / rejected / cancelled, else "unknown"). Read with the LLC's transfer
+    token; never retried. Raises `MercuryTransferTokenMissingError` or `MercuryApiError` (no answer, an error status
+    such as 401/403 when the token lacks the scope, or a body that is not JSON); Mercury's text is never relayed."""
+    if not _TRANSFER_APPROVAL_REQUEST_ID_PATTERN.fullmatch(transfer_approval_request_id or ""):
+        raise MercuryApiError("not a transfer approval request id")
+    token = _transfer_token_of_workspace(mercury_workspace_label)
+    headers = {"Authorization": f"Bearer {token.reveal()}", "Accept": "application/json"}
+    url = TRANSFER_APPROVAL_REQUEST_URL_TEMPLATE.format(transfer_approval_request_id=transfer_approval_request_id)
+    try:
+        response = requests.get(url, headers=headers, timeout=MERCURY_TIMEOUT_SECONDS)
+    except requests.RequestException as error:
+        logger.warning("Mercury transfer approval request read failed (%s)", type(error).__name__)
+        raise MercuryApiError("request failed") from error
+    finally:
+        token.wipe()
+    if not response.ok:
+        logger.warning("Mercury refused a transfer approval request read: HTTP %s", response.status_code)
+        _raise_for_an_error_status(response)
+    try:
+        body = response.json()
+    except ValueError as error:
+        raise MercuryApiError("the answer is not JSON") from error
+    return _answer_of(body).mercury_transfer_status

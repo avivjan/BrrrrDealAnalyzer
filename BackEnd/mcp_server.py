@@ -399,10 +399,20 @@ DESCRIPTIONS: dict[str, str] = {
     ),
     "mark_liquidity_construction_account_closed_out": (
         "Close a construction account out without a transfer (the owner emptied it in Mercury): its return row is marked "
-        "done and it is no longer refreshed. balance_left_in_the_account_dollars says what is still in it. Undo with "
-        "reopen_liquidity_construction_account."
+        "done and it is no longer refreshed. balance_left_in_the_account_dollars says what is left in it. The first "
+        "close-out also e-mails the rehab summary and saves it to Drive. Undo with reopen_liquidity_construction_account."
     ),
     "reopen_liquidity_construction_account": "Undo a construction account's close-out: it is refreshed again and its return row counts again.",
+    "list_liquidity_construction_account_rehab_summaries": (
+        "A deal's rehab summaries, newest first. The first close-out of a construction account makes one (a PDF of the "
+        "rehab's numbers and transactions, plus a CSV), e-mailed to the owner and saved to the owner's Google Drive. "
+        "overall_delivery_state: sending / delivered / will_retry / failed."
+    ),
+    "send_liquidity_construction_account_rehab_summary_again": (
+        "Make a new rehab summary of a closed-out construction account, as things are now, and e-mail it to the owner and "
+        "save it to the owner's Google Drive (409 until the account is closed out; at most 10 a day per deal). Ask the "
+        "owner first: it sends an e-mail."
+    ),
     "get_mercury_balance": (
         "Live bank balance: the total cash across the Mercury bank accounts in dollars, used to "
         "re-anchor the liquidity timeline to today (503 if MERCURY_API_TOKEN is not configured "
@@ -500,7 +510,11 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
                        # They move real money at Mercury: Claude never does (tasks/todo/ConstructionAccountPerRehab.md, Step E).
                        "deposit_into_liquidity_construction_account", "steal_from_liquidity_construction_account",
                        # They register or remove this app's address at Mercury: the owner does it on the site.
-                       "turn_on_liquidity_mercury_instant_updates", "turn_off_liquidity_mercury_instant_updates"}
+                       "turn_on_liquidity_mercury_instant_updates", "turn_off_liquidity_mercury_instant_updates",
+                       # The rehab summary's files are for the browser to save; the same data is in
+                       # list_liquidity_construction_account_transactions and the account's status.
+                       "download_liquidity_construction_account_rehab_summary_pdf",
+                       "download_liquidity_construction_account_rehab_summary_csv"}
 
 # Tools whose call has a side effect beyond this app's own database, or that
 # an LLM should never run without a human confirming: annotated so a client
@@ -509,7 +523,9 @@ EXCLUDED_TOOL_NAMES = {"upload_inspection_photo", "get_inspection_photo_thumbnai
 OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", "reps_log", "reps_upload", "reps_upload_batch", "estimate_arv_with_claude",
                     # They read the bank (never write to it): tasks/todo/ConstructionAccountPerRehab.md.
                     "refresh_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
-                    "preview_liquidity_construction_account_switch"}
+                    "preview_liquidity_construction_account_switch",
+                    # They e-mail the owner and save to the owner's Google Drive.
+                    "mark_liquidity_construction_account_closed_out", "send_liquidity_construction_account_rehab_summary_again"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
                      "apply_liquidity_transaction_bulk_action", "import_liquidity_deal", "apply_liquidity_deal_milestone_change",

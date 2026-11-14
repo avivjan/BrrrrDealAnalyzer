@@ -382,6 +382,20 @@ Construction Accounts settings. **Webhook secret:** turn instant updates off and
 registration and signature format. The code reads them defensively and records failures in our own words; the first real
 transfer must be small and checked in Mercury.
 
+
+#### 3.3.2 Transfer approval status and the rehab summary (tasks/todo/MercuryTransferApprovalStatus.md, tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md)
+
+A security review of the branch diff (`/security-review`, 2026-11-13) found no high- or medium-confidence vulnerability. The controls it checked:
+
+| Control | What ships | Threat it closes |
+| --- | --- | --- |
+| Approval status read | `fetch_transfer_approval_request_status`: the transfer token (`Secret`, wiped after), a pinned `GET /api/v1/request-transfer/{id}`, the id must be a uuid, a timeout, no retry; only the error's class or HTTP status is logged; Mercury's text never reaches a log or the frontend. It only reads requests this app made (ids from its own transfer rows), and an error leaves the row as it is | Path injection; token or bank text leaking; a failed read changing money figures |
+| Summary files | Every user or bank text is escaped before ReportLab and the e-mail HTML; every CSV cell a spreadsheet would read as a formula (`= + - @`, tab, CR) gets a leading `'`; the download file name keeps only letters, digits, spaces and `, . # ( ) _ -` | Injection into the PDF, the e-mail or a spreadsheet; header injection through the file name |
+| Downloads | `GET .../rehab-summaries/{id}/pdf\|csv` behind the same data gate as every `/liquidity` route; a summary is only served through its own deal (id parsed as a uuid, deal checked) | Reading another deal's summary by its id |
+| Drive script | `google_drive_rehab_summaries.gs`: HMAC-SHA256 over timestamp, `folder/file` and the file's SHA-256 (constant-time compare), a 5-minute window, `.pdf` and `.csv` only, a 20 MB cap, names stripped of path characters, writes only under `rehab summaries`, never reads, lists or deletes. The backend posts only to `https://script.google.com/`; a folder link it returns is used only if it starts with `https://drive.google.com/` | Writing to or reading the owner's Drive with the URL alone; a rogue link in the page or the e-mail |
+| Where it goes | The recipient is `REHAB_SUMMARY_EMAIL` (environment only, one address); no route takes an address. Send again is limited to 10 a day per deal and audited; only error type names are stored | Using the app as a mail relay; addresses in the repo or the logs |
+| Privacy | The owner's personal address is only in the hosting secrets, never in the code, the README or the scripts | Personal data in the repository |
+
 ### 3.4 Pillar 3 — Trusted device management and allowlisting
 
 What each layer proves, and does not prove:
