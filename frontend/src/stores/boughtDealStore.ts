@@ -87,11 +87,11 @@ export const useBoughtDealStore = defineStore('boughtDeals', () => {
     }
   }
 
-  async function moveToBought(dealId: string, dealType: 'BRRRR' | 'FLIP') {
+  async function moveToBought(dealId: string, dealType: 'BRRRR' | 'FLIP', googleDriveLink: string) {
     console.group('BoughtDealStore: moveToBought');
     isLoading.value = true;
     try {
-      const newDeal = await api.moveToBought(dealId, dealType);
+      const newDeal = await api.moveToBought(dealId, dealType, googleDriveLink);
       boughtDeals.value.unshift(newDeal);
       console.log('Deal moved to bought:', newDeal);
       return newDeal;

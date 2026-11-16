@@ -385,11 +385,105 @@ class TestGoogleDriveLink:
         assert client.get("/bought-deals").json()[0]["google_drive_link"] == edited_url
 
     def test_is_null_when_never_set(self, client, brrrr_payload):
-        assert _create(client, brrrr_payload)["google_drive_link"] is None
+        without_link = {key: value for key, value in brrrr_payload.items() if key != "google_drive_link"}
+        assert _create(client, without_link)["google_drive_link"] is None
 
     def test_is_capped_like_the_other_links(self, client, brrrr_payload):
         too_long = client.post("/active-deals", json={**brrrr_payload, "google_drive_link": "https://" + "x" * 2_000})
         assert too_long.status_code == 422
+
+
+class TestTheDriveFolderIsRequiredOnTheBoughtBoard:
+    """Every Bought deal has its own Google Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md)."""
+
+    DRIVE_URL = "https://drive.google.com/drive/u/0/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing"
+
+    @pytest.mark.parametrize("payload_fixture, deal_type", [("brrrr_payload", "BRRRR"), ("flip_payload", "FLIP")])
+    def test_a_move_without_a_folder_link_or_with_a_bad_one_is_refused(self, client, request, payload_fixture, deal_type):
+        payload = {key: value for key, value in request.getfixturevalue(payload_fixture).items() if key != "google_drive_link"}
+        deal = _create(client, payload)
+        move = f"/bought-deals/from-active/{deal['id']}"
+        refused = client.post(move, params={"deal_type": deal_type})
+        assert refused.status_code == 422 and "Google Drive Link is required" in refused.json()["detail"]
+        for bad_link in ("https://docs.google.com/document/d/1AbCdEfGhIjKlMnOp/edit", "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view",
+                         "http://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp", "https://evil.example.com/drive/folders/1AbCdEfGhIjKlMnOp"):
+            assert client.post(move, params={"deal_type": deal_type}, json={"google_drive_link": bad_link}).status_code == 422, bad_link
+        assert client.get("/bought-deals").json() == []
+        moved = client.post(move, params={"deal_type": deal_type}, json={"google_drive_link": self.DRIVE_URL})
+        assert moved.status_code == 200, moved.text
+        assert moved.json()["google_drive_link"] == self.DRIVE_URL
+
+    def test_a_bought_save_refuses_a_changed_link_that_is_not_a_folder_but_keeps_an_old_deal_saving(self, client, brrrr_payload):
+        bought = client.post(f"/bought-deals/from-active/{_create(client, brrrr_payload)['id']}", params={"deal_type": "BRRRR"}).json()
+        bad = client.put(f"/bought-deals/{bought['id']}", json={**bought, "google_drive_link": "https://example.com/folder"})
+        assert bad.status_code == 422
+        assert client.put(f"/bought-deals/{bought['id']}", json={**bought, "address": "9 Renamed St"}).status_code == 200
+
+    def test_a_bought_deal_added_directly_needs_its_folder_link(self, client, brrrr_payload):
+        without_link = {key: value for key, value in brrrr_payload.items() if key != "google_drive_link"}
+        assert client.post("/bought-deals", json=without_link).status_code == 422
+        assert client.post("/bought-deals", json=brrrr_payload).status_code == 200
+
+
+class TestHtmlToDrive:
+    """HTML to Drive: the deal's interactive HTML report saved in its own Drive folder as "<date> deal projection.html"."""
+
+    @pytest.fixture
+    def drive_files(self, monkeypatch):
+        from BL.common import deal_drive_folder
+        saved = []
+
+        def save_file(folder_id, subfolder_name, file_name, file_bytes):
+            saved.append((folder_id, subfolder_name, file_name, file_bytes))
+            return "drive-file-1", "https://drive.google.com/drive/folders/TestDealFolder0001"
+
+        monkeypatch.setattr(deal_drive_folder, "save_file_to_deal_drive_folder", save_file)
+        return saved
+
+    @pytest.mark.parametrize("payload_fixture, deal_type", [("brrrr_payload", "BRRRR"), ("flip_payload", "FLIP")])
+    def test_the_report_lands_in_the_deal_folder_with_the_date(self, client, request, drive_files, payload_fixture, deal_type):
+        payload = request.getfixturevalue(payload_fixture)
+        bought = client.post(f"/bought-deals/from-active/{_create(client, payload)['id']}", params={"deal_type": deal_type}).json()
+        answer = client.post(f"/bought-deals/{bought['id']}/projection-to-drive", params={"deal_type": deal_type, "today": "2026-11-16"})
+        assert answer.status_code == 200, answer.text
+        assert answer.json()["file_name"] == "2026-11-16 deal projection.html"
+        [(folder_id, subfolder_name, file_name, file_bytes)] = drive_files
+        assert (folder_id, subfolder_name, file_name) == ("TestDealFolder0001", "", "2026-11-16 deal projection.html")
+        assert file_bytes.startswith(b"<!doctype html") or file_bytes.lower().startswith(b"<!doctype html")
+        assert payload["address"].encode() in file_bytes
+
+    def test_without_a_folder_it_asks_for_one_and_an_unknown_deal_is_404(self, client, brrrr_payload, drive_files):
+        from DAL.data_models import BoughtBrrrDeal
+        from db import SessionLocal
+        import uuid
+        bought = client.post(f"/bought-deals/from-active/{_create(client, brrrr_payload)['id']}", params={"deal_type": "BRRRR"}).json()
+        with SessionLocal() as db:   # an older Bought deal, from before the link was required
+            db.get(BoughtBrrrDeal, uuid.UUID(bought["id"])).google_drive_link = None
+            db.commit()
+        assert client.post(f"/bought-deals/{bought['id']}/projection-to-drive").status_code == 409
+        assert client.post(f"/bought-deals/{uuid.uuid4()}/projection-to-drive").status_code == 404
+        assert drive_files == []
+
+    def test_drive_refusing_is_a_502_with_our_own_words(self, client, brrrr_payload, monkeypatch):
+        from BL.common import deal_drive_folder
+
+        def refuse(*args, **kwargs):
+            raise deal_drive_folder.DealDriveFolderUploadFailed("the script said: secret-ish text")
+
+        monkeypatch.setattr(deal_drive_folder, "save_file_to_deal_drive_folder", refuse)
+        bought = client.post(f"/bought-deals/from-active/{_create(client, brrrr_payload)['id']}", params={"deal_type": "BRRRR"}).json()
+        answer = client.post(f"/bought-deals/{bought['id']}/projection-to-drive")
+        assert answer.status_code == 502 and "secret-ish" not in answer.text
+
+
+def test_drive_folder_links_are_read_for_their_folder_id_only():
+    from BL.common.deal_drive_folder import DealDriveFolderLinkInvalid, drive_folder_id_from_link
+    assert drive_folder_id_from_link("https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp") == "1AbCdEfGhIjKlMnOp"
+    assert drive_folder_id_from_link(" https://drive.google.com/drive/u/2/folders/1AbCdEfGhIjKlMnOp/?usp=sharing ") == "1AbCdEfGhIjKlMnOp"
+    for bad_link in ("", None, "https://drive.google.com/drive/folders/short", "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp/../x",
+                     "https://user:pw@drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp", "javascript:alert(1)"):
+        with pytest.raises(DealDriveFolderLinkInvalid):
+            drive_folder_id_from_link(bad_link)
 
 
 class TestBrokerProcessingFeeDefault:

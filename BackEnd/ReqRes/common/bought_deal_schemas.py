@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, Annotated, Literal, Dict
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ReqRes.common.active_deal_schemas import BrrrActiveDealCreate, FlipActiveDealCreate
 from ReqRes.common.analyze_results import analyzeBRRRRes, analyzeFlipRes
@@ -47,3 +47,18 @@ class BoughtFlipDealRes(BoughtFlipDealCreate, analyzeFlipRes):
     id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class MoveToBoughtReq(BaseModel):
+    """Every Bought deal has its own Google Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md)."""
+    google_drive_link: Optional[str] = Field(
+        None, max_length=2000,
+        description="The deal's Google Drive folder link (https://drive.google.com/drive/folders/...). Left out: the My Deals "
+                    "deal's own link is used. Required one way or the other: the rehab summary and HTML to Drive save there.")
+
+
+class DealProjectionSavedToDriveRes(BaseModel):
+    """HTML to Drive: the deal's interactive HTML report saved in its Google Drive folder."""
+    file_name: str = Field(..., description='The saved file: "<YYYY-MM-DD> deal projection.html".')
+    drive_file_id: str = Field(..., description="The file's id in Google Drive.")
+    drive_folder_url: str = Field(..., description="The deal's Google Drive folder (where the file is).")

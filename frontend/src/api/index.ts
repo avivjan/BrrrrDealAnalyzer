@@ -9,6 +9,7 @@ import type {
   SendOfferReq,
   SendOfferRes,
   BoughtDealRes,
+  DealProjectionSavedToDrive,
   PipelineTemplateDto,
   PipelineTemplateStats,
   PipelineStageDto,
@@ -359,11 +360,20 @@ export default {
     }
   },
 
-  async moveToBought(dealId: string, dealType: 'BRRRR' | 'FLIP'): Promise<BoughtDealRes> {
+  /** HTML to Drive: the deal's interactive HTML report saved in its own Drive folder as "<date> deal projection.html". */
+  async saveBoughtDealProjectionToDrive(dealId: string, dealType: 'BRRRR' | 'FLIP', today: string): Promise<DealProjectionSavedToDrive> {
+    const response = await apiClient.post<DealProjectionSavedToDrive>(`/bought-deals/${encodeURIComponent(dealId)}/projection-to-drive`, null,
+      { params: { deal_type: dealType, today } });
+    return response.data;
+  },
+
+  /** Every Bought deal needs its own Google Drive folder link (the server refuses a move without one). */
+  async moveToBought(dealId: string, dealType: 'BRRRR' | 'FLIP', googleDriveLink: string): Promise<BoughtDealRes> {
     console.group('API: moveToBought');
     console.log('Deal ID:', dealId, 'Type:', dealType);
     try {
-      const response = await apiClient.post<BoughtDealRes>(`/bought-deals/from-active/${dealId}`, null, { params: { deal_type: dealType } });
+      const response = await apiClient.post<BoughtDealRes>(`/bought-deals/from-active/${dealId}`, { google_drive_link: googleDriveLink },
+        { params: { deal_type: dealType } });
       console.log('Response Status:', response.status);
       console.log('Created Bought Deal:', response.data);
       console.groupEnd();

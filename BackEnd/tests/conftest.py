@@ -186,17 +186,17 @@ def rehab_summaries_never_leave_the_test(monkeypatch):
     or Drive: both channels fail as "not configured" unless a test installs its own fakes."""
 
     from BL.liquidity.constructionAccount import rehab_summary_delivery
-    from BL.liquidity.constructionAccount.rehab_summary_google_drive import RehabSummaryDriveUploadFailed
+    from BL.common.deal_drive_folder import DealDriveFolderUploadFailed
     from BL.memberLoan.common.member_loan_mail_transport import MemberLoanEmailNotSent
 
     def email_not_configured(*args, **kwargs):
         raise MemberLoanEmailNotSent("not configured in tests")
 
     def drive_not_configured(*args, **kwargs):
-        raise RehabSummaryDriveUploadFailed("not configured in tests")
+        raise DealDriveFolderUploadFailed("not configured in tests")
 
     monkeypatch.setattr(rehab_summary_delivery, "send_rehab_summary_email", email_not_configured)
-    monkeypatch.setattr(rehab_summary_delivery, "save_rehab_summary_file_to_drive", drive_not_configured)
+    monkeypatch.setattr(rehab_summary_delivery, "save_rehab_summary_file_to_deal_drive_folder", drive_not_configured)
 
 
 @pytest.fixture
@@ -212,6 +212,8 @@ def brrrr_payload() -> dict:
     """A complete BRRRR deal, using the exact field names `DealInputsForm` emits."""
     return {
         "deal_type": "BRRRR",
+        # Every Bought deal needs its own Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md).
+        "google_drive_link": "https://drive.google.com/drive/folders/TestDealFolder0001",
         "purchasePrice": 200,
         "rehabCost": 50,
         "rehabContingency": 10,

@@ -5,10 +5,13 @@ from ReqRes.common.bought_deal_schemas import BoughtBrrrDealCreate, BoughtFlipDe
 from DAL.crud.bought_deal import add_bought_brrr_deal, add_bought_flip_deal
 from BL.common.deal_response import create_bought_deal_response
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal, validate_flip_inputs_for_saved_deal
+from BL.common.deal_drive_folder import drive_folder_id_from_link
 
 
 def add_bought_deal(db: Session, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate]):
-    """Returns the created deal's response, or `None` for an unrecognized deal_type."""
+    """Returns the created deal's response, or `None` for an unrecognized deal_type. A Bought deal needs its Google Drive
+    folder link (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md): raises `DealDriveFolderLinkInvalid`."""
+    drive_folder_id_from_link(deal.google_drive_link)
     if deal.deal_type == "BRRRR":
         validate_brrr_inputs_for_saved_deal(deal)
         created = add_bought_brrr_deal(db, deal)

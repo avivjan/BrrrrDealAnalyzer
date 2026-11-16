@@ -354,6 +354,13 @@ export interface BoughtFlipDealRes extends FlipDealRes {
 
 export type BoughtDealRes = BoughtBrrrDealRes | BoughtFlipDealRes;
 
+/** HTML to Drive (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md). */
+export interface DealProjectionSavedToDrive {
+  file_name: string;
+  drive_file_id: string;
+  drive_folder_url: string;
+}
+
 // Pipeline templates (editable per deal type)
 export interface PipelineSubStageDto {
   id: string;

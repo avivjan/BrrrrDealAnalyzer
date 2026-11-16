@@ -277,6 +277,15 @@ const onToggleSubstage = (substageId: string) => {
         </svg>
         Drive
       </a>
+      <!-- A deal moved to Bought before the link was required: the rehab summary and HTML to Drive need it. -->
+      <span
+        v-else
+        data-testid="boughtcard.google-drive-missing"
+        title="Open the deal and paste its Google Drive folder link"
+        class="inline-flex shrink-0 items-center gap-1 rounded-ctl border-ui border-warning/40 bg-warning/10 px-2 py-1 text-xs font-medium text-warning"
+      >
+        <i class="pi pi-folder-plus text-[10px]" aria-hidden="true"></i>Add Drive folder
+      </span>
       <!-- Its rehab's construction account, one click from the card (tasks/todo/ConstructionAccountPerRehab.md, Step C0) -->
       <RouterLink
         v-if="isBrrr"
