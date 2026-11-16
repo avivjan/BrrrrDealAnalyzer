@@ -737,7 +737,7 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_LENDER_EMAIL`, `MEMBER_LOAN_YARDEN_EMAIL` | Member Loan | Where each member's e-mail goes (never sent to the frontend) |
 | `MEMBER_LOAN_COMPANY_EMAIL` | Member Loan | The Borrower's notice address (`bigwhalesllc@gmail.com`); every signed copy goes to it too. Unset, the signed-copy e-mail fails and is retried |
 | `MEMBER_LOAN_LENDER_LEGAL_NAME`, `MEMBER_LOAN_YARDEN_LEGAL_NAME` | Member Loan | The full legal names typed to sign (default `Aviv Jan`, `Yarden Kelly`) |
-| `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
+| `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `docs/loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
 | `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos and finished reports in the Drive folder `inspections` (one sub-folder per inspection), and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
 | `INSPECTION_REPORT_EMAIL`, `INSPECTION_REPORT_SENDER`, `INSPECTION_APP_ORIGIN`, `INSPECTION_REPORT_RETRY_SCHEDULE` | `BackEnd/BL/inspection/common/inspection_report.py` | Where each finished inspection's PDF report is e-mailed and from which Gmail account (both default `bigwhalesllc@gmail.com`; the app password is `EMAIL_PASSWORD`), the site address for its links (default `AUTH_APP_ORIGIN`), and `off` to stop retrying failed deliveries |
 | `REHAB_SUMMARY_EMAIL`, `REHAB_SUMMARY_SENDER`, `REHAB_SUMMARY_DRIVE_UPLOAD_URL`, `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`, `REHAB_SUMMARY_RETRY_SCHEDULE` | `BackEnd/BL/liquidity/constructionAccount/rehab_summary_*.py` | Where each rehab summary is e-mailed (the owner's address; unset, the e-mail fails and is retried) and from which Gmail account (default the company Gmail; its app password is `EMAIL_PASSWORD`), the Apps Script that saves it to the owner's Google Drive, and `off` to stop retrying failed deliveries |
@@ -771,7 +771,7 @@ decisions and tests are in [`tasks/todo/MemberLoan.md`](tasks/todo/MemberLoan.md
   cancelling stay as they were. A proposal expires after 14 days. Reversals work the same way.
 - **Signed copies.** Once everyone has signed, the record plus a signature certificate page is
   e-mailed to the Lender, Yarden and the company (subject `whales loan update`, or
-  `whales loan statement` for a statement) and saved to the Drive folder `loan agreements`.
+  `whales loan statement` for a statement) and saved to the Drive folder `docs/loan agreements`.
   A failed delivery is retried by the schedule below, three times.
 - **The calculation** (`BL/memberLoan/common/member_loan_engine.py`, `Decimal` only): 1% a month,
   every month counted as 30 days (30/360). A change on any day splits the month into stretches,

@@ -4,8 +4,9 @@
  * Runs as a Google Apps Script web app owned by the owner's personal Google
  * account (it used to be the company account; signed PDFs saved before the
  * move stay in that account's Drive). The web service POSTs each fully signed PDF here (BL/memberLoan/common/member_loan_google_drive.py);
- * this script saves it in the Drive folder "loan agreements", creating the
- * folder the first time.
+ * this script saves it in the Drive folder "docs/loan agreements" (a "docs"
+ * folder at the Drive root, with "loan agreements" inside it), creating the
+ * folders the first time. PDFs saved before this change stay where they were.
  *
  * Every request must carry an HMAC-SHA256 signature made with the shared
  * secret, over "<timestamp>\n<file name>\n<SHA-256 of the PDF>", and a
@@ -25,9 +26,13 @@
  *   4. Moving it to another account: do 1-3 there with a new secret, then set the
  *      new MEMBER_LOAN_DRIVE_UPLOAD_URL and MEMBER_LOAN_DRIVE_UPLOAD_SECRET on Render.
  *      Nothing else changes: the e-mailed signed copies keep their recipients.
+ *   5. After changing this file: paste it over the old code, then Deploy > Manage
+ *      deployments > Edit > Version: New version > Deploy. The /exec URL and the
+ *      secret stay the same, so nothing changes on Render.
  */
 
 var LARGEST_TIMESTAMP_AGE_SECONDS = 300;
+var DOCS_FOLDER_NAME = 'docs';
 var LOAN_AGREEMENTS_FOLDER_NAME = 'loan agreements';
 
 function doPost(e) {
@@ -54,7 +59,8 @@ function doPost(e) {
     if (fileName.slice(-4).toLowerCase() !== '.pdf') {
       return answer_({ ok: false, error: 'only PDF files are saved' });
     }
-    var folder = loanAgreementsFolder_(LOAN_AGREEMENTS_FOLDER_NAME); // never a name from the request
+    // docs/loan agreements: never a name from the request.
+    var folder = childFolder_(childFolder_(DriveApp.getRootFolder(), DOCS_FOLDER_NAME), LOAN_AGREEMENTS_FOLDER_NAME);
     var file = folder.createFile(Utilities.newBlob(pdfBytes, 'application/pdf', fileName));
     return answer_({ ok: true, file_id: file.getId() });
   } catch (error) {
@@ -62,9 +68,9 @@ function doPost(e) {
   }
 }
 
-function loanAgreementsFolder_(folderName) {
-  var folders = DriveApp.getRootFolder().getFoldersByName(folderName);
-  return folders.hasNext() ? folders.next() : DriveApp.getRootFolder().createFolder(folderName);
+function childFolder_(parentFolder, folderName) {
+  var folders = parentFolder.getFoldersByName(folderName);
+  return folders.hasNext() ? folders.next() : parentFolder.createFolder(folderName);
 }
 
 function answer_(body) {
