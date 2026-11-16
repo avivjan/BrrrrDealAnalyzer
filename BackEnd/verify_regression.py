@@ -1203,6 +1203,9 @@ class _Recorder:
 MISSING_ID = "99999999-9999-9999-9999-999999999999"
 
 
+REGRESSION_DRIVE_FOLDER_LINK = "https://drive.google.com/drive/folders/RegressionDealFolder01"
+
+
 def capture_endpoints(client: TestClient) -> dict[str, Any]:
     _reset_database()
     r = _Recorder(client)
@@ -1276,10 +1279,13 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
 
     # -- bought deals -----------------------------------------------------------
     r.get("bought_deals/list_empty", "/bought-deals")
+    # Every Bought deal has its own Google Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md).
+    r.post("bought_deals/from_active_without_drive_folder_link", f"/bought-deals/from-active/{brrr_id}",
+           params={"deal_type": "BRRRR"})
     bought_brrr = client.post(f"/bought-deals/from-active/{brrr_id}",
-                              params={"deal_type": "BRRRR"}).json()
+                              params={"deal_type": "BRRRR"}, json={"google_drive_link": REGRESSION_DRIVE_FOLDER_LINK}).json()
     bought_flip = client.post(f"/bought-deals/from-active/{flip_id}",
-                              params={"deal_type": "FLIP"}).json()
+                              params={"deal_type": "FLIP"}, json={"google_drive_link": REGRESSION_DRIVE_FOLDER_LINK}).json()
     r.results["bought_deals/from_active_brrr"] = {"status": 200, "body": _redact(bought_brrr)}
     r.results["bought_deals/from_active_flip"] = {"status": 200, "body": _redact(bought_flip)}
     r.post("bought_deals/from_active_missing", f"/bought-deals/from-active/{MISSING_ID}",
@@ -1291,7 +1297,7 @@ def capture_endpoints(client: TestClient) -> dict[str, Any]:
 
     r.get("bought_deals/list", "/bought-deals")
     r.post("bought_deals/create_direct", "/bought-deals",
-           json={**BRRRR_PAYLOAD, "address": "3 Direct Bought Rd"})
+           json={**BRRRR_PAYLOAD, "address": "3 Direct Bought Rd", "google_drive_link": REGRESSION_DRIVE_FOLDER_LINK})
     r.put("bought_deals/update", f"/bought-deals/{bought_brrr['id']}",
           json={**bought_brrr, "rehabCost": 65, "boughtStage": "rehab",
                 "completedSubstages": {"x": True}})
