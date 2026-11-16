@@ -462,6 +462,7 @@ class TestHtmlToDrive:
             db.commit()
         assert client.post(f"/bought-deals/{bought['id']}/projection-to-drive").status_code == 409
         assert client.post(f"/bought-deals/{uuid.uuid4()}/projection-to-drive").status_code == 404
+        assert client.post("/bought-deals/not-a-uuid/projection-to-drive").status_code == 404
         assert drive_files == []
 
     def test_drive_refusing_is_a_502_with_our_own_words(self, client, brrrr_payload, monkeypatch):

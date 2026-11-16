@@ -4,6 +4,7 @@ one as the report download, built from the saved Bought deal and saved in the de
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional, Union
@@ -44,7 +45,10 @@ def save_bought_deal_projection_to_drive(db: Session, deal_id: str, deal_type: s
     """None when there is no such Bought deal. Raises `DealDriveFolderMissing` / `DealDriveFolderLinkInvalid` (the
     deal's link) or `DealDriveFolderUploadFailed` (the Drive script)."""
     deal_model = BoughtBrrrDeal if deal_type == "BRRRR" else BoughtFlipDeal
-    deal = db.get(deal_model, deal_id)
+    try:
+        deal = db.get(deal_model, uuid.UUID(str(deal_id)))
+    except ValueError:
+        return None
     if deal is None:
         return None
     folder_id = drive_folder_id_of_deal(deal)
