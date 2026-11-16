@@ -29,6 +29,7 @@ export interface SeededDeal {
 }
 
 export interface SeededBoughtDeal extends SeededDeal {
+  google_drive_link?: string | null;
   boughtStage: string;
   completedSubstages: Record<string, boolean>;
 }
