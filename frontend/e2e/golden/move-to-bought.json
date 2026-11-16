@@ -6,7 +6,9 @@
       "query": {
         "deal_type": "BRRRR"
       },
-      "body": null
+      "body": {
+        "google_drive_link": "https://drive.google.com/drive/folders/E2EDealFolder0001"
+      }
     }
   ]
 }
