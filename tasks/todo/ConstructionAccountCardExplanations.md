@@ -1,6 +1,6 @@
 # ConstructionAccountCardExplanations: what's left, and "why this number" on the compact construction-account cards
 
-Branch `ConstructionAccountCardExplanations`, from the latest `main` (`3679e13`; #131 is still open and touches nothing here). Frontend only: every number already comes in the status the page loads.
+On the PR #131 branch `DealDriveFolderRehabSummaryAndProjection` (as asked: everything on #131). Frontend only: every number already comes in the status the page loads.
 
 ## Context
 On each closed card (`ConstructionAccountSummaryCard.vue`) the owner wants:
@@ -30,16 +30,16 @@ On each closed card (`ConstructionAccountSummaryCard.vue`) the owner wants:
    Then one line saying which of the two limits it.
 
 ## Todo
-- [ ] Commit this plan on the branch (5 min)
-- [ ] `utils/constructionAccountFigureExplanations.ts`: pure functions that build both explanations (a summary sentence, the signed lines, the result) from a `ConstructionAccountStatus`. They use the same formulas as the backend projection (`construction_account_projection.py`), so the lines add up to the shown figure (45 min)
-- [ ] `ConstructionAccountFigureExplanation.vue`: an (i) button with a popover. It opens on hover and keyboard focus, and toggles on a tap (phones); it closes on Escape or a tap outside; `aria-describedby` / `aria-expanded` (45 min)
-- [ ] `ConstructionAccountSummaryCard.vue`:
+- [x] Commit this plan on the branch (5 min)
+- [x] `utils/constructionAccountFigureExplanations.ts`: pure functions that build both explanations (a summary sentence, the signed lines, the result) from a `ConstructionAccountStatus`. They use the same formulas as the backend projection (`construction_account_projection.py`), so the lines add up to the shown figure (45 min)
+- [x] `ConstructionAccountFigureExplanation.vue`: an (i) button with a popover. It opens on hover and keyboard focus, and toggles on a tap (phones); it closes on Escape or a tap outside; `aria-describedby` / `aria-expanded` (45 min)
+- [x] `ConstructionAccountSummaryCard.vue`:
   - the "left to draw" / "left to pay" lines under the bars;
   - the (i) on "Back to you at the end";
   - the new "Safe to take out now" figure with its (i), five columns on wide screens.
 
   The card's open/close button no longer wraps the numbers, so the (i) buttons are not nested inside a button (invalid HTML). The number area still opens the card on a mouse click, and the address row stays the keyboard toggle (1 h)
-- [ ] Docs: the README's Construction accounts line; check off this plan; push; open the PR (15 min)
+- [x] Docs: the README's Construction accounts line; check off this plan; push to PR #131 and add this to its description (15 min)
 
 ## Tests
 - **Unit (vitest):**
@@ -49,6 +49,8 @@ On each closed card (`ConstructionAccountSummaryCard.vue`) the owner wants:
   - clicking an (i) does not open the card.
 - **Integration:** none. No backend or API change.
 - **E2E:** `construction-accounts.spec.ts`: the compact card shows "left to draw" and "left to pay"; the (i) of "Back to you at the end" shows the calculation; the a11y spec stays green.
+
+**What I changed while building it:** the popover first opened on CSS hover and focus. On a phone it stayed open after a second tap or Escape, because the focus kept it open, and covered the next (i). It is now driven by state: a mouse hover, keyboard focus or a tap opens it; a second tap, Escape or a tap outside closes it. Checked in phone and desktop screenshots.
 
 ## MCP
 No change: no new endpoint, and every figure is already in `list_liquidity_construction_accounts`.

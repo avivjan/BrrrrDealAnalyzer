@@ -8,8 +8,10 @@ import { computed } from 'vue'
 
 import type { ConstructionAccountStatus } from '../../../types/constructionAccount'
 import { constructionAccountStateOf } from '../../../utils/constructionAccountState'
+import { backToYouAtTheEndExplanation, safeToTakeOutNowExplanation } from '../../../utils/constructionAccountFigureExplanations'
 import { constructionAccountSummaryFiguresOf } from '../../../utils/constructionAccountSummaryFigures'
 import { formatMoney } from '../../../utils/money'
+import ConstructionAccountFigureExplanation from './ConstructionAccountFigureExplanation.vue'
 
 const props = defineProps<{
   status: ConstructionAccountStatus
@@ -25,12 +27,14 @@ const emit = defineEmits<{
 const hook = (name: string) => `ca.${props.status.bought_deal_id}.${name}`
 const stateChip = computed(() => constructionAccountStateOf(props.status))
 const summaryFigures = computed(() => constructionAccountSummaryFiguresOf(props.status))
+const backToYouExplanation = computed(() => backToYouAtTheEndExplanation(props.status))
+const safeToTakeOutExplanation = computed(() => safeToTakeOutNowExplanation(props.status))
 const closedOutOn = computed(() => props.status.closed_out_at
   ? new Date(props.status.closed_out_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null)
 </script>
 
 <template>
-  <div class="flex flex-wrap items-stretch gap-3 sm:flex-nowrap">
+  <div class="flex flex-wrap items-start gap-x-3">
     <button
       type="button"
       :data-testid="hook('toggle')"
@@ -54,9 +58,18 @@ const closedOutOn = computed(() => props.status.closed_out_at
           {{ status.latest_rehab_summary.overall_delivery_state === 'delivered' ? '· Summary e-mailed and saved to Drive' : '· Summary not delivered yet' }}
         </span>
       </span>
+    </button>
+    <div v-if="!status.is_linked" class="flex items-center">
+      <UiButton size="sm" :data-testid="hook('link')" @click="emit('link')">
+        <i class="pi pi-link mr-1.5 text-xs" aria-hidden="true"></i>Link an account
+      </UiButton>
+    </div>
 
-      <!-- Row 2, linked: the four numbers that matter -->
-      <span v-if="status.is_linked" class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 lg:grid-cols-4">
+    <!-- The numbers: a click anywhere here opens the card too (the address row is its keyboard toggle); the (i) buttons
+         explain a figure without opening it. -->
+    <div class="w-full cursor-pointer" :data-testid="hook('summary.figures')" @click="emit('toggle')">
+      <!-- Row 2, linked: the five numbers that matter -->
+      <div v-if="status.is_linked" class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 lg:grid-cols-5">
         <span class="flex flex-col">
           <span class="text-xs text-fg-muted">In the account now</span>
           <span :data-testid="hook('summary.balance')" class="numeric text-base font-bold text-fg">{{ formatMoney(summaryFigures.moneyInTheAccountDollars) || '—' }}</span>
@@ -70,6 +83,9 @@ const closedOutOn = computed(() => props.status.closed_out_at
           <span class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted" aria-hidden="true">
             <span class="block h-full rounded-full bg-primary" :style="{ width: `${summaryFigures.lenderDrawsReceivedOutOfLenderBudget.percentOfTotal}%` }"></span>
           </span>
+          <span :data-testid="hook('summary.left-to-draw')" class="mt-1 text-xs text-fg-muted">
+            <span class="numeric">{{ formatMoney(Math.max(0, status.loan_draws_remaining_to_pull_dollars ?? 0)) }}</span> left to draw
+          </span>
         </span>
         <span class="flex flex-col">
           <span class="text-xs text-fg-muted">Paid to contractors</span>
@@ -80,21 +96,31 @@ const closedOutOn = computed(() => props.status.closed_out_at
           <span class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted" aria-hidden="true">
             <span class="block h-full rounded-full bg-positive" :style="{ width: `${summaryFigures.paidToContractorsOutOfRehabCost.percentOfTotal}%` }"></span>
           </span>
+          <span :data-testid="hook('summary.left-to-pay')" class="mt-1 text-xs text-fg-muted">
+            <span class="numeric">{{ formatMoney(Math.max(0, status.unpaid_rehab_remaining_dollars ?? 0)) }}</span> left to pay
+          </span>
         </span>
         <span class="flex flex-col">
-          <template v-if="summaryFigures.rehabEndOutcome.kind === 'you_need_to_add_now'">
-            <span class="text-xs text-fg-muted">You need to add now</span>
-            <span :data-testid="hook('summary.end-outcome')" class="numeric text-base font-bold text-negative">{{ formatMoney(summaryFigures.rehabEndOutcome.dollars) }}</span>
-          </template>
-          <template v-else>
-            <span class="text-xs text-fg-muted">{{ status.closed_out_at ? 'Came back to you' : 'Back to you at the end' }}</span>
-            <span :data-testid="hook('summary.end-outcome')" class="numeric text-base font-bold text-positive">{{ formatMoney(summaryFigures.rehabEndOutcome.dollars) }}</span>
-          </template>
+          <span class="flex items-center gap-1 text-xs text-fg-muted">
+            {{ summaryFigures.rehabEndOutcome.kind === 'you_need_to_add_now' ? 'You need to add now' : status.closed_out_at ? 'Came back to you' : 'Back to you at the end' }}
+            <ConstructionAccountFigureExplanation :testid="hook('summary.end-outcome.explain')" figure-name="Back to you at the end"
+              :explanation="backToYouExplanation" panel-position-class="right-0" />
+          </span>
+          <span :data-testid="hook('summary.end-outcome')" class="numeric text-base font-bold"
+                :class="summaryFigures.rehabEndOutcome.kind === 'you_need_to_add_now' ? 'text-negative' : 'text-positive'">{{ formatMoney(summaryFigures.rehabEndOutcome.dollars) }}</span>
         </span>
-      </span>
+        <span class="flex flex-col">
+          <span class="text-xs text-fg-muted">
+            Safe to take out now (steal)
+            <ConstructionAccountFigureExplanation class="align-middle" :testid="hook('summary.safe-to-take-out.explain')" figure-name="Safe to take out now"
+              :explanation="safeToTakeOutExplanation" panel-position-class="left-0 lg:left-auto lg:right-0" />
+          </span>
+          <span :data-testid="hook('summary.safe-to-take-out')" class="numeric text-base font-bold text-fg">{{ formatMoney(status.safe_to_steal_now_dollars ?? 0) }}</span>
+        </span>
+      </div>
 
       <!-- Row 2, not linked yet: the plan from the deal -->
-      <span v-else :data-testid="hook('summary.plan')" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <div v-else :data-testid="hook('summary.plan')" class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <span><span class="text-fg-muted">Rehab cost</span> <span class="numeric font-semibold text-fg">{{ formatMoney(status.rehab_cost_dollars) }}</span></span>
         <span><span class="text-fg-muted">Lender budget</span> <span class="numeric font-semibold text-fg">{{ formatMoney(status.construction_budget_dollars) }}</span></span>
         <span v-if="summaryFigures.rehabBudgetDifference.kind === 'under_budget_you_keep'">
@@ -104,13 +130,14 @@ const closedOutOn = computed(() => props.status.closed_out_at
           <span class="text-fg-muted">Over budget, you cover</span> <span class="numeric font-semibold text-warning">{{ formatMoney(summaryFigures.rehabBudgetDifference.dollars) }}</span>
         </span>
         <span><span class="text-fg-muted">You deposit</span> <span class="numeric font-semibold text-fg">{{ formatMoney(status.total_to_deposit_dollars) }}</span></span>
-      </span>
-    </button>
-
-    <div v-if="!status.is_linked" class="flex items-center">
-      <UiButton size="sm" :data-testid="hook('link')" @click="emit('link')">
-        <i class="pi pi-link mr-1.5 text-xs" aria-hidden="true"></i>Link an account
-      </UiButton>
+        <span class="inline-flex items-center gap-1">
+          <span class="text-fg-muted">Back to you at the end</span>
+          <span :data-testid="hook('summary.end-outcome')" class="numeric font-semibold text-positive">{{ formatMoney(summaryFigures.rehabEndOutcome.dollars) }}</span>
+          <ConstructionAccountFigureExplanation :testid="hook('summary.end-outcome.explain')" figure-name="Back to you at the end"
+            :explanation="backToYouExplanation" panel-position-class="left-0 sm:left-auto sm:right-0" />
+        </span>
+      </div>
     </div>
+
   </div>
 </template>

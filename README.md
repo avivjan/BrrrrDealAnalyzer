@@ -820,7 +820,9 @@ deposit at the purchase closing, what comes back at rehab end, and a top-up when
 - **Page:** `/liquidity/construction-accounts` (sidebar, ⌘K, `g c`, the Liquidity bar, the Dashboard tile). One compact
   card per Bought BRRRR deal (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md): the money in the account,
   the lender draws against the lender's budget, the money paid to contractors against the rehab cost, what comes back at
-  the end, and the one thing to do now. A click opens the detail in tabs (Overview, Draws & payments, Bank transactions,
+  the end, and the one thing to do now. Under the bars: what is left to draw and left to pay; a fifth figure, **Safe to take
+  out now (steal)**. The (i) beside "Back to you at the end" and "Safe to take out now" (hover, keyboard focus or a tap) shows
+  the calculation line by line (tasks/todo/ConstructionAccountCardExplanations.md). A click opens the detail in tabs (Overview, Draws & payments, Bank transactions,
   Entered by hand, Timeline & transfers, Account), with every number and where it comes from; rehab figures, the
   cushion, the buffer and the before-this-account amounts edit in place. Cards needing you come first.
 - **Rehab summary at close-out:** the first close-out (the Close out transfer or Mark closed out) makes a PDF of the
