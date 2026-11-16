@@ -48,9 +48,13 @@ export function indexForOffsetX(offsetX: number, scrollX: number, count: number)
   return idx < 0 || idx >= count ? null : idx;
 }
 
-export function yForBalance(balance: number, height: number, range: Range): number {
+/**
+ * `reservedBottomHeight`: a strip at the bottom of the plot the balance never enters (the deal lifespan lanes), so the
+ * line and its fill are never drawn under them.
+ */
+export function yForBalance(balance: number, height: number, range: Range, reservedBottomHeight = 0): number {
   const span = range.max - range.min || 1;
-  const plotH = height - PAD_TOP - PAD_BOTTOM;
+  const plotH = Math.max(1, height - PAD_TOP - PAD_BOTTOM - reservedBottomHeight);
   return PAD_TOP + plotH * (1 - (balance - range.min) / span);
 }
 

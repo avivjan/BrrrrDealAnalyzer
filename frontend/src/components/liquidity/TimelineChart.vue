@@ -165,7 +165,7 @@ const C = computed(() => {
 const count = computed(() => props.days.length)
 const range = computed(() => balanceRange([...props.days.map((d) => d.balance_dollars), ...(props.balancesWithTheDeal ?? [])]))
 const plotBottom = computed(() => height.value - PAD_BOTTOM)
-const y = (balance: number) => yForBalance(balance, height.value, range.value)
+const y = (balance: number) => yForBalance(balance, height.value, range.value, lifespanLanesHeight.value)
 const x = (i: number) => xForIndex(i, scrollX.value)
 
 /** Hover wins over selection for the highlight and the tooltip. */
@@ -243,8 +243,15 @@ interface DayShape {
 const DEAL_DOT_SPACING = 7
 
 // --- Deal lifespans (tasks/todo/ConstructionAccountPerRehab.md, Step G) ---------------------------------------
+// One lane per deal, tall enough for its own label above its line, so no label ever sits on another deal's line. The
+// lanes live in their own strip at the bottom of the plot: the balance scale stops above it.
 const LIFESPAN_LOWEST_LANE_OFFSET = 16   // above the deal dots
-const LIFESPAN_LANE_HEIGHT = 6
+const LIFESPAN_LANE_HEIGHT = 13
+const LIFESPAN_LABEL_FONT_SIZE = 9
+const LIFESPAN_STRIP_TOP_PADDING = 6
+const lifespanLaneCount = computed(() => props.dealLifespans?.length ? Math.max(...props.dealLifespans.map(lifespan => lifespan.laneIndex)) + 1 : 0)
+const lifespanLanesHeight = computed(() => lifespanLaneCount.value
+  ? LIFESPAN_LOWEST_LANE_OFFSET + lifespanLaneCount.value * LIFESPAN_LANE_HEIGHT + LIFESPAN_STRIP_TOP_PADDING : 0)
 const lifespanLines = computed(() => {
   const days = props.days
   if (!days.length || !props.dealLifespans?.length) return []
@@ -270,6 +277,8 @@ const lifespanLines = computed(() => {
         y: plotBottom.value - LIFESPAN_LOWEST_LANE_OFFSET - lifespan.laneIndex * LIFESPAN_LANE_HEIGHT,
         colorHex: attribution?.dealColorHex ?? C.value.axisText,
         label: attribution?.shortDealAddress ?? '',
+        // The label starts where the line is visible, never under the y-axis labels.
+        labelX: Math.max(x1, PAD_LEFT) + 4,
       }
     })
     .filter(line => line.x2 > PAD_LEFT && line.x1 < width.value)
@@ -770,13 +779,17 @@ defineExpose({ centerOnToday, centerOnDate })
           </template>
         </g>
 
-        <!-- Deal lifespans: contract to refi, one lane per deal; drawn still (no animation) -->
+        <!-- Deal lifespans: contract to refi, one lane per deal in their own strip; drawn still (no animation) -->
         <g v-if="lifespanLines.length" data-part="deal-lifespans" aria-hidden="true">
+          <rect data-part="deal-lifespans-strip" :x="PAD_LEFT" :y="plotBottom - lifespanLanesHeight" :width="Math.max(0, width - PAD_LEFT)"
+                :height="lifespanLanesHeight" :fill="C.bg" fill-opacity="0.72" />
+          <line :x1="PAD_LEFT" :x2="width" :y1="plotBottom - lifespanLanesHeight" :y2="plotBottom - lifespanLanesHeight" :stroke="C.grid" stroke-width="1" />
           <g v-for="line in lifespanLines" :key="line.dealKey" data-part="deal-lifespan" :data-deal-key="line.dealKey"
              :opacity="highlightedDealKey && highlightedDealKey !== line.dealKey ? 0.25 : 1">
             <line :x1="line.x1" :x2="line.x2" :y1="line.y" :y2="line.y" :stroke="line.colorHex" stroke-width="2" stroke-linecap="round"
                   :stroke-dasharray="line.refiIsLate ? '4 3' : undefined" />
-            <text v-if="line.label && line.x2 - line.x1 > 60" :x="line.x1 + 4" :y="line.y - 2" font-size="8" font-weight="600" :fill="line.colorHex">{{ line.label }}</text>
+            <text v-if="line.label && line.x2 - line.labelX > 60" :x="line.labelX" :y="line.y - 3" :font-size="LIFESPAN_LABEL_FONT_SIZE" font-weight="600"
+                  :fill="line.colorHex" :stroke="C.bg" stroke-width="3" stroke-linejoin="round" paint-order="stroke">{{ line.label }}</text>
           </g>
         </g>
 
