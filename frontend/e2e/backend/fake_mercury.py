@@ -29,6 +29,7 @@ from decimal import Decimal
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from BL.common import deal_drive_folder
 from BL.liquidity.common import mercury_client, mercury_reads
 from BL.liquidity.common.mercury_transfers import MercuryTransferAnswer
 from BL.liquidity.common.mercury_webhooks import MercuryWebhookRegistration
@@ -61,6 +62,7 @@ class FakeMercury:
         self.transfer_count = 0
         self.rehab_summary_emails_sent_count = 0
         self.rehab_summary_files_saved_to_drive_count = 0
+        self.deal_projection_files_saved_to_drive_count = 0
         self.registered_receiving_url: str | None = None
         for name in ("MERCURY_API_TOKEN_E2E", "MERCURY_TRANSFER_API_TOKEN_E2E"):
             if on:
@@ -111,9 +113,13 @@ class FakeMercury:
     def send_rehab_summary_email(self, **email) -> None:
         self.rehab_summary_emails_sent_count += 1
 
-    def save_rehab_summary_file_to_drive(self, folder_name: str, file_name: str, file_bytes: bytes) -> tuple[str, str]:
-        self.rehab_summary_files_saved_to_drive_count += 1
-        return f"e2e-drive-file-{self.rehab_summary_files_saved_to_drive_count}", "https://drive.google.com/drive/folders/e2e-rehab-summaries"
+    def save_file_to_deal_drive_folder(self, folder_id: str, subfolder_name: str, file_name: str, file_bytes: bytes) -> tuple[str, str]:
+        """Every file saved to a deal's own Drive folder (the rehab summary in "Rehab", HTML to Drive in the folder)."""
+        if subfolder_name == "Rehab":
+            self.rehab_summary_files_saved_to_drive_count += 1
+        else:
+            self.deal_projection_files_saved_to_drive_count += 1
+        return f"e2e-drive-file-{folder_id}-{file_name}", f"https://drive.google.com/drive/folders/{folder_id}"
 
     def register_webhook(self, workspace_label: str, receiving_url: str) -> MercuryWebhookRegistration:
         self.registered_receiving_url = receiving_url
@@ -160,9 +166,11 @@ def install(app: FastAPI) -> FakeMercury:
     construction_accounts.fetch_account_transactions = fake.fetch_account_transactions
     construction_account_transfers.send_internal_transfer = fake.send_internal_transfer
     construction_accounts.fetch_transfer_approval_request_status = fake.fetch_transfer_approval_request_status
-    # The rehab summary made at close-out is "e-mailed" and "saved to Drive" here, never through Gmail or Drive.
+    # The rehab summary made at close-out and HTML to Drive are "e-mailed" and "saved to Drive" here, never through
+    # Gmail or Drive.
     rehab_summary_delivery.send_rehab_summary_email = fake.send_rehab_summary_email
-    rehab_summary_delivery.save_rehab_summary_file_to_drive = fake.save_rehab_summary_file_to_drive
+    rehab_summary_delivery.save_rehab_summary_file_to_deal_drive_folder = fake.save_file_to_deal_drive_folder
+    deal_drive_folder.save_file_to_deal_drive_folder = fake.save_file_to_deal_drive_folder
     os.environ.setdefault("REHAB_SUMMARY_EMAIL", "owner@e2e.invalid")
     mercury_instant_updates.register_webhook = fake.register_webhook
     mercury_instant_updates.delete_webhook = fake.delete_webhook
@@ -197,7 +205,8 @@ def install(app: FastAPI) -> FakeMercury:
                 "transactions": sum(len(rows) for rows in fake.transactions_by_account_id.values()),
                 "webhook_is_registered": fake.registered_receiving_url is not None,
                 "rehab_summary_emails_sent": fake.rehab_summary_emails_sent_count,
-                "rehab_summary_files_saved_to_drive": fake.rehab_summary_files_saved_to_drive_count}
+                "rehab_summary_files_saved_to_drive": fake.rehab_summary_files_saved_to_drive_count,
+                "deal_projection_files_saved_to_drive": fake.deal_projection_files_saved_to_drive_count}
 
     @app.post("/e2e/fake-mercury/signed-event", include_in_schema=False)
     def fake_mercury_signed_event(data: SignedEventReq):

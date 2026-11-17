@@ -29,6 +29,7 @@ export interface SeededDeal {
 }
 
 export interface SeededBoughtDeal extends SeededDeal {
+  google_drive_link?: string | null;
   boughtStage: string;
   completedSubstages: Record<string, boolean>;
 }
@@ -99,7 +100,8 @@ export class Seeder {
     type: DealType = 'BRRRR',
     overrides: Record<string, unknown> = {},
   ): Promise<SeededBoughtDeal> {
-    const active = await this.seedActiveDeal(type, { stage: 3, ...overrides });
+    // Every Bought deal has its own Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md).
+    const active = await this.seedActiveDeal(type, { stage: 3, google_drive_link: 'https://drive.google.com/drive/folders/E2EDealFolder0001', ...overrides });
     const response = await this.request.post(
       this.url(`/bought-deals/from-active/${active.id}?deal_type=${type}`),
       { headers: SEED_HEADERS },

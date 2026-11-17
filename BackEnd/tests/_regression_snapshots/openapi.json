@@ -10211,6 +10211,33 @@
         "title": "DealMilestoneRes",
         "type": "object"
       },
+      "DealProjectionSavedToDriveRes": {
+        "description": "HTML to Drive: the deal's interactive HTML report saved in its Google Drive folder.",
+        "properties": {
+          "drive_file_id": {
+            "description": "The file's id in Google Drive.",
+            "title": "Drive File Id",
+            "type": "string"
+          },
+          "drive_folder_url": {
+            "description": "The deal's Google Drive folder (where the file is).",
+            "title": "Drive Folder Url",
+            "type": "string"
+          },
+          "file_name": {
+            "description": "The saved file: \"<YYYY-MM-DD> deal projection.html\".",
+            "title": "File Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_name",
+          "drive_file_id",
+          "drive_folder_url"
+        ],
+        "title": "DealProjectionSavedToDriveRes",
+        "type": "object"
+      },
       "DealSummary": {
         "description": "One row of the compact deal list. Money in thousands where the name ends in _k, else plain dollars.",
         "properties": {
@@ -15091,6 +15118,26 @@
         "title": "MercuryWorkspaceConnectionRes",
         "type": "object"
       },
+      "MoveToBoughtReq": {
+        "description": "Every Bought deal has its own Google Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md).",
+        "properties": {
+          "google_drive_link": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deal's Google Drive folder link (https://drive.google.com/drive/folders/...). Left out: the My Deals deal's own link is used. Required one way or the other: the rehab summary and HTML to Drive save there.",
+            "title": "Google Drive Link"
+          }
+        },
+        "title": "MoveToBoughtReq",
+        "type": "object"
+      },
       "OAuthApproveReq": {
         "properties": {
           "txn": {
@@ -19885,6 +19932,7 @@
     },
     "/bought-deals/from-active/{deal_id}": {
       "post": {
+        "description": "Copy a My Deals deal onto the Bought board. It needs its Google Drive folder link (in the body, or already on the\nMy Deals deal): 422 without a valid one.",
         "operationId": "move_to_bought_bought_deals_from_active__deal_id__post",
         "parameters": [
           {
@@ -19907,6 +19955,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveToBoughtReq"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Data"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -20185,6 +20250,75 @@
           }
         },
         "summary": "Create Inspection For Bought Deal"
+      }
+    },
+    "/bought-deals/{deal_id}/projection-to-drive": {
+      "post": {
+        "description": "HTML to Drive: the deal's interactive HTML report (as the report download builds it) saved in the deal's own\nGoogle Drive folder as \"<date> deal projection.html\". 409 until the deal has its Drive folder link; 502 when Drive\ndid not take it.",
+        "operationId": "save_bought_deal_projection_to_drive_bought_deals__deal_id__projection_to_drive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "title": "Deal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deal_type",
+            "required": false,
+            "schema": {
+              "default": "BRRRR",
+              "title": "Deal Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The browser's local date, for the file name.",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The browser's local date, for the file name.",
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealProjectionSavedToDriveRes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Bought Deal Projection To Drive"
       }
     },
     "/credentials": {

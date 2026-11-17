@@ -11,7 +11,8 @@ from datetime import date
 
 import pytest
 
-from BL.liquidity.constructionAccount import rehab_summary_delivery, rehab_summary_google_drive
+from BL.common import deal_drive_folder
+from BL.liquidity.constructionAccount import rehab_summary_delivery
 from BL.liquidity.constructionAccount.rehab_summary_report import (
     RehabSummaryStatistic, build_rehab_summary_content, build_rehab_summary_pdf, build_rehab_summary_transactions_csv,
     rehab_summary_email_html, rehab_summary_file_base_name,
@@ -32,13 +33,13 @@ def rehab_summary_outbox(monkeypatch):
     def send_email(**email):
         outbox["emails"].append(email)
 
-    def save_to_drive(folder_name, file_name, file_bytes):
-        outbox["drive_files"].append((folder_name, file_name, file_bytes))
+    def save_to_drive(folder_id, subfolder_name, file_name, file_bytes):
+        outbox["drive_files"].append((folder_id, subfolder_name, file_name, file_bytes))
         return f"drive-file-{len(outbox['drive_files'])}", "https://drive.google.com/drive/folders/rehab-folder"
 
     monkeypatch.setenv("REHAB_SUMMARY_EMAIL", "owner@example.com")
     monkeypatch.setattr(rehab_summary_delivery, "send_rehab_summary_email", send_email)
-    monkeypatch.setattr(rehab_summary_delivery, "save_rehab_summary_file_to_drive", save_to_drive)
+    monkeypatch.setattr(rehab_summary_delivery, "save_rehab_summary_file_to_deal_drive_folder", save_to_drive)
     return outbox
 
 
@@ -82,20 +83,22 @@ class TestTheContent:
         assert "<script>" not in rehab_summary_email_html(content.deal_address, content.statistics, None)
         assert "/" not in rehab_summary_file_base_name(content) and "<" not in rehab_summary_file_base_name(content)
 
-    def test_the_drive_request_is_signed_over_the_folder_the_file_and_its_hash(self):
-        body = rehab_summary_google_drive.build_upload_request_body(
-            folder_name="1 Oak St (deal)", file_name="Rehab summary.pdf", file_bytes=b"%PDF-1", secret="s3cret", timestamp=1700000000)
+    def test_the_drive_request_is_signed_over_the_folder_the_subfolder_the_file_and_its_hash(self):
+        body = deal_drive_folder.build_upload_request_body(
+            folder_id="DealFolder0001", subfolder_name="Rehab", file_name="Rehab summary.pdf", file_bytes=b"%PDF-1",
+            secret="s3cret", timestamp=1700000000)
         import hashlib
         file_sha256 = hashlib.sha256(b"%PDF-1").hexdigest()
         assert body["file_sha256"] == file_sha256
-        assert body["signature"] == rehab_summary_google_drive.upload_signature("s3cret", 1700000000, "1 Oak St (deal)/Rehab summary.pdf", file_sha256)
-        assert rehab_summary_google_drive.rehab_summary_drive_folder_name("1/2 Oak St", "abc") == "1 2 Oak St (abc)"
+        assert body["signature"] == deal_drive_folder.upload_signature("s3cret", 1700000000, "DealFolder0001/Rehab/Rehab summary.pdf", file_sha256)
 
-    def test_the_drive_upload_refuses_a_url_that_is_not_apps_script(self, monkeypatch):
-        monkeypatch.setenv("REHAB_SUMMARY_DRIVE_UPLOAD_URL", "https://evil.example.com/exec")
-        monkeypatch.setenv("REHAB_SUMMARY_DRIVE_UPLOAD_SECRET", "s3cret")
-        with pytest.raises(rehab_summary_google_drive.RehabSummaryDriveUploadFailed):
-            rehab_summary_google_drive.save_rehab_summary_file_to_drive("folder", "file.pdf", b"%PDF")
+    def test_the_drive_upload_refuses_a_url_that_is_not_apps_script_and_a_subfolder_not_allowed(self, monkeypatch):
+        monkeypatch.setenv("DEAL_DRIVE_FOLDERS_UPLOAD_URL", "https://evil.example.com/exec")
+        monkeypatch.setenv("DEAL_DRIVE_FOLDERS_UPLOAD_SECRET", "s3cret")
+        with pytest.raises(deal_drive_folder.DealDriveFolderUploadFailed):
+            deal_drive_folder.save_file_to_deal_drive_folder("DealFolder0001", "Rehab", "file.pdf", b"%PDF")
+        with pytest.raises(deal_drive_folder.DealDriveFolderUploadFailed):
+            deal_drive_folder.save_file_to_deal_drive_folder("DealFolder0001", "../other", "file.pdf", b"%PDF")
 
 
 class TestClosingOutSendsIt:
@@ -118,7 +121,9 @@ class TestClosingOutSendsIt:
         assert email["recipients"] == ["owner@example.com"] and email["subject"].startswith("Rehab completed")
         assert [attachment.filename.rsplit(".", 1)[1] for attachment in email["attachments"]] == ["pdf", "csv"]
         assert "Lender draws received" in email["text_body"]
-        assert sorted(name.rsplit(".", 1)[1] for _folder, name, _bytes in rehab_summary_outbox["drive_files"]) == ["csv", "pdf"]
+        # Into the "Rehab" subfolder of the deal's own Drive folder (its Google Drive Link).
+        assert {(folder_id, subfolder_name) for folder_id, subfolder_name, _name, _bytes in rehab_summary_outbox["drive_files"]} == {("TestDealFolder0001", "Rehab")}
+        assert sorted(name.rsplit(".", 1)[1] for _folder, _subfolder, name, _bytes in rehab_summary_outbox["drive_files"]) == ["csv", "pdf"]
 
         # Closing out an account already closed out makes no second summary; reopen and close again does.
         client.post(f"{base_url}/mark-closed-out")
@@ -186,6 +191,21 @@ class TestSendAgainAndDownloads:
         assert len(_summaries_of(deal_id)) == 1
         assert client.delete(f"/bought-deals/{deal_id}", params={"deal_type": "BRRRR"}).status_code in (200, 204)
         assert _summaries_of(deal_id) == []
+
+
+class TestADealWithoutItsDriveFolder:
+    def test_the_drive_channel_waits_for_the_link_and_the_e_mail_still_goes(self, client, mercury, bought_deal, rehab_summary_outbox):
+        deal_id = bought_deal["id"]
+        base_url = _a_rehab_run_through_the_account(client, mercury, deal_id)
+        from DAL.data_models import BoughtBrrrDeal
+        with SessionLocal() as db:   # an older Bought deal, made before the link was required
+            db.get(BoughtBrrrDeal, __import__("uuid").UUID(deal_id)).google_drive_link = None
+            db.commit()
+        client.post(f"{base_url}/mark-closed-out")
+        latest = _status(client, deal_id)["latest_rehab_summary"]
+        assert latest["email_delivery_status"] == "delivered"
+        assert (latest["drive_delivery_status"], latest["drive_last_error_type_name"]) == ("failed", "DealDriveFolderMissing")
+        assert rehab_summary_outbox["drive_files"] == []
 
 
 def test_the_statistics_are_stored_so_a_retried_email_still_carries_them():

@@ -9,6 +9,7 @@ from BL.common.deal_response import create_bought_deal_response
 from BL.liquidity.dealCashRows.deal_cash_rows import DEAL_BOARD_BOUGHT
 from BL.liquidity.dealCashRows.liquidity_deals import mark_liquidity_rows_out_of_date_if_the_save_changed_them
 from BL.analyze.common.validation import validate_brrr_inputs_for_saved_deal, validate_flip_inputs_for_saved_deal
+from BL.common.deal_drive_folder import drive_folder_id_from_link
 
 
 class StaleDealFormError(Exception):
@@ -29,11 +30,22 @@ def _refuse_a_stale_form(db: Session, deal_model, deal_id: str, updated_at_the_f
         raise StaleDealFormError()
 
 
+def _refuse_a_changed_link_that_is_not_a_drive_folder(db: Session, deal_model, deal_id: str, new_google_drive_link: Optional[str]) -> None:
+    """A new link must be a Google Drive folder link (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md). An
+    unchanged one is left alone, so an older deal saved before the rule still saves its other fields."""
+    new_link = (new_google_drive_link or "").strip()
+    stored_link = (db.query(deal_model.google_drive_link).filter(deal_model.id == deal_id).scalar() or "").strip()
+    if new_link and new_link != stored_link:
+        drive_folder_id_from_link(new_link)
+
+
 def update_bought_deal(db: Session, deal_id: str, deal: Union[BoughtBrrrDealCreate, BoughtFlipDealCreate],
                        updated_at_the_form_was_loaded_with: Optional[datetime] = None):
     """Returns the updated deal's response, or `None` if no matching row was found. Raises `StaleDealFormError` when the
     form was loaded before the deal's last change (tasks/todo/ConstructionAccountPerRehab.md)."""
-    _refuse_a_stale_form(db, BoughtBrrrDeal if deal.deal_type == "BRRRR" else BoughtFlipDeal, deal_id, updated_at_the_form_was_loaded_with)
+    deal_model = BoughtBrrrDeal if deal.deal_type == "BRRRR" else BoughtFlipDeal
+    _refuse_a_stale_form(db, deal_model, deal_id, updated_at_the_form_was_loaded_with)
+    _refuse_a_changed_link_that_is_not_a_drive_folder(db, deal_model, deal_id, deal.google_drive_link)
     if deal.deal_type == "BRRRR":
         validate_brrr_inputs_for_saved_deal(deal)
         updated = update_bought_brrr_deal(db, deal_id, deal)

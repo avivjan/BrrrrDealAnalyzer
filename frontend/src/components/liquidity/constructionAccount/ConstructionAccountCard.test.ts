@@ -102,3 +102,40 @@ describe('the rehab summary', () => {
   })
 })
 
+
+describe('what is left, and why the numbers (tasks/todo/ConstructionAccountCardExplanations.md)', () => {
+  const chateau = {
+    current_balance_dollars: 24100, available_balance_dollars: 24100, construction_budget_dollars: 73000, rehab_cost_dollars: 65000,
+    loan_draws_pulled: sumBySource(52900), loan_draws_remaining_to_pull_dollars: 20100,
+    rehab_payments_made: sumBySource(30750), unpaid_rehab_remaining_dollars: 34250,
+    remaining_deposit_dollars: 0, projected_return_at_rehab_end_dollars: 9950, own_money_back_at_rehab_end_dollars: 5000,
+    spread_at_rehab_end_dollars: 4950, safe_to_steal_now_dollars: 9950, safe_to_steal_now_is_capped_by: 'projected_return' as const,
+  }
+
+  it('shows what is left to draw and to pay, and what is safe to take out now', () => {
+    const card = mountTheCard({}, chateau)
+    expect(card.get('[data-testid="ca.deal-1.summary.left-to-draw"]').text()).toBe('$20,100 left to draw')
+    expect(card.get('[data-testid="ca.deal-1.summary.left-to-pay"]').text()).toBe('$34,250 left to pay')
+    expect(card.get('[data-testid="ca.deal-1.summary.safe-to-take-out"]').text()).toBe('$9,950')
+  })
+
+  it('the (i) of Back to you shows the calculation and does not open the card; Escape closes it', async () => {
+    const card = mountTheCard({}, chateau)
+    const explain = card.get('[data-testid="ca.deal-1.summary.end-outcome.explain"]')
+    await explain.trigger('click')
+    expect(card.emitted('toggle')).toBeUndefined()
+    expect(explain.attributes('aria-expanded')).toBe('true')
+    const lines = card.findAll('[data-testid="ca.deal-1.summary.end-outcome.explain.line"]').map(line => line.text().replace(/\s+/g, ' '))
+    expect(lines[0]).toContain('In the account now')
+    expect(lines[lines.length - 1]).toContain('Back to you at the end')
+    expect(lines[lines.length - 1]).toContain('$9,950')
+    await explain.trigger('keydown', { key: 'Escape' })
+    expect(explain.attributes('aria-expanded')).toBe('false')
+  })
+
+  it('a click on the numbers still opens the card', async () => {
+    const card = mountTheCard({}, chateau)
+    await card.get('[data-testid="ca.deal-1.summary.figures"]').trigger('click')
+    expect(card.emitted('toggle')).toHaveLength(1)
+  })
+})

@@ -1,4 +1,5 @@
-"""Delivers each rehab summary: e-mailed to the owner and saved to the owner's Google Drive
+"""Delivers each rehab summary: e-mailed to the owner and saved in the "Rehab" subfolder of the deal's own Google Drive
+folder (its "Google Drive Link", tasks/todo/DealDriveFolderRehabSummaryAndProjection.md)
 (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md).
 
 Closing a construction account out (`mark_closed_out`) records a `LiquidityConstructionAccountRehabSummary` row with
@@ -24,10 +25,13 @@ from uuid import UUID
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from BL.liquidity.constructionAccount.rehab_summary_google_drive import (
-    RehabSummaryDriveUploadFailed,
-    rehab_summary_drive_folder_name,
-    save_rehab_summary_file_to_drive as save_rehab_summary_file_to_drive_through_the_script,
+from BL.common.deal_drive_folder import (
+    REHAB_SUBFOLDER_NAME,
+    DealDriveFolderLinkInvalid,
+    DealDriveFolderMissing,
+    DealDriveFolderUploadFailed,
+    drive_folder_id_of_deal,
+    save_file_to_deal_drive_folder,
 )
 from BL.liquidity.constructionAccount.rehab_summary_report import (
     RehabSummaryEmailAddressMissing,
@@ -45,6 +49,7 @@ from BL.liquidity.constructionAccount.rehab_summary_report import (
 )
 from BL.memberLoan.common.member_loan_mail_transport import MemberLoanEmailAttachment, MemberLoanEmailNotSent, deliver_member_loan_email
 from DAL.crud.liquidity_construction_account import get_rehab_summaries_of_deal
+from DAL.data_models import BoughtBrrrDeal
 from DAL.data_models.liquidity.construction_account_models import (
     REHAB_SUMMARY_DELIVERY_DELIVERED, REHAB_SUMMARY_DELIVERY_FAILED, REHAB_SUMMARY_DELIVERY_PENDING, LiquidityConstructionAccountRehabSummary,
 )
@@ -64,7 +69,7 @@ DRIVE_CHANNEL = "drive"
 
 # The two ways out, as names tests replace (tests/conftest.py never lets a test reach either).
 send_rehab_summary_email = deliver_member_loan_email
-save_rehab_summary_file_to_drive = save_rehab_summary_file_to_drive_through_the_script
+save_rehab_summary_file_to_deal_drive_folder = save_file_to_deal_drive_folder
 
 
 def count_rehab_summaries_of_deal_today(db: Session, bought_brrr_deal_id) -> int:
@@ -119,14 +124,19 @@ def latest_rehab_summary_res(db: Session, bought_brrr_deal_id) -> Optional[Const
     return rehab_summary_res(summaries[0]) if summaries else None
 
 
-def _deliver_to_drive(summary: LiquidityConstructionAccountRehabSummary) -> None:
-    folder_name = rehab_summary_drive_folder_name(summary.deal_address, str(summary.bought_brrr_deal_id))
+def _deliver_to_drive(db: Session, summary: LiquidityConstructionAccountRehabSummary) -> None:
+    """Into the "Rehab" subfolder of the deal's own Google Drive folder (its "Google Drive Link")."""
+    deal = db.get(BoughtBrrrDeal, summary.bought_brrr_deal_id)
+    if deal is None:
+        raise DealDriveFolderMissing("the deal no longer exists")
+    folder_id = drive_folder_id_of_deal(deal)
     if not summary.drive_pdf_file_id:
-        summary.drive_pdf_file_id, folder_url = save_rehab_summary_file_to_drive(folder_name, f"{summary.summary_file_base_name}.pdf", summary.summary_pdf_bytes)
+        summary.drive_pdf_file_id, folder_url = save_rehab_summary_file_to_deal_drive_folder(
+            folder_id, REHAB_SUBFOLDER_NAME, f"{summary.summary_file_base_name}.pdf", summary.summary_pdf_bytes)
         summary.drive_folder_url = folder_url or summary.drive_folder_url
     if not summary.drive_csv_file_id:
-        summary.drive_csv_file_id, folder_url = save_rehab_summary_file_to_drive(
-            folder_name, f"{summary.summary_file_base_name} transactions.csv", summary.summary_transactions_csv_text.encode("utf-8"))
+        summary.drive_csv_file_id, folder_url = save_rehab_summary_file_to_deal_drive_folder(
+            folder_id, REHAB_SUBFOLDER_NAME, f"{summary.summary_file_base_name} transactions.csv", summary.summary_transactions_csv_text.encode("utf-8"))
         summary.drive_folder_url = folder_url or summary.drive_folder_url
 
 
@@ -160,7 +170,7 @@ def deliver_rehab_summary(rehab_summary_id: UUID, *, respect_attempt_limit: bool
         if summary is None:
             return outcome
         for channel, deliver, failure_types in (
-            (DRIVE_CHANNEL, lambda: _deliver_to_drive(summary), (RehabSummaryDriveUploadFailed,)),
+            (DRIVE_CHANNEL, lambda: _deliver_to_drive(db, summary), (DealDriveFolderUploadFailed, DealDriveFolderMissing, DealDriveFolderLinkInvalid)),
             (EMAIL_CHANNEL, lambda: _deliver_email(summary), (MemberLoanEmailNotSent, RehabSummaryEmailAddressMissing)),
         ):
             if not _channel_needs_delivery(summary, channel, respect_attempt_limit):

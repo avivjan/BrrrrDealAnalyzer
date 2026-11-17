@@ -235,7 +235,13 @@ DESCRIPTIONS: dict[str, str] = {
     "move_to_bought": (
         "Mark a deal as bought: copy an active deal onto the Bought Deals board (the site "
         "allows this for stage 3 'Brought' deals). The active deal is kept. deal_type must "
-        "match the deal."
+        "match the deal. Needs the deal's Google Drive folder link (google_drive_link in the body, or already on "
+        "the active deal; https://drive.google.com/drive/folders/...): 422 without one. Ask the owner for it."
+    ),
+    "save_bought_deal_projection_to_drive": (
+        "HTML to Drive: save a Bought deal's interactive HTML report (as the report download builds it) in the "
+        "deal's own Google Drive folder as '<date> deal projection.html'. 409 until the deal has its Drive "
+        "folder link; 502 when Drive did not take it."
     ),
     # --- Dashboard: Send Market Offer ---
     "send_offer": (
@@ -525,7 +531,9 @@ OPEN_WORLD_TOOLS = {"complete_inspection", "send_offer", "get_mercury_balance", 
                     "refresh_liquidity_construction_accounts", "list_liquidity_construction_account_transactions",
                     "preview_liquidity_construction_account_switch",
                     # They e-mail the owner and save to the owner's Google Drive.
-                    "mark_liquidity_construction_account_closed_out", "send_liquidity_construction_account_rehab_summary_again"}
+                    "mark_liquidity_construction_account_closed_out", "send_liquidity_construction_account_rehab_summary_again",
+                    # It writes to the owner's Google Drive.
+                    "save_bought_deal_projection_to_drive"}
 DESTRUCTIVE_PREFIXES = ("delete_", "reps_delete_")
 DESTRUCTIVE_TOOLS = {"send_offer", "reps_log", "reps_upload", "reps_upload_batch", "update_pipeline_template", "unlink_inspection_from_deal",
                      "apply_liquidity_transaction_bulk_action", "import_liquidity_deal", "apply_liquidity_deal_milestone_change",

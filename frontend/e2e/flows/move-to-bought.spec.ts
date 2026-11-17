@@ -14,6 +14,7 @@ test('a stage-3 card copies itself into Bought Deals and stays put', async ({
   api,
   dialogs,
   seed,
+  settle,
 }) => {
   const deal = await seed.seedActiveDeal('BRRRR', { section: 1, stage: 3 });
 
@@ -26,15 +27,43 @@ test('a stage-3 card copies itself into Bought Deals and stays put', async ({
 
   await card.getByTestId('dealcard.move-to-bought').click();
 
-  await dialogs.expectDialogs([
-    'Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.',
-    'Deal moved to Bought Deals successfully!',
-  ]);
+  // It asks for the deal's own Google Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md) and refuses
+  // anything but a Drive folder link.
+  const moveDialog = page.getByTestId('move-to-bought.root');
+  await expect(moveDialog).toBeVisible();
+  await page.getByTestId('move-to-bought.confirm').click();
+  await expect(page.getByTestId('move-to-bought.link-problem')).toContainText('Paste');
+  await page.getByTestId('move-to-bought.google-drive-link').fill('https://docs.google.com/document/d/1AbCdEfGhIjKlMnOp/edit');
+  await page.getByTestId('move-to-bought.confirm').click();
+  await expect(page.getByTestId('move-to-bought.link-problem')).toContainText('not a Google Drive folder link');
+  expect(await seed.listBoughtDeals()).toHaveLength(0);
+  await page.getByTestId('move-to-bought.google-drive-link').fill('https://drive.google.com/drive/folders/E2EDealFolder0001');
+  await page.getByTestId('move-to-bought.confirm').click();
+
+  await dialogs.expectDialogs(['Deal moved to Bought Deals successfully!']);
+  await expect.poll(async () => { await settle(400); return moveDialog.count(); }).toBe(0);   // it leaves on the paused clock
 
   // Today's behaviour: the active card is not removed.
   await expect(card).toBeVisible();
 
-  expect(await seed.listBoughtDeals()).toHaveLength(1);
+  const [boughtDeal] = await seed.listBoughtDeals();
+  expect(boughtDeal?.google_drive_link).toBe('https://drive.google.com/drive/folders/E2EDealFolder0001');
 
   await api.expectContract('move-to-bought');
+});
+
+test('HTML to Drive saves the deal projection in the deal\'s Drive folder, and says where', async ({ page, request, seed, settle }) => {
+  const { API_ORIGIN } = await import('../fixtures/env');
+  const deal = await seed.seedBoughtDeal('BRRRR');
+  const callsBefore = await (await request.get(`${API_ORIGIN}/e2e/fake-mercury/calls`, { headers: { 'x-e2e-seed': '1' } })).json();
+
+  await page.goto('/bought-deals');
+  await page.getByTestId(`boughtdeals.card.${deal.id}`).click();
+  await expect(page.getByTestId('boughtdeals.modal')).toBeVisible();
+  await settle(300);
+  await page.getByTestId('boughtdeals.modal.html-to-drive').click();
+
+  await expect(page.getByTestId('boughtdeals.modal.html-to-drive.saved')).toContainText(/\d{4}-\d{2}-\d{2} deal projection\.html/);
+  const callsAfter = await (await request.get(`${API_ORIGIN}/e2e/fake-mercury/calls`, { headers: { 'x-e2e-seed': '1' } })).json();
+  expect(callsAfter.deal_projection_files_saved_to_drive - callsBefore.deal_projection_files_saved_to_drive).toBe(1);
 });

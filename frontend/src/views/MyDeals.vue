@@ -11,6 +11,7 @@ import {
   ensureBrrrLegacyDefaults,
 } from "../utils/dealUtils";
 import DealCard from "../components/DealCard.vue";
+import MoveToBoughtDialog from "../components/MoveToBoughtDialog.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import DealInputsForm from "../components/DealInputsForm.vue";
 import DealLinkedInspectionsSection from "../components/inspection/DealLinkedInspectionsSection.vue";
@@ -261,16 +262,14 @@ const duplicateDeal = async (deal: ActiveDealRes) => {
     }
   }
 };
-const moveToBought = async (deal: ActiveDealRes) => {
-  if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
-    try {
-      await boughtStore.moveToBought(deal.id, deal.deal_type || 'BRRRR');
-      alert("Deal moved to Bought Deals successfully!");
-    } catch (e) {
-      console.error("View: MyDeals - Failed to move deal to bought", e);
-      alert("Failed to move deal to Bought Deals");
-    }
-  }
+// Move to Bought asks for the deal's own Google Drive folder first (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md).
+const dealBeingMovedToBought = ref<ActiveDealRes | null>(null);
+const isMovingToBought = ref(false);
+const moveToBoughtServerErrorMessage = ref<string | null>(null);
+
+const moveToBought = (deal: ActiveDealRes) => {
+  moveToBoughtServerErrorMessage.value = null;
+  dealBeingMovedToBought.value = deal;
 };
 
 const moveToBoughtFromModal = async () => {
@@ -279,16 +278,26 @@ const moveToBoughtFromModal = async () => {
     return;
   }
   if (editingDeal.value) {
-    if (confirm("Move this deal to Bought Deals? A copy will be created in the Bought Deals pipeline.")) {
-      try {
-        if (isDirty) await performSave();
-        await boughtStore.moveToBought(editingDeal.value.id, editingDeal.value.deal_type || 'BRRRR');
-        alert("Deal moved to Bought Deals successfully!");
-      } catch (e) {
-        console.error("View: MyDeals - Failed to move editing deal to bought", e);
-        alert("Failed to move deal to Bought Deals");
-      }
-    }
+    if (isDirty) await performSave();
+    moveToBought(editingDeal.value as ActiveDealRes);
+  }
+};
+
+const confirmMoveToBought = async (googleDriveLink: string) => {
+  const deal = dealBeingMovedToBought.value;
+  if (!deal) return;
+  isMovingToBought.value = true;
+  moveToBoughtServerErrorMessage.value = null;
+  try {
+    await boughtStore.moveToBought(deal.id, deal.deal_type || 'BRRRR', googleDriveLink);
+    dealBeingMovedToBought.value = null;
+    alert("Deal moved to Bought Deals successfully!");
+  } catch (e) {
+    console.error("View: MyDeals - Failed to move deal to bought", e);
+    const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+    moveToBoughtServerErrorMessage.value = typeof detail === "string" ? detail : "Failed to move deal to Bought Deals";
+  } finally {
+    isMovingToBought.value = false;
   }
 };
 
@@ -1519,6 +1528,16 @@ console.groupEnd();
       :metric-value="pressedResultTileValue"
       :cash-needed-schedule="currentAnalysis && 'cash_needed_schedule_at_lowest_arv' in currentAnalysis ? currentAnalysis.cash_needed_schedule_at_lowest_arv : null"
       @close="pressedResultTileForCalculationBreakdown = null"
+    />
+
+    <MoveToBoughtDialog
+      :open="dealBeingMovedToBought !== null"
+      :deal-address="dealBeingMovedToBought?.address ?? ''"
+      :initial-google-drive-link="dealBeingMovedToBought?.google_drive_link"
+      :is-moving="isMovingToBought"
+      :server-error-message="moveToBoughtServerErrorMessage"
+      @cancel="dealBeingMovedToBought = null"
+      @confirm="confirmMoveToBought"
     />
   </div>
 </template>

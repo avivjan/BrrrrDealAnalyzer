@@ -272,6 +272,15 @@ test('compact cards: every rehab shows closed, a click opens one, a link opens i
     await expect(page.getByTestId(`ca.${dealId}`)).toHaveAttribute('data-expanded', 'false');
   }
   await expect(page.getByTestId(`ca.${firstDealId}.summary.draws`)).toContainText('of $70,000 budget');
+  // What is left, and why the numbers (tasks/todo/ConstructionAccountCardExplanations.md).
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.left-to-draw`)).toContainText('$70,000 left to draw');
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.left-to-pay`)).toContainText('$50,000 left to pay');
+  await page.getByTestId(`ca.${firstDealId}.summary.end-outcome.explain`).click();
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.end-outcome.explain.panel`)).toBeVisible();
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.end-outcome.explain.panel`)).toContainText('Lender draws still to come');
+  await expect(page.getByTestId(`ca.${firstDealId}`)).toHaveAttribute('data-expanded', 'false');   // explaining never opens the card
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId(`ca.${firstDealId}.summary.end-outcome.explain.panel`)).toBeHidden();
   await expect(page.getByTestId(`ca.${secondDealId}.summary.plan`)).toContainText('Under budget, you keep $20,000');
 
   await page.getByTestId(`ca.${firstDealId}.toggle`).click();

@@ -8,6 +8,8 @@ import { VueDraggable } from "vue-draggable-plus";
 import { useDebounceFn } from "@vueuse/core";
 import { formatDealForClipboard } from "../utils/dealUtils";
 import BoughtDealCard from "../components/BoughtDealCard.vue";
+import DealProjectionToDriveButton from "../components/deal/DealProjectionToDriveButton.vue";
+import { googleDriveFolderLinkProblem } from "../utils/googleDriveFolderLink";
 import DealLinkedInspectionsSection from "../components/inspection/DealLinkedInspectionsSection.vue";
 import StageColumn from "../components/board/StageColumn.vue";
 import PipelineTemplateEditor from "../components/PipelineTemplateEditor.vue";
@@ -456,6 +458,14 @@ watch(
 );
 
 /** For the "Import to liquidity" button: save pending edits first; invalid inputs cannot be imported. */
+// A Bought deal's Drive folder link: shown wrong at once (an empty one too, on a deal made before it was required).
+const editingDealDriveFolderLinkProblem = computed(() =>
+  editingDeal.value ? googleDriveFolderLinkProblem(editingDeal.value.google_drive_link) : null);
+
+const savePendingEditsBeforeHtmlToDrive = async (): Promise<void> => {
+  if (isDirty) await performSave();
+};
+
 const savePendingChangesBeforeLiquidityImport = async (): Promise<boolean> => {
   if (hasInvalidDealInputs.value) {
     alert("Fix the highlighted inputs before importing this deal to liquidity.");
@@ -1147,8 +1157,13 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     data-testid="boughtdeals.modal.google-drive-link"
                     v-model="editingDeal.google_drive_link"
                     class="ui-input"
-                    placeholder="https://drive.google.com/..."
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    :aria-invalid="editingDealDriveFolderLinkProblem ? 'true' : undefined"
                   />
+                  <!-- The deal's own Drive folder: the rehab summary and HTML to Drive save there (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md). -->
+                  <p v-if="editingDealDriveFolderLinkProblem" data-testid="boughtdeals.modal.google-drive-link.problem" role="alert" class="text-xs text-negative">
+                    {{ editingDealDriveFolderLinkProblem }}
+                  </p>
                   <a
                     v-if="editingDeal.google_drive_link"
                     data-testid="boughtdeals.modal.google-drive-open"
@@ -1158,6 +1173,12 @@ const copyToClipboard = async (deal: BoughtDealRes) => {
                     class="text-xs text-primary hover:underline inline-flex items-center gap-1 min-h-6"
                     ><i class="pi pi-external-link" aria-hidden="true"></i> Open</a
                   >
+                  <DealProjectionToDriveButton
+                    :deal-id="editingDeal.id"
+                    :deal-type="editingDeal.deal_type === 'FLIP' ? 'FLIP' : 'BRRRR'"
+                    :has-a-valid-drive-folder-link="!editingDealDriveFolderLinkProblem && !!editingDeal.google_drive_link"
+                    :save-pending-edits="savePendingEditsBeforeHtmlToDrive"
+                  />
                 </div>
               </div>
               <div class="space-y-4">

@@ -737,10 +737,11 @@ The SPA's Content-Security-Policy (`frontend/public/_headers`) is enforcing;
 | `MEMBER_LOAN_LENDER_EMAIL`, `MEMBER_LOAN_YARDEN_EMAIL` | Member Loan | Where each member's e-mail goes (never sent to the frontend) |
 | `MEMBER_LOAN_COMPANY_EMAIL` | Member Loan | The Borrower's notice address (`bigwhalesllc@gmail.com`); every signed copy goes to it too. Unset, the signed-copy e-mail fails and is retried |
 | `MEMBER_LOAN_LENDER_LEGAL_NAME`, `MEMBER_LOAN_YARDEN_LEGAL_NAME` | Member Loan | The full legal names typed to sign (default `Aviv Jan`, `Yarden Kelly`) |
-| `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
+| `MEMBER_LOAN_DRIVE_UPLOAD_URL`, `MEMBER_LOAN_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/memberLoan/common/member_loan_google_drive.py` | The Apps Script web app that saves signed copies to the Drive folder `docs/loan agreements`, and the secret that signs each upload (see [Member Loan](#member-loan)) |
 | `INSPECTION_PHOTOS_DRIVE_UPLOAD_URL`, `INSPECTION_PHOTOS_DRIVE_UPLOAD_SECRET` | `BackEnd/BL/inspection/common/inspection_photo_google_drive.py` | The Apps Script web app that keeps inspection photos and finished reports in the Drive folder `inspections` (one sub-folder per inspection), and the secret that signs each request (see [Property inspections](#property-inspections)). Unset, photo uploads answer 503 and stay queued on the device |
 | `INSPECTION_REPORT_EMAIL`, `INSPECTION_REPORT_SENDER`, `INSPECTION_APP_ORIGIN`, `INSPECTION_REPORT_RETRY_SCHEDULE` | `BackEnd/BL/inspection/common/inspection_report.py` | Where each finished inspection's PDF report is e-mailed and from which Gmail account (both default `bigwhalesllc@gmail.com`; the app password is `EMAIL_PASSWORD`), the site address for its links (default `AUTH_APP_ORIGIN`), and `off` to stop retrying failed deliveries |
-| `REHAB_SUMMARY_EMAIL`, `REHAB_SUMMARY_SENDER`, `REHAB_SUMMARY_DRIVE_UPLOAD_URL`, `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`, `REHAB_SUMMARY_RETRY_SCHEDULE` | `BackEnd/BL/liquidity/constructionAccount/rehab_summary_*.py` | Where each rehab summary is e-mailed (the owner's address; unset, the e-mail fails and is retried) and from which Gmail account (default the company Gmail; its app password is `EMAIL_PASSWORD`), the Apps Script that saves it to the owner's Google Drive, and `off` to stop retrying failed deliveries |
+| `REHAB_SUMMARY_EMAIL`, `REHAB_SUMMARY_SENDER`, `REHAB_SUMMARY_RETRY_SCHEDULE` | `BackEnd/BL/liquidity/constructionAccount/rehab_summary_*.py` | Where each rehab summary is e-mailed (the owner's address; unset, the e-mail fails and is retried) and from which Gmail account (default the company Gmail; its app password is `EMAIL_PASSWORD`), and `off` to stop retrying failed deliveries |
+| `DEAL_DRIVE_FOLDERS_UPLOAD_URL`, `DEAL_DRIVE_FOLDERS_UPLOAD_SECRET` | `BackEnd/BL/common/deal_drive_folder.py` | The Apps Script that saves into each Bought deal's own Drive folder (the rehab summary in `Rehab`, HTML to Drive) |
 | `MEMBER_LOAN_SENDER_ADDRESS` | Member Loan | Sending Gmail account (default `bigwhalesllc@gmail.com`); its app password is `EMAIL_PASSWORD` |
 | `MEMBER_LOAN_EMAIL_DRY_RUN` | Member Loan | `true` (default): the monthly statement is not sent. Set `false` to send it on the 1st |
 | `MEMBER_LOAN_STATEMENT_SCHEDULE` | Member Loan | `on` (default): production sends the monthly statement itself; `off` stops that |
@@ -771,7 +772,7 @@ decisions and tests are in [`tasks/todo/MemberLoan.md`](tasks/todo/MemberLoan.md
   cancelling stay as they were. A proposal expires after 14 days. Reversals work the same way.
 - **Signed copies.** Once everyone has signed, the record plus a signature certificate page is
   e-mailed to the Lender, Yarden and the company (subject `whales loan update`, or
-  `whales loan statement` for a statement) and saved to the Drive folder `loan agreements`.
+  `whales loan statement` for a statement) and saved to the Drive folder `docs/loan agreements`.
   A failed delivery is retried by the schedule below, three times.
 - **The calculation** (`BL/memberLoan/common/member_loan_engine.py`, `Decimal` only): 1% a month,
   every month counted as 30 days (30/360). A change on any day splits the month into stretches,
@@ -819,13 +820,15 @@ deposit at the purchase closing, what comes back at rehab end, and a top-up when
 - **Page:** `/liquidity/construction-accounts` (sidebar, ⌘K, `g c`, the Liquidity bar, the Dashboard tile). One compact
   card per Bought BRRRR deal (tasks/todo/ConstructionAccountsCompactCardsAndRehabSummary.md): the money in the account,
   the lender draws against the lender's budget, the money paid to contractors against the rehab cost, what comes back at
-  the end, and the one thing to do now. A click opens the detail in tabs (Overview, Draws & payments, Bank transactions,
+  the end, and the one thing to do now. Under the bars: what is left to draw and left to pay; a fifth figure, **Safe to take
+  out now (steal)**. The (i) beside "Back to you at the end" and "Safe to take out now" (hover, keyboard focus or a tap) shows
+  the calculation line by line (tasks/todo/ConstructionAccountCardExplanations.md). A click opens the detail in tabs (Overview, Draws & payments, Bank transactions,
   Entered by hand, Timeline & transfers, Account), with every number and where it comes from; rehab figures, the
   cushion, the buffer and the before-this-account amounts edit in place. Cards needing you come first.
 - **Rehab summary at close-out:** the first close-out (the Close out transfer or Mark closed out) makes a PDF of the
   rehab's numbers, every bank transaction, the manual entries and the in-app transfers, plus a CSV of the transactions.
-  Both are e-mailed to `REHAB_SUMMARY_EMAIL` and saved to the owner's Google Drive under
-  `rehab summaries/<address> (<deal id>)/`, in the background; a failed channel is retried every 30 minutes, three tries
+  Both are e-mailed to `REHAB_SUMMARY_EMAIL` and saved in the `Rehab` subfolder of the deal's own Drive folder (its
+  Google Drive Link, below), in the background; a failed channel is retried every 30 minutes, three tries
   in all. The card's Account tab shows where it went, downloads both files, and has **Send again** (10 a day per deal).
 - **Transfer approvals:** Deposit and Steal are approval requests in Mercury. Each refresh asks Mercury about the ones
   still waiting; one rejected or cancelled there shows "Rejected in Mercury" / "Cancelled in Mercury" and stops counting.
@@ -840,14 +843,29 @@ deposit at the purchase closing, what comes back at rehab end, and a top-up when
   shows which ones the backend found and the exact names of the missing ones.
 - **Verify against the real Mercury yourself:** the first transfer (make it $1), and turning on instant updates.
 
-**Saving rehab summaries to Google Drive (once).** Same pattern as the loan agreements, with its own script and secret:
-[`BackEnd/integrations/google_drive_rehab_summaries.gs`](BackEnd/integrations/google_drive_rehab_summaries.gs).
-Signed in as the owner's personal Google account, paste it into a new project at script.google.com, add the script
-property `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET`, deploy it as a web app (execute as me, anyone may call it), and set the
-same secret and the web app URL (`…/exec`) on Render as `REHAB_SUMMARY_DRIVE_UPLOAD_SECRET` and
-`REHAB_SUMMARY_DRIVE_UPLOAD_URL`. Set `REHAB_SUMMARY_EMAIL` to the owner's address. The script only creates files
-inside `rehab summaries`, only `.pdf` and `.csv`, and refuses any request that is not HMAC-signed and less than five
-minutes old.
+### Each Bought deal's own Google Drive folder
+
+Every Bought deal has its own Drive folder: its **Google Drive Link** (plan: `tasks/todo/DealDriveFolderRehabSummaryAndProjection.md`).
+
+- **Required at Move to Bought.** The dialog asks for it, prefilled from the deal. The server refuses a move, or a Bought
+  deal added directly, without a Google Drive *folder* link (`https://drive.google.com/drive/folders/…`; a file, a doc
+  or another site is refused). MCP `move_to_bought` takes it too. Deals moved before this rule show **Add Drive folder**
+  on their card.
+- **The rehab summary** is saved in the deal folder's `Rehab` subfolder.
+- **HTML to Drive** (the Bought deal window, under the link; MCP `save_bought_deal_projection_to_drive`) saves the deal's
+  interactive HTML report in the deal folder as `<date> deal projection.html`.
+
+**Saving to deal folders (once).** A small Apps Script owned by the owner's personal Google account does it:
+[`BackEnd/integrations/google_drive_deal_folders.gs`](BackEnd/integrations/google_drive_deal_folders.gs).
+1. Signed in as that account, paste it into a new project at script.google.com.
+2. Add the script property `DEAL_DRIVE_FOLDERS_UPLOAD_SECRET`.
+3. Deploy it as a web app (execute as me, anyone may call it).
+4. On Render, set the same secret and the web app URL (`…/exec`) as `DEAL_DRIVE_FOLDERS_UPLOAD_SECRET` and
+   `DEAL_DRIVE_FOLDERS_UPLOAD_URL`.
+
+The script writes only into a folder that account owns, only into that folder or its `Rehab` subfolder, and only `.pdf`,
+`.csv` and `.html` files. It never reads, lists or deletes, and it refuses any request that is not HMAC-signed and less
+than five minutes old.
 
 ### Property inspections
 

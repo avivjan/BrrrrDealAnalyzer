@@ -392,9 +392,20 @@ A security review of the branch diff (`/security-review`, 2026-11-13) found no h
 | Approval status read | `fetch_transfer_approval_request_status`: the transfer token (`Secret`, wiped after), a pinned `GET /api/v1/request-transfer/{id}`, the id must be a uuid, a timeout, no retry; only the error's class or HTTP status is logged; Mercury's text never reaches a log or the frontend. It only reads requests this app made (ids from its own transfer rows), and an error leaves the row as it is | Path injection; token or bank text leaking; a failed read changing money figures |
 | Summary files | Every user or bank text is escaped before ReportLab and the e-mail HTML; every CSV cell a spreadsheet would read as a formula (`= + - @`, tab, CR) gets a leading `'`; the download file name keeps only letters, digits, spaces and `, . # ( ) _ -` | Injection into the PDF, the e-mail or a spreadsheet; header injection through the file name |
 | Downloads | `GET .../rehab-summaries/{id}/pdf\|csv` behind the same data gate as every `/liquidity` route; a summary is only served through its own deal (id parsed as a uuid, deal checked) | Reading another deal's summary by its id |
-| Drive script | `google_drive_rehab_summaries.gs`: HMAC-SHA256 over timestamp, `folder/file` and the file's SHA-256 (constant-time compare), a 5-minute window, `.pdf` and `.csv` only, a 20 MB cap, names stripped of path characters, writes only under `rehab summaries`, never reads, lists or deletes. The backend posts only to `https://script.google.com/`; a folder link it returns is used only if it starts with `https://drive.google.com/` | Writing to or reading the owner's Drive with the URL alone; a rogue link in the page or the e-mail |
+| Drive script | Replaced by the deal-folder script, §3.3.3 (the shared `rehab summaries` script was never deployed) | — |
 | Where it goes | The recipient is `REHAB_SUMMARY_EMAIL` (environment only, one address); no route takes an address. Send again is limited to 10 a day per deal and audited; only error type names are stored | Using the app as a mail relay; addresses in the repo or the logs |
 | Privacy | The owner's personal address is only in the hosting secrets, never in the code, the README or the scripts | Personal data in the repository |
+
+#### 3.3.3 Each Bought deal's own Drive folder (tasks/todo/DealDriveFolderRehabSummaryAndProjection.md)
+
+The rehab summary and HTML to Drive save into the deal's own folder (its Google Drive Link), through `google_drive_deal_folders.gs`. The branch review (2026-11-16) found no high- or medium-confidence vulnerability. The controls:
+
+| Control | What ships | Threat it closes |
+| --- | --- | --- |
+| The link | Only an `https://drive.google.com/drive/[u/<n>/]folders/<id>` link is accepted (no user info, no other host or scheme); only its folder id (`[A-Za-z0-9_-]{10,100}`) is ever sent. The card and modal open it through `safeHref` | A `javascript:` or look-alike link; path tricks in the id |
+| The script | HMAC-SHA256 over timestamp, `<folder id>/<subfolder>/<file name>` and the file's SHA-256 (constant-time), a 5-minute window; it writes only into a folder whose owner is the script's own account, only into that folder or `Rehab`, only `.pdf` / `.csv` / `.html`, at most 20 MB; never reads, lists or deletes | Writing into someone else's folder, or anywhere else in the Drive, with the URL alone or a pasted link |
+| Our words only | The script's error text is never relayed: the API answers 409 (no folder link) or 502 (Drive refused) in its own words; only error type names are stored | Drive or account details in the page or logs |
+| Routes | `POST /bought-deals/{id}/projection-to-drive` sits behind the data gate like every `/bought-deals` route and is audited; the HTML is the report download's own (already escaped, its CSP), built from the saved deal | Unauthenticated writes to the Drive; injection through deal fields |
 
 ### 3.4 Pillar 3 — Trusted device management and allowlisting
 
