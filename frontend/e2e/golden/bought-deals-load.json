@@ -6,15 +6,15 @@
     },
     {
       "method": "GET",
-      "path": "/active-deals"
-    },
-    {
-      "method": "GET",
       "path": "/bought-deals"
     },
     {
       "method": "GET",
       "path": "/pipeline-templates"
+    },
+    {
+      "method": "GET",
+      "path": "/active-deals"
     },
     {
       "method": "GET",

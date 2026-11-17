@@ -2,7 +2,8 @@
 import { RouterView } from "vue-router";
 import { useConnectionStore } from "./stores/connectionStore";
 import { useDealStore } from "./stores/dealStore";
-import { onMounted } from "vue";
+import { useAuthStore } from "./stores/authStore";
+import { onMounted, watch } from "vue";
 import { apiClient } from "./api";
 import router from "./router";
 import AppShell from "./components/shell/AppShell.vue";
@@ -13,8 +14,12 @@ import LiquidityRowsChangedNotice from "./components/liquidity/LiquidityRowsChan
 
 const connectionStore = useConnectionStore();
 const dealStore = useDealStore();
+const authStore = useAuthStore();
 
-onMounted(() => {
+/** Auth statuses where the API answers data routes; `anon` and `pending` are sent to /login or /pending instead. */
+const AUTH_STATUSES_THAT_CAN_READ_DEALS = ["off", "trusted"];
+
+onMounted(async () => {
   // Setup global interceptors to track connection status
   apiClient.interceptors.request.use((config) => {
     connectionStore.isChecking = true;
@@ -47,7 +52,23 @@ onMounted(() => {
   // Fetch deals globally so portfolio stats are available on all pages --
   // except on a public inspection page, where a visitor may not be logged in.
   // The route is resolved from the address bar now, so the request order is unchanged.
-  if (router.resolve(window.location.pathname).meta.public !== true) dealStore.fetchDeals();
+  if (router.resolve(window.location.pathname).meta.public === true) return;
+  // Wait for the first navigation: its guard runs `auth.load()`, which renews a
+  // session whose 15-minute access cookie expired while the site was closed.
+  // Fetching before that answered 401 and left the dashboard empty until a reload.
+  // When the visitor has to sign in (or wait for device approval) first, the
+  // deals load the moment the session becomes usable, once.
+  await router.isReady();
+  let haveDealsBeenFetchedForThisSession = false;
+  watch(
+    () => authStore.status,
+    (authStatus) => {
+      if (haveDealsBeenFetchedForThisSession || !AUTH_STATUSES_THAT_CAN_READ_DEALS.includes(authStatus)) return;
+      haveDealsBeenFetchedForThisSession = true;
+      dealStore.fetchDeals();
+    },
+    { immediate: true },
+  );
 });
 </script>
 

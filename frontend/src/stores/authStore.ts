@@ -32,8 +32,18 @@ export const useAuthStore = defineStore('auth', () => {
     status.value = next.status === 'ok' ? 'trusted' : 'pending';
   }
 
-  /** Called once by the router guard before the first protected route. */
-  async function load(): Promise<AuthStatus> {
+  /**
+   * Called once by the router guard before the first protected route. Calls
+   * made while one is running share it: a second `/auth/refresh` with the same
+   * refresh token is a replay, and the API revokes the whole session for it.
+   */
+  let loadInFlight: Promise<AuthStatus> | null = null;
+  function load(): Promise<AuthStatus> {
+    loadInFlight = loadInFlight || loadConfigAndSession().finally(() => { loadInFlight = null; });
+    return loadInFlight;
+  }
+
+  async function loadConfigAndSession(): Promise<AuthStatus> {
     try {
       config.value = await authApi.config();
     } catch {

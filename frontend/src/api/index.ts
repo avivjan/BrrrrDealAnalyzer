@@ -99,6 +99,16 @@ apiClient.interceptors.response.use(
     if (error?.response?.status === 401 && config && !config.__retried && !url.startsWith('/auth/')) {
       const { useAuthStore } = await import('../stores/authStore');
       const auth = useAuthStore();
+      // A request sent while the page is still loading the session (status
+      // `unknown`) cannot tell yet whether sessions are enforced. Wait for that
+      // same load, which renews an expired session itself, then retry once.
+      if (auth.status === 'unknown') {
+        const authStatusAfterLoad = await auth.load();
+        if (authStatusAfterLoad === 'trusted') {
+          config.__retried = true;
+          return apiClient.request(config);
+        }
+      }
       if (auth.enforced) {
         refreshing = refreshing || auth.tryRefresh().finally(() => { refreshing = null; });
         const ok = await refreshing;
