@@ -70,4 +70,7 @@ Contents of `.claude/security.md`:
       still never trigger a login redirect. (~10 min)
 
 ## Finish
-- [ ] Push the branch and open a PR. (~5 min)
+- [x] Push the branch and open a PR. (~5 min)
+- Golden update: `bought-deals-load`, `liquidity-load` and `reps-load` keep the
+  same requests; only `/active-deals` now comes after the page's own loads,
+  because App.vue waits for the first navigation.

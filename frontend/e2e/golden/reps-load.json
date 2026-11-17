@@ -6,11 +6,11 @@
     },
     {
       "method": "GET",
-      "path": "/active-deals"
+      "path": "/reps/config-status"
     },
     {
       "method": "GET",
-      "path": "/reps/config-status"
+      "path": "/active-deals"
     },
     {
       "method": "GET",
