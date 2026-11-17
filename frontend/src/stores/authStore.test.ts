@@ -115,4 +115,16 @@ describe("authStore", () => {
     expect(store.status).toBe("anon");
     expect(store.user).toBeNull();
   });
+
+  it("concurrent load() calls share one /auth/refresh, so the API never sees the same refresh token twice", async () => {
+    api.config.mockResolvedValue({ auth_mode: "enforce", device_policy: "off", rp_id: "localhost" });
+    api.me.mockRejectedValue(new Error("401"));
+    api.refresh.mockResolvedValue(SESSION);
+    const store = useAuthStore();
+    const [authStatusFromRouterGuard, authStatusFromEarlyRequest] = await Promise.all([store.load(), store.load()]);
+    expect(authStatusFromRouterGuard).toBe("trusted");
+    expect(authStatusFromEarlyRequest).toBe("trusted");
+    expect(api.refresh).toHaveBeenCalledTimes(1);
+    expect(api.config).toHaveBeenCalledTimes(1);
+  });
 });
