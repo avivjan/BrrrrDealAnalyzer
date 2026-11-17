@@ -4,9 +4,10 @@
  * Runs as a Google Apps Script web app owned by the owner's personal Google
  * account (it used to be the company account; signed PDFs saved before the
  * move stay in that account's Drive). The web service POSTs each fully signed PDF here (BL/memberLoan/common/member_loan_google_drive.py);
- * this script saves it in the Drive folder "docs/loan agreements" (a "docs"
- * folder at the Drive root, with "loan agreements" inside it), creating the
- * folders the first time. PDFs saved before this change stay where they were.
+ * this script saves it in the Drive folder "RealEstate/Docs/loan agreements"
+ * (a "RealEstate" folder at the top of My Drive, "Docs" inside it, then
+ * "loan agreements"), using the folders that exist and creating any that are
+ * missing. PDFs saved before this change stay where they were.
  *
  * Every request must carry an HMAC-SHA256 signature made with the shared
  * secret, over "<timestamp>\n<file name>\n<SHA-256 of the PDF>", and a
@@ -32,8 +33,8 @@
  */
 
 var LARGEST_TIMESTAMP_AGE_SECONDS = 300;
-var DOCS_FOLDER_NAME = 'docs';
-var LOAN_AGREEMENTS_FOLDER_NAME = 'loan agreements';
+// From the top of My Drive down; exact folder names. Never a name from the request.
+var LOAN_AGREEMENTS_FOLDER_PATH = ['RealEstate', 'Docs', 'loan agreements'];
 
 function doPost(e) {
   try {
@@ -59,8 +60,7 @@ function doPost(e) {
     if (fileName.slice(-4).toLowerCase() !== '.pdf') {
       return answer_({ ok: false, error: 'only PDF files are saved' });
     }
-    // docs/loan agreements: never a name from the request.
-    var folder = childFolder_(childFolder_(DriveApp.getRootFolder(), DOCS_FOLDER_NAME), LOAN_AGREEMENTS_FOLDER_NAME);
+    var folder = LOAN_AGREEMENTS_FOLDER_PATH.reduce(childFolder_, DriveApp.getRootFolder());
     var file = folder.createFile(Utilities.newBlob(pdfBytes, 'application/pdf', fileName));
     return answer_({ ok: true, file_id: file.getId() });
   } catch (error) {

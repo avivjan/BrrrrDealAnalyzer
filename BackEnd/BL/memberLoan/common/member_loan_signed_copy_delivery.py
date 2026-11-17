@@ -5,7 +5,7 @@ Once every required member has signed, the signed copy is:
     (MEMBER_LOAN_LENDER_EMAIL, MEMBER_LOAN_YARDEN_EMAIL, MEMBER_LOAN_COMPANY_EMAIL),
     subject exactly "whales loan update" for a change or "whales loan statement"
     for a statement;
-  - saved to the Google Drive folder "docs/loan agreements".
+  - saved to the Google Drive folder "RealEstate/Docs/loan agreements".
 
 Each attempt is one append-only delivery row; the newest row per channel is
 the current state. A failure never undoes a signature. The scheduler retries a
@@ -88,7 +88,7 @@ def compose_signed_copy_email(
         lines.append(f"- {verb} by {signature.typed_full_legal_name} on {when}.{detail}")
     lines += [
         "",
-        "The signed copy is attached. It is also saved in the Google Drive folder \"docs/loan agreements\".",
+        "The signed copy is attached. It is also saved in the Google Drive folder \"RealEstate/Docs/loan agreements\".",
         f"SHA-256 of the signed copy: {signed_copy.signed_pdf_sha256}",
         "",
         f"Open it in the app: {link}",
@@ -105,7 +105,7 @@ def compose_signed_copy_email(
             for s in signatures
         )
         + "</ul><p>The signed copy is attached. It is also saved in the Google Drive folder "
-        "&quot;docs/loan agreements&quot;.</p>"
+        "&quot;RealEstate/Docs/loan agreements&quot;.</p>"
         f"<p style='color:#6b7280;font-size:12px'>SHA-256 of the signed copy: {esc(signed_copy.signed_pdf_sha256)}</p>"
         f"<p><a href='{esc(link, quote=True)}'>Open it in the app</a></p></body></html>"
     )
