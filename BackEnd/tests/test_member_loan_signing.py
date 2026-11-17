@@ -196,7 +196,7 @@ class TestCeremonyChecks:
 
     def test_the_drive_upload_is_signed_over_the_name_and_the_pdf(self):
         body = google_drive_upload_module.build_upload_request_body(file_name="a.pdf", pdf=b"%PDF-1", secret="s3cret", timestamp=1_800_000_000)
-        assert body["folder_name"] == "docs/loan agreements" and body["pdf_sha256"] == hashlib.sha256(b"%PDF-1").hexdigest()
+        assert body["folder_name"] == "RealEstate/Docs/loan agreements" and body["pdf_sha256"] == hashlib.sha256(b"%PDF-1").hexdigest()
         assert body["signature"] == google_drive_upload_module.upload_signature("s3cret", 1_800_000_000, "a.pdf", body["pdf_sha256"])
         assert body["signature"] != google_drive_upload_module.upload_signature("other", 1_800_000_000, "a.pdf", body["pdf_sha256"])
 
