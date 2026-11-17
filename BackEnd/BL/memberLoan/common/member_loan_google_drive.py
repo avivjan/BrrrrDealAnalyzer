@@ -1,4 +1,4 @@
-"""Saves signed copies into the Google Drive folder "docs/loan agreements".
+"""Saves signed copies into the Google Drive folder "RealEstate/Docs/loan agreements".
 
 A service account cannot keep files in a personal Gmail account's Drive (it has
 no storage quota), so the upload goes through a small Google Apps Script web
@@ -32,7 +32,7 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 # Informational only: the Apps Script picks the folder itself and never takes it from the request.
-LOAN_AGREEMENTS_FOLDER_NAME = "docs/loan agreements"
+LOAN_AGREEMENTS_FOLDER_NAME = "RealEstate/Docs/loan agreements"
 UPLOAD_TIMEOUT_SECONDS = 60
 
 

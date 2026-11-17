@@ -246,8 +246,9 @@ const onToggleSubstage = (substageId: string) => {
       <UiProgressRing :value="ringValue" :size="40" :thickness="4" :label="ringLabel" class="shrink-0" />
     </div>
 
-    <!-- Header: Address, with the deal's Google Drive folder beside it when one is set -->
-    <div class="mt-2 flex items-start justify-between gap-2">
+    <!-- Header: the address on its own line, full width (the chips beside it used to squeeze it to "9729 Ma…");
+         the deal's Google Drive folder and construction account chips in a row under it. -->
+    <div class="mt-2 flex flex-col gap-1.5">
       <h3 class="min-w-0 line-clamp-2 break-words font-display text-sm font-semibold leading-tight tracking-display text-fg md:text-base">
         {{ deal.address || "No Address" }}
       </h3>
@@ -255,7 +256,7 @@ const onToggleSubstage = (substageId: string) => {
         `@click.stop` so opening the folder never opens the card's modal; `safeHref`
         drops anything that is not http(s). A static inline glyph: no external fetch.
       -->
-      <div class="flex shrink-0 items-center gap-1">
+      <div class="flex flex-wrap items-center gap-1">
       <a
         v-if="deal.google_drive_link"
         data-testid="boughtcard.google-drive-link"
